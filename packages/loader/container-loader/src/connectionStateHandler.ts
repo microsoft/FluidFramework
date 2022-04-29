@@ -128,6 +128,10 @@ export class ConnectionStateHandler {
         }
     }
 
+    private transitionToConnectedStateWhenCaughtUp() {
+        this.handler.onCaughUpToKnownOps(() => this.setConnectionState(ConnectionState.Connected));
+    }
+
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved") {
         const quorumClients = this.handler.quorumClients();
         assert(quorumClients !== undefined, 0x236 /* "In all cases it should be already installed" */);
@@ -140,7 +144,7 @@ export class ConnectionStateHandler {
             && !this.prevClientLeftTimer.hasTimer
         ) {
             this.waitEvent?.end({ source });
-            this.setConnectionState(ConnectionState.Connected);
+            this.transitionToConnectedStateWhenCaughtUp();
         } else {
             // Adding this event temporarily so that we can get help debugging if something goes wrong.
             this.logger.sendTelemetryEvent({
@@ -214,7 +218,7 @@ export class ConnectionStateHandler {
             assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "Unexpected timer state" */);
 
             // Wait to fire "connected" event until we are caught up to known ops at the time the "connect" event fired
-            this.handler.onCaughUpToKnownOps(() => this.setConnectionState(ConnectionState.Connected));
+            this.transitionToConnectedStateWhenCaughtUp();
         }
     }
 
