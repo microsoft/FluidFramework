@@ -792,7 +792,6 @@ declare function get_old_InterfaceDeclaration_IProvideSummarizer():
 declare function use_current_InterfaceDeclaration_IProvideSummarizer(
     use: TypeOnly<current.IProvideSummarizer>);
 use_current_InterfaceDeclaration_IProvideSummarizer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideSummarizer());
 
 /*
@@ -961,7 +960,6 @@ declare function get_old_InterfaceDeclaration_ISummarizer():
 declare function use_current_InterfaceDeclaration_ISummarizer(
     use: TypeOnly<current.ISummarizer>);
 use_current_InterfaceDeclaration_ISummarizer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizer());
 
 /*
@@ -1490,7 +1488,6 @@ declare function get_old_ClassDeclaration_Summarizer():
 declare function use_current_ClassDeclaration_Summarizer(
     use: TypeOnly<current.Summarizer>);
 use_current_ClassDeclaration_Summarizer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Summarizer());
 
 /*

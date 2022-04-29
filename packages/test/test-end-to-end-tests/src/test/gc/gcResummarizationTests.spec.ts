@@ -110,7 +110,7 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
 
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
         const channelsTree = (latestUploadedSummary.tree[channelsTreeName] as ISummaryTree).tree;
-        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
+        for (const [id, summaryObject] of Object.entries(channelsTree)) {
             if (changedDataStoreIds.includes(id)) {
                 assert(summaryObject.type === SummaryType.Tree, `Data store ${id}'s entry should be a tree`);
             } else {

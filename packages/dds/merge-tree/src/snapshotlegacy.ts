@@ -131,7 +131,7 @@ export class SnapshotLegacy {
             segments === chunk1.totalSegmentCount,
             0x05e /* "emit: mismatch in totalSegmentCount" */);
 
-        if(catchUpMsgs !== undefined && catchUpMsgs.length > 0) {
+        if (catchUpMsgs !== undefined && catchUpMsgs.length > 0) {
             builder.addBlob(
                 this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
                 serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs));

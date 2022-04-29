@@ -44,7 +44,7 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
         // Always include isReplay: true on events for the Replay Driver.
         // It's used in testing/debugging scenarios, so we want to be able to filter these events out sometimes.
         const replayLogger = ChildLogger.create(
-            logger, undefined /* namespace */, {all: { isReplay: true }} /* properties */);
+            logger, undefined /* namespace */, { all: { isReplay: true } } /* properties */);
 
         return ReplayDocumentService.create(
             await this.documentServiceFactory.createDocumentService(resolvedUrl, replayLogger, clientIsSummarizer),
