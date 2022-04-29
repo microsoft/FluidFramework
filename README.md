@@ -12,7 +12,6 @@ You may be here because you want to...
 
 Documentation and guides can be found at <https://fluidframework.com/>.
 
-
 Hello World repo can be found at <https://github.com/microsoft/FluidHelloWorld>.
 
 Core Examples repo can be found at <https://github.com/microsoft/FluidExamples>.
