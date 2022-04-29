@@ -45,6 +45,8 @@ import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
+export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
+
 /* eslint-disable max-len */
 
 // An implementation of Promise.race that gives you the winner of the promise race
@@ -412,6 +414,16 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     // If the cached entry does not contain the entry time, then assign it a default of 30 days old.
                                     const age = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
                                         (Date.now() - 30 * 24 * 60 * 60 * 1000));
+
+                                    // In order to decrease the number of times we have to execute a snapshot refresh,
+                                    // if this is the summarizer and we have a cache entry but it is past the defaultSummarizerCacheExpiryTimeout,
+                                    // force the network retrieval instead as there might be a more recent snapshot available.
+                                    if (this.hostPolicy.summarizerClient &&
+                                        age > defaultSummarizerCacheExpiryTimeout) {
+                                        // eslint-disable-next-line @typescript-eslint/dot-notation
+                                        props["cacheSummarizerExpired"] = true;
+                                        return undefined;
+                                    }
 
                                     // Record the cache age
                                     // eslint-disable-next-line @typescript-eslint/dot-notation
