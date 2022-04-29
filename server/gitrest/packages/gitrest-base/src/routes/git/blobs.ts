@@ -7,7 +7,7 @@ import { ICreateBlobParams } from "@fluidframework/gitresources";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";
-import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory, logApiError } from "../../utils";
+import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory, logAndThrowApiError } from "../../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
@@ -16,10 +16,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.createBlob(
                 request.body as ICreateBlobParams,
-            )).catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response, undefined, undefined, 201);
     });
@@ -32,10 +29,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.getBlob(
                 request.params.sha,
-            )).catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response);
     });

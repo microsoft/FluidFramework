@@ -10,7 +10,7 @@ import nconf from "nconf";
 import {
     getRepoManagerParamsFromRequest,
     IRepositoryManagerFactory,
-    logApiError,
+    logAndThrowApiError,
 } from "../../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
@@ -22,10 +22,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.createCommit(request.body as ICreateCommitParams))
-            .catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response, undefined, undefined, 201);
     });
@@ -34,10 +31,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.getCommit(request.params.sha))
-            .catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response);
     });

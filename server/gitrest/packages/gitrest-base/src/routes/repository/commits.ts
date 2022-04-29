@@ -10,7 +10,7 @@ import {
     getExternalWriterParams,
     getRepoManagerParamsFromRequest,
     IRepositoryManagerFactory,
-    logApiError,
+    logAndThrowApiError,
 } from "../../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
@@ -29,10 +29,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
                 request.query.sha as string,
                 Number(request.query.count as string),
                 getExternalWriterParams(request.query?.config as string),
-            )).catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 

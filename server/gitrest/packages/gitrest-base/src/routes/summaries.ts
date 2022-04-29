@@ -27,7 +27,7 @@ import {
     IFileSystemManagerFactory,
     Constants,
     getRepoManagerParamsFromRequest,
-    logApiError,
+    logAndThrowApiError,
     BaseGitRestTelemetryProperties,
     IRepoManagerParams,
     getLumberjackBasePropertiesFromRepoManagerParams,
@@ -158,8 +158,8 @@ export function create(
      */
     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        if (!repoManagerParams?.storageRoutingId?.tenantId ||
-            !repoManagerParams?.storageRoutingId?.documentId) {
+        if (!repoManagerParams.storageRoutingId?.tenantId ||
+            !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
                 response);
@@ -173,10 +173,7 @@ export function create(
                 repoManagerParams,
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,
-            )).catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 
@@ -185,8 +182,8 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        if (!repoManagerParams?.storageRoutingId?.tenantId ||
-            !repoManagerParams?.storageRoutingId?.documentId) {
+        if (!repoManagerParams.storageRoutingId?.tenantId ||
+            !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
                 response);
@@ -201,10 +198,7 @@ export function create(
                 repoManagerParams,
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,
-            )).catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
@@ -214,8 +208,8 @@ export function create(
      */
     router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        if (!repoManagerParams?.storageRoutingId?.tenantId ||
-            !repoManagerParams?.storageRoutingId?.documentId) {
+        if (!repoManagerParams.storageRoutingId?.tenantId ||
+            !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
                 response);
@@ -230,10 +224,7 @@ export function create(
                 softDelete,
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,
-            )).catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 204);
     });
 

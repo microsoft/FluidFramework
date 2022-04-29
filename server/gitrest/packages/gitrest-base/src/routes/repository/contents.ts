@@ -6,7 +6,7 @@
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";
-import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory, logApiError } from "../../utils";
+import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory, logAndThrowApiError } from "../../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
@@ -17,10 +17,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
             .then(async (repoManager) => repoManager.getContent(
                 request.query.ref as string,
                 request.params[0],
-            )).catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
             handleResponse(resultP, response);
     });
 

@@ -132,7 +132,7 @@ export function getGitDirectory(repoPath: string, baseDir?: string): string {
     return baseDir ? `${baseDir}/${repoPath}` : repoPath;
 }
 
-export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId {
+export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId | undefined {
     if (!storageRoutingId) {
         return undefined;
     }
@@ -169,5 +169,5 @@ export function logAndThrowApiError(error: any, request: Request, params: IRepoM
     if (isNetworkError(error)) {
         throw error;
     }
-    throw new NetworkError(500, `Internal Error Retrieving Blob ${request.params.sha}`);
+    throw new NetworkError(500, `Internal error when processing ${request.method} request to ${request.url}`);
 }

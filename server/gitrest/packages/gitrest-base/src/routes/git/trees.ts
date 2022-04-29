@@ -7,7 +7,7 @@ import { ICreateTreeParams } from "@fluidframework/gitresources";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";
-import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory, logApiError } from "../../utils";
+import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory, logAndThrowApiError } from "../../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
@@ -16,10 +16,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.createTree(request.body as ICreateTreeParams))
-            .catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response, undefined, undefined, 201);
     });
@@ -28,10 +25,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.getTree(request.params.sha, request.query.recursive === "1"))
-            .catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response);
     });

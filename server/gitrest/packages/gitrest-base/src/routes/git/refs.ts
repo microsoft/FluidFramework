@@ -13,7 +13,7 @@ import {
     getExternalWriterParams,
     getRepoManagerParamsFromRequest,
     IRepositoryManagerFactory,
-    logApiError,
+    logAndThrowApiError,
 } from "../../utils";
 
 /**
@@ -35,10 +35,7 @@ export function create(
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.getRefs())
-            .catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response);
     });
@@ -49,10 +46,7 @@ export function create(
             .then(async (repoManager) => repoManager.getRef(
                 getRefId(request.params[0]),
                 getExternalWriterParams(request.query?.config as string),
-            )).catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 
@@ -63,10 +57,7 @@ export function create(
             .then(async (repoManager) => repoManager.createRef(
                 createRefParams,
                 createRefParams.config,
-            )).catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
@@ -78,10 +69,7 @@ export function create(
                 getRefId(request.params[0]),
                 patchRefParams,
                 patchRefParams.config,
-            )).catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 
@@ -89,10 +77,7 @@ export function create(
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.deleteRef(getRefId(request.params[0])))
-            .catch((error) => {
-                logApiError(error, request, repoManagerParams);
-                throw error;
-            });
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response, undefined, undefined, 204);
     });

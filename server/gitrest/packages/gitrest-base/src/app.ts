@@ -47,8 +47,8 @@ export function create(
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
                 responseTime: tokens["response-time"](req, res),
-                tenantId: params?.storageRoutingId?.tenantId ?? params?.repoName,
-                documentId: params?.storageRoutingId?.documentId,
+                tenantId: params.storageRoutingId?.tenantId ?? params.repoName,
+                documentId: params.storageRoutingId?.documentId,
                 serviceName: "gitrest",
                 eventName: "http_requests",
              };
