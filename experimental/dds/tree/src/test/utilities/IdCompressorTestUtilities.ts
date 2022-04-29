@@ -575,14 +575,6 @@ export function mergeArrayMaps<K, V>(
 	return to;
 }
 
-// enum Operation {
-// 	AllocateIds,
-// 	DeliverOperations,
-// 	ChangeCapacity,
-// 	GenerateUnifyingIds,
-// 	GoOfflineThenResume,
-// }
-
 interface AllocateIds {
 	type: 'allocateIds';
 	client: Client;
@@ -604,6 +596,7 @@ interface GenerateUnifyingIds {
 	type: 'generateUnifyingIds';
 	clientA: Client;
 	clientB: Client;
+    uuid: string;
 }
 
 // Represents intent to go offline then resume.
@@ -621,7 +614,6 @@ type Operation = AllocateIds | DeliverOperations | ChangeCapacity | GenerateUnif
 interface FuzzTestState {
 	rand: Random;
 	network: IdCompressorTestNetwork;
-	uuidNum: number;
 	activeClients: Client[];
 	selectableClients: Client[];
 	clusterSize: number;
@@ -642,19 +634,18 @@ const defaultOptions = {
 	validateInterval: 200,
 };
 
-const uuidNamespace = 'ece2be2e-f374-4ca8-b034-a0bac2da69da';
 export function makeOpGenerator(options: OperationGenerationConfig): Generator<Operation, FuzzTestState> {
 	const { includeOverrides, maxClusterSize, validateInterval } = { ...defaultOptions, ...options };
 
-	function allocateIdsGenerator({ activeClients, clusterSize, rand, uuidNum }: FuzzTestState): AllocateIds {
+	function allocateIdsGenerator({ activeClients, clusterSize, rand }: FuzzTestState): AllocateIds {
 		const client = rand.pick(activeClients);
 		const maxIdsPerUsage = clusterSize * 2;
 		const numIds = Math.floor(rand.real(0, 1) ** 2 * maxIdsPerUsage) + 1;
 		const overrides: AllocateIds['overrides'] = {};
-		if (includeOverrides && /* 25% chance: */ rand.integer(0, 3) === 0) {
+		if (includeOverrides && rand.bool(1 / 4)) {
 			for (let j = 0; j < numIds; j++) {
-				if (/* 33% chance: */ rand.integer(0, 2) === 0) {
-					overrides[j] = v5((uuidNum++).toString(), uuidNamespace);
+				if (rand.bool(1 / 3)) {
+					overrides[j] = rand.uuid4();
 				}
 			}
 		}
@@ -683,7 +674,7 @@ export function makeOpGenerator(options: OperationGenerationConfig): Generator<O
 	function generateUnifyingIdsGenerator({ activeClients, rand }: FuzzTestState): GenerateUnifyingIds {
 		const clientA = rand.pick(activeClients);
 		const clientB = rand.pick(activeClients.filter((c) => c !== clientA));
-		return { type: 'generateUnifyingIds', clientA, clientB };
+		return { type: 'generateUnifyingIds', clientA, clientB, uuid: rand.uuid4() };
 	}
 
 	function reconnectGenerator({ activeClients, rand }: FuzzTestState): Reconnect {
@@ -733,9 +724,6 @@ export function performFuzzActions(
     const initialState: FuzzTestState = {
 		rand,
 		network,
-		// Using v5 uuids with an incrementing seed ensures that the same UUIDs are generated for the same seed across different calls
-		// TODO: Can probably kill this now that randomness engine supports uuidv4 generation
-		uuidNum: 0,
 		activeClients: selectableClients.filter((c) => c !== observerClient),
 		selectableClients,
 		clusterSize: network.initialClusterSize,
@@ -756,12 +744,10 @@ export function performFuzzActions(
 				network.deliverOperations(op.client);
 				return state;
 			},
-			generateUnifyingIds: (state, { clientA, clientB }) => {
-				const uuidNum = state.uuidNum;
-				const uuid = v5(state.uuidNum.toString(), uuidNamespace);
+			generateUnifyingIds: (state, { clientA, clientB, uuid }) => {
 				network.allocateAndSendIds(clientA, 1, { 0: uuid });
 				network.allocateAndSendIds(clientB, 1, { 0: uuid });
-				return { ...state, uuidNum: uuidNum + 1 };
+				return state;
 			},
 			reconnect: (state, { client }) => {
 				network.goOfflineThenResume(client);
