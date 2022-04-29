@@ -12,6 +12,7 @@ import {
     getLumberBaseProperties,
     Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import { BaseGitRestTelemetryProperties } from "./utils";
 
 export interface IExternalStorageManager {
     read(tenantId: string, documentId: string): Promise<boolean>;
@@ -62,8 +63,9 @@ export class ExternalStorageManager implements IExternalStorageManager {
     public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
         const lumberjackProperties = {
             [BaseTelemetryProperties.tenantId]: tenantId,
-            ref,
-            sha,
+            [BaseGitRestTelemetryProperties.ref]: ref,
+            [BaseGitRestTelemetryProperties.sha]: sha,
+            update,
          };
         if (!this.config.get("externalStorage:enabled")) {
             Lumberjack.info("External storage is not enabled", lumberjackProperties);

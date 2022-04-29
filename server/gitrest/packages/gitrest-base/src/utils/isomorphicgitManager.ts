@@ -17,6 +17,7 @@ import {
     IFileSystemManagerFactory,
     IRepoManagerParams,
     IStorageDirectoryConfig,
+    BaseGitRestTelemetryProperties,
 } from "./definitions";
 
 export class IsomorphicGitRepositoryManager implements IRepositoryManager {
@@ -73,7 +74,14 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                 return result;
             });
         } catch (err) {
-            Lumberjack.error("getCommits error", this.lumberjackBaseProperties, err);
+            Lumberjack.error(
+                "getCommits error",
+                {
+                    ...this.lumberjackBaseProperties,
+                    [BaseGitRestTelemetryProperties.sha]: sha,
+                    count,
+                },
+                err);
             throw new NetworkError(500, "Unable to get commits.");
         }
     }
@@ -280,8 +288,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                 "getRef error",
                 {
                     ...this.lumberjackBaseProperties,
-                    repo: this.repoName,
-                    ref: refId,
+                    [BaseGitRestTelemetryProperties.ref]: refId,
                 },
                 err);
             throw new NetworkError(500, "Unable to get ref.");
@@ -384,9 +391,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             "Created a new repo",
             {
                 ...lumberjackBaseProperties,
-                repoOwner: params.repoOwner,
-                repoName: params.repoName,
-                directoryPath,
+                [BaseGitRestTelemetryProperties.directoryPath]: directoryPath,
             });
 
         return repoManager;
@@ -405,7 +410,12 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
         if (!(this.repositoryCache.has(repoPath))) {
             const repoExists = await helpers.exists(fileSystemManager, directoryPath);
             if (!repoExists || !repoExists.isDirectory()) {
-                Lumberjack.error(`Repo does not exist ${directoryPath}`, lumberjackBaseProperties);
+                Lumberjack.error(
+                    `Repo does not exist ${directoryPath}`,
+                    {
+                        ...lumberjackBaseProperties,
+                        [BaseGitRestTelemetryProperties.directoryPath]: directoryPath,
+                    });
                 // services-client/getOrCreateRepository depends on a 400 response code
                 throw new NetworkError(400, `Repo does not exist ${directoryPath}`);
             }

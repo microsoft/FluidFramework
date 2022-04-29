@@ -6,9 +6,10 @@
 import { PathLike, Stats } from "fs";
 import * as path from "path";
 import { Request } from "express";
-import { IGetRefParamsExternal, IWholeFlatSummary, NetworkError } from "@fluidframework/server-services-client";
+import { IGetRefParamsExternal, IWholeFlatSummary, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
+    BaseGitRestTelemetryProperties,
     Constants,
     IExternalWriterConfig,
     IFileSystemManager,
@@ -146,7 +147,9 @@ export function getLumberjackBasePropertiesFromRepoManagerParams(params: IRepoMa
     return {
         [BaseTelemetryProperties.tenantId]: params?.storageRoutingId?.tenantId ?? params?.repoName,
         [BaseTelemetryProperties.documentId]: params?.storageRoutingId?.documentId,
-        storageName: params?.fileSystemManagerParams?.storageName,
+        [BaseGitRestTelemetryProperties.repoOwner]: params.repoOwner,
+        [BaseGitRestTelemetryProperties.repoName]: params.repoName,
+        [BaseGitRestTelemetryProperties.storageName]: params?.fileSystemManagerParams?.storageName,
     };
 }
 
@@ -154,12 +157,17 @@ export function getRequestPathCategory(request: Request) {
     return `${request.baseUrl}${request?.route?.path ?? "PATH_UNAVAILABLE"}`;
 }
 
-export function logApiError(error: any, request: Request, params: IRepoManagerParams) {
+export function logAndThrowApiError(error: any, request: Request, params: IRepoManagerParams): never {
     const pathCategory = getRequestPathCategory(request);
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(params),
-        method: request.method,
-        pathCategory,
+        [BaseGitRestTelemetryProperties.method]: request.method,
+        [BaseGitRestTelemetryProperties.pathCategory]: pathCategory,
     };
     Lumberjack.error(`${request.method} request to ${pathCategory} failed`, lumberjackProperties, error);
+
+    if (isNetworkError(error)) {
+        throw error;
+    }
+    throw new NetworkError(500, `Internal Error Retrieving Blob ${request.params.sha}`);
 }
