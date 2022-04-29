@@ -20,7 +20,7 @@ export const TooltipedField: React.FunctionComponent<IEditableValueCellProps & {
       classes={{
         tooltip: classes.tooltip,
       }}
-      placement='left'
+      placement="left"
       title={message}
     >
       <span style={{ width: "100%" }}>

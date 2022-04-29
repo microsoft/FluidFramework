@@ -130,3 +130,7 @@ export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot
     );
     return snapshotTreeWithBlobContents;
 };
+
+export function getProtocolSnapshotTree(snapshot: ISnapshotTree): ISnapshotTree {
+    return ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
+}

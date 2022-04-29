@@ -72,7 +72,7 @@
     "@fluidframework/shared-object-base": "^0.59.3000"
   },
   "devDependencies": {
-    "@fluid-experimental/task-manager-previous": "npm:@fluid-experimental/task-manager@0.59.1000",
+    "@fluid-experimental/task-manager-previous": "npm:@fluid-experimental/task-manager@0.59.2000",
     "@fluid-internal/test-dds-utils": "^0.59.3000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
@@ -105,7 +105,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.2000",
+    "version": "0.59.3000",
     "broken": {}
   }
 }
