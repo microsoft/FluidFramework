@@ -158,7 +158,7 @@ export enum ConnectionState {
 }
 
 /** Invoke the callback once deltaManager has processed all ops known at the time this function is called */
-function waitForKnownOps(container: IContainer, resolve: (hasCheckpointSequenceNumber: boolean) => void) {
+function waitToProcessKnownOps(container: IContainer, resolve: (hasCheckpointSequenceNumber: boolean) => void) {
     assert(container.connectionState !== ConnectionState.Disconnected,
         0x0cd /* "Container disconnected while waiting for ops!" */);
 
@@ -614,7 +614,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     }
                 },
                 onCaughUpToKnownOps: (callback: () => void) => {
-                    waitForKnownOps(this, callback);
+                    waitToProcessKnownOps(this, callback);
                 },
             },
             this.mc.logger,
