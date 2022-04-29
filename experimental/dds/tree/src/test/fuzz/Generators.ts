@@ -30,9 +30,9 @@ import {
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
-	createWeightedGenerator,
+	AsyncWeights,
+	createWeightedAsyncGenerator,
 	done,
-	Weights,
 } from '../../stochastic-test-utilities';
 
 function uuid(rand: Random): string {
@@ -344,7 +344,7 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		};
 	}
 
-	const baseEditGenerator = createWeightedGenerator<FuzzChange, EditState>([
+	const baseEditGenerator = createWeightedAsyncGenerator<FuzzChange, EditState>([
 		[insertGenerator, config.insertWeight, ({ idList }) => idList.length < config.maxTreeSize],
 		[deleteGenerator, config.deleteWeight, ({ idList }) => idList.length > 1],
 		[moveGenerator, config.moveWeight, ({ idList }) => idList.length > 1],
@@ -396,7 +396,7 @@ export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncG
 	const atLeastOneClient = collaboratorsMatches((count) => count > 0);
 	const atLeastOneActiveClient: AcceptanceCondition<FuzzTestState> = ({ activeCollaborators }) =>
 		activeCollaborators.length > 0;
-	const opWeights: Weights<Operation, FuzzTestState> = [
+	const opWeights: AsyncWeights<Operation, FuzzTestState> = [
 		[makeEditGenerator(config.editConfig), config.editWeight, atLeastOneActiveClient],
 		[
 			makeJoinGenerator(config.joinConfig),
@@ -406,7 +406,7 @@ export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncG
 		[leaveGenerator, config.leaveWeight, atLeastOneClient],
 		[{ type: 'synchronize' }, config.synchronizeWeight, atLeastOneClient],
 	];
-	return createWeightedGenerator(opWeights);
+	return createWeightedAsyncGenerator(opWeights);
 }
 
 function getIdList(tree: TreeView): NodeId[] {

@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from './Generators';
-export * from './Types';
+export * from './generators';
+export * from './types';
+export * from './performActions';
