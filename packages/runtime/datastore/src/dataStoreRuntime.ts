@@ -857,7 +857,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
-    public rollback(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+    public rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
         this.verifyNotClosed();
 
         switch (type) {
