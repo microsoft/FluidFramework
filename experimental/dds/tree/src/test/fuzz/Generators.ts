@@ -13,6 +13,7 @@ import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers';
 import { fail } from '../../Common';
 import { rangeFromStableRange } from '../../TreeViewUtilities';
+import { makeRandom } from '../utilities/TestUtilities';
 import {
 	done,
 	EditGenerationConfig,
@@ -98,7 +99,7 @@ const defaultEditConfig: Required<EditGenerationConfig> = {
 const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<Operation, FuzzTestState> => {
 	const config = { ...defaultEditConfig, ...passedConfig };
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
-	const poolRand = new Random(/* mathNative engine */);
+	const poolRand = makeRandom(0);
 	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => uuid(poolRand) as TraitLabel);
 	const traitLabelGenerator = ({ rand }: FuzzTestState) => rand.pick(traitLabelPool);
 

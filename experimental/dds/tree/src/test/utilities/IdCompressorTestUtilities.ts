@@ -26,6 +26,7 @@ import type {
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
 } from '../../id-compressor';
+import { makeRandom } from './TestUtilities';
 
 /** Identifies a compressor in a network */
 export enum Client {
@@ -594,7 +595,7 @@ export function performFuzzActions(
 	maxClusterSize = 25,
 	validator?: (network: IdCompressorTestNetwork) => void
 ): void {
-	const rand = new Random(Random.engines.mt19937().seed(seed));
+	const rand = makeRandom(seed);
 	const selectableClients: Client[] = network.getTargetCompressors(MetaClient.All).map(([client]) => client);
 	const activeClients = selectableClients.filter((c) => c !== observerClient);
 	// Ensure that the same UUIDs are generated for the same seed across different calls

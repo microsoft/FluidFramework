@@ -21,6 +21,7 @@ import {
 } from '../id-compressor/NumericUuid';
 import { StableId } from '../Identifiers';
 import { integerToStableId } from './utilities/IdCompressorTestUtilities';
+import { makeRandom } from './utilities/TestUtilities';
 
 describe('NumericUuid', () => {
 	it('can detect non-v4 variant 2 UUIDs', () => {
@@ -132,7 +133,7 @@ describe('NumericUuid', () => {
 	];
 
 	describe('incrementing', () => {
-		const rand = new Random(Random.engines.mt19937().seedWithArray([0xdeadbeef, 0xfeedbed]));
+		const rand = makeRandom(0);
 		const incrementAmounts = [
 			...[...new Array(53).keys()].map((n) => 2 ** n - 1),
 			...[...new Array(10).keys()].map((_) => rand.integer(0, Number.MAX_SAFE_INTEGER)),

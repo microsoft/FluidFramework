@@ -5,9 +5,8 @@
 
 import { promises as fs, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import Random from 'random-js';
 import { expect } from 'chai';
-import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
+import { makeRandom, setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
 import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
@@ -34,7 +33,7 @@ export async function performFuzzActions(
 	synchronizeAtEnd: boolean = true,
 	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
 ): Promise<Required<FuzzTestState>> {
-	const rand = new Random(Random.engines.mt19937().seed(seed));
+	const rand = makeRandom(seed);
 
 	// Note: the direct fields of `state` aren't mutated, but it is mutated transitively.
 	const state: FuzzTestState = { rand, passiveCollaborators: [], activeCollaborators: [] };
