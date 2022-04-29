@@ -16,7 +16,13 @@ import { AppView } from "./appView";
 import { extractStringData, fetchData, applyStringData, writeData } from "./dataHelpers";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
-import { containerKillBitId, InventoryListContainerRuntimeFactory } from "./version1";
+import {
+    containerKillBitId,
+    InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
+} from "./version1";
+import {
+    InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2,
+} from "./version2";
 
 async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
@@ -32,8 +38,13 @@ async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
     const load = async (): Promise<IFluidModuleWithDetails> => {
+        const useNewVersion = false;
+        const containerRuntimeFactory = useNewVersion
+            ? new InventoryListContainerRuntimeFactory2()
+            : new InventoryListContainerRuntimeFactory1();
+
         return {
-            module: { fluidExport: new InventoryListContainerRuntimeFactory() },
+            module: { fluidExport: containerRuntimeFactory },
             details: { package: "no-dynamic-package", config: {} },
         };
     };
