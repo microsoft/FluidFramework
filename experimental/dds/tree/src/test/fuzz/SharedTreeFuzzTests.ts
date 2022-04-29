@@ -170,12 +170,11 @@ export function runSharedTreeFuzzTests(title: string): void {
 
 		function runMixedVersionTests(summarizeHistory: boolean, testsPerSuite: number): void {
 			// TODO: fix these tests. See https://github.com/microsoft/FluidFramework/issues/10103
-            if (!summarizeHistory) {
+			if (!summarizeHistory) {
 				describe('using 0.0.2 and 0.1.1 trees', () => {
 					for (let seed = 0; seed < testsPerSuite; seed++) {
 						runTest(
-							() => take(1000,
-								makeOpGenerator({ joinConfig: { summarizeHistory: [summarizeHistory] } })),
+							() => take(1000, makeOpGenerator({ joinConfig: { summarizeHistory: [summarizeHistory] } })),
 							seed
 						);
 					}
