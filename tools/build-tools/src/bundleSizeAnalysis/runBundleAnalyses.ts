@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -12,7 +12,7 @@ function main() {
     try {
         child_process.execSync(`npx danger ci -d ${__dirname}/dangerfile.js`, { stdio: "inherit" });
     } catch (e) {
-        console.error(e.toString());
+        console.error(e);
         process.exit(-1);
     }
 }

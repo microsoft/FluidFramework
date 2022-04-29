@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -82,7 +82,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
     constructor() {
         // We'll use a MountableView so webpack-fluid-loader can display us,
         // and add our default view request handler.
-        super(registryEntries, [], [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
+        super(registryEntries, undefined, [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
     }
 
     /**

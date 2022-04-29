@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 module.exports = {
   server: {
-    command: `npm run start -- --no-live-reload --port ${process.env["PORT"]}`,
+    command: `npm run start -- --no-hot --no-live-reload --port ${process.env["PORT"]}`,
     port: process.env["PORT"],
     launchTimeout:10000,
     usedPortAction: 'error'

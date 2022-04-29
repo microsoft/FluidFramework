@@ -1,67 +1,87 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { Response } from "express";
-// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
-// eslint-disable-next-line import/no-unresolved
-import { Params } from "express-serve-static-core";
+import { AsyncLocalStorage } from "async_hooks";
+import { RequestHandler, Response } from "express";
+import * as jwt from "jsonwebtoken";
+import * as nconf from "nconf";
+import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import { NetworkError } from "@fluidframework/server-services-client";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
+import { containsPathTraversal, parseToken } from "../utils";
 
 /**
- * Helper function to handle a promise that should be returned to the user
+ * Helper function to handle a promise that should be returned to the user.
+ * TODO: Replace with handleResponse from services-shared.
+ * @param resultP Promise whose resolved value or rejected error will send with appropriate status codes.
+ * @param response Express Response used for writing response body, headers, and status.
+ * @param allowClientCache sends Cache-Control header with maximum age set to 1 yr if true or no store if false.
+ * @param errorStatus Overrides any error status code; leave undefined for pass-through error codes or 400 default.
+ * @param successStatus Status to send when result is successful. Default: 200
+ * @param onSuccess Additional callback fired when response is successful before sending response.
  */
-export function handleResponse<T>(
+ export function handleResponse<T>(
     resultP: Promise<T>,
     response: Response,
-    cache = true,
-    status: number = 200,
-    handler: (value: T) => void = (value) => value,
+    allowClientCache?: boolean,
+    errorStatus?: number,
+    successStatus: number = 200,
+    onSuccess: (value: T) => void = () => {},
 ) {
-    resultP.then(handler).then(
+    resultP.then(
         (result) => {
-            if (cache) {
+            if (allowClientCache === true) {
                 response.setHeader("Cache-Control", "public, max-age=31536000");
+            } else if (allowClientCache === false) {
+                response.setHeader("Cache-Control", "no-store, max-age=0");
             }
 
-            response.status(status).json(result);
+            onSuccess(result);
+            response.status(successStatus).json(result);
         },
         (error) => {
-            response.status(400).json(error);
+            if (error instanceof Error && error?.name === "NetworkError") {
+                const networkError = error as NetworkError;
+                response
+                    .status(errorStatus ?? networkError.code ?? 400)
+                    .json(networkError.details ?? error);
+            } else {
+                response.status(errorStatus ?? 400).json(error?.message ?? error);
+            }
         });
 }
 
 export async function createGitService(
+    config: nconf.Provider,
     tenantId: string,
     authorization: string,
     tenantService: ITenantService,
-    cache: ICache,
+    cache?: ICache,
+    asyncLocalStorage?: AsyncLocalStorage<string>,
+    allowDisabledTenant = false,
 ): Promise<RestGitService> {
-    let token: string = null;
-    if (authorization) {
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-        const base64TokenMatch = authorization.match(/Basic (.+)/);
-        if (!base64TokenMatch) {
-            return Promise.reject("Malformed authorization token");
-        }
-        const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
-
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-        const tokenMatch = encoded.match(/(.+):(.+)/);
-        if (!tokenMatch || tenantId !== tokenMatch[1]) {
-            return Promise.reject("Malformed authorization token");
-        }
-
-        token = tokenMatch[2];
-    }
-
-    const details = await tenantService.getTenant(tenantId, token);
+    const token = parseToken(tenantId, authorization);
+    const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
     const customData: ITenantCustomDataExternal = details.customData;
-    const writeToExternalStorage = customData.externalStorageData !== undefined &&
-    customData.externalStorageData !== null;
-    const service = new RestGitService(details.storage, cache, writeToExternalStorage);
-
+    const writeToExternalStorage = !!customData?.externalStorageData;
+    const storageName = customData?.storageName;
+    const decoded = jwt.decode(token) as ITokenClaims;
+    const storageUrl = config.get("storageUrl") as string | undefined;
+    if (containsPathTraversal(decoded.documentId)) {
+        // Prevent attempted directory traversal.
+        throw new NetworkError(400, `Invalid document id: ${decoded.documentId}`);
+    }
+    const service = new RestGitService(
+        details.storage,
+        writeToExternalStorage,
+        tenantId,
+        decoded.documentId,
+        cache,
+        asyncLocalStorage,
+        storageName,
+        storageUrl);
     return service;
 }
 
@@ -84,11 +104,28 @@ export function queryParamToString(value: any): string {
     return value;
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function getParam(params: Params, key: string) {
-    return Array.isArray(params) ? undefined : params[key];
-}
-
 export const Constants = Object.freeze({
     throttleIdSuffix: "HistorianRest",
 });
+
+/**
+ * Validate specific request parameters to prevent directory traversal.
+ * TODO: replace with validateRequestParams from service-shared.
+ */
+ export function validateRequestParams(...paramNames: (string | number)[]): RequestHandler {
+    return (req, res, next) => {
+        for (const paramName of paramNames) {
+            const param = req.params[paramName];
+            if (!param) {
+                continue;
+            }
+            if (containsPathTraversal(param)) {
+                return handleResponse(
+                    Promise.reject(new NetworkError(400, `Invalid ${paramName}: ${param}`)),
+                    res,
+                );
+            }
+        }
+        next();
+    };
+}

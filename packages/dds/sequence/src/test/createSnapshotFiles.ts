@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,7 +8,7 @@ import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
 
 for (const s of generateStrings()) {
-    const summaryTree = s[1].summarize().summary;
+    const summaryTree = s[1].getAttachSummary().summary;
     const snapshotTree = convertSummaryTreeToITree(summaryTree);
     fs.writeFileSync(`${LocationBase}${s[0]}.json`, JSON.stringify(snapshotTree, undefined, 1));
 }

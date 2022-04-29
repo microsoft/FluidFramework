@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { LeafTask } from "./leafTask";
-import { TscTask, TscDependentTask } from "./tscTask";
+import { TscDependentTask } from "./tscTask";
 import { existsSync, readFileSync } from "fs";
 import * as path from "path";
 import * as JSON5 from "json5";
@@ -74,11 +74,23 @@ export class EsLintTask extends LintBaseTask {
             throw new Error(`Unable to parse options from ${this.configFileFullPath}. ${e}`)
         }
         if (config.parserOptions?.project) {
-            for (const tsConfigPath of config.parserOptions?.project) {
+            // parserOptions.project is type string | string[]
+            const projectArray = typeof config.parserOptions.project === "string"
+                ? [config.parserOptions.project]
+                : config.parserOptions.project;
+            for (const tsConfigPath of projectArray) {
                 this.addTscTask(dependentTasks, { tsConfig: this.getPackageFileFullPath(tsConfigPath) });
             }
         }
         super.addDependentTasks(dependentTasks);
+    }
+
+    protected get useWorker() {
+        if (this.command === "eslint --format stylish src") {
+            // eslint can't use worker thread as it needs to change the current working directory
+            return this.node.buildContext.workerPool?.useWorkerThreads === false;
+        }
+        return false;
     }
 }
 

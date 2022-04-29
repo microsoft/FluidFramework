@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -41,7 +41,6 @@ export class NodeCodeLoader {
     private async installOrWaitForPackages(pkg: string): Promise<string> {
         // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const fluidObjects = pkg.match(/(.*)\/(.*)@(.*)/);
-        // eslint-disable-next-line no-null/no-null
         if (fluidObjects === null) {
             return Promise.reject(new Error("Invalid package"));
         }

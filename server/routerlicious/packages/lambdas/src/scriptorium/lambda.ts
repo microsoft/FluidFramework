@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -11,19 +11,23 @@ import {
     IPartitionLambda,
     ISequencedOperationMessage,
     SequencedOperationType,
+    runWithRetry,
 } from "@fluidframework/server-services-core";
+import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
-    private pendingOffset: IQueuedMessage;
+    private pendingOffset: IQueuedMessage | undefined;
     private current = new Map<string, ISequencedOperationMessage[]>();
 
     constructor(
         private readonly opCollection: ICollection<any>,
-        protected context: IContext) {
+        protected context: IContext,
+        protected readonly tenantId: string,
+        protected readonly documentId: string) {
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
@@ -34,16 +38,21 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 value.operation.traces = [];
 
                 const topic = `${value.tenantId}/${value.documentId}`;
-                if (!this.pending.has(topic)) {
-                    this.pending.set(topic, []);
+
+                let pendingMessages = this.pending.get(topic);
+                if (!pendingMessages) {
+                    pendingMessages = [];
+                    this.pending.set(topic, pendingMessages);
                 }
 
-                this.pending.get(topic).push(value);
+                pendingMessages.push(value);
             }
         }
 
         this.pendingOffset = message;
         this.sendPending();
+
+        return undefined;
     }
 
     public close() {
@@ -65,7 +74,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         this.pending = temp;
         const batchOffset = this.pendingOffset;
 
-        const allProcessed = [];
+        const allProcessed: Promise<void>[] = [];
 
         // Process all the batches + checkpoint
         for (const [, messages] of this.current) {
@@ -76,11 +85,12 @@ export class ScriptoriumLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.current.clear();
-                this.context.checkpoint(batchOffset);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.context.checkpoint(batchOffset!);
                 this.sendPending();
             },
             (error) => {
-                this.context.error(error, true);
+                this.context.error(error, { restart: true });
             });
     }
 
@@ -89,17 +99,16 @@ export class ScriptoriumLambda implements IPartitionLambda {
     }
 
     private async insertOp(messages: ISequencedOperationMessage[]) {
-        const dbOps = messages.map((message) => ({ ...message,
-            mongoTimestamp: new Date(message.operation.timestamp) }));
-        return this.opCollection
-            .insertMany(dbOps, false)
-            .catch(async (error) => {
-                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                // All other errors result in a rejected promise.
-                if (error.code !== 11000) {
-                    // Needs to be a full rejection here
-                    return Promise.reject(error);
-                }
-            });
+        const dbOps = messages.map((message) => ({
+            ...message,
+            mongoTimestamp: new Date(message.operation.timestamp),
+        }));
+        return runWithRetry(
+            async () => this.opCollection.insertMany(dbOps, false),
+            "insertOpScriptorium",
+            3 /* maxRetries */,
+            1000 /* retryAfterMs */,
+            getLumberBaseProperties(this.documentId, this.tenantId),
+            (error) => error.code === 11000 /* shouldIgnoreError */);
     }
 }

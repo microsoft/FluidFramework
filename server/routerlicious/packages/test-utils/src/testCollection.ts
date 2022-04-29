@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,6 +9,10 @@ import * as _ from "lodash";
 
 export class TestCollection implements ICollection<any> {
     constructor(public collection: any[]) {
+    }
+
+    public async aggregate(group: any, options?: any) {
+        throw new Error("Method not implemented.");
     }
 
     public async find(query: any, sort: any): Promise<any[]> {
@@ -30,6 +34,20 @@ export class TestCollection implements ICollection<any> {
             return Promise.reject(new Error("Not found"));
         }
         _.extend(value, set);
+    }
+
+    public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
+        const values = this.findInternal(filter);
+        try {
+            values.forEach((value) => {
+                if (!value) {
+                    throw new Error("Not found");
+                }
+                _.extend(value, set);
+            });
+        } catch (e) {
+            return Promise.reject(e);
+        }
     }
 
     public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
@@ -78,6 +96,10 @@ export class TestCollection implements ICollection<any> {
         return values;
     }
 
+    public async distinct(key: any, filter: any): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
+
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public createIndex(index: any, unique: boolean): Promise<void> {
         throw new Error("Method not implemented.");
@@ -122,7 +144,7 @@ export class TestCollection implements ICollection<any> {
             if (!query[key]) {
                 return;
             }
-            if (query[key].$gt > 0 || query[key].$lt > 0) {
+            if (query[key].$gt > 0 || query[key].$lt > 0 || query[key].$lte > 0) {
                 if (query[key].$gt > 0) {
                     filteredCollection = filteredCollection.filter(
                         (value) => getValueByKey(value, key) > query[key].$gt);
@@ -130,6 +152,10 @@ export class TestCollection implements ICollection<any> {
                 if (query[key].$lt > 0) {
                     filteredCollection = filteredCollection.filter(
                         (value) => getValueByKey(value, key) < query[key].$lt);
+                }
+                if (query[key].$lte > 0) {
+                    filteredCollection = filteredCollection.filter(
+                        (value) => getValueByKey(value, key) <= query[key].$lte);
                 }
             } else {
                 filteredCollection = filteredCollection.filter(

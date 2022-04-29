@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
@@ -36,7 +36,7 @@ describe("SummarizerHandle", () => {
     it("get should fail", async () => {
         try {
             await handle?.get();
-        } catch (e) {
+        } catch (e: any) {
             assert(e.message === "Do not try to get a summarizer object from the handle. Reference it directly.");
         }
     });

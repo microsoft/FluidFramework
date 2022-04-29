@@ -1,12 +1,14 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
-import { Container, Loader } from "@fluidframework/container-loader";
-import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { IContainer, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
     InnerDocumentServiceFactory,
     InnerUrlResolver,
@@ -15,18 +17,14 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFrameInnerApi } from "./inframehost";
 
 let innerPort: MessagePort;
-const containers: Map<string, Container> = new Map();
+const containers: Map<string, IContainer> = new Map();
 
-async function getFluidObjectAndRender(container: Container, div: HTMLDivElement) {
+async function getFluidObjectAndRender(container: IContainer, div: HTMLDivElement) {
     const response = await container.request({ url: "/" });
-    if (response.status !== 200 ||
-        !(
-            response.mimeType === "fluid/component" ||
-            response.mimeType === "fluid/object"
-        )) {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return undefined;
     }
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject: FluidObject = response.value;
 
     // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
     const view = new HTMLViewAdapter(fluidObject);
@@ -35,7 +33,7 @@ async function getFluidObjectAndRender(container: Container, div: HTMLDivElement
 
 async function loadFluidObject(
     divId: string,
-    container: Container,
+    container: IContainer,
 ) {
     const componentDiv = document.getElementById(divId) as HTMLDivElement;
     await getFluidObjectAndRender(container, componentDiv).catch(() => { });
@@ -53,8 +51,14 @@ async function loadContainer(
     const documentServiceFactory = await InnerDocumentServiceFactory.create(innerPort);
     const urlResolver = await InnerUrlResolver.create(innerPort);
 
-    const module = { fluidExport: TodoContainer };
-    const codeLoader = { load: async () => module };
+    const load = async (): Promise<IFluidModuleWithDetails> => {
+        return {
+            module: { fluidExport: TodoContainer },
+            details: { package: "no-dynamic-package", config: {} },
+        };
+    };
+
+    const codeLoader = { load };
 
     const loader = new Loader({
         urlResolver,
@@ -62,30 +66,25 @@ async function loadContainer(
         codeLoader,
     });
 
-    let container: Container;
+    let container: IContainer;
 
     // TODO: drive new/existing creation entirely from outer
     if (createNew) {
         // We're not actually using the code proposal (our code loader always loads the same module regardless of the
-        // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
+        // proposal), but the IContainer will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
         container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
         // Caller is responsible for attaching the created container
     } else {
         // Request must be appropriate and parseable by resolver.
         container = await loader.resolve({ url: documentId });
-        // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
-        // new container here, where we expect this to be loading an existing container.
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!container.existing) {
-            throw new Error("Attempted to load a non-existing container");
-        }
     }
 
     await loadFluidObject(divId, container);
-    containers.set(container.id, container);
+    const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;
+    containers.set(containerId, container);
 
-    return container.id;
+    return containerId;
 }
 
 async function attachContainer(

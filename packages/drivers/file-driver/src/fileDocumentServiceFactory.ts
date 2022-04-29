@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -36,6 +36,7 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     public async createDocumentService(
         fileURL: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         return new FileDocumentService(this.storage, this.deltaStorage, this.deltaConnection);
     }
@@ -45,6 +46,7 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         throw new Error("Not implemented");
     }

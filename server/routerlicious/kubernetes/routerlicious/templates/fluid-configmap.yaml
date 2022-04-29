@@ -13,15 +13,24 @@ data:
     {
         "logger": {
             "colorize": false,
-            "morganFormat": "short",
+            "morganFormat": "json",
             "json": true,
             "level": "info",
             "timestamp": false,
             "label": "winston"
         },
         "mongo": {
-            "endpoint": "{{ .Values.mongodb.url }}",
-            "expireAfterSeconds": "{{ .Values.mongodb.expireAfterSeconds }}",
+            "operationsDbEndpoint": "{{ .Values.mongodb.operationsDbEndpoint }}",
+            "globalDbEndpoint": "{{ .Values.mongodb.globalDbEndpoint }}",
+            "globalDbEnabled": {{ .Values.mongodb.globalDbEnabled }},
+            "expireAfterSeconds": {{ .Values.mongodb.expireAfterSeconds }},
+            "createCosmosDBIndexes": {{ .Values.mongodb.createCosmosDBIndexes }},
+            "bufferMaxEntries": {{ .Values.mongodb.bufferMaxEntries }},
+            "softDeletionRetentionPeriodMs": {{ .Values.mongodb.softDeletionRetentionPeriodMs }},
+            "offlineWindowMs": {{ .Values.mongodb.offlineWindowMs }},
+            "softDeletionEnabled": {{ .Values.mongodb.softDeletionEnabled }},
+            "permanentDeletionEnabled": {{ .Values.mongodb.permanentDeletionEnabled }},
+            "deletionIntervalMs": {{ .Values.mongodb.deletionIntervalMs }},
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
@@ -34,23 +43,24 @@ data:
         },
         "kafka": {
             "lib": {
-                "name": "kafka-node",
+                "name": "{{ .Values.kafka.libname }}",
                 "endpoint": "{{ .Values.kafka.url }}",
                 "producerPollIntervalMs": 10,
                 "numberOfPartitions": 32,
-                "replicationFactor": 3
+                "replicationFactor": 3,
+                "rdkafkaOptimizedRebalance": true,
+                "rdkafkaAutomaticConsume": true,
+                "rdkafkaConsumeTimeout": 5,
+                "rdkafkaMaxConsumerCommitRetries": 10
             }
         },
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"
         },
-        {{- if .Values.eventHub }}
-        "eventHub": {
-            "endpoint": "{{ .Values.eventHub.endpoint }}",
-            "storageEndpoint": "{{ .Values.eventHub.storageEndpoint }}",
-            "storageContainer": "{{ .Values.eventHub.storageContainer }}"
+        "storage": {
+            "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }},
+            "storageUrl": "{{ .Values.storage.storageUrl }}",
         },
-        {{- end }}
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
@@ -84,7 +94,12 @@ data:
                 {{- range $i, $tenant := .Values.alfred.tenants }}
                 {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
                 {{- end }}
-            ]
+            ],
+            "socketIoAdapter" : {
+                "enableCustomSocketIoAdapter": {{ .Values.alfred.socketIoAdapter.enableCustomSocketIoAdapter }},
+                "shouldDisableDefaultNamespace": {{ .Values.alfred.socketIoAdapter.shouldDisableDefaultNamespace }}
+            },
+            "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }}
         },
         "client": {
             "type": "browser",
@@ -104,6 +119,9 @@ data:
             "kafkaClientId": "{{ template "scribe.fullname" . }}"
         },
         "system": {
+            "httpServer": {
+                "connectionTimeout": {{ .Values.system.httpServer.connectionTimeout }}
+            },
             "topics": {
                 "send": "{{ .Values.kafka.topics.deltas }}"
             }

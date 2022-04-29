@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,9 +9,10 @@ import {
     IContext,
     IQueuedMessage,
     IPartitionLambda,
+    IPartitionConfig,
     IPartitionLambdaFactory,
+    IContextErrorData,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
 
 export class TestLambda implements IPartitionLambda {
     private lastOffset: number;
@@ -22,7 +23,7 @@ export class TestLambda implements IPartitionLambda {
         private readonly context: IContext) {
     }
 
-    public handler(message: IQueuedMessage): void {
+    public handler(message: IQueuedMessage) {
         if (this.throwHandler) {
             throw new Error("Requested failure");
         }
@@ -31,14 +32,16 @@ export class TestLambda implements IPartitionLambda {
         this.lastOffset = message.offset;
         this.factory.handleCount++;
         this.context.checkpoint(message);
+
+        return undefined;
     }
 
     public close(): void {
         return;
     }
 
-    public error(error: string, restart: boolean) {
-        this.context.error(error, restart);
+    public error(error: string, errorData: IContextErrorData) {
+        this.context.error(error, errorData);
     }
 }
 
@@ -52,7 +55,7 @@ export class TestPartitionLambdaFactory extends EventEmitter implements IPartiti
         super();
     }
 
-    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
+    public async create(config: IPartitionConfig, context: IContext): Promise<IPartitionLambda> {
         if (this.failCreate) {
             return Promise.reject(new Error("Set to fail create"));
         }
@@ -77,9 +80,9 @@ export class TestPartitionLambdaFactory extends EventEmitter implements IPartiti
     /**
      * Closes all created lambdas
      */
-    public closeLambdas(error: string, restart: boolean) {
+    public closeLambdas(error: string, errorData: IContextErrorData) {
         for (const lambda of this.lambdas) {
-            lambda.error(error, restart);
+            lambda.error(error, errorData);
         }
     }
 }

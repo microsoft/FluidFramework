@@ -1,23 +1,27 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { BroadcasterLambda, DeliLambdaFactory } from "@fluidframework/server-lambdas";
-import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
+import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
+import { RedisOptions } from "ioredis";
 import * as winston from "winston";
+import { IDb, MongoManager } from "@fluidframework/server-services-core";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
-    const mongoUrl = config.get("mongo:endpoint") as string;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
     const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
     const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+    const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
+    const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
 
     const kafkaForwardClientId = config.get("deli:kafkaClientId");
     const kafkaReverseClientId = config.get("alfred:kafkaClientId");
@@ -29,14 +33,27 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
-    const tenantManager = new services.TenantManager(authEndpoint);
+    const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+    const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
+    const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 
-    // Connection to stored document details
-    const mongoFactory = new services.MongoDbFactory(mongoUrl);
-    const mongoManager = new core.MongoManager(mongoFactory, false);
-    const client = await mongoManager.getDatabase();
+    // Database connection for global db if enabled
+    const factory = await services.getDbFactory(config);
+
+    let globalDb;
+    let globalDbManager;
+    if (globalDbEnabled) {
+        globalDbManager = new MongoManager(factory, false, null, true);
+        globalDb = await globalDbManager.getDatabase();
+    }
+
+    const operationsDbManager = new MongoManager(factory, false);
+    const operationsDb = await operationsDbManager.getDatabase();
+
+    const db: IDb = globalDbEnabled ? globalDb : operationsDb;
+
     // eslint-disable-next-line @typescript-eslint/await-thenable
-    const collection = await client.collection<core.IDocument>(documentsCollectionName);
+    const collection = await db.collection<core.IDocument>(documentsCollectionName);
 
     const forwardProducer = services.createProducer(
         kafkaLibrary,
@@ -46,7 +63,9 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         true,
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
-        kafkaReplicationFactor);
+        kafkaReplicationFactor,
+        kafkaMaxBatchSize,
+        kafkaSslCACertFilePath);
     const reverseProducer = services.createProducer(
         kafkaLibrary,
         kafkaEndpoint,
@@ -55,35 +74,48 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         false,
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
-        kafkaReplicationFactor);
+        kafkaReplicationFactor,
+        kafkaMaxBatchSize,
+        kafkaSslCACertFilePath);
 
     const redisConfig = config.get("redis");
-    const redisOptions: any = { password: redisConfig.pass };
+    const redisOptions: RedisOptions = {
+        host: redisConfig.host,
+        port: redisConfig.port,
+        password: redisConfig.pass,
+    };
     if (redisConfig.tls) {
         redisOptions.tls = {
-            serverName: redisConfig.host,
+            servername: redisConfig.host,
         };
     }
-    const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host, redisOptions);
+    const publisher = new services.SocketIoRedisPublisher(redisOptions);
+    publisher.on("error", (err) => {
+        winston.error("Error with Redis Publisher:", err);
+        Lumberjack.error("Error with Redis Publisher:", undefined, err);
+    });
 
     const localContext = new LocalContext(winston);
 
     const localProducer = new LocalKafka();
-    const combinedProducer = new core.CombinedProducer([forwardProducer, localProducer]);
+    const combinedProducer = new core.CombinedProducer([forwardProducer, localProducer], true);
 
     const broadcasterLambda = new LocalLambdaController(
         localProducer,
         undefined,
         localContext,
-        async (_, context: LocalContext) => new BroadcasterLambda(publisher, context));
+        async (_, context: LocalContext) =>
+            new BroadcasterLambda(publisher, context, core.DefaultServiceConfiguration, undefined));
 
     await broadcasterLambda.start();
 
     return new DeliLambdaFactory(
-        mongoManager,
+        operationsDbManager,
         collection,
         tenantManager,
+        undefined,
         combinedProducer,
+        undefined,
         reverseProducer,
         core.DefaultServiceConfiguration);
 }

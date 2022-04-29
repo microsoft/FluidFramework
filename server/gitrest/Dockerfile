@@ -1,20 +1,30 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:12.19-stretch AS base
+FROM node:14.19.1-stretch AS base
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-RUN apt-get update && apt-get install -y build-essential libssl-dev python libcurl4-openssl-dev
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    python3 \
+    libcurl4-openssl-dev
 
 # Copy over and build the server
 WORKDIR /home/node/server
-COPY package.json .
-COPY package-lock.json .
-RUN BUILD_ONLY=true npm install
+
+COPY package*.json ./
+COPY lerna.json .
+COPY lerna-package-lock.json .
+
+COPY packages/gitrest/package*.json packages/gitrest/
+COPY packages/gitrest-base/package*.json packages/gitrest-base/
+
+RUN npm install --unsafe-perm
 COPY . .
 RUN npm run build
 
@@ -36,4 +46,4 @@ EXPOSE 3000
 ENTRYPOINT ["/tini", "--"]
 
 # And set the default command to start the server
-CMD ["node", "dist/www.js"]
+CMD ["node", "packages/gitrest/dist/www.js"]

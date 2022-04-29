@@ -1,30 +1,35 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { EventEmitter } from "events";
+import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
+    IClientManager,
     ICollection,
     IContext,
     IDeliState,
     IDocument,
     ILogger,
     IPartitionLambda,
+    IPartitionLambdaConfig,
     IPartitionLambdaFactory,
     IProducer,
     IServiceConfiguration,
     ITenantManager,
+    LambdaCloseType,
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
-import { Provider } from "nconf";
-import { NoOpLambda } from "../utils";
+import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
+import { Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
+import { NoOpLambda, createSessionMetric } from "../utils";
 import { DeliLambda } from "./lambda";
+import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
 // Epoch should never tick in our current setting. This flag is just for being extra cautious.
 // TODO: Remove when everything is up to date.
@@ -32,73 +37,98 @@ const FlipTerm = false;
 
 const getDefaultCheckpooint = (epoch: number): IDeliState => {
     return {
-        branchMap: undefined,
         clients: undefined,
         durableSequenceNumber: 0,
         epoch,
+        expHash1: defaultHash,
         logOffset: -1,
         sequenceNumber: 0,
+        signalClientConnectionNumber: 0,
         term: 1,
+        lastSentMSN: 0,
+        nackMessages: undefined,
+        successfullyStartedLambdas: [],
     };
 };
 
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private readonly mongoManager: MongoManager,
+        private readonly operationsDbMongoManager: MongoManager,
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
+        private readonly clientManager: IClientManager | undefined,
         private readonly forwardProducer: IProducer,
+        private readonly signalProducer: IProducer | undefined,
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration) {
         super();
     }
 
-    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const documentId = config.get("documentId");
-        const tenantId = config.get("tenantId");
-        const leaderEpoch = config.get("leaderEpoch") as number;
-
-        const tenant = await this.tenantManager.getTenant(tenantId);
-        const gitManager = tenant.gitManager;
-
-        // Lookup the last sequence number stored
-        // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-        const dbObject = await this.collection.findOne({ documentId, tenantId });
-        if (!dbObject) {
-            // Temporary guard against failure until we figure out what causing this to trigger.
-            return new NoOpLambda(context);
-        }
-
-        let lastCheckpoint: IDeliState;
+    public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
+        const { documentId, tenantId, leaderEpoch } = config;
+        const sessionMetric = createSessionMetric(tenantId, documentId,
+            LumberEventName.SessionResult, this.serviceConfiguration);
+        const sessionStartMetric = createSessionMetric(tenantId, documentId,
+            LumberEventName.StartSessionResult, this.serviceConfiguration);
 
         const messageMetaData = {
             documentId,
             tenantId,
         };
 
+        let gitManager: IGitManager;
+        let dbObject: IDocument;
+
+        try {
+            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+            gitManager = tenant.gitManager;
+
+            // Lookup the last sequence number stored
+            // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
+            dbObject = await this.collection.findOne({ documentId, tenantId });
+            // Check if the document was deleted prior.
+        } catch (error) {
+            const errMsg = "Deli lambda creation failed";
+            context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
+            this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
+            throw error;
+        }
+
+        if (!dbObject || dbObject.scheduledDeletionTime) {
+            // Temporary guard against failure until we figure out what causing this to trigger.
+            return new NoOpLambda(context);
+        }
+
+        let lastCheckpoint: IDeliState;
+
         // Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary or the document
         // was created within a different tenant.
-        // eslint-disable-next-line no-null/no-null
         if (dbObject.deli === undefined || dbObject.deli === null) {
-            context.log.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
+            context.log?.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
             if (dbObject.deli === "") {
-                context.log.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
+                context.log?.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
 
-                lastCheckpoint = await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
-                if (lastCheckpoint === undefined) {
-                    context.log.error(`Summary cannot be fetched`, { messageMetaData });
+                const lastCheckpointFromSummary =
+                    await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
+                if (lastCheckpointFromSummary === undefined) {
+                    const errMsg = "Could not load state from summary";
+                    context.log?.error(errMsg, { messageMetaData });
+                    this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
+
                     lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
                 } else {
+                    lastCheckpoint = lastCheckpointFromSummary;
                     // Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
                     // Currently the lambda checkpoints only after updating the logOffset so setting this to lower
                     // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
                     // the sequence number is 'n' rather than '0'.
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
-                    context.log.info(JSON.stringify(lastCheckpoint));
+                    context.log?.info(`Deli checkpoint from summary:
+                        ${JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {
                 lastCheckpoint = JSON.parse(dbObject.deli);
@@ -123,25 +153,57 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             ) :
             lastCheckpoint;
 
+        const checkpointManager = createDeliCheckpointManagerFromCollection(tenantId, documentId, this.collection);
+
         // Should the lambda reaize that term has flipped to send a no-op message at the beginning?
-        return new DeliLambda(
+        const deliLambda = new DeliLambda(
             context,
             tenantId,
             documentId,
             newCheckpoint,
-            // It probably shouldn't take the collection - I can manage that
-            this.collection,
+            checkpointManager,
+            this.clientManager,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
+            this.signalProducer,
             this.reverseProducer,
-            this.serviceConfiguration);
+            this.serviceConfiguration,
+            sessionMetric,
+            sessionStartMetric);
+
+        deliLambda.on("close", (closeType) => {
+            const handler = async () => {
+                if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)) {
+                    const query = { documentId, tenantId, session: { $exists: true } };
+                    const data = { "session.isSessionAlive": false };
+                    await this.collection.update(query, data, null);
+                    context.log?.info(`Marked isSessionAlive as false for closeType: ${JSON.stringify(closeType)}`,
+                        { messageMetaData });
+                }
+            };
+            handler().catch((e) => {
+                context.log?.error(`Failed to handle isSessionAlive with exception ${e}`
+                    , { messageMetaData });
+            });
+        });
+
+        return deliLambda;
+    }
+
+    private logSessionFailureMetrics(
+        sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
+        sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
+        errMsg: string) {
+        sessionMetric?.error(errMsg);
+        sessionStartMetric?.error(errMsg);
     }
 
     public async dispose(): Promise<void> {
-        const mongoClosedP = this.mongoManager.close();
+        const mongoClosedP = this.operationsDbMongoManager.close();
         const forwardProducerClosedP = this.forwardProducer.close();
+        const signalProducerClosedP = this.signalProducer?.close();
         const reverseProducerClosedP = this.reverseProducer.close();
-        await Promise.all([mongoClosedP, forwardProducerClosedP, reverseProducerClosedP]);
+        await Promise.all([mongoClosedP, forwardProducerClosedP, signalProducerClosedP, reverseProducerClosedP]);
     }
 
     // Fetches last durable deli state from summary. Returns undefined if not present.
@@ -149,7 +211,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         tenantId: string,
         documentId: string,
         gitManager: IGitManager,
-        logger: ILogger): Promise<IDeliState> {
+        logger: ILogger | undefined): Promise<IDeliState | undefined> {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (existingRef) {
             try {
@@ -161,8 +223,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     documentId,
                     tenantId,
                 };
-                logger.error(`Error fetching deli state from summary`, { messageMetaData });
-                logger.error(JSON.stringify(exception), { messageMetaData });
+                logger?.error(`Error fetching deli state from summary`, { messageMetaData });
+                logger?.error(JSON.stringify(exception), { messageMetaData });
                 return undefined;
             }
         }
@@ -180,7 +242,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         tenantId: string,
         documentId: string,
         gitManager: IGitManager,
-        logger: ILogger,
+        logger: ILogger | undefined,
         checkpoint: IDeliState,
         leaderEpoch: number): Promise<IDeliState> {
         let newCheckpoint = checkpoint;
@@ -198,11 +260,14 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 newCheckpoint.logOffset = logOffset;
                 // Now create the summary.
                 await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
-                const messageMetaData = {
-                    documentId,
-                    tenantId,
-                };
-                logger.info(`Created a summary on epoch tick`, { messageMetaData });
+                logger?.info(
+                    `Created a summary on epoch tick`,
+                    {
+                        messageMetaData: {
+                            documentId,
+                            tenantId,
+                        },
+                    });
             }
         }
         return newCheckpoint;
@@ -221,7 +286,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         const serviceProtocolEntries = generateServiceProtocolEntries(JSON.stringify(checkpoint), scribe);
 
         const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
-            // eslint-disable-next-line no-null/no-null
             gitManager.createTree({ entries: serviceProtocolEntries }),
             gitManager.getTree(lastCommit.tree.sha, false),
         ]);

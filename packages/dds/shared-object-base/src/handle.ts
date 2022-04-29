@@ -1,12 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import {
     IFluidHandleContext,
-    IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISharedObject } from "./types";
@@ -48,14 +46,5 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
     public attachGraph(): void {
         this.value.bindToContext();
         super.attachGraph();
-    }
-
-    /**
-     * Returns 404.
-     * @param request - The request to make
-     * @returns A 404 error
-     */
-    public async request(request: IRequest): Promise<IResponse> {
-        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
 }

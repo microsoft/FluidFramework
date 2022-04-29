@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -75,7 +75,7 @@ function generateSummaryTree(
         containerRuntimeFactory.processAllMessages();
     }
     assert.equal(sharedString2.getText(), sharedString.getText());
-    const summaryTree = sharedString2.summarize().summary;
+    const summaryTree = sharedString2.getAttachSummary().summary;
     assert(summaryTree);
     return [sharedString2, summaryTree];
 }

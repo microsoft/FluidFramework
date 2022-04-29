@@ -1,13 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
-import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
-import { RouteOptions } from "./loader";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
+import { ITinyliciousRouteOptions, RouteOptions } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export const dockerUrls = {
@@ -16,10 +16,16 @@ export const dockerUrls = {
     storageUrl: "http://localhost:3001",
 };
 
-export const tinyliciousUrls = {
-    hostUrl: "http://localhost:3000",
-    ordererUrl: "http://localhost:3000",
-    storageUrl: "http://localhost:3000",
+const defaultTinyliciousPort = 7070;
+
+export const tinyliciousUrls = (options: ITinyliciousRouteOptions) => {
+    const port = options.tinyliciousPort ?? defaultTinyliciousPort;
+
+    return {
+        hostUrl: `http://localhost:${port}`,
+        ordererUrl: `http://localhost:${port}`,
+        storageUrl: `http://localhost:${port}`,
+    };
 };
 
 function getUrlResolver(options: RouteOptions): IUrlResolver {
@@ -33,20 +39,29 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                 options.bearerSecret);
 
         case "r11s":
+            if (options.discoveryEndpoint !== undefined) {
+                return new InsecureUrlResolver(
+                    "",
+                    options.discoveryEndpoint,
+                    "https://dummy-historian",
+                    options.tenantId,
+                    options.bearerSecret);
+            }
             return new InsecureUrlResolver(
                 options.fluidHost,
                 options.fluidHost.replace("www", "alfred"),
                 options.fluidHost.replace("www", "historian"),
                 options.tenantId,
                 options.bearerSecret);
-        case "tinylicious":
+        case "tinylicious": {
+            const urls = tinyliciousUrls(options);
             return new InsecureUrlResolver(
-                tinyliciousUrls.hostUrl,
-                tinyliciousUrls.ordererUrl,
-                tinyliciousUrls.storageUrl,
+                urls.hostUrl,
+                urls.ordererUrl,
+                urls.storageUrl,
                 "tinylicious",
                 options.bearerSecret);
-
+        }
         case "spo":
         case "spo-df":
             return new OdspUrlResolver(

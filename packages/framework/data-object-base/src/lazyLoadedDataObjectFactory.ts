@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import { ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
@@ -36,7 +36,6 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         if (storeFactories !== undefined) {
             this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(
                 storeFactories.map(
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries);
         }
 
@@ -48,36 +47,39 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public async instantiateDataStore(
+        context: IFluidDataStoreContext,
+        existing: boolean,
+    ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await instance;
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, this.ISharedObjectRegistry);
+        const runtime = new runtimeClass(context, this.ISharedObjectRegistry, existing);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
         // depending of if a new store is being created or an existing store
         // is being loaded.
-        const instance = this.instantiate(context, runtime);
+        const instance = this.instantiate(context, runtime, existing);
 
         return runtime;
     }
 
-    public async create(parentContext: IFluidDataStoreContext, props?: any) {
+    public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<FluidObject> {
         const { containerRuntime, packagePath } = parentContext;
 
         const router = await containerRuntime.createDataStore(packagePath.concat(this.type));
         return requestFluidObject(router, "/");
     }
 
-    private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
+    private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, existing: boolean) {
         // New data store instances are synchronously created.  Loading a previously created
         // store is deferred (via a LazyPromise) until requested by invoking `.then()`.
-        return runtime.existing
-            ? new LazyPromise(async () => this.load(context, runtime))
-            : this.createCore(context, runtime);
+        return existing
+            ? new LazyPromise(async () => this.load(context, runtime, existing))
+            : this.createCore(context, runtime, existing);
     }
 
     private createCore(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, props?: any) {
@@ -88,13 +90,13 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         return instance;
     }
 
-    private async load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
+    private async load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, existing: boolean) {
         const instance = new this.ctor(
             context,
             runtime,
             await runtime.getChannel("root") as ISharedObject);
 
-        await instance.load();
+        await instance.load(context, runtime, existing);
         return instance;
     }
 }

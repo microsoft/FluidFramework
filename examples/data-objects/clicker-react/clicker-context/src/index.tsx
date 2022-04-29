@@ -1,8 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -13,9 +14,8 @@ import {
     IFluidState,
     IFluidContextProps,
     SyncedDataObject,
-} from "@fluidframework/react";
+} from "@fluid-experimental/react";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
 // ----- REACT STUFF -----
 interface ICounterState {
@@ -24,16 +24,16 @@ interface ICounterState {
 
 interface ICounterFunctionalViewState
     extends IViewState,
-    ICounterState {}
+    ICounterState { }
 interface ICounterFunctionalFluidState
     extends IFluidState,
-    ICounterState {}
+    ICounterState { }
 
 function CounterReactFunctionalContext(
     props: IFluidContextProps<
-    ICounterFunctionalViewState,
-    ICounterFunctionalFluidState,
-    IFluidDataProps
+        ICounterFunctionalViewState,
+        ICounterFunctionalFluidState,
+        IFluidDataProps
     >,
 ) {
     const { Provider, Consumer, state, setState } = createContextFluid(props, { value: 0 });
@@ -81,7 +81,7 @@ export class ClickerContext extends SyncedDataObject {
             "counter-context",
             {
                 syncedStateId: "counter-context",
-                fluidToView:  new Map([
+                fluidToView: new Map([
                     [
                         "value", {
                             type: "number",
@@ -93,30 +93,22 @@ export class ClickerContext extends SyncedDataObject {
             },
         );
     }
-    /**
-     * Will return a new ClickerContext view
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>
-                <CounterReactFunctionalContext
-                    syncedStateId={"counter-context"}
-                    syncedDataObject={this}
-                />
-            </div>,
-            div,
-        );
-        return div;
-    }
-
-    // #endregion IFluidHTMLView
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerContextInstantiationFactory = new DataObjectFactory(
-    "clicker-context",
-    ClickerContext,
-    [],
-    {},
-);
-export const fluidExport = ClickerContextInstantiationFactory;
+export const ClickerContextInstantiationFactory =
+    new DataObjectFactory(
+        "clicker-context",
+        ClickerContext,
+        [],
+        {},
+    );
+
+const clickerViewCallback = (clicker: ClickerContext) =>
+    <CounterReactFunctionalContext
+        syncedStateId={ "counter-context" }
+        syncedDataObject={ clicker }
+    />;
+
+export const fluidExport =
+    new ContainerViewRuntimeFactory<ClickerContext>(ClickerContextInstantiationFactory, clickerViewCallback);

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -30,7 +30,9 @@ export function createTrackedServer(port: number, requestListener: http.RequestL
 export type OnceListenerHandler<T> = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<T>;
 export type OnceListenerResult<T> = Promise<() => Promise<T>>;
 export const serverListenAndHandle = async <T>(port: number, handler: OnceListenerHandler<T>): OnceListenerResult<T> =>
+    // eslint-disable-next-line promise/param-names
     new Promise((outerResolve, outerReject) => {
+    // eslint-disable-next-line promise/param-names
         const innerP = new Promise<T>((innerResolve, innerReject) => {
             const httpServer = createTrackedServer(port, (req, res) => {
                 // ignore favicon

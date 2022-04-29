@@ -1,25 +1,15 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { ICollection } from "./database";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { IDb, IDbFactory } from "./database";
 import { debug } from "./debug";
 
-export interface IDb {
-    close(): Promise<void>;
-
-    on(event: string, listener: (...args: any[]) => void);
-
-    collection<T>(name: string): ICollection<T>;
-}
-
-export interface IDbFactory {
-    connect(): Promise<IDb>;
-}
-
 /**
- * Helper class to manage access to a MongoDb database
+ * Helper class to manage access to database
+ * @TODO: Rename the file name as it behaves now as a generic DB Manager
  */
 export class MongoManager {
     private databaseP: Promise<IDb>;
@@ -27,12 +17,13 @@ export class MongoManager {
     constructor(
         private readonly factory: IDbFactory,
         private shouldReconnect = true,
-        private readonly reconnectDelayMs = 1000) {
-        this.databaseP = this.connect();
+        private readonly reconnectDelayMs = 1000,
+        private readonly global = false) {
+        this.databaseP = this.connect(this.global);
     }
 
     /**
-     * Retrieves the MongoDB database
+     * Retrieves the database
      */
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getDatabase(): Promise<IDb> {
@@ -40,29 +31,43 @@ export class MongoManager {
     }
 
     /**
-     * Closes the connection to MongoDB
+     * Closes the connection to DB
      */
     public async close(): Promise<void> {
+        debug("Call close connection to Db");
+        Lumberjack.info("Call close connection to Db");
         this.shouldReconnect = false;
         const database = await this.databaseP;
         return database.close();
     }
 
     /**
-     * Creates a connection to the MongoDB database
+     * Creates a connection to the database
      */
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private connect(): Promise<IDb> {
-        const databaseP = this.factory.connect()
+    private connect(global = false): Promise<IDb> {
+        const databaseP = this.factory.connect(global)
             .then((db) => {
                 db.on("error", (error) => {
                     debug("DB Error", error);
+                    Lumberjack.error("DB Error", undefined, error);
                     this.reconnect(this.reconnectDelayMs);
                 });
 
                 db.on("close", (value) => {
-                    debug("DB Close", value);
+                    debug("DB Close");
+                    Lumberjack.info("DB Close");
                     this.reconnect(this.reconnectDelayMs);
+                });
+
+                db.on("reconnect", (value) => {
+                    debug("DB Reconnect");
+                    Lumberjack.info("DB Reconnect");
+                });
+
+                db.on("reconnectFailed", (value) => {
+                    debug("DB Reconnect failed");
+                    Lumberjack.error("DB Reconnect failed", undefined, value);
                 });
 
                 return db;
@@ -70,17 +75,22 @@ export class MongoManager {
 
         databaseP.catch((error) => {
             debug("DB Connection Error", error);
+            Lumberjack.error("DB Connection Error", undefined, error);
             this.reconnect(this.reconnectDelayMs);
         });
 
+        debug("Successfully connected");
+        Lumberjack.info("Successfully connected to Db");
         return databaseP;
     }
 
     /**
-     * Reconnects to MongoDb
+     * Reconnects to DB
      */
     private reconnect(delay) {
         if (!this.shouldReconnect) {
+            debug("Should not reconnect to Db");
+            Lumberjack.info("Should not reconnect to Db");
             return;
         }
 

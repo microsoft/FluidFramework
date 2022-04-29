@@ -1,12 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
-import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
+import { IContext, IQueuedMessage, ILogger, IContextErrorData } from "@fluidframework/server-services-core";
+import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import { DebugLogger } from "./logger";
 
 interface IWaitOffset {
@@ -15,11 +16,16 @@ interface IWaitOffset {
 }
 
 export class TestContext extends EventEmitter implements IContext {
-    public offset: number = Number.NEGATIVE_INFINITY;
+    public offset: number = -1;
     private waits: IWaitOffset[] = [];
 
     constructor(public readonly log: ILogger = DebugLogger.create("fluid-server:TestContext")) {
         super();
+        const lumberjackEngine = new TestEngine1();
+
+        if (!Lumberjack.isSetupCompleted()) {
+            Lumberjack.setup([lumberjackEngine]);
+        }
     }
 
     public checkpoint(queuedMessage: IQueuedMessage) {
@@ -37,8 +43,8 @@ export class TestContext extends EventEmitter implements IContext {
         });
     }
 
-    public error(error: any, restart: boolean) {
-        this.emit("error", error, restart);
+    public error(error: any, errorData: IContextErrorData) {
+        this.emit("error", error, errorData);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -50,5 +56,9 @@ export class TestContext extends EventEmitter implements IContext {
         const deferred = new Deferred<void>();
         this.waits.push({ deferred, value });
         return deferred.promise;
+    }
+
+    public getContextError() {
+        return;
     }
 }

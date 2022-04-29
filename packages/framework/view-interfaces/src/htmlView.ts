@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -37,8 +37,8 @@ export interface IFluidHTMLView extends IProvideFluidHTMLView {
 }
 
 declare module "@fluidframework/core-interfaces" {
-    /* eslint-disable @typescript-eslint/no-empty-interface */
-    export interface IFluidObject extends
-        Readonly<Partial<IProvideFluidHTMLView>> { }
-    /* eslint-enable @typescript-eslint/no-empty-interface */
+    export interface IFluidObject{
+        /** @deprecated - use `FluidObject<IFluidHTMLView>` instead */
+        readonly IFluidHTMLView?: IFluidHTMLView;
+    }
 }

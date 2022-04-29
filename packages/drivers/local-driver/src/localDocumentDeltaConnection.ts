@@ -1,38 +1,51 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import {
-    ConnectionMode,
     IClient,
-    IClientConfiguration,
     IConnect,
-    IConnected,
     IDocumentMessage,
-    ISequencedDocumentMessage,
-    ISignalClient,
-    ISignalMessage,
-    ITokenClaims,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import * as core from "@fluidframework/server-services-core";
-import { debug } from "./debug";
+import type { Socket } from "socket.io-client";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
-export class LocalDocumentDeltaConnection
-    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection {
+
+/**
+ * Represents a connection to a stream of delta updates
+ */
+export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
+    /**
+     * Create a LocalDocumentDeltaConnection
+     * Handle initial messages, contents or signals if they were in queue
+     *
+     * @param tenantId - the ID of the tenant
+     * @param id - document ID
+     * @param token - authorization token for storage service
+     * @param client - information about the client
+     * @param webSocketServer - web socket server to create connection
+     */
     public static async create(
         tenantId: string,
         id: string,
         token: string,
         client: IClient,
-        webSocketServer: core.IWebSocketServer): Promise<LocalDocumentDeltaConnection> {
+        webSocketServer: core.IWebSocketServer,
+        timeoutMs = 60000,
+    ): Promise<LocalDocumentDeltaConnection> {
         const socket = (webSocketServer as LocalWebSocketServer).createConnection();
+
+        // Cast LocalWebSocket to SocketIOClient.Socket which is the socket that the base class needs. This is hacky
+        // but should be fine because this delta connection is for local use only.
+        const socketWithListener = socket as unknown as Socket;
+
+        const deltaConnection = new LocalDocumentDeltaConnection(socketWithListener, id);
 
         const connectMessage: IConnect = {
             client,
@@ -42,130 +55,16 @@ export class LocalDocumentDeltaConnection
             token,  // Token is going to indicate tenant level information, etc...
             versions: testProtocolVersions,
         };
-
-        const connection = await new Promise<IConnected>((resolve, reject) => {
-            // Listen for ops sent before we receive a response to connect_document
-            const queuedMessages: ISequencedDocumentMessage[] = [];
-            const queuedSignals: ISignalMessage[] = [];
-
-            const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-                debug("Queued early ops", msgs.length);
-                queuedMessages.push(...msgs);
-            };
-            socket.on("op", earlyOpHandler);
-
-            const earlySignalHandler = (msg: ISignalMessage) => {
-                debug("Queued early signals");
-                queuedSignals.push(msg);
-            };
-            socket.on("signal", earlySignalHandler);
-
-            // Listen for connection issues
-            socket.on("connect_error", (error) => {
-                reject(error);
-            });
-
-            socket.on("connect_document_success", (response: IConnected) => {
-                socket.removeListener("op", earlyOpHandler);
-                socket.removeListener("signal", earlySignalHandler);
-
-                if (queuedMessages.length > 0) {
-                    // Some messages were queued.
-                    // add them to the list of initialMessages to be processed
-                    response.initialMessages.push(...queuedMessages);
-                    response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-                }
-
-                if (queuedSignals.length > 0) {
-                    // Some signals were queued.
-                    // add them to the list of initialSignals to be processed
-                    response.initialSignals.push(...queuedSignals);
-                }
-
-                resolve(response);
-            });
-
-            socket.on("connect_document_error", reject);
-
-            socket.emit("connect_document", connectMessage);
-        });
-
-        const deltaConnection = new LocalDocumentDeltaConnection(socket, id, connection);
-
-        return Promise.resolve(deltaConnection);
+        await deltaConnection.initialize(connectMessage, timeoutMs);
+        return deltaConnection;
     }
 
-    private readonly submitManager: BatchManager<IDocumentMessage[]>;
-    private readonly subscribedEvents = new Set<string>();
-
-    public get clientId(): string {
-        return this.details.clientId;
+    constructor(socket: Socket, documentId: string) {
+          super(socket, documentId, new TelemetryNullLogger());
     }
 
-    public get mode(): ConnectionMode {
-        return this.details.mode;
-    }
-
-    public get claims(): ITokenClaims {
-        return this.details.claims;
-    }
-
-    public get existing(): boolean {
-        return this.details.existing;
-    }
-
-    public get maxMessageSize(): number {
-        return this.details.maxMessageSize;
-    }
-
-    public get initialMessages(): ISequencedDocumentMessage[] {
-        return this.details.initialMessages;
-    }
-
-    public get initialSignals(): ISignalMessage[] {
-        return this.details.initialSignals;
-    }
-
-    public get initialClients(): ISignalClient[] {
-        return this.details.initialClients;
-    }
-
-    public get version(): string {
-        return testProtocolVersions[0];
-    }
-
-    public get serviceConfiguration(): IClientConfiguration {
-        return this.details.serviceConfiguration;
-    }
-
-    constructor(
-        private readonly socket: core.IWebSocket,
-        public documentId: string,
-        public details: IConnected) {
-        super();
-
-        this.submitManager = new BatchManager<IDocumentMessage[]>((submitType, work) => {
-            this.socket.emit(
-                submitType,
-                this.details.clientId,
-                work,
-                (error) => {
-                    if (error) {
-                        debug("Emit error", error);
-                    }
-                });
-        });
-
-        this.on("newListener", (event, listener) => {
-            if (!this.subscribedEvents.has(event)) {
-                this.subscribedEvents.add(event);
-                this.socket.on(
-                    event,
-                    (...args: any[]) => {
-                        this.emit(event, ...args);
-                    });
-                }
-        });
+    protected submitCore(type: string, messages: IDocumentMessage[]) {
+        this.emitMessages(type, [messages]);
     }
 
     /**
@@ -175,8 +74,7 @@ export class LocalDocumentDeltaConnection
         // We use a promise resolve to force a turn break given message processing is sync
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.resolve().then(() => {
-            this.submitManager.add("submitOp", messages);
-            this.submitManager.drain();
+            this.submitCore("submitOp", messages);
         });
     }
 
@@ -184,12 +82,7 @@ export class LocalDocumentDeltaConnection
      * Submits a new signal to the server
      */
     public submitSignal(message: any): void {
-        this.submitManager.add("submitSignal", message);
-        this.submitManager.drain();
-    }
-
-    public close() {
-        this.disconnectClient("client close");
+        this.submitCore("submitSignal", [message]);
     }
 
     /**

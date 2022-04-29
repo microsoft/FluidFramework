@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import * as url from "url";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
@@ -17,16 +17,16 @@ import { NodeCodeLoader } from "./nodeCodeloader";
 import { fetchFluidObject } from "./utils";
 
 // Base service configuration.
-const ordererEndpoint = "http://localhost:3000";
-const storageEndpoint = "http://localhost:3000";
+const ordererEndpoint = "http://localhost:7070";
+const storageEndpoint = "http://localhost:7070";
 const tenantId = "tinylicious";
 // Tinylicious doesn't care about tenantKey and bearerSecret
 const tenantKey = "12345";
 const bearerSecret = "12345";
 // Code package details.
-const defaultPackage = "@fluid-example/key-value-cache@0.28.2";
+const defaultPackage = "@fluid-example/key-value-cache@0.49.0";
 const installPath = "/tmp/fluid-objects";
-const timeoutMS = 60000;
+const timeoutMS = 120000;
 
 // Document id (randomly chosen if not specified)
 const docId = "";
@@ -74,6 +74,7 @@ export async function start(): Promise<void> {
             ordererUrl: ordererEndpoint,
             storageUrl,
         },
+        id: documentId,
         tokens: { jwt: token },
         type: "fluid",
         url: documentUrl,

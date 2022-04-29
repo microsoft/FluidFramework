@@ -1,6 +1,0 @@
-## Generated from a tool - do not edit directly
-apiVersion: v1
-name: headless-agent
-version: 0.1.1
-description: A Helm chart for Headless Chrome Deployment.
-home: https://github.com/microsoft/FluidFramework

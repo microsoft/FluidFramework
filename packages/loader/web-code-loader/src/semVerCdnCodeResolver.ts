@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import {
-    IFluidCodeResolver, IResolvedFluidCodeDetails, isFluidBrowserPackage,
+    IFluidCodeResolver, IResolvedFluidCodeDetails, isFluidBrowserPackage, IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import fetch from "isomorphic-fetch";
 import {
     extractPackageIdentifierDetails,

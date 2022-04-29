@@ -1,10 +1,20 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "assert";
-import { IMergeBlock, MaxNodesInBlock, MergeTree, MergeTreeTextHelper, TextSegment } from "../";
+import {
+    IMergeBlock,
+    MaxNodesInBlock,
+    MergeTree,
+} from "../mergeTree";
+import {
+    MergeTreeTextHelper,
+    TextSegment,
+} from "../textSegment";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { insertText, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -22,7 +32,6 @@ interface ITestData {
 }
 
 const localClientId = 17;
-const branchId = 0;
 const treeFactories: ITestTreeFactory[] = [
     {
         create: () => {
@@ -38,8 +47,7 @@ const treeFactories: ITestTreeFactory[] = [
             mergeTree.startCollaboration(
                 localClientId,
                 /* minSeq: */ UniversalSequenceNumber,
-                /* currentSeq: */ UniversalSequenceNumber,
-                branchId);
+                /* currentSeq: */ UniversalSequenceNumber);
             return {
                 initialText,
                 mergeTree,
@@ -82,20 +90,19 @@ const treeFactories: ITestTreeFactory[] = [
 
             const nodes: IMergeBlock[] = [mergeTree.root];
             while (nodes.length > 0) {
-                const node = nodes.pop();
+                const node = nodes.pop()!;
                 assert.equal(node.childCount, MaxNodesInBlock - 1);
-                const childernBlocks =
+                const childrenBlocks =
                     node.children
                         .map((v) => v as IMergeBlock)
                         .filter((v) => v === undefined);
-                nodes.push(...childernBlocks);
+                nodes.push(...childrenBlocks);
             }
 
             mergeTree.startCollaboration(
                 localClientId,
                 /* minSeq: */ UniversalSequenceNumber,
-                /* currentSeq: */ UniversalSequenceNumber,
-                branchId);
+                /* currentSeq: */ UniversalSequenceNumber);
             return {
                 initialText,
                 mergeTree,
@@ -140,7 +147,7 @@ const treeFactories: ITestTreeFactory[] = [
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
             initialText = initialText.substring(remove);
 
             // remove from end
@@ -151,14 +158,13 @@ const treeFactories: ITestTreeFactory[] = [
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
             initialText = initialText.substring(0, initialText.length - remove);
 
             mergeTree.startCollaboration(
                 localClientId,
                 /* minSeq: */ UniversalSequenceNumber,
-                /* currentSeq: */ UniversalSequenceNumber,
-                branchId);
+                /* currentSeq: */ UniversalSequenceNumber);
 
             return {
                 initialText,

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -24,9 +24,6 @@ import {
 import { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {
-    // Back-compat, removal tracked with issue #4346
-    public readonly parentBranch = null;
-
     public readonly maxMessageSize: number;
 
     constructor(

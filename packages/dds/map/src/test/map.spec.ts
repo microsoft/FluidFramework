@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -61,7 +61,7 @@ describe("Map", () => {
                 dummyMap.on("op", (arg1, arg2, arg3) => {
                     assert.fail("shouldn't receive an op event");
                 });
-                dummyMap.on("valueChanged", (changed, local, op, target) => {
+                dummyMap.on("valueChanged", (changed, local, target) => {
                     assert.equal(valueChangedExpected, true, "valueChange event not expected");
                     valueChangedExpected = false;
 
@@ -69,15 +69,13 @@ describe("Map", () => {
                     assert.equal(changed.previousValue, previousValue);
 
                     assert.equal(local, true, "local should be true for local action for valueChanged event");
-                    assert.equal(op, null, "op should be null for local actions for valueChanged event");
                     assert.equal(target, dummyMap, "target should be the map for valueChanged event");
                 });
-                dummyMap.on("clear", (local, op, target) => {
+                dummyMap.on("clear", (local, target) => {
                     assert.equal(clearExpected, true, "clear event not expected");
                     clearExpected = false;
 
                     assert.equal(local, true, "local should be true for local action  for clear event");
-                    assert.equal(op, null, "op should be null for local actions for clear event");
                     assert.equal(target, dummyMap, "target should be the map for clear event");
                 });
                 dummyMap.on("error", (error) => {
@@ -124,17 +122,10 @@ describe("Map", () => {
                 const subMap = createLocalMap("subMap");
                 map.set("object", subMap.handle);
 
-                const parsed = map.getSerializableStorage();
-
-                map.forEach((value, key) => {
-                    if (!value.IFluidHandle) {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value, value);
-                    } else {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
-                    }
-                });
+                const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
+                const subMapHandleUrl = subMap.handle.absolutePath;
+                // eslint-disable-next-line max-len
+                assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
             });
 
             it("Should serialize an undefined value", () => {
@@ -145,17 +136,10 @@ describe("Map", () => {
                 const subMap = createLocalMap("subMap");
                 map.set("object", subMap.handle);
 
-                const parsed = map.getSerializableStorage();
-
-                map.forEach((value, key) => {
-                    if (!value || !value.IFluidHandle) {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value, value);
-                    } else {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
-                    }
-                });
+                const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
+                const subMapHandleUrl = subMap.handle.absolutePath;
+                // eslint-disable-next-line max-len
+                assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
             });
 
             it("Should serialize an object with nested handles", async () => {
@@ -171,9 +155,9 @@ describe("Map", () => {
 
                 const subMapHandleUrl = subMap.handle.absolutePath;
                 const subMap2HandleUrl = subMap2.handle.absolutePath;
-                const serialized = JSON.stringify(map.getSerializableStorage());
+                const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 // eslint-disable-next-line max-len
-                assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}`);
+                assert.equal(summaryContent, `{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}}`);
             });
 
             it("can load old serialization format", async () => {
@@ -197,7 +181,7 @@ describe("Map", () => {
             it("new serialization format for small maps", async () => {
                 map.set("key", "value");
 
-                const summaryTree = map.summarize().summary;
+                const summaryTree = map.getAttachSummary().summary;
                 assert.strictEqual(
                     Object.keys(summaryTree.tree).length, 1, "summary tree should only have one blob");
                 const summaryContent = (summaryTree.tree.header as ISummaryBlob)?.content;
@@ -231,7 +215,7 @@ describe("Map", () => {
                 map.set("longValue", longString);
                 map.set("zzz", "the end");
 
-                const summaryTree = map.summarize().summary;
+                const summaryTree = map.getAttachSummary().summary;
                 assert.strictEqual(
                     Object.keys(summaryTree.tree).length, 2, "There should be 2 entries in the summary tree");
                 const expectedContent1 = JSON.stringify({
@@ -298,7 +282,7 @@ describe("Map", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(map1.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(map1.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
@@ -467,39 +451,6 @@ describe("Map", () => {
                     });
 
                     assert.equal(set.size, 0);
-                });
-            });
-
-            describe(".wait()", () => {
-                it("Should resolve returned promise for existing keys", async () => {
-                    map1.set("test", "resolved");
-                    assert.ok(map1.has("test"));
-
-                    containerRuntimeFactory.processAllMessages();
-
-                    // Verify the local SharedMap
-                    assert.equal(await map1.wait("test"), "resolved", "promise not resolved for existing key");
-
-                    // Verify the remote SharedMap
-                    assert.equal(
-                        await map2.wait("test"), "resolved", "promise not resolved for existing key in remote map");
-                });
-
-                it("Should resolve returned promise once unavailable key is available", async () => {
-                    assert.ok(!map1.has("test"));
-
-                    const waitP = map1.wait("test");
-                    const waitP2 = map2.wait("test");
-
-                    map1.set("test", "resolved");
-
-                    containerRuntimeFactory.processAllMessages();
-
-                    // Verify the local SharedMap
-                    assert.equal(await waitP, "resolved", "promise not resolved after key is available");
-
-                    // Verify the remote SharedMap
-                    assert.equal(await waitP2, "resolved", "promise not resolved after key is available in remote map");
                 });
             });
         });

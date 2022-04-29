@@ -1,27 +1,39 @@
-/* eslint-disable no-null/no-null */
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { isSystemType } from "@fluidframework/protocol-base";
 import {
     ConnectionMode,
     IClient,
     IConnect,
     IConnected,
     IDocumentMessage,
-    IDocumentSystemMessage,
     INack,
     ISignalMessage,
     MessageType,
     NackErrorType,
+    ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { canSummarize, canWrite, validateTokenClaims } from "@fluidframework/server-services-client";
+import {
+    canSummarize,
+    canWrite,
+    isNetworkError,
+    NetworkError,
+    validateTokenClaims,
+    validateTokenClaimsExpiration,
+} from "@fluidframework/server-services-client";
 
 import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
 import * as core from "@fluidframework/server-services-core";
+import {
+    BaseTelemetryProperties,
+    CommonProperties,
+    LumberEventName,
+    Lumberjack,
+    getLumberBaseProperties,
+} from "@fluidframework/server-services-telemetry";
 import {
     createRoomJoinMessage,
     createNackMessage,
@@ -29,6 +41,8 @@ import {
     getRandomInt,
     generateClientId,
 } from "../utils";
+
+const summarizerClientType = "summarizer";
 
 interface IRoom {
 
@@ -46,14 +60,24 @@ interface IConnectedClient {
     connectVersions: string[];
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function getRoomId(room: IRoom) {
     return `${room.tenantId}/${room.documentId}`;
 }
 
+const getMessageMetadata = (documentId: string, tenantId: string) => ({
+    documentId,
+    tenantId,
+});
+
+const handleServerError = async (logger: core.ILogger, errorMessage: string, documentId: string, tenantId: string) => {
+    logger.error(errorMessage, { messageMetaData: getMessageMetadata(documentId, tenantId) });
+    Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
+    throw new NetworkError(500, "Failed to connect client to document.");
+};
+
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
 
-const getSubmitOpThrottleId = (clientId: string) => `${clientId}_SubmitOp`;
+const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
@@ -75,27 +99,36 @@ function sanitizeMessage(message: any): IDocumentMessage {
         type: message.type,
     };
 
-    if (isSystemType(sanitizedMessage.type)) {
-        const systemMessage = sanitizedMessage as IDocumentSystemMessage;
-        systemMessage.data = message.data;
-        return systemMessage;
-    } else {
-        return sanitizedMessage;
-    }
+    return sanitizedMessage;
 }
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
-function selectProtocolVersion(connectVersions: string[]): string {
-    let version: string = null;
+function selectProtocolVersion(connectVersions: string[]): string | undefined {
     for (const connectVersion of connectVersions) {
         for (const protocolVersion of protocolVersions) {
             if (semver.intersects(protocolVersion, connectVersion)) {
-                version = protocolVersion;
-                return version;
+                return protocolVersion;
             }
         }
     }
+}
+
+/**
+ * Converts a relayUserAgent string into a <key,value> map.
+ * @param relayUserAgent user agent string in the format "prop1:val1;prop2:val2;prop3:val3"
+ */
+function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string, string> {
+    if (!relayUserAgent) {
+        return {};
+    }
+    const map = {};
+    const propertyKeyValuePairs: string[][] = relayUserAgent.split(";").map((keyValuePair) => keyValuePair.split(":"));
+    // TODO: would be cleaner with `Object.fromEntries()` but tsconfig needs es2019 lib
+    for (const [key, value] of propertyKeyValuePairs) {
+        map[key] = value;
+    }
+    return map;
 }
 
 /**
@@ -104,34 +137,30 @@ function selectProtocolVersion(connectVersions: string[]): string {
 function checkThrottle(
     throttler: core.IThrottler | undefined,
     throttleId: string,
+    tenantId: string,
     logger?: core.ILogger): core.ThrottlingError | undefined {
     if (!throttler) {
         return;
     }
 
-    const messageMetaData = {
-        key: throttleId,
-        weight: 1,
-        eventName: "throttling",
-    };
-
     try {
-        logger?.info(`Incrementing throttle count: ${throttleId}`, { messageMetaData });
         throttler.incrementCount(throttleId);
-    } catch (e) {
-        if (e instanceof core.ThrottlingError) {
-            logger?.info(`Throttled: ${throttleId}`, {
-                messageMetaData: {
-                    ...messageMetaData,
-                    reason: e.message,
-                    retryAfterInSeconds: e.retryAfter,
-                },
-            });
-            return e;
+    } catch (error) {
+        if (error instanceof core.ThrottlingError) {
+            return error;
         } else {
             logger?.error(
-                `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
-                { messageMetaData });
+                `Throttle increment failed: ${safeStringify(error, undefined, 2)}`,
+                {
+                    messageMetaData: {
+                        key: throttleId,
+                        eventName: "throttling",
+                    },
+                });
+            Lumberjack.error(`Throttle increment failed`, {
+                [CommonProperties.telemetryGroupName]: "throttling",
+                [BaseTelemetryProperties.tenantId]: tenantId,
+            }, error);
         }
     }
 }
@@ -162,14 +191,9 @@ export function configureWebSocketServices(
 
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
-        function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
+        function isWriter(scopes: string[], mode: ConnectionMode): boolean {
             if (hasWriteAccess(scopes)) {
-                // New document needs a writer to boot.
-                if (!existing) {
-                    return true;
-                } else {
-                    return mode === "write";
-                }
+                return mode === "write";
             } else {
                 return false;
             }
@@ -193,32 +217,30 @@ export function configureWebSocketServices(
             const throttleError = checkThrottle(
                 connectThrottler,
                 getSocketConnectThrottleId(message.tenantId),
+                message.tenantId,
                 logger);
             if (throttleError) {
                 return Promise.reject(throttleError);
             }
             if (!message.token) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Must provide an authorization token");
+                throw new NetworkError(403, "Must provide an authorization token");
             }
 
             // Validate token signature and claims
             const token = message.token;
             const claims = validateTokenClaims(token,
                 message.id,
-                message.tenantId,
-                maxTokenLifetimeSec,
-                isTokenExpiryEnabled);
-            if (!claims) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Invalid claims");
-            }
+                message.tenantId);
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
-            } catch (err) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject("Invalid token");
+            } catch (error) {
+                if (isNetworkError(error)) {
+                    throw error;
+                }
+                // We don't understand the error, so it is likely an internal service error.
+                const errMsg = `Could not verify connect document token. Error: ${safeStringify(error, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.tenantId, claims.documentId);
             }
 
             const clientId = generateClientId();
@@ -227,16 +249,32 @@ export function configureWebSocketServices(
                 documentId: claims.documentId,
             };
 
-            // Subscribe to channels.
-            await Promise.all([
-                socket.join(getRoomId(room)),
-                socket.join(`client#${clientId}`)]);
+            try {
+                // Subscribe to channels.
+                await Promise.all([
+                    socket.join(getRoomId(room)),
+                    socket.join(`client#${clientId}`)]);
+            } catch (err) {
+                const errMsg = `Could not subscribe to channels. Error: ${safeStringify(err, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+            }
+
+            const connectedTimestamp = Date.now();
 
             // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
             const messageClient: Partial<IClient> = message.client ? message.client : {};
+            const isSummarizer = messageClient.details?.type === summarizerClientType;
             messageClient.user = claims.user;
             messageClient.scopes = claims.scopes;
+
+            // Do not give SummaryWrite scope to clients that are not summarizers
+            if (!isSummarizer) {
+                messageClient.scopes = claims.scopes.filter((scope) => scope !== ScopeType.SummaryWrite);
+            }
+
+            // back-compat: remove cast to any once new definition of IClient comes through.
+            (messageClient as any).timestamp = connectedTimestamp;
 
             // Cache the scopes.
             scopeMap.set(clientId, messageClient.scopes);
@@ -247,72 +285,89 @@ export function configureWebSocketServices(
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject(
-                    `Unsupported client protocol.` +
-                    `Server: ${protocolVersions}. ` +
-                    `Client: ${JSON.stringify(connectVersions)}`);
+                throw new NetworkError(
+                    400,
+                    // eslint-disable-next-line max-len
+                    `Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`,
+                );
             }
 
-            const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
-            const clientsP = clientManager.getClients(claims.tenantId, claims.documentId);
-
-            const [details, clients] = await Promise.all([detailsP, clientsP]);
+            const clients = await clientManager.getClients(claims.tenantId, claims.documentId)
+                .catch(async (err) => {
+                    const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
+                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                });
 
             if (clients.length > maxNumberOfClientsPerDocument) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 400,
-                    message: "Too many clients are already connected to this document.",
-                    retryAfter: 5 * 60,
-                });
+                throw new NetworkError(
+                    429,
+                    "Too Many Clients Connected to Document",
+                    true, /* canRetry */
+                    false, /* isFatal */
+                    5 * 60 * 1000 /* retryAfterMs (5 min) */,
+                );
             }
 
-            await clientManager.addClient(
-                claims.tenantId,
-                claims.documentId,
-                clientId,
-                messageClient as IClient);
+            try {
+                await clientManager.addClient(
+                    claims.tenantId,
+                    claims.documentId,
+                    clientId,
+                    messageClient as IClient);
+            } catch (err) {
+                const errMsg = `Could not add client. Error: ${safeStringify(err, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+            }
 
-            if (isTokenExpiryEnabled && claims.exp) {
-                const lifeTimeMSec = (claims.exp * 1000) - Math.round((new Date()).getTime());
-                if (lifeTimeMSec > 0) {
-                    setExpirationTimer(lifeTimeMSec);
-                } else {
-                    // eslint-disable-next-line prefer-promise-reject-errors
-                    return Promise.reject("Invalid token expiry");
-                }
+            if (isTokenExpiryEnabled) {
+                const lifeTimeMSec = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
+                setExpirationTimer(lifeTimeMSec);
             }
 
             let connectedMessage: IConnected;
-            if (isWriter(messageClient.scopes, details.existing, message.mode)) {
-                const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                connection.connect();
+            if (isWriter(messageClient.scopes, message.mode)) {
+                const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId)
+                    .catch(async (err) => {
+                        const errMsg = `Failed to get orderer manager. Error: ${safeStringify(err, undefined, 2)}`;
+                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                    });
 
-                connectionsMap.set(clientId, connection);
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient)
+                    .catch(async (err) => {
+                        const errMsg = `Failed to connect to orderer. Error: ${safeStringify(err, undefined, 2)}`;
+                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                    });
 
                 // Eventually we will send disconnect reason as headers to client.
                 connection.once("error", (error) => {
-                    const messageMetaData = {
-                        documentId: connection.documentId,
-                        tenantId: connection.tenantId,
-                    };
+                    const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
+
                     // eslint-disable-next-line max-len
                     logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                    Lumberjack.error(
+                        `Disconnecting socket on connection error`,
+                        getLumberBaseProperties(connection.documentId, connection.tenantId),
+                        error,
+                    );
                     clearExpirationTimer();
                     socket.disconnect(true);
                 });
 
+                connection.connect()
+                    .catch(async (err) => {
+                        // eslint-disable-next-line max-len
+                        const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
+                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                    });
+
+                connectionsMap.set(clientId, connection);
+
                 connectedMessage = {
                     claims,
                     clientId,
-                    existing: details.existing,
+                    existing: true,
                     maxMessageSize: connection.maxMessageSize,
                     mode: "write",
-                    // Back-compat, removal tracked with issue #4346
-                    parentBranch: null,
                     serviceConfiguration: {
                         blockSize: connection.serviceConfiguration.blockSize,
                         maxMessageSize: connection.serviceConfiguration.maxMessageSize,
@@ -328,11 +383,9 @@ export function configureWebSocketServices(
                 connectedMessage = {
                     claims,
                     clientId,
-                    existing: details.existing,
+                    existing: true,
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     mode: "read",
-                    // Back-compat, removal tracked with issue #4346
-                    parentBranch: null, // Does not matter for now.
                     serviceConfiguration: {
                         blockSize: core.DefaultServiceConfiguration.blockSize,
                         maxMessageSize: core.DefaultServiceConfiguration.maxMessageSize,
@@ -346,6 +399,9 @@ export function configureWebSocketServices(
                 };
             }
 
+            // back-compat: remove cast to any once new definition of IConnected comes through.
+            (connectedMessage as any).timestamp = connectedTimestamp;
+
             return {
                 connection: connectedMessage,
                 connectVersions,
@@ -356,21 +412,35 @@ export function configureWebSocketServices(
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
+            const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
+            const driverVersion: string | undefined = userAgentInfo.driverVersion;
+            const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
+            connectMetric.setProperties({
+                ...getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId),
+                [CommonProperties.clientDriverVersion]: driverVersion,
+            });
+
             connectDocument(connectionMessage).then(
                 (message) => {
                     socket.emit("connect_document_success", message.connection);
-                    socket.emitToRoom(
-                        getRoomId(roomMap.get(message.connection.clientId)),
-                        "signal",
-                        createRoomJoinMessage(message.connection.clientId, message.details));
+                    const room = roomMap.get(message.connection.clientId);
+                    if (room) {
+                        socket.emitToRoom(
+                            getRoomId(room),
+                            "signal",
+                            createRoomJoinMessage(message.connection.clientId, message.details));
+                    }
+
+                    connectMetric.setProperties({
+                        [CommonProperties.clientId]: message.connection.clientId,
+                        [CommonProperties.clientCount]: message.connection.initialClients.length + 1,
+                        [CommonProperties.clientType]: message.details.details?.type,
+                    });
+                    connectMetric.success(`Connect document successful`);
                 },
                 (error) => {
-                    const messageMetaData = {
-                        documentId: connectionMessage.id,
-                        tenantId: connectionMessage.tenantId,
-                    };
-                    logger.error(`Connect Document error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     socket.emit("connect_document_error", error);
+                    connectMetric.error(`Connect document failed`, error);
                 });
         });
 
@@ -378,25 +448,12 @@ export function configureWebSocketServices(
         socket.on(
             "submitOp",
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
-                const throttleError = checkThrottle(
-                    submitOpThrottler,
-                    getSubmitOpThrottleId(clientId),
-                    logger);
-                if (throttleError) {
-                    const nackMessage = createNackMessage(
-                        throttleError.code,
-                        NackErrorType.ThrottlingError,
-                        throttleError.message,
-                        throttleError.retryAfter);
-                    socket.emit("nack", "", [nackMessage]);
-                    return;
-                }
-
                 // Verify the user has an orderer connection.
-                if (!connectionsMap.has(clientId)) {
+                const connection = connectionsMap.get(clientId);
+                if (!connection) {
                     let nackMessage: INack;
-
-                    if (hasWriteAccess(scopeMap.get(clientId))) {
+                    const clientScope = scopeMap.get(clientId);
+                    if (clientScope && hasWriteAccess(clientScope)) {
                         nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Readonly client");
                     } else if (roomMap.has(clientId)) {
                         nackMessage = createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid scope");
@@ -406,18 +463,35 @@ export function configureWebSocketServices(
 
                     socket.emit("nack", "", [nackMessage]);
                 } else {
-                    const connection = connectionsMap.get(clientId);
+                    const throttleError = checkThrottle(
+                        submitOpThrottler,
+                        getSubmitOpThrottleId(clientId, connection.tenantId),
+                        connection.tenantId,
+                        logger);
+                    if (throttleError) {
+                        const nackMessage = createNackMessage(
+                            throttleError.code,
+                            NackErrorType.ThrottlingError,
+                            throttleError.message,
+                            throttleError.retryAfter);
+                        socket.emit("nack", "", [nackMessage]);
+                        return;
+                    }
 
                     messageBatches.forEach((messageBatch) => {
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
                         const sanitized = messages
                             .filter((message) => {
                                 if (message.type === MessageType.RoundTrip) {
-                                    // End of tracking. Write traces.
-                                    metricLogger.writeLatencyMetric("latency", message.traces).catch(
-                                        (error) => {
-                                            logger.error(error.stack);
-                                        });
+                                    if (message.traces) {
+                                        // End of tracking. Write traces.
+                                        // TODO: add Lumber metric here?
+                                        metricLogger.writeLatencyMetric("latency", message.traces).catch(
+                                            (error) => {
+                                                logger.error(error.stack);
+                                                Lumberjack.error(error.stack);
+                                            });
+                                    }
                                     return false;
                                 } else {
                                     return true;
@@ -438,7 +512,8 @@ export function configureWebSocketServices(
             "submitSignal",
             (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
                 // Verify the user has subscription to the room.
-                if (!roomMap.has(clientId)) {
+                const room = roomMap.get(clientId);
+                if (!room) {
                     const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                     socket.emit("nack", "", [nackMessage]);
                 } else {
@@ -451,7 +526,7 @@ export function configureWebSocketServices(
                                 content,
                             };
 
-                            socket.emitToRoom(getRoomId(roomMap.get(clientId)), "signal", signalMessage);
+                            socket.emitToRoom(getRoomId(room), "signal", signalMessage);
                         }
                     });
                 }
@@ -462,22 +537,24 @@ export function configureWebSocketServices(
             clearExpirationTimer();
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
-                const messageMetaData = {
-                    documentId: connection.documentId,
-                    tenantId: connection.tenantId,
-                };
+                const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
                 logger.info(`Disconnect of ${clientId}`, { messageMetaData });
+                Lumberjack.info(
+                    `Disconnect of ${clientId}`,
+                    getLumberBaseProperties(connection.documentId, connection.tenantId),
+                );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
             }
             // Send notification messages for all client IDs in the room map
-            const removeP = [];
+            const removeP: Promise<void>[] = [];
             for (const [clientId, room] of roomMap) {
-                const messageMetaData = {
-                    documentId: room.documentId,
-                    tenantId: room.tenantId,
-                };
+                const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
+                Lumberjack.info(
+                    `Disconnect of ${clientId} from room`,
+                    getLumberBaseProperties(room.documentId, room.tenantId),
+                );
                 removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
                 socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
             }

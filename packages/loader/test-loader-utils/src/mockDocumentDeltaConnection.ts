@@ -1,8 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { IDisposable } from "@fluidframework/common-definitions";
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
@@ -15,6 +16,7 @@ import {
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IAnyDriverError } from "@fluidframework/driver-utils";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {
@@ -33,7 +35,7 @@ const DefaultServiceConfiguration: IClientConfiguration = {
  */
 export class MockDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection {
+    implements IDocumentDeltaConnection, IDisposable {
     public claims: ITokenClaims = {
         documentId: "documentId",
         scopes: ["doc:read", "doc:write", "summary:write"],
@@ -74,8 +76,11 @@ export class MockDocumentDeltaConnection
             this.submitSignalHandler(message);
         }
     }
-    public close(reason?: string) {
-        this.emit("disconnect", reason ?? "mock close() called");
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+    public dispose(error?: Error) {
+        this._disposed = true;
+        this.emit("disconnect", error?.message ?? "mock close() called");
     }
 
     // Mock methods for raising events
@@ -91,7 +96,10 @@ export class MockDocumentDeltaConnection
     public emitPong(latency: number) {
         this.emit("pong", latency);
     }
-    public emitError(error: any) {
+    public emitDisconnect(disconnectReason: IAnyDriverError) {
+        this.emit("error", disconnectReason);
+    }
+    public emitError(error: IAnyDriverError) {
         this.emit("error", error);
     }
 }

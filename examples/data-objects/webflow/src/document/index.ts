@@ -1,10 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -31,9 +30,8 @@ import {
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IFluidHTMLOptions } from "@fluidframework/view-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
-import { clamp, emptyArray } from "../util";
+import { clamp, emptyArray, randomId, TagName, TokenList } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { documentType } from "../package";
 import { debug } from "./debug";
@@ -44,14 +42,13 @@ export const enum DocSegmentKind {
     paragraph = "<p>",
     lineBreak = "<br>",
     beginTags = "<t>",
-    inclusion = "<?>",
     endTags = "</>",
 
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
     endOfText = "eot",
 }
 
-const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion]);
+const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags]);
 
 const enum Workaround { checkpoint = "*" }
 
@@ -77,11 +74,12 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
                 const kind = (segment.hasRangeLabels() ? segment.getRangeLabels()[0] :
                     segment.getTileLabels()[0]) as DocSegmentKind;
 
-                assert(tilesAndRanges.has(kind), `Unknown tile/range label '${kind}'.`);
+                assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
 
                 return kind;
             default:
-                assert(markerType === (ReferenceType.Tile | ReferenceType.NestEnd));
+                assert(markerType === (ReferenceType.Tile | ReferenceType.NestEnd),
+                    "unexpected marker type");
 
                 // Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
                 // will not close the range.)
@@ -94,9 +92,6 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 const empty = Object.freeze({});
 
 export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const getComponentOptions = (segment: ISegment): IFluidHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
 
@@ -132,6 +127,8 @@ export interface IFlowDocumentEvents extends IEvent {
     (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString) => void);
 }
 
+const textId = "text";
+
 export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
     private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
         documentType,
@@ -145,42 +142,38 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         return FlowDocument.factory.create(parentContext, props);
     }
 
-    private get sharedString() { return this.maybeSharedString; }
-
     public get length() {
         return this.sharedString.getLength();
     }
 
     private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: TagName.p });
     private static readonly lineBreakProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint] });
-    private static readonly inclusionProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint] });
     private static readonly tagsProperties = Object.freeze({
-        [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint],
+        [reservedTileLabelsKey]: [DocTile.checkpoint],
         [reservedRangeLabelsKey]: [DocSegmentKind.beginTags],
     });
 
-    private maybeSharedString?: SharedString;
+    private sharedString: SharedString;
 
     public create() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
-        this.maybeSharedString = SharedString.create(this.runtime, "text");
-        this.root.set("text", this.maybeSharedString.handle);
-        if (this.maybeSharedString !== undefined) {
-            this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
-        }
+        this.sharedString = SharedString.create(this.runtime);
+        this.root.set(textId, this.sharedString.handle);
+        this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
     }
 
     public async load() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
-        const handle = await this.root.wait<IFluidHandle<SharedString>>("text");
-        this.maybeSharedString = await handle.get();
-        if (this.maybeSharedString !== undefined) {
-            this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
+        const handle = this.root.get<IFluidHandle<SharedString>>(textId);
+        if (handle === undefined) {
+            throw new Error("String not initialized properly");
         }
+        this.sharedString = await handle.get();
+        this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
     }
 
     public async getComponentFromMarker(marker: Marker) {
@@ -243,7 +236,8 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public remove(start: number, end: number) {
-        debug(`remove(${start},${end})`);
+        let _start = start;
+        debug(`remove(${_start},${end})`);
         const ops: IMergeTreeRemoveMsg[] = [];
 
         this.visitRange((position: number, segment: ISegment) => {
@@ -273,17 +267,17 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
                     // Note: The start tag must appear before the position of the current end tag.
                     console.assert(startPos < position);
 
-                    if (!(start <= startPos)) {
+                    if (!(_start <= startPos)) {
                         // If not, remove any positions up to, but excluding the current segment
                         // and adjust the pending removal range to just after this marker.
                         debug(`  exclude end tag '</${segment.properties.tag}>' at ${position}.`);
 
                         // If the preserved end tag is at the beginning of the removal range, no remove op
                         // is necessary.  Just skip over it.
-                        if (start !== position) {
-                            ops.push(createRemoveRangeOp(start, position));
+                        if (_start !== position) {
+                            ops.push(createRemoveRangeOp(_start, position));
                         }
-                        start = position + 1;
+                        _start = position + 1;
                     }
                     break;
                 }
@@ -291,11 +285,11 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
                     break;
             }
             return true;
-        }, start, end);
+        }, _start, end);
 
         // If there is a non-empty span remaining, generate its remove op now.
-        if (start !== end) {
-            ops.push(createRemoveRangeOp(start, end));
+        if (_start !== end) {
+            ops.push(createRemoveRangeOp(_start, end));
         }
 
         // Perform removals in descending order, otherwise earlier deletions will shift the positions
@@ -316,14 +310,6 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     public insertLineBreak(position: number) {
         debug(`insertLineBreak(${position})`);
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public insertComponent(position: number, handle: IFluidHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
-        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
-            ...FlowDocument.inclusionProperties,
-            componentOptions, handle, style, classList: classList && classList.join(" "), view,
-        }));
     }
 
     public setFormat(position: number, tag: TagName) {
@@ -434,18 +420,18 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public visitRange(callback: LeafAction, start = 0, end = this.length) {
-        end = clamp(0, end, this.length);
-        start = clamp(0, start, end);
+        const _end = clamp(0, end, this.length);
+        const _start = clamp(0, start, end);
 
         // Early exit if passed an empty or invalid range (e.g., NaN).
-        if (!(start < end)) {
+        if (!(_start < _end)) {
             return;
         }
 
         // Note: We pass the leaf callback action as the accumulator, and then use the 'accumAsLeafAction'
         //       actions to invoke the accum for each leaf.  (Paranoid micro-optimization that attempts to
         //       avoid allocation while simplifying the 'LeafAction' signature.)
-        this.sharedString.walkSegments(accumAsLeafAction, start, end, callback);
+        this.sharedString.walkSegments(accumAsLeafAction, _start, _end, callback);
     }
 
     public getText(start?: number, end?: number): string {
@@ -455,19 +441,20 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     public toString() {
         const s: string[] = [];
         this.visitRange((position, segment) => {
-            const kind = getDocSegmentKind(segment);
+            let _segment = segment;
+            const kind = getDocSegmentKind(_segment);
             switch (kind) {
                 case DocSegmentKind.text:
-                    s.push((segment as TextSegment).text);
+                    s.push((_segment as TextSegment).text);
                     break;
                 case DocSegmentKind.beginTags:
-                    for (const tag of segment.properties.tags) {
+                    for (const tag of _segment.properties.tags) {
                         s.push(`<${tag}>`);
                     }
                     break;
                 case DocSegmentKind.endTags:
-                    segment = this.getStart(segment as Marker);
-                    const tags = segment.properties.tags.slice().reverse();
+                    _segment = this.getStart(_segment as Marker);
+                    const tags = _segment.properties.tags.slice().reverse();
                     for (const tag of tags) {
                         s.push(`</${tag}>`);
                     }

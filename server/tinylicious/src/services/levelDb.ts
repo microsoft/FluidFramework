@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { EventEmitter } from "events";
-import { ICollection, IDb } from "@fluidframework/server-services-core";
+import { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
 import level from "level";
 import sublevel from "level-sublevel";
 import { Collection, ICollectionProperty } from "./levelDbCollection";
@@ -61,5 +61,17 @@ export class LevelDb extends EventEmitter implements IDb {
             default:
                 throw new Error(`Collection ${name} not implemented.`);
         }
+    }
+}
+
+export class LevelDbFactory implements IDbFactory {
+    private readonly db: LevelDb;
+
+    constructor(path: string) {
+        this.db = new LevelDb(path);
+    }
+
+    public async connect(): Promise<IDb> {
+        return this.db;
     }
 }

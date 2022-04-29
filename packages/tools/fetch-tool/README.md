@@ -1,14 +1,15 @@
-# @fluid-internal/fetch-tool
+# @fluid-tools/fetch-tool
 
 Connection using ODSP or routerlicious driver to dump the messages or snapshot information on the server.
 In order to connect to ODSP, the clientID and clientSecret must be set as environment variables login__microsoft__clientId and login__microsoft__secret, respectively. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
 
 ## Usage
 
-    Usage: fluid-fetch [options] URL
+    Usage: fluid-fetch [options] "URL"
     URL: <ODSP joinSession URL>|<Routerlicious URL>
     Options:
       --dump:rawmessage               : dump all messages
+      --dump:rawmessage:overwrite     : dump all messages and overwrite existing        messages.json
       --dump:snapshotVersion          : dump a list of snapshot version
       --dump:snapshotTree             : dump the snapshot trees
       --dump:snapshotBlob             : dump the contents of snapshot blobs
@@ -93,3 +94,21 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
     [defaultDataStore]/root/header                                             | 300
     ----------------------------------------------------------------------------------------------------
     Total snapshot size                                                        | 3048
+
+## Debugging
+
+If you would like to debug fetch-tool, you can create a unit test. Remember to add tsconfig.json and list mocha in devDependencies.
+
+In the unit test, you can use `setArguments()` from fluidFetchArgs to pass in arguments you want to test. Then call the methods you want to run and you will be able to set breakpoints in vscode.
+
+**Example**
+```js
+describe("fetch tool", () => {
+    it("can fetch messages", async () => {
+        fluidFetchArgs.setArguments(your_args);
+        const documentService = await fluidFetchInit(your_paramURL);
+        await fluidFetchMessages(documentService, your_saveDir);
+    });
+});
+```
+

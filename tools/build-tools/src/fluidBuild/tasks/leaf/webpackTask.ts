@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -62,6 +62,11 @@ export class WebpackTask extends LeafWithDoneFileTask {
             // TODO: Need to look at the output from tsconfig
             if (this.addChildTask(dependentTasks, child, "npm run build:esnext")) {
                 this.logVerboseDependency(child, "build:esnext");
+                if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
+                    this.logVerboseDependency(child, "build:copy");
+                }
+            } else if (this.addChildTask(dependentTasks, child, "npm run webpack")) {
+                this.logVerboseDependency(child, "webpack");
                 if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
                     this.logVerboseDependency(child, "build:copy");
                 }

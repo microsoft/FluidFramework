@@ -1,6 +1,8 @@
 ---
-title: Documentation for Fluid Framework
-meta: "What is Fluid Framework"
+title: Fluid Framework Documentation
+meta: "meta"
+cascade:
+  includeApiSubmenu: true
 ---
 
 ## What is Fluid Framework?
@@ -70,10 +72,11 @@ participation.
 ## Next steps
 
 If you want to learn a lot more about how Fluid works, start with our
-**[architecture](concepts/architecture.md)** overview.
+**[architecture]({{< relref "architecture.md" >}})** overview.
 
-If you prefer to get your hands dirty right away, head for our coding **[tutorial](get-started/tutorial.md)** and
-**[examples](get-started/examples.md)**. But first, get your **[dev environment](get-started/quick-start.md)** set up.
+If you prefer to get your hands dirty right away, head for our coding **[tutorial]({{< relref "tutorial.md" >}})** and
+**[examples]({{< relref "examples.md" >}})**. But first, get your **[dev environment]({{< relref "quick-start.md" >}})**
+set up.
 
-Still have questions? Maybe we've answered them in our **[FAQ](faq.md)**. If not, check out our
-**[Community page](/community/)**.
+Still have questions? Maybe we've answered them in our **[FAQ]({{< relref "faq.md" >}})**. If not, check out our
+**[Community page]({{< relref "/community/" >}})**.

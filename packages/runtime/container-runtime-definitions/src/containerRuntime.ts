@@ -1,89 +1,85 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IEventProvider } from "@fluidframework/common-definitions";
 import {
     AttachState,
-    ContainerWarning,
     IDeltaManager,
-    ILoader,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     IRequest,
     IResponse,
-    IFluidObject,
     IFluidRouter,
-    IFluidCodeDetails,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
-    IPendingProposal,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IDataStore,
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
- } from "@fluidframework/runtime-definitions";
-import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
+} from "@fluidframework/runtime-definitions";
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntime>> { }
+/**
+ * @deprecated - This will be removed once https://github.com/microsoft/FluidFramework/issues/9127 is fixed.
+ */
+export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
+    fluidDataStoreChannel?: { bindToContext?(): void; };
 }
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export interface IProvideContainerRuntime {
+    /**
+     * @deprecated - This will be removed in a later release.
+     */
     IContainerRuntime: IContainerRuntime;
 }
 
-export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents{
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
+export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (
-        event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument",
+        event: "dirty" | "disconnected" | "dispose" | "saved" | "attached",
         listener: () => void);
     (event: "connected", listener: (clientId: string) => void);
     (event: "localHelp", listener: (message: IHelpMessage) => void);
-    (
-        event: "fluidDataStoreInstantiated",
-        listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
-    );
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents =
-    IContainerRuntimeBase &  IEventProvider<IContainerRuntimeEvents>;
+    IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
 /*
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
-    Partial<IProvideContainerRuntimeDirtyable>,
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
-    readonly id: string;
-    readonly existing: boolean;
+
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly connected: boolean;
-    readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
-    readonly branch: string;
-    readonly loader: ILoader;
     readonly flushMode: FlushMode;
-    readonly snapshotFn: (message: string) => Promise<void>;
-    readonly scope: IFluidObject;
+    readonly scope: FluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */
@@ -117,15 +113,10 @@ export interface IContainerRuntime extends
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
 
     /**
-     * Used to raise an unrecoverable error on the runtime.
-     */
-    raiseContainerWarning(warning: ContainerWarning): void;
-
-    /**
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
-    isDocumentDirty(): boolean;
+    readonly isDirty: boolean;
 
     /**
      * Flushes any ops currently being batched to the loader

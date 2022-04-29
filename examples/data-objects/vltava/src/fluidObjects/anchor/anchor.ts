@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,7 +9,7 @@ import {
     IFluidLastEditedTracker,
     IProvideFluidLastEditedTracker,
     LastEditedTrackerDataObject,
-} from "@fluidframework/last-edited-experimental";
+} from "@fluid-experimental/last-edited";
 import { IFluidHTMLView, IProvideFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Vltava } from "../vltava";
 
@@ -30,15 +30,16 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
         return this.defaultFluidObjectInternal;
     }
 
-    private static readonly factory = new DataObjectFactory(
-        "anchor",
-        Anchor,
-        [],
-        {},
-        [
-            LastEditedTrackerDataObject.getFactory().registryEntry,
-            Vltava.getFactory().registryEntry,
-        ],
+    private static readonly factory =
+        new DataObjectFactory(
+            "anchor",
+            Anchor,
+            [],
+            {},
+            [
+                LastEditedTrackerDataObject.getFactory().registryEntry,
+                Vltava.getFactory().registryEntry,
+            ],
         );
 
     public static getFactory() {
@@ -65,11 +66,11 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
 
     protected async hasInitialized() {
         this.defaultFluidObjectInternal =
-            (await this.root.get<IFluidHandle>(this.defaultFluidObjectId)?.get())
+            (await this.root.get<IFluidHandle<IFluidHTMLView>>(this.defaultFluidObjectId)?.get())
                 ?.IFluidHTMLView;
 
         this.lastEditedFluidObject =
-            (await this.root.get<IFluidHandle>(this.lastEditedFluidObjectId)?.get())
+            (await this.root.get<IFluidHandle<IFluidLastEditedTracker>>(this.lastEditedFluidObjectId)?.get())
                 ?.IFluidLastEditedTracker;
     }
 }

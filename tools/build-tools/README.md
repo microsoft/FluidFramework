@@ -92,6 +92,8 @@ To build Fluid within VSCode, use Ctrl-Shift-B to break up the build task list a
 Usage: fluid-layer-check <options>
 Options:
      --dot <path>     Generate *.dot for GraphViz
+     --info <path>    Path to the layer graph json file
+     --md [<path>]    Generate PACKAGES.md file for human consumption. (default: current working directory)
      --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
      --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
      --timer          Measure elapsed time of each step
@@ -123,3 +125,7 @@ Currently, this task recognize whether it is the default tsc build to commonjs m
 #### Tslint/Eslint Task
 
 Tslint task only wait for the type definition from it's package dependencies.
+
+## Note about `fluid-bump-version`
+
+This tool assumes that you have a set a remote git ref to `microsoft/FluidFramework`. Note that this ref must be an HTTPS URL - if you are using an SSH ref and get an error saying that a remote cannot be found for the repo, then make sure you add another ref specifically for the HTTPS URL (even if you do not use it otherwise).

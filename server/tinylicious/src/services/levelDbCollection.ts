@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -10,7 +10,7 @@ import * as charwise from "charwise";
 import * as _ from "lodash";
 
 export interface ICollectionProperty {
-    indexes: string[]; // Index structure for the collecion.
+    indexes: string[]; // Index structure for the collection.
     limit?: number;  // Range query maximum fetch. If set, last index should be a number.
 }
 
@@ -38,6 +38,17 @@ async function readStream<T>(stream): Promise<T[]> {
 export class Collection<T> implements ICollection<T> {
     constructor(private readonly db: any,
                 private readonly property: ICollectionProperty) {
+    }
+
+    public aggregate(group: any, options?: any): any {
+        throw new Error("Method Not Implemented");
+    }
+
+    public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
+        throw new Error("Method Not Implemented");
+    }
+    public async distinct(key: any, query: any): Promise<any> {
+        throw new Error("Method Not Implemented");
     }
 
     public async find(query: any, sort?: any): Promise<T[]> {
@@ -112,7 +123,7 @@ export class Collection<T> implements ICollection<T> {
     }
 
     private async insertOneInternal(value: any): Promise<any> {
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             this.db.put(this.getKey(value), value, (error) => {
                 if (error) {
                     reject(error);
@@ -157,8 +168,9 @@ export class Collection<T> implements ICollection<T> {
         const indexLen = isRange ? indexes.length - 1 : indexes.length;
         const queryValues = [];
         for (let i = 0; i < indexLen; ++i) {
-            if (query[indexes[i]] !== undefined) {
-                queryValues.push(query[indexes[i]]);
+            const queryValue = query[indexes[i]];
+            if (queryValue !== undefined) {
+                queryValues.push(isNaN(queryValue) ? queryValue : charwise.encode(Number(queryValue)));
             }
         }
         const key = queryValues.join("!");

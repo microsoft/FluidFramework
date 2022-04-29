@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,7 +7,13 @@ import assert from "assert";
 import { TestThrottlerHelper } from "@fluidframework/server-test-utils";
 import { Throttler } from "../throttler";
 import { IThrottler, ThrottlingError } from "@fluidframework/server-services-core";
+import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import Sinon from "sinon";
+
+const lumberjackEngine = new TestEngine1();
+if (!Lumberjack.isSetupCompleted()) {
+    Lumberjack.setup([lumberjackEngine]);
+}
 
 describe("Throttler", () => {
     beforeEach(() => {

@@ -1,15 +1,24 @@
 {
     "logger": {
         "colorize": true,
-        "morganFormat": "dev",
+        "morganFormat": "json",
         "json": false,
         "level": "info",
         "timestamp": true,
         "label": "winston"
     },
     "mongo": {
-        "endpoint": "mongodb://mongodb:27017",
+        "operationsDbEndpoint": "mongodb://mongodb:27017",
+        "globalDbEndpoint": "mongodb://mongodb:27017",
+        "globalDbEnabled": false,
         "expireAfterSeconds": -1,
+        "createCosmosDBIndexes": false,
+        "bufferMaxEntries": 50,
+        "softDeletionRetentionPeriodMs": 2592000000,
+        "offlineWindowMs": 86400000,
+        "softDeletionEnabled": false,
+        "permanentDeletionEnabled": false,
+        "deletionIntervalMs": 3600000,
         "collectionNames": {
             "deltas": "deltas",
             "rawdeltas": "rawdeltas",
@@ -23,15 +32,23 @@
     },
     "kafka": {
         "lib": {
-            "name": "kafka-node",
+            "name": "rdkafka",
             "endpoint": "kafka:9092",
             "producerPollIntervalMs": 10,
-            "numberOfPartitions": 32,
-            "replicationFactor": 3
+            "numberOfPartitions": 8,
+            "replicationFactor": 1,
+            "rdkafkaOptimizedRebalance": true,
+            "rdkafkaAutomaticConsume": true,
+            "rdkafkaConsumeTimeout": 5,
+            "rdkafkaMaxConsumerCommitRetries": 10
         }
     },
     "zookeeper": {
         "endpoint": "zookeeper:2181"
+    },
+    "storage": {
+        "enableWholeSummaryUpload": false,
+        "storageUrl": "http://gitrest:3000"
     },
     "alfred": {
         "kafkaClientId": "alfred",
@@ -68,13 +85,18 @@
             },
             {
                 "id": "github",
-                "key": "0bea3f87c186991a69245a29dc3f61d2"
+                "key": "create-new-tenants-if-going-to-production"
             },
             {
                 "id": "local",
-                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+                "key": "create-new-tenants-if-going-to-production"
             }
-        ]
+        ],
+        "socketIoAdapter": {
+            "enableCustomSocketIoAdapter": true,
+            "shouldDisableDefaultNamespace": false
+        },
+        "enforceServerGeneratedDocumentId": false
     },
     "client": {
         "type": "browser",
@@ -94,6 +116,9 @@
         "kafkaClientId": "scribe"
     },
     "system": {
+        "httpServer": {
+            "connectionTimeoutMs": 0
+        },
         "topics": {
             "send": "deltas"
         }
@@ -145,11 +170,28 @@
     },
     "foreman": {
         "alfred": "http://alfred:3000",
-        "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
+        "queues": [
+            "paparazziQueue",
+            "augloopQueue",
+            "headlessQueue"
+        ],
         "permissions": {
-            "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
-            "augloopQueue": ["augmentation"],
-            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
+            "paparazziQueue": [
+                "snapshot",
+                "spell",
+                "intel",
+                "translation"
+            ],
+            "augloopQueue": [
+                "augmentation"
+            ],
+            "headlessQueue": [
+                "chain-snapshot",
+                "chain-intel",
+                "chain-translation",
+                "chain-spell",
+                "chain-cache"
+            ]
         }
     },
     "paparazzi": {
@@ -175,14 +217,23 @@
     },
     "error": {
         "track": false,
-        "endpoint" : ""
+        "endpoint": ""
     },
     "worker": {
         "alfredUrl": "http://alfred:3003",
         "serverUrl": "http://localhost:3003",
         "blobStorageUrl": "http://historian:3000",
         "internalBlobStorageUrl": "http://historian:3000",
-        "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
+        "permission": [
+            "snapshot",
+            "spell",
+            "intel",
+            "translation",
+            "chain-snapshot",
+            "chain-spell",
+            "chain-intel",
+            "chain-translation"
+        ]
     },
     "tenantConfig": [
         {
@@ -198,22 +249,22 @@
         },
         {
             "_id": "github",
-            "key": "0bea3f87c186991a69245a29dc3f61d2",
+            "key": "create-new-tenants-if-going-to-production",
             "storage": {
                 "historianUrl": "http://localhost:3001",
                 "internalHistorianUrl": "http://historian:3000",
                 "url": "https://api.github.com",
-                "owner": "kurtb",
-                "repository": "praguedocs",
+                "owner": "gitrepoowner",
+                "repository": "gitrepo",
                 "credentials": {
-                    "user": "praguegit",
-                    "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
+                    "user": "gituser",
+                    "password": "invalid"
                 }
             }
         },
         {
             "_id": "local",
-            "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
+            "key": "create-new-tenants-if-going-to-production",
             "storage": {
                 "historianUrl": "http://localhost:3001",
                 "internalHistorianUrl": "http://historian:3000",

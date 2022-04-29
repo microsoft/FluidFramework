@@ -13,17 +13,20 @@
                 "${workspaceRoot}",
                 "--vscode"
             ],
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "problemMatcher": [
                 {
                     "base": "$tsc",
-                    "fileLocation": "absolute",
+                    "fileLocation": "absolute"
                 },
                 "$tslint5"
             ]
         },
         {
-            "label": "fluid-build $cwd --nolint",
+            "label": "Build Current Tests",
             "type": "process",
             "command": "node",
             "args": [
@@ -31,14 +34,17 @@
                 "--root",
                 "${workspaceRoot}",
                 "--vscode",
-                "--nolint",
+                "-s",
+                "tsc",
+                "-s",
+                "build:test",
                 "${fileDirname}"
             ],
             "group": "build",
             "problemMatcher": [
                 {
                     "base": "$tsc",
-                    "fileLocation": "absolute",
+                    "fileLocation": "absolute"
                 },
                 "$tslint5"
             ]

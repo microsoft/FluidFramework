@@ -1,55 +1,35 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-    LocalDocumentServiceFactory,
-    LocalResolver,
-    createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ITestDriver } from "./interfaces";
-import { pkgVersion } from "./packageVersion";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
 
 export class LocalServerTestDriver implements ITestDriver {
-    /**
-     * @deprecated - We only need this for some back-compat cases. Once we have a release with
-     * all the test driver changes, this will be removed in 0.33
-     */
-    public static createWithOptions(options?: {serviceConfiguration?: {summary?: Partial<ISummaryConfiguration>}}) {
-        const localDriver =  new LocalServerTestDriver();
-        localDriver.reset(options);
-        return localDriver;
-    }
-
-    private _server = LocalDeltaConnectionServer.create();
+    private readonly _server = LocalDeltaConnectionServer.create();
 
     public readonly type = "local";
-    public readonly version = pkgVersion;
-    public get server() {return this._server;}
+    public get version() { return this.api.version; }
+    public get server(): ILocalDeltaConnectionServer { return this._server; }
 
-    createDocumentServiceFactory(): LocalDocumentServiceFactory {
-        return new LocalDocumentServiceFactory(this._server);
+    constructor(private readonly api: LocalDriverApiType = LocalDriverApi) {
+        this._server = api.LocalDeltaConnectionServer.create();
     }
-    createUrlResolver(): LocalResolver {
-        return new LocalResolver();
+
+    createDocumentServiceFactory(): IDocumentServiceFactory {
+        return new this.api.LocalDocumentServiceFactory(this._server);
+    }
+    createUrlResolver(): IUrlResolver {
+        return new this.api.LocalResolver();
     }
     createCreateNewRequest(testId: string): IRequest {
-        return createLocalResolverCreateNewRequest(testId);
+        return this.api.createLocalResolverCreateNewRequest(testId);
     }
 
-    createContainerUrl(testId: string): string {
+    async createContainerUrl(testId: string): Promise<string> {
         return `http://localhost/${testId}`;
-    }
-
-    /**
-     * @deprecated - We only need this for some back-compat cases. Once we have a release with
-     * all the test driver changes, this will be removed in 0.33
-     */
-    public reset(options?: {serviceConfiguration?: {summary?: Partial<ISummaryConfiguration>}}) {
-        this._server?.webSocketServer.close().catch(()=>{});
-        this._server = LocalDeltaConnectionServer.create(undefined, options?.serviceConfiguration as any);
     }
 }

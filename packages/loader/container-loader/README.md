@@ -2,15 +2,24 @@
 
 **Topics covered below:**
 
-- [Fluid loader](#Fluid-loader)
-- [Expectations from host implementers](#Expectations-from-host-implementers)
-- [Expectations from container runtime and data store implementers](#Expectations-from-container-runtime-and-data-store-implementers)
-- [Container Lifetime](#Container-lifetime)
-- [Audience](#Audience)
-- [ClientID and client identification](#ClientId-and-client-identification)
-- [Error Handling](#Error-handling)
-- [Connectivity events](#Connectivity-events)
-- [Readonly states](#Readonly-states)
+- [@fluidframework/container-loader](#fluidframeworkcontainer-loader)
+  - [Fluid Loader](#fluid-loader)
+  - [Expectations from host implementers](#expectations-from-host-implementers)
+  - [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
+  - [Container Lifetime](#container-lifetime)
+    - [Loading](#loading)
+    - [Connectivity](#connectivity)
+    - [Closure](#closure)
+  - [Audience](#audience)
+  - [ClientID and client identification](#clientid-and-client-identification)
+  - [Error handling](#error-handling)
+  - [Connectivity events](#connectivity-events)
+  - [Readonly states](#readonly-states)
+    - [`readonly`](#readonly)
+    - [`permissions`](#permissions)
+    - [`forced`](#forced)
+    - [`storageOnly`](#storageonly)
+  - [Dirty events](#dirty-events)
 
 **Related topics covered elsewhere:**
 
@@ -35,6 +44,7 @@ Please see specific sections for more details on these states and events - this 
 1. ["disconnected" and "connected"](#Connectivity-events) event: Host can either notify user about no connectivity (and potential data loss if container is closed) or disallow edits via `Container.forceReadonly(true)`
 2. ["closed"](#Closure) event: If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & readonly state when it is closed (because of error or not).
 3. ["readonly"](#Readonly-states) event: Host should have some indication to user that container is not editable. User permissions can change over lifetime of Container, but they can't change per connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
+4. [Dirty events](#Dirty-events): Host should have some reasonable UX / workflows to ensure user does not lose edits unexpectedly. I.e. there is enough signals (potentially including blocking user from closing container) ensuring that all user edits make it to storage, unless user explicitly choses to lose such edits.
 
 ## Expectations from container runtime and data store implementers
 
@@ -42,6 +52,7 @@ Please see specific sections for more details on these states and events - this 
 2. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSes in stock implementations of container & data store runtimes provided by Fluid Framework
 3. Respect "["disconnected" and "connected"](#Connectivity-events) states and do not not submit Ops when disconnected.
 4. Respect ["dispose"](#Closure) event and treat it as combination of "readonly" and "disconnected" states. I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes container's code version upgrades).
+5. Notify Container about presence or lack of unsaved changed through IContainerContext.updateDirtyContainerState callback. This is required for [Dirty events](#Dirty-events) to correctly represent state of user edits to host.
 
 ## Container Lifetime
 
@@ -49,11 +60,11 @@ Please see specific sections for more details on these states and events - this 
 
 Container is returned as result of Loader.resolve() call. Loader can cache containers, so if same URI is requested from same loader instance, earlier created container might be returned. This is important, as some of the headers (like `pause`) might be ignored because of Container reuse.
 
-`ILoaderHeader` in [loader.ts](../container-definitions/src/loader.ts) describes properties controlling container loading.
+`ILoaderHeader` in [loader.ts](../../../common/lib/container-definitions/src/loader.ts) describes properties controlling container loading.
 
 ### Connectivity
 
-Usually container is returned when state of container (and data stores) is rehydrated from snapshot. Unless `IRequest.headers.pause` is specified, connection to ordering service will be established at some point (asynchronously) and latest Ops would be processed, allowing local changes to flow form client to server. `Container.connected` indicates whether connection to ordering service is established, and  [Connectivity events](#Connectivity-events) are notifying about connectivity changes.
+Usually container is returned when state of container (and data stores) is rehydrated from snapshot. Unless `IRequest.headers.pause` is specified, connection to ordering service will be established at some point (asynchronously) and latest Ops would be processed, allowing local changes to flow form client to server. `Container.connectionState` indicates whether connection to ordering service is established, and  [Connectivity events](#Connectivity-events) are notifying about connectivity changes. While it's highly recommended for listeners to check initial state at the moment they register for connectivity events, new listeners are called on registration to propagate current state. That is, if a container is disconnected when both "connected" and "disconnected" listeners are installed, newly installed listeners for "disconnected" event will be called on registration.
 
 ### Closure
 
@@ -106,7 +117,7 @@ There are two ways errors are exposed:
 
 Critical errors can show up in #1 & #2 workflows. For example, data store URI may point to a deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
 
-Errors are of [ICriticalContainerError](../container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../container-definitions/src/error.ts) type. Both have `errorType` property, describing type of an error (and appropriate interface of error object):
+Errors are of [ICriticalContainerError](../../../common/lib/container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../../../common/lib/container-definitions/src/error.ts) type. Both have `errorType` property, describing type of an error (and appropriate interface of error object):
 
 ```ts
      readonly errorType: string;
@@ -114,7 +125,7 @@ Errors are of [ICriticalContainerError](../container-definitions/src/error.ts) t
 
 There are 3 sources of errors:
 
-1. [ContainerErrorType](../container-definitions/src/error.ts) - errors & warnings raised at loader level
+1. [ContainerErrorType](../../../common/lib/container-definitions/src/error.ts) - errors & warnings raised at loader level
 2. [OdspErrorType](../../drivers/odsp-driver/src/odspError.ts) and [R11sErrorType](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
 3. Runtime errors, like `"summarizingError"`, `"dataCorruptionError"`. This class of errors is not pre-determined and depends on type of container loaded.
 
@@ -130,11 +141,11 @@ Container raises two events to notify hosting application about connectivity iss
 - `"connected"` event is raised when container is connected and is up-to-date, i.e. changes are flowing between client and server.
 - `"disconnected"` event is raised when container lost connectivity (for any reason).
 
-Container also exposes `Container.connected` property to indicate current state.
+Container also exposes `Container.connectionState` property to indicate current state.
 
 In normal circumstances, container will attempt to reconnect back to ordering service as quickly as possible. But it will scale down retries if computer is offline.  That said, if IThrottlingWarning is raised through `"warning"` handler, then container is following storage throttling policy and will attempt to reconnect after some amount of time (`IThrottlingWarning.retryAfterSeconds`).
 
-Container will also not attempt to reconnect on lost connection if `Container.setAutoReconnect(false)` was called prior to loss of connection. This might be useful if hosting application implements "user away" type of experience to reduce cost on both client and server of maintaining connection while user is away. Calling setAutoReconnect(true) will reenable automatic reconnections, but host might need to allow extra time for reconnection as it likely involves token fetch and processing of a lot of Ops generated by other clients while this client was not connected.
+Container will also not attempt to reconnect on lost connection if `Container.disconnect()` was called prior to loss of connection. This can be useful if the hosting application implements "user away" type of experience to reduce cost on both client and server of maintaining connection while user is away. Calling `Container.connect()` will reenable automatic reconnections, but the host might need to allow extra time for reconnection as it likely involves token fetch and processing of a lot of Ops generated by other clients while it was not connected.
 
 Data stores should almost never listen to these events (see more on [Readonly states](#Readonly-states), and should use consensus DDSes if they need to synchronize activity across clients. DDSes listen for these events to know when to resubmit pending Ops.
 
@@ -145,30 +156,35 @@ Please note that hosts can implement various strategies on how to handle disconn
 It's worth pointing out that being connected does not mean all user edits are preserved on container closure. There is latency in the system, and loader layer does not provide any guarantees here. Not every implementation needs a solution here (games likely do not care), and thus solving this problem is pushed to framework level (i.e. having a data store that can expose `'dirtyDocument'` signal from ContainerRuntime and request route that can return such data store).
 
 ## Readonly states
+User permissions can change over lifetime of Container. They can't change during single connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
 
-`Container.readonlyPermissions` (and `DeltaManager.readonlyPermissions`) indicates to host if file is writable or not. There are two cases when it's true:
+DeltaManager will emit a `"readonly"` event when transitioning to a read-only state. Readonly events are accessible by data stores and DDSes (through ContainerRuntime.deltaManager). It's expected that data stores adhere to requirements and expose read-only (or rather 'no edit') experiences.
+
+`Container.readOnlyInfo` (and `DeltaManager.readOnlyInfo`) indicates to host if file is writable or not.
+### `readonly`
+one of the following:
+- true: Container is readonly. One or more of the additional properties listed below will be true.
+- undefined: Runtime does not know yet if file is writable or not. Currently we get a signal here only when websocket connection is made to the server.
+- false: Container.forceReadonly() was never called or last call was with false, plus it's known that user has write permissions to a file.
+
+### `permissions`
+There are two cases when it's true:
 
 1. User has no write permissions to to modify this container (which usually maps to file in storage, and lack of write permissions by a given user)
 2. Container was closed, either due to critical error, or due to host closing container. See [Container Lifetime](#Container-lifetime) and [Error Handling](#Error-handling) for more details.
 
-Please note that this property (as well as `readonly` property discussed below) can be `undefined` when runtime does not know yet if file is writable or not. Currently we get a signal here only when websocket connection is made to the server.
-
-User permissions can change over lifetime of Container. They can't change during single connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
-
-This value is not affected by `Container.forceReadonly` calls discussed below and can be used by hosts to indicate to users if it's possible to edit a file in the absence of readonly state being overridden via `Container.forceReadonly`.
-
+### `forced`
 Hosts can also force readonly-mode for a container via calling `Container.forceReadonly(true)`. This can be useful in scenarios like:
 
-- Loss of connectivity, in scenarios where host choses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container
+- Loss of connectivity, in scenarios where host chooses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container
 - Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
 
-Container and DeltaManager expose `"readonly"` event and property. It can have 3 states:
+### `storageOnly`
+Storage-only mode is a readonly mode in which the container does not connect to the delta stream and is unable to submit or recieve ops. This is useful for viewing a specific version of a document.
 
-- **true**: One of the following is true:
-  - Container.readonlyPermissions === true
-  - Container.forceReadonly(true) was called
-  - Container is closed
-- **false**: None of the above (Container.forceReadonly was never called or last call was with false), plus it's none that user has write permissions to a file (see below for more details)
-- **undefined**: Same as above, but we do not know yet if current user has write access to a file (because there were no successful connection to ordering service yet).
+## Dirty events
+The Container runtime can communicate with the container to get the container's current state. In response, the container will raise two events - `"dirty"` and `"saved"` events. Transitions between these two events signify presence (or lack of) user changes that were not saved to storage. In other words, if container is dirty, closing it at that moment will result in data loss from user perspective, because not all user changes made it to storage.
+This information can be used by a host to build appropriate UX that allows user to be confident in the platform. For example, a host may chose to show a dialog asking the user if they want to save their changes before closing. Instead of, or in addition to this, the host may choose to show "Saving..." and "Saved" text somewhere in UX. Coupled with lack of connectivity to ordering service (and appropriate notification to the user) that may create enough continuous notification to user not to require a blocking dialog on closing.
+Note that when an active connection is in place, it's just a matter of time before changes will be flushed to storage unless there is some source of continuous local changes being generated that prevents container from ever being fully saved. But if there is no active connection, because the user is offline, for example, then a document may stay in a dirty state for very long time.
 
-Readonly events are accessible by data stores and DDSes (through ContainerRuntime.deltaManager). It's expected that data stores adhere to requirements and expose read-only (or rather 'no edit') experiences.
+`Container.isDirty` can be used to get current state of container.

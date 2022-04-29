@@ -1,9 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { Deferred } from "@fluidframework/common-utils";
+import { ITicketedMessage } from "./messages";
 
 export interface IQueuedMessage {
     topic: string;
@@ -28,18 +29,9 @@ export interface IConsumer {
     readonly topic: string;
 
     /**
-     * Commits consumer checkpoint offset.
+     * Returns true if the consumer is connected
      */
-    commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void>;
-
-    /**
-     * Event Handler.
-     */
-    on(event: "connected", listener: () => void): this;
-    on(event: "data", listener: (message: IQueuedMessage) => void): this;
-    on(event: "rebalancing", listener: (partitions: IPartition[]) => void): this;
-    on(event: "rebalanced", listener: (partitions: IPartitionWithEpoch[]) => void): this;
-    on(event: string, listener: (...args: any[]) => void): this;
+    isConnected(): boolean;
 
     /**
      * Closes the consumer.
@@ -55,6 +47,27 @@ export interface IConsumer {
      * Resumes retrival of messages
      */
     resume(): Promise<void>;
+
+    /**
+     * Commits consumer checkpoint offset.
+     */
+    commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void>;
+
+    /**
+     * Returns the offset of the latest consumsed message
+     * May return undefined if a consumer is not tracking this
+     */
+    getLatestMessageOffset(partitionId: number): number | undefined;
+
+    /**
+     * Event handlers
+     */
+    on(event: "connected" | "disconnected" | "closed" | "paused" | "resumed", listener: () => void): this;
+    on(event: "data", listener: (message: IQueuedMessage) => void): this;
+    on(event: "rebalancing", listener: (partitions: IPartition[]) => void): this;
+    on(event: "rebalanced", listener: (partitions: IPartitionWithEpoch[]) => void): this;
+    on(event: string, listener: (...args: any[]) => void): this;
+    once(event: "connected" | "disconnected" | "closed" | "paused" | "resumed", listener: () => void): this;
 }
 
 /**
@@ -68,12 +81,17 @@ export interface IPendingMessage {
     message: string;
 }
 
-export interface IProducer {
+export interface IProducer<T = ITicketedMessage> {
+    /**
+     * Returns true if the producer is connected
+     */
+    isConnected(): boolean;
+
     /**
      * Sends the message to a queue
+     * @param partitionId Specify this to send the messages to a specific partition. Only RdkafkaProducer supports this.
      */
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    send(messages: object[], tenantId: string, documentId: string): Promise<void>;
+    send(messages: T[], tenantId: string, documentId: string, partitionId?: number): Promise<void>;
 
     /**
      * Closes the underlying connection
@@ -83,9 +101,9 @@ export interface IProducer {
     /**
      * Event handlers
      */
-    on(event: "connected" | "disconnected" | "produced" | "throttled" | "error",
+    on(event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "error",
         listener: (...args: any[]) => void): this;
-    once(event: "connected" | "disconnected" | "produced" | "throttled" | "error",
+    once(event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "error",
         listener: (...args: any[]) => void): this;
 }
 
@@ -94,4 +112,5 @@ export interface IPendingBoxcar {
     tenantId: string;
     deferred: Deferred<void>;
     messages: any[];
+    partitionId?: number;
 }

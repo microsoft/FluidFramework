@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -20,7 +20,7 @@ export class SharedMapUndoRedoHandler {
         map.off("valueChanged", this.mapDeltaHandler);
     }
 
-    private readonly mapDeltaHandler = (changed: IValueChanged, local: boolean, op, target: ISharedMap) => {
+    private readonly mapDeltaHandler = (changed: IValueChanged, local: boolean, target: ISharedMap) => {
         if (local) {
             this.stackManager.pushToCurrentOperation(new SharedMapRevertible(changed, target));
         }

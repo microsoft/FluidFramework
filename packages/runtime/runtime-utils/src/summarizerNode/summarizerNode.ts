@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -16,10 +16,12 @@ import {
     ISequencedDocumentMessage,
     SummaryType,
     ISnapshotTree,
+    SummaryObject,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
+import { ReadAndParseBlob } from "../utils";
 import {
     decodeSummary,
     encodeSummary,
@@ -29,8 +31,8 @@ import {
     IInitialSummary,
     ISummarizerNodeRootContract,
     parseSummaryForSubtrees,
-    ReadAndParseBlob,
-    seqFromTree,
+    parseSummaryTreeForSubtrees,
+    RefreshSummaryResult,
     SummaryNode,
 } from "./summarizerNodeUtils";
 
@@ -55,7 +57,7 @@ export class SummarizerNode implements IRootSummarizerNode {
      * Returns 0 if there is not yet an acked summary.
      */
     public get referenceSequenceNumber() {
-        return this.latestSummary?.referenceSequenceNumber ?? 0;
+        return this._latestSummary?.referenceSequenceNumber ?? 0;
     }
 
     protected readonly children = new Map<string, SummarizerNode>();
@@ -66,8 +68,9 @@ export class SummarizerNode implements IRootSummarizerNode {
     private wipSkipRecursion = false;
 
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
-        assert(this.wipSummaryLogger === undefined, "wipSummaryLogger should not be set yet in startSummary");
-        assert(this.wipReferenceSequenceNumber === undefined, "Already tracking a summary");
+        assert(this.wipSummaryLogger === undefined,
+            0x19f /* "wipSummaryLogger should not be set yet in startSummary" */);
+        assert(this.wipReferenceSequenceNumber === undefined, 0x1a0 /* "Already tracking a summary" */);
 
         this.wipSummaryLogger = summaryLogger;
 
@@ -78,12 +81,13 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
-        assert(this.isTrackingInProgress(), "summarize should not be called when not tracking the summary");
-        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
+        assert(this.isTrackingInProgress(), 0x1a1 /* "summarize should not be called when not tracking the summary" */);
+        assert(this.wipSummaryLogger !== undefined,
+            0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
 
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
-            const latestSummary = this.latestSummary;
+            const latestSummary = this._latestSummary;
             if (latestSummary !== undefined) {
                 this.wipLocalPaths = {
                     localPath: latestSummary.localPath,
@@ -106,12 +110,15 @@ export class SummarizerNode implements IRootSummarizerNode {
         try {
             const result = await this.summarizeInternalFn(fullTree);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
+            if (result.pathPartsForChildren !== undefined) {
+                this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(result.pathPartsForChildren);
+            }
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
             if (this.throwOnError || this.trackingSequenceNumber < this._changeSequenceNumber) {
                 throw error;
             }
-            const latestSummary = this.latestSummary;
+            const latestSummary = this._latestSummary;
             const initialSummary = this.initialSummary;
 
             let encodeParam: EncodeSummaryParam;
@@ -134,9 +141,8 @@ export class SummarizerNode implements IRootSummarizerNode {
                 // No base summary to reference
                 throw error;
             }
-            this.wipSummaryLogger.logException({
+            this.wipSummaryLogger.sendErrorEvent({
                 eventName: "SummarizingWithBasePlusOps",
-                category: "error",
             },
             error);
             const summary = encodeSummary(encodeParam, this.outstandingOps);
@@ -164,12 +170,13 @@ export class SummarizerNode implements IRootSummarizerNode {
         parentPath: EscapedPath | undefined,
         parentSkipRecursion: boolean,
     ) {
-        assert(this.wipSummaryLogger !== undefined, "wipSummaryLogger should have been set in startSummary or ctor");
-        assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
+        assert(this.wipSummaryLogger !== undefined,
+            0x1a3 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
+        assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
         let localPathsToUse = this.wipLocalPaths;
 
         if (parentSkipRecursion) {
-            const latestSummary = this.latestSummary;
+            const latestSummary = this._latestSummary;
             if (latestSummary !== undefined) {
                 // This case the parent node created a failure summary or was reused.
                 // This node and all children should only try to reference their path
@@ -196,7 +203,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         // This should come from wipLocalPaths in normal cases, or from the latestSummary
         // if parentIsFailure or parentIsReused is true.
         // If there is no latestSummary, clearSummary and return before reaching this code.
-        assert(!!localPathsToUse, "Tracked summary local paths not set");
+        assert(!!localPathsToUse, 0x1a5 /* "Tracked summary local paths not set" */);
 
         const summary = new SummaryNode({
             ...localPathsToUse,
@@ -231,31 +238,48 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
+    /**
+     * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
+     * it becomes the latest summary. If the current summary is already ahead (e.g., loaded from a service summary),
+     * we skip the update. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
+     * summary based off of that.
+     * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
+     *          1. The latest summary was not udpated.
+     *          2. The latest summary was updated and the summary corresponding to the params was being tracked.
+     *          3. The latest summary was updated but the summary corresponding to the params was not tracked. In this
+     *             case, the latest summary is updated based on the downloaded snapshot which is also returned.
+     */
     public async refreshLatestSummary(
         proposalHandle: string | undefined,
+        summaryRefSeq: number,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
-    ): Promise<void> {
+    ): Promise<RefreshSummaryResult> {
         if (proposalHandle !== undefined) {
             const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
 
             if (maybeSummaryNode !== undefined) {
                 this.refreshLatestSummaryFromPending(proposalHandle, maybeSummaryNode.referenceSequenceNumber);
-                return;
+                return { latestSummaryUpdated: true, wasSummaryTracked: true };
             }
         }
 
+        // If we have seen a summary same or later as the current one, ignore it.
+        if (this.referenceSequenceNumber >= summaryRefSeq) {
+            return { latestSummaryUpdated: false };
+        }
+
         const snapshotTree = await getSnapshot();
-        const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
-        return this.refreshLatestSummaryFromSnapshot(
-            referenceSequenceNumber,
+        await this.refreshLatestSummaryFromSnapshot(
+            summaryRefSeq,
             snapshotTree,
             undefined,
             EscapedPath.create(""),
             correlatedSummaryLogger,
             readAndParseBlob,
         );
+        return { latestSummaryUpdated: true, wasSummaryTracked: false, snapshot: snapshotTree };
     }
 
     protected refreshLatestSummaryFromPending(
@@ -266,15 +290,15 @@ export class SummarizerNode implements IRootSummarizerNode {
         if (summaryNode === undefined) {
             // This should only happen if parent skipped recursion AND no prior summary existed.
             assert(
-                this.latestSummary === undefined,
-                "Not found pending summary, but this node has previously completed a summary",
+                this._latestSummary === undefined,
+                0x1a6 /* "Not found pending summary, but this node has previously completed a summary" */,
             );
             return;
         } else {
             assert(
                 referenceSequenceNumber === summaryNode.referenceSequenceNumber,
                 // eslint-disable-next-line max-len
-                `Pending summary reference sequence number should be consistent: ${summaryNode.referenceSequenceNumber} != ${referenceSequenceNumber}`,
+                0x1a7 /* `Pending summary reference sequence number should be consistent: ${summaryNode.referenceSequenceNumber} != ${referenceSequenceNumber}` */,
             );
 
             // Clear earlier pending summaries
@@ -283,7 +307,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
-        this.latestSummary = summaryNode;
+        this._latestSummary = summaryNode;
 
         // Propagate update to all child nodes
         for (const child of this.children.values()) {
@@ -308,7 +332,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         const { baseSummary, pathParts } = decodeSummary(snapshotTree, correlatedSummaryLogger);
 
-        this.latestSummary = new SummaryNode({
+        this._latestSummary = new SummaryNode({
             referenceSequenceNumber,
             basePath,
             localPath,
@@ -320,11 +344,11 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
 
         if (pathParts.length > 0) {
-            this.latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
+            this._latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
         }
 
         // Propagate update to all child nodes
-        const pathForChildren = this.latestSummary.fullPathForChildren;
+        const pathForChildren = this._latestSummary.fullPathForChildren;
         await Promise.all(Array.from(this.children)
             .filter(([id]) => {
                 // Assuming subtrees missing from snapshot are newer than the snapshot,
@@ -358,6 +382,15 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
+    public loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree) {
+        // Check base summary to see if it has any additional path parts
+        // separating child SummarizerNodes. Checks for .channels subtrees.
+        const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
+        if (childrenPathPart !== undefined && this._latestSummary !== undefined) {
+            this._latestSummary.additionalPath = EscapedPath.create(childrenPathPart);
+        }
+    }
+
     public async loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: ReadAndParseBlob,
@@ -370,9 +403,8 @@ export class SummarizerNode implements IRootSummarizerNode {
             decodedSummary.pathParts.push(childrenPathPart);
         }
 
-        if (decodedSummary.pathParts.length > 0) {
-            assert(!!this.latestSummary, "Should have latest summary defined during loadBaseSummary");
-            this.latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+        if (decodedSummary.pathParts.length > 0 && this._latestSummary !== undefined) {
+            this._latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
         }
 
         // Defensive assertion: tracking number should already exceed this number.
@@ -381,7 +413,7 @@ export class SummarizerNode implements IRootSummarizerNode {
             const newOpsLatestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
             assert(
                 newOpsLatestSeq <= this.trackingSequenceNumber,
-                "When loading base summary, expected outstanding ops <= tracking sequence number",
+                0x1a9 /* "When loading base summary, expected outstanding ops <= tracking sequence number" */,
             );
         }
 
@@ -396,7 +428,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         if (lastOp !== undefined) {
             assert(
                 lastOp.sequenceNumber < op.sequenceNumber,
-                `Out of order change recorded: ${lastOp.sequenceNumber} > ${op.sequenceNumber}`,
+                0x1aa /* `Out of order change recorded: ${lastOp.sequenceNumber} > ${op.sequenceNumber}` */,
             );
         }
         this.invalidate(op.sequenceNumber);
@@ -419,8 +451,17 @@ export class SummarizerNode implements IRootSummarizerNode {
         return this._changeSequenceNumber > this.referenceSequenceNumber;
     }
 
+    public get latestSummary(): Readonly<SummaryNode> | undefined {
+        return this._latestSummary;
+    }
+
     private readonly canReuseHandle: boolean;
     private readonly throwOnError: boolean;
+    /**
+     * Sequence number of latest tracked op. This updates during recordChange,
+     * but not for invalidate since we don't have the op. If this drifts from
+     * changeSequenceNumber and we try to create a differential summary we assert.
+     */
     private trackingSequenceNumber: number;
 
     /**
@@ -433,7 +474,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
-        private latestSummary?: SummaryNode,
+        private _latestSummary?: SummaryNode,
         private readonly initialSummary?: IInitialSummary,
         protected wipSummaryLogger?: ITelemetryLogger,
     ) {
@@ -458,7 +499,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         createParam: CreateChildSummarizerNodeParam,
         config: ISummarizerNodeConfig = {},
     ): ISummarizerNode {
-        assert(!this.children.has(id), "Create SummarizerNode child already exists");
+        assert(!this.children.has(id), 0x1ab /* "Create SummarizerNode child already exists" */);
 
         const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
         const child = new SummarizerNode(
@@ -494,7 +535,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         let latestSummary: SummaryNode | undefined;
         let changeSequenceNumber: number;
 
-        const parentLatestSummary = this.latestSummary;
+        const parentLatestSummary = this._latestSummary;
         switch (createParam.type) {
             case CreateSummarizerNodeSource.FromAttach: {
                 if (
@@ -518,23 +559,31 @@ export class SummarizerNode implements IRootSummarizerNode {
                 if (this.initialSummary === undefined) {
                     assert(
                         !!parentLatestSummary,
-                        "Cannot create child from summary if parent does not have latest summary");
+                        0x1ac /* "Cannot create child from summary if parent does not have latest summary" */);
                 }
                 // fallthrough to local
             }
             case CreateSummarizerNodeSource.Local: {
                 const parentInitialSummary = this.initialSummary;
                 if (parentInitialSummary !== undefined) {
-                    const childSummary = parentInitialSummary.summary?.summary.tree[id];
+                    let childSummary: SummaryObject | undefined;
+                    if (parentInitialSummary.summary !== undefined) {
+                        const { childrenTree } = parseSummaryTreeForSubtrees(parentInitialSummary.summary.summary);
+                        assert(
+                            childrenTree.type === SummaryType.Tree,
+                            0x1d6 /* "Parent summary object is not a tree" */,
+                        );
+                        childSummary = childrenTree.tree[id];
+                    }
                     if (createParam.type === CreateSummarizerNodeSource.FromSummary) {
-                        // Locally created would not have subtree.
-                        assert(!!childSummary, "Missing child summary tree");
+                        // Locally created would not have differential subtree.
+                        assert(!!childSummary, 0x1ad /* "Missing child summary tree" */);
                     }
                     let childSummaryWithStats: ISummaryTreeWithStats | undefined;
                     if (childSummary !== undefined) {
                         assert(
                             childSummary.type === SummaryType.Tree,
-                            "Child summary object is not a tree",
+                            0x1ae /* "Child summary object is not a tree" */,
                         );
                         childSummaryWithStats = {
                             summary: childSummary,

@@ -1,12 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { globals } from "../jest.config";
 
 // Tests disabled -- requires Tinylicious to be running, which our test environment doesn't do.
-describe("diceRoller", () => {
+describe("external-controller-diceRoller", () => {
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
@@ -15,7 +15,7 @@ describe("diceRoller", () => {
 
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
-        await page.waitFor(() => window["fluidStarted"]);
+        await page.waitFor(() => (window as any).fluidStarted as unknown);
     });
 
     it("loads and there's a button with Roll", async () => {

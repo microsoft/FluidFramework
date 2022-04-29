@@ -1,13 +1,16 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
+import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
+import React from "react";
+import ReactDOM from "react-dom";
 
 import { CollaborativeTextContainer } from "../src/container";
 import { CollaborativeText } from "../src/fluid-object";
+import { CollaborativeTextView } from "../src/view";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -30,11 +33,11 @@ async function createContainerAndRenderInElement(element: HTMLElement, createNew
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<CollaborativeText>(container);
 
-    // For now we will just reach into the FluidObject to render it
-    defaultObject.render(element);
+    // Render it
+    ReactDOM.render(React.createElement(CollaborativeTextView, { text: defaultObject.text }), element);
 
     // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     window["fluidStarted"] = true;
 }
 

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -170,5 +170,17 @@ describe("Buffer isomorphism", () => {
         expect(nodeStringUtf8).toEqual(browserStringUtf8);
         expect(nodeStringUtf8).toEqual("hellothere");
         expect(browserStringUtf8).toEqual("hellothere");
+    });
+
+    test("bufferToString working with IsoBuffer",() => {
+        const test = "aGVsbG90aGVyZQ==";
+
+        const buffer = BufferBrowser.IsoBuffer.from(test, "base64");
+        expect(BufferBrowser.bufferToString(buffer, "base64")).toEqual(test);
+        expect(BufferBrowser.bufferToString(buffer, "utf-8")).toEqual("hellothere");
+
+        const buffer2 = BufferNode.IsoBuffer.from(test, "base64");
+        expect(BufferNode.bufferToString(buffer2, "base64")).toEqual(test);
+        expect(BufferNode.bufferToString(buffer2, "utf-8")).toEqual("hellothere");
     });
 });

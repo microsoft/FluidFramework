@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -21,6 +21,7 @@ import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
+import { create404Response } from "@fluidframework/runtime-utils";
 
 export abstract class LazyLoadedDataObject<
     TRoot extends ISharedObject = ISharedObject,
@@ -47,10 +48,10 @@ export abstract class LazyLoadedDataObject<
 
     // #region IFluidRouter
 
-    public async request({ url }: IRequest): Promise<IResponse> {
-        return url === "" || url === "/"
+    public async request(r: IRequest): Promise<IResponse> {
+        return r.url === "" || r.url === "/"
             ? { status: 200, mimeType: "fluid/object", value: this }
-            : { status: 404, mimeType: "text/plain", value: `Requested URL '${url}' not found.` };
+            : create404Response(r);
     }
 
     // #endregion IFluidRouter
@@ -72,5 +73,6 @@ export abstract class LazyLoadedDataObject<
     // #endregion IFluidLoadable
 
     public abstract create(props?: any);
-    public abstract async load();
+    public abstract load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime,
+         existing: boolean): Promise<void>;
 }

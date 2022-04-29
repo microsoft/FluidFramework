@@ -1,49 +1,32 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { KeyCode, Scheduler, Template } from "@fluid-example/flow-util-lib";
-import { colIndexToName, TableDocument } from "@fluid-example/table-document";
+import { colIndexToName } from "@fluid-example/table-document";
+import { SharedMatrix } from "@fluidframework/matrix";
 import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
 import { TableView } from "./tableview";
 
-const tableTemplate = new Template({
-    tag: "table",
-    props: { className: styles.view, tabIndex: 0, sortable: true },
-    children: [
-        {
-            tag: "caption",
-            children: [{ tag: "span", props: { textContent: "Table" } }],
-        },
-        {
-            tag: "thead",
-            children: [{
-                tag: "tr",
-                ref: "cols",
-            }],
-        },
-        {
-            tag: "tbody",
-            ref: "body",
-        },
-    ],
-});
-
-const rowTemplate = new Template({ tag: "tr" });
-const headerTemplate = new Template({ tag: "th" });
-const cellTemplate = new Template({ tag: "td" });
-const cellInputTemplate = new Template({ tag: "input", props: { className: styles.inputBox } });
-
 // eslint-disable-next-line unicorn/no-unsafe-regex
 const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
 
+const enum KeyCode {
+    tab = "Tab",                    // 9
+    enter = "Enter",                // 13
+    escape = "Escape",              // 27
+    arrowLeft = "ArrowLeft",      // 37
+    arrowUp = "ArrowUp",        // 38
+    arrowRight = "ArrowRight",     // 39
+    arrowDown = "ArrowDown",      // 40
+}
+
 export class GridView {
-    private get numRows() { return this.doc.numRows; }
-    private get numCols() { return this.doc.numCols; }
-    public readonly root = tableTemplate.clone();
+    private get numRows() { return this.matrix.rowCount; }
+    private get numCols() { return this.matrix.colCount; }
+    public readonly root;
 
     private _startRow = 0;
     public get startRow() { return this._startRow; }
@@ -53,9 +36,9 @@ export class GridView {
         this.refreshCells();
     }
 
-    private readonly cols = tableTemplate.get(this.root, "cols");
-    private readonly tbody = tableTemplate.get(this.root, "body");
-    private readonly inputBox = cellInputTemplate.clone() as HTMLInputElement;
+    private readonly cols = document.createElement("tr");
+    private readonly tbody = document.createElement("tbody");
+    private readonly inputBox = document.createElement("input");
     private tdText?: Node;
     private readonly selection = new BorderRect([
         [`${styles.selectedTL}`, `${styles.selectedT}`, `${styles.selectedTR}`],
@@ -64,60 +47,84 @@ export class GridView {
     ]);
     private readonly maxRows = 10;
 
-    private readonly invalidate: (op, local) => void;
-
     private readonly sheetlet: ISheetlet;
 
+    private generateDom() {
+        const root = document.createElement("table");
+        root.classList.add(styles.view);
+        root.tabIndex = 0;
+
+        const caption = document.createElement("caption");
+        const captionSpan = document.createElement("span");
+        captionSpan.textContent = "Table";
+        caption.append(captionSpan);
+
+        const head = document.createElement("thead");
+        head.append(this.cols);
+
+        root.append(caption, head, this.tbody);
+
+        return root;
+    }
+
     constructor(
-        private readonly doc: TableDocument,
+        private readonly matrix: SharedMatrix,
         private readonly tableView: TableView,
     ) {
-        const scheduler = new Scheduler();
-
-        const refreshGrid = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
-
-        this.invalidate = (op, local) => {
-            if (!local) {
-                // Temporarily, we invalidate the entire matrix when we receive a remote op.
-                // This can be improved w/the new SparseMatrix, which makes it easier to decode
-                // the range of cells impacted by matrix ops.
-                for (let row = 0; row < this.doc.numRows; row++) {
-                    for (let col = 0; col < this.doc.numCols; col++) {
-                        this.sheetlet.invalidate(row, col);
-                    }
-                }
-            }
-            refreshGrid();
-        };
-
+        this.root = this.generateDom();
         this.root.addEventListener("click", this.onGridClick as EventListener);
         this.tbody.addEventListener("pointerdown", this.cellPointerDown as EventListener);
         this.tbody.addEventListener("pointermove", this.cellPointerMove as EventListener);
+        this.inputBox.classList.add(styles.inputBox);
         this.inputBox.addEventListener("keydown", this.cellKeyDown);
         this.inputBox.addEventListener("input", this.cellInput);
 
-        this.doc.on("op", this.invalidate);
-
-        const blank = headerTemplate.clone();
+        const blank = document.createElement("th");
         this.cols.appendChild(blank);
 
-        const producer = {
-            get rowCount() { return doc.numRows; },
-            get colCount() { return doc.numCols; },
-            getCell: (row, col) => {
-                const raw = doc.getCellValue(row, col);
-                return typeof raw === "object"
-                    ? undefined
-                    : raw;
-            },
-            openMatrix() { return this; },
-            closeMatrix() { },
-            get matrixProducer() { return this; },
+        this.sheetlet = createSheetletProducer(matrix);
+
+        this.setupMatrixConsumer();
+        this.refreshCells();
+    }
+
+    private setupMatrixConsumer() {
+        let scheduled = false;
+        const scheduleGridRefresh = () => {
+            if (scheduled) {
+                return;
+            }
+
+            requestAnimationFrame(() => {
+                scheduled = false;
+                this.refreshCells();
+            });
+
+            scheduled = true;
         };
 
-        this.sheetlet = createSheetletProducer(producer);
+        const invalidateCells = (rowStart: number, colStart: number, rowCount: number, colCount: number) => {
+            for (let row = rowStart; row < rowStart + rowCount; row++) {
+                for (let col = colStart; col < colStart + colCount; col++) {
+                    this.sheetlet.invalidate(row, col);
+                }
+            }
+            scheduleGridRefresh();
+        };
 
-        this.refreshCells();
+        const matrixReader = {
+            rowsChanged() {
+                scheduleGridRefresh();
+            },
+            colsChanged() {
+                scheduleGridRefresh();
+            },
+            cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number) {
+                invalidateCells(rowStart, colStart, rowCount, colCount);
+            },
+        };
+
+        this.matrix.openMatrix(matrixReader);
     }
 
     private refreshCell(td: HTMLTableCellElement, row: number, col: number) {
@@ -160,7 +167,7 @@ export class GridView {
 
                     // Append any missing columns
                     for (; col < this.numCols; col++) {
-                        const td = cellTemplate.clone() as HTMLTableCellElement;
+                        const td = document.createElement("td");
                         this.refreshCell(td, row, col);
                         tr.appendChild(td);
                     }
@@ -175,13 +182,13 @@ export class GridView {
 
         // Append any missing rows
         for (; row < numRows; row++) {
-            const tr = rowTemplate.clone();
-            const th = headerTemplate.clone();
+            const tr = document.createElement("tr");
+            const th = document.createElement("th");
             th.textContent = `${row + 1}`;
             tr.appendChild(th);
 
             for (let col = 0; col < this.numCols; col++) {
-                const td = cellTemplate.clone() as HTMLTableCellElement;
+                const td = document.createElement("td");
                 this.refreshCell(td, row, col);
                 tr.appendChild(td);
             }
@@ -191,7 +198,7 @@ export class GridView {
 
         // Append any missing col headers
         for (let col = this.cols.childElementCount - 1; col < this.numCols; col++) {
-            const th = headerTemplate.clone();
+            const th = document.createElement("th");
             // Skip placeholder <th> above the row number column.
             if (col >= 0) {
                 th.textContent = `${colIndexToName(col)}`;
@@ -274,10 +281,10 @@ export class GridView {
         const maybeParent = this.inputBox.parentElement as HTMLTableCellElement | null;
         if (maybeParent) {
             const [row, col] = this.getRowColFromTd(maybeParent);
-            const previous = this.doc.getCellValue(row, col);
+            const previous = this.matrix.getCell(row, col);
             const current = this.parseInput(this.inputBox.value);
             if (previous !== current) {
-                this.doc.setCellValue(row, col, current);
+                this.matrix.setCell(row, col, current);
                 this.sheetlet.invalidate(row, col);
             }
             this.refreshCell(maybeParent, row, col);
@@ -291,9 +298,9 @@ export class GridView {
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.tdText = newParent.firstChild!;
-            console.assert(this.tdText.nodeType === Node.TEXT_NODE);
+            console.assert(this.tdText.nodeType === Node.TEXT_NODE, "TableData text has wrong node type!");
 
-            const value = this.doc.getCellValue(row, col);
+            const value = this.matrix.getCell(row, col);
             this.inputBox.value = `${value ?? ""}`;
             newParent.appendChild(this.inputBox);
             this.cellInput();
@@ -313,14 +320,15 @@ export class GridView {
     }
 
     private moveInputByOffset(e: KeyboardEvent, rowOffset: number, colOffset: number) {
+        let _colOffset = colOffset;
         // Allow the left/right arrow keys to move the caret inside the inputBox until the caret
         // is in the first/last character position.  Then move the inputBox.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if ((e.target === this.inputBox) && this.inputBox.selectionStart! >= 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const x = this.inputBox.selectionStart! + colOffset;
+            const x = this.inputBox.selectionStart! + _colOffset;
             if (0 <= x && x <= this.inputBox.value.length) {
-                colOffset = 0;
+                _colOffset = 0;
                 if (rowOffset === 0) {
                     return;
                 }
@@ -350,17 +358,18 @@ export class GridView {
     };
 
     private readonly cellKeyDown = (e: KeyboardEvent) => {
-        /* eslint-disable default-case */
+        /* eslint-disable no-fallthrough */
         switch (e.code) {
             case KeyCode.escape: { this.cancelInput(); break; }
-            case KeyCode.arrowUp: { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
+            case KeyCode.arrowUp: { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */ 0); break; }
             case KeyCode.enter: { this.commitInput(); /* fall-through */ }
-            case KeyCode.arrowDown: { this.moveInputByOffset(e, /* rowOffset: */  1, /* colOffset */  0); break; }
-            case KeyCode.arrowLeft: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */ -1); break; }
+            case KeyCode.arrowDown: { this.moveInputByOffset(e, /* rowOffset: */ 1, /* colOffset */ 0); break; }
+            case KeyCode.arrowLeft: { this.moveInputByOffset(e, /* rowOffset: */ 0, /* colOffset */ -1); break; }
             case KeyCode.tab: { e.preventDefault(); /* fall-through */ }
-            case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); }
+            case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */ 0, /* colOffset */ 1); }
+            default: break;
         }
-        /* eslint-enable default-case */
+        /* eslint-enable no-fallthrough */
     };
 
     public readonly formulaKeypress = (e: KeyboardEvent) => {
@@ -392,17 +401,18 @@ export class GridView {
     }
 
     private getTdFromRowCol(row: number, col: number) {
-        row -= this.startRow;
+        let _row = row;
+        _row -= this.startRow;
 
         // Column heading are outside the <tbody> in <thead>, and therefore we do not need
         // to make adjustments when indexing into children.
         const rows = this.tbody.children;
-        if (row < 0 || row >= rows.length) {
+        if (_row < 0 || _row >= rows.length) {
             return undefined;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const cols = rows.item(row)!.children;
+        const cols = rows.item(_row)!.children;
 
         // Row headings are inside the <tbody>, therefore we need to adjust our column
         // index by +/-1 to skip them.
@@ -414,7 +424,7 @@ export class GridView {
             const [row, col] = this.selection.start;
             // The formula bar should always show raw values, but when a cell is
             // selected for edit it will be showing the raw value
-            const cellValue = this.doc.getCellValue(row, col);
+            const cellValue = this.matrix.getCell(row, col);
             this.tableView.formulaInput = `${cellValue ?? ""}`;
         } else {
             this.tableView.formulaInput = "<multiple selection>";
@@ -427,11 +437,11 @@ export class GridView {
             const [row, col] = this.selection.start;
             const selectedCell = this.getTdFromRowCol(row, col) as HTMLTableDataCellElement;
             if (selectedCell) {
-                const previous = this.doc.getCellValue(row, col);
+                const previous = this.matrix.getCell(row, col);
                 const current = this.parseInput(this.tableView.formulaInput);
                 if (previous !== current) {
                     selectedCell.textContent = `\u200B${current}`;
-                    this.doc.setCellValue(row, col, current);
+                    this.matrix.setCell(row, col, current);
                     this.sheetlet.invalidate(row, col);
                 }
             }
@@ -461,12 +471,13 @@ export class GridView {
     }
 
     private numberToColumnLetter(index: number): string {
-        let colString = String.fromCharCode((index % 26) + 65);
-        index = index / 26;
+        let _index = index;
+        let colString = String.fromCharCode((_index % 26) + 65);
+        _index = _index / 26;
 
-        while (index >= 1) {
-            colString = String.fromCharCode((index % 26) + 64) + colString;
-            index = index / 26;
+        while (_index >= 1) {
+            colString = String.fromCharCode((_index % 26) + 64) + colString;
+            _index = _index / 26;
         }
 
         return colString;

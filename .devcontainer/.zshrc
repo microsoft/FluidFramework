@@ -110,8 +110,36 @@ if [ "$(stat -c '%U' /usr/local/share/npm-global)" != "node" ]; then sudo chown 
 
 # Returns the full path to the root of the current git repo
 function getRepoRoot {
-    git rev-parse --show-toplevel
+    local repoRoot="$(git rev-parse --show-toplevel)"
+
+    if [[ ! -a "$repoRoot/tools/build-tools/src/fluidBuild" ]]; then
+        echo "\nError: Command must be invoked inside a FluidFramework Git repository." >&2
+        return 1
+    else
+        echo "$repoRoot"
+    fi
 }
 
-# Alias 'fb' to the 'fluid-build' command
-alias fb='clear && node "$(getRepoRoot)/node_modules/.bin/fluid-build"'
+# Invoke the 'fluid-build' tool for the current repo, installing it if necessary.
+function fluid-build {
+    local repoRoot="$(getRepoRoot)"
+
+    # Empty string indicates we are not inside a Fluid repo.
+    if [ -z "$repoRoot" ]; then
+        return 1
+    fi
+
+    local binPath="$repoRoot/node_modules/.bin/fluid-build"
+
+    # If needed, install the root packages to pick up currently deployed build-tools.
+    if [[ ! -a "$binPath" ]]; then
+        echo -e "(Installing root NPM packages to retrieve 'build-tools'...)\n"
+        pushd "$repoRoot" && npm i
+        popd
+    fi
+
+    node "$binPath" $@
+}
+
+# Alias 'fb' to the 'fluid-build' function above.
+alias fb='clear && fluid-build'

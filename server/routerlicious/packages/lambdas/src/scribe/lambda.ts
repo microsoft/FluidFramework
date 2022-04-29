@@ -1,50 +1,56 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import assert from "assert";
+import { inspect } from "util";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import {
-    IDocumentMessage,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryNack,
     MessageType,
     ISequencedDocumentAugmentedMessage,
+    ISequencedDocumentSystemMessage,
     IProtocolState,
 } from "@fluidframework/protocol-definitions";
+import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import {
     ControlMessageType,
     extractBoxcar,
     IContext,
     IControlMessage,
     IProducer,
-    IRawOperationMessage,
     IScribe,
     ISequencedOperationMessage,
     IServiceConfiguration,
-    RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
+    IPartitionLambda,
+    LambdaCloseType,
 } from "@fluidframework/server-services-core";
+import {
+    getLumberBaseProperties,
+    Lumber,
+    LumberEventName,
+    Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
-import { SequencedLambda } from "../sequencedLambda";
-import { ICheckpointManager, ISummaryReader, ISummaryWriter } from "./interfaces";
-import { initializeProtocol } from "./utils";
+import { createSessionMetric, logCommonSessionEndMetrics } from "../utils";
+import { ICheckpointManager, IPendingMessageReader, ISummaryReader, ISummaryWriter } from "./interfaces";
+import { initializeProtocol, sendToDeli } from "./utils";
 
-export class ScribeLambda extends SequencedLambda {
+export class ScribeLambda implements IPartitionLambda {
     // Value of the last processed Kafka offset
     private lastOffset: number;
 
     // Pending checkpoint information
-    private pendingCheckpointScribe: IScribe;
-    private pendingCheckpointOffset: IQueuedMessage;
-    private pendingP: Promise<void>;
+    private pendingCheckpointScribe: IScribe | undefined;
+    private pendingCheckpointOffset: IQueuedMessage | undefined;
+    private pendingP: Promise<void> | undefined;
     private readonly pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
 
     // Messages not yet processed by protocolHandler
@@ -55,10 +61,16 @@ export class ScribeLambda extends SequencedLambda {
     private minSequenceNumber = 0;
 
     // Ref of the last client generated summary
-    private lastClientSummaryHead: string;
+    private lastClientSummaryHead: string | undefined;
+
+    // Seqeunce number of the last summarised op
+    private lastSummarySequenceNumber: number | undefined;
 
     // Indicates whether cache needs to be cleaned after processing a message
     private clearCache: boolean = false;
+
+    // Indicates if the lambda was closed
+    private closed: boolean = false;
 
     constructor(
         protected readonly context: IContext,
@@ -66,6 +78,7 @@ export class ScribeLambda extends SequencedLambda {
         protected documentId: string,
         private readonly summaryWriter: ISummaryWriter,
         private readonly summaryReader: ISummaryReader,
+        private readonly pendingMessageReader: IPendingMessageReader | undefined,
         private readonly checkpointManager: ICheckpointManager,
         scribe: IScribe,
         private readonly serviceConfiguration: IServiceConfiguration,
@@ -74,20 +87,18 @@ export class ScribeLambda extends SequencedLambda {
         private term: number,
         private protocolHead: number,
         messages: ISequencedDocumentMessage[],
+        private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
     ) {
-        super(context);
-
         this.lastOffset = scribe.logOffset;
         this.setStateFromCheckpoint(scribe);
-        // Filter and keep messages after protocol state
-        this.pendingMessages = new Deque<ISequencedDocumentMessage>(
-            messages.filter((message) => message.sequenceNumber > scribe.protocolState.sequenceNumber));
+        this.pendingMessages = new Deque<ISequencedDocumentMessage>(messages);
     }
 
-    public async handlerCore(message: IQueuedMessage): Promise<void> {
+    public async handler(message: IQueuedMessage) {
         // Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
         // we had already checkpointed at a given offset.
         if (message.offset <= this.lastOffset) {
+            this.context.checkpoint(message);
             return;
         }
 
@@ -104,11 +115,12 @@ export class ScribeLambda extends SequencedLambda {
                     } else if (value.operation.term > this.term) {
                         const lastSummary = await this.summaryReader.readLastSummary();
                         if (!lastSummary.fromSummary) {
-                            throw Error(`Required summary can't be fetched`);
+                            const errorMsg = `Required summary can't be fetched`;
+                            throw Error(errorMsg);
                         }
                         this.term = lastSummary.term;
                         const lastScribe = JSON.parse(lastSummary.scribe) as IScribe;
-                        this.protocolHead = lastSummary.protocolHead;
+                        this.updateProtocolHead(lastSummary.protocolHead);
                         this.protocolHandler = initializeProtocol(lastScribe.protocolState, this.term);
                         this.setStateFromCheckpoint(lastScribe);
                         this.pendingMessages = new Deque<ISequencedDocumentMessage>(
@@ -128,16 +140,39 @@ export class ScribeLambda extends SequencedLambda {
                     continue;
                 }
 
+                const lastProtocolHandlerSequenceNumber =
+                    this.pendingMessages.peekBack()?.sequenceNumber ?? this.protocolHandler.sequenceNumber;
+
                 // Handles a partial checkpoint case where messages were inserted into DB but checkpointing failed.
-                if (this.pendingMessages.length > 0 &&
-                    value.operation.sequenceNumber <= this.pendingMessages.peekBack().sequenceNumber) {
+                if (value.operation.sequenceNumber <= lastProtocolHandlerSequenceNumber) {
                     continue;
+                }
+
+                // Ensure protocol handler sequence numbers are monotonically increasing
+                if (value.operation.sequenceNumber !== lastProtocolHandlerSequenceNumber + 1) {
+                    // unexpected sequence number. if a pending message reader is available, ask for those ops
+                    if (this.pendingMessageReader !== undefined) {
+                        const from = lastProtocolHandlerSequenceNumber + 1;
+                        const to = value.operation.sequenceNumber - 1;
+                        const additionalPendingMessages = await this.pendingMessageReader.readMessages(from, to);
+                        for (const additionalPendingMessage of additionalPendingMessages) {
+                            this.pendingMessages.push(additionalPendingMessage);
+                        }
+                    } else {
+                        const errorMsg = `Invalid message sequence number.`
+                            + `Current message @${value.operation.sequenceNumber}.`
+                            + `ProtocolHandler @${lastProtocolHandlerSequenceNumber}`;
+                        throw new Error(errorMsg);
+                    }
                 }
 
                 // Add the message to the list of pending for this document and those that we need
                 // to include in the checkpoint
                 this.pendingMessages.push(value.operation);
-                this.pendingCheckpointMessages.push(value);
+
+                if (this.serviceConfiguration.scribe.enablePendingCheckpointMessages) {
+                    this.pendingCheckpointMessages.push(value);
+                }
 
                 // Update the current sequence and min sequence numbers
                 const msnChanged = this.minSequenceNumber !== value.operation.minimumSequenceNumber;
@@ -149,11 +184,6 @@ export class ScribeLambda extends SequencedLambda {
                     this.processFromPending(this.minSequenceNumber);
                 }
 
-                const messageMetaData = {
-                    documentId: this.documentId,
-                    tenantId: this.tenantId,
-                };
-
                 this.clearCache = false;
                 if (value.operation.type === MessageType.Summarize) {
                     // Process up to the summary op ref seq to get the protocol state at the summary op.
@@ -164,7 +194,7 @@ export class ScribeLambda extends SequencedLambda {
                     };
                     this.processFromPending(value.operation.referenceSequenceNumber);
 
-                    // Only process the op if the protocol state advances. This elimiates the corner case where we have
+                    // Only process the op if the protocol state advances. This eliminates the corner case where we have
                     // already captured this summary and are processing this message due to a replay of the stream.
                     if (this.protocolHead < this.protocolHandler.sequenceNumber) {
                         try {
@@ -173,9 +203,6 @@ export class ScribeLambda extends SequencedLambda {
                             const summaryResponse = await this.summaryWriter.writeClientSummary(
                                 operation,
                                 this.lastClientSummaryHead,
-                                this.protocolHandler.minimumSequenceNumber,
-                                this.protocolHandler.sequenceNumber,
-                                this.protocolHandler.quorum.snapshot(),
                                 scribeCheckpoint,
                                 this.pendingCheckpointMessages.toArray(),
                             );
@@ -188,29 +215,50 @@ export class ScribeLambda extends SequencedLambda {
                                 // Otherwise send a nack and revert the protocol state back to pre summary state.
                                 if (summaryResponse.status) {
                                     await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
-                                    await this.sendSummaryConfirmationMessage(operation.sequenceNumber, false);
-                                    this.protocolHead = this.protocolHandler.sequenceNumber;
-                                    this.context.log.info(
-                                        `Client summary success @${value.operation.sequenceNumber}`,
-                                        { messageMetaData },
+                                    await this.sendSummaryConfirmationMessage(operation.sequenceNumber, true, false);
+                                    this.updateProtocolHead(this.protocolHandler.sequenceNumber);
+                                    this.updateLastSummarySequenceNumber(this.protocolHandler.sequenceNumber);
+                                    const summaryResult = `Client summary success @${value.operation.sequenceNumber}`;
+                                    this.context.log?.info(
+                                        summaryResult,
+                                        {
+                                            messageMetaData: {
+                                                documentId: this.documentId,
+                                                tenantId: this.tenantId,
+                                            },
+                                        },
                                     );
+                                    Lumberjack.info(summaryResult,
+                                        getLumberBaseProperties(this.documentId, this.tenantId));
                                 } else {
-                                    await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
-                                    this.context.log.error(
-                                        `Client summary failure @${value.operation.sequenceNumber}`,
-                                        { messageMetaData },
+                                    const nackMessage = summaryResponse.message as ISummaryNack;
+                                    await this.sendSummaryNack(nackMessage);
+                                    const errorMsg = `Client summary failure @${value.operation.sequenceNumber}. `
+                                        + `Error: ${nackMessage.message}`;
+                                    this.context.log?.error(
+                                        errorMsg,
+                                        {
+                                            messageMetaData: {
+                                                documentId: this.documentId,
+                                                tenantId: this.tenantId,
+                                            },
+                                        },
                                     );
+                                    Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId));
                                     this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                                 }
                             }
                         } catch (ex) {
+                            const errorMsg = `Client summary failure @${value.operation.sequenceNumber}`;
+                            this.context.log?.error(`${errorMsg} Exception: ${inspect(ex)}`);
+                            Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), ex);
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
-                            // If this flag is set, we should ignore any storage speciic error and move forward
+                            // If this flag is set, we should ignore any storage specific error and move forward
                             // to process the next message.
                             if (this.serviceConfiguration.scribe.ignoreStorageException) {
                                 await this.sendSummaryNack(
                                     {
-                                        errorMessage: "Failed to summarize the document.",
+                                        message: "Failed to summarize the document.",
                                         summaryProposal: {
                                             summarySequenceNumber: value.operation.sequenceNumber,
                                         },
@@ -246,28 +294,50 @@ export class ScribeLambda extends SequencedLambda {
                                 }
                                 await this.sendSummaryConfirmationMessage(
                                     operation.sequenceNumber,
+                                    false,
                                     this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
-                                this.context.log.info(
-                                    `Service summary success @${operation.sequenceNumber}`, { messageMetaData });
+                                this.updateLastSummarySequenceNumber(operation.sequenceNumber);
+                                const summaryResult = `Service summary success @${operation.sequenceNumber}`;
+                                this.context.log?.info(
+                                    summaryResult,
+                                    {
+                                        messageMetaData: {
+                                            documentId: this.documentId,
+                                            tenantId: this.tenantId,
+                                        },
+                                    },
+                                );
+                                Lumberjack.info(summaryResult, getLumberBaseProperties(this.documentId, this.tenantId));
                             }
                         } catch (ex) {
+                            const errorMsg = `Service summary failure @${operation.sequenceNumber}`;
+
                             // If this flag is set, we should ignore any storage speciic error and move forward
                             // to process the next message.
                             if (this.serviceConfiguration.scribe.ignoreStorageException) {
-                                this.context.log.error(
-                                    `Service summary failure @${operation.sequenceNumber}`, { messageMetaData });
+                                this.context.log?.error(
+                                    errorMsg,
+                                    {
+                                        messageMetaData: {
+                                            documentId: this.documentId,
+                                            tenantId: this.tenantId,
+                                        },
+                                    });
+                                Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), ex);
                             } else {
                                 throw ex;
                             }
                         }
                     }
                 } else if (value.operation.type === MessageType.SummaryAck) {
-                    const content = value.operation.contents as ISummaryAck;
+                    const operation = value.operation as ISequencedDocumentSystemMessage;
+                    const content: ISummaryAck = operation.data ? JSON.parse(operation.data) : operation.contents;
                     this.lastClientSummaryHead = content.handle;
                     // An external summary writer can only update the protocolHead when the ack is sequenced
                     // back to the stream.
                     if (this.summaryWriter.isExternal) {
-                        this.protocolHead = content.summaryProposal.summarySequenceNumber;
+                        this.updateProtocolHead(content.summaryProposal.summarySequenceNumber);
+                        this.updateLastSummarySequenceNumber(content.summaryProposal.summarySequenceNumber);
                     }
                 }
             }
@@ -281,16 +351,40 @@ export class ScribeLambda extends SequencedLambda {
         this.lastOffset = message.offset;
     }
 
-    public close() {
+    public close(closeType: LambdaCloseType) {
+        this.logScribeSessionMetrics(closeType);
+
+        this.closed = true;
         this.protocolHandler.close();
+    }
+
+    private logScribeSessionMetrics(closeType: LambdaCloseType) {
+        if (this.scribeSessionMetric?.isCompleted()) {
+            this.scribeSessionMetric = createSessionMetric(this.tenantId,
+                this.documentId,
+                LumberEventName.ScribeSessionResult,
+                this.serviceConfiguration,
+            );
+        }
+
+        logCommonSessionEndMetrics(
+            this.context as DocumentContext,
+            closeType,
+            this.scribeSessionMetric,
+            this.sequenceNumber,
+            this.protocolHead,
+            undefined,
+        );
     }
 
     // Advances the protocol state up to 'target' sequence number. Having an exception while running this code
     // is crucial and the document is essentially corrupted at this point. We should start logging this and
     // have a better understanding of all failure modes.
     private processFromPending(target: number) {
-        while (this.pendingMessages.length > 0 && this.pendingMessages.peekFront().sequenceNumber <= target) {
-            const message = this.pendingMessages.shift();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        while (this.pendingMessages.length > 0 && this.pendingMessages.peekFront()!.sequenceNumber <= target) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const message = this.pendingMessages.shift()!;
             try {
                 if (message.contents &&
                     typeof message.contents === "string" &&
@@ -302,11 +396,15 @@ export class ScribeLambda extends SequencedLambda {
                     this.protocolHandler.processMessage(message, false);
                 }
             } catch (error) {
-                this.context.log.error(`Protocol error ${error}`,
+                this.context.log?.error(`Protocol error ${error}`,
                     {
-                        documentId: this.documentId,
-                        tenantId: this.tenantId,
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
                     });
+                Lumberjack.error(`Protocol error`, getLumberBaseProperties(this.documentId, this.tenantId), error);
+                throw new Error(`Protocol error ${error} for ${this.documentId} ${this.tenantId}`);
             }
         }
     }
@@ -319,6 +417,7 @@ export class ScribeLambda extends SequencedLambda {
     private generateCheckpoint(logOffset: number): IScribe {
         const protocolState = this.protocolHandler.getProtocolState();
         const checkpoint: IScribe = {
+            lastSummarySequenceNumber: this.lastSummarySequenceNumber,
             lastClientSummaryHead: this.lastClientSummaryHead,
             logOffset,
             minimumSequenceNumber: this.minSequenceNumber,
@@ -329,7 +428,10 @@ export class ScribeLambda extends SequencedLambda {
     }
 
     private checkpointCore(checkpoint: IScribe, queuedMessage: IQueuedMessage, clearCache: boolean) {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        if (this.closed) {
+            return;
+        }
+
         if (this.pendingP) {
             this.pendingCheckpointScribe = checkpoint;
             this.pendingCheckpointOffset = queuedMessage;
@@ -344,16 +446,20 @@ export class ScribeLambda extends SequencedLambda {
                 this.pendingP = undefined;
                 this.context.checkpoint(queuedMessage);
 
-                if (this.pendingCheckpointScribe) {
-                    const pendingScribe = this.pendingCheckpointScribe;
-                    const pendingOffset = this.pendingCheckpointOffset;
+                const pendingScribe = this.pendingCheckpointScribe;
+                const pendingOffset = this.pendingCheckpointOffset;
+                if (pendingScribe && pendingOffset) {
                     this.pendingCheckpointScribe = undefined;
                     this.pendingCheckpointOffset = undefined;
                     this.checkpointCore(pendingScribe, pendingOffset, clearCache);
                 }
             },
             (error) => {
-                this.context.error(error, true);
+                this.context.error(error, {
+                    restart: true,
+                    tenantId: this.tenantId,
+                    documentId: this.documentId,
+                });
             });
     }
 
@@ -365,45 +471,68 @@ export class ScribeLambda extends SequencedLambda {
             // or in memory. In other words, we can only remove messages from memory once there is a copy in the DB
             const lastInsertedSeqNumber = inserts[inserts.length - 1].operation.sequenceNumber;
             while (this.pendingCheckpointMessages.length > 0 &&
-                this.pendingCheckpointMessages.peekFront().operation.sequenceNumber <= lastInsertedSeqNumber) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.pendingCheckpointMessages.peekFront()!.operation.sequenceNumber <= lastInsertedSeqNumber) {
                 this.pendingCheckpointMessages.removeFront();
             }
         }
     }
 
+    /**
+     * Protocol head is the sequence number of the last summary
+     * This method updates the protocol head to the new summary sequence number
+     * @param protocolHead The sequence number of the new summary
+     */
+    private updateProtocolHead(protocolHead: number) {
+        this.protocolHead = protocolHead;
+    }
+
+    /**
+     * lastSummarySequenceNumber tracks the sequence number that was part of the latest summary
+     * This method updates it to the sequence number that was part of the latest summary
+     * @param summarySequenceNumber The sequence number of the operation that was part of the latest summary
+     */
+    private updateLastSummarySequenceNumber(summarySequenceNumber: number) {
+        this.lastSummarySequenceNumber = summarySequenceNumber;
+    }
+
     private async sendSummaryAck(contents: ISummaryAck) {
-        const operation: IDocumentMessage = {
+        const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents,
+            data: JSON.stringify(contents),
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.SummaryAck,
         };
 
-        return this.sendToDeli(operation);
+        return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
     }
 
     private async sendSummaryNack(contents: ISummaryNack) {
-        const operation: IDocumentMessage = {
+        const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents,
+            data: JSON.stringify(contents),
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.SummaryNack,
         };
 
-        return this.sendToDeli(operation);
+        return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
     }
 
     // Sends a confirmation back to deli as a signal to update its DSN. Note that 'durableSequenceNumber (dsn)'
     // runs ahead of last summary sequence number (protocolHead). The purpose of dsn is to inform deli about permanent
     // storage so that it can hydrate its state after a failure. The client's are still reponsible for fetching ops
     // from protocolHead to dsn.
-    private async sendSummaryConfirmationMessage(durableSequenceNumber: number, clearCache: boolean) {
+    private async sendSummaryConfirmationMessage(durableSequenceNumber: number,
+        isClientSummary: boolean, clearCache: boolean) {
         const controlMessage: IControlMessage = {
             type: ControlMessageType.UpdateDSN,
             contents: {
                 durableSequenceNumber,
+                isClientSummary,
                 clearCache,
             },
         };
@@ -417,33 +546,13 @@ export class ScribeLambda extends SequencedLambda {
             type: MessageType.Control,
         };
 
-        return this.sendToDeli(operation);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private sendToDeli(operation: IDocumentMessage | IDocumentSystemMessage): Promise<any> {
-        const message: IRawOperationMessage = {
-            clientId: null,
-            documentId: this.documentId,
-            operation,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
-
-        if (!this.producer) {
-            throw new Error("Invalid producer");
-        }
-
-        return this.producer.send(
-            [message],
-            this.tenantId,
-            this.documentId);
+        return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
     }
 
     private setStateFromCheckpoint(scribe: IScribe) {
         this.sequenceNumber = scribe.sequenceNumber;
         this.minSequenceNumber = scribe.minimumSequenceNumber;
         this.lastClientSummaryHead = scribe.lastClientSummaryHead;
+        this.lastSummarySequenceNumber = scribe.lastSummarySequenceNumber;
     }
 }

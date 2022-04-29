@@ -1,19 +1,32 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import * as services from "@fluidframework/server-services";
 import { getOrCreateRepository } from "@fluidframework/server-services-client";
-import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+    MongoManager,
+    IDb,
+    ISecretManager,
+    IResources,
+    IResourcesFactory,
+    IRunner,
+    IRunnerFactory,
+    IWebServerFactory,
+} from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 
-export class RiddlerResources implements utils.IResources {
+export class RiddlerResources implements IResources {
+    public webServerFactory: IWebServerFactory;
+
     constructor(
+        public readonly config: Provider,
         public readonly tenantsCollectionName: string,
         public readonly mongoManager: MongoManager,
         public readonly port: any,
@@ -23,6 +36,8 @@ export class RiddlerResources implements utils.IResources {
         public readonly defaultInternalHistorianUrl: string,
         public readonly secretManager: ISecretManager,
     ) {
+        const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+        this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
     }
 
     public async dispose(): Promise<void> {
@@ -30,17 +45,25 @@ export class RiddlerResources implements utils.IResources {
     }
 }
 
-export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerResources> {
+export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
     public async create(config: Provider): Promise<RiddlerResources> {
         // Database connection
-        const mongoUrl = config.get("mongo:endpoint") as string;
-        const mongoFactory = new services.MongoDbFactory(mongoUrl);
-        const mongoManager = new MongoManager(mongoFactory);
+        const factory = await services.getDbFactory(config);
+
+        const operationsDbMongoManager = new MongoManager(factory);
         const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
         const secretManager = new services.SecretManager();
 
         // Load configs for default tenants
-        const db = await mongoManager.getDatabase();
+        let globalDbMongoManager;
+        const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+        if (globalDbEnabled) {
+            globalDbMongoManager = new MongoManager(factory, false, null, true);
+        }
+
+        const mongoManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
+        const db: IDb = await mongoManager.getDatabase();
+
         const collection = db.collection<ITenantDocument>(tenantsCollectionName);
         const tenants = config.get("tenantConfig") as any[];
         const upsertP = tenants.map(async (tenant) => {
@@ -51,10 +74,12 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
             // or don't want to automatically create (i.e. GitHub)
             if (!tenant.storage.credentials) {
                 try {
-                    await getOrCreateRepository(tenant.storage.url, tenant.storage.owner, tenant.storage.repository);
+                    const storageUrl = config.get("storage:storageUrl");
+                    await getOrCreateRepository(storageUrl, tenant.storage.owner, tenant.storage.repository);
                 } catch (err) {
                     // This is okay to fail since the repos are alreay created in production.
                     winston.error(`Error creating repos`);
+                    Lumberjack.error(`Error creating repos`, { [BaseTelemetryProperties.tenantId]: tenant._id }, err);
                 }
             }
         });
@@ -67,6 +92,7 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
         const defaultInternalHistorianUrl = config.get("worker:internalBlobStorageUrl") || defaultHistorianUrl;
 
         return new RiddlerResources(
+            config,
             tenantsCollectionName,
             mongoManager,
             port,
@@ -78,9 +104,10 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
     }
 }
 
-export class RiddlerRunnerFactory implements utils.IRunnerFactory<RiddlerResources> {
-    public async create(resources: RiddlerResources): Promise<utils.IRunner> {
+export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
+    public async create(resources: RiddlerResources): Promise<IRunner> {
         return new RiddlerRunner(
+            resources.webServerFactory,
             resources.tenantsCollectionName,
             resources.port,
             resources.mongoManager,

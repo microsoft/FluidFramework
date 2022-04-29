@@ -1,14 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext";
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideFluidDataStoreFactory>> { }
-}
 
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory = "IFluidDataStoreFactory";
 
@@ -29,6 +24,7 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     /**
      * Generates runtime for the data store from the data store context. Once created should be bound to the context.
      * @param context - Context for the data store.
+     * @param existing - If instantiating from an existing file.
      */
-    instantiateDataStore(context: IFluidDataStoreContext): Promise<IFluidDataStoreChannel>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
 }

@@ -7,7 +7,7 @@ of the overall document or a section of it.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
 <!-- The getting started instructions are automatically generated.
-To update them, edit md-magic.config.js in the root of the repo, then run npm run readme:update -->
+To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
 
 ## Getting Started
 
@@ -27,12 +27,6 @@ You can also set a custom status with any text or color.
 
 ![Color picker and custom status UI](./images/color-picker.png)
 
-## History
-
-The history of the Badge is also shown on hover, so users can see how the status has evolved over time.
-
-![Status history UI](./images/history.png)
-
 ## Data model
 
 Badge uses the following distributed data structures:
@@ -40,4 +34,3 @@ Badge uses the following distributed data structures:
 - SharedDirectory - root
 - SharedMap - stores the status options for the Badge
 - SharedCell - represents the Badge's current state
-- SharedObjectSequence - stores the history of status changes

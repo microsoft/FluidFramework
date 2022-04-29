@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -81,7 +81,7 @@ export class VltavaView extends React.Component<IVltavaViewProps, IVltavaViewSta
                 <div style={viewStyle}>
                     <div>
                         <h2>
-                            {this.props.dataModel.getTitle()}
+                            Vltava
                         </h2>
                     </div>
                     <VltavaFacepile users={this.state.users} />

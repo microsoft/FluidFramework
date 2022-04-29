@@ -1,12 +1,14 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { parse } from "url";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
+    IDocumentServicePolicies,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
@@ -18,6 +20,7 @@ import {
     getQuorumValuesFromProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
+import { defaultHash } from "@fluidframework/server-services-client";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
 import { createLocalDocumentService } from "./localDocumentService";
 
@@ -35,14 +38,17 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
      */
     constructor(
         private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
+        private readonly policies?: IDocumentServicePolicies,
         private readonly innerDocumentService?: IDocumentService) { }
 
     public async createContainer(
-        createNewSummary: ISummaryTree,
+        createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
+        assert(!!createNewSummary, 0x202 /* "create empty file not supported" */);
         const pathName = new URL(resolvedUrl.url).pathname;
         const pathArr = pathName.split("/");
         const tenantId = pathArr[pathArr.length - 2];
@@ -66,9 +72,12 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             appSummary,
             sequenceNumber,
             documentAttributes.term ?? 1,
+            defaultHash,
+            resolvedUrl.endpoints.ordererUrl ?? "",
+            resolvedUrl.endpoints.storageUrl ?? "",
             quorumValues,
         );
-        return this.createDocumentService(resolvedUrl, logger);
+        return this.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
     }
 
     /**
@@ -79,6 +88,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
@@ -103,6 +113,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             tenantId,
             documentId,
             this.documentDeltaConnectionsMap,
+            this.policies,
             this.innerDocumentService);
     }
 

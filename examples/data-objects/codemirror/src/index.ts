@@ -1,56 +1,83 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
- import {
-    IContainerContext,
-    IRuntime,
-    IRuntimeFactory,
-} from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
+import { mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import {
-    innerRequestHandler,
-    buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+    requestFluidObject,
+    RequestParser,
+    RuntimeFactoryHelper,
+} from "@fluidframework/runtime-utils";
+import { MountableView } from "@fluidframework/view-adapters";
+import {
+    CodeMirrorComponent,
+    SmdeFactory,
+} from "./codeMirror";
+import {
+    CodeMirrorView,
+} from "./codeMirrorView";
 
-import { fluidExport as smde } from "./codemirror";
+export {
+    CodeMirrorComponent,
+    SmdeFactory,
+} from "./codeMirror";
+export {
+    CodeMirrorView,
+} from "./codeMirrorView";
 
-class CodeMirrorFactory implements IRuntimeFactory {
-    public get IRuntimeFactory() { return this; }
+const defaultComponentId = "default";
 
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+const smde = new SmdeFactory();
+
+const viewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
+    if (request.pathParts.length === 0) {
+        const objectRequest = RequestParser.create({
+            url: ``,
+            headers: request.headers,
+        });
+        const codeMirror = await requestFluidObject<CodeMirrorComponent>(
+            await runtime.getRootDataStore(defaultComponentId),
+            objectRequest);
+        return {
+            status: 200,
+            mimeType: "fluid/view",
+            value: new CodeMirrorView(codeMirror.text, codeMirror.presenceManager),
+        };
+    }
+};
+
+class CodeMirrorFactory extends RuntimeFactoryHelper {
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+        await runtime.createRootDataStore(smde.type, defaultComponentId);
+    }
+
+    public async preInitialize(
+        context: IContainerContext,
+        existing: boolean,
+    ): Promise<ContainerRuntime> {
         const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-            ["@fluid-example/smde", Promise.resolve(smde)],
+            [smde.type, Promise.resolve(smde)],
         ]);
 
-        const defaultComponentId = "default";
-        const defaultComponent = "@fluid-example/smde";
-
-        const runtime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             registry,
             buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler),
-            { generateSummaries: true });
-
-        // Flush mode to manual to batch operations within a turn
-        runtime.setFlushMode(FlushMode.Manual);
-
-        // On first boot create the base component
-        if (!runtime.existing) {
-            await runtime.createRootDataStore(defaultComponent, defaultComponentId);
-        }
+                mountableViewRequestHandler(MountableView, [viewRequestHandler]),
+            ),
+            undefined, // runtimeOptions
+            undefined, // containerScope
+            existing,
+        );
 
         return runtime;
     }
 }
 
 export const fluidExport = new CodeMirrorFactory();
-
-export const instantiateRuntime =
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    (context: IContainerContext): Promise<IRuntime> => fluidExport.instantiateRuntime(context);

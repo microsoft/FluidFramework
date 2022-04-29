@@ -1,13 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import * as readline from "readline";
 import { IKeyValue } from "@fluid-example/key-value-cache";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<string> {
     return new Promise<string>((resolve) => {
         input.question(prompt, (answer) => resolve(answer));
@@ -17,7 +16,7 @@ async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<
 /**
  * A simple command line utility to interact with the key-value-cache fluidObject.
  */
-export async function launchCLI(fluidObject: IFluidObject) {
+export async function launchCLI(fluidObject: FluidObject<IKeyValue>) {
     const keyValue: IKeyValue | undefined = fluidObject.IKeyValue;
     if (keyValue === undefined) {
         return;

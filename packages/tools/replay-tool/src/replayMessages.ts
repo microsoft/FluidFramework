@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,17 +7,9 @@ import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
 import { assert, Lazy } from "@fluidframework/common-utils";
-import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { IContainer } from "@fluidframework/container-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
-import {
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
-    IResolvedUrl,
-    IUrlResolver,
-} from "@fluidframework/driver-definitions";
 import {
     FileDeltaStorageService,
     FileDocumentServiceFactory,
@@ -38,7 +30,14 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
-import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import stringify from "json-stable-stringify";
+import {
+    compareWithReferenceSnapshot,
+    getNormalizedFileSnapshot,
+    loadContainer,
+    uploadSummary,
+} from "./helpers";
+import { ReplayArgs } from "./replayArgs";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -46,7 +45,6 @@ try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     threads = require("worker_threads");
 } catch (error) { }
-import { ReplayArgs } from "./replayArgs";
 
 function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
@@ -70,21 +68,6 @@ function expandTreeForReadability(tree: ITree): ITree {
 }
 
 /**
- * Helper function that normalizes the snapshot trees in the given file snapshot.
- * @returns the normalized file snapshot.
- */
-function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
-    const normalizedSnapshot: IFileSnapshot = {
-        commits: {},
-        tree: getNormalizedSnapshot(snapshot.tree),
-    };
-    for (const commit of Object.keys(snapshot.commits)) {
-        normalizedSnapshot.commits[commit] = getNormalizedSnapshot(snapshot.commits[commit]);
-    }
-    return normalizedSnapshot;
-}
-
-/**
  * Helper class to container information about particular snapshot
  */
 class ContainerContent {
@@ -96,17 +79,18 @@ class ContainerContent {
 
     public constructor(public readonly op: number) {
         this._normalizedSnapshot = new Lazy(() => {
-            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it");
+            assert(this.snapshot !== undefined, 0x1c5 /* "snapshot should be set before retrieving it" */);
             return getNormalizedFileSnapshot(this.snapshot);
         });
 
         this._snapshotAsString = new Lazy(() => {
-            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it");
-            return JSON.stringify(this.snapshot, undefined, 2);
+            assert(this.snapshot !== undefined, 0x1c6 /* "snapshot should be set before retrieving it" */);
+            return stringify(this.snapshot, { space: 2 });
         });
 
         this._snapshotExpanded = new Lazy(() => {
-            assert(this.snapshot !== undefined, "snapshot should be set before retreiving it as expanded string");
+            assert(this.snapshot !== undefined,
+                0x1c7 /* "snapshot should be set before retrieving it as expanded string" */);
             const snapshotExpanded: IFileSnapshot = {
                 commits: {},
                 tree: expandTreeForReadability(this.snapshot.tree),
@@ -114,7 +98,7 @@ class ContainerContent {
             for (const commit of Object.keys(this.snapshot.commits)) {
                 snapshotExpanded.commits[commit] = expandTreeForReadability(this.snapshot.commits[commit]);
             }
-            return JSON.stringify(snapshotExpanded, undefined, 2);
+            return stringify(snapshotExpanded, { space: 2 });
         });
     }
 
@@ -150,7 +134,7 @@ class Logger implements ITelemetryBaseLogger {
             const stack: string | undefined = event.stack as string | undefined;
             delete event.stack;
             const error = new Error(`An error has been logged from ${this.containerDescription}!\n
-                        ${JSON.stringify(event)}`);
+                        ${stringify(event)}`);
             error.stack = stack;
             // throw instead of printing an error to fail tests
             throw error;
@@ -159,35 +143,13 @@ class Logger implements ITelemetryBaseLogger {
 }
 
 /**
- * URL Resolver object
- */
-class ContainerUrlResolver implements IUrlResolver {
-    constructor(private readonly cache?: Map<string, IResolvedUrl>) {
-    }
-
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (!this.cache.has(request.url)) {
-            return Promise.reject(new Error(`ContainerUrlResolver can't resolve ${request}`));
-        }
-        return this.cache.get(request.url);
-    }
-
-    public async getAbsoluteUrl(
-        resolvedUrl: IResolvedUrl,
-        relativeUrl: string,
-    ): Promise<string> {
-        throw new Error("Not implemented");
-    }
-}
-
-/**
  * Helper class holding container and providing load / snapshot capabilities
  */
 class Document {
-    private container: Container;
+    private container: IContainer;
     private replayer: Replayer;
     private documentSeqNumber = 0;
-    private from = -1;
+    private from: number = -1;
     private snapshotFileName: string = "";
     private docLogger: TelemetryLogger;
     private originalSummarySeqs: number[];
@@ -231,10 +193,13 @@ class Document {
             deltaStorageService,
             deltaConnection);
 
-        this.container = await this.loadContainer(
+        this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
+        this.container = await loadContainer(
             documentServiceFactory,
-            this.containerDescription,
-            errorHandler);
+            FileStorageDocumentName,
+            this.args.strictChannels,
+            this.docLogger,
+        );
 
         this.from = this.container.deltaManager.lastSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
@@ -264,17 +229,16 @@ class Document {
         const fetched = this.replayer.replay(replayTo);
 
         if (fetched > 0 && this.documentSeqNumber !== this.currentOp) {
-            await new Promise((resolve) => {
+            await new Promise<void>((resolve) => {
                 this.resolveC = resolve;
             });
-            assert(this.documentSeqNumber === this.currentOp);
+            assert(this.documentSeqNumber === this.currentOp,
+                0x1c8 /* "Mismatch between document sequence number and current op number" */);
         }
     }
 
-    public async snapshot() {
-        return this.container.snapshot(
-            `ReplayTool Snapshot: op ${this.currentOp}, ${this.getFileName()}`,
-            !this.args.incremental /* generateFullTreeNoOtimizations */);
+    public async summarize() {
+        await uploadSummary(this.container);
     }
 
     public extractContent(): ContainerContent {
@@ -294,66 +258,6 @@ class Document {
     }
 
     private resolveC = () => { };
-
-    private async loadContainer(
-        documentServiceFactory: IDocumentServiceFactory,
-        containerDescription: string,
-        errorHandler: (event: ITelemetryBaseEvent) => boolean,
-    ): Promise<Container> {
-        const resolved: IFluidResolvedUrl = {
-            endpoints: {
-                deltaStorageUrl: "replay.com",
-                ordererUrl: "replay.com",
-                storageUrl: "replay.com",
-            },
-            tokens: {},
-            type: "fluid",
-            url: `fluid-file://localhost:6000/fluid/${FileStorageDocumentName}`,
-        };
-
-        const urlResolver = new ContainerUrlResolver(
-            new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-        const chaincode = new API.Chaincode(() => {
-            throw new Error("Can't close Document");
-        });
-        const codeLoader = new API.CodeLoader({ generateSummaries: false },
-            [
-                ["@ms/atmentions", Promise.resolve(chaincode)],
-                ["@ms/augloop", Promise.resolve(chaincode)],
-                ["@ms/catalog", Promise.resolve(chaincode)],
-                ["@ms/scriptor", Promise.resolve(chaincode)],
-                ["@ms/discover", Promise.resolve(chaincode)],
-                ["@ms/registro", Promise.resolve(chaincode)],
-                ["@ms/formula", Promise.resolve(chaincode)],
-                ["@ms/application-services", Promise.resolve(chaincode)],
-                ["@ms/undo-stack", Promise.resolve(chaincode)],
-                ["@ms/commanding-surface", Promise.resolve(chaincode)],
-                ["@ms/dias", Promise.resolve(chaincode)],
-                ["@ms/scriptor/Titulo", Promise.resolve(chaincode)],
-                ["@fluidx/tasks", Promise.resolve(chaincode)],
-                ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
-                ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
-                ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
-                ["LastEditedComponent", Promise.resolve(chaincode)],
-                ["OfficeRootComponent", Promise.resolve(chaincode)],
-            ]);
-        const options = {};
-
-        // Load the Fluid document
-        this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
-        const loader = new Loader({
-            urlResolver,
-            documentServiceFactory,
-            codeLoader,
-            options,
-            logger: this.docLogger,
-        });
-        const container: Container = await loader.resolve({ url: resolved.url });
-
-        assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
-
-        return container;
-    }
 }
 
 /**
@@ -397,7 +301,8 @@ export class ReplayTool {
         } else if (threads.isMainThread) {
             process.stdout.write("\n");
         }
-        assert(this.documentsFromStorageSnapshots.length === 0);
+        assert(this.documentsFromStorageSnapshots.length === 0,
+            0x1c9 /* "Leftover documents after replay!" */);
 
         process.removeListener("unhandledRejection", listener);
 
@@ -432,7 +337,7 @@ export class ReplayTool {
     }
 
     private errorHandler(event: ITelemetryBaseEvent): boolean {
-        const errorString = JSON.stringify(event);
+        const errorString = stringify(event);
         // Snapshots errors are both reported to telemetry and propagated to caller
         // So if we d not filter them out, we report them twice.
         // Avoid that, but have a safety net - increase error count, so that tool
@@ -443,11 +348,20 @@ export class ReplayTool {
             }
             return false;
         }
+
+        // GC will consider unreferenced node in old documents to be inactive. When such nodes receive ops or are
+        // loaded, GC will log an error. Ignore those errors since we don't care about them when replaying old docs.
+        if (event.eventName.includes("GarbageCollector:inactiveObject_")
+            // there is something wrong with summary ops, but we don't run the summarizer, so it shouldn't matter
+            || event.eventName.includes("SummaryAckWithoutOp")
+        ) {
+            return false;
+        }
+
         return this.shouldReportError(errorString);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private loadDoc(doc: Document) {
+    private async loadDoc(doc: Document) {
         return doc.load(
             this.deltaStorageService,
             (event) => this.errorHandler(event));
@@ -463,8 +377,35 @@ export class ReplayTool {
 
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
 
-        this.storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
-        let description = this.args.version ? this.args.version : "main container";
+        // Can't load files from ops any more, due to detached container creation
+        // If there are snapshots present (from fetch tool), find latest snapshot and load from it.
+        if (this.args.fromVersion === undefined) {
+            for (const name of fs.readdirSync(this.args.inDirName)) {
+                if (name.indexOf("9-") === 0) {
+                    // It can be any file, even created not detached and downloaded by fetch-tool
+                    // Do quick and ugly test to see if it's for sequenceNumber <= 1.
+                    // Note we rely here on a fact that .attributes are always downloaded by fetch tool first
+                    // and places as 0-... file. That may change in the future - better test would be to read
+                    // a tree.json and find actual .attributes blob
+                    const dir = `${this.args.inDirName}/${name}/decoded`;
+                    for (const file of fs.readdirSync(dir)) {
+                        try {
+                            if (file.indexOf("0-") === 0 &&
+                                JSON.parse(fs.readFileSync(`${dir}/${file}`).toString("utf-8")).sequenceNumber <= 1) {
+                                this.args.fromVersion = name;
+                            }
+                        } catch (err) {}
+                    }
+                    if (this.args.fromVersion === undefined) {
+                        // eslint-disable-next-line max-len
+                        console.error(`Failed to parse ${name} snapshot to find .attributes blob and check sequence number. This may result in failure to process file. In such case, please point to any snapshot via --from argument.`);
+                    }
+                }
+            }
+        }
+
+        this.storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
+        let description = this.args.fromVersion ? this.args.fromVersion : "main container";
         this.mainDocument = new Document(this.args, this.storage, description);
         await this.loadDoc(this.mainDocument);
         this.documents.push(this.mainDocument);
@@ -472,8 +413,10 @@ export class ReplayTool {
             this.args.from = this.mainDocument.fromOp;
         }
 
-        if (this.args.version !== undefined) {
-            console.log(`Starting from ${this.args.version}, seq# = ${this.mainDocument.currentOp}`);
+        if (this.args.fromVersion !== undefined) {
+            if (this.args.verbose) {
+                console.log(`Starting from ${this.args.fromVersion}, seq# = ${this.mainDocument.currentOp}`);
+            }
             if (this.mainDocument.currentOp > this.args.to) {
                 return Promise.reject(new Error("--to argument is below snapshot starting op. Nothing to do!"));
             }
@@ -484,7 +427,7 @@ export class ReplayTool {
                 let storage;
                 if (node.isDirectory()) {
                     // Did we load it already as main doc?
-                    if (node.name === this.args.version) {
+                    if (node.name === this.args.fromVersion) {
                         continue;
                     }
 
@@ -519,7 +462,7 @@ export class ReplayTool {
                         this.documents.push(doc);
                     }
                 } catch (error) {
-                    doc.logger.logException({ eventName: "FailedToLoadSnapshot" }, error);
+                    doc.logger.sendErrorEvent({ eventName: "FailedToLoadSnapshot" }, error);
                 }
             }
         }
@@ -527,8 +470,8 @@ export class ReplayTool {
         // This does not seem to provide much value, we can disable it for per reasons
         // It adds about 10% to the duration of the test.
         if (this.args.snapFreq !== undefined || this.args.validateStorageSnapshots) {
-            const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
-            description = this.args.version ? this.args.version : "secondary container";
+            const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
+            description = this.args.fromVersion ? this.args.fromVersion : "secondary container";
             this.documentNeverSnapshot = new Document(this.args, storage, description);
             await this.loadDoc(
                 this.documentNeverSnapshot);
@@ -543,7 +486,7 @@ export class ReplayTool {
                     continue;
                 }
                 // Did we load it already as main doc?
-                if (node.name === this.args.version) {
+                if (node.name === this.args.fromVersion) {
                     continue;
                 }
 
@@ -566,7 +509,7 @@ export class ReplayTool {
                         this.documentsFromStorageSnapshots.push(doc);
                     }
                 } catch (error) {
-                    doc.logger.logException({ eventName: "FailedToLoadSnapshot" }, error);
+                    doc.logger.sendErrorEvent({ eventName: "FailedToLoadSnapshot" }, error);
                 }
             }
             this.documentsFromStorageSnapshots.sort((a: Document, b: Document) => a.fromOp > b.fromOp ? 1 : -1);
@@ -575,20 +518,16 @@ export class ReplayTool {
 
     private async mainCycle() {
         const originalSummaries =
-            this.args.snapFreq === undefined ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
-        let nextSnapPoint;
-        do {
-            nextSnapPoint = originalSummaries.shift() ?? this.args.from;
-        } while (nextSnapPoint < this.args.from);
+            this.args.testSummaries
+            ? this.mainDocument.originalSummarySequenceNumbers.filter((s) => s >= this.args.from)
+            : [];
+        let nextSnapPoint = -1;
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const currentOp = this.mainDocument.currentOp;
             if (nextSnapPoint <= currentOp) {
-                if (this.args.snapFreq !== undefined) {
-                    nextSnapPoint = currentOp + this.args.snapFreq;
-                } else {
-                    nextSnapPoint = originalSummaries.shift() ?? this.args.to;
-                }
+                nextSnapPoint = originalSummaries.shift() ??
+                    (this.args.snapFreq !== undefined ? currentOp + this.args.snapFreq : this.args.to);
             }
             let replayTo = Math.min(nextSnapPoint, this.args.to);
 
@@ -597,7 +536,7 @@ export class ReplayTool {
                 replayTo = Math.min(replayTo, op);
             }
 
-            assert(replayTo > currentOp);
+            assert(replayTo > currentOp, 0x1ca /* "replay-to target is <= current op in replay cycle" */);
             for (const doc of this.documents) {
                 await doc.replay(replayTo);
             }
@@ -606,14 +545,14 @@ export class ReplayTool {
             }
 
             const final = this.mainDocument.currentOp < replayTo || this.args.to <= this.mainDocument.currentOp;
-            await this.generateSnapshot(final);
+            await this.generateSummary(final);
             if (final) {
                 break;
             }
         }
     }
 
-    private async generateMainSnapshot(dir: string, final: boolean): Promise<ContainerContent> {
+    private async generateMainSummary(dir: string, final: boolean): Promise<ContainerContent> {
         const op = this.mainDocument.currentOp;
 
         const content = this.mainDocument.extractContent();
@@ -621,9 +560,10 @@ export class ReplayTool {
         this.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
             content.snapshot = snapshot;
             if (this.args.compare) {
-                this.compareWithReferenceSnapshot(
+                compareWithReferenceSnapshot(
                     content.normalizedSnapshot,
-                    `${dir}/${this.mainDocument.getFileName()}`);
+                    `${dir}/${this.mainDocument.getFileName()}`,
+                    (description: string, error?: any) => this.reportError(description, error));
             } else if (this.args.write) {
                 fs.mkdirSync(dir, { recursive: true });
                 this.expandForReadabilityAndWriteOut(
@@ -640,7 +580,7 @@ export class ReplayTool {
             }
         }
 
-        await this.mainDocument.snapshot();
+        await this.mainDocument.summarize();
         if (final) {
             this.mainDocument.close();
         }
@@ -668,9 +608,11 @@ export class ReplayTool {
 
         const startOp = op - this.args.overlappingContainers * this.args.snapFreq;
         while (this.documentsWindow.length > 0
+            // eslint-disable-next-line no-unmodified-loop-condition
             && (final || this.documentsWindow[0].fromOp <= startOp)) {
             const doc = this.documentsWindow.shift();
-            assert(doc.fromOp === startOp || final);
+            assert(doc.fromOp === startOp || final,
+                0x1cb /* "Bad window to verify snapshot" */);
             await this.saveAndVerify(doc, dir, content, final);
         }
     }
@@ -687,7 +629,7 @@ export class ReplayTool {
         }
         if (processVersionedSnapshot) {
             this.documentPriorSnapshot = this.documentsFromStorageSnapshots.shift();
-            assert(this.documentPriorSnapshot.fromOp === op);
+            assert(this.documentPriorSnapshot.fromOp === op, 0x1cc /* "Unexpected previous snapshot op number" */);
             await this.saveAndVerify(this.documentPriorSnapshot, dir, content, final)
                 .catch((e) => {
                     const from = this.documentPriorSnapshot.containerDescription;
@@ -718,11 +660,11 @@ export class ReplayTool {
         await this.saveAndVerify(this.documentPriorWindow, dir, content, final);
     }
 
-    private async generateSnapshot(final: boolean) {
+    private async generateSummary(final: boolean) {
         const op = this.mainDocument.currentOp;
         const dir = this.args.outDirName; // `${this.args.outDirName}/${op}`;
 
-        const content = await this.generateMainSnapshot(dir, final);
+        const content = await this.generateMainSummary(dir, final);
         if (content.snapshot === undefined) {
             // Snapshots are not created if there is no "code" proposal
             // It takes some number of ops to get there (join, propose)
@@ -750,7 +692,7 @@ export class ReplayTool {
             // FluidFetchReaderFileSnapshotWriter.write()
             const summaryTree = await container.summarize(true);
             const file = `${dir}/summary.json`;
-            fs.writeFileSync(file, JSON.stringify(summaryTree, undefined, 2));
+            fs.writeFileSync(file, stringify(summaryTree, undefined, 2));
         }
         */
     }
@@ -771,7 +713,7 @@ export class ReplayTool {
             content2.snapshot = snapshot;
         };
 
-        await document2.snapshot();
+        await document2.summarize();
         if (final) {
             document2.close();
         }
@@ -836,35 +778,6 @@ export class ReplayTool {
                 `${filename}_expanded.json`,
                 content.snapshotExpanded,
                 { encoding: "utf-8" });
-        }
-    }
-
-    private compareWithReferenceSnapshot(snapshot: IFileSnapshot, referenceSnapshotFilename: string) {
-        // Read the reference snapshot and covert it to normalized IFileSnapshot.
-        const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
-        const referenceSnapshot = getNormalizedFileSnapshot(JSON.parse(referenceSnapshotString));
-
-        /**
-         * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
-         * package versions with X before we compare them. This is how it will looks like:
-         * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
-         * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
-         */
-        const packageVersionRegex = /\\"packageversion\\":\\".+\\"/gi;
-        const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
-
-        const normalizedSnapshot = JSON.parse(
-            JSON.stringify(snapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
-        );
-        const normalizedReferenceSnapshot = JSON.parse(
-            JSON.stringify(referenceSnapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
-        );
-
-        // Put the assert in a try catch block, so that we can report errors, if any.
-        try {
-            strict.deepStrictEqual(normalizedSnapshot, normalizedReferenceSnapshot);
-        } catch (error) {
-            this.reportError(`Mismatch in snapshot ${referenceSnapshotFilename}.json`, error);
         }
     }
 }

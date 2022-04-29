@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -11,8 +11,9 @@ import {
     ITenantOrderer,
     ITenantCustomData,
 } from "@fluidframework/server-services-core";
-import { Response, Router } from "express";
-import { getParam } from "../utils";
+import { handleResponse } from "@fluidframework/server-services";
+import { Router } from "express";
+import { getParam } from "@fluidframework/server-services-utils";
 import { TenantManager } from "./tenantManager";
 
 export function create(
@@ -32,19 +33,15 @@ export function create(
         defaultInternalHistorianUrl,
         secretManager);
 
-    function returnResponse<T>(resultP: Promise<T>, response: Response) {
-        resultP.then(
-            (result) => response.status(200).json(result),
-            (error) => response.status(400).end(error.toString()));
-    }
-
     /**
      * Validates a tenant token. This only confirms that the token was correctly signed by the given tenant.
      * Clients still need to verify the claims.
      */
     router.post("/tenants/:id/validate", (request, response) => {
-        const validP = manager.validateToken(getParam(request.params, "id"), request.body.token);
-        returnResponse(validP, response);
+        const tenantId = getParam(request.params, "id");
+        const includeDisabledTenant = getIncludeDisabledFlag(request);
+        const validP = manager.validateToken(tenantId, request.body.token, includeDisabledTenant);
+        handleResponse(validP, response);
     });
 
     /**
@@ -52,24 +49,28 @@ export function create(
      */
     router.get("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const tenantP = manager.getTenant(tenantId);
-        returnResponse(tenantP, response);
+        const includeDisabledTenant = getIncludeDisabledFlag(request);
+        const tenantP = manager.getTenant(tenantId, includeDisabledTenant);
+        handleResponse(tenantP, response);
     });
 
     /**
      * Retrieves list of all tenants
      */
     router.get("/tenants", (request, response) => {
-        const tenantP = manager.getAllTenants();
-        returnResponse(tenantP, response);
+        const includeDisabledTenant = getIncludeDisabledFlag(request);
+        const tenantP = manager.getAllTenants(includeDisabledTenant);
+        handleResponse(tenantP, response);
     });
 
     /**
      * Retrieves the api key for the tenant
      */
-    router.get("/tenants/:id/key", (request, response) => {
-        const tenantP = manager.getTenantKey(getParam(request.params, "id"));
-        returnResponse(tenantP, response);
+    router.get("/tenants/:id/keys", (request, response) => {
+        const tenantId = getParam(request.params, "id");
+        const includeDisabledTenant = getIncludeDisabledFlag(request);
+        const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant);
+        handleResponse(tenantP, response);
     });
 
     /**
@@ -77,7 +78,7 @@ export function create(
      */
     router.put("/tenants/:id/storage", (request, response) => {
         const storageP = manager.updateStorage(getParam(request.params, "id"), request.body);
-        returnResponse(storageP, response);
+        handleResponse(storageP, response);
     });
 
     /**
@@ -85,7 +86,7 @@ export function create(
      */
     router.put("/tenants/:id/orderer", (request, response) => {
         const storageP = manager.updateOrderer(getParam(request.params, "id"), request.body);
-        returnResponse(storageP, response);
+        handleResponse(storageP, response);
     });
 
     /**
@@ -94,7 +95,7 @@ export function create(
     router.put("/tenants/:id/customData", (request, response) => {
         const tenantId = getParam(request.params, "id");
         const customDataP = manager.updateCustomData(tenantId, request.body);
-        returnResponse(customDataP, response);
+        handleResponse(customDataP, response);
     });
 
     /**
@@ -102,8 +103,9 @@ export function create(
      */
     router.put("/tenants/:id/key", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const refreshKeyP = manager.refreshTenantKey(tenantId);
-        return returnResponse(refreshKeyP, response);
+        const keyName = request.body.keyName as string;
+        const refreshKeyP = manager.refreshTenantKey(tenantId, keyName);
+        handleResponse(refreshKeyP, response);
     });
 
     /**
@@ -120,17 +122,26 @@ export function create(
             tenantOrderer,
             tenantCustomData,
         );
-        returnResponse(tenantP, response);
+        handleResponse(tenantP, response);
     });
 
     /**
-     * Deletes a tenant by adding a disabled flag
+     * Deletes a tenant
      */
     router.delete("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const tenantP = manager.disableTenant(tenantId);
-        returnResponse(tenantP, response);
+        const scheduledDeletionTimeStr = request.body.scheduledDeletionTime;
+        const scheduledDeletionTime = scheduledDeletionTimeStr
+        ? new Date(scheduledDeletionTimeStr)
+        : null;
+        const tenantP = manager.deleteTenant(tenantId, scheduledDeletionTime);
+        handleResponse(tenantP, response);
     });
+
+    function getIncludeDisabledFlag(request): boolean {
+        const includeDisabledRaw = request.query.includeDisabledTenant as string;
+        return includeDisabledRaw?.toLowerCase() === "true";
+    }
 
     return router;
 }

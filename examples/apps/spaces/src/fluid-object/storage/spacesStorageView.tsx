@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { AsSerializable } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions";
 
 import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
@@ -14,6 +14,7 @@ import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
     clickCallback(): void;
+    title: string,
 }
 
 const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
@@ -24,6 +25,7 @@ const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
             onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                 event.stopPropagation();
             }}
+            title={props.title}
         >
             {props.children}
         </button>;
@@ -37,8 +39,9 @@ const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
     (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
         return (
             <div className="spaces-edit-pane">
-                <SpacesEditButton clickCallback={props.removeItem}>❌</SpacesEditButton>
+                <SpacesEditButton title="Delete" clickCallback={props.removeItem}>❌</SpacesEditButton>
                 <SpacesEditButton
+                    title="Copy to clipboard"
                     clickCallback={() => {
                         navigator.clipboard.writeText(props.url).then(() => {
                             console.log("Async: Copying to clipboard was successful!");
@@ -47,7 +50,10 @@ const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
                         });
                     }}
                 >📎</SpacesEditButton>
-                <SpacesEditButton clickCallback={() => window.open(props.url, "_blank")}>↗️</SpacesEditButton>
+                <SpacesEditButton
+                    title="Open in new window"
+                    clickCallback={() => window.open(props.url, "_blank")}
+                >↗️</SpacesEditButton>
             </div>
         );
     };
@@ -83,8 +89,8 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
     };
 
 // Stronger typing here maybe?
-interface ISpacesStorageViewProps<T = AsSerializable<any>> {
-    getViewForItem: (item: T) => Promise<JSX.Element | undefined>,
+interface ISpacesStorageViewProps<T = any> {
+    getViewForItem: (item: Serializable<T>) => Promise<JSX.Element | undefined>,
     getUrlForItem: (itemId: string) => string;
     storage: ISpacesStorage<T>;
     editable: boolean;
@@ -94,7 +100,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
     (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
         // Again stronger typing would be good
         const [itemMap, setItemMap] =
-            React.useState<Map<string, ISpacesStoredItem<AsSerializable<any>>>>(props.storage.itemList);
+            React.useState<Map<string, ISpacesStoredItem<any>>>(props.storage.itemList);
 
         React.useEffect(() => {
             const onItemListChanged = (newMap: Map<string, Layout>) => {
@@ -152,7 +158,6 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
                 rowHeight={50}
                 width={1800}
                 height={10000}
-                // eslint-disable-next-line no-null/no-null
                 compactType={null} // null is required for the GridLayout
                 isDroppable={props.editable}
                 isDraggable={props.editable}

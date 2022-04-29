@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluidframework/webpack-fluid-loader");
+const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require('path');
-const merge = require('webpack-merge');
+const { merge } = require("webpack-merge");
 // const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = env => {
@@ -21,7 +21,7 @@ module.exports = env => {
                 {
                     test: /\.tsx?$/,
                     use: [{
-                        loader:'ts-loader',
+                        loader: require.resolve("ts-loader"),
                         options: {
                             compilerOptions: {
                                 module: "esnext"
@@ -30,16 +30,18 @@ module.exports = env => {
                     }],
                     exclude: /node_modules/
                 },
-                {
-                    test: /\.js$/,
-                    use: ["source-map-loader"],
-                    enforce: "pre"
-                },
+                // This example currently has missing sourcemap issues.
+                // Disabling source mapping allows it to be runnable with these issues.
+                // {
+                //     test: /\.js$/,
+                //     use: [require.resolve("source-map-loader")],
+                //     enforce: "pre"
+                // },
                 {
                     test: /\.css$/,
                     use: [
-                        "style-loader", // creates style nodes from JS strings
-                        "css-loader", // translates CSS into CommonJS
+                        require.resolve("style-loader"), // creates style nodes from JS strings
+                        require.resolve("css-loader"), // translates CSS into CommonJS
                     ]
                 },
                 {
@@ -52,14 +54,14 @@ module.exports = env => {
                 },
                 {
                     test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                    loader: 'url-loader',
+                    loader: require.resolve('url-loader'),
                     options: {
                         limit: 10000
                     }
                 },
                 {
                     test: /\.html$/,
-                    loader: 'html-loader'
+                    loader: require.resolve('html-loader')
                 }
             ]
         },
@@ -83,11 +85,13 @@ module.exports = env => {
         },
         devServer: {
             host: "0.0.0.0",
-            before: (app, server) => fluidRoute.before(app, server, env),
-            after: (app, server) => fluidRoute.after(app, server, __dirname, env),
-            watchOptions: {
-                ignored: "**/node_modules/**",
-            }
+        },
+        // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
+        // This should be configurable under devServer.static.watch
+        // (see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md) but that does not seem to work.
+        // The CLI options for disabling watching don't seem to work either, so this may be a symptom of using webpack4 with the newer webpack-cli and webpack-dev-server.
+        watchOptions: {
+            ignored: "**/node_modules/**",
         },
         plugins: [
             // new MonacoWebpackPlugin()
@@ -95,5 +99,6 @@ module.exports = env => {
         ]
     }, isProduction
         ? require("./webpack.prod")
-        : require("./webpack.dev"));
+        : require("./webpack.dev"),
+    fluidRoute.devServerConfig(__dirname, env));
 };

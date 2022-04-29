@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
     IFluidLoadable,
     IFluidRouter,
     IRequest,
@@ -24,11 +23,10 @@ import {
     Marker,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import SimpleMDE from "simplemde";
-import { Viewer } from "./marked";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";
@@ -37,9 +35,9 @@ export class Smde extends EventEmitter implements
     IFluidLoadable,
     IFluidRouter,
     IFluidHTMLView {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
-        const collection = new Smde(runtime, context);
-        await collection.initialize();
+    public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
+        const collection = new Smde(runtime);
+        await collection.initialize(existing);
 
         return collection;
     }
@@ -59,10 +57,10 @@ export class Smde extends EventEmitter implements
     private smde: SimpleMDE | undefined;
 
     private get text() {
-        assert(!!this._text);
+        assert(!!this._text, "SharedString property missing!");
         return this._text;
     }
-    constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime) {
         super();
 
         this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
@@ -72,8 +70,8 @@ export class Smde extends EventEmitter implements
         return defaultFluidObjectRequestHandler(this, request);
     }
 
-    private async initialize() {
-        if (!this.runtime.existing) {
+    private async initialize(existing: boolean) {
+        if (!existing) {
             this.root = SharedMap.create(this.runtime, "root");
             const text = SharedString.create(this.runtime);
 
@@ -92,24 +90,19 @@ export class Smde extends EventEmitter implements
     }
 
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
-        if (this.isReadonly()) {
-            const viewer = new Viewer(elm, this.text);
-            viewer.render();
-        } else {
-            // Create base textarea
-            if (!this.textArea) {
-                this.textArea = document.createElement("textarea");
-            }
+        // Create base textarea
+        if (!this.textArea) {
+            this.textArea = document.createElement("textarea");
+        }
 
-            // Reparent if needed
-            if (this.textArea.parentElement !== elm) {
-                this.textArea.remove();
-                elm.appendChild(this.textArea);
-            }
+        // Reparent if needed
+        if (this.textArea.parentElement !== elm) {
+            this.textArea.remove();
+            elm.appendChild(this.textArea);
+        }
 
-            if (!this.smde) {
-                this.setupEditor();
-            }
+        if (!this.smde) {
+            this.setupEditor();
         }
     }
 
@@ -197,13 +190,6 @@ export class Smde extends EventEmitter implements
                 });
             });
     }
-
-    // TODO: this should be an utility.
-    private isReadonly() {
-        const runtimeAsComponent = this.context.containerRuntime as IFluidObject;
-        const scopes = runtimeAsComponent.IFluidConfiguration?.scopes;
-        return scopes !== undefined && !scopes.includes("doc:write");
-    }
 }
 
 class SmdeFactory implements IFluidDataStoreFactory {
@@ -212,22 +198,22 @@ class SmdeFactory implements IFluidDataStoreFactory {
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const dataTypes = new Map<string, IChannelFactory>();
-        const mapFactory = SharedMap.getFactory();
-        const sequenceFactory = SharedString.getFactory();
-
-        dataTypes.set(mapFactory.type, mapFactory);
-        dataTypes.set(sequenceFactory.type, sequenceFactory);
-
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, dataTypes);
-        const routerP = Smde.load(runtime, context);
+        const runtime = new runtimeClass(
+            context,
+            new Map([
+                SharedMap.getFactory(),
+                SharedString.getFactory(),
+            ].map((factory) => [factory.type, factory])),
+            existing,
+        );
+        const routerP = Smde.load(runtime, existing);
 
         return runtime;
     }

@@ -1,11 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-param-reassign */
-
-import * as ops from "./ops";
+import { ICombiningOp } from "./ops";
 
 export interface MapLike<T> {
     [index: string]: T;
@@ -23,40 +21,46 @@ export interface IConsensusValue {
     value: any;
 }
 
-export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newValue: any, seq?: number) {
-    if (currentValue === undefined) {
-        currentValue = combiningInfo.defaultValue;
+export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue: any, seq?: number) {
+    let _currentValue = currentValue;
+
+    if (_currentValue === undefined) {
+        _currentValue = combiningInfo.defaultValue;
     }
     // Fixed set of operations for now
-    /* eslint-disable default-case */
+
     switch (combiningInfo.name) {
         case "incr":
-            currentValue += newValue as number;
+            _currentValue += newValue as number;
             if (combiningInfo.minValue) {
-                if (currentValue < combiningInfo.minValue) {
-                    currentValue = combiningInfo.minValue;
+                if (_currentValue < combiningInfo.minValue) {
+                    _currentValue = combiningInfo.minValue;
                 }
             }
             break;
         case "consensus":
-            if (currentValue === undefined) {
+            if (_currentValue === undefined) {
                 const cv: IConsensusValue = {
                     value: newValue,
-                    seq,
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    seq: seq!,
                 };
 
-                currentValue = cv;
+                _currentValue = cv;
             } else {
-                const cv = currentValue as IConsensusValue;
+                const cv = _currentValue as IConsensusValue;
                 if (cv.seq === -1) {
-                    cv.seq = seq;
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    cv.seq = seq!;
                 }
             }
             break;
+        default:
+            break;
     }
-    /* eslint-enable default-case */
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return currentValue;
+    return _currentValue;
 }
 
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
@@ -65,6 +69,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
             return false;
         } else {
             // For now, straightforward; later use hashing
+
             // eslint-disable-next-line no-restricted-syntax
             for (const key in a) {
                 if (b[key] === undefined) {
@@ -77,6 +82,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
                     return false;
                 }
             }
+
             // eslint-disable-next-line no-restricted-syntax
             for (const key in b) {
                 if (a[key] === undefined) {
@@ -95,13 +101,10 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 export function extend<T>(
     base: MapLike<T>,
     extension: MapLike<T> | undefined,
-    combiningOp?: ops.ICombiningOp,
+    combiningOp?: ICombiningOp,
     seq?: number,
 ) {
     if (extension !== undefined) {
-        if ((typeof extension !== "object")) {
-            console.log(`oh my ${extension}`);
-        }
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const key in extension) {
             const v = extension[key];
@@ -138,21 +141,19 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 export function addProperties(
     oldProps: PropertySet | undefined,
     newProps: PropertySet,
-    op?: ops.ICombiningOp,
+    op?: ICombiningOp,
     seq?: number,
 ) {
-    if ((!oldProps) || (op && (op.name === "rewrite"))) {
-        oldProps = createMap<any>();
+    let _oldProps = oldProps;
+    if ((!_oldProps) || (op && (op.name === "rewrite"))) {
+        _oldProps = createMap<any>();
     }
-    extend(oldProps, newProps, op, seq);
-    return oldProps;
+    extend(_oldProps, newProps, op, seq);
+    return _oldProps;
 }
 
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
     if (extension !== undefined) {
-        if ((typeof extension !== "object")) {
-            console.log(`oh my ${extension}`);
-        }
         // eslint-disable-next-line no-restricted-syntax
         for (const key in extension) {
             if (base[key] === undefined) {
@@ -165,16 +166,5 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 
 // Create a MapLike with good performance.
 export function createMap<T>(): MapLike<T> {
-    const map = Object.create(null);
-
-    // Using 'delete' on an object causes V8 to put the object in dictionary mode.
-    // This disables creation of hidden classes, which are expensive when an object is
-    // constantly changing shape.
-    // eslint-disable-next-line dot-notation
-    map["__"] = undefined;
-    // eslint-disable-next-line dot-notation, @typescript-eslint/no-dynamic-delete
-    delete map["__"];
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return map;
+    return Object.create(null) as MapLike<T>;
 }

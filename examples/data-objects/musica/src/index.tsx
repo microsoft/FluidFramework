@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -100,16 +100,18 @@ export class Musica extends DataObject implements IFluidHTMLView {
     }
 }
 
-export const MusicaInstantiationFactory = new DataObjectFactory(
-    musicaName,
-    Musica,
-    [],
-    {},
-);
+export const MusicaInstantiationFactory =
+    new DataObjectFactory(
+        musicaName,
+        Musica,
+        [],
+        {},
+    );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    MusicaInstantiationFactory,
-    new Map([
-        [musicaName, Promise.resolve(MusicaInstantiationFactory)],
-    ]),
-);
+export const fluidExport =
+    new ContainerRuntimeFactoryWithDefaultDataStore(
+        MusicaInstantiationFactory,
+        new Map([
+            [musicaName, Promise.resolve(MusicaInstantiationFactory)],
+        ]),
+    );

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -77,7 +77,7 @@ export class HandleTable<T> {
     private get next() { return this.handles[0] as Handle; }
     private set next(handle: Handle) { this.handles[0] = handle; }
 
-    public snapshot() {
+    public getSummaryContent() {
         return this.handles;
     }
 

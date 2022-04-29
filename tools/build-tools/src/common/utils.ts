@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -59,7 +59,7 @@ export async function execAsync(command: string, options: child_process.ExecOpti
             resolve({ error, stdout, stderr });
         });
 
-        if (pipeStdIn) {
+        if (pipeStdIn && p.stdin) {
             p.stdin.write(pipeStdIn);
             p.stdin.end();
         }

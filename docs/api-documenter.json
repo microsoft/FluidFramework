@@ -1,6 +1,5 @@
 {
   "outputTarget": "markdown",
   "newlineKind": "lf",
-  "uriRoot": "/apis",
-  "onlyPackagesStartingWith": "@fluidframework"
+  "uriRoot": "/docs/apis"
 }

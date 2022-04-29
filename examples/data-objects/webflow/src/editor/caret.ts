@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent, hasTagName, TagName } from "@fluid-example/flow-util-lib";
 import { LocalReference } from "@fluidframework/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
-import { clamp } from "../util";
+import { CaretEventType, clamp, Direction, Dom, getDeltaX, getDeltaY, hasTagName, ICaretEvent, TagName } from "../util";
 import { ownsNode } from "../util/event";
 import { updateRef } from "../util/localref";
 

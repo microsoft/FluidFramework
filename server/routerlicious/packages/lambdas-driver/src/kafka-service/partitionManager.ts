@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,11 +8,14 @@ import {
     IConsumer,
     IQueuedMessage,
     IPartition,
+    IPartitionConfig,
     IPartitionWithEpoch,
     IPartitionLambdaFactory,
     ILogger,
+    LambdaCloseType,
+    IContextErrorData,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Partition } from "./partition";
 
 /**
@@ -24,10 +27,11 @@ export class PartitionManager extends EventEmitter {
     // Start rebalancing until we receive the first rebalanced message
     private isRebalancing = true;
 
+    private stopped = false;
+
     constructor(
-        private readonly factory: IPartitionLambdaFactory,
+        private readonly factory: IPartitionLambdaFactory<IPartitionConfig>,
         private readonly consumer: IConsumer,
-        private readonly config: Provider,
         private readonly logger?: ILogger) {
         super();
 
@@ -44,13 +48,21 @@ export class PartitionManager extends EventEmitter {
             this.rebalanced(partitions);
         });
 
-        // On any Kafka errors immediately stop processing
-        this.consumer.on("error", (error) => {
-            this.emit("error", error);
+        this.consumer.on("error", (error, errorData: IContextErrorData) => {
+            if (this.stopped) {
+                return;
+            }
+
+            this.emit("error", error, errorData);
         });
     }
 
     public async stop(): Promise<void> {
+        this.stopped = true;
+
+        this.logger?.info("Stop requested");
+        Lumberjack.info("Stop requested");
+
         // Drain all pending messages from the partitions
         const partitionsStoppedP: Promise<void>[] = [];
         for (const [, partition] of this.partitions) {
@@ -61,27 +73,35 @@ export class PartitionManager extends EventEmitter {
 
         // Then stop them all
         for (const [, partition] of this.partitions) {
-            partition.close();
+            partition.close(LambdaCloseType.Stop);
         }
 
         this.partitions.clear();
+
+        this.removeAllListeners();
     }
 
     private process(message: IQueuedMessage) {
+        if (this.stopped) {
+            return;
+        }
+
         if (this.isRebalancing) {
             this.logger?.info(
+                `Ignoring ${message.topic}:${message.partition}@${message.offset} due to pending rebalance`);
+            Lumberjack.info(
                 `Ignoring ${message.topic}:${message.partition}@${message.offset} due to pending rebalance`);
             return;
         }
 
-        if (!this.partitions.has(message.partition)) {
+        const partition = this.partitions.get(message.partition);
+        if (!partition) {
             this.emit(
                 "error",
                 `Received message for untracked partition ${message.topic}:${message.partition}@${message.offset}`);
             return;
         }
 
-        const partition = this.partitions.get(message.partition);
         partition.process(message);
     }
 
@@ -92,12 +112,14 @@ export class PartitionManager extends EventEmitter {
      */
     private rebalancing(partitions: IPartition[]) {
         this.logger?.info(`Rebalancing partitions: ${JSON.stringify(partitions)}`);
+        Lumberjack.info(`Rebalancing partitions: ${JSON.stringify(partitions)}`);
 
         this.isRebalancing = true;
 
         for (const [id, partition] of this.partitions) {
             this.logger?.info(`Closing partition ${id} due to rebalancing`);
-            partition.close();
+            Lumberjack.info(`Closing partition ${id} due to rebalancing`);
+            partition.close(LambdaCloseType.Rebalance);
         }
 
         this.partitions.clear();
@@ -109,6 +131,10 @@ export class PartitionManager extends EventEmitter {
      * May contain partitions that have been previously assigned to this consumer
      */
     private rebalanced(partitions: IPartitionWithEpoch[]) {
+        if (this.stopped) {
+            return;
+        }
+
         this.isRebalancing = false;
 
         const partitionsMap = new Map(partitions.map((partition) => [partition.partition, partition]));
@@ -118,7 +144,8 @@ export class PartitionManager extends EventEmitter {
         for (const [id, partition] of existingPartitions) {
             if (!partitionsMap.has(id)) {
                 this.logger?.info(`Closing partition ${id} due to rebalancing`);
-                partition.close();
+                Lumberjack.info(`Closing partition ${id} due to rebalancing`);
+                partition.close(LambdaCloseType.Rebalance);
                 this.partitions.delete(id);
             }
         }
@@ -133,21 +160,23 @@ export class PartitionManager extends EventEmitter {
 
             // eslint-disable-next-line max-len
             this.logger?.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);
+            // eslint-disable-next-line max-len
+            Lumberjack.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);
 
             const newPartition = new Partition(
                 partition.partition,
                 partition.leaderEpoch,
                 this.factory,
                 this.consumer,
-                this.config,
                 this.logger);
 
             // Listen for error events to know when the partition has stopped processing due to an error
-            newPartition.on("error", (error, restart) => {
-                // For simplicity we will close the entire manager whenever any partition errors. In the case that the
-                // restart flag is false and there was an error we will eventually need a way to signify that a
-                // partition is 'poisoned'.
-                this.emit("error", error, true);
+            newPartition.on("error", (error, errorData: IContextErrorData) => {
+                if (this.stopped) {
+                    return;
+                }
+
+                this.emit("error", error, errorData);
             });
 
             this.partitions.set(partition.partition, newPartition);

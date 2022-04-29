@@ -1,8 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -10,9 +11,8 @@ import {
     setSyncedObjectConfig,
     useSyncedObject,
     SyncedDataObject,
-} from "@fluidframework/react";
+} from "@fluid-experimental/react";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
 // ---- Fluid Object w/ Functional React View using the useSyncedObject hook ----
 
@@ -54,28 +54,22 @@ export class ClickerFunction extends SyncedDataObject {
         super(props);
         setSyncedObjectConfig<number>(this, "counter-function", 0);
     }
-    /**
-     * Will return a new ClickerFunction view
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>
-                <CounterReactFunction
-                    syncedStateId={"counter-function"}
-                    syncedDataObject={this}
-                />
-            </div>,
-            div,
-        );
-        return div;
-    }
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerFunctionInstantiationFactory = new DataObjectFactory(
-    "clicker-function",
-    ClickerFunction,
-    [],
-    {},
-);
-export const fluidExport = ClickerFunctionInstantiationFactory;
+export const ClickerFunctionInstantiationFactory =
+    new DataObjectFactory(
+        "clicker-function",
+        ClickerFunction,
+        [],
+        {},
+    );
+
+const clickerViewCallback = (clicker: ClickerFunction) =>
+    <CounterReactFunction
+        syncedStateId={ "counter-function" }
+        syncedDataObject={ clicker }
+    />;
+
+export const fluidExport =
+    new ContainerViewRuntimeFactory<ClickerFunction>(ClickerFunctionInstantiationFactory, clickerViewCallback);

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -47,6 +47,7 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
 export class ProtocolOpHandler {
     public readonly quorum: Quorum;
     public readonly term: number;
+
     constructor(
         public minimumSequenceNumber: number,
         public sequenceNumber: number,
@@ -55,15 +56,14 @@ export class ProtocolOpHandler {
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
-        sendReject: (sequenceNumber: number) => void) {
+    ) {
         this.term = term ?? 1;
         this.quorum = new Quorum(
-            minimumSequenceNumber,
             members,
             proposals,
             values,
             sendProposal,
-            sendReject);
+        );
     }
 
     public close() {
@@ -71,6 +71,17 @@ export class ProtocolOpHandler {
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
+        // verify it's moving sequentially
+        if (message.sequenceNumber !== this.sequenceNumber + 1) {
+            throw new Error(
+                `Protocol state is not moving sequentially. ` +
+                `Current is ${this.sequenceNumber}. Next is ${message.sequenceNumber}`);
+        }
+
+        // Update tracked sequence numbers
+        this.sequenceNumber = message.sequenceNumber;
+        this.minimumSequenceNumber = message.minimumSequenceNumber;
+
         let immediateNoOp = false;
 
         switch (message.type) {
@@ -82,7 +93,6 @@ export class ProtocolOpHandler {
                     sequenceNumber: systemJoinMessage.sequenceNumber,
                 };
                 this.quorum.addMember(join.clientId, member);
-
                 break;
 
             case MessageType.ClientLeave:
@@ -105,33 +115,28 @@ export class ProtocolOpHandler {
                 break;
 
             case MessageType.Reject:
-                const sequenceNumber = message.contents as number;
-                this.quorum.rejectProposal(message.clientId, sequenceNumber);
-                break;
+                throw new Error("Quorum rejection is removed.");
 
             default:
         }
 
-        // Update tracked sequence numbers
-        this.minimumSequenceNumber = message.minimumSequenceNumber;
-        this.sequenceNumber = message.sequenceNumber;
-
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
-        immediateNoOp = this.quorum.updateMinimumSequenceNumber(message) || immediateNoOp;
+        this.quorum.updateMinimumSequenceNumber(message);
 
         return { immediateNoOp };
     }
 
+    /**
+     * Gets the scribe protocol state
+     */
     public getProtocolState(): IScribeProtocolState {
-        const quorumSnapshot = this.quorum.snapshot();
-
+        // return a new object every time
+        // this ensures future state changes will not affect outside callers
         return {
-            members: quorumSnapshot.members,
-            minimumSequenceNumber: this.minimumSequenceNumber,
-            proposals: quorumSnapshot.proposals,
             sequenceNumber: this.sequenceNumber,
-            values: quorumSnapshot.values,
+            minimumSequenceNumber: this.minimumSequenceNumber,
+            ...this.quorum.snapshot(),
         };
     }
 }

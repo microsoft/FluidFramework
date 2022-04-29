@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,7 +13,6 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 export class ContainerFluidHandleContext implements IFluidHandleContext {
-    public get IFluidRouter() { return this; }
     public get IFluidHandleContext() { return this; }
     public readonly absolutePath: string;
 

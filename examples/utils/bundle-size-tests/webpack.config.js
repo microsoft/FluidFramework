@@ -1,20 +1,23 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 const path = require('path');
 const { BundleComparisonPlugin } = require('@mixer/webpack-bundle-compare/dist/plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin');
+const DuplicatePackageCheckerPlugin = require('@cerner/duplicate-package-checker-webpack-plugin');
 const { BannedModulesPlugin } = require('@fluidframework/bundle-size-tools')
 
 module.exports = {
   entry: {
-    'container': './src/container',
+    'aqueduct': './src/aqueduct',
+    'containerRuntime': './src/containerRuntime',
+    'loader': './src/loader',
     'map': './src/map',
     'matrix': './src/matrix',
     'odspDriver': './src/odspDriver',
+    'odspPrefetchSnapshot': './src/odspPrefetchSnapshot',
     'sharedString': './src/sharedString'
   },
   mode: 'production',
@@ -22,12 +25,12 @@ module.exports = {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        use: require.resolve('ts-loader'),
         exclude: /node_modules/,
       },
       {
         test: /\.js$/,
-        use: ["source-map-loader"],
+        use: [require.resolve("source-map-loader")],
         enforce: "pre"
       },
     ],
@@ -58,13 +61,7 @@ module.exports = {
        */
       exclude: (instance) =>
         // object-is depends on es-abstract 1.18.0-next, which does not satisfy the semver of other packages. We should be able to remove this when es-abstract moves to 1.18.0
-        instance.name === 'es-abstract' ||
-        // socket.io and Fluid Framework do not use compatible versions of debug
-        instance.name === 'debug' ||
-        // socket.io and Fluid Framework do not use compatible versions of isarray
-        instance.name === 'isarray' ||
-        // socket.io and Fluid Framework do not use compatible versions of ms
-        instance.name === 'ms'
+        instance.name === 'es-abstract'
     }),
     new BundleAnalyzerPlugin({
       analyzerMode: 'static',

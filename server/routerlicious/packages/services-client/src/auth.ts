@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,35 +7,44 @@ import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definit
 import { KJUR as jsrsasign } from "jsrsasign";
 import jwtDecode from "jwt-decode";
 import { v4 as uuid } from "uuid";
+import { NetworkError } from "./error";
 
 /**
- * Validates a JWT token to authorize routerlicious and returns decoded claims.
- * An undefined return value indicates invalid claims.
+ * Validates a JWT token to authorize routerlicious.
+ * Throws NetworkError if claims are invalid.
+ * @returns - decoded claims.
  */
 export function validateTokenClaims(
     token: string,
     documentId: string,
-    tenantId: string,
-    maxTokenLifetimeSec: number,
-    isTokenExpiryEnabled: boolean): ITokenClaims {
+    tenantId: string): ITokenClaims {
     const claims = jwtDecode<ITokenClaims>(token);
 
     if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
-        return undefined;
+        throw new NetworkError(403, "DocumentId and/or TenantId in token claims do not match requested resource");
     }
 
     if (claims.scopes === undefined || claims.scopes.length === 0) {
-        return undefined;
-    }
-
-    if (isTokenExpiryEnabled && claims.exp && claims.iat) {
-        const now = Math.round((new Date()).getTime() / 1000);
-        if (now >= claims.exp || claims.exp - claims.iat > maxTokenLifetimeSec) {
-            return undefined;
-        }
+        throw new NetworkError(403, "Missing scopes in token claims");
     }
 
     return claims;
+}
+
+/**
+ * Validates token claims' iat and exp properties to ensure valid token expiration.
+ * Throws NetworkError if expiry is invalid.
+ * @returns token lifetime in milliseconds.
+ */
+export function validateTokenClaimsExpiration(claims: ITokenClaims, maxTokenLifetimeSec: number): number {
+    if (!claims.exp || !claims.iat || claims.exp - claims.iat > maxTokenLifetimeSec) {
+        throw new NetworkError(403, "Invalid token expiry");
+    }
+    const lifeTimeMSec = (claims.exp * 1000) - (new Date()).getTime();
+    if (lifeTimeMSec < 0) {
+        throw new NetworkError(401, "Expired token");
+    }
+    return lifeTimeMSec;
 }
 
 /**
@@ -51,29 +60,27 @@ export function generateToken(
     user?: IUser,
     lifetime: number = 60 * 60,
     ver: string = "1.0"): string {
-    // eslint-disable-next-line no-param-reassign
-    user = (user) ? user : generateUser();
-    if (user.id === "" || user.id === undefined) {
-        // eslint-disable-next-line no-param-reassign
-        user = generateUser();
+    let userClaim = (user) ? user : generateUser();
+    if (userClaim.id === "" || userClaim.id === undefined) {
+        userClaim = generateUser();
     }
 
     // Current time in seconds
     const now = Math.round((new Date()).getTime() / 1000);
 
-    const claims: ITokenClaims = {
+    const claims: ITokenClaims & { jti: string } = {
         documentId,
         scopes,
         tenantId,
-        user,
+        user: userClaim,
         iat: now,
         exp: now + lifetime,
         ver,
+        jti: uuid(),
     };
 
     const utf8Key = { utf8: key };
-    // eslint-disable-next-line no-null/no-null
-    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
+    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 }
 
 export function generateUser(): IUser {

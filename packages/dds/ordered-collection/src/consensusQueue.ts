@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -42,6 +42,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
      * @param id - optional name of theconsensus queue
      * @returns newly create consensus queue (but not attached yet)
      */
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     public static create<T = any>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, ConsensusQueueFactory.Type) as ConsensusQueue<T>;
     }

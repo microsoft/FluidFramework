@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -96,8 +96,8 @@ export interface ICreateBlobParams {
     // The encoded content
     content: string;
 
-    // The encoding of the content. Either utf8 or base64.
-    encoding: string;
+    // The encoding of the content.
+    encoding: "utf-8" | "base64";
 }
 
 /**

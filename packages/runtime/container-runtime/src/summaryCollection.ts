@@ -1,11 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
-import { Deferred, assert } from "@fluidframework/common-utils";
+import { IDisposable, IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { Deferred, assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
+    IDocumentMessage,
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryContent,
@@ -51,9 +53,9 @@ export interface ISummary {
 /**
  * A single summary which has already been acked by the server.
  */
-export interface IAckedSummary extends ISummary {
+export interface IAckedSummary {
     readonly summaryOp: ISummaryOpMessage;
-    readonly summaryAckNack: ISummaryAckMessage;
+    readonly summaryAck: ISummaryAckMessage;
 }
 
 enum SummaryState {
@@ -93,7 +95,7 @@ class Summary implements ISummary {
     }
 
     public broadcast(op: ISummaryOpMessage) {
-        assert(this.state === SummaryState.Local);
+        assert(this.state === SummaryState.Local, 0x175 /* "Can only broadcast if summarizer starts in local state" */);
         this._summaryOp = op;
         this.defSummaryOp.resolve();
         this.state = SummaryState.Broadcast;
@@ -101,7 +103,8 @@ class Summary implements ISummary {
     }
 
     public ackNack(op: ISummaryAckMessage | ISummaryNackMessage) {
-        assert(this.state === SummaryState.Broadcast);
+        assert(this.state === SummaryState.Broadcast,
+            0x176 /* "Can only ack/nack if summarizer is in broadcasting state" */);
         this._summaryAckNack = op;
         this.defSummaryAck.resolve();
         this.state = op.type === MessageType.SummaryAck ? SummaryState.Acked : SummaryState.Nacked;
@@ -189,23 +192,57 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
     }
 }
 
+export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
+export interface ISummaryCollectionOpEvents extends IEvent {
+    (event: OpActionEventName, listener: OpActionEventListener);
+}
+
 /**
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
  */
-export class SummaryCollection {
+export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
     // key: clientId
     private readonly summaryWatchers = new Map<string, ClientSummaryWatcher>();
     // key: summarySeqNum
     private readonly pendingSummaries = new Map<number, Summary>();
     private refreshWaitNextAck = new Deferred<void>();
 
-    private lastAck?: IAckedSummary;
+    private lastSummaryTimestamp: number | undefined;
+    private maxAckWaitTime: number | undefined;
+    private pendingAckTimerTimeoutCallback: (() => void) | undefined;
+    private lastAck: IAckedSummary | undefined;
 
-    public get latestAck() { return this.lastAck; }
+    public get latestAck(): IAckedSummary | undefined { return this.lastAck; }
 
-    public constructor(public readonly initialSequenceNumber: number) { }
+    public emit(event: OpActionEventName, ...args: Parameters<OpActionEventListener>): boolean {
+        return super.emit(event, ...args);
+    }
+
+    public get opsSinceLastAck() {
+        return this.deltaManager.lastSequenceNumber -
+            (this.lastAck?.summaryAck.sequenceNumber ?? this.deltaManager.initialSequenceNumber);
+    }
+
+    public addOpListener(listener: () => void) {
+        this.deltaManager.on("op", listener);
+    }
+
+    public removeOpListener(listener: () => void) {
+        this.deltaManager.off("op", listener);
+    }
+
+    public constructor(
+        private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        private readonly logger: ITelemetryLogger,
+    ) {
+        super();
+        this.deltaManager.on(
+            "op",
+            (op) => this.handleOp(op));
+    }
 
     /**
      * Creates and returns a summary watcher for a specific client.
@@ -220,6 +257,16 @@ export class SummaryCollection {
 
     public removeWatcher(clientId: string) {
         this.summaryWatchers.delete(clientId);
+    }
+
+    public setPendingAckTimerTimeoutCallback(maxAckWaitTime: number, timeoutCallback: () => void) {
+        this.maxAckWaitTime = maxAckWaitTime;
+        this.pendingAckTimerTimeoutCallback = timeoutCallback;
+    }
+
+    public unsetPendingAckTimerTimeoutCallback() {
+        this.maxAckWaitTime = undefined;
+        this.pendingAckTimerTimeoutCallback = undefined;
     }
 
     /**
@@ -252,7 +299,7 @@ export class SummaryCollection {
      * Handler for ops; only handles ops relating to summaries.
      * @param op - op message to handle
      */
-    public handleOp(op: ISequencedDocumentMessage) {
+    private handleOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
             case MessageType.Summarize: {
                 this.handleSummaryOp(op as ISummaryOpMessage);
@@ -267,6 +314,18 @@ export class SummaryCollection {
                 return;
             }
             default: {
+                // If the difference between timestamp of current op and last summary op is greater than
+                // the maxAckWaitTime, then we need to inform summarizer to not wait and summarize
+                // immediately as we have already waited for maxAckWaitTime.
+                const lastOpTimestamp = op.timestamp;
+                if (this.lastSummaryTimestamp !== undefined &&
+                    this.maxAckWaitTime !== undefined &&
+                    lastOpTimestamp - this.lastSummaryTimestamp >= this.maxAckWaitTime
+                ) {
+                    this.pendingAckTimerTimeoutCallback?.();
+                }
+                this.emit("default", op);
+
                 return;
             }
         }
@@ -292,21 +351,46 @@ export class SummaryCollection {
             }
         }
         this.pendingSummaries.set(op.sequenceNumber, summary);
+        this.lastSummaryTimestamp = op.timestamp;
+        this.emit(MessageType.Summarize, op);
     }
 
     private handleSummaryAck(op: ISummaryAckMessage) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const summary = this.pendingSummaries.get(seq)!;
-        assert(!!summary); // We should never see an ack without an op
+        const summary = this.pendingSummaries.get(seq);
+        if (!summary || summary.summaryOp === undefined) {
+            // Summary ack without an op should be rare. We could fetch the
+            // reference sequence number from the snapshot, but instead we
+            // will not emit this ack. It should be the case that the summary
+            // op that this ack is for is earlier than this file was loaded
+            // from. i.e. initialSequenceNumber > summarySequenceNumber.
+            // We really don't care about it for now, since it is older than
+            // the one we loaded from.
+            if (seq >= this.deltaManager.initialSequenceNumber) {
+                // Potential causes for it to be later than our initialSequenceNumber
+                // are that the summaryOp was nacked then acked, double-acked, or
+                // the summarySequenceNumber is incorrect.
+                this.logger.sendErrorEvent({
+                    eventName: "SummaryAckWithoutOp",
+                    sequenceNumber: op.sequenceNumber, // summary ack seq #
+                    summarySequenceNumber: seq, // missing summary seq #
+                    initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+                });
+            }
+            return;
+        }
         summary.ackNack(op);
         this.pendingSummaries.delete(seq);
 
         // Track latest ack
-        if (!this.lastAck || seq > this.lastAck.summaryAckNack.contents.summaryProposal.summarySequenceNumber) {
-            this.lastAck = summary as IAckedSummary;
+        if (!this.lastAck || seq > this.lastAck.summaryAck.contents.summaryProposal.summarySequenceNumber) {
+            this.lastAck = {
+                summaryOp: summary.summaryOp,
+                summaryAck: op,
+            };
             this.refreshWaitNextAck.resolve();
             this.refreshWaitNextAck = new Deferred<void>();
+            this.emit(MessageType.SummaryAck, op);
         }
     }
 
@@ -316,6 +400,7 @@ export class SummaryCollection {
         if (summary) {
             summary.ackNack(op);
             this.pendingSummaries.delete(seq);
+            this.emit(MessageType.SummaryNack, op);
         }
     }
 }

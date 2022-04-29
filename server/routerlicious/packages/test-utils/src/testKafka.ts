@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -21,6 +21,17 @@ export class TestConsumer implements core.IConsumer {
 
     public setFailOnCommit(value: boolean) {
         this.failOnCommit = value;
+    }
+
+    public isConnected() {
+        return true;
+    }
+
+    /**
+     * Returns the offset of the latest consumsed message
+     */
+    public getLatestMessageOffset(partitionId: number): number | undefined {
+        return undefined;
     }
 
     public async commitCheckpoint(partitionId: number, queuedMessage: core.IQueuedMessage): Promise<void> {
@@ -45,6 +56,11 @@ export class TestConsumer implements core.IConsumer {
 
     public on(event: string, listener: (...args: any[]) => void): this {
         this.emitter.on(event, listener as (...args: any[]) => void);
+        return this;
+    }
+
+    public once(event: string, listener: (...args: any[]) => void): this {
+        this.emitter.once(event, listener as (...args: any[]) => void);
         return this;
     }
 
@@ -97,6 +113,10 @@ export class TestProducer implements core.IProducer {
     constructor(private readonly kafka: TestKafka) {
     }
 
+    public isConnected() {
+        return true;
+    }
+
     // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/promise-function-async
     public send(messages: object[], key: string): Promise<any> {
         for (const message of messages) {
@@ -110,11 +130,11 @@ export class TestProducer implements core.IProducer {
         return Promise.resolve();
     }
 
-    public on(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
+    public on(event: string, listener: (...args: any[]) => void): this {
         return this;
     }
 
-    public once(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
+    public once(event: string, listener: (...args: any[]) => void): this {
         return this;
     }
 }

@@ -1,60 +1,116 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { v4 as uuid } from "uuid";
+import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { InstrumentedStorageTokenFetcher, IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
-import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
+import { getOrigin, TokenFetchOptionsEx } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
-import { TokenFetchOptions } from "./tokenFetch";
-import { EpochTracker, FetchType } from "./epochTracker";
+import { EpochTracker } from "./epochTracker";
+import { runWithRetry } from "./retryUtils";
+
+interface IJoinSessionBody {
+    requestSocketToken: boolean;
+    guestDisplayName: string;
+}
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document
- * @param driveId - The SPO drive id that this request should be made against
- * @param itemId -The SPO item id that this request should be made against
- * @param siteUrl - The SPO site that this request should be made against
+ * @param urlParts - The SPO drive id, itemId, siteUrl that this request should be made against
  * @param path - The API path that is relevant to this request
  * @param method - The type of request, such as GET or POST
  * @param logger - A logger to use for this request
- * @param getVroomToken - A function that is able to provide the vroom token for this request
+ * @param getStorageToken - A function that is able to provide the access token for this request
+ * @param epochTracker - fetch wrapper which incorporates epoch logic around joinSession call
+ * @param requestSocketToken - flag indicating whether joinSession is expected to return access token
+ * which is used when establishing websocket connection with collab session backend service.
+ * @param options - Options to fetch the token.
+ * @param disableJoinSessionRefresh - Whether the caller wants to disable refreshing join session periodically.
+ * @param guestDisplayName - display name used to identify guest user joining a session.
+ * This is optional and used only when collab session is being joined via invite.
  */
 export async function fetchJoinSession(
-    driveId: string,
-    itemId: string,
-    siteUrl: string,
+    urlParts: IOdspUrlParts,
     path: string,
     method: string,
     logger: ITelemetryLogger,
-    getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     epochTracker: EpochTracker,
+    requestSocketToken: boolean,
+    options: TokenFetchOptionsEx,
+    disableJoinSessionRefresh: boolean | undefined,
+    guestDisplayName?: string,
 ): Promise<ISocketStorageDiscovery> {
-    return getWithRetryForTokenRefresh(async (options) => {
-        const token = await getStorageToken(options, "JoinSession");
+    const token = await getStorageToken(options, "JoinSession");
 
-        const extraProps = options.refresh ? { secondAttempt: 1, hasClaims: !!options.claims } : {};
-        return PerformanceEvent.timedExecAsync(logger, { eventName: "JoinSession", ...extraProps }, async (event) => {
-            // TODO Extract the auth header-vs-query logic out
-            const siteOrigin = getOrigin(siteUrl);
-            let queryParams = `access_token=${token}`;
-            let headers = {};
-            if (queryParams.length > 2048) {
-                queryParams = "";
-                headers = { Authorization: `Bearer ${token}` };
+    const tokenRefreshProps = options.refresh
+        ? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
+        : {};
+    const details: ITelemetryProperties = {
+        refreshedToken: options.refresh,
+        requestSocketToken,
+        ...tokenRefreshProps,
+    };
+
+    return PerformanceEvent.timedExecAsync(
+        logger, {
+            eventName: "JoinSession",
+            attempts: options.refresh ? 2 : 1,
+            details: JSON.stringify(details),
+            ...tokenRefreshProps,
+        },
+        async (event) => {
+            const siteOrigin = getOrigin(urlParts.siteUrl);
+            const formBoundary = uuid();
+            let postBody = `--${formBoundary}\r\n`;
+            postBody += `Authorization: Bearer ${token}\r\n`;
+            postBody += `X-HTTP-Method-Override: POST\r\n`;
+            postBody += `Content-Type: application/json\r\n`;
+            if (!disableJoinSessionRefresh) {
+                postBody += `prefer: FluidRemoveCheckAccess\r\n`;
             }
+            postBody += `_post: 1\r\n`;
+            // Name should be there when socket token is requested and vice-versa.
+            if (requestSocketToken && guestDisplayName !== undefined) {
+                const body: IJoinSessionBody = {
+                    requestSocketToken: true,
+                    guestDisplayName,
+                };
+                postBody += `\r\n${JSON.stringify(body)}\r\n`;
+            }
+            postBody += `\r\n--${formBoundary}--`;
+            const headers: { [index: string]: string } = {
+                "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+            };
 
-            const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-                `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
-                { method, headers },
-                FetchType.joinSession,
+            const response = await runWithRetry(
+                async () => epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
+                    `${getApiRoot(siteOrigin)}/drives/${
+                        urlParts.driveId
+                    }/items/${urlParts.itemId}/${path}?ump=1`,
+                    { method, headers, body: postBody },
+                    "joinSession",
+                    true,
+                ),
+                "joinSession",
+                logger,
             );
+
+            const socketUrl = response.content.deltaStreamSocketUrl;
+            // expecting socketUrl to be something like https://{hostName}/...
+            const webSocketHostName = socketUrl.split("/")[2];
 
             // TODO SPO-specific telemetry
             event.end({
-                sprequestguid: response.headers.get("sprequestguid"),
-                sprequestduration: response.headers.get("sprequestduration"),
+                ...response.propsToLog,
+                // pushV2 websocket urls will contain pushf
+                pushv2: socketUrl.includes("pushf"),
+                webSocketHostName,
+                refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
             });
 
             if (response.content.runtimeTenantId && !response.content.tenantId) {
@@ -63,5 +119,4 @@ export async function fetchJoinSession(
 
             return response.content;
         });
-    });
 }

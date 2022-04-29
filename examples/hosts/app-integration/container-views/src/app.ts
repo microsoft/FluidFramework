@@ -1,13 +1,15 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
-import { Container } from "@fluidframework/container-loader";
-import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
-import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { getTinyliciousContainer } from "@fluid-experimental/get-container";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { IContainer } from "@fluidframework/container-definitions";
+import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
+import React from "react";
+import ReactDOM from "react-dom";
 import { DiceRollerContainerRuntimeFactory } from "./containerCode";
 
 // I'm choosing to put the docId in the hash just for my own convenience, so the URL will end up looking something
@@ -15,17 +17,10 @@ import { DiceRollerContainerRuntimeFactory } from "./containerCode";
 // on the page's URL format deeper in the system, so you're free to change this however you'd like.
 // Additionally, I'm choosing to create a new document when navigating directly to http://localhost:8080 -- this is
 // also open for customization.
-let createNew = false;
-if (window.location.hash.length === 0) {
-    createNew = true;
-    window.location.hash = Date.now().toString();
-}
-const documentId = window.location.hash.substring(1);
-document.title = documentId;
 
 // In this app, we are assuming our container code is capable of providing a default mountable view.  This is up to
 // how the container code is authored though (e.g. if the container code is data-only and does not bundle views).
-async function mountDefaultFluidObjectFromContainer(container: Container): Promise<void> {
+async function mountDefaultFluidObjectFromContainer(container: IContainer): Promise<void> {
     const div = document.getElementById("content") as HTMLDivElement;
     // For this basic scenario, I'm just requesting the default view.  Nothing stopping me from issuing alternate
     // requests (e.g. for other Fluid objects or views) if I wished.
@@ -46,7 +41,7 @@ async function mountDefaultFluidObjectFromContainer(container: Container): Promi
     }
 
     // Now we know we got the Fluid Object back, time to start mounting it.
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject: FluidObject<IFluidMountableView> = response.value;
 
     // In a production app, we should probably be retaining a reference to mountableView long-term so we can call
     // unmount() on it to correctly remove it from the DOM if needed.
@@ -59,19 +54,34 @@ async function mountDefaultFluidObjectFromContainer(container: Container): Promi
     // If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
     // if the response is a React-based component using hooks) and is not the preferred path, but sometimes it
     // can work.
-    console.warn(`Container returned a non-IFluidMountableView.  This can cause errors when mounting React components `
-        + `with hooks across bundle boundaries.  URL: ${url}`);
-    const view = new HTMLViewAdapter(fluidObject);
-    view.render(div, { display: "block" });
+    if (ReactViewAdapter.canAdapt(fluidObject)) {
+        console.warn(`Container returned a non-IFluidMountableView.  This can cause errors when mounting React `
+            + `components with hooks across bundle boundaries.  URL: ${url}`);
+        ReactDOM.render(React.createElement(ReactViewAdapter, { view: fluidObject }), div);
+        return;
+    }
+
+    throw new Error("Could not retrieve a view");
 }
 
 // Just a helper function to kick things off.  Making it async allows us to use await.
 async function start(): Promise<void> {
+    // when the document ID is not provided, create a new one.
+    const shouldCreateNew = location.hash.length === 0;
+    const documentId = !shouldCreateNew ? window.location.hash.substring(1) : "";
+
     // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
-    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
+    const [container, containerId] = await getTinyliciousContainer(
+        documentId, new DiceRollerContainerRuntimeFactory(), shouldCreateNew,
+    );
+
+    // update the browser URL and the window title with the actual container ID
+    location.hash = containerId;
+    document.title = containerId;
+
     await mountDefaultFluidObjectFromContainer(container);
     // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     window["fluidStarted"] = true;
 }
 

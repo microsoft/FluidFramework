@@ -8,7 +8,7 @@
         "module": "esnext",
         "outDir": "dist",
         "jsx": "react",
-        "types": []
+        "types": ["react", "react-dom"]
     },
     "include": [
         "src/**/*"

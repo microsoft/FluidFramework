@@ -1,29 +1,29 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+
 import { DataObject } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
-import { SharedObjectSequence } from "@fluidframework/sequence";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { AsSerializable } from "@fluidframework/datastore-definitions";
-import { IBadgeModel, IBadgeHistory, IBadgeType } from "./Badge.types";
+import { IBadgeModel, IBadgeType } from "./Badge.types";
 import { defaultItems } from "./helpers";
-import { BadgeClient } from "./BadgeClient";
 
-export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
-    currentCell: SharedCell<AsSerializable<IBadgeType>>;
-    optionsMap: SharedMap;
-    historySequence: SharedObjectSequence<IBadgeHistory>;
+export class Badge extends DataObject implements IBadgeModel {
+    private _currentCell: SharedCell<IBadgeType> | undefined;
+    private _optionsMap: SharedMap | undefined;
 
-    public get IFluidHTMLView() { return this; }
+    public get currentCell() {
+        if (!this._currentCell) { throw new Error("Not initialized"); }
+        return this._currentCell;
+    }
+    public get optionsMap() {
+        if (!this._optionsMap) { throw new Error("Not initialized"); }
+        return this._optionsMap;
+    }
 
     private readonly currentId: string = "value";
-    private readonly historyId: string = "history";
     private readonly optionsId: string = "options";
 
     /**
@@ -42,14 +42,6 @@ export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
         const options = SharedMap.create(this.runtime);
         defaultItems.forEach((v) => options.set(v.key, v));
         this.root.set(this.optionsId, options.handle);
-
-        // Create a sequence to store the badge's history
-        const badgeHistory = SharedObjectSequence.create<IBadgeHistory>(this.runtime);
-        badgeHistory.insert(0, [{
-            value: current.get(),
-            timestamp: new Date(),
-        }]);
-        this.root.set(this.historyId, badgeHistory.handle);
     }
 
     /**
@@ -59,14 +51,9 @@ export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
      * object refs as props to the React component.
      */
     protected async hasInitialized() {
-        [this.currentCell, this.optionsMap, this.historySequence] = await Promise.all([
-            this.root.get<IFluidHandle<SharedCell>>(this.currentId).get(),
-            this.root.get<IFluidHandle<SharedMap>>(this.optionsId).get(),
-            this.root.get<IFluidHandle<SharedObjectSequence<IBadgeHistory>>>(this.historyId).get(),
+        [this._currentCell, this._optionsMap] = await Promise.all([
+            this.root.get<IFluidHandle<SharedCell>>(this.currentId)?.get(),
+            this.root.get<IFluidHandle<SharedMap>>(this.optionsId)?.get(),
         ]);
-    }
-
-    public render(div: HTMLElement) {
-        ReactDOM.render(<BadgeClient model={this} />, div);
     }
 }

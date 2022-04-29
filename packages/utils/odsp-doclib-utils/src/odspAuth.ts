@@ -1,15 +1,16 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { getSharepointTenant } from "./odspDocLibUtils";
+import { assert } from "@fluidframework/common-utils";
+import { getAadTenant, getAadUrl, getSiteUrl } from "./odspDocLibUtils";
 import { throwOdspNetworkError } from "./odspErrorUtils";
 import { unauthPostAsync } from "./odspRequest";
 
 export interface IOdspTokens {
-    accessToken: string;
-    refreshToken: string;
+    readonly accessToken: string;
+    readonly refreshToken: string;
 }
 
 export interface IClientConfig {
@@ -42,22 +43,20 @@ type TokenRequestBody =
         scope: string,
     };
 
-export const getOdspScope = (server: string) => `offline_access https://${server}/AllSites.Write`;
+export const getOdspScope = (server: string) => `offline_access ${getSiteUrl(server)}/AllSites.Write`;
 export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
 export function getFetchTokenUrl(server: string): string {
-    return `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/token`;
+    return `${getAadUrl(server)}/${getAadTenant(server)}/oauth2/v2.0/token`;
 }
 
 export function getLoginPageUrl(
-    isPush: boolean,
     server: string,
     clientConfig: IClientConfig,
     scope: string,
     odspAuthRedirectUri: string,
 ) {
-    const tenant = isPush ? "organizations" : getSharepointTenant(server);
-    return `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?`
+    return `${getAadUrl(server)}/${getAadTenant(server)}/oauth2/v2.0/authorize?`
         + `client_id=${clientConfig.clientId}`
         + `&scope=${scope}`
         + `&response_type=code`
@@ -70,8 +69,8 @@ export const getPushRefreshTokenFn = (server: string, clientConfig: IClientConfi
     getRefreshTokenFn(pushScope, server, clientConfig, tokens);
 export const getRefreshTokenFn = (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
     async () => {
-        await refreshTokens(server, scope, clientConfig, tokens);
-        return tokens.accessToken;
+        const newTokens = await refreshTokens(server, scope, clientConfig, tokens);
+        return newTokens.accessToken;
     };
 
 /**
@@ -102,28 +101,33 @@ export async function fetchTokens(
     const refreshToken = tokens.refresh_token;
 
     if (accessToken === undefined || refreshToken === undefined) {
-        throwOdspNetworkError("Unable to get access token.", tokens.error === "invalid_grant" ? 401 : result.status);
+        throwOdspNetworkError(
+            // pre-0.58 error message: unableToGetAccessToken
+            "Unable to get access token",
+            tokens.error === "invalid_grant" ? 401 : result.status,
+            result);
     }
     return { accessToken, refreshToken };
 }
 
 /**
- * Fetch fresh tokens and update the provided tokens object with them
+ * Fetch fresh tokens.
  * @param server - The server to auth against
  * @param scope - The desired oauth scope
  * @param clientConfig - Info about this client's identity
- * @param tokens - The tokens object to update with fresh tokens. Also provides the refresh token for the request
+ * @param tokens - The tokens object provides the refresh token for the request
+ *
+ * @returns The tokens object with refreshed tokens.
  */
 export async function refreshTokens(
     server: string,
     scope: string,
     clientConfig: IClientConfig,
     tokens: IOdspTokens,
-): Promise<void> {
+): Promise<IOdspTokens> {
     // Clear out the old tokens while awaiting the new tokens
     const refresh_token = tokens.refreshToken;
-    tokens.accessToken = "";
-    tokens.refreshToken = "";
+    assert(refresh_token.length > 0, 0x1ec /* "No refresh token provided." */);
 
     const credentials: TokenRequestCredentials = {
         grant_type: "refresh_token",
@@ -132,8 +136,7 @@ export async function refreshTokens(
     const newTokens = await fetchTokens(server, scope, clientConfig, credentials);
 
     // Instead of returning, update the passed in tokens object
-    tokens.accessToken = newTokens.accessToken;
-    tokens.refreshToken = newTokens.refreshToken;
+    return { accessToken: newTokens.accessToken, refreshToken: newTokens.refreshToken };
 }
 
 /**

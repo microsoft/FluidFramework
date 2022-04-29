@@ -1,11 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IDisposable, IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -23,105 +22,12 @@ export interface IValueChanged {
 }
 
 /**
- * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
- * @alpha
- */
-export interface IValueOpEmitter {
-    /**
-     * Called by the value type to emit a value type operation through the container type holding it.
-     * @param opName - Name of the emitted operation
-     * @param previousValue - JSONable previous value as defined by the value type
-     * @param params - JSONable params for the operation as defined by the value type
-     * @alpha
-     */
-    emit(opName: string, previousValue: any, params: any): void;
-}
-
-/**
- * A value factory is used to serialize/deserialize value types to a map
- * @alpha
- */
-export interface IValueFactory<T> {
-    /**
-     * Create a new value type.  Used both in creation of new value types, as well as in loading existing ones
-     * from remote.
-     * @param emitter - Emitter object that the created value type will use to emit operations
-     * @param raw - Initialization parameters as defined by the value type
-     * @returns The new value type
-     * @alpha
-     */
-    load(emitter: IValueOpEmitter, raw: any): T;
-
-    /**
-     * Given a value type, provides a JSONable form of its data to be used for snapshotting.  This data must be
-     * loadable using the load method of its factory.
-     * @param value - The value type to serialize
-     * @returns The JSONable form of the value type
-     * @alpha
-     */
-    store(value: T): any;
-}
-
-/**
- * Defines an operation that a value type is able to handle.
- * @alpha
- */
-export interface IValueOperation<T> {
-    /**
-     * Performs the actual processing on the incoming operation.
-     * @param value - The current value stored at the given key, which should be the value type
-     * @param params - The params on the incoming operation
-     * @param local - Whether the operation originated from this client
-     * @param message - The operation itself
-     * @alpha
-     */
-    process(value: T, params: any, local: boolean, message: ISequencedDocumentMessage);
-}
-
-/**
- * Defines a value type that can be registered on a container type.
- */
-export interface IValueType<T> {
-    /**
-     * Name of the value type.
-     * @alpha
-     */
-    name: string;
-
-    /**
-     * Factory method used to convert to/from a JSON form of the type.
-     * @alpha
-     */
-    factory: IValueFactory<T>;
-
-    /**
-     * Operations that can be applied to the value type.
-     * @alpha
-     */
-    ops: Map<string, IValueOperation<T>>;
-}
-
-/**
- * Container types that are able to create value types as contained values.
- */
-export interface IValueTypeCreator {
-    /**
-     * Create a new value type at the given key.
-     * @param key - Key to create the value type at
-     * @param type - Type of the value type to create
-     * @param params - Initialization params for the value type
-     * @alpha
-     */
-    createValueType(key: string, type: string, params: any): this;
-}
-
-/**
  * Interface describing actions on a directory.
  *
  * @remarks
  * When used as a Map, operates on its keys.
  */
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     /**
      * The absolute path of the directory.
      */
@@ -135,13 +41,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     get<T = any>(key: string): T | undefined;
 
     /**
-     * A form of get except it will only resolve the promise once the key exists in the directory.
-     * @param key - Key to retrieve from
-     * @returns The stored value once available
-     */
-    wait<T = any>(key: string): Promise<T>;
-
-    /**
      * Sets the value stored at key to the provided value.
      * @param key - Key to set at
      * @param value - Value to set
@@ -150,9 +49,16 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     set<T = any>(key: string, value: T): this;
 
     /**
-     * Creates an IDirectory child of this IDirectory.
+     * Get the number of sub directory within the directory.
+     * @returns The number of sub directory within a directory.
+     */
+    countSubDirectory?(): number;
+
+    /**
+     * Creates an IDirectory child of this IDirectory, or retrieves the existing IDirectory child if one with the
+     * same name already exists.
      * @param subdirName - Name of the new child directory to create
-     * @returns The newly created IDirectory
+     * @returns The IDirectory child that was created or retrieved
      */
     createSubDirectory(subdirName: string): IDirectory;
 
@@ -191,24 +97,99 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
 }
 
+/**
+ * Events emitted in response to changes to the directory data.  These events only emit on the ISharedDirectory itself,
+ * and not on subdirectories.
+ *
+ * ### "valueChanged"
+ *
+ * The valueChanged event is emitted when a key is set or deleted.  This is emitted for any key in the ISharedDirectory
+ * or any subdirectory.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (
+ *     changed: IDirectoryValueChanged,
+ *     local: boolean,
+ *     op: ISequencedDocumentMessage | null,
+ *     target: IEventThisPlaceHolder,
+ * ) => void
+ * ```
+ * - `changed` - Information on the key that changed, its value prior to the change, and the path to the key that
+ *   changed.
+ *
+ * - `local` - Whether the change originated from the this client.
+ *
+ * - `op` - The op that caused the change in value.
+ *
+ * - `target` - The ISharedDirectory itself.
+ *
+ * ### "clear"
+ *
+ * The clear event is emitted when the ISharedDirectory is cleared.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `local` - Whether the clear originated from the this client.
+ *
+ * - `op` - The op that caused the clear.
+ *
+ * - `target` - The ISharedDirectory itself.
+ */
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder,
     ) => void);
     (event: "clear", listener: (
         local: boolean,
-        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder,
     ) => void);
 }
 
+/**
+ * Events emitted in response to changes to the directory data.
+ *
+ * ### "containedValueChanged"
+ *
+ * The containedValueChanged event is emitted when a key is set or deleted.  As opposed to the SharedDirectory's
+ * valueChanged event, this is emitted only on the IDirectory that directly contains the key.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `changed` - Information on the key that changed and its value prior to the change.
+ *
+ * - `local` - Whether the change originated from the this client.
+ *
+ * - `target` - The IDirectory itself.
+ *
+ * ### "disposed"
+ *
+ * The dispose event is emitted when this sub directory is deleted.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ *
+ * - `target` - The IDirectory itself.
+ */
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (
         changed: IValueChanged,
         local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "disposed", listener: (
         target: IEventThisPlaceHolder,
     ) => void);
 }
@@ -235,15 +216,53 @@ export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
 
+/**
+ * Events emitted in response to changes to the map data.
+ *
+ * ### "valueChanged"
+ *
+ * The valueChanged event is emitted when a key is set or deleted.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (
+ *     changed: IValueChanged,
+ *     local: boolean,
+ *     op: ISequencedDocumentMessage | null,
+ *     target: IEventThisPlaceHolder,
+ * ) => void
+ * ```
+ * - `changed` - Information on the key that changed and its value prior to the change.
+ *
+ * - `local` - Whether the change originated from the this client.
+ *
+ * - `op` - The op that caused the change in value.
+ *
+ * - `target` - The map itself.
+ *
+ * ### "clear"
+ *
+ * The clear event is emitted when the map is cleared.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `local` - Whether the clear originated from the this client.
+ *
+ * - `op` - The op that caused the clear.
+ *
+ * - `target` - The map itself.
+ */
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
-        changed: IDirectoryValueChanged,
+        changed: IValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder) => void);
     (event: "clear", listener: (
         local: boolean,
-        op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder
     ) => void);
 }
@@ -260,20 +279,12 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
     get<T = any>(key: string): T | undefined;
 
     /**
-     * A form of get except it will only resolve the promise once the key exists in the map.
-     * @param key - Key to retrieve from
-     * @returns The stored value once available
-     */
-    wait<T = any>(key: string): Promise<T>;
-
-    /**
      * Sets the value stored at key to the provided value.
      * @param key - Key to set at
      * @param value - Value to set
      * @returns The ISharedMap itself
      */
     set<T = any>(key: string, value: T): this;
-
 }
 
 /**
@@ -313,25 +324,4 @@ export interface ISerializedValue {
      * String representation of the value.
      */
     value: string | undefined;
-}
-
-/**
- * ValueTypes handle ops slightly differently from SharedObjects or plain JS objects.  Since the Map/Directory doesn't
- * know how to handle the ValueType's ops, those ops are instead passed along to the ValueType for processing.
- * IValueTypeOperationValue is that passed-along op.  The opName on it is the ValueType-specific operation and the
- * value is whatever params the ValueType needs to complete that operation.  Similar to ISerializableValue, it is
- * serializable via JSON.stringify/parse but differs in that it has no equivalency with an in-memory value - rather
- * it just describes an operation to be applied to an already-in-memory value.
- * @alpha
- */
-export interface IValueTypeOperationValue {
-    /**
-     * The name of the operation.
-     */
-    opName: string;
-
-    /**
-     * The payload that is submitted along with the operation.
-     */
-    value: any;
 }

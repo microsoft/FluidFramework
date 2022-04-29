@@ -1,20 +1,15 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import {
-    IFluidObject,
     IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { mixinRequestHandler } from "@fluidframework/datastore";
-import {
-    IContainerContext,
-    IRuntime,
-    IRuntimeFactory,
-} from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
@@ -23,14 +18,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     IFluidDataStoreRuntime,
-    IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import {
-    innerRequestHandler,
-    buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
+import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 export const IKeyValue: keyof IProvideKeyValue = "IKeyValue";
 
@@ -45,15 +37,10 @@ export interface IKeyValue extends IProvideKeyValue {
     delete(key: string): boolean;
 }
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
-}
-
-class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
+class KeyValue implements IKeyValue, IFluidRouter {
+    public static async load(runtime: IFluidDataStoreRuntime, _context: IFluidDataStoreContext, existing: boolean) {
         const kevValue = new KeyValue(runtime);
-        await kevValue.initialize();
+        await kevValue.initialize(existing);
 
         return kevValue;
     }
@@ -64,7 +51,7 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     private _root: ISharedMap | undefined;
 
     public get root() {
-        assert(!!this._root);
+        assert(!!this._root, "KeyValueCache root map is missing!");
         return this._root;
     }
 
@@ -92,8 +79,8 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
         return defaultFluidObjectRequestHandler(this, request);
     }
 
-    private async initialize() {
-        if (!this.runtime.existing) {
+    private async initialize(existing: boolean) {
+        if (!existing) {
             this._root = SharedMap.create(this.runtime, "root");
             this._root.bindToContext();
         } else {
@@ -102,44 +89,51 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     }
 }
 
-export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStoreFactory {
+export class KeyValueFactoryComponent
+    extends RuntimeFactoryHelper
+    implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/key-value-cache";
     public readonly type = KeyValueFactoryComponent.type;
     private readonly defaultComponentId = "default";
-    public get IRuntimeFactory() { return this; }
     public get IFluidDataStoreFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
-        const dataTypes = new Map<string, IChannelFactory>();
-        const mapFactory = SharedMap.getFactory();
-        dataTypes.set(mapFactory.type, mapFactory);
-
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, dataTypes);
-        const routerP = KeyValue.load(runtime, context);
+        const runtime = new runtimeClass(
+            context,
+            new Map([
+                SharedMap.getFactory(),
+            ].map((factory) => [factory.type, factory])),
+            existing,
+        );
+        const routerP = KeyValue.load(runtime, context, existing);
 
         return runtime;
     }
 
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+        await runtime.createRootDataStore(this.type, this.defaultComponentId);
+    }
+
+    public async preInitialize(
+        context: IContainerContext,
+        existing: boolean,
+    ): Promise<ContainerRuntime> {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             new Map([[this.type, Promise.resolve(this)]]),
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(this.defaultComponentId),
-                innerRequestHandler,
             ),
+            undefined, // runtimeOptions
+            undefined, // containerScope
+            existing,
         );
-
-        if (!runtime.existing) {
-            await runtime.createRootDataStore(this.type, this.defaultComponentId);
-        }
-
         return runtime;
     }
 }

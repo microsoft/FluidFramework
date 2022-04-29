@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -27,7 +27,7 @@ export class ClientSequenceNumberManager {
         return this.clientNodeMap.has(clientId);
     }
 
-    public get(clientId: string): IClientSequenceNumber {
+    public get(clientId: string): IClientSequenceNumber | undefined {
         const node = this.clientNodeMap.get(clientId);
         if (node === undefined) {
             return undefined;
@@ -65,6 +65,7 @@ export class ClientSequenceNumberManager {
      * @param canEvict Flag indicating whether or not we can evict the client (branch clients cannot be evicted)
      * @param scopes scope of the client
      * @param nack Flag indicating whether we have nacked this client
+     * @param serverMetadata Optional server provided metadata to associate with the client
      * Returns false if the same client has been added earlier.
      */
     public upsertClient(
@@ -74,44 +75,37 @@ export class ClientSequenceNumberManager {
         timestamp: number,
         canEvict: boolean,
         scopes: string[] = [],
-        nack: boolean = false): boolean {
-        // Add the client ID to our map if this is the first time we've seen it
-        let newClient = false;
-        if (!this.clientNodeMap.has(clientId)) {
-            const newNode = this.clientSeqNumbers.add({
-                canEvict,
-                clientId,
-                clientSequenceNumber,
-                lastUpdate: timestamp,
-                nack,
-                referenceSequenceNumber,
-                scopes,
-            });
-            this.clientNodeMap.set(clientId, newNode);
-            newClient = true;
+        nack: boolean = false,
+        serverMetadata: any = undefined): boolean {
+        const client = this.clientNodeMap.get(clientId);
+        if (client) {
+            client.value.referenceSequenceNumber = referenceSequenceNumber;
+            client.value.clientSequenceNumber = clientSequenceNumber;
+            client.value.lastUpdate = timestamp;
+            client.value.nack = nack;
+
+            if (serverMetadata) {
+                // update serverMetadata if it's provided
+                client.value.serverMetadata = serverMetadata;
+            }
+
+            this.clientSeqNumbers.update(client);
+            return false;
         }
 
-        // And then update its values
-        this.updateClient(clientId, timestamp, clientSequenceNumber, referenceSequenceNumber, nack);
-        return newClient;
-    }
-
-    /**
-     * Updates the sequence number of the specified client
-     */
-    public updateClient(
-        clientId: string,
-        lastUpdate: number,
-        clientSequenceNumber: number,
-        referenceSequenceNumber: number,
-        nack: boolean) {
-        // Lookup the node and then update its value based on the message
-        const heapNode = this.clientNodeMap.get(clientId);
-        heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
-        heapNode.value.clientSequenceNumber = clientSequenceNumber;
-        heapNode.value.lastUpdate = lastUpdate;
-        heapNode.value.nack = nack;
-        this.clientSeqNumbers.update(heapNode);
+        // Add the client ID to our map since this is the first time we've seen it
+        const newNode = this.clientSeqNumbers.add({
+            canEvict,
+            clientId,
+            clientSequenceNumber,
+            lastUpdate: timestamp,
+            nack,
+            referenceSequenceNumber,
+            scopes,
+            serverMetadata,
+        });
+        this.clientNodeMap.set(clientId, newNode);
+        return true;
     }
 
     /**
@@ -119,12 +113,12 @@ export class ClientSequenceNumberManager {
      * Returns false if the client has been removed earlier.
      */
     public removeClient(clientId: string): boolean {
-        if (!this.clientNodeMap.has(clientId)) {
+        const details = this.clientNodeMap.get(clientId);
+        if (!details) {
             return false;
         }
 
         // Remove the client from the list of nodes
-        const details = this.clientNodeMap.get(clientId);
         this.clientSeqNumbers.remove(details);
         this.clientNodeMap.delete(clientId);
         return true;

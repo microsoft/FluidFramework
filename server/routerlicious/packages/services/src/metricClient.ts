@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -31,7 +31,7 @@ class TelegrafClient implements IMetricClient {
     }
 
     private createTelegrafRow(traces: ITrace[]): any {
-        const row = new Object();
+        const row = {};
         const Float = telegraf.Float;
         for (const trace of traces) {
             // tslint:disable prefer-template
@@ -41,8 +41,7 @@ class TelegrafClient implements IMetricClient {
         return row;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private writeToTelegraf(series: string, row: any): Promise<void> {
+    private async writeToTelegraf(series: string, row: any): Promise<void> {
         const Measurement = telegraf.Measurement;
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return

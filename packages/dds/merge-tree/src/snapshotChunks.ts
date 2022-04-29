@@ -1,11 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-    IFluidSerializer,
-    IFluidHandle,
-} from "@fluidframework/core-interfaces";
+
+ /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
@@ -22,9 +23,9 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     chunkStartSegmentIndex: number,
     chunkSegmentCount: number;
     chunkLengthChars: number;
-    totalLengthChars: number;
-    totalSegmentCount: number;
-    chunkSequenceNumber: number;
+    totalLengthChars?: number;
+    totalSegmentCount?: number;
+    chunkSequenceNumber?: number;
     chunkMinSequenceNumber?: number;
     segmentTexts: JsonSegmentSpecs[];
     headerMetadata?: MergeTreeHeaderMetadata;
@@ -61,7 +62,11 @@ export interface IJSONSegmentWithMergeInfo {
     json: IJSONSegment;
     client?: string;
     seq?: number;
+    /**
+     * @deprecated - use removedClientIds instead. this only exists for back-compat
+     */
     removedClient?: string;
+    removedClientIds?: string[];
     removedSeq?: number;
 }
 
@@ -78,7 +83,7 @@ export function serializeAsMinSupportedVersion(
     logger: ITelemetryLogger,
     options: PropertySet | undefined,
     serializer: IFluidSerializer,
-    bind?: IFluidHandle) {
+    bind: IFluidHandle) {
     let targetChuck: MergeTreeChunkLegacy;
 
     if (chunk.version !== undefined) {
@@ -93,7 +98,7 @@ export function serializeAsMinSupportedVersion(
     switch (chunk.version) {
         case undefined:
             targetChuck = chunk as MergeTreeChunkLegacy;
-            targetChuck.headerMetadata = buildHeaderMetadataForLegecyChunk(path, targetChuck, options);
+            targetChuck.headerMetadata = buildHeaderMetadataForLegacyChunk(path, targetChuck, options);
             break;
 
         case "1":
@@ -125,7 +130,7 @@ export function serializeAsMaxSupportedVersion(
     logger: ITelemetryLogger,
     options: PropertySet | undefined,
     serializer: IFluidSerializer,
-    bind?: IFluidHandle) {
+    bind: IFluidHandle) {
     const targetChuck = toLatestVersion(path, chunk, logger, options);
     return serializer.stringify(targetChuck, bind);
 }
@@ -142,7 +147,7 @@ export function toLatestVersion(
                 version: "1",
                 length: chunkLegacy.chunkLengthChars,
                 segmentCount: chunkLegacy.chunkSegmentCount,
-                headerMetadata: buildHeaderMetadataForLegecyChunk(path, chunkLegacy, options),
+                headerMetadata: buildHeaderMetadataForLegacyChunk(path, chunkLegacy, options),
                 segments: chunkLegacy.segmentTexts,
                 startIndex: chunkLegacy.chunkStartSegmentIndex,
             };
@@ -155,22 +160,22 @@ export function toLatestVersion(
     }
 }
 
-function buildHeaderMetadataForLegecyChunk(
+function buildHeaderMetadataForLegacyChunk(
     path: string, chunk: MergeTreeChunkLegacy, options: PropertySet | undefined): MergeTreeHeaderMetadata | undefined {
     if (path === SnapshotLegacy.header) {
         if (chunk.headerMetadata !== undefined) {
             return chunk.headerMetadata;
         }
         const chunkIds: MergeTreeHeaderChunkMetadata[] = [{ id: SnapshotLegacy.header }];
-        if (chunk.chunkLengthChars < chunk.totalLengthChars) {
+        if (chunk.chunkLengthChars < chunk.totalLengthChars!) {
             chunkIds.push({ id: SnapshotLegacy.body });
         }
         return {
             orderedChunkMetadata: chunkIds,
-            minSequenceNumber: chunk.chunkMinSequenceNumber,
-            sequenceNumber: chunk.chunkSequenceNumber,
-            totalLength: chunk.totalLengthChars,
-            totalSegmentCount: chunk.totalSegmentCount,
+            minSequenceNumber: chunk.chunkMinSequenceNumber!,
+            sequenceNumber: chunk.chunkSequenceNumber!,
+            totalLength: chunk.totalLengthChars!,
+            totalSegmentCount: chunk.totalSegmentCount!,
         };
     }
     return undefined;

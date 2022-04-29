@@ -23,6 +23,30 @@ If you want to debug and test
 
 `docker run -p 3000:3000 -p 9229:9229 --rm -t gitrest node --inspect=0.0.0.0:9229 dist/www.js`
 
+Alternatively, for development, use docker-compose to start a mounted container
+
+```shell
+npm run start:dev
+```
+
+Then, when making changes, to update the running container code
+
+```shell
+npm run build
+docker-compose restart gitrest
+```
+
+### Build and run alongside local R11s
+
+1. Comment out all services in `gitrest/docker-compose.yml` except for gitrest,
+   then save.
+1. Comment out the gitrest service within `routerlicious/docker-compose.yml`,
+   then save.
+1. Start Routerlicious by following instructions within
+   `server/routerlicious/README.md`.
+1. Run `npm run start:dev` from gitrest.
+1. Troubleshooting: if you see gitrest errors like `Repo does not exist /home/node/documents/fluid/fluid`, run `docker-compose restart` from within `server/routerlicious`.
+
 ## Testing
 
 `docker run -t gitrest npm test`

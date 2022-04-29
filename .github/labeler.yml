@@ -1,0 +1,10 @@
+# This file is used as the configuration for srvaroa/labeler
+
+version: 1
+labels:
+- label: "base: main"
+  base-branch: "main"
+- label: "base: next"
+  base-branch: "next"
+- label: "base: release"
+  base-branch: "^release/.*"

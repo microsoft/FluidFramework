@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,10 +13,11 @@ import {
 } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import * as redis from "redis";
+import Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
@@ -40,36 +41,39 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 
 export class OrdererManager implements core.IOrdererManager {
     constructor(
+        private readonly globalDbEnabled: boolean,
         private readonly ordererUrl: string,
         private readonly tenantManager: core.ITenantManager,
         private readonly localOrderManager: LocalOrderManager,
         private readonly kafkaFactory: KafkaOrdererFactory,
-        private readonly eventHubFactory: KafkaOrdererFactory,
     ) {
     }
 
     public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
 
         const messageMetaData = { documentId, tenantId };
         winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
+        Lumberjack.info(
+            `tenant orderer: ${JSON.stringify(tenant.orderer)}`,
+            getLumberBaseProperties(documentId, tenantId),
+        );
 
-        if (tenant.orderer.url !== this.ordererUrl) {
+        if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
+            Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
             return Promise.reject(new Error("Invalid ordering service endpoint"));
         }
 
         switch (tenant.orderer.type) {
             case "kafka":
                 return this.kafkaFactory.create(tenantId, documentId);
-            case "eventHub":
-                return this.eventHubFactory.create(tenantId, documentId);
             default:
                 return this.localOrderManager.get(tenantId, documentId);
         }
     }
 }
 
-export class AlfredResources implements utils.IResources {
+export class AlfredResources implements core.IResources {
     public webServerFactory: core.IWebServerFactory;
 
     constructor(
@@ -83,13 +87,21 @@ export class AlfredResources implements utils.IResources {
         public restThrottler: core.IThrottler,
         public socketConnectThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
+        public singleUseTokenCache: core.ICache,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
         public port: any,
         public documentsCollectionName: string,
-        public metricClientConfig: any) {
-        this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
+        public metricClientConfig: any,
+        public documentsCollection: core.ICollection<core.IDocument>,
+    ) {
+        const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
+        const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+        this.webServerFactory = new services.SocketIoWebServerFactory(
+            this.redisConfig,
+            socketIoAdapterConfig,
+            httpServerConfig);
     }
 
     public async dispose(): Promise<void> {
@@ -99,7 +111,7 @@ export class AlfredResources implements utils.IResources {
     }
 }
 
-export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredResources> {
+export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
     public async create(config: Provider): Promise<AlfredResources> {
         // Producer used to publish messages
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
@@ -110,6 +122,9 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
         const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
         const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+        const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
+        const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+
         const producer = services.createProducer(
             kafkaLibrary,
             kafkaEndpoint,
@@ -118,33 +133,52 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             false,
             kafkaProducerPollIntervalMs,
             kafkaNumberOfPartitions,
-            kafkaReplicationFactor);
+            kafkaReplicationFactor,
+            kafkaMaxBatchSize,
+            kafkaSslCACertFilePath);
+
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
 
-        // Redis connection for client manager.
+        // Redis connection for client manager and single-use JWTs.
         const redisConfig2 = config.get("redis2");
-        const redisOptions2: redis.ClientOpts = { password: redisConfig2.pass };
+        const redisOptions2: Redis.RedisOptions = {
+            host: redisConfig2.host,
+            port: redisConfig2.port,
+            password: redisConfig2.pass,
+        };
         if (redisConfig2.tls) {
             redisOptions2.tls = {
-                serverName: redisConfig2.host,
+                servername: redisConfig2.host,
             };
         }
-        const redisClient = redis.createClient(
-            redisConfig2.port,
-            redisConfig2.host,
-            redisOptions2);
-        const clientManager = new services.ClientManager(redisClient);
 
-        // Database connection
-        const mongoUrl = config.get("mongo:endpoint") as string;
-        const mongoFactory = new services.MongoDbFactory(mongoUrl);
-        const mongoManager = new core.MongoManager(mongoFactory);
+        const redisParams2 = {
+            expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
+        };
+
+        const redisClient = new Redis(redisOptions2);
+        const clientManager = new services.ClientManager(redisClient, redisParams2);
+
+        const redisClientForJwtCache = new Redis(redisOptions2);
+        const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
+
+        // Database connection for global db if enabled
+        let globalDbMongoManager;
+        const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+        const factory = await services.getDbFactory(config);
+        if (globalDbEnabled) {
+            globalDbMongoManager = new core.MongoManager(factory, false, null, true);
+        }
+
+        // Database connection for operations db
+        const operationsDbMongoManager = new core.MongoManager(factory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
         // Create the index on the documents collection
-        const db = await mongoManager.getDatabase();
+        const dbManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
+        const db: core.IDb = await dbManager.getDatabase();
         const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
         await documentsCollection.createIndex(
             {
@@ -162,27 +196,33 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         await taskMessageSender.initialize();
 
         const nodeCollectionName = config.get("mongo:collectionNames:nodes");
-        const nodeManager = new NodeManager(mongoManager, nodeCollectionName);
+        const nodeManager = new NodeManager(operationsDbMongoManager, nodeCollectionName);
         // This.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
         const reservationManager = new ReservationManager(
             nodeManager,
-            mongoManager,
+            operationsDbMongoManager,
             config.get("mongo:collectionNames:reservations"));
 
-        const tenantManager = new services.TenantManager(authEndpoint);
+        const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+        const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 
         // Redis connection for throttling.
         const redisConfigForThrottling = config.get("redisForThrottling");
-        const redisOptionsForThrottling: redis.ClientOpts = { password: redisConfigForThrottling.pass };
+        const redisOptionsForThrottling: Redis.RedisOptions = {
+            host: redisConfigForThrottling.host,
+            port: redisConfigForThrottling.port,
+            password: redisConfigForThrottling.pass,
+        };
         if (redisConfigForThrottling.tls) {
             redisOptionsForThrottling.tls = {
-                serverName: redisConfigForThrottling.host,
+                servername: redisConfigForThrottling.host,
             };
         }
-        const redisClientForThrottling = redis.createClient(
-            redisConfigForThrottling.port,
-            redisConfigForThrottling.host,
-            redisOptionsForThrottling);
+        const redisParamsForThrottling = {
+            expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as number | undefined,
+        };
+
+        const redisClientForThrottling = new Redis(redisOptionsForThrottling);
 
         // Rest API Throttler
         const throttleMaxRequestsPerMs =
@@ -193,7 +233,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             config.get("alfred:throttling:restCalls:minCooldownIntervalInMs") as number | undefined;
         const throttleMinRequestThrottleIntervalInMs =
             config.get("alfred:throttling:restCalls:minThrottleIntervalInMs") as number | undefined;
-        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClientForThrottling);
+        const throttleStorageManager =
+            new services.RedisThrottleStorageManager(redisClientForThrottling, redisParamsForThrottling);
         const restThrottlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
             throttleMaxRequestsPerMs,
@@ -244,13 +285,16 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             winston);
 
         const databaseManager = new core.MongoDatabaseManager(
-            mongoManager,
+            globalDbEnabled,
+            operationsDbMongoManager,
+            globalDbMongoManager,
             nodeCollectionName,
             documentsCollectionName,
             deltasCollectionName,
             scribeCollectionName);
 
-        const storage = new services.DocumentStorage(databaseManager, tenantManager);
+        const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+        const storage = new services.DocumentStorage(databaseManager, tenantManager, enableWholeSummaryUpload);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         const address = `${await utils.getHostIp()}:4000`;
@@ -275,21 +319,12 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             core.DefaultServiceConfiguration);
         const serverUrl = config.get("worker:serverUrl");
 
-        let eventHubOrdererFactory: KafkaOrdererFactory = null;
-        if (config.get("eventHub")) {
-            const eventHubProducer = new services.EventHubProducer(config.get("eventHub:endpoint"), topic);
-            eventHubOrdererFactory = new KafkaOrdererFactory(
-                eventHubProducer,
-                maxSendMessageSize,
-                core.DefaultServiceConfiguration);
-        }
-
         const orderManager = new OrdererManager(
+            globalDbEnabled,
             serverUrl,
             tenantManager,
             localOrderManager,
-            kafkaOrdererFactory,
-            eventHubOrdererFactory);
+            kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as { id: string, key: string }[];
@@ -308,17 +343,19 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             restThrottler,
             socketConnectThrottler,
             socketSubmitOpThrottler,
+            redisJwtCache,
             storage,
             appTenants,
-            mongoManager,
+            operationsDbMongoManager,
             port,
             documentsCollectionName,
-            metricClientConfig);
+            metricClientConfig,
+            documentsCollection);
     }
 }
 
-export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources> {
-    public async create(resources: AlfredResources): Promise<utils.IRunner> {
+export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources> {
+    public async create(resources: AlfredResources): Promise<core.IRunner> {
         return new AlfredRunner(
             resources.webServerFactory,
             resources.config,
@@ -328,11 +365,13 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.restThrottler,
             resources.socketConnectThrottler,
             resources.socketSubmitOpThrottler,
+            resources.singleUseTokenCache,
             resources.storage,
             resources.clientManager,
             resources.appTenants,
             resources.mongoManager,
             resources.producer,
-            resources.metricClientConfig);
+            resources.metricClientConfig,
+            resources.documentsCollection);
     }
 }

@@ -1,21 +1,23 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { IPersistedCache } from "./odspCache";
+import {
+    OdspResourceTokenFetchOptions,
+    TokenFetcher,
+    IPersistedCache,
+    HostStoragePolicy,
+} from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
-import { HostStoragePolicy } from "./contracts";
-import { StorageTokenFetcher, PushTokenFetcher } from "./tokenFetch";
-import io from "./getSocketIo";
 
 export class OdspDocumentServiceFactoryWithCodeSplit
     extends OdspDocumentServiceFactoryCore
     implements IDocumentServiceFactory {
     constructor(
-        getStorageToken: StorageTokenFetcher,
-        getWebsocketToken: PushTokenFetcher,
+        getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+        getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
         persistedCache?: IPersistedCache,
         hostPolicy?: HostStoragePolicy,
     ) {

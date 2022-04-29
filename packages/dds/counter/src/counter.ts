@@ -1,25 +1,18 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
-import { debug } from "./debug";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
 
 /**
@@ -42,6 +35,7 @@ const snapshotFileName = "header";
 
 /**
  * A `SharedCounter` is a shared object which holds a number that can be incremented or decremented.
+ * @public
  *
  * @remarks
  * ### Creation
@@ -125,56 +119,36 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     /**
-     * Create a snapshot for the counter
+     * Create a summary for the counter
      *
-     * @returns the snapshot of the current state of the counter
+     * @returns the summary of the current state of the counter
+     * @internal
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // Get a serializable form of data
         const content: ICounterSnapshotFormat = {
             value: this.value,
         };
 
-        // And then construct the tree for it
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: JSON.stringify(content),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+        // And then construct the summary for it
+        return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     * @internal
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const rawContent = await storage.read(snapshotFileName);
-
-        const content = rawContent !== undefined
-            ? JSON.parse(fromBase64ToUtf8(rawContent)) as ICounterSnapshotFormat
-            : { value: 0 };
+        const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
 
         this._value = content.value;
     }
 
-    protected registerCore() {
-    }
-
     /**
-     * Call back on disconnect
+     * Called when the object has disconnected from the delta stream.
+     * @internal
      */
-    protected onDisconnect() {
-        debug(`SharedCounter ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() { }
 
     /**
      * Process a counter operation
@@ -183,6 +157,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @param local - whether the message was sent by the local client
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
+     * @internal
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation && !local) {
@@ -197,5 +172,13 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
                     throw new Error("Unknown operation");
             }
         }
+    }
+
+    /**
+     * Not implemented.
+     * @internal
+     */
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -14,16 +14,15 @@ import * as api from "@fluidframework/protocol-definitions";
  * Partial implementation of IDocumentStorageService
  */
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
-    public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
+    public abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
-    public abstract read(blobId: string): Promise<string>;
     public abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         return Promise.reject(new Error("Invalid operation"));
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
+    public async write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
         return Promise.reject(new Error("Invalid operation"));
     }
 
@@ -65,7 +64,7 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
      * Note: this API is called while replay() is in progress - next batch of ops is downloaded in parallel
      * @param currentOp - current op
      */
-    public abstract fetchTo(currentOp: number): number;
+    public abstract fetchTo(currentOp: number): number | undefined;
 
     /**
      * Returns true if no more ops should be processed (or downloaded for future processing).

@@ -1,13 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@fluid-example/flow-util-lib";
-import { IFluidObject } from "@fluidframework/core-interfaces";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { paste } from "../clipboard/paste";
-import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
+import { FlowDocument } from "../document";
+import { Direction, getDeltaX, KeyCode } from "../util";
 import { ownsNode } from "../util/event";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
@@ -15,25 +14,29 @@ import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 
-/**
- * The Host provides the Editor with a registry of view factories which will be used to render components that have
- * been inserted into the document.
- */
-export interface IFluidHTMLViewFactory {
-    createView(model: IFluidObject, scope?: IFluidObject): IFluidHTMLView;
-}
-
 export class Editor {
     private readonly layout: Layout;
     private readonly caret: Caret;
     private readonly caretSync: () => void;
     private get doc() { return this.layout.doc; }
 
-    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, viewFactoryRegistry?: Map<string, IFluidHTMLViewFactory>, scope?: IFluidObject) {
-        const scheduler = new Scheduler();
-        this.layout = new Layout(doc, root, formatter, scheduler, viewFactoryRegistry, scope);
+    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, scope?: FluidObject) {
+        this.layout = new Layout(doc, root, formatter);
         this.caret = new Caret(this.layout);
-        this.caretSync = scheduler.coalesce(scheduler.onTurnEnd, () => { this.caret.sync(); });
+
+        let scheduled = false;
+        this.caretSync = () => {
+            if (scheduled) {
+                return;
+            }
+
+            Promise.resolve().then(() => {
+                scheduled = false;
+                this.caret.sync();
+            }).catch(console.error);
+
+            scheduled = true;
+        };
         this.layout.on("render", this.caretSync);
 
         root.tabIndex = 0;
@@ -110,14 +113,6 @@ export class Editor {
                 break;
             }
 
-            case KeyCode.arrowLeft:
-                this.enterIfInclusion(e, this.caret.position - 1, Direction.left);
-                break;
-
-            case KeyCode.arrowRight:
-                this.enterIfInclusion(e, this.caret.position, Direction.right);
-                break;
-
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
             case KeyCode.backspace: {
                 this.delete(e, Direction.left);
@@ -177,18 +172,5 @@ export class Editor {
     private consume(e: Event) {
         e.preventDefault();
         e.stopPropagation();
-    }
-
-    private enterIfInclusion(e: Event, position: number, direction: Direction) {
-        const { segment } = this.doc.getSegmentAndOffset(position);
-        const kind = getDocSegmentKind(segment);
-        if (kind === DocSegmentKind.inclusion) {
-            const { node } = this.layout.segmentAndOffsetToNodeAndOffset(segment, 0);
-            const bounds = this.caret.bounds;
-            debug("Entering inclusion: (dx=%d,dy=%d,bounds=%o)", getDeltaX(direction), getDeltaY(direction), bounds);
-            if (CaretUtil.caretEnter(node as Element, direction, bounds)) {
-                this.consume(e);
-            }
-        }
     }
 }

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -19,8 +19,6 @@ export interface IWebSocket {
     join(id: string): Promise<void>;
 
     emit(event: string, ...args);
-
-    broadcastToRoom(roomId: string, event: string, ...args: any[]);
 
     emitToRoom(roomId: string, event: string, ...args: any[]);
 

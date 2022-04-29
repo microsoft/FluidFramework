@@ -1,16 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import { addBlobToTree } from "@fluidframework/protocol-base";
-import {
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -18,10 +11,13 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
     ISharedMap,
     ISharedMapEvents,
@@ -42,13 +38,13 @@ const snapshotFileName = "header";
  */
 export class MapFactory implements IChannelFactory {
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+     */
     public static readonly Type = "https://graph.microsoft.com/types/map";
 
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+     */
     public static readonly Attributes: IChannelAttributes = {
         type: MapFactory.Type,
         snapshotFormatVersion: "0.2",
@@ -56,22 +52,22 @@ export class MapFactory implements IChannelFactory {
     };
 
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+     */
     public get type() {
         return MapFactory.Type;
     }
 
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+     */
     public get attributes() {
         return MapFactory.Attributes;
     }
 
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+     */
     public async load(
         runtime: IFluidDataStoreRuntime,
         id: string,
@@ -84,8 +80,8 @@ export class MapFactory implements IChannelFactory {
     }
 
     /**
-    * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-    */
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+     */
     public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
         const map = new SharedMap(id, runtime, MapFactory.Attributes);
         map.initializeLocal();
@@ -113,7 +109,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * ```typescript
      * const myMap = SharedMap.create(this.runtime, id);
      * ```
-     *
      */
     public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap {
         return runtime.createChannel(id, MapFactory.Type) as SharedMap;
@@ -128,22 +123,22 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * String representation for the class.
-    */
+     * String representation for the class.
+     */
     public readonly [Symbol.toStringTag]: string = "SharedMap";
 
     /**
-    * MapKernel which manages actual map operations.
-    */
+     * MapKernel which manages actual map operations.
+     */
     private readonly kernel: MapKernel;
 
     /**
-    * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
-    *
-    * @param id - String identifier.
-    * @param runtime - Data store runtime.
-    * @param attributes - The attributes for the map.
-    */
+     * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
+     *
+     * @param id - String identifier.
+     * @param runtime - Data store runtime.
+     * @param attributes - The attributes for the map.
+     */
     constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
@@ -155,109 +150,108 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),
-            [],
             this,
         );
     }
 
     /**
-    * {@inheritDoc MapKernel.keys}
-    */
+     * Get an iterator over the keys in this map.
+     * @returns The iterator
+     */
     public keys(): IterableIterator<string> {
         return this.kernel.keys();
     }
 
     /**
-    * {@inheritDoc MapKernel.entries}
-    */
+     * Get an iterator over the entries in this map.
+     * @returns The iterator
+     */
     public entries(): IterableIterator<[string, any]> {
         return this.kernel.entries();
     }
 
     /**
-    * {@inheritDoc MapKernel.values}
-    */
+     * Get an iterator over the values in this map.
+     * @returns The iterator
+     */
     public values(): IterableIterator<any> {
         return this.kernel.values();
     }
 
     /**
-    * Get an iterator over the entries in this map.
-    * @returns The iterator
-    */
+     * Get an iterator over the entries in this map.
+     * @returns The iterator
+     */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.kernel.entries();
     }
 
     /**
-    * {@inheritDoc MapKernel.size}
-    */
+     * The number of key/value pairs stored in the map.
+     */
     public get size() {
         return this.kernel.size;
     }
 
     /**
-    * {@inheritDoc MapKernel.forEach}
-    */
+     * Executes the given callback on each entry in the map.
+     * @param callbackFn - Callback function
+     */
     public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
         this.kernel.forEach(callbackFn);
     }
 
     /**
-    * {@inheritDoc ISharedMap.get}
-    */
+     * {@inheritDoc ISharedMap.get}
+     */
     public get<T = any>(key: string): T | undefined {
         return this.kernel.get<T>(key);
     }
 
     /**
-    * {@inheritDoc ISharedMap.wait}
-    */
-    public async wait<T = any>(key: string): Promise<T> {
-        return this.kernel.wait<T>(key);
-    }
-
-    /**
-    * {@inheritDoc MapKernel.has}
-    */
+     * Check if a key exists in the map.
+     * @param key - The key to check
+     * @returns True if the key exists, false otherwise
+     */
     public has(key: string): boolean {
         return this.kernel.has(key);
     }
 
     /**
-    * {@inheritDoc ISharedMap.set}
-    */
+     * {@inheritDoc ISharedMap.set}
+     */
     public set(key: string, value: any): this {
         this.kernel.set(key, value);
         return this;
     }
 
     /**
-    * {@inheritDoc MapKernel.delete}
-    */
+     * Delete a key from the map.
+     * @param key - Key to delete
+     * @returns True if the key existed and was deleted, false if it did not exist
+     */
     public delete(key: string): boolean {
         return this.kernel.delete(key);
     }
 
     /**
-    * {@inheritDoc MapKernel.clear}
-    */
+     * Clear all data from the map.
+     */
     public clear(): void {
         this.kernel.clear();
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
-    */
-   protected snapshotCore(serializer: IFluidSerializer): ITree {
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
+     * @internal
+     */
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         let currentSize = 0;
         let counter = 0;
         let headerBlob: IMapDataObjectSerializable = {};
         const blobs: string[] = [];
 
-        const tree: ITree = {
-            entries: [],
-        };
+        const builder = new SummaryTreeBuilder();
 
         const data = this.kernel.getSerializedStorage(serializer);
 
@@ -290,7 +284,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
                         value: JSON.parse(value.value),
                     },
                 };
-                addBlobToTree(tree, blobName, content);
+                builder.addBlob(blobName, JSON.stringify(content));
             } else {
                 currentSize += value.type.length + 21; // Approximation cost of property header
                 if (value.value) {
@@ -301,7 +295,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
                     const blobName = `blob${counter}`;
                     counter++;
                     blobs.push(blobName);
-                    addBlobToTree(tree, blobName, headerBlob);
+                    builder.addBlob(blobName, JSON.stringify(headerBlob));
                     headerBlob = {};
                     currentSize = 0;
                 }
@@ -316,31 +310,24 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             blobs,
             content: headerBlob,
         };
-        addBlobToTree(tree, snapshotFileName, header);
+        builder.addBlob(snapshotFileName, JSON.stringify(header));
 
-        return tree;
-    }
-
-    public getSerializableStorage(): IMapDataObjectSerializable {
-        return this.kernel.getSerializableStorage(this.serializer);
+        return builder.getSummaryTree();
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-    */
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     * @internal
+     */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.read(snapshotFileName);
-
-        const data = fromBase64ToUtf8(header);
         // eslint-disable-next-line @typescript-eslint/ban-types
-        const json = JSON.parse(data) as object;
+        const json = await readAndParse<object>(storage, snapshotFileName);
         const newFormat = json as IMapSerializationFormat;
         if (Array.isArray(newFormat.blobs)) {
             this.kernel.populateFromSerializable(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
-                const blob = await storage.read(value);
-                const blobData = fromBase64ToUtf8(blob);
-                this.kernel.populateFromSerializable(JSON.parse(blobData) as IMapDataObjectSerializable);
+                const content = await readAndParse<IMapDataObjectSerializable>(storage, value);
+                this.kernel.populateFromSerializable(content);
             }));
         } else {
             this.kernel.populateFromSerializable(json as IMapDataObjectSerializable);
@@ -348,36 +335,35 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-    */
-    protected onDisconnect() {
-        debug(`Map ${this.id} is now disconnected`);
-    }
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
+     * @internal
+     */
+    protected onDisconnect() {}
 
     /**
-      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
-      */
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+     * @internal
+     */
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         this.kernel.trySubmitMessage(content, localOpMetadata);
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
-    */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        if (message.type === MessageType.Operation) {
-            this.kernel.tryProcessMessage(message, local, localOpMetadata);
-        }
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+     * @internal
+     */
+    protected applyStashedOp(content: any): unknown {
+        this.kernel.tryProcessMessage(content, false, undefined);
+        return this.kernel.tryGetStashedOpLocalMetadata(content);
     }
 
     /**
-    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-    */
-    protected registerCore() {
-        for (const value of this.values()) {
-            if (SharedObject.is(value)) {
-                value.bindToContext();
-            }
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
+     * @internal
+     */
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+        if (message.type === MessageType.Operation) {
+            this.kernel.tryProcessMessage(message.contents, local, localOpMetadata);
         }
     }
 }

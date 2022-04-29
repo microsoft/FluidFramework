@@ -1,26 +1,22 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { EventEmitter } from "events";
-
 import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-
 import React from "react";
-import ReactDOM from "react-dom";
 
 const diceValueKey = "diceValue";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller Fluid object.
  */
-interface IDiceRoller extends EventEmitter {
+export interface IDiceRoller extends EventEmitter {
     /**
      * Get the dice value as a number.
      */
@@ -37,11 +33,11 @@ interface IDiceRoller extends EventEmitter {
     on(event: "diceRolled", listener: () => void): this;
 }
 
-interface IDiceRollerViewProps {
+export interface IDiceRollerViewProps {
     model: IDiceRoller;
 }
 
-const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
+export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
     const [diceValue, setDiceValue] = React.useState(props.model.value);
 
     React.useEffect(() => {
@@ -68,10 +64,15 @@ const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewPr
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
-export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLView {
+export class DiceRoller extends DataObject implements IDiceRoller {
     public static get Name() { return "@fluid-example/dice-roller"; }
 
-    public get IFluidHTMLView() { return this; }
+    public static readonly factory = new DataObjectFactory(
+        DiceRoller.Name,
+        DiceRoller,
+        [],
+        {},
+    );
 
     /**
      * initializingFirstTime is called only once, it is executed only by the first client to open the
@@ -91,16 +92,6 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
         });
     }
 
-    /**
-     * Render the dice.
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <DiceRollerView model={this} />,
-            div,
-        );
-    }
-
     public get value() {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.root.get(diceValueKey);
@@ -116,9 +107,4 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const DiceRollerInstantiationFactory = new DataObjectFactory(
-    DiceRoller.Name,
-    DiceRoller,
-    [],
-    {},
-);
+export const DiceRollerInstantiationFactory = DiceRoller.factory;

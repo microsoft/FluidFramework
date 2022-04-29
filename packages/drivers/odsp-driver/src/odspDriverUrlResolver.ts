@@ -1,37 +1,49 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { assert } from "@fluidframework/common-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
-    IFluidCodeDetails,
-    IRequest,
-    isFluidPackage,
-} from "@fluidframework/core-interfaces";
-import {
-    IUrlResolver,
-    IResolvedUrl,
+    DriverErrorType,
     DriverHeader,
+    IContainerPackageInfo,
+    IResolvedUrl,
+    IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "./contracts";
-import { getHashedDocumentId } from "./odspUtils";
+import { IOdspResolvedUrl, ShareLinkTypes, ShareLinkInfoType } from "@fluidframework/odsp-driver-definitions";
+import { NonRetryableError } from "@fluidframework/driver-utils";
+import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
+import { getOdspResolvedUrl } from "./odspUtils";
+import { getHashedDocumentId } from "./odspPublicUtils";
+import { ClpCompliantAppHeader } from "./contractsPublic";
+import { pkgVersion } from "./packageVersion";
 
-function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
+function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
     const siteOrigin = new URL(siteUrl).origin;
-    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/snapshots`;
+    const version = fileVersion ? `versions/${fileVersion}/` : "";
+    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${version}`;
 }
 
-function getAttachmentPOSTUrl(siteUrl: string, driveId: string, itemId: string) {
-    const siteOrigin = new URL(siteUrl).origin;
-    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/attachment`;
+function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+    const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
+    return `${urlBase}opStream/snapshots`;
 }
 
-function getAttachmentGETUrl(siteUrl: string, driveId: string, itemId: string) {
-    const siteOrigin = new URL(siteUrl).origin;
-    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/attachments`;
+function getAttachmentPOSTUrl(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+    const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
+    return `${urlBase}opStream/attachment`;
+}
+
+function getAttachmentGETUrl(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+    const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
+    return `${urlBase}opStream/attachments`;
+}
+
+function getDeltaStorageUrl(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+    const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
+    return `${urlBase}opStream`;
 }
 
 /**
@@ -62,17 +74,32 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             const driveID = searchParams.get("driveId");
             const filePath = searchParams.get("path");
             const packageName = searchParams.get("containerPackageName");
+            const createLinkType = searchParams.get("createLinkType");
             if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
-                throw new Error("Proper new file params should be there!!");
+                throw new NonRetryableError(
+                    "Proper new file params should be there!!",
+                    DriverErrorType.genericError,
+                    { driverVersion: pkgVersion });
+            }
+            let shareLinkInfo: ShareLinkInfoType | undefined;
+            if (createLinkType && createLinkType in ShareLinkTypes) {
+                shareLinkInfo = {
+                    createLink: {
+                        type: ShareLinkTypes[createLinkType],
+                    },
+                };
             }
             return {
                 endpoints: {
                     snapshotStorageUrl: "",
                     attachmentGETStorageUrl: "",
                     attachmentPOSTStorageUrl: "",
+                    deltaStorageUrl: "",
                 },
                 tokens: {},
                 type: "fluid",
+                odspResolvedUrl: true,
+                id: "odspCreateNew",
                 url: `fluid-odsp://${siteURL}?${queryString}&version=null`,
                 siteUrl: siteURL,
                 hashedDocumentId: "",
@@ -83,11 +110,14 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 codeHint: {
                     containerPackageName: packageName ? packageName : undefined,
                 },
+                fileVersion: undefined,
+                shareLinkInfo,
+                isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
             };
         }
-        const { siteUrl, driveId, itemId, path, containerPackageName } = decodeOdspUrl(request.url);
-        const hashedDocumentId = getHashedDocumentId(driveId, itemId);
-        assert(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
+        const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
+        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+        assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
 
         let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 
@@ -100,15 +130,18 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             }
         }
 
-        const summarizer = request.headers?.[DriverHeader.summarizingClient];
+        const summarizer = !!request.headers?.[DriverHeader.summarizingClient];
 
         return {
             type: "fluid",
+            odspResolvedUrl: true,
             endpoints: {
-                snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId),
-                attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId),
-                attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId),
+                snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId, fileVersion),
+                attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId, fileVersion),
+                attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId, fileVersion),
+                deltaStorageUrl: getDeltaStorageUrl(siteUrl, driveId, itemId, fileVersion),
             },
+            id: hashedDocumentId,
             tokens: {},
             url: documentUrl,
             hashedDocumentId,
@@ -120,37 +153,42 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             codeHint: {
                 containerPackageName,
             },
+            fileVersion,
+            isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
         };
     }
 
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        codeDetails?: IFluidCodeDetails,
+        packageInfoSource?: IContainerPackageInfo,
     ): Promise<string> {
-        let url = relativeUrl;
-        if (url.startsWith("/")) {
-            url = url.substr(1);
+        let dataStorePath = relativeUrl;
+        if (dataStorePath.startsWith("/")) {
+            dataStorePath = dataStorePath.substr(1);
         }
-        const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        let odspUrl = `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(odspResolvedUrl.driveId,
-            )}&itemId=${encodeURIComponent(odspResolvedUrl.itemId)}&path=${encodeURIComponent("/")}`;
-        const packageName = isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
-             odspResolvedUrl.codeHint?.containerPackageName;
-        if (packageName) {
-            odspUrl += `&containerPackageName=${encodeURIComponent(packageName)}`;
+        const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+        // back-compat: GitHub #9653
+        const isFluidPackage = (pkg: any) =>
+            typeof pkg === "object"
+            && typeof pkg?.name === "string"
+            && typeof pkg?.fluid === "object";
+        let containerPackageName;
+        if (packageInfoSource && "name" in packageInfoSource) {
+            containerPackageName = packageInfoSource.name;
+            // packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
+        } else if (isFluidPackage((packageInfoSource as any)?.package)) {
+            containerPackageName = (packageInfoSource as any)?.package.name;
+        } else {
+            containerPackageName = (packageInfoSource as any)?.package;
         }
+        containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
-        return odspUrl;
-    }
-
-    public createCreateNewRequest(
-        siteUrl: string,
-        driveId: string,
-        filePath: string,
-        fileName: string,
-    ): IRequest {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+        return createOdspUrl({
+            ... odspResolvedUrl,
+            containerPackageName,
+            dataStorePath,
+        });
     }
 }
 
@@ -160,6 +198,7 @@ function decodeOdspUrl(url: string): {
     itemId: string;
     path: string;
     containerPackageName?: string;
+    fileVersion?: string;
 } {
     const [siteUrl, queryString] = url.split("?");
 
@@ -169,6 +208,7 @@ function decodeOdspUrl(url: string): {
     const itemId = searchParams.get("itemId");
     const path = searchParams.get("path");
     const containerPackageName = searchParams.get("containerPackageName");
+    const fileVersion = searchParams.get("fileVersion");
 
     if (driveId === null) {
         throw new Error("ODSP URL did not contain a drive id");
@@ -188,5 +228,6 @@ function decodeOdspUrl(url: string): {
         itemId: decodeURIComponent(itemId),
         path: decodeURIComponent(path),
         containerPackageName: containerPackageName ? decodeURIComponent(containerPackageName) : undefined,
+        fileVersion: fileVersion ? decodeURIComponent(fileVersion) : undefined,
     };
 }

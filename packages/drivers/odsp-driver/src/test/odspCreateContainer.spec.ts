@@ -1,18 +1,21 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
-import { IDocumentService } from "@fluidframework/driver-definitions";
+import { DriverErrorType, IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { IOdspResolvedUrl } from "../contracts";
-import { getHashedDocumentId } from "../odspUtils";
-import { mockFetch } from "./mockFetch";
+import { getOdspResolvedUrl } from "../odspUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
+import { LocalPersistentCache } from "../odspCache";
+import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
+import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {
     const siteUrl = "https://www.localhost.xxx";
@@ -30,13 +33,17 @@ describe("Odsp Create Container Test", () => {
         itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
         driveId,
         itemId,
+        id: "fakeSummaryHandle",
     };
 
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
-        async (_url: string, _refresh: boolean, _claims?: string) => "token",
-        async (_refresh: boolean, _claims?: string) => "token");
+        async (_options) => "token",
+        async (_options) => "token",
+        new LocalPersistentCache(2000),
+        { snapshotOptions: { timeout: 2000 } },
+    );
 
-    const createSummary = (putAppTree: boolean, putProtocolTree: boolean, sequenceNumber: number) => {
+    const createSummary = (putAppTree: boolean, putProtocolTree: boolean) => {
         const summary: ISummaryTree = {
             type: SummaryType.Tree,
             tree: {},
@@ -53,7 +60,7 @@ describe("Odsp Create Container Test", () => {
                 tree: {
                     attributes: {
                         type: SummaryType.Blob,
-                        content: JSON.stringify({ branch: "", minimumSequenceNumber: 0, sequenceNumber }),
+                        content: JSON.stringify({ branch: "", minimumSequenceNumber: 0, sequenceNumber: 0 }),
                     },
                 },
             };
@@ -67,24 +74,23 @@ describe("Odsp Create Container Test", () => {
     ): Promise<IDocumentService> => odspDocumentServiceFactory.createContainer(
         summary,
         resolved,
-        DebugLogger.create("fluid:createContainer"));
+        new TelemetryUTLogger());
 
     beforeEach(() => {
         resolver = new OdspDriverUrlResolver();
-        request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName);
+        request = createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     });
 
     it("Check Document Service Successfully", async () => {
         const resolved = await resolver.resolve(request);
-        const docID = getHashedDocumentId(driveId, itemId);
-        const summary = createSummary(true, true, 0);
-        const docService = await mockFetch(
+        const docID = await getHashedDocumentId(driveId, itemId);
+        const summary = createSummary(true, true);
+        const docService = await mockFetchOk(
+            async () => odspDocumentServiceFactory.createContainer(summary, resolved, new TelemetryUTLogger()),
             expectedResponse,
-            async () => odspDocumentServiceFactory.createContainer(
-                summary,
-                resolved,
-                DebugLogger.create("fluid:createContainer")));
-        const finalResolverUrl = docService.resolvedUrl as IOdspResolvedUrl;
+            { "x-fluid-epoch": "epoch1" },
+        );
+        const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
         assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
         assert.strictEqual(finalResolverUrl.itemId, itemId, "ItemId should match");
         assert.strictEqual(finalResolverUrl.siteUrl, siteUrl, "SiteUrl should match");
@@ -99,23 +105,37 @@ describe("Odsp Create Container Test", () => {
 
     it("No App Summary", async () => {
         const resolved = await resolver.resolve(request);
-        const summary = createSummary(false, true, 0);
+        const summary = createSummary(false, true);
         await assert.rejects(createService(summary, resolved),
             "Doc service should not be created because there was no app summary");
     });
 
-    it("Wrong Seq No in Protocol Summary", async () => {
+    it("No protocol Summary", async () => {
         const resolved = await resolver.resolve(request);
-        const summary = createSummary(true, true, 1);
+        const summary = createSummary(true, false);
         await assert.rejects(createService(summary, resolved),
-            "Doc service should not be created because seq no was wrong");
+            "Doc service should not be created because there was no protocol summary");
     });
 
     it("No item id in response from server", async () => {
         const resolved = await resolver.resolve(request);
-        const summary = createSummary(true, true, 0);
+        const summary = createSummary(true, true);
 
-        await assert.rejects(createService(summary, resolved),
-            "Doc service should not be created because no Item id is there");
+        try {
+            await mockFetchMultiple(
+                async () => createService(summary, resolved),
+                [
+                    // Due to retry logic in getWithRetryForTokenRefresh() for DriverErrorType.incorrectServerResponse
+                    // Need to mock two calls
+                    async () => okResponse({}, {}),
+                    async () => okResponse({}, {}),
+                ],
+            );
+        } catch (error: any) {
+            assert.strictEqual(error.statusCode, undefined, "Wrong error code");
+            assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
+                "Error type should be correct");
+            assert.strictEqual(error.message, "ODSP CreateFile call returned no item ID", "Message should be correct");
+        }
     });
 });

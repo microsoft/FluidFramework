@@ -1,11 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { TestConsumer, TestKafka, TestProducer } from "@fluidframework/server-test-utils";
+import { DebugLogger, TestConsumer, TestKafka, TestProducer } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
-import { Provider } from "nconf";
 import { KafkaRunner } from "../../kafka-service/runner";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
@@ -18,17 +17,16 @@ describe("kafka-service", () => {
         let testProducer: TestProducer;
 
         beforeEach(() => {
-            const config = (new Provider({})).defaults({}).use("memory");
             testKafka = new TestKafka();
             testFactory = new TestPartitionLambdaFactory();
             testConsumer = testKafka.createConsumer();
             testProducer = testKafka.createProducer();
-            testRunner = new KafkaRunner(testFactory, testConsumer, config);
+            testRunner = new KafkaRunner(testFactory, testConsumer);
         });
 
         describe(".start", () => {
             it("Should be able to stop after processing messages", async () => {
-                const startP = testRunner.start();
+                const startP = testRunner.start(DebugLogger.create("fluid-server:TestRunner"));
                 testConsumer.rebalance();
 
                 const messageCount = 10;
@@ -54,7 +52,7 @@ describe("kafka-service", () => {
             }
 
             it("Should resolve start promise on kafka error ", async () => {
-                const startP = testRunner.start();
+                const startP = testRunner.start(DebugLogger.create("fluid-server:TestRunner"));
                 testConsumer.rebalance();
 
                 testProducer.send([{}], "test");
@@ -64,7 +62,7 @@ describe("kafka-service", () => {
             });
 
             it("Should resolve start promise on lambda error ", async () => {
-                const startP = testRunner.start();
+                const startP = testRunner.start(DebugLogger.create("fluid-server:TestRunner"));
                 testFactory.setThrowHandler(true);
                 testConsumer.rebalance();
 

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,6 +13,7 @@ import { FileHashCache } from "../common/fileHashCache";
 import chalk from "chalk";
 import { options } from "./options";
 import * as semver from "semver";
+import { WorkerPool } from "./tasks/workers/workerPool";
 
 export enum BuildResult {
     Success,
@@ -44,12 +45,13 @@ class TaskStats {
 class BuildContext {
     public readonly fileHashCache = new FileHashCache();
     public readonly taskStats = new TaskStats();
+    public readonly failedTaskLines: string[] = [];
+    constructor(public readonly workerPool?: WorkerPool) { }
 };
 
 export class BuildPackage {
     private buildTask?: Task | null = null;
     private buildScriptNames: string[];
-    private loaded = false;
     public readonly parents = new Array<BuildPackage>();
     public readonly dependentPackages = new Array<BuildPackage>();
     public level: number = -1;
@@ -91,8 +93,9 @@ export class BuildPackage {
 }
 
 export class BuildGraph {
-    private readonly buildPackages = new Map<string, BuildPackage>();
-    private readonly buildContext = new BuildContext();
+    public readonly buildPackages = new Map<string, BuildPackage>();
+    private readonly buildContext = new BuildContext(
+        options.worker ? new WorkerPool(options.workerThreads, options.workerMemoryLimit) : undefined);
 
     public constructor(
         private readonly packages: Package[],
@@ -143,10 +146,15 @@ export class BuildGraph {
         this.buildContext.fileHashCache.clear();
         const q = Task.createTaskQueue();
         const p: Promise<BuildResult>[] = [];
-        this.buildPackages.forEach((node) => {
-            p.push(node.build(q));
-        });
-        return summarizeBuildResult(await Promise.all(p));
+        try {
+            this.buildPackages.forEach((node) => {
+                p.push(node.build(q));
+            });
+
+            return summarizeBuildResult(await Promise.all(p));
+        } finally {
+            this.buildContext.workerPool?.reset();
+        }
     }
 
     public async clean() {
@@ -166,6 +174,17 @@ export class BuildGraph {
 
     public get totalElapsedTime(): number {
         return this.buildContext.taskStats.leafExecTimeTotal;
+    }
+
+    public get taskFailureSummary(): string {
+        if (this.buildContext.failedTaskLines.length === 0) {
+            return "";
+        }
+        const summaryLines = this.buildContext.failedTaskLines;
+        const notRunCount = this.buildContext.taskStats.leafTotalCount - this.buildContext.taskStats.leafUpToDateCount - this.buildContext.taskStats.leafBuiltCount;
+        summaryLines.unshift(chalk.redBright("Failed Tasks:"));
+        summaryLines.push(chalk.yellow(`Did not run ${notRunCount} tasks due to prior failures.`));
+        return summaryLines.join("\n");
     }
 
     private buildDependencies(getDepFilter: (pkg: Package) => (dep: Package) => boolean) {
@@ -197,7 +216,7 @@ export class BuildGraph {
     private populateLevel() {
         // level is not strictly necessary, except for circular reference.
         const getLevel = (node: BuildPackage, parent?: BuildPackage) => {
-            if (node.level === -2) { throw new Error(`Circular Reference detected ${parent? parent.pkg.nameColored : "<none>"} -> ${node.pkg.nameColored}`); }
+            if (node.level === -2) { throw new Error(`Circular Reference detected ${parent ? parent.pkg.nameColored : "<none>"} -> ${node.pkg.nameColored}`); }
             if (node.level !== -1) { return node.level; } // populated
             node.level = -2;
             let maxChildrenLevel = -1;

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -29,7 +29,7 @@ export const runGCTests = (ctor: new () => IGCTestProvider) => {
         const gcNodes = Object.entries(provider.sharedObject.getGCData().gcNodes);
         assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
 
-        const [ id, outboundRoutes ] = gcNodes[0];
+        const [id, outboundRoutes] = gcNodes[0];
         assert.strictEqual(id, "/", "GC node's id should be /");
         assert.deepStrictEqual(
             outboundRoutes.sort(),

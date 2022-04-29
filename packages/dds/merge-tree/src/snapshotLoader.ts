@@ -1,10 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
+import { assert, bufferToString } from "@fluidframework/common-utils";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
@@ -38,16 +40,16 @@ export class SnapshotLoader {
         services: IChannelStorageService,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         const headerLoadedP =
-            services.read(SnapshotLegacy.header).then((header) => {
-                assert(!!header);
-                return this.loadHeader(header);
+            services.readBlob(SnapshotLegacy.header).then((header) => {
+                assert(!!header, 0x05f /* "Missing blob header on legacy snapshot!" */);
+                return this.loadHeader(bufferToString(header, "utf8"));
             });
 
         const catchupOpsP =
             this.loadBodyAndCatchupOps(headerLoadedP, services);
 
         catchupOpsP.catch(
-            (err)=>this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" },err));
+            (err) => this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" }, err));
 
         await headerLoadedP;
 
@@ -66,15 +68,16 @@ export class SnapshotLoader {
         await this.loadBody(headerChunk, services);
 
         const blobs = await blobsP;
-        if (blobs.length === headerChunk.headerMetadata.orderedChunkMetadata.length + 1) {
-            headerChunk.headerMetadata.orderedChunkMetadata.forEach(
+        if (blobs.length === headerChunk.headerMetadata!.orderedChunkMetadata.length + 1) {
+            headerChunk.headerMetadata!.orderedChunkMetadata.forEach(
                 (md) => blobs.splice(blobs.indexOf(md.id), 1));
-            assert(blobs.length === 1, `There should be only one blob with catch up ops: ${blobs.length}`);
+            assert(blobs.length === 1, 0x060 /* `There should be only one blob with catch up ops: ${blobs.length}` */);
 
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
-            return this.loadCatchupOps(services.read(blobs[0]));
-        } else if (blobs.length !== headerChunk.headerMetadata.orderedChunkMetadata.length) {
+
+            return this.loadCatchupOps(services.readBlob(blobs[0]));
+        } else if (blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length) {
             throw new Error("Unexpected blobs in snapshot");
         }
         return [];
@@ -99,8 +102,16 @@ export class SnapshotLoader {
             if (spec.removedSeq !== undefined) {
                 seg.removedSeq = spec.removedSeq;
             }
+            // this format had a bug where it didn't store all the overlap clients
+            // this is for back compat, so we change the singular id to an array
+            // this will only cause problems if there is an overlapping delete
+            // spanning the snapshot, which should be rare
             if (spec.removedClient !== undefined) {
-                seg.removedClientId = this.client.getOrAddShortClientId(spec.removedClient);
+                seg.removedClientIds = [this.client.getOrAddShortClientId(spec.removedClient)];
+            }
+            if (spec.removedClientIds !== undefined) {
+                seg.removedClientIds = spec.removedClientIds?.map(
+                    (sid) => this.client.getOrAddShortClientId(sid));
             }
         } else {
             seg = this.client.specToSegment(spec);
@@ -151,23 +162,23 @@ export class SnapshotLoader {
     }
 
     private async loadBody(chunk1: MergeTreeChunkV1, services: IChannelStorageService): Promise<void> {
-        this.runtime.logger.shipAssert(
-            chunk1.length <= chunk1.headerMetadata.totalLength,
-            { eventName: "Mismatch in totalLength" });
+        assert(
+            chunk1.length <= chunk1.headerMetadata!.totalLength,
+            0x061 /* "Mismatch in totalLength" */);
 
-        this.runtime.logger.shipAssert(
-            chunk1.segmentCount <= chunk1.headerMetadata.totalSegmentCount,
-            { eventName: "Mismatch in totalSegmentCount" });
+        assert(
+            chunk1.segmentCount <= chunk1.headerMetadata!.totalSegmentCount,
+            0x062 /* "Mismatch in totalSegmentCount" */);
 
-        if (chunk1.segmentCount === chunk1.headerMetadata.totalSegmentCount) {
+        if (chunk1.segmentCount === chunk1.headerMetadata!.totalSegmentCount) {
             return;
         }
         const segs: ISegment[] = [];
         let lengthSofar = chunk1.length;
-        for (let chunkIndex = 1; chunkIndex < chunk1.headerMetadata.orderedChunkMetadata.length; chunkIndex++) {
+        for (let chunkIndex = 1; chunkIndex < chunk1.headerMetadata!.orderedChunkMetadata.length; chunkIndex++) {
             const chunk = await SnapshotV1.loadChunk(
                 services,
-                chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
+                chunk1.headerMetadata!.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
                 this.mergeTree.options,
                 this.serializer);
@@ -175,13 +186,13 @@ export class SnapshotLoader {
             // Deserialize each chunk segment and append it to the end of the MergeTree.
             segs.push(...chunk.segments.map(this.specToSegment));
         }
-        this.runtime.logger.shipAssert(
-            lengthSofar === chunk1.headerMetadata.totalLength,
-            { eventName: "Mismatch in totalLength" });
+        assert(
+            lengthSofar === chunk1.headerMetadata!.totalLength,
+            0x063 /* "Mismatch in totalLength" */);
 
-        this.runtime.logger.shipAssert(
-            chunk1.segmentCount + segs.length === chunk1.headerMetadata.totalSegmentCount,
-            { eventName: "Mismatch in totalSegmentCount" });
+        assert(
+            chunk1.segmentCount + segs.length === chunk1.headerMetadata!.totalSegmentCount,
+            0x064 /* "Mismatch in totalSegmentCount" */);
 
         // Helper to insert segments at the end of the MergeTree.
         const mergeTree = this.mergeTree;
@@ -211,7 +222,7 @@ export class SnapshotLoader {
                 batch.push(seg);
             } else {
                 flushBatch();
-                append([seg], cli, seq);
+                append([seg], cli, seq!);
             }
         }
 
@@ -224,8 +235,7 @@ export class SnapshotLoader {
      * @returns The decoded messages, but handles aren't parsed.  Matches the format that will be passed in
      * SharedObject.processCore.
      */
-    private async loadCatchupOps(rawMessages: Promise<string>): Promise<ISequencedDocumentMessage[]> {
-        const utf8 = fromBase64ToUtf8(await rawMessages);
-        return JSON.parse(utf8) as ISequencedDocumentMessage[];
+    private async loadCatchupOps(rawMessages: Promise<ArrayBufferLike>): Promise<ISequencedDocumentMessage[]> {
+        return JSON.parse(bufferToString(await rawMessages, "utf8")) as ISequencedDocumentMessage[];
     }
 }

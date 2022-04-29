@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -28,6 +28,7 @@ const addCopyButtonsToCodeBlocks = () => {
         const copyBtn = document.createElement("button");
         copyBtn.className = "highlight-copy-btn";
         copyBtn.textContent = copyMessage;
+        copyBtn.setAttribute("aria-label", "Copy this code snippet");
 
         // Set a message on the button then return to the initial
         // value after 1 second
