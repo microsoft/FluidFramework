@@ -43,7 +43,8 @@ export interface TreeCompressor<TPlaceholder extends DetachedSequenceId | never>
  * See {@link CompressedPlaceholderTree} for format.
  */
 export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | never>
-	implements TreeCompressor<TPlaceholder> {
+	implements TreeCompressor<TPlaceholder>
+{
 	public compress<TId extends OpSpaceNodeId>(
 		node: PlaceholderTree<TPlaceholder>,
 		interner: StringInterner,
