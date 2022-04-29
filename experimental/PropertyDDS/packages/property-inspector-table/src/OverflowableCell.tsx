@@ -45,14 +45,14 @@ export const OverflowableCell: React.FunctionComponent<IOverflowCellProps> = (pr
   if (allowTooltip) {
     return (
       <Tooltip title={props.cellContent} enterDelay={800} classes={{ tooltip: classes.tooltip }}>
-        <div id='overflowableDiv' ref={divRef} className={classes.wrappedCell}>
+        <div id="overflowableDiv" ref={divRef} className={classes.wrappedCell}>
           {props.cellContent}
         </div>
       </Tooltip>
     );
   }
   return (
-    <div id='overflowableDiv' ref={divRef} className={classes.wrappedCell}>
+    <div id="overflowableDiv" ref={divRef} className={classes.wrappedCell}>
       {props.cellContent}
     </div>
   );

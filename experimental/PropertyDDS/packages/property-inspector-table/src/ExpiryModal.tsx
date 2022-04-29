@@ -271,8 +271,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
                 <div className={classes!.horizontalContainer}>
                     {renderLifeCycleState()}
                     <Button
-                        id='delete-repository'
-                        color='primary'
+                        id="delete-repository"
+                        color="primary"
                         className={classes.textButton}
                         classes={{ textPrimary: classes.deleteLink }}
                         disabled={modalExpiryState.expiresIn === expiryPlaceHolder ||
@@ -290,8 +290,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
                         {modalExpiryState.expiresIn}
                     </span>
                     <Button
-                        id='set-expiry'
-                        color='primary'
+                        id="set-expiry"
+                        color="primary"
                         className={classes.textButton}
                         disabled={modalExpiryState.expiresIn === expiryPlaceHolder}
                         onClick={() => { setModalState({ mode: "expirySelection" }); }}
@@ -301,8 +301,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
                 </div>
                 <div className={classes.horizontalButtonContainer}>
                     <Button
-                        color='primary'
-                        variant='contained'
+                        color="primary"
+                        variant="contained"
                         onClick={onClosed}
                     >
                         Ok
@@ -331,7 +331,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     const renderNewExpirySelection = () => {
         const radioButton = () => {
             return (
-                <Radio color='primary' />
+                <Radio color="primary" />
             );
         };
 
@@ -340,23 +340,23 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
                 <FormControl component={"fieldset" as "div"}>
                     <span className={classes.legend}>Select one of following expiry options:</span>
                     <RadioGroup
-                        aria-label='policy'
+                        aria-label="policy"
                         className={classes.radioGroup}
-                        name='policy'
+                        name="policy"
                         onChange={setRetentionPolicy}
                         value={policyState.retentionStrategy}>
                         <FormControlLabel
-                            value='transient'
+                            value="transient"
                             control={radioButton()}
                             label={renderSelectionLabel("transient")}
                         />
                         <FormControlLabel
-                            value='temporary'
+                            value="temporary"
                             control={radioButton()}
                             label={renderSelectionLabel("temporary")}
                         />
                         <FormControlLabel
-                            value='persistent'
+                            value="persistent"
                             control={radioButton()}
                             label={renderSelectionLabel("persistent")}
                         />
@@ -364,18 +364,18 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
                 </FormControl>
                 <div className={classes.horizontalButtonContainer}>
                     <Button
-                        color='primary'
+                        color="primary"
                         disabled={policyState.updating}
-                        variant='outlined'
+                        variant="outlined"
                         className={classes.cancelButton}
                         onClick={() => { setModalState({ mode: "default" }); }}
                     >
                         Cancel
                     </Button>
                     <LoadingButton
-                        color='primary'
+                        color="primary"
                         onClick={async () => setExpiry(policyState.retentionStrategy)}
-                        variant='contained'
+                        variant="contained"
                     >
                         Update
                     </LoadingButton>
@@ -399,9 +399,9 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
                 }
                 <div className={classes.horizontalButtonContainer}>
                     <Button
-                        color='primary'
+                        color="primary"
                         disabled={deletionState.deleting}
-                        variant='outlined'
+                        variant="outlined"
                         className={classes.cancelButton}
                         onClick={() => { setModalState({ mode: "default" }); }}
                     >
@@ -410,7 +410,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
                     <LoadingButton
                         classes={{ contained: classes.deleteButton }}
                         onClick={async () => deleteRepository(repositoryUrn!)}
-                        variant='contained'
+                        variant="contained"
                     >
                         Yes, delete
                     </LoadingButton>

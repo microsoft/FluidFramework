@@ -34,6 +34,7 @@ import {
 	SaveInfo,
 	take,
 } from '../stochastic-test-utilities';
+import { makeRandom } from './TestUtilities';
 
 /** Identifies a compressor in a network */
 export enum Client {
@@ -711,7 +712,7 @@ export function performFuzzActions(
 	validator?: (network: IdCompressorTestNetwork) => void,
 	saveInfo?: SaveInfo
 ): void {
-	const rand = new Random(Random.engines.mt19937().seed(seed));
+	const rand = makeRandom(seed);
 	const selectableClients: Client[] = network.getTargetCompressors(MetaClient.All).map(([client]) => client);
 
 	const initialState: FuzzTestState = {
