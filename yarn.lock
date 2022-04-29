@@ -796,104 +796,104 @@
     "@uifabric/utilities" "^7.34.0"
     tslib "^1.10.0"
 
-"@fluid-experimental/task-manager-previous@npm:@fluid-experimental/task-manager@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluid-experimental/task-manager/-/task-manager-0.59.1000.tgz#5117b0ac01212597a9fb6eeb6d4b2de51ac5b43a"
-  integrity sha512-14U5Fumd4UjBHBXsgclXzRo6+GLUGzp2l1CXN6olKufCuKCRpgLwFMpYUk0FcJmabwxkRg2c8+rg5MBw3TdpXg==
+"@fluid-experimental/task-manager-previous@npm:@fluid-experimental/task-manager@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluid-experimental/task-manager/-/task-manager-0.59.2000.tgz#5e45ea50cdd3aed492a35a8bc5a34b10c2172e4d"
+  integrity sha512-N98R0S67rG7bFYKiv/zPIjXh0FM9IriAWPyQags2M6uKVuuzhzZO0oZRQxNbCFHjyMJGZGtxFxcY1K/FtGRy2A==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-runtime-definitions" "^0.59.1000"
+    "@fluidframework/container-runtime-definitions" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/shared-object-base" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/shared-object-base" "^0.59.2000"
 
-"@fluid-tools/fluidapp-odsp-urlresolver-previous@npm:@fluid-tools/fluidapp-odsp-urlresolver@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluid-tools/fluidapp-odsp-urlresolver/-/fluidapp-odsp-urlresolver-0.59.1000.tgz#9e3799ad24028fb564cc15d824e05c7b7c3d6804"
-  integrity sha512-g+T8MGBeIl92LMKddok6tev9rKWZ528sYVLhGUnp102nYWztbCmOEAslAXjO0oSzJXjIfowwI4+IJo+j2yx3jQ==
+"@fluid-tools/fluidapp-odsp-urlresolver-previous@npm:@fluid-tools/fluidapp-odsp-urlresolver@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluid-tools/fluidapp-odsp-urlresolver/-/fluidapp-odsp-urlresolver-0.59.2000.tgz#3bc11c5931aebefb0924142baa941db33e6a4f18"
+  integrity sha512-8o2whTlVg1M7OuTCswLhWJJMoUAlkeXkVLjGKsi7cKP1cIlkt5a0sLUrEY2yvnJLuN8ZdRg4/pPXuZBxCaDslg==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/odsp-driver" "^0.59.1000"
-    "@fluidframework/odsp-driver-definitions" "^0.59.1000"
+    "@fluidframework/odsp-driver" "^0.59.2000"
+    "@fluidframework/odsp-driver-definitions" "^0.59.2000"
 
-"@fluid-tools/webpack-fluid-loader-previous@npm:@fluid-tools/webpack-fluid-loader@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluid-tools/webpack-fluid-loader/-/webpack-fluid-loader-0.59.1000.tgz#5ae88a5ebe346bc653956e16f9c3d7188b91124e"
-  integrity sha512-sihDV79PZ9nivswV9UfPb0aLq9e+Q16ieGRKtzQUkKRvNmDAt2Ru8lm7xeoJpLgVlOYwUiL0CW244WVCyx4pBg==
+"@fluid-tools/webpack-fluid-loader-previous@npm:@fluid-tools/webpack-fluid-loader@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluid-tools/webpack-fluid-loader/-/webpack-fluid-loader-0.59.2000.tgz#ebe66c37354ce433a410fe20539c9f37f44acdbd"
+  integrity sha512-W/RbrZz9hWYpOrIpTX4nKITCnV5+fAph3xbIW7+93i/yB6EEFRTASpcFgwwsLGTwQL/k1a3d/6cMJIn8a7dyvg==
   dependencies:
-    "@fluidframework/aqueduct" "^0.59.1000"
+    "@fluidframework/aqueduct" "^0.59.2000"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-loader" "^0.59.1000"
+    "@fluidframework/container-loader" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
-    "@fluidframework/local-driver" "^0.59.1000"
-    "@fluidframework/odsp-doclib-utils" "^0.59.1000"
-    "@fluidframework/odsp-driver" "^0.59.1000"
-    "@fluidframework/odsp-driver-definitions" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
+    "@fluidframework/local-driver" "^0.59.2000"
+    "@fluidframework/odsp-doclib-utils" "^0.59.2000"
+    "@fluidframework/odsp-driver" "^0.59.2000"
+    "@fluidframework/odsp-driver-definitions" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/routerlicious-driver" "^0.59.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
+    "@fluidframework/routerlicious-driver" "^0.59.2000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
     "@fluidframework/server-local-server" "^0.1036.1000"
     "@fluidframework/server-services-client" "^0.1036.1000"
-    "@fluidframework/test-runtime-utils" "^0.59.1000"
-    "@fluidframework/tool-utils" "^0.59.1000"
-    "@fluidframework/view-adapters" "^0.59.1000"
-    "@fluidframework/view-interfaces" "^0.59.1000"
-    "@fluidframework/web-code-loader" "^0.59.1000"
+    "@fluidframework/test-runtime-utils" "^0.59.2000"
+    "@fluidframework/tool-utils" "^0.59.2000"
+    "@fluidframework/view-adapters" "^0.59.2000"
+    "@fluidframework/view-interfaces" "^0.59.2000"
+    "@fluidframework/web-code-loader" "^0.59.2000"
     axios "^0.26.0"
     express "^4.16.3"
-    nconf "^0.11.0"
+    nconf "^0.11.4"
     sillyname "^0.1.0"
     uuid "^8.3.1"
-    webpack-dev-server "^3.8.0"
+    webpack-dev-server "4.0.0"
 
-"@fluidframework/agent-scheduler-previous@npm:@fluidframework/agent-scheduler@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/agent-scheduler/-/agent-scheduler-0.59.1000.tgz#1301850675453787204893019a01127fb4bc46c2"
-  integrity sha512-2Vvr2Ofl+1yfPLal/kkwQyfatx2Q7sP+VbwvUIi3sAe8M86+e6Enk+cv8hddtk3GhtmycqhKvDcOeepXc8JB3w==
+"@fluidframework/agent-scheduler-previous@npm:@fluidframework/agent-scheduler@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/agent-scheduler/-/agent-scheduler-0.59.2000.tgz#800f4e57497e73695f48093cc8c7cc811e77e44f"
+  integrity sha512-AalyBFbeZ6LFyyv4nK9F8l3WCsDPFrFksJ2J/IxbFkSiSyRlBDvWxIHfbkodyo3DqlDq26TorZsjPe+DPapi0w==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore" "^0.59.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/map" "^0.59.1000"
-    "@fluidframework/register-collection" "^0.59.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
+    "@fluidframework/datastore" "^0.59.2000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/map" "^0.59.2000"
+    "@fluidframework/register-collection" "^0.59.2000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
     uuid "^8.3.1"
 
-"@fluidframework/aqueduct-previous@npm:@fluidframework/aqueduct@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/aqueduct/-/aqueduct-0.59.1000.tgz#0bfbe12a15b3ac48af050b1711ea3b6ba7d1c0ab"
-  integrity sha512-mzYuHMt2ww3ZfG0SpwFLRekqn4xYybikHxuJSTaejijSYZSZxuU8ZZO3juZRM8/p/pGdJQac9dnqHMVY38xt/Q==
+"@fluidframework/aqueduct-previous@npm:@fluidframework/aqueduct@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/aqueduct/-/aqueduct-0.59.2000.tgz#eca1979fe130151c2efda1e82600917525fe4764"
+  integrity sha512-0OnZ2M9GRfQHvwagZZqaeMIZ5eAsPxk54kyeir+0O+q6L+Q0EIylw50YAY4fTK22xDyt8er8DMDUYXPlc4MXHA==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-loader" "^0.59.1000"
-    "@fluidframework/container-runtime" "^0.59.1000"
-    "@fluidframework/container-runtime-definitions" "^0.59.1000"
+    "@fluidframework/container-loader" "^0.59.2000"
+    "@fluidframework/container-runtime" "^0.59.2000"
+    "@fluidframework/container-runtime-definitions" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore" "^0.59.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/map" "^0.59.1000"
-    "@fluidframework/request-handler" "^0.59.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/synthesize" "^0.59.1000"
-    "@fluidframework/view-interfaces" "^0.59.1000"
+    "@fluidframework/datastore" "^0.59.2000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/map" "^0.59.2000"
+    "@fluidframework/request-handler" "^0.59.2000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/synthesize" "^0.59.2000"
+    "@fluidframework/view-interfaces" "^0.59.2000"
     uuid "^8.3.1"
 
 "@fluidframework/aqueduct@^0.58.2002":
@@ -918,22 +918,22 @@
     "@fluidframework/view-interfaces" "^0.58.2002"
     uuid "^8.3.1"
 
-"@fluidframework/azure-client-previous@npm:@fluidframework/azure-client@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/azure-client/-/azure-client-0.59.1000.tgz#fe877f4bd6a246630c9f52ae6a0c31691a8fd3fe"
-  integrity sha512-AzWMorHSjvKr8rOU/8Qu/04t+PeSqMgClusNh3y2lLzmijLZvyFQ1QrMk62ki8cMPgztSZUyl49LwObEywWKYQ==
+"@fluidframework/azure-client-previous@npm:@fluidframework/azure-client@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/azure-client/-/azure-client-0.59.2000.tgz#43ddf192e12667fd78a87305250e09ce70ef0270"
+  integrity sha512-eZOoIAQ5JZcBvDJppg227r5JTJrWXQMJzKJ9EZZ2ub4pR3LTTjiZir3AiIM1JqqwvG0hRb/IUBGg2V78o7Z8Dw==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-loader" "^0.59.1000"
+    "@fluidframework/container-loader" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
-    "@fluidframework/fluid-static" "^0.59.1000"
-    "@fluidframework/map" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
+    "@fluidframework/fluid-static" "^0.59.2000"
+    "@fluidframework/map" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/routerlicious-driver" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
+    "@fluidframework/routerlicious-driver" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
     "@fluidframework/server-services-client" "^0.1036.1000"
     axios "^0.26.0"
     uuid "^8.3.1"
@@ -945,10 +945,10 @@
   dependencies:
     tinylicious "^0.4.38350"
 
-"@fluidframework/azure-service-utils-previous@npm:@fluidframework/azure-service-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/azure-service-utils/-/azure-service-utils-0.59.1000.tgz#ba644b376b04cf4382544bf18cdb4f095b195c96"
-  integrity sha512-GBKZ/l+nJHigo7LsSQwj3WFBm33WNd2N4ivR5jjlGSjvixz1C/Am9w517WdlV2l1T6sLFZp2prwHbWJIsngOvA==
+"@fluidframework/azure-service-utils-previous@npm:@fluidframework/azure-service-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/azure-service-utils/-/azure-service-utils-0.59.2000.tgz#091ab0222fd73bb63ce1d2638bd599730001d0ef"
+  integrity sha512-n6DskhMT+BsaG4zGsAIb4aSXbnUTx4pqJSNI0ra5Uik8Czy8G8fAloizK4uVGThNEaNri91snhodY34Esx5s2A==
   dependencies:
     "@fluidframework/protocol-definitions" "^0.1028.1000"
     jsrsasign "^10.2.0"
@@ -996,18 +996,18 @@
     pako "^1.0.10"
     typescript "^3.7.4"
 
-"@fluidframework/cell-previous@npm:@fluidframework/cell@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/cell/-/cell-0.59.1000.tgz#3cebdcfb13d264866df43c590745784c0cefa424"
-  integrity sha512-gR/TbtAg1OLMSh1cAdpJpPtlCPlEkcROqvozmBsXVRNiZAncDvMGolmJSgjjC4E2+dVcQHtbPOZwf9ezV0m5pg==
+"@fluidframework/cell-previous@npm:@fluidframework/cell@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/cell/-/cell-0.59.2000.tgz#e17e794c6ee8456c267051bc44258519f1f7e43f"
+  integrity sha512-3MAIDJ5J+ifdEp4HNUe8YHJNPqeE5OIAQrMeWlE+dFu4UZofs1fql4QsOqwWeXWTHDpYHvguRiHdAhNkR3JhxA==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/shared-object-base" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/shared-object-base" "^0.59.2000"
 
 "@fluidframework/common-definitions-previous@npm:@fluidframework/common-definitions@^0.20.0", "@fluidframework/common-definitions@^0.20.0", "@fluidframework/common-definitions@^0.20.1":
   version "0.20.1"
@@ -1064,21 +1064,21 @@
     "@fluidframework/driver-definitions" "^0.45.1000"
     "@fluidframework/protocol-definitions" "^0.1027.1000"
 
-"@fluidframework/container-loader-previous@npm:@fluidframework/container-loader@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/container-loader/-/container-loader-0.59.1000.tgz#7b0ae1defa7d2edc5adfa66b7f7f66cc31fa98b3"
-  integrity sha512-xK6jqL9ZBmVpJlCcCZ4MhO4GIhFgE4W07ZHZ8Dubq6Mtusi6wJ/knpiGRmHoNmPQCx2ZKi8SNy+LPTzH0HdzXg==
+"@fluidframework/container-loader-previous@npm:@fluidframework/container-loader@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/container-loader/-/container-loader-0.59.2000.tgz#f3d4f14f66c47af1aca46171ec1035eb15ac9bb2"
+  integrity sha512-I1cJyGtxj3UcdmJeGIlOEjWqlo2EzHR9v5Q0lOoOfbnF6sbKcMLQWMErddvOXlr4w7HP8JyiH2TDjzdllwxslA==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-utils" "^0.59.1000"
+    "@fluidframework/container-utils" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-base" "^0.1036.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     abort-controller "^3.0.0"
     double-ended-queue "^2.1.0-0"
     lodash "^4.17.21"
@@ -1104,17 +1104,17 @@
     lodash "^4.17.21"
     uuid "^8.3.1"
 
-"@fluidframework/container-runtime-definitions-previous@npm:@fluidframework/container-runtime-definitions@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/container-runtime-definitions/-/container-runtime-definitions-0.59.1000.tgz#587c92e2fa13caf0cb145271ab144c707315d8a0"
-  integrity sha512-OUACev+V9UWQfO7oQ8GLN8vPwCKoMp9FrTKvzHXxBLVK/+RiXaKS0yOtPlskLkhdDLid1SzDslHsRoLq6VCjeA==
+"@fluidframework/container-runtime-definitions-previous@npm:@fluidframework/container-runtime-definitions@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/container-runtime-definitions/-/container-runtime-definitions-0.59.2000.tgz#2c22e77db10a06052911dd33dbd7d4f161a82c1e"
+  integrity sha512-CSN7aHH/h9YC2ijqSQRFM8eni+tG+QgHETH1s7wLQnaL8RZkdBc2muxafJogwBzPz3X6DPvJRPouWszMk3B24g==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/container-definitions" "^0.48.1000"
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
     "@types/node" "^14.18.0"
 
 "@fluidframework/container-runtime-definitions@^0.58.2002":
@@ -1130,26 +1130,26 @@
     "@fluidframework/runtime-definitions" "^0.58.2002"
     "@types/node" "^14.18.0"
 
-"@fluidframework/container-runtime-previous@npm:@fluidframework/container-runtime@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/container-runtime/-/container-runtime-0.59.1000.tgz#7d3ffd2f3a1d0a97d2b2e5678cb192e67ca6be0b"
-  integrity sha512-AGNUBNrrfINALPd6DcgJMZg6TGkRvjWYjpoE73GwhYfFwBOs0ClRbt2ErJtjV+fOa3+2p2iGCnKJlLwQ+zAnvA==
+"@fluidframework/container-runtime-previous@npm:@fluidframework/container-runtime@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/container-runtime/-/container-runtime-0.59.2000.tgz#65a39a52c4bd86d6a54e3c930da8fbb8599cf793"
+  integrity sha512-mV8+KYJN1scV4lH4GsJ9UzeN07XiGhHNJkFvvCHNAMDNRFg+LnhF09xjbuREMbfuBvxaaWXSSsT98i9jIAO3eQ==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-runtime-definitions" "^0.59.1000"
-    "@fluidframework/container-utils" "^0.59.1000"
+    "@fluidframework/container-runtime-definitions" "^0.59.2000"
+    "@fluidframework/container-utils" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore" "^0.59.1000"
+    "@fluidframework/datastore" "^0.59.2000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
-    "@fluidframework/garbage-collector" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
+    "@fluidframework/garbage-collector" "^0.59.2000"
     "@fluidframework/protocol-base" "^0.1036.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     double-ended-queue "^2.1.0-0"
     uuid "^8.3.1"
 
@@ -1176,16 +1176,16 @@
     double-ended-queue "^2.1.0-0"
     uuid "^8.3.1"
 
-"@fluidframework/container-utils-previous@npm:@fluidframework/container-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/container-utils/-/container-utils-0.59.1000.tgz#bcb3383544526f88eeebdd6c3e27cd636a0d9df1"
-  integrity sha512-ChBj7qam/xyBVvsSxjmcBi0R9XVnvOJfw4Tb991S2qJDi5XFPSVImk1PQd1f5SzmAfC2O9Vasm8uqoYeMCUKyQ==
+"@fluidframework/container-utils-previous@npm:@fluidframework/container-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/container-utils/-/container-utils-0.59.2000.tgz#a040c1230dfa7e2c2a61d4abc1d6a77664d14463"
+  integrity sha512-IX5s0yHcWBLlEbCTkFCWL7KwenNBlqfxhsiR8H6ObcEYa6ZdkWX4SI7poqRJbDoYNbPcR6/Lk17znnG0EsbKNw==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
 
 "@fluidframework/container-utils@^0.58.2002":
   version "0.58.2002"
@@ -1218,47 +1218,47 @@
   resolved "https://registry.yarnpkg.com/@fluidframework/core-interfaces/-/core-interfaces-0.42.0.tgz#5ac5c519eb3b0cafb67bc1f4a120d36c4779cd82"
   integrity sha512-++hCu5X6e2CL2swrhXoGaJanGjvaHZNmTT/cSYI8tfnX4cW7eRJuIy8Kcg6K3nMn4thxbVPW7+QG4VPRNuGlMQ==
 
-"@fluidframework/counter-previous@npm:@fluidframework/counter@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/counter/-/counter-0.59.1000.tgz#a60856d6638eb9234a4c41a04d03db54fd8ad675"
-  integrity sha512-T+8rYBdXd7EQTvO4N0l+ISlY2zo0+Yf/yjDXC0pAPCtbAaMCrWPUblRUemHgKtCNlfYrO05GVflkYWq/FLi1zg==
+"@fluidframework/counter-previous@npm:@fluidframework/counter@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/counter/-/counter-0.59.2000.tgz#7364045772ac5c9d1a4130116e03d334631eea39"
+  integrity sha512-Bzt7sxsB3cNo4RkP0c9nTFtHY2R34EKQdGjHfkSYaQZKj6QmbXI5yGvAbfWJOzgJDx1Av7DJrjt96oPjZLU4OQ==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/shared-object-base" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/shared-object-base" "^0.59.2000"
 
-"@fluidframework/data-object-base-previous@npm:@fluidframework/data-object-base@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/data-object-base/-/data-object-base-0.59.1000.tgz#819da03ad11840d8b48b0eded8ad8db0fdb8cd04"
-  integrity sha512-F7SuZHcowq5rhhS95G8gEn1GERNfrCErIfVgtFiuyCFF2uAsvaW0GHSIIi6Dv3Em0dagVZtCZOTfCtsAolTK6Q==
+"@fluidframework/data-object-base-previous@npm:@fluidframework/data-object-base@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/data-object-base/-/data-object-base-0.59.2000.tgz#00030c083ef38668e158fcb7bbb04ce0ddd1d93c"
+  integrity sha512-kihdyyedSiye4JZjEiVh4F+ktuFEabZ85VZuHSgjtHlJRCT/wN8yYmfpu00zKLtGu00UgWKBR05lkO023foVDQ==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-runtime" "^0.59.1000"
+    "@fluidframework/container-runtime" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore" "^0.59.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/request-handler" "^0.59.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/shared-object-base" "^0.59.1000"
+    "@fluidframework/datastore" "^0.59.2000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/request-handler" "^0.59.2000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/shared-object-base" "^0.59.2000"
 
-"@fluidframework/datastore-definitions-previous@npm:@fluidframework/datastore-definitions@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/datastore-definitions/-/datastore-definitions-0.59.1000.tgz#66ad6694c4c3bd791a2c8169c4b1db0c5d8ad398"
-  integrity sha512-/YMoDxDp1CX8YtvnCiu3ndbPgpOg5MrKAANF/0vSAbPTODM1PGxnOTsXW8zKbjY9CstM4jbIGpx0oq6JKJIJKQ==
+"@fluidframework/datastore-definitions-previous@npm:@fluidframework/datastore-definitions@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/datastore-definitions/-/datastore-definitions-0.59.2000.tgz#90ec89c33e01676e9dbbbce09bacde2b3ffeb877"
+  integrity sha512-GeIOEvIf0GBtr9cRLnY9KWVbQe2sIuhl6EcYqux+jIdaUP6wK7qYQ/NVteXMIVyMhNBy5mwJjhnByOY3QJe6Bw==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
     "@types/node" "^14.18.0"
 
 "@fluidframework/datastore-definitions@^0.58.2002":
@@ -1274,25 +1274,25 @@
     "@fluidframework/runtime-definitions" "^0.58.2002"
     "@types/node" "^14.18.0"
 
-"@fluidframework/datastore-previous@npm:@fluidframework/datastore@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/datastore/-/datastore-0.59.1000.tgz#b61af9cf7da079119994e79ec048cf0fedecb7ad"
-  integrity sha512-C/2uXuy8wHXv98fRQeAsA7Cww8n4JA0yjsjMXIesJCRsj93XMAGyqzN+PPXTsLF2gu5I06PcKF2BB19WjUQYBQ==
+"@fluidframework/datastore-previous@npm:@fluidframework/datastore@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/datastore/-/datastore-0.59.2000.tgz#42ce25fe82954f58450afb15c6c62f8467758b23"
+  integrity sha512-amY/4sOXJ5yEcBE6Wkv3HI63dfCqk57E2wJVT5Kcscl3YQ/o99JQIqU0E5KRFJzhS6zc0P8Lt9ncyt22WbY5/w==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-utils" "^0.59.1000"
+    "@fluidframework/container-utils" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
-    "@fluidframework/garbage-collector" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
+    "@fluidframework/garbage-collector" "^0.59.2000"
     "@fluidframework/protocol-base" "^0.1036.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     lodash "^4.17.21"
     uuid "^8.3.1"
 
@@ -1318,40 +1318,40 @@
     lodash "^4.17.21"
     uuid "^8.3.1"
 
-"@fluidframework/dds-interceptions-previous@npm:@fluidframework/dds-interceptions@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/dds-interceptions/-/dds-interceptions-0.59.1000.tgz#da17b8036f611e02fa9ea5ae5942db2137a9a9a0"
-  integrity sha512-IqMJjbrgS8bGXq1v1wXJ5O/W+lufn8e9NGcNxTjYpg1IA5rHDT01FaaDhEylR/7Jx5LGFPhryBw/W0kh5XRSzw==
+"@fluidframework/dds-interceptions-previous@npm:@fluidframework/dds-interceptions@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/dds-interceptions/-/dds-interceptions-0.59.2000.tgz#fede6aabd0ed5cb58e801cfa493e10f8d52f0def"
+  integrity sha512-c0j/FyU1J6SX9IQf5ieusl+vLFC0vBqpHC2Aw6Mn6p6hMhZMz5ynJTvgAeFsx89gYIz5fDsmstgKK2grd+oq4A==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
-    "@fluidframework/map" "^0.59.1000"
-    "@fluidframework/merge-tree" "^0.59.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/sequence" "^0.59.1000"
+    "@fluidframework/map" "^0.59.2000"
+    "@fluidframework/merge-tree" "^0.59.2000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/sequence" "^0.59.2000"
 
-"@fluidframework/debugger-previous@npm:@fluidframework/debugger@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/debugger/-/debugger-0.59.1000.tgz#4e0920b2323edffa1eb19d3d7b17d968c589a2d3"
-  integrity sha512-cukrgsdo0wJBiNyDXY1ghE/5oNoF6prZO4Vj0x8lfAKGU3fCnsH1rcBKrLj1abSlEMC+DNNSbrtkJK2szXsn1g==
+"@fluidframework/debugger-previous@npm:@fluidframework/debugger@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/debugger/-/debugger-0.59.2000.tgz#80f96e222ad429d4c27bd15039e8bddeecbf5e7a"
+  integrity sha512-fzEGGdb3KjFfOr7Yto3eSsRGkqPUDkTJls19/QzjqYm3mdl8KQN9Wzllj91HgzAPIvaLK+FZyb6UrfEYaDGreg==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/replay-driver" "^0.59.1000"
+    "@fluidframework/replay-driver" "^0.59.2000"
     jsonschema "^1.2.6"
 
-"@fluidframework/driver-base-previous@npm:@fluidframework/driver-base@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/driver-base/-/driver-base-0.59.1000.tgz#b79bef5cae997613f414ca061a3811a8f421b7f0"
-  integrity sha512-C3J7L1vZfw1/nqV8erGIxHJ0sA2j2uIvIV/bEePW5fyP55GBSJKXOkuNFVbgYKjFJiykpLHIjMMfZCrLnY/VwA==
+"@fluidframework/driver-base-previous@npm:@fluidframework/driver-base@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/driver-base/-/driver-base-0.59.2000.tgz#6f90311698570198546786ffd0a277e2d52b3c5c"
+  integrity sha512-tDOp2fpXDiOuJp+tbTrfRYi19GOZ9n6QLIkwyviMa4w2zoAvhRbRB94i8gTI2LYDgfJsXLW8Za/d2K76i07hog==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
 
 "@fluidframework/driver-definitions-previous@npm:@fluidframework/driver-definitions@0.46.1000":
   version "0.46.1000"
@@ -1389,10 +1389,10 @@
     "@fluidframework/core-interfaces" "^0.42.0"
     "@fluidframework/protocol-definitions" "^0.1027.1000"
 
-"@fluidframework/driver-utils-previous@npm:@fluidframework/driver-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/driver-utils/-/driver-utils-0.59.1000.tgz#354776328f96d00313a6a25b540d1c0c00beeedc"
-  integrity sha512-VZtoV+8sEzBtyRbXU6fbaZOxNKUBjzdL+Fp2Xp53mr5HRwu0IT0EMC1xMXExr46l7loyAuXyvso++naupyNODg==
+"@fluidframework/driver-utils-previous@npm:@fluidframework/driver-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/driver-utils/-/driver-utils-0.59.2000.tgz#cf33580061e291ef32e8c249624628cb443e8018"
+  integrity sha512-vTY096vLDdZMNIguQGMA1AV2XJye9qCS3x92KGqmFj0788rfeW+8qWDjRYcGALHT4wsunvFxvhy+fqiwgmW84w==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
@@ -1401,7 +1401,7 @@
     "@fluidframework/gitresources" "^0.1036.1000"
     "@fluidframework/protocol-base" "^0.1036.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     axios "^0.26.0"
     uuid "^8.3.1"
 
@@ -1437,45 +1437,45 @@
     axios "^0.26.0"
     uuid "^8.3.1"
 
-"@fluidframework/driver-web-cache-previous@npm:@fluidframework/driver-web-cache@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/driver-web-cache/-/driver-web-cache-0.59.1000.tgz#d592c84925c9e0665410b7c55e75f659a657b684"
-  integrity sha512-9EpaIv0wGt5urRYPk0pjfd0JlkiF6E7WySUe4RzbLwYmyXhX82G0VUjLdYzYhkyihEV0fhveBRlH1sdnqZVZtw==
+"@fluidframework/driver-web-cache-previous@npm:@fluidframework/driver-web-cache@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/driver-web-cache/-/driver-web-cache-0.59.2000.tgz#d483eacc42838d058cb67ca65295fbef92cb7d7d"
+  integrity sha512-jt5ZHnf1DbdUvrgraN+X86blId9azxs7Gj+qLXucJCc/dL+OV7B9AKPNmEuuoshx8lXfLF6hiIXtkzUaVdxltA==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
-    "@fluidframework/odsp-driver-definitions" "^0.59.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/odsp-driver-definitions" "^0.59.2000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     idb "^6.1.2"
 
-"@fluidframework/file-driver-previous@npm:@fluidframework/file-driver@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/file-driver/-/file-driver-0.59.1000.tgz#3b51ef151be729a2171a6f93027d5afad68f2348"
-  integrity sha512-It22F5iqqdIJwaJXhmgkkgDyGt7mCB7oVX2AsyaQ5Gs4Z9cdZIUmZVsWOyRLts2PDis+jKx0yxV53lOfw61DPA==
+"@fluidframework/file-driver-previous@npm:@fluidframework/file-driver@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/file-driver/-/file-driver-0.59.2000.tgz#9ade4f3d6928dc3745187a01013ce9200aca643a"
+  integrity sha512-zFFJGuHEBj5A/BPBgD0hNcnnkDSCkEPqiDpcFr5SmMO2eVJKRw0n+i+Lar4RDHRBoPQdBzqZcLWNaxd/BK3B7A==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/replay-driver" "^0.59.1000"
+    "@fluidframework/replay-driver" "^0.59.2000"
 
-"@fluidframework/fluid-static-previous@npm:@fluidframework/fluid-static@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/fluid-static/-/fluid-static-0.59.1000.tgz#aadf3eb20a2981d58cf115ce5d7bb0227aca5605"
-  integrity sha512-dJbl5QwE6knlVxG5rMPWJX8omkd73y0iGcyCkRX/D6dI8t/78tEPeUckOd0qNBfpLzyGe6h+vsQKGx9C+XokQw==
+"@fluidframework/fluid-static-previous@npm:@fluidframework/fluid-static@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/fluid-static/-/fluid-static-0.59.2000.tgz#bb8c53ba87dc0c24c5972cbe8f996a414b2653bd"
+  integrity sha512-p+pHpXYNvUPemwwYe2B6zgENoCFuq89L4L7nm7KJ9WozBG+nJZ6lltRRCmkUl5tuYB8jiJF1Ar9nAfp+lM3B3A==
   dependencies:
-    "@fluidframework/aqueduct" "^0.59.1000"
+    "@fluidframework/aqueduct" "^0.59.2000"
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-loader" "^0.59.1000"
-    "@fluidframework/container-runtime-definitions" "^0.59.1000"
+    "@fluidframework/container-loader" "^0.59.2000"
+    "@fluidframework/container-runtime-definitions" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/request-handler" "^0.59.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
+    "@fluidframework/request-handler" "^0.59.2000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
 
 "@fluidframework/fluid-static@^0.58.2002":
   version "0.58.2002"
@@ -1495,14 +1495,14 @@
     "@fluidframework/runtime-definitions" "^0.58.2002"
     "@fluidframework/runtime-utils" "^0.58.2002"
 
-"@fluidframework/garbage-collector-previous@npm:@fluidframework/garbage-collector@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/garbage-collector/-/garbage-collector-0.59.1000.tgz#d71ecf886720a0e17cae77af0a6d36ef151c5b87"
-  integrity sha512-2F4EIR604W8iZzFyPqDwA19SVqmEyD+3w6TYaLQO9dC9s3Pk00EIGTbc3asIA1x76SEgHC6nFwgVvQ2LuVTwLQ==
+"@fluidframework/garbage-collector-previous@npm:@fluidframework/garbage-collector@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/garbage-collector/-/garbage-collector-0.59.2000.tgz#c118504f493705dd3933ddbf62ad6ac00d2f3396"
+  integrity sha512-4OSLgAGpU3M7Hzcz8TnxItk6lTibTEmyRLU2l3Zud0qYKJpjZAzd4zAkX619OIpB5sxseNqx7tZ4osekZ9zxPg==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
 
 "@fluidframework/garbage-collector@^0.58.2002":
   version "0.58.2002"
@@ -1523,47 +1523,47 @@
   resolved "https://registry.yarnpkg.com/@fluidframework/gitresources/-/gitresources-0.1035.1000.tgz#220e336c7439a81e18d10f61502c84358f40ec5b"
   integrity sha512-wva423Pk9+SRDr7OlgvZxHdohGuo6cI4yenj7aVLenbqhrq72zxT8hJ5TG4PZJeu2BEybZRxz6AFGRLZpGp8CQ==
 
-"@fluidframework/iframe-driver-previous@npm:@fluidframework/iframe-driver@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/iframe-driver/-/iframe-driver-0.59.1000.tgz#0d69c7442dbe34b5fcc3f2127dce2751acde912b"
-  integrity sha512-AT5esBd+bry+Mphq1lQqvmA3ZoHGro14UDLZfBAYuyyuMCYWMU5HW3Av4eFaw6kT9xQOmSpuZ4EmI9bSw8DGTg==
+"@fluidframework/iframe-driver-previous@npm:@fluidframework/iframe-driver@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/iframe-driver/-/iframe-driver-0.59.2000.tgz#f94736e6a25aab7244710c2def18b2e334ede924"
+  integrity sha512-Y2z5h2SytSUEAdgCCuNRCKfe0D5KXQvJ36H7kSe4rKUPUaXH6rRrR+zgFe15s3GaFJPEu+9sjjWroj28UTZvNg==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     comlink "^4.3.0"
 
-"@fluidframework/ink-previous@npm:@fluidframework/ink@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/ink/-/ink-0.59.1000.tgz#15489de78fb9c14068e1e9cf8d950807044ca539"
-  integrity sha512-p5LAM2EuFNrGwLFLr96lUVRAOKoW32ds+1ytBC9ieH2BckFXPPGyjY4+JDKeXcVRt8BWk/Kg0iXx7ss9BcHk8g==
+"@fluidframework/ink-previous@npm:@fluidframework/ink@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/ink/-/ink-0.59.2000.tgz#0d45ad2803e4d20ba827395fc1b72d936959860c"
+  integrity sha512-xEFUNFQPtqbVqok88hLV5bEJ3d5jKf1c7wjM2HZwn4fTAsEcshvhMz7PbfjMGxJSHQr/8PekfCJ6RCSFjbNMOA==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/shared-object-base" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/shared-object-base" "^0.59.2000"
     uuid "^8.3.1"
 
-"@fluidframework/local-driver-previous@npm:@fluidframework/local-driver@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/local-driver/-/local-driver-0.59.1000.tgz#4375ed825b9f935d9cd4441af5afcc0774e5be99"
-  integrity sha512-GFBoMaHA3lWBHi61fATH8SckCLc4dQx6VBffdHMw4IQgnoVbT9eh3YxG/f9xb4VqLRhPQOQVyLpyJgasxePswA==
+"@fluidframework/local-driver-previous@npm:@fluidframework/local-driver@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/local-driver/-/local-driver-0.59.2000.tgz#76b0dd9e59f9ed169e48a5d5f6d6b019df8bd5ec"
+  integrity sha512-CNJNeEJR0G4Z3ThJpN/xVa414CXbhCoG3XV5+ySiOHK6eYOTyTXKFx6ACxwrSvlVyb9ag98vYUu5evKOV3PCCQ==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/driver-base" "^0.59.1000"
+    "@fluidframework/driver-base" "^0.59.2000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/routerlicious-driver" "^0.59.1000"
+    "@fluidframework/routerlicious-driver" "^0.59.2000"
     "@fluidframework/server-local-server" "^0.1036.1000"
     "@fluidframework/server-services-client" "^0.1036.1000"
     "@fluidframework/server-services-core" "^0.1036.1000"
@@ -1571,21 +1571,21 @@
     jsrsasign "^10.2.0"
     uuid "^8.3.1"
 
-"@fluidframework/map-previous@npm:@fluidframework/map@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/map/-/map-0.59.1000.tgz#a89d1179b44b2bb6b9717aac8700daf74af760de"
-  integrity sha512-viwpzIFGgQnUgnJ0w7CHdw2KH025AawN6S8fATHg8IvGspJ3Q5ZV8Bw/GH38B6ogTk/jNgYdmeJx+t06IO77kw==
+"@fluidframework/map-previous@npm:@fluidframework/map@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/map/-/map-0.59.2000.tgz#4ea3685d49c6da70c2830e0015a0e9a68d99d1f1"
+  integrity sha512-jKdBf1v0dFK8m4Q+OVh/RFHUr/1HyS2f0B5P1HtFBPzA6OOf8p6/r3XpAaE86L/NlmXxDHX3doT6Az+7gooSrA==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
-    "@fluidframework/container-utils" "^0.59.1000"
+    "@fluidframework/container-utils" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/shared-object-base" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/shared-object-base" "^0.59.2000"
     path-browserify "^1.0.1"
 
 "@fluidframework/map@^0.58.2002":
@@ -1604,22 +1604,22 @@
     "@fluidframework/shared-object-base" "^0.58.2002"
     path-browserify "^1.0.1"
 
-"@fluidframework/matrix-previous@npm:@fluidframework/matrix@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/matrix/-/matrix-0.59.1000.tgz#de78cfa99e205fac66f417085103119651ca616a"
-  integrity sha512-mxFDgAyHLJJ2CDKFL5qRvbW0/k1iWiC1HJOuwm+MvOtipAahXUJgfqcWQDNdJdrswyWHpZLFfEJmtHXzksJ9Qg==
+"@fluidframework/matrix-previous@npm:@fluidframework/matrix@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/matrix/-/matrix-0.59.2000.tgz#23131b6848fdf980b9c07c63194756f7c0ce8503"
+  integrity sha512-FSIyUQZg2UMfqxk7qaGizJc2av03ANLxv3XYcCgJsaCwsyF3+jMVqp7kt6DOLdMdwset5Rh57wQtC8xlQtyfxg==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/merge-tree" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/merge-tree" "^0.59.2000"
     "@fluidframework/protocol-base" "^0.1036.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/shared-object-base" "^0.59.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/shared-object-base" "^0.59.2000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     "@tiny-calc/nano" "0.0.0-alpha.5"
     tslib "^1.10.0"
 
@@ -1640,13 +1640,13 @@
     "@fluidframework/shared-object-base" "^0.58.2002"
     "@fluidframework/telemetry-utils" "^0.58.2002"
 
-"@fluidframework/mocha-test-setup-previous@npm:@fluidframework/mocha-test-setup@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/mocha-test-setup/-/mocha-test-setup-0.59.1000.tgz#76cdcf2393cb16c9b43adee6159475cfd26ff101"
-  integrity sha512-EIdO0cQJmOoD4MZJqSJSoFadzF8HaOa1UPN+TnegCxpiwLTXYshfByCEwTC1YH05iXxEGAXVHcYYentggCwvpQ==
+"@fluidframework/mocha-test-setup-previous@npm:@fluidframework/mocha-test-setup@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/mocha-test-setup/-/mocha-test-setup-0.59.2000.tgz#1b11e77957191712e380dda253e77c7d42fb7c6a"
+  integrity sha512-CqU+9ry9udo82n+MHpFwMDxLn+VU4tqDxTFJ3qcv3qDRY9tqb2RH9YaDXmbjkcCQ0B1/g/1+B2NOH3lZVOGhEg==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
-    "@fluidframework/test-driver-definitions" "^0.59.1000"
+    "@fluidframework/test-driver-definitions" "^0.59.2000"
     mocha "^8.4.0"
 
 "@fluidframework/mocha-test-setup@^0.27.0":
@@ -1663,17 +1663,17 @@
     "@fluidframework/test-driver-definitions" "^0.41.4"
     mocha "^8.4.0"
 
-"@fluidframework/odsp-doclib-utils-previous@npm:@fluidframework/odsp-doclib-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/odsp-doclib-utils/-/odsp-doclib-utils-0.59.1000.tgz#af6b8c9896aa1d3b5daf420c5dba269ab2b558fd"
-  integrity sha512-Crd9z5tfU07N7WmwtzcqSQUMwzLOizdg/BW4oiMKxDB+s8jNapjGgZaRL2SDeyEiuY5HVnyWzMOOnnefpJ2DGw==
+"@fluidframework/odsp-doclib-utils-previous@npm:@fluidframework/odsp-doclib-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/odsp-doclib-utils/-/odsp-doclib-utils-0.59.2000.tgz#d73404b81e795c223765a1cc2d677e186d36a3a6"
+  integrity sha512-Ofn71lsbbFbAD6L1NK8Azf6GnKkTzqNMR6qGiXd/KWAPgzlcOgtjUPp20pYhJc0w7UdN7tBOwqXSDkjVKJbbPA==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
-    "@fluidframework/odsp-driver-definitions" "^0.59.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
+    "@fluidframework/odsp-driver-definitions" "^0.59.2000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     node-fetch "^2.6.1"
 
 "@fluidframework/odsp-doclib-utils@^0.35.6":
@@ -1686,57 +1686,57 @@
     "@fluidframework/driver-utils" "^0.35.6"
     node-fetch "^2.6.1"
 
-"@fluidframework/odsp-driver-definitions-previous@npm:@fluidframework/odsp-driver-definitions@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/odsp-driver-definitions/-/odsp-driver-definitions-0.59.1000.tgz#d7ee1ae8fed887d2a6b9ee2af6ae15e36d03d4cd"
-  integrity sha512-rzwpLtUjzoP3DJalwz+pEnTIjuy0WXb1tUMQikMCB3pQMZyoa8AsFLFFgWJVNka1+3vg8xv/k9bfnhGKDyx+6A==
+"@fluidframework/odsp-driver-definitions-previous@npm:@fluidframework/odsp-driver-definitions@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/odsp-driver-definitions/-/odsp-driver-definitions-0.59.2000.tgz#fde95e77b2102111b48149a516a3cdb7ac79ee6b"
+  integrity sha512-VcUj/dvDAc+KpucDT4NGwDb5mm/HTI0AqWUY7ZPWheDnTE/7UavArsY3zaFfUap6J4XT8Sb6xO4twsxjIAU/tQ==
   dependencies:
     "@fluidframework/driver-definitions" "^0.46.1000"
 
-"@fluidframework/odsp-driver-previous@npm:@fluidframework/odsp-driver@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/odsp-driver/-/odsp-driver-0.59.1000.tgz#d0f997b903a8a8970b61556fb04773fa4e580abd"
-  integrity sha512-GAr4q/9eWNtwpYe3XNgp2B/gFfEQiPLdQlWy3XYspqcxNW1+qbuCN/pZW8SdN2tjTKfbA5S2qOI8snGCaMiWTw==
+"@fluidframework/odsp-driver-previous@npm:@fluidframework/odsp-driver@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/odsp-driver/-/odsp-driver-0.59.2000.tgz#fc97ac6c7adc2729a17f8c42e7d1ec56ac17c935"
+  integrity sha512-mM341ZBMdKRbVfirTwewtWaPlPLfhOW5BqWgcehOGW2dsJ5T/hNLB2OlNTww899KkHvd28qouKgs0hSjv8miHw==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/driver-base" "^0.59.1000"
+    "@fluidframework/driver-base" "^0.59.2000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/gitresources" "^0.1036.1000"
-    "@fluidframework/odsp-doclib-utils" "^0.59.1000"
-    "@fluidframework/odsp-driver-definitions" "^0.59.1000"
+    "@fluidframework/odsp-doclib-utils" "^0.59.2000"
+    "@fluidframework/odsp-driver-definitions" "^0.59.2000"
     "@fluidframework/protocol-base" "^0.1036.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     abort-controller "^3.0.0"
     node-fetch "^2.6.1"
     socket.io-client "^4.4.1"
     uuid "^8.3.1"
 
-"@fluidframework/odsp-urlresolver-previous@npm:@fluidframework/odsp-urlresolver@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/odsp-urlresolver/-/odsp-urlresolver-0.59.1000.tgz#b1d27389b050d70662bc3cee0418f126824112f2"
-  integrity sha512-tcRRvS0kWJLQ1miCGuXMFTO5ELISoFyZpIG12oqnIXrx1wZ0njop5K49+isOO61xngSJ2QQn/kgohvvm4MO2zA==
+"@fluidframework/odsp-urlresolver-previous@npm:@fluidframework/odsp-urlresolver@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/odsp-urlresolver/-/odsp-urlresolver-0.59.2000.tgz#b3c435d9ba1a4847d564fdb94a7b03e5b0f992b6"
+  integrity sha512-4UUOfig3a1+QqFeXxR+ncwjEUX/9JEDGyE2mSiNBth0BZgFqJ0dH6u6PfzeLv5GshLUykTDl4AJgF2RHXs3TIQ==
   dependencies:
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/odsp-driver" "^0.59.1000"
-    "@fluidframework/odsp-driver-definitions" "^0.59.1000"
+    "@fluidframework/odsp-driver" "^0.59.2000"
+    "@fluidframework/odsp-driver-definitions" "^0.59.2000"
 
-"@fluidframework/ordered-collection-previous@npm:@fluidframework/ordered-collection@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/ordered-collection/-/ordered-collection-0.59.1000.tgz#e34cc6343788d52c63f1b5e28a1fdb5dde722f53"
-  integrity sha512-xhZpeN3F9XlyiujcsW0foxG/WPhfw3B5ysUbg7pMoThFxkwqsWcmF18SkO0uiAj9ccnVGvOd7MyAIPxYqu+cFQ==
+"@fluidframework/ordered-collection-previous@npm:@fluidframework/ordered-collection@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/ordered-collection/-/ordered-collection-0.59.2000.tgz#c897828f52c610edbbfede22e0f9a1014e01cfc4"
+  integrity sha512-FkQE0NaFEMMHLhA0dR1JowymWi1BJpHIg3mrDSncGUWwKpfKnxdPmIEhTuUzkIBsolKEOI193AVjujqTQUwyoA==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/shared-object-base" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/shared-object-base" "^0.59.2000"
     uuid "^8.3.1"
 
 "@fluidframework/protocol-base@^0.1019.0":
@@ -1788,41 +1788,41 @@
   dependencies:
     "@fluidframework/common-definitions" "^0.20.0"
 
-"@fluidframework/register-collection-previous@npm:@fluidframework/register-collection@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/register-collection/-/register-collection-0.59.1000.tgz#c933dd1fd68cf22b71326a16cec8e7bbc4b15817"
-  integrity sha512-aZL4/apKXW2b8qJO7AAg1fS85IjyiDTMBsLdOs0eC4BJ5ssRbkrHhAolcuEvWr2x6otzr/5ltUzNITbjpfUjWQ==
+"@fluidframework/register-collection-previous@npm:@fluidframework/register-collection@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/register-collection/-/register-collection-0.59.2000.tgz#060078f7b9f014ab280d28510798d1a4c91aca26"
+  integrity sha512-ecTfBZJhRbu6IBkc4JzkAn+Zi9UQ5YMP+nls/4Sm/L+n2yXmpoHSpnzxWktajyUR5bRI1l6FOUC6l1gOgj1zIQ==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
     "@fluidframework/protocol-base" "^0.1036.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/shared-object-base" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/shared-object-base" "^0.59.2000"
 
-"@fluidframework/replay-driver-previous@npm:@fluidframework/replay-driver@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/replay-driver/-/replay-driver-0.59.1000.tgz#d13f0dcc6e3ed2b659c7bb3534f7d932dfe71943"
-  integrity sha512-65Ud/QfLtXRxg1apxtxVz9A5f4JFFlJ1q+VZBK8GGGGYDDw4h5E838UhHgyN5jgpQUC+/z2Z1RTZoIkjuKXstg==
+"@fluidframework/replay-driver-previous@npm:@fluidframework/replay-driver@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/replay-driver/-/replay-driver-0.59.2000.tgz#1820ea5351e9bb46b43f9d5187de16a901a18406"
+  integrity sha512-UOrc96+pKg4445YvqNrDUBDxRLMFlPcd5+GG2IIPpCs/yI7vj4hAN+NmJa/redPULUngB3Bmy4IRpiky4239VA==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
 
-"@fluidframework/request-handler-previous@npm:@fluidframework/request-handler@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/request-handler/-/request-handler-0.59.1000.tgz#f7c31622837b398c20d0001d60e2826aace705ec"
-  integrity sha512-XQTusnpyTNEvR5tGztN4ZIcG7+tOwh1JDDVJydVdLawOlPD9SASGZBYY3pg4uXs0Pj25u5flXroeM8EcC2AURg==
+"@fluidframework/request-handler-previous@npm:@fluidframework/request-handler@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/request-handler/-/request-handler-0.59.2000.tgz#7f7bf8512a78185ccfb20183a3f65e1e39bbc71c"
+  integrity sha512-HEbu2hwy89cfz13KiGkYJYDl8FiwZcqNS4C8esNJAh7HMy4NEKlL78FDNqtUrdANRgKC8pJ7UjdTFuZPdnUvEA==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
-    "@fluidframework/container-runtime-definitions" "^0.59.1000"
+    "@fluidframework/container-runtime-definitions" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
 
 "@fluidframework/request-handler@^0.58.2002":
   version "0.58.2002"
@@ -1835,52 +1835,52 @@
     "@fluidframework/runtime-definitions" "^0.58.2002"
     "@fluidframework/runtime-utils" "^0.58.2002"
 
-"@fluidframework/routerlicious-driver-previous@npm:@fluidframework/routerlicious-driver@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/routerlicious-driver/-/routerlicious-driver-0.59.1000.tgz#840630c5c39c8c7d261cf84a6b8f8ccf82f25462"
-  integrity sha512-Jjw894PYVmhcS+KAsW/cQj5unyKRLYGtrhllbUWV37C4AMJ+bWvs11CkMra891I4KloZKoxv6FpyJT6O7Xh02g==
+"@fluidframework/routerlicious-driver-previous@npm:@fluidframework/routerlicious-driver@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/routerlicious-driver/-/routerlicious-driver-0.59.2000.tgz#4a5792003ce550ec549180213226051cd087d114"
+  integrity sha512-dHTRDsqyrggSUOEHRQEtm0vleQRCSBcf1k8pAQPV8G429zQpVX+xTwkLUxIcwcApj/HLjwYfsmp62TB2UHlb5w==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
-    "@fluidframework/driver-base" "^0.59.1000"
+    "@fluidframework/driver-base" "^0.59.2000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/gitresources" "^0.1036.1000"
     "@fluidframework/protocol-base" "^0.1036.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
     "@fluidframework/server-services-client" "^0.1036.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     cross-fetch "^3.1.5"
     json-stringify-safe "5.0.1"
     socket.io-client "^4.4.1"
     url-parse "^1.5.8"
     uuid "^8.3.1"
 
-"@fluidframework/routerlicious-host-previous@npm:@fluidframework/routerlicious-host@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/routerlicious-host/-/routerlicious-host-0.59.1000.tgz#04e2c244e5aa3a7c4643a10982e907390fac3a56"
-  integrity sha512-1faWHEtWqyZNr996C1zPWX/is0f08veoKbccwCSBlXBFyjZegRhqKkx786ahpxk54zxVRMuIJV0MuN/8Neia6Q==
+"@fluidframework/routerlicious-host-previous@npm:@fluidframework/routerlicious-host@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/routerlicious-host/-/routerlicious-host-0.59.2000.tgz#4c584193150decb5c4442a4d01674e3a436d8ffc"
+  integrity sha512-tQPYfeq0/aIMOc5jVT8/GAhLJ6X723tnyj3u81dAu/UTQSmQlzY6rkEvvaRfx5brlIh23YHPXQ2FvmKPnm7CJw==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
     axios "^0.26.0"
 
-"@fluidframework/routerlicious-urlresolver-previous@npm:@fluidframework/routerlicious-urlresolver@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/routerlicious-urlresolver/-/routerlicious-urlresolver-0.59.1000.tgz#866abf3fcd01ff818282fa866001fd441639e451"
-  integrity sha512-Fb1fTQH1SLmKz6EobQOrEhMD2EqI06pYHEuH29OaIV+HTAwepCfDS/qr7ImkO2AjEi4ctu24egY/nNl0f+Lc8w==
+"@fluidframework/routerlicious-urlresolver-previous@npm:@fluidframework/routerlicious-urlresolver@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/routerlicious-urlresolver/-/routerlicious-urlresolver-0.59.2000.tgz#8bb0bb413ed1dfb0cf04348102bc164df23cb88b"
+  integrity sha512-Mq2YKNtjWJhwOwsWW18sobZx/wSuTQxJQsGwKvL8e/XBCL1CosEa2YtNwYJWQ/AkxBj/njrV12BmMY5QQhcJyA==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    nconf "^0.11.0"
+    nconf "^0.11.4"
 
-"@fluidframework/runtime-definitions-previous@npm:@fluidframework/runtime-definitions@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/runtime-definitions/-/runtime-definitions-0.59.1000.tgz#58072ebf4c396e55e2d10c1ce9eb2811da5bcb56"
-  integrity sha512-qqnBhU9x7aPWfGAAOZpoX2zRWvU9WmtdWhpfg6BRW+BgTCmuIb4abMwyqCaJPhew1CZ0TLVv02jTE0mk7lS/jw==
+"@fluidframework/runtime-definitions-previous@npm:@fluidframework/runtime-definitions@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/runtime-definitions/-/runtime-definitions-0.59.2000.tgz#29c202f50fe40b765f74d7547014ca67fc206f16"
+  integrity sha512-nF23aAGSJ5MshYxCyQKdGm/kOSwacJh2VEIukKsRRNxgbVf+rqXXelVWm4BBJQN/zchkbS7jbCtebTD+5yMCUQ==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
@@ -1903,22 +1903,22 @@
     "@fluidframework/protocol-definitions" "^0.1027.1000"
     "@types/node" "^14.18.0"
 
-"@fluidframework/runtime-utils-previous@npm:@fluidframework/runtime-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/runtime-utils/-/runtime-utils-0.59.1000.tgz#070c4a584a8add104af7f8be9feeafe638e32e5c"
-  integrity sha512-ew/I2sOFjc34J73Pn66BLe9JC+koU6P7HAz3hbG+4SDMDgXNxNA4Bp2AzGJPMq0fFzLHpKNcKFnRTIXYI88qOw==
+"@fluidframework/runtime-utils-previous@npm:@fluidframework/runtime-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/runtime-utils/-/runtime-utils-0.59.2000.tgz#4ce68cd735c6aa5458e8440836889817ee8fb99f"
+  integrity sha512-gcnduOs3OyPz6Tlbw06QlO2L6BRvbdy7NY/esYdiPnShmdpWuKX9qJpvk7/TlgWoUbjBykQ0Up0eDfRnw1TLjQ==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-runtime-definitions" "^0.59.1000"
+    "@fluidframework/container-runtime-definitions" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/garbage-collector" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/garbage-collector" "^0.59.2000"
     "@fluidframework/protocol-base" "^0.1036.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
 
 "@fluidframework/runtime-utils@^0.58.2002":
   version "0.58.2002"
@@ -2139,23 +2139,23 @@
     string-hash "^1.1.3"
     uuid "^8.3.1"
 
-"@fluidframework/shared-object-base-previous@npm:@fluidframework/shared-object-base@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/shared-object-base/-/shared-object-base-0.59.1000.tgz#60ea226342ba735a9c8d8c8dad44af4ce6678433"
-  integrity sha512-du8IZ32lzoHBnp5XBBVdaIujex5blGw7B+wMrry2jzw80IgHhN0NjrC496klUktDLe25C6IhxpDA0JfNWZ8Gmw==
+"@fluidframework/shared-object-base-previous@npm:@fluidframework/shared-object-base@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/shared-object-base/-/shared-object-base-0.59.2000.tgz#34cc3b88e1e298b4571e58f5e49524e60e1870f1"
+  integrity sha512-u8NTbI5M5A9TpSbKqLf3zXjPLHUD3s5To80C4I+NQNsf6R010Ck8F5o+3cwgzLM/+nmPyS7hBPbufUO50AMU1Q==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-runtime" "^0.59.1000"
-    "@fluidframework/container-utils" "^0.59.1000"
+    "@fluidframework/container-runtime" "^0.59.2000"
+    "@fluidframework/container-utils" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore" "^0.59.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
+    "@fluidframework/datastore" "^0.59.2000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     uuid "^8.3.1"
 
 "@fluidframework/shared-object-base@^0.58.2002":
@@ -2177,33 +2177,33 @@
     "@fluidframework/telemetry-utils" "^0.58.2002"
     uuid "^8.3.1"
 
-"@fluidframework/shared-summary-block-previous@npm:@fluidframework/shared-summary-block@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/shared-summary-block/-/shared-summary-block-0.59.1000.tgz#00b1ed0bbb5176be1223ff092ac26fa4bda7728b"
-  integrity sha512-yXtznzCmxnjfOyJtMl9chFQNYnayphkYnwIrhFSHvmH3JuRDST8TtTJaZEqSJERJxtuPm7FqLz4fP2XYcCIpqg==
+"@fluidframework/shared-summary-block-previous@npm:@fluidframework/shared-summary-block@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/shared-summary-block/-/shared-summary-block-0.59.2000.tgz#804170657af10836e6f767dd0377895e76e8c83f"
+  integrity sha512-XABB1wivgWee8blAdSOXmXbrq/kA9eZdknzS/cJTjmG10q61hDxufvAUXIIXKkLZXkOrg4DOUd5mNvvBY2l6Ig==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/shared-object-base" "^0.59.1000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/shared-object-base" "^0.59.2000"
 
-"@fluidframework/synthesize-previous@npm:@fluidframework/synthesize@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/synthesize/-/synthesize-0.59.1000.tgz#699d89b2d1a01069f02d061e346c252033da05a9"
-  integrity sha512-K6utPbwIoF4NOHlPOJ26xXnDDyysSM4lXnsnVSCMQ29cCTQUhHGg36pjMF+EYhVvbTkDsjRuxt+Y0GyDpoQRYQ==
+"@fluidframework/synthesize-previous@npm:@fluidframework/synthesize@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/synthesize/-/synthesize-0.59.2000.tgz#391db49dea2fee02b0b9f09ef67f72022f48b654"
+  integrity sha512-1WJ0LH+28d6jbOC17ZQnwRmmq4KxrrUYNlVLLh8+FQAGGuUIIm83ECkc0I7Rd4LOw30M2zidZ8uXefGKyRpIjg==
 
 "@fluidframework/synthesize@^0.58.2002":
   version "0.58.2002"
   resolved "https://registry.yarnpkg.com/@fluidframework/synthesize/-/synthesize-0.58.2002.tgz#02878145d5ccf55a87570da080606850b997986a"
   integrity sha512-8eHyC6YyZMxlghKZy2EE3jETr5jYsaXqTOveYqBvSf0iAUC/rIPSHhNkNnDM3L1/ljaLwo2KhGYxj4nuKODBYA==
 
-"@fluidframework/telemetry-utils-previous@npm:@fluidframework/telemetry-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/telemetry-utils/-/telemetry-utils-0.59.1000.tgz#5d5170cfaf039c5d3dc1f8ffe62b6bf419ee2582"
-  integrity sha512-1UwKRq+8+yYriKZo0YqGRSMe5MiNgwJN1mGt2Eaw6k5Fag+2SWSJ2RoYIQnMiPg/IDH1q/vWtr2Bu5QnDo8N6A==
+"@fluidframework/telemetry-utils-previous@npm:@fluidframework/telemetry-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/telemetry-utils/-/telemetry-utils-0.59.2000.tgz#dacb58ea34f6645296c132165853fb4364a39f50"
+  integrity sha512-aAqzBaqY9vOqpQNLiwxyQQa5ggVtrG4K1ZK6bqvIbgmvXrHP+viJxkm1wk5xGZI+YfESVZM28sgs3vL9OsUEWw==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
@@ -2232,19 +2232,19 @@
     events "^3.1.0"
     uuid "^8.3.1"
 
-"@fluidframework/test-client-utils-previous@npm:@fluidframework/test-client-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/test-client-utils/-/test-client-utils-0.59.1000.tgz#82280fcac548395034ab2eaeb3ce79c4f5228c06"
-  integrity sha512-91mlZ21hkUY/l8DqkXNYGLd0fjya0JWiB3hePPJIWy6oKfqHNKPTau61TgJNtKYP0is+LFf/KEMx0KtsMTAjww==
+"@fluidframework/test-client-utils-previous@npm:@fluidframework/test-client-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/test-client-utils/-/test-client-utils-0.59.2000.tgz#e5b2bbe59d314ed23e98d9c1bfb3ee36a5a987dc"
+  integrity sha512-wKPYxJI1sHhsVzttkhHe68Rj9X47cCHH4+JhWLLd2RXgD5MZ8gWS5fLif6uquSvmwaTeReU/hyBs+1601HWCfA==
   dependencies:
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/test-runtime-utils" "^0.59.1000"
+    "@fluidframework/test-runtime-utils" "^0.59.2000"
     sillyname "^0.1.0"
 
-"@fluidframework/test-driver-definitions-previous@npm:@fluidframework/test-driver-definitions@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/test-driver-definitions/-/test-driver-definitions-0.59.1000.tgz#70bbafa0acc50527074cb914f5a8342b2b841c2e"
-  integrity sha512-eh/52XAXGteJSxfxWGKD5BnrYBj9kZf8MJOZgxp1AxqXU0APa02B7ScuI1gvy57luyhsbCxQOm1t2uRXvcm/8w==
+"@fluidframework/test-driver-definitions-previous@npm:@fluidframework/test-driver-definitions@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/test-driver-definitions/-/test-driver-definitions-0.59.2000.tgz#1878d825c0f75a41a774e0b114cc3329a5114ccf"
+  integrity sha512-moEQLLSA3jISc3AIWuWyB2xO3KWSaNUxjhF/lQ6eZEAT2BZPK0+1jMdACCFDd94FwBoInDC3cV14BScpxmKX7A==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
@@ -2263,69 +2263,69 @@
     "@fluidframework/protocol-definitions" "^0.1024.0"
     uuid "^8.3.1"
 
-"@fluidframework/test-drivers-previous@npm:@fluidframework/test-drivers@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/test-drivers/-/test-drivers-0.59.1000.tgz#5cf4d6bbf79fd48c1c62f423c3be44911811d9df"
-  integrity sha512-OOSqDL6lyN4icxhaW0u+1UZ6jJihce9yVqPjfFW/EM/qOaslK+LeIIwJc0ZioQoH1cmAyD/Lz9le85FbVW9hjQ==
+"@fluidframework/test-drivers-previous@npm:@fluidframework/test-drivers@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/test-drivers/-/test-drivers-0.59.2000.tgz#26385e034ec906c530dcb64263a649c702e75136"
+  integrity sha512-EHIzotrjIFAxDjcezxPQratxGEosWChhlBqOIWkEZyFDc77oycay1sjhvrbery600j15xeXb39CZ6cYZ92yKSw==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
-    "@fluidframework/local-driver" "^0.59.1000"
-    "@fluidframework/odsp-doclib-utils" "^0.59.1000"
-    "@fluidframework/odsp-driver" "^0.59.1000"
-    "@fluidframework/odsp-driver-definitions" "^0.59.1000"
-    "@fluidframework/odsp-urlresolver" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
+    "@fluidframework/local-driver" "^0.59.2000"
+    "@fluidframework/odsp-doclib-utils" "^0.59.2000"
+    "@fluidframework/odsp-driver" "^0.59.2000"
+    "@fluidframework/odsp-driver-definitions" "^0.59.2000"
+    "@fluidframework/odsp-urlresolver" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/routerlicious-driver" "^0.59.1000"
+    "@fluidframework/routerlicious-driver" "^0.59.2000"
     "@fluidframework/server-local-server" "^0.1036.1000"
-    "@fluidframework/test-driver-definitions" "^0.59.1000"
-    "@fluidframework/test-pairwise-generator" "^0.59.1000"
-    "@fluidframework/test-runtime-utils" "^0.59.1000"
-    "@fluidframework/tinylicious-driver" "^0.59.1000"
-    "@fluidframework/tool-utils" "^0.59.1000"
+    "@fluidframework/test-driver-definitions" "^0.59.2000"
+    "@fluidframework/test-pairwise-generator" "^0.59.2000"
+    "@fluidframework/test-runtime-utils" "^0.59.2000"
+    "@fluidframework/tinylicious-driver" "^0.59.2000"
+    "@fluidframework/tool-utils" "^0.59.2000"
     axios "^0.26.0"
     semver "^7.3.4"
     uuid "^8.3.1"
 
-"@fluidframework/test-loader-utils-previous@npm:@fluidframework/test-loader-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/test-loader-utils/-/test-loader-utils-0.59.1000.tgz#a91540e9c81b9f41134ba08d3f1648b3b5ac3e76"
-  integrity sha512-zVTd5IhAOjrWPFrr955xgqPqApySHRThQ4TDigSsTd170Yjd5PjJlBHmJvO8ibsS8H9WTfFzy19+Oj9bgYxaww==
+"@fluidframework/test-loader-utils-previous@npm:@fluidframework/test-loader-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/test-loader-utils/-/test-loader-utils-0.59.2000.tgz#dc0830dd5c76f4579b4b39d7618509778dd164df"
+  integrity sha512-bNQUbkjJQK+Ac754mD/99eyXWkRTfgW+wbxH0cqNZb6wg0E9EavQnARrmwE/DjLlAxikFo3OxxRUbRa8aXinrg==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
 
-"@fluidframework/test-pairwise-generator-previous@npm:@fluidframework/test-pairwise-generator@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/test-pairwise-generator/-/test-pairwise-generator-0.59.1000.tgz#9b81706eda28fc1bd801701257b47e35c6db3b5d"
-  integrity sha512-/4fyw0zTwaM9SudO9OR1S5DedEuT1N4E2rvg/UFn0CW4PYBi/LK3BCMO9CuK7Y7BI+nOMYD4Ef6GplLX2QnEFQ==
+"@fluidframework/test-pairwise-generator-previous@npm:@fluidframework/test-pairwise-generator@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/test-pairwise-generator/-/test-pairwise-generator-0.59.2000.tgz#43b9619a1b44583dde8fe3a33e669153a3a88e98"
+  integrity sha512-IZIFrgF/ilPFh+btfI4GkonfYvTBN3Mohrju1iSoC5g813EwsNn6WSi9tg7TNimiDfGPsr3lZfSOBIUB/eg+kQ==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     random-js "^1.0.8"
 
-"@fluidframework/test-runtime-utils-previous@npm:@fluidframework/test-runtime-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/test-runtime-utils/-/test-runtime-utils-0.59.1000.tgz#5e2ebe984fb762470701b63cd81c291e914c8113"
-  integrity sha512-pgs4aU9g+X84AgCI2GoZynSlMFum3P/aayABxv21i0V7aI5+oRRwlaJXEF4hc1TK63SYS+jW0WUgKvUV0DcQ5w==
+"@fluidframework/test-runtime-utils-previous@npm:@fluidframework/test-runtime-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/test-runtime-utils/-/test-runtime-utils-0.59.2000.tgz#ff9c6d16cfd795a991c20bb9d22e840c14de5eaf"
+  integrity sha512-Isf7ECYSpCxbrN7oO7w4Usq/SVlzWCsOKq9DV7dl3Q94dlqOOnb0nOVR+d4ACF16KEepL16Thmy5dPhAaZ7JAg==
   dependencies:
-    "@fluidframework/azure-service-utils" "^0.59.1000"
+    "@fluidframework/azure-service-utils" "^0.59.2000"
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/routerlicious-driver" "^0.59.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
+    "@fluidframework/routerlicious-driver" "^0.59.2000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
     axios "^0.26.0"
     uuid "^8.3.1"
 
@@ -2334,109 +2334,109 @@
   resolved "https://registry.yarnpkg.com/@fluidframework/test-tools/-/test-tools-0.2.3074.tgz#fd06ecca6e1469d08cb7204e9c71e86a195464ad"
   integrity sha512-ZRSSKPXMm/ni/hDztf38GMBtzFez0Q9XXaY5abd2rQz76A3wIK+yzQerTqnZYBnwrzGwZi22Ne1FXND1JeFMZA==
 
-"@fluidframework/test-utils-previous@npm:@fluidframework/test-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/test-utils/-/test-utils-0.59.1000.tgz#9fda55efe6e149b9a7cff86962dcca870797589a"
-  integrity sha512-zNYhn8NugiGo98lxIPkIa3wfqGo6zWMtv4tV6asPUgR2hasy8Q2VrEkBTmfmmE6HJsiTCNtlEUbxMjz2MzMK+Q==
+"@fluidframework/test-utils-previous@npm:@fluidframework/test-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/test-utils/-/test-utils-0.59.2000.tgz#b205153e99581bf6d95495ed62ce8ebacf164e30"
+  integrity sha512-mSLxWahWpc63lu1pn7VI7aDWbWsP3GeYml+BsYoNQnKvviidUq2iKjt0Tacv4PxOBzV4g5zvyInQJc2QNu4NmQ==
   dependencies:
-    "@fluidframework/aqueduct" "^0.59.1000"
+    "@fluidframework/aqueduct" "^0.59.2000"
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-loader" "^0.59.1000"
-    "@fluidframework/container-runtime" "^0.59.1000"
-    "@fluidframework/container-runtime-definitions" "^0.59.1000"
+    "@fluidframework/container-loader" "^0.59.2000"
+    "@fluidframework/container-runtime" "^0.59.2000"
+    "@fluidframework/container-runtime-definitions" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/datastore" "^0.59.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
+    "@fluidframework/datastore" "^0.59.2000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
-    "@fluidframework/local-driver" "^0.59.1000"
-    "@fluidframework/map" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
+    "@fluidframework/local-driver" "^0.59.2000"
+    "@fluidframework/map" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/request-handler" "^0.59.1000"
-    "@fluidframework/routerlicious-driver" "^0.59.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/telemetry-utils" "^0.59.1000"
-    "@fluidframework/test-driver-definitions" "^0.59.1000"
-    "@fluidframework/test-runtime-utils" "^0.59.1000"
+    "@fluidframework/request-handler" "^0.59.2000"
+    "@fluidframework/routerlicious-driver" "^0.59.2000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/telemetry-utils" "^0.59.2000"
+    "@fluidframework/test-driver-definitions" "^0.59.2000"
+    "@fluidframework/test-runtime-utils" "^0.59.2000"
     debug "^4.1.1"
     uuid "^8.3.1"
 
-"@fluidframework/test-version-utils-previous@npm:@fluidframework/test-version-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/test-version-utils/-/test-version-utils-0.59.1000.tgz#60967362e6af2fe67ad8cc62960af28824b5f1e1"
-  integrity sha512-fUvGpKfQu/Aj7ZllUy7fCh1H8EWVq9HBKofMiKcrd4WVfXmrlL//h1lBQkNj0h2onlmlbqSRLPio9z63Lq34OA==
+"@fluidframework/test-version-utils-previous@npm:@fluidframework/test-version-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/test-version-utils/-/test-version-utils-0.59.2000.tgz#4ef335ad286cc62ceb08b178ec2429bb6851cafd"
+  integrity sha512-OkW+xnS9tmTs+LwiWrvkAQMwP+za507QdSyhX70DE8yC+jCkvnkYMFXUCd91aEd/xDyDN29mbgqFyiSCrV56RQ==
   dependencies:
-    "@fluidframework/aqueduct" "^0.59.1000"
-    "@fluidframework/cell" "^0.59.1000"
+    "@fluidframework/aqueduct" "^0.59.2000"
+    "@fluidframework/cell" "^0.59.2000"
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-loader" "^0.59.1000"
-    "@fluidframework/container-runtime" "^0.59.1000"
+    "@fluidframework/container-loader" "^0.59.2000"
+    "@fluidframework/container-runtime" "^0.59.2000"
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/counter" "^0.59.1000"
-    "@fluidframework/datastore-definitions" "^0.59.1000"
+    "@fluidframework/counter" "^0.59.2000"
+    "@fluidframework/datastore-definitions" "^0.59.2000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
-    "@fluidframework/ink" "^0.59.1000"
-    "@fluidframework/map" "^0.59.1000"
-    "@fluidframework/matrix" "^0.59.1000"
-    "@fluidframework/mocha-test-setup" "^0.59.1000"
-    "@fluidframework/ordered-collection" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
+    "@fluidframework/ink" "^0.59.2000"
+    "@fluidframework/map" "^0.59.2000"
+    "@fluidframework/matrix" "^0.59.2000"
+    "@fluidframework/mocha-test-setup" "^0.59.2000"
+    "@fluidframework/ordered-collection" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/register-collection" "^0.59.1000"
-    "@fluidframework/runtime-definitions" "^0.59.1000"
-    "@fluidframework/sequence" "^0.59.1000"
-    "@fluidframework/test-driver-definitions" "^0.59.1000"
-    "@fluidframework/test-drivers" "^0.59.1000"
-    "@fluidframework/test-utils" "^0.59.1000"
-    nconf "^0.11.0"
+    "@fluidframework/register-collection" "^0.59.2000"
+    "@fluidframework/runtime-definitions" "^0.59.2000"
+    "@fluidframework/sequence" "^0.59.2000"
+    "@fluidframework/test-driver-definitions" "^0.59.2000"
+    "@fluidframework/test-drivers" "^0.59.2000"
+    "@fluidframework/test-utils" "^0.59.2000"
+    nconf "^0.11.4"
     proper-lockfile "^4.1.2"
     semver "^7.3.4"
 
-"@fluidframework/tinylicious-client-previous@npm:@fluidframework/tinylicious-client@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/tinylicious-client/-/tinylicious-client-0.59.1000.tgz#fc66583487c5a5ac3412d284bfdcf84395b91b0f"
-  integrity sha512-JnBmuUEAl9VWPL+C+bc4I1ZHEWSnVDowVUz9x4jj6wjJtkFVYMKxPMfrCnehbLzXPfGG8pcdYjfYoxl6z/xhaQ==
+"@fluidframework/tinylicious-client-previous@npm:@fluidframework/tinylicious-client@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/tinylicious-client/-/tinylicious-client-0.59.2000.tgz#30046ad02ce78ef26eb9e5d3c6ac5f65a9b33896"
+  integrity sha512-11hBfps7mk161z2BDdFGt38Eda7fNPMqHqLXt4kax7ZElF2Vlzt0n2WvoW6QmDahkPRma0kI6SmcrI4xq3i0PQ==
   dependencies:
     "@fluidframework/common-definitions" "^0.20.1"
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/container-definitions" "^0.48.1000"
-    "@fluidframework/container-loader" "^0.59.1000"
+    "@fluidframework/container-loader" "^0.59.2000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
-    "@fluidframework/fluid-static" "^0.59.1000"
-    "@fluidframework/map" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
+    "@fluidframework/fluid-static" "^0.59.2000"
+    "@fluidframework/map" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/routerlicious-driver" "^0.59.1000"
-    "@fluidframework/runtime-utils" "^0.59.1000"
-    "@fluidframework/tinylicious-driver" "^0.59.1000"
+    "@fluidframework/routerlicious-driver" "^0.59.2000"
+    "@fluidframework/runtime-utils" "^0.59.2000"
+    "@fluidframework/tinylicious-driver" "^0.59.2000"
     uuid "^8.3.1"
 
-"@fluidframework/tinylicious-driver-previous@npm:@fluidframework/tinylicious-driver@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/tinylicious-driver/-/tinylicious-driver-0.59.1000.tgz#dda9fe4c8b8c96d316c56fbe1b826026d7ab3ee5"
-  integrity sha512-9McR39G+CUEdWaVqjNRzyKsOKfwbTPHELQbSmRpiFzWXmh8t9mzoMQV5f2B0wcjPjUkgXlPRPpXqIV9Ffn1Fkg==
+"@fluidframework/tinylicious-driver-previous@npm:@fluidframework/tinylicious-driver@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/tinylicious-driver/-/tinylicious-driver-0.59.2000.tgz#2ebe0504154dad4664031244a69c6c087c836166"
+  integrity sha512-7NGqW4b4ii6VlTCmrSt0lncwJdvg4TQzmJUgvILsSGetMKgft0kxzC/A/9l9pXqcV3KQcezRUaDzqvR5xpMCuw==
   dependencies:
     "@fluidframework/core-interfaces" "^0.43.1000"
     "@fluidframework/driver-definitions" "^0.46.1000"
-    "@fluidframework/driver-utils" "^0.59.1000"
+    "@fluidframework/driver-utils" "^0.59.2000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
-    "@fluidframework/routerlicious-driver" "^0.59.1000"
+    "@fluidframework/routerlicious-driver" "^0.59.2000"
     "@fluidframework/server-services-client" "^0.1036.1000"
     jsrsasign "^10.2.0"
     uuid "^8.3.1"
 
-"@fluidframework/tool-utils-previous@npm:@fluidframework/tool-utils@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/tool-utils/-/tool-utils-0.59.1000.tgz#b34a883e60a8c46150030eaecefcbfcda67d26a5"
-  integrity sha512-aaH+ybxUdzoBWOkbCtpsT8zSllLcm6TbktO93DguSh0WDIHPK5cVl6kzhRE5yAO6sTlT7RHL/1d/CFA+O4zS2w==
+"@fluidframework/tool-utils-previous@npm:@fluidframework/tool-utils@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/tool-utils/-/tool-utils-0.59.2000.tgz#1dae527779fd78cbf31674c05b4d551f7b39872e"
+  integrity sha512-pbF3zhfn3TonMa0J1OdN9+uPNsPddlthkBnua1xrilF7TVLhgDKkEJNxF/DZwd8nGPZnCPLBqrZs7LzY6lS1xQ==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
-    "@fluidframework/odsp-doclib-utils" "^0.59.1000"
+    "@fluidframework/odsp-doclib-utils" "^0.59.2000"
     "@fluidframework/protocol-base" "^0.1036.1000"
     "@fluidframework/protocol-definitions" "^0.1028.1000"
     async-mutex "^0.3.1"
@@ -2457,30 +2457,30 @@
     jwt-decode "^2.2.0"
     proper-lockfile "^4.1.1"
 
-"@fluidframework/undo-redo-previous@npm:@fluidframework/undo-redo@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/undo-redo/-/undo-redo-0.59.1000.tgz#0494e289a0065ea8822ca779a5aeb75a3af4094f"
-  integrity sha512-0GamjG54FrXG9QHsSTHEv092VDWf/30sd62p8h0w1zjcoN+r2vGDsztQ6mVcexMB8BnX/pDVd51WvS2o2l4u0g==
+"@fluidframework/undo-redo-previous@npm:@fluidframework/undo-redo@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/undo-redo/-/undo-redo-0.59.2000.tgz#dbd1dae839a6b83515c924b5ae4b2887d07eacf1"
+  integrity sha512-CyKXdc6FPOZayrYFTr+YnqkruFZUOqSOc3oDedSF0Jsp48hMza0ZguY3eVLzne97vTIAp/NnZy9kawxnIAn+BQ==
   dependencies:
-    "@fluidframework/map" "^0.59.1000"
-    "@fluidframework/matrix" "^0.59.1000"
-    "@fluidframework/merge-tree" "^0.59.1000"
-    "@fluidframework/sequence" "^0.59.1000"
+    "@fluidframework/map" "^0.59.2000"
+    "@fluidframework/matrix" "^0.59.2000"
+    "@fluidframework/merge-tree" "^0.59.2000"
+    "@fluidframework/sequence" "^0.59.2000"
 
-"@fluidframework/view-adapters-previous@npm:@fluidframework/view-adapters@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/view-adapters/-/view-adapters-0.59.1000.tgz#dd2196772748e010520274cc6d8805dbe83f715c"
-  integrity sha512-s5CV8HS9AWVkpemIXTMAsG32O3QFFsfIiJtu94DpRtslnZDIYNBhyT9oUPPEnVpEkaP+rJGMfAOkdh7ATHwnmQ==
+"@fluidframework/view-adapters-previous@npm:@fluidframework/view-adapters@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/view-adapters/-/view-adapters-0.59.2000.tgz#dda0650dbe17e6be42e5dbfbf1da555a54e7bfde"
+  integrity sha512-rib3RKBkYnkLpqop2uARgezYihj2ZhKhB/BEyiIxy6Wtq6PT8qh49QKpLoG8LfHVr3b55j0ElENNYpymf9f1Qg==
   dependencies:
     "@fluidframework/core-interfaces" "^0.43.1000"
-    "@fluidframework/view-interfaces" "^0.59.1000"
+    "@fluidframework/view-interfaces" "^0.59.2000"
     react "^16.10.2"
     react-dom "^16.10.2"
 
-"@fluidframework/view-interfaces-previous@npm:@fluidframework/view-interfaces@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/view-interfaces/-/view-interfaces-0.59.1000.tgz#528417814d1b77f72684a44a02fb88a965d61d72"
-  integrity sha512-KEv/iccEKfySJetEye8TvdimFj0K1nuADutKkdRAvvcCxXU03DChXVZtjqdHirVBXT9Djvl/lJDVPfeRmGfovw==
+"@fluidframework/view-interfaces-previous@npm:@fluidframework/view-interfaces@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/view-interfaces/-/view-interfaces-0.59.2000.tgz#46a9b69c17884986e183a53637e3db1710095d57"
+  integrity sha512-V3sxv0fBNQwK7QJ8SKb5MfFkRHNiIA04VS4HpNxFO/edaPKZA6b9eeMOB8EMh22QKUIoyXeL7+Hg44UxfvoC0g==
   dependencies:
     "@fluidframework/core-interfaces" "^0.43.1000"
 
@@ -2491,10 +2491,10 @@
   dependencies:
     "@fluidframework/core-interfaces" "^0.42.0"
 
-"@fluidframework/web-code-loader-previous@npm:@fluidframework/web-code-loader@0.59.1000":
-  version "0.59.1000"
-  resolved "https://registry.yarnpkg.com/@fluidframework/web-code-loader/-/web-code-loader-0.59.1000.tgz#c411387261ee0faabc1d91c780ce1289a92622d0"
-  integrity sha512-W9Z151qbssS5FJNL+BHbjTBwFwX4G537sGK/kjWHPxpSohwXwXMJixZnO77uha7px44PbSwVvkgQhQpot7MhZw==
+"@fluidframework/web-code-loader-previous@npm:@fluidframework/web-code-loader@0.59.2000":
+  version "0.59.2000"
+  resolved "https://registry.yarnpkg.com/@fluidframework/web-code-loader/-/web-code-loader-0.59.2000.tgz#b19908ef0a962839d3bfd4f46f55270c256b25fd"
+  integrity sha512-x+F5WkNz9EzSPY9tBB+qLHFnRyp1GHPG86BXqyG0ZIp3mbzamqxQrUzXEoCSfK7qcOComgg5w6/8eJIBFXNyUg==
   dependencies:
     "@fluidframework/container-definitions" "^0.48.1000"
     "@fluidframework/core-interfaces" "^0.43.1000"
@@ -6692,11 +6692,6 @@ ansi-colors@4.1.1, ansi-colors@^4.1.1:
   resolved "https://registry.yarnpkg.com/ansi-colors/-/ansi-colors-4.1.1.tgz#cbb9ae256bf750af1eab344f229aa27fe94ba348"
   integrity sha512-JoX0apGbHaUJBNl6yF+p6JAFYZ666/hhCGKN5t9QFjbJQKUU/g8MNbFDbvfrgKXvI1QpZplPOnwIo99lX/AAmA==
 
-ansi-colors@^3.0.0:
-  version "3.2.4"
-  resolved "https://registry.yarnpkg.com/ansi-colors/-/ansi-colors-3.2.4.tgz#e3a3da4bfbae6c86a9c285625de124a234026fbf"
-  integrity sha512-hHUXGagefjN2iRrID63xckIvotOXOojhQKWIPUZ4mNUZ9nLZW+7FMNoE1lOkEhNWYsx/7ysGIuJYCiMAA9FnrA==
-
 ansi-escapes@^3.0.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/ansi-escapes/-/ansi-escapes-3.2.0.tgz#8780b98ff9dbf5638152d1f1fe5c1d7b4442976b"
@@ -6708,11 +6703,6 @@ ansi-escapes@^4.2.1, ansi-escapes@^4.3.1:
   integrity sha512-gKXj5ALrKWQLsYG9jlTRmR/xKluxHV+Z9QEwNIgCfM1/uwPMCuzVVnh5mwTd+OuBZcwSIMbqssNWRm1lE51QaQ==
   dependencies:
     type-fest "^0.21.3"
-
-ansi-html-community@0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/ansi-html-community/-/ansi-html-community-0.0.8.tgz#69fbc4d6ccbe383f9736934ae34c3f8290f1bf41"
-  integrity sha512-1APHAyr3+PCamwNw3bXCPp4HFLONZt/yIH0sZp0/469KWNTEy+qN5jQ3GVX6DMZ1UXAi34yVwtTeaG/HpBuuzw==
 
 ansi-html@^0.0.7:
   version "0.0.7"
@@ -8430,15 +8420,6 @@ cliui@^3.0.3:
     strip-ansi "^3.0.1"
     wrap-ansi "^2.0.0"
 
-cliui@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/cliui/-/cliui-5.0.0.tgz#deefcfdb2e800784aa34f46fa08e06851c7bbbc5"
-  integrity sha512-PYeGSEmmHM6zvoef2w8TPzlrnNpXIjTipYK780YswmIP9vjxmd6Y2a3CB2Ks6/AU8NHjZugXvo8w3oWM2qnwXA==
-  dependencies:
-    string-width "^3.1.0"
-    strip-ansi "^5.2.0"
-    wrap-ansi "^5.1.0"
-
 cliui@^6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/cliui/-/cliui-6.0.0.tgz#511d702c0c4e41ca156d7d0e96021f23e13225b1"
@@ -9650,14 +9631,6 @@ deepmerge@^4.2.2:
   version "4.2.2"
   resolved "https://registry.yarnpkg.com/deepmerge/-/deepmerge-4.2.2.tgz#44d2ea3679b8f4d4ffba33f03d865fc1e7bf4955"
   integrity sha512-FJ3UgI4gIl+PHZm53knsuSFpE+nESMr7M4v9QcgB7S63Kj/6WqMiFQJpBBYz1Pt+66bZpP3Q7Lye0Oo9MPKEdg==
-
-default-gateway@^4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/default-gateway/-/default-gateway-4.2.0.tgz#167104c7500c2115f6dd69b0a536bb8ed720552b"
-  integrity sha512-h6sMrVB1VMWVrW13mSc6ia/DwYYw5MN6+exNu1OaJeFac5aSAvwM7lZ0NVfTABuSkQelr4h5oebg3KB1XPdjgA==
-  dependencies:
-    execa "^1.0.0"
-    ip-regex "^2.1.0"
 
 default-gateway@^6.0.0:
   version "6.0.3"
@@ -10932,13 +10905,6 @@ events@^3.0.0, events@^3.1.0:
   resolved "https://registry.yarnpkg.com/events/-/events-3.3.0.tgz#31a95ad0a924e2d2c419a813aeb2c4e878ea7400"
   integrity sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==
 
-eventsource@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/eventsource/-/eventsource-1.1.0.tgz#00e8ca7c92109e94b0ddf32dac677d841028cfaf"
-  integrity sha512-VSJjT5oCNrFvCS6igjzPAt5hBzQ2qPBFIbJ03zLI9SE0mxwZpMw6BfJrbFHm1a141AavMEB8JHmBhWAd66PfCg==
-  dependencies:
-    original "^1.0.0"
-
 evp_bytestokey@^1.0.0, evp_bytestokey@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/evp_bytestokey/-/evp_bytestokey-1.0.3.tgz#7fcbdb198dc71959432efe13842684e0525acb02"
@@ -11273,7 +11239,7 @@ fastq@^1.6.0:
   dependencies:
     reusify "^1.0.4"
 
-faye-websocket@^0.11.3, faye-websocket@^0.11.4:
+faye-websocket@^0.11.3:
   version "0.11.4"
   resolved "https://registry.yarnpkg.com/faye-websocket/-/faye-websocket-0.11.4.tgz#7f0d9275cfdd86a1c963dc8b65fcc451edcbb1da"
   integrity sha512-CzbClwlXAuiRQAlUyfqPgvPoNKTckTPGfwZV4ZdAhVcP2lh9KUxJg2b5GkE7XbjKQ3YJnQ9z6D9ntLAlB+tP8g==
@@ -12673,11 +12639,6 @@ html-encoding-sniffer@^2.0.1:
   dependencies:
     whatwg-encoding "^1.0.5"
 
-html-entities@^1.3.1:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/html-entities/-/html-entities-1.4.0.tgz#cfbd1b01d2afaf9adca1b10ae7dffab98c71d2dc"
-  integrity sha512-8nxjcBcd8wovbeKx7h3wTji4e6+rhaVuPNpMqwWgnHh+N9ToqsCs6XztWRBPQ+UtzsoMAdKZtUENoVzU/EMtZA==
-
 html-entities@^2.3.2:
   version "2.3.3"
   resolved "https://registry.yarnpkg.com/html-entities/-/html-entities-2.3.3.tgz#117d7626bece327fc8baace8868fa6f5ef856e46"
@@ -12808,16 +12769,6 @@ http-proxy-agent@^4.0.1:
     agent-base "6"
     debug "4"
 
-http-proxy-middleware@0.19.1:
-  version "0.19.1"
-  resolved "https://registry.yarnpkg.com/http-proxy-middleware/-/http-proxy-middleware-0.19.1.tgz#183c7dc4aa1479150306498c210cdaf96080a43a"
-  integrity sha512-yHYTgWMQO8VvwNS22eLLloAkvungsKdKTLO8AJlftYIKNfJr3GK3zK0ZCfzDDGUBttdGc8xFy1mCitvNKQtC3Q==
-  dependencies:
-    http-proxy "^1.17.0"
-    is-glob "^4.0.0"
-    lodash "^4.17.11"
-    micromatch "^3.1.10"
-
 http-proxy-middleware@^2.0.0:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/http-proxy-middleware/-/http-proxy-middleware-2.0.6.tgz#e1a4dd6979572c7ab5a4e4b55095d1f32a74963f"
@@ -12829,7 +12780,7 @@ http-proxy-middleware@^2.0.0:
     is-plain-obj "^3.0.0"
     micromatch "^4.0.2"
 
-http-proxy@^1.17.0, http-proxy@^1.18.1:
+http-proxy@^1.18.1:
   version "1.18.1"
   resolved "https://registry.yarnpkg.com/http-proxy/-/http-proxy-1.18.1.tgz#401541f0534884bbf95260334e72f88ee3976549"
   integrity sha512-7mz/721AbnJwIVbnaSv1Cz3Am0ZLT/UBwkC92VlxhXv/k/BBQfM2fXElQNC27BVGr0uwUpplYPQM9LnaBMR5NQ==
@@ -13037,14 +12988,6 @@ import-lazy@~4.0.0:
   resolved "https://registry.yarnpkg.com/import-lazy/-/import-lazy-4.0.0.tgz#e8eb627483a0a43da3c03f3e35548be5cb0cc153"
   integrity sha512-rKtvo6a868b5Hu3heneU+L4yEQ4jYKLtjpnPeUdK7h0yzXGmyBTypknlkCvHFBqfX9YlorEiMM6Dnq/5atfHkw==
 
-import-local@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/import-local/-/import-local-2.0.0.tgz#55070be38a5993cf18ef6db7e961f5bee5c5a09d"
-  integrity sha512-b6s04m3O+s3CGSbqDIyP4R6aAwAeYlVq9+WUWep6iHa8ETRf9yei1U48C5MmfJmV9AiLYYBKPMq/W+/WRpQmCQ==
-  dependencies:
-    pkg-dir "^3.0.0"
-    resolve-cwd "^2.0.0"
-
 import-local@^3.0.2:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/import-local/-/import-local-3.1.0.tgz#b4479df8a5fd44f6cdce24070675676063c95cb4"
@@ -13143,14 +13086,6 @@ int64-buffer@^0.1.9:
   resolved "https://registry.yarnpkg.com/int64-buffer/-/int64-buffer-0.1.10.tgz#277b228a87d95ad777d07c13832022406a473423"
   integrity sha1-J3siiofZWtd30HwTgyAiQGpHNCM=
 
-internal-ip@^4.3.0:
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/internal-ip/-/internal-ip-4.3.0.tgz#845452baad9d2ca3b69c635a137acb9a0dad0907"
-  integrity sha512-S1zBo1D6zcsyuC6PMmY5+55YMILQ9av8lotMx447Bq6SAgo/sDK6y6uUKmuYhW7eacnIhFfsPmCNYdDzsnnDCg==
-  dependencies:
-    default-gateway "^4.2.0"
-    ipaddr.js "^1.9.0"
-
 internal-ip@^6.2.0:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/internal-ip/-/internal-ip-6.2.0.tgz#d5541e79716e406b74ac6b07b856ef18dc1621c1"
@@ -13227,11 +13162,6 @@ ioredis@^4.24.2:
     redis-parser "^3.0.0"
     standard-as-callback "^2.1.0"
 
-ip-regex@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/ip-regex/-/ip-regex-2.1.0.tgz#fa78bf5d2e6913c911ce9f819ee5146bb6d844e9"
-  integrity sha1-+ni/XS5pE8kRzp+BnuUUa7bYROk=
-
 ip-regex@^4.0.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/ip-regex/-/ip-regex-4.3.0.tgz#687275ab0f57fa76978ff8f4dddc8a23d5990db5"
@@ -13242,7 +13172,7 @@ ip@^1.1.0, ip@^1.1.5:
   resolved "https://registry.yarnpkg.com/ip/-/ip-1.1.5.tgz#bdded70114290828c0a039e72ef25f5aaec4354a"
   integrity sha1-vd7XARQpCCjAoDnnLvJfWq7ENUo=
 
-ipaddr.js@1.9.1, ipaddr.js@^1.9.0, ipaddr.js@^1.9.1:
+ipaddr.js@1.9.1, ipaddr.js@^1.9.1:
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/ipaddr.js/-/ipaddr.js-1.9.1.tgz#bff38543eeb8984825079ff3a2a8e6cbd46781b3"
   integrity sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==
@@ -13256,11 +13186,6 @@ irregular-plurals@^3.2.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/irregular-plurals/-/irregular-plurals-3.3.0.tgz#67d0715d4361a60d9fd9ee80af3881c631a31ee2"
   integrity sha512-MVBLKUTangM3EfRPFROhmWQQKRDsrgI83J8GS3jXy+OwYqiR2/aoWndYQ5416jLE3uaGgLH7ncme3X9y09gZ3g==
-
-is-absolute-url@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/is-absolute-url/-/is-absolute-url-3.0.3.tgz#96c6a22b6a23929b11ea0afb1836c36ad4a5d698"
-  integrity sha512-opmNIX7uFnS96NtPmhWQgQx6/NYFgsUXYMllcfzwWKUMwfo8kku1TvE6hkNcH+Q1ts5cMVrsY7j0bxXQDciu9Q==
 
 is-absolute@^1.0.0:
   version "1.0.0"
@@ -15157,11 +15082,6 @@ keyv@^3.0.0:
   dependencies:
     json-buffer "3.0.0"
 
-killable@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/killable/-/killable-1.0.1.tgz#4c8ce441187a061c7474fb87ca08e2a638194892"
-  integrity sha512-LzqtLKlUwirEUyl/nicirVmNiPvYs7l5n8wOPP7fyJVpUPkvCnW/vuiXGpylGUlnPDnB7311rARzAt3Mhswpjg==
-
 kind-of@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-2.0.1.tgz#018ec7a4ce7e3a86cb9141be519d24c8faa981b5"
@@ -15795,11 +15715,6 @@ logform@^2.3.2, logform@^2.4.0:
     ms "^2.1.1"
     safe-stable-stringify "^2.3.1"
     triple-beam "^1.3.0"
-
-loglevel@^1.6.8:
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/loglevel/-/loglevel-1.8.0.tgz#e7ec73a57e1e7b419cb6c6ac06bf050b67356114"
-  integrity sha512-G6A/nJLRgWOuuwdNuA6koovfEV1YpqqAG4pRUlFaz3jj2QNZ8M4vBqnVA+HBTmU/AMNUtlOsMmSpF6NyOjztbA==
 
 lolex@^4.2.0:
   version "4.2.0"
@@ -17512,13 +17427,6 @@ opener@^1.5.2:
   resolved "https://registry.yarnpkg.com/opener/-/opener-1.5.2.tgz#5d37e1f35077b9dcac4301372271afdeb2a13598"
   integrity sha512-ur5UIdyw5Y7yEj9wLzhqXiy6GZ3Mwx0yGI+5sMn2r0N0v3cKJvUmFH5yPP+WXh9e0xfyzyJX95D8l088DNFj7A==
 
-opn@^5.5.0:
-  version "5.5.0"
-  resolved "https://registry.yarnpkg.com/opn/-/opn-5.5.0.tgz#fc7164fab56d235904c51c3b27da6758ca3b9bfc"
-  integrity sha512-PqHpggC9bLV0VeWcdKhkpxY+3JTzetLSqTCWL/z/tFIbI6G8JCjondXklT1JinczLz2Xib62sSp0T/gKT4KksA==
-  dependencies:
-    is-wsl "^1.1.0"
-
 optimism@^0.16.0, optimism@^0.16.1:
   version "0.16.1"
   resolved "https://registry.yarnpkg.com/optimism/-/optimism-0.16.1.tgz#7c8efc1f3179f18307b887e18c15c5b7133f6e7d"
@@ -17568,13 +17476,6 @@ orderedmap@^1.1.0, orderedmap@^1.1.1:
   version "1.1.5"
   resolved "https://registry.yarnpkg.com/orderedmap/-/orderedmap-1.1.5.tgz#4174c90b61bd7c25294932edf789f3b5677744d0"
   integrity sha512-/fzlCGKRmfayGoI9UUXvJfc2nMZlJHW30QqEvwPvlg8tsX7jyiUSomYie6mYqx7Z9bOMGoag0H/q1PS/0PjYkg==
-
-original@^1.0.0:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/original/-/original-1.0.2.tgz#e442a61cffe1c5fd20a65f3261c26663b303f25f"
-  integrity sha512-hyBVl6iqqUOJ8FqRe+l/gS8H+kKYjrEndd5Pm1MfBtsEKA038HkkdbAl/72EAXGyonD/PFsvmVG+EvcIpliMBg==
-  dependencies:
-    url-parse "^1.4.3"
 
 os-browserify@^0.3.0:
   version "0.3.0"
@@ -17772,13 +17673,6 @@ p-reduce@^2.0.0, p-reduce@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/p-reduce/-/p-reduce-2.1.0.tgz#09408da49507c6c274faa31f28df334bc712b64a"
   integrity sha512-2USApvnsutq8uoxZBGbbWM0JIYLiEMJ9RlaN7fAzVNb9OZN0SHjjTTfIcb667XynS5Y1VhwDJVDa72TnPzAYWw==
-
-p-retry@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/p-retry/-/p-retry-3.0.1.tgz#316b4c8893e2c8dc1cfa891f406c4b422bebf328"
-  integrity sha512-XE6G4+YTTkT2a0UWb2kjZe8xNwf8bIbnqpc/IS/idOBVhyves0mK5OJgeocjx7q5pvX/6m23xuzVPYT1uGM73w==
-  dependencies:
-    retry "^0.12.0"
 
 p-retry@^4.5.0:
   version "4.6.1"
@@ -18254,7 +18148,7 @@ pn@^1.1.0:
   resolved "https://registry.yarnpkg.com/pn/-/pn-1.1.0.tgz#e2f4cef0e219f463c179ab37463e4e1ecdccbafb"
   integrity sha512-2qHaIQr2VLRFoxe2nASzsV6ef4yOOH+Fi9FBOVH6cqeSgUnoyySPZkxzLuzd+RYOQTRpROA0ztTMqxROKSb/nA==
 
-portfinder@^1.0.26, portfinder@^1.0.28:
+portfinder@^1.0.28:
   version "1.0.28"
   resolved "https://registry.yarnpkg.com/portfinder/-/portfinder-1.0.28.tgz#67c4622852bd5374dd1dd900f779f53462fac778"
   integrity sha512-Se+2isanIcEqf2XMHjyUKskczxbPH7dQnlMjXX6+dybayyHvAf/TCgyMRlzf/B6QDhAEFOGes0pzRo3by4AbMA==
@@ -19591,13 +19485,6 @@ requires-port@^1.0.0:
   resolved "https://registry.yarnpkg.com/requires-port/-/requires-port-1.0.0.tgz#925d2601d39ac485e091cf0da5c6e694dc3dcaff"
   integrity sha1-kl0mAdOaxIXgkc8NpcbmlNw9yv8=
 
-resolve-cwd@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/resolve-cwd/-/resolve-cwd-2.0.0.tgz#00a9f7387556e27038eae232caa372a6a59b665a"
-  integrity sha1-AKn3OHVW4nA46uIyyqNypqWbZlo=
-  dependencies:
-    resolve-from "^3.0.0"
-
 resolve-cwd@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/resolve-cwd/-/resolve-cwd-3.0.0.tgz#0f0075f1bb2544766cf73ba6a6e2adfebcb13f2d"
@@ -19622,11 +19509,6 @@ resolve-from@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/resolve-from/-/resolve-from-2.0.0.tgz#9480ab20e94ffa1d9e80a804c7ea147611966b57"
   integrity sha1-lICrIOlP+h2egKgEx+oUdhGWa1c=
-
-resolve-from@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/resolve-from/-/resolve-from-3.0.0.tgz#b22c7af7d9d6881bc8b6e653335eebcb0a188748"
-  integrity sha1-six699nWiBvItuZTM17rywoYh0g=
 
 resolve-from@^4.0.0:
   version "4.0.0"
@@ -19984,7 +19866,7 @@ select-hose@^2.0.0:
   resolved "https://registry.yarnpkg.com/select-hose/-/select-hose-2.0.0.tgz#625d8658f865af43ec962bfc376a37359a4994ca"
   integrity sha1-Yl2GWPhlr0Psliv8N2o3NZpJlMo=
 
-selfsigned@^1.10.11, selfsigned@^1.10.8:
+selfsigned@^1.10.11:
   version "1.10.14"
   resolved "https://registry.yarnpkg.com/selfsigned/-/selfsigned-1.10.14.tgz#ee51d84d9dcecc61e07e4aba34f229ab525c1574"
   integrity sha512-lkjaiAye+wBZDCBsu5BGi0XiLRxeUlsGod5ZP924CRSEoGuZAw/f7y9RKu28rwTfiHVhdavhB0qH0INV6P1lEA==
@@ -20434,17 +20316,6 @@ socket.io@^4.1.2:
     engine.io "~6.2.0"
     socket.io-adapter "~2.4.0"
     socket.io-parser "~4.0.4"
-
-sockjs-client@^1.5.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/sockjs-client/-/sockjs-client-1.6.0.tgz#e0277b8974558edcb557eafc7d3027ef6128d865"
-  integrity sha512-qVHJlyfdHFht3eBFZdKEXKTlb7I4IV41xnVNo8yUKA1UHcPJwgW2SvTq9LhnjjCywSkSK7c/e4nghU0GOoMCRQ==
-  dependencies:
-    debug "^3.2.7"
-    eventsource "^1.1.0"
-    faye-websocket "^0.11.4"
-    inherits "^2.0.4"
-    url-parse "^1.5.10"
 
 sockjs@^0.3.21:
   version "0.3.24"
@@ -20928,7 +20799,7 @@ string-width@^1.0.1:
     is-fullwidth-code-point "^3.0.0"
     strip-ansi "^6.0.1"
 
-string-width@^3.0.0, string-width@^3.1.0:
+string-width@^3.0.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-3.1.0.tgz#22767be21b62af1081574306f69ac51b62203961"
   integrity sha512-vafcv6KjVZKSgz06oM/H6GDBrAtz8vdhQakGjFIvNrHA6y3HCF1CInLy+QLq8dTJPQ1b+KDUqDFctkdRW44e1w==
@@ -21000,7 +20871,7 @@ strip-ansi@^4.0.0:
   dependencies:
     ansi-regex "^3.0.0"
 
-strip-ansi@^5.0.0, strip-ansi@^5.1.0, strip-ansi@^5.2.0:
+strip-ansi@^5.1.0, strip-ansi@^5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-5.2.0.tgz#8c9a536feb6afc962bdfa5b104a5091c1ad9c0ae"
   integrity sha512-DuRs1gKbBqsMKIZlrffwlug8MHkcnpjs5VPmL1PAh+mA30U0DTotfDZ0d2UUsXpPmPmMMJ6W773MaA3J+lbiWA==
@@ -21140,13 +21011,6 @@ supports-color@^5.0.0, supports-color@^5.3.0, supports-color@^5.4.0, supports-co
   version "5.5.0"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-5.5.0.tgz#e2e69a44ac8772f78a1ec0b35b689df6530efc8f"
   integrity sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==
-  dependencies:
-    has-flag "^3.0.0"
-
-supports-color@^6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-6.1.0.tgz#0764abc69c63d5ac842dd4867e8d025e880df8f3"
-  integrity sha512-qe1jfm1Mg7Nq/NSh6XE24gPXROEVsWHxC1LIx//XNlD9iw7YZQGjZNjYN7xGaEG6iKdA8EtNFW6R0gjnVXp+wQ==
   dependencies:
     has-flag "^3.0.0"
 
@@ -22185,7 +22049,7 @@ url-parse-lax@^3.0.0:
   dependencies:
     prepend-http "^2.0.0"
 
-url-parse@^1.4.3, url-parse@^1.5.10, url-parse@^1.5.8, url-parse@~1.5.1:
+url-parse@^1.5.8, url-parse@~1.5.1:
   version "1.5.10"
   resolved "https://registry.yarnpkg.com/url-parse/-/url-parse-1.5.10.tgz#9d3c2f736c1d75dd3bd2be507dcc111f1e2ea9c1"
   integrity sha512-WypcfiRhfeUP9vvF0j6rw0J3hrWrw6iZv3+22h6iRMJ/8z1Tj6XfLP4DsUix5MhMPnXpiHDoKyoZ/bdCkwBCiQ==
@@ -22546,17 +22410,6 @@ webpack-cli@^4.9.2:
     rechoir "^0.7.0"
     webpack-merge "^5.7.3"
 
-webpack-dev-middleware@^3.7.2:
-  version "3.7.3"
-  resolved "https://registry.yarnpkg.com/webpack-dev-middleware/-/webpack-dev-middleware-3.7.3.tgz#0639372b143262e2b84ab95d3b91a7597061c2c5"
-  integrity sha512-djelc/zGiz9nZj/U7PTBi2ViorGJXEWo/3ltkPbDyxCXhhEXkW0ce99falaok4TPj+AsxLiXJR0EBOb0zh9fKQ==
-  dependencies:
-    memory-fs "^0.4.1"
-    mime "^2.4.4"
-    mkdirp "^0.5.1"
-    range-parser "^1.2.1"
-    webpack-log "^2.0.0"
-
 webpack-dev-middleware@^5.0.0:
   version "5.3.1"
   resolved "https://registry.yarnpkg.com/webpack-dev-middleware/-/webpack-dev-middleware-5.3.1.tgz#aa079a8dedd7e58bfeab358a9af7dab304cee57f"
@@ -22598,53 +22451,6 @@ webpack-dev-server@4.0.0:
     url "^0.11.0"
     webpack-dev-middleware "^5.0.0"
     ws "^8.1.0"
-
-webpack-dev-server@^3.8.0:
-  version "3.11.3"
-  resolved "https://registry.yarnpkg.com/webpack-dev-server/-/webpack-dev-server-3.11.3.tgz#8c86b9d2812bf135d3c9bce6f07b718e30f7c3d3"
-  integrity sha512-3x31rjbEQWKMNzacUZRE6wXvUFuGpH7vr0lIEbYpMAG9BOxi0928QU1BBswOAP3kg3H1O4hiS+sq4YyAn6ANnA==
-  dependencies:
-    ansi-html-community "0.0.8"
-    bonjour "^3.5.0"
-    chokidar "^2.1.8"
-    compression "^1.7.4"
-    connect-history-api-fallback "^1.6.0"
-    debug "^4.1.1"
-    del "^4.1.1"
-    express "^4.17.1"
-    html-entities "^1.3.1"
-    http-proxy-middleware "0.19.1"
-    import-local "^2.0.0"
-    internal-ip "^4.3.0"
-    ip "^1.1.5"
-    is-absolute-url "^3.0.3"
-    killable "^1.0.1"
-    loglevel "^1.6.8"
-    opn "^5.5.0"
-    p-retry "^3.0.1"
-    portfinder "^1.0.26"
-    schema-utils "^1.0.0"
-    selfsigned "^1.10.8"
-    semver "^6.3.0"
-    serve-index "^1.9.1"
-    sockjs "^0.3.21"
-    sockjs-client "^1.5.0"
-    spdy "^4.0.2"
-    strip-ansi "^3.0.1"
-    supports-color "^6.1.0"
-    url "^0.11.0"
-    webpack-dev-middleware "^3.7.2"
-    webpack-log "^2.0.0"
-    ws "^6.2.1"
-    yargs "^13.3.2"
-
-webpack-log@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/webpack-log/-/webpack-log-2.0.0.tgz#5b7928e0637593f119d32f6227c1e0ac31e1b47f"
-  integrity sha512-cX8G2vR/85UYG59FgkoMamwHUIkSSlV3bBMRsbxVXVUk2j6NleCKjQ/WE9eYg9WY4w25O9w8wKP4rzNZFmUcUg==
-  dependencies:
-    ansi-colors "^3.0.0"
-    uuid "^3.3.2"
 
 webpack-merge@^5.7.3, webpack-merge@^5.8.0:
   version "5.8.0"
@@ -22929,15 +22735,6 @@ wrap-ansi@^3.0.1:
     string-width "^2.1.1"
     strip-ansi "^4.0.0"
 
-wrap-ansi@^5.1.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-5.1.0.tgz#1fd1f67235d5b6d0fee781056001bfb694c03b09"
-  integrity sha512-QC1/iN/2/RPVJ5jYK8BGttj5z83LmSKmvbvrXPNCLZSEb32KKVDJDl/MOt2N01qU2H/FkzEa9PKto1BqDjtd7Q==
-  dependencies:
-    ansi-styles "^3.2.0"
-    string-width "^3.0.0"
-    strip-ansi "^5.0.0"
-
 wrap-ansi@^6.2.0:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-6.2.0.tgz#e9393ba07102e6c91a3b221478f0257cd2856e53"
@@ -23030,7 +22827,7 @@ ws@7.4.5:
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.7.tgz#9e0ac77ee50af70d58326ecff7e85eb3fa375e67"
   integrity sha512-KMvVuFzpKBuiIXW3E4u3mySRO2/mCHSyZDJQM5NQ9Q9KHWHWh0NHgfbRMLLrceUK5qAL4ytALJbpRMjixFZh8A==
 
-ws@^6.1.0, ws@^6.2.1:
+ws@^6.1.0:
   version "6.2.2"
   resolved "https://registry.yarnpkg.com/ws/-/ws-6.2.2.tgz#dd5cdbd57a9979916097652d78f1cc5faea0c32e"
   integrity sha512-zmhltoSR8u1cnDsD43TX59mzoMZsLKqUweyYBAIvTngR3shc0W6aOZylZmq/7hqyVxPdi+5Ud2QInblgyE72fw==
@@ -23145,14 +22942,6 @@ yargs-parser@21.0.1, yargs-parser@^21.0.0:
   resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-21.0.1.tgz#0267f286c877a4f0f728fceb6f8a3e4cb95c6e35"
   integrity sha512-9BK1jFpLzJROCI5TzwZL/TU4gqjK5xiHV/RfWLOahrjAko/e4DJkRDZQXfvqAsiZzzYhgAzbgz6lg48jcm4GLg==
 
-yargs-parser@^13.1.2:
-  version "13.1.2"
-  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-13.1.2.tgz#130f09702ebaeef2650d54ce6e3e5706f7a4fb38"
-  integrity sha512-3lbsNRf/j+A4QuSZfDRA7HRSfWrzO0YjqTJd5kjAq37Zep1CEgaYmrH9Q3GwPiB9cHyd1Y1UwggGhJGoxipbzg==
-  dependencies:
-    camelcase "^5.0.0"
-    decamelize "^1.2.0"
-
 yargs-parser@^18.1.2:
   version "18.1.3"
   resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-18.1.3.tgz#be68c4975c6b2abf469236b0c870362fab09a7b0"
@@ -23183,22 +22972,6 @@ yargs@16.2.0, yargs@^16.1.0, yargs@^16.1.1, yargs@^16.2.0:
     string-width "^4.2.0"
     y18n "^5.0.5"
     yargs-parser "^20.2.2"
-
-yargs@^13.3.2:
-  version "13.3.2"
-  resolved "https://registry.yarnpkg.com/yargs/-/yargs-13.3.2.tgz#ad7ffefec1aa59565ac915f82dccb38a9c31a2dd"
-  integrity sha512-AX3Zw5iPruN5ie6xGRIDgqkT+ZhnRlZMLMHAs8tg7nRruy2Nb+i5o9bwghAogtM08q1dpr2LVoS8KSTMYpWXUw==
-  dependencies:
-    cliui "^5.0.0"
-    find-up "^3.0.0"
-    get-caller-file "^2.0.1"
-    require-directory "^2.1.1"
-    require-main-filename "^2.0.0"
-    set-blocking "^2.0.0"
-    string-width "^3.0.0"
-    which-module "^2.0.0"
-    y18n "^4.0.0"
-    yargs-parser "^13.1.2"
 
 yargs@^15.0.2, yargs@^15.3.1, yargs@^15.4.1:
   version "15.4.1"
