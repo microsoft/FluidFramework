@@ -198,10 +198,9 @@ export class DocumentStorage implements IDocumentStorage {
             isSessionAlive: true,
         };
 
-        winston.info(`Create session with enableDiscovery flag as ${enableDiscovery}: ${JSON.stringify(session)}`,
-            { messageMetaData });
-        Lumberjack.info(`Create session with enableDiscovery flag as ${enableDiscovery}: ${JSON.stringify(session)}`,
-            lumberjackProperties);
+        const message: string = `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`;
+        winston.info(message, { messageMetaData });
+        Lumberjack.info(message, lumberjackProperties);
 
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
