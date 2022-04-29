@@ -104,13 +104,8 @@
   "typeValidation": {
     "version": "0.60.1000",
     "broken": {
-      "0.58.2002": {
-        "ClassDeclaration_MockFluidDataStoreContext": {
-          "backCompat": false
-        },
-        "ClassDeclaration_MockFluidDataStoreRuntime": {
-          "forwardCompat": false
-        }
+      "ClassDeclaration_MockFluidDataStoreContext": {
+        "backCompat": false
       }
     }
   }

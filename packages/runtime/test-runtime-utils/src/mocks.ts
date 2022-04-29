@@ -555,7 +555,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public async applyStashedOp(content: any) {
         return;
     }
-    public rollback(message: any, localOpMetadata: unknown): void {
+    public rollback?(message: any, localOpMetadata: unknown): void {
         return;
     }
 }
