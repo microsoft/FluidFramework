@@ -24,7 +24,7 @@ export function getFullTypeName(typeData: TypeData){
 }
 
 export function hasDocTag(data: TypeData, tagName: "deprecated" | "internal"){
-    if(Node.isJSDocableNode(data.node)) {
+    if(Node.isJSDocable(data.node)) {
         for(const doc of data.node.getJsDocs()){
             for(const tag of doc.getTags()){
                 if(tag.getTagName() === tagName){
@@ -47,11 +47,11 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
         this will prefix foo and generate two type data:
         foo.first and foo.second
     */
-    if (Node.isNamespaceDeclaration(node)){
+    if (Node.isNamespaceExport(node)){
         const typeData: TypeData[]=[];
-        for(const s of node.getStatements()){
+        for(const s of node.getChildren()){
             // only get type data for nodes that are exported from the namespace
-            if(Node.isExportableNode(s) && s.isExported()){
+            if(Node.isExportable(s) && s.isExported()){
                 typeData.push(...getNodeTypeData(s, node.getName()));
             }
         }

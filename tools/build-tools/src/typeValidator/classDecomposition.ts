@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ClassDeclaration, DiagnosticCategory, Node, Project, Scope, TypeChecker } from "ts-morph";
+import { ClassDeclaration, DiagnosticCategory, Node, Project, Scope, ts, TypeChecker } from "ts-morph";
 import {
     getConstructorReplacements,
     getGetterReplacement,
@@ -92,10 +92,21 @@ export class ClassValidator implements IValidator {
 
         for (const member of node.getMembers()) {
             // Pass over Private properties because they don't affect the public API
-            const modifierList = member.getModifiers().map((val) => val.getText());
-            if (modifierList.indexOf(Scope.Private) != -1) {
+            const modifierFlags = member.getCombinedModifierFlags() ;
+            if (modifierFlags && ts.ModifierFlags.Private) {
                 continue;
             }
+
+            let propNamePrefix = "";
+            if (modifierFlags && ts.ModifierFlags.Protected) {
+                propNamePrefix += `__${Scope.Protected}__`;
+            }
+            if (modifierFlags && ts.ModifierFlags.Static) {
+                propNamePrefix += "__static__";
+            }
+
+            const modifiers = ts.createModifiersFromModifierFlags(
+                modifierFlags && ~(ts.ModifierFlags.Protected | ts.ModifierFlags.Static | ts.ModifierFlags.Async))?? [].join(' ');
 
             if (Node.isMethodDeclaration(member)) {
                 const replacement = getMethodReplacement(
