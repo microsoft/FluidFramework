@@ -418,11 +418,16 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     // In order to decrease the number of times we have to execute a snapshot refresh,
                                     // if this is the summarizer and we have a cache entry but it is past the defaultSummarizerCacheExpiryTimeout,
                                     // force the network retrieval instead as there might be a more recent snapshot available.
-                                    if (this.hostPolicy.summarizerClient &&
-                                        age > defaultSummarizerCacheExpiryTimeout) {
-                                        // eslint-disable-next-line @typescript-eslint/dot-notation
-                                        props["cacheSummarizerExpired"] = true;
-                                        return undefined;
+                                    // See: https://github.com/microsoft/FluidFramework/issues/8995 for additional information.
+                                    if (this.hostPolicy.summarizerClient) {
+                                        if (age > defaultSummarizerCacheExpiryTimeout) {
+                                            // eslint-disable-next-line @typescript-eslint/dot-notation
+                                            props["cacheSummarizerExpired"] = true;
+                                            return undefined;
+                                        } else {
+                                            // eslint-disable-next-line @typescript-eslint/dot-notation
+                                            props["cacheSummarizerExpired"] = false;
+                                        }
                                     }
 
                                     // Record the cache age
