@@ -5,7 +5,6 @@
 
 /* eslint-disable no-bitwise */
 
-import { v5 } from 'uuid';
 import Random from 'random-js';
 import { expect } from 'chai';
 import { Serializable } from '@fluidframework/datastore-definitions';
@@ -28,13 +27,13 @@ import type {
 } from '../../id-compressor';
 import {
 	Generator,
-	chainIterables,
 	createWeightedGenerator,
+	interleave,
 	performFuzzActions as performFuzzActionsBase,
 	repeat,
 	SaveInfo,
 	take,
-} from '../../stochastic-test-utilities';
+} from '../stochastic-test-utilities';
 
 /** Identifies a compressor in a network */
 export enum Client {
@@ -596,7 +595,7 @@ interface GenerateUnifyingIds {
 	type: 'generateUnifyingIds';
 	clientA: Client;
 	clientB: Client;
-    uuid: string;
+	uuid: string;
 }
 
 // Represents intent to go offline then resume.
@@ -681,23 +680,17 @@ export function makeOpGenerator(options: OperationGenerationConfig): Generator<O
 		return { type: 'reconnect', client: rand.pick(activeClients) };
 	}
 
-	const stochasticGenerator = createWeightedGenerator<Operation, FuzzTestState>([
-		[changeCapacityGenerator, 1],
-		[allocateIdsGenerator, 8],
-		[deliverOperationsGenerator, 4],
-		[generateUnifyingIdsGenerator, 1],
-		[reconnectGenerator, 1],
-	]);
-
-	let generatorIndex = 0;
-	return chainIterables(() => {
-		generatorIndex += 1;
-		if (generatorIndex % 2 === 1) {
-			return take(validateInterval, stochasticGenerator);
-		} else {
-			return take(1, repeat({ type: 'validate' }));
-		}
-	});
+	return interleave(
+		createWeightedGenerator<Operation, FuzzTestState>([
+			[changeCapacityGenerator, 1],
+			[allocateIdsGenerator, 8],
+			[deliverOperationsGenerator, 4],
+			[generateUnifyingIdsGenerator, 1],
+			[reconnectGenerator, 1],
+		]),
+		take(1, repeat({ type: 'validate' })),
+		validateInterval
+	);
 }
 
 /**
@@ -721,7 +714,7 @@ export function performFuzzActions(
 	const rand = new Random(Random.engines.mt19937().seed(seed));
 	const selectableClients: Client[] = network.getTargetCompressors(MetaClient.All).map(([client]) => client);
 
-    const initialState: FuzzTestState = {
+	const initialState: FuzzTestState = {
 		rand,
 		network,
 		activeClients: selectableClients.filter((c) => c !== observerClient),

@@ -13,6 +13,13 @@ import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identi
 import { fail } from '../../Common';
 import { rangeFromStableRange } from '../../TreeViewUtilities';
 import {
+	AcceptanceCondition,
+	AsyncGenerator,
+	AsyncWeights,
+	createWeightedAsyncGenerator,
+	done,
+} from '../stochastic-test-utilities';
+import {
 	EditGenerationConfig,
 	FuzzChange,
 	FuzzDelete,
@@ -26,13 +33,6 @@ import {
 	TreeContext,
 	TreeLeave,
 } from './Types';
-import {
-	AcceptanceCondition,
-	AsyncGenerator,
-	AsyncWeights,
-	createWeightedAsyncGenerator,
-	done,
-} from '../../stochastic-test-utilities';
 
 const defaultJoinConfig: Required<JoinGenerationConfig> = {
 	maximumActiveCollaborators: 10,
@@ -102,7 +102,10 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => poolRand.uuid4() as TraitLabel);
 	const traitLabelGenerator = ({ rand }: FuzzTestState) => rand.pick(traitLabelPool);
 
-	const definitionPool = Array.from({ length: insertConfig.definitionPoolSize }, () => poolRand.uuid4() as Definition);
+	const definitionPool = Array.from(
+		{ length: insertConfig.definitionPoolSize },
+		() => poolRand.uuid4() as Definition
+	);
 	const definitionGenerator = ({ rand }: FuzzTestState) => rand.pick(definitionPool);
 	type EditState = FuzzTestState & TreeContext;
 

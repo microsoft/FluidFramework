@@ -44,7 +44,7 @@ import {
 	makeOpGenerator,
 } from './utilities/IdCompressorTestUtilities';
 import { expectDefined } from './utilities/TestCommon';
-import { take } from '../stochastic-test-utilities';
+import { take } from './stochastic-test-utilities';
 
 describe('IdCompressor', () => {
 	it('detects invalid cluster sizes', () => {
@@ -964,11 +964,11 @@ describe('IdCompressor', () => {
 			});
 		});
 
-        itNetwork('produces consistent IDs with large fuzz input', (network) => {
-            const generator = take(1000, makeOpGenerator({ includeOverrides: true }));
-            performFuzzActions(generator, network, 1984, undefined, true, (network) => network.assertNetworkState());
-            network.deliverOperations(DestinationClient.All);
-        });
+		itNetwork('produces consistent IDs with large fuzz input', (network) => {
+			const generator = take(1000, makeOpGenerator({ includeOverrides: true }));
+			performFuzzActions(generator, network, 1984, undefined, true, (network) => network.assertNetworkState());
+			network.deliverOperations(DestinationClient.All);
+		});
 
 		itNetwork('can set the cluster size via constructor', 2, (network) => {
 			const compressor = network.getCompressor(Client.Client1);

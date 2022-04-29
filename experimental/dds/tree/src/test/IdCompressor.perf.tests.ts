@@ -31,7 +31,7 @@ import {
 	sessionIds,
 	TestIdData,
 } from './utilities/IdCompressorTestUtilities';
-import { take } from '../stochastic-test-utilities';
+import { take } from './stochastic-test-utilities';
 
 describe('IdCompressor Perf', () => {
 	const type = BenchmarkType.Measurement;
@@ -57,14 +57,11 @@ describe('IdCompressor Perf', () => {
 		includeOverrides: boolean,
 		client: Client
 	): [IdCompressor, readonly TestIdData[]] {
-        const maxClusterSize = 25;
-		const generator = take(
-			1000,
-			makeOpGenerator({ includeOverrides, validateInterval: 2000, maxClusterSize })
-		);
-        if (network.initialClusterSize > maxClusterSize) {
-            network.enqueueCapacityChange(maxClusterSize);
-        }
+		const maxClusterSize = 25;
+		const generator = take(1000, makeOpGenerator({ includeOverrides, validateInterval: 2000, maxClusterSize }));
+		if (network.initialClusterSize > maxClusterSize) {
+			network.enqueueCapacityChange(maxClusterSize);
+		}
 		performFuzzActions(generator, network, Math.E, client, allowLocal ? false : true);
 		return [network.getCompressorUnsafe(client), network.getIdLog(client)];
 	}

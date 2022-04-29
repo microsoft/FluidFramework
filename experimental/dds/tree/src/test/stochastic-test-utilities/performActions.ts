@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import Random from 'random-js';
-import { AsyncGenerator, AsyncReducer, done, Generator, Reducer, SaveInfo } from './types';
 import { promises as fs, writeFileSync } from 'fs';
+import Random from 'random-js';
 import { assert } from '@fluidframework/common-utils';
+import { AsyncGenerator, AsyncReducer, done, Generator, Reducer, SaveInfo } from './types';
 
 /**
  * Performs random actions on a set of clients.
@@ -95,7 +95,7 @@ export async function performFuzzActionsAsync<
 		} catch (err) {
 			console.log(`Error encountered on operation number ${operations.length}`);
 			if (saveInfo !== undefined && saveInfo.saveOnFailure) {
-				await fs.writeFile(saveInfo.filepath, JSON.stringify(operations));
+				await fs.writeFile(saveInfo.filepath, JSON.stringify(operations, undefined, 4));
 			}
 			throw err;
 		}
@@ -182,7 +182,7 @@ export function performFuzzActions<TOperation extends { type: string | number },
 		} catch (err) {
 			console.log(`Error encountered on operation number ${operations.length}`);
 			if (saveInfo !== undefined && saveInfo.saveOnFailure) {
-				writeFileSync(saveInfo.filepath, JSON.stringify(operations));
+				writeFileSync(saveInfo.filepath, JSON.stringify(operations, undefined, 4));
 			}
 			throw err;
 		}

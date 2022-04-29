@@ -10,7 +10,7 @@ import { SharedTree } from '../../SharedTree';
 import { WriteFormat } from '../../persisted-types';
 import { performFuzzActions } from '../fuzz/SharedTreeFuzzTests';
 import { makeOpGenerator } from '../fuzz/Generators';
-import { takeAsync } from '../../stochastic-test-utilities';
+import { takeAsync } from '../stochastic-test-utilities';
 import { expectAssert } from '../Summary.tests';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import { setUpLocalServerTestSharedTree, setUpTestSharedTree, testDocumentsPathBase } from './TestUtilities';

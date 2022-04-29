@@ -12,7 +12,7 @@ import type { Build, Detach, Insert, SetValue } from '../../ChangeTypes';
 import type { TreeView } from '../../TreeView';
 import type { NodeId } from '../../Identifiers';
 import type { NodeIdGenerator } from '../../NodeIdUtilities';
-import type { BaseFuzzTestState } from '../../stochastic-test-utilities';
+import type { BaseFuzzTestState } from '../stochastic-test-utilities';
 
 export interface FuzzTestState extends BaseFuzzTestState {
 	testObjectProvider?: TestObjectProvider;

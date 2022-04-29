@@ -93,19 +93,48 @@ export function chain<T, TState>(...generators: Generator<T, TState>[]): Generat
  * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
  */
 export function chainIterables<T, TState>(generators: Generator<Generator<T, TState>, void>): Generator<T, TState> {
-    let currentGenerator = generators();
+	let currentGenerator = generators();
 	return (state) => {
-        while (currentGenerator !== done) {
-            const result = currentGenerator(state);
-            if (result !== done) {
-                return result;
-            }
+		while (currentGenerator !== done) {
+			const result = currentGenerator(state);
+			if (result !== done) {
+				return result;
+			}
 
-            currentGenerator = generators();
-        }
+			currentGenerator = generators();
+		}
 
-        return done;
-    };
+		return done;
+	};
+}
+
+/**
+ * Interleaves outputs from `generator1` and `generator2`.
+ * By default outputs are taken one at a time, but can be controlled with `numOps1` and `numOps2`.
+ * This is useful in stochastic tests for producing a certain operation (e.g. "validate" or "synchronize") at a defined interval.
+ * @example
+ * ```typescript
+ * // Assume gen1 produces 1, 2, 3, ... and gen2 produces 'a', 'b', 'c', ...
+ * interleave(gen1, gen2) // 1, a, 2, b, 3, c, ...
+ * interleave(gen1, gen2, 2) // 1, 2, a, 3, 4, b, 5, 6, c, ...
+ * interleave(gen1, gen2, 2, 3) // 1, 2, a, b, c, 3, 4, d, e, f, ...
+ * ```
+ */
+export function interleave<T, TState>(
+	generator1: Generator<T, TState>,
+	generator2: Generator<T, TState>,
+	numOps1 = 1,
+	numOps2 = 1
+): Generator<T, TState> {
+	let generatorIndex = 0;
+	return chainIterables(() => {
+		generatorIndex += 1;
+		if (generatorIndex % 2 === 1) {
+			return take(numOps1, generator1);
+		} else {
+			return take(numOps2, generator2);
+		}
+	});
 }
 
 /**
@@ -201,20 +230,49 @@ export function chainAsync<T, TState>(...generators: AsyncGenerator<T, TState>[]
 export function chainAsyncIterables<T, TState>(
 	generators: AsyncGenerator<AsyncGenerator<T, TState>, void>
 ): AsyncGenerator<T, TState> {
-    let currentGeneratorP = generators();
+	let currentGeneratorP = generators();
 	return async (state) => {
-        const currentGenerator = await currentGeneratorP;
-        while (currentGenerator !== done) {
-            const result = await currentGenerator(state);
-            if (result !== done) {
-                return result;
-            }
+		const currentGenerator = await currentGeneratorP;
+		while (currentGenerator !== done) {
+			const result = await currentGenerator(state);
+			if (result !== done) {
+				return result;
+			}
 
-            currentGeneratorP = generators();
-        }
+			currentGeneratorP = generators();
+		}
 
-        return done;
-    };
+		return done;
+	};
+}
+
+/**
+ * Interleaves outputs from `generator1` and `generator2`.
+ * By default outputs are taken one at a time, but can be controlled with `numOps1` and `numOps2`.
+ * This is useful in stochastic tests for producing a certain operation (e.g. "validate" or "synchronize") at a defined interval.
+ * @example
+ * ```typescript
+ * // Assume gen1 produces 1, 2, 3, ... and gen2 produces 'a', 'b', 'c', ...
+ * interleave(gen1, gen2) // 1, a, 2, b, 3, c, ...
+ * interleave(gen1, gen2, 2) // 1, 2, a, 3, 4, b, 5, 6, c, ...
+ * interleave(gen1, gen2, 2, 3) // 1, 2, a, b, c, 3, 4, d, e, f, ...
+ * ```
+ */
+export function interleaveAsync<T, TState>(
+	generator1: AsyncGenerator<T, TState>,
+	generator2: AsyncGenerator<T, TState>,
+	numOps1 = 1,
+	numOps2 = 1
+): AsyncGenerator<T, TState> {
+	let generatorIndex = 0;
+	return chainAsyncIterables(async () => {
+		generatorIndex += 1;
+		if (generatorIndex % 2 === 1) {
+			return takeAsync(numOps1, generator1);
+		} else {
+			return takeAsync(numOps2, generator2);
+		}
+	});
 }
 
 /**

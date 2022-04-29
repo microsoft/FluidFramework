@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { promises as fs, existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import Random from 'random-js';
 import { expect } from 'chai';
@@ -11,14 +11,14 @@ import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilit
 import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { FuzzTestState, EditGenerationConfig, Operation } from './Types';
-import { makeOpGenerator } from './Generators';
 import {
 	AsyncGenerator,
 	chainAsync as chain,
 	takeAsync as take,
 	performFuzzActionsAsync as performFuzzActionsBase,
-} from '../../stochastic-test-utilities';
+} from '../stochastic-test-utilities';
+import { FuzzTestState, EditGenerationConfig, Operation } from './Types';
+import { makeOpGenerator } from './Generators';
 
 const directory = join(testDocumentsPathBase, 'fuzz-tests');
 
