@@ -90,7 +90,6 @@ api-report/shared-summary-block.api.md                                    @micro
 api-report/synthesize.api.md                                              @microsoft/fluid-cr-runtime
 api-report/task-manager.api.md                                            @microsoft/fluid-cr-dds
 api-report/telemetry-utils.api.md                                         @microsoft/fluid-cr-telemetry
-api-report/test-client-utils.api.md                                       @microsoft/fluid-cr-test
 api-report/test-driver-definitions.api.md                                 @microsoft/fluid-cr-drivers
 api-report/test-drivers.api.md                                            @microsoft/fluid-cr-drivers
 api-report/test-runtime-utils.api.md                                      @microsoft/fluid-cr-runtime
