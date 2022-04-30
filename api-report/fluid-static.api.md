@@ -35,7 +35,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
     constructor(schema: ContainerSchema);
     // (undocumented)
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
-    }
+}
 
 // @public
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
@@ -51,7 +51,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     get disposed(): boolean;
     get initialObjects(): Record<string, IFluidLoadable>;
     get isDirty(): boolean;
-    }
+}
 
 // @public
 export interface IConnection {
@@ -63,12 +63,12 @@ export interface IConnection {
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
     readonly attachState: AttachState;
-    connect?(): void;
+    connect(): void;
     // @deprecated
     readonly connected: boolean;
     readonly connectionState: ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-    disconnect?(): void;
+    disconnect(): void;
     dispose(): void;
     readonly disposed: boolean;
     readonly initialObjects: LoadableObjectRecord;
@@ -125,7 +125,7 @@ export class RootDataObject extends DataObject<{
     protected initializingFirstTime(props: RootDataObjectProps): Promise<void>;
     // (undocumented)
     get initialObjects(): LoadableObjectRecord;
-    }
+}
 
 // @public (undocumented)
 export interface RootDataObjectProps {
@@ -153,7 +153,6 @@ export abstract class ServiceAudience<M extends IMember = IMember> extends Typed
 export type SharedObjectClass<T extends IFluidLoadable> = {
     readonly getFactory: () => IChannelFactory;
 } & LoadableObjectCtor<T>;
-
 
 // (No @packageDocumentation comment for this package)
 

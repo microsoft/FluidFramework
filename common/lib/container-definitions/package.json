@@ -82,6 +82,7 @@
         "backCompat": false
       },
       "InterfaceDeclaration_IContainer": {
+        "forwardCompat": false,
         "backCompat": false
       },
       "InterfaceDeclaration_IDeltaManager": {

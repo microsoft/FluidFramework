@@ -41,6 +41,8 @@ const testContainerConfig: ITestContainerConfig = {
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
                 ...{
+                    idleTime: 1000,
+                    maxTime: 1000 * 5,
                     initialSummarizerDelayMs: 0,
                     maxOps,
                 },
