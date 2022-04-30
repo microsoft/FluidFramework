@@ -21,6 +21,8 @@
 /experimental/                                                            @microsoft/fluid-cr-framework
 /experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
 /experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
+/experimental/dds/tree-graphql/                                           @microsoft/fluid-cr-tree
+/experimental/dds/xtree/                                                  @microsoft/fluid-cr-tree
 /packages/dds/                                                            @microsoft/fluid-cr-dds
 /packages/drivers/                                                        @microsoft/fluid-cr-drivers
 /packages/drivers/odsp*/                                                  @microsoft/fluid-cr-drivers @microsoft/fluid-cr-odsp
@@ -89,6 +91,7 @@ api-report/test-drivers.api.md                                            @micro
 api-report/test-runtime-utils.api.md                                      @microsoft/fluid-cr-runtime
 api-report/test-utils.api.md                                              @microsoft/fluid-cr-test
 api-report/tool-utils.api.md                                              @microsoft/fluid-cr-tools
+api-report/tree.api.md                                                    @microsoft/fluid-cr-tree
 api-report/undo-redo.api.md                                               @microsoft/fluid-cr-framework
 api-report/view-adapters.api.md                                           @microsoft/fluid-cr-framework
 api-report/view-interfaces.api.md                                         @microsoft/fluid-cr-framework
