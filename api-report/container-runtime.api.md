@@ -134,8 +134,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getSnapshotBlobs(): Promise<void>;
     // (undocumented)
-    get heuristicsDisabled(): boolean;
-    // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
@@ -145,14 +143,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get IFluidRouter(): this;
     // (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
-    // (undocumented)
-    get initialSummarizerDelayMs(): number;
     get isDirty(): boolean;
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // (undocumented)
-    get maxOpsSinceLastSummary(): number;
     // (undocumented)
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     // (undocumented)
@@ -186,8 +180,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitDataStoreSignal(address: string, type: string, content: any): void;
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
-    // (undocumented)
-    get summariesDisabled(): boolean;
     summarize(options: {
         fullTree?: boolean;
         trackState?: boolean;
@@ -198,8 +190,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }): Promise<IRootSummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
-    // (undocumented)
-    get summarizerClientElectionEnabled(): boolean;
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
@@ -580,6 +570,14 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 }
 
 // @public (undocumented)
+export interface ISummaryBaseConfiguration {
+    initialSummarizerDelayMs: number;
+    maxAckWaitTime: number;
+    maxOpsSinceLastSummary: number;
+    summarizerClientElection: boolean;
+}
+
+// @public (undocumented)
 export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 // @public (undocumented)
@@ -589,18 +587,10 @@ export interface ISummaryCollectionOpEvents extends IEvent {
 }
 
 // @public (undocumented)
-export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationeHeuristics;
+export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationHeuristics;
 
 // @public (undocumented)
-export interface ISummaryConfigurationBaseSettings {
-    initialSummarizerDelayMs: number;
-    maxAckWaitTime: number;
-    maxOpsSinceLastSummary: number;
-    summarizerClientElection: boolean;
-}
-
-// @public (undocumented)
-export interface ISummaryConfigurationDisableHeuristics extends ISummaryConfigurationBaseSettings {
+export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
     // (undocumented)
     state: "disableHeuristics";
 }
@@ -612,17 +602,19 @@ export interface ISummaryConfigurationDisableSummarizer {
 }
 
 // @public (undocumented)
-export interface ISummaryConfigurationeHeuristics extends ISummaryConfigurationHeuristicSettings {
+export interface ISummaryConfigurationHeuristics extends ISummaryConfigurationHeuristicsSettings {
     // (undocumented)
     state: "enabled";
 }
 
 // @public (undocumented)
-export interface ISummaryConfigurationHeuristicSettings extends ISummaryConfigurationBaseSettings {
+export interface ISummaryConfigurationHeuristicsSettings extends ISummaryBaseConfiguration {
     idleTime: number;
     maxOps: number;
     maxTime: number;
-    minOpsForAttemptOnClose: number;
+    minOpsForLastSummaryAttempt: number;
+    // (undocumented)
+    state: "enabled";
 }
 
 // @public

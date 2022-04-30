@@ -45,6 +45,7 @@ const testContainerConfig: ITestContainerConfig = {
                     maxOps,
                 },
             },
+            initialSummarizerDelayMs: 0,
         },
     },
 };

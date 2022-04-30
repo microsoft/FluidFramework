@@ -4,7 +4,7 @@
  */
 
 import { Timer } from "@fluidframework/common-utils";
-import { ISummaryConfigurationHeuristicSettings } from "./containerRuntime";
+import { ISummaryConfigurationHeuristics } from "./containerRuntime";
 
 import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummarizeAttempt } from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
@@ -52,17 +52,17 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
  */
 export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     private readonly idleTimer: Timer;
-    private readonly minOpsForAttemptOnClose: number;
+    private readonly minOpsForLastSummaryAttempt: number;
 
     public constructor(
         private readonly heuristicData: ISummarizeHeuristicData,
-        private readonly configuration: ISummaryConfigurationHeuristicSettings,
+        private readonly configuration: ISummaryConfigurationHeuristics,
         private readonly trySummarize: (reason: SummarizeReason) => void,
     ) {
         this.idleTimer = new Timer(
             this.configuration.idleTime,
             () => this.trySummarize("idle"));
-        this.minOpsForAttemptOnClose = this.configuration.minOpsForAttemptOnClose;
+        this.minOpsForLastSummaryAttempt = this.configuration.minOpsForLastSummaryAttempt;
     }
 
     public get opsSinceLastAck(): number {
@@ -85,7 +85,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 
     public shouldRunLastSummary(): boolean {
         const opsSinceLastAck = this.opsSinceLastAck;
-        return (opsSinceLastAck > this.minOpsForAttemptOnClose);
+        return (opsSinceLastAck > this.minOpsForLastSummaryAttempt);
     }
 
     public dispose() {

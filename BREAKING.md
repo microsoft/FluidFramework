@@ -23,6 +23,8 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 - [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
 - [Remove IDeltaManager.close()](#remove-ideltamanagerclose)
+- [Deprecated Fields from ISummaryRuntimeOptions](#Deprecated-fields-from-ISummaryRuntimeOptions)
+- [`ISummarizerOptions` is deprecated](#isummarizerOptions-is-deprecated)
 
 ### Remove IFluidSerializer from core-interfaces
 `IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
@@ -40,6 +42,20 @@ Use IContainer.close() or IContainerContext.closeFn() instead, and pass an error
 ### Require enableOfflineLoad to use IContainer.closeAndGetPendingLocalState()
 Offline load functionality has been placed behind a feature flag as part of [ongoing offline work](https://github.com/microsoft/FluidFramework/pull/9557).
 In order to use `IContainer.closeAndGetPendingLocalState`, pass a set of options to the container runtime including `{ enableOfflineLoad: true }`.
+
+### Deprecated Fields from ISummaryRuntimeOptions
+The following fields have been deprecated from `ISummaryRuntimeOptions` and became properties from `ISummaryConfiguration` interface in order to have the Summarizer Heuristics Settings under the same object. See [#9990](https://github.com/microsoft/FluidFramework/issues/9990):
+
+`ISummaryRuntimeOptions.initialSummarizerDelayMs`
+`ISummaryRuntimeOptions.disableSummaries`
+`ISummaryRuntimeOptions.maxOpsSinceLastSummary`
+`ISummaryRuntimeOptions.summarizerClientElection`
+`ISummaryRuntimeOptions.summarizerOptions`
+
+They will be removed in a future release. See [#9990](https://github.com/microsoft/FluidFramework/issues/9990)
+
+- ### `ISummarizerOptions` is deprecated
+`ISummarizerOptions` interface is deprecated and will be removed in a future release. See [#9990](https://github.com/microsoft/FluidFramework/issues/9990)
 
 # 0.59
 

@@ -334,10 +334,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             const coordinatorCreateP = this.runCoordinatorCreateFn(this.runtime);
 
             coordinatorCreateP.then((runCoordinator) => {
-                const newConfig = {
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                const newConfig: ISummaryConfiguration = {
                     ...this.configurationGetter(),
-                };
-                newConfig.state = "disableHeuristics";
+                    state: "disableHeuristics",
+                } as ISummaryConfiguration;
+
                 // Successully created the cancellation token. Start the summarizer.
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const startP = this.start(this.runtime.clientId!, runCoordinator, newConfig);
