@@ -71,7 +71,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     private readonly logger: ITelemetryLogger;
     private runningSummarizer?: RunningSummarizer;
-    private opListener?: (op: ISequencedDocumentMessage) => void;
     private _disposed: boolean = false;
     private starting: boolean = false;
 
@@ -264,6 +263,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.summaryCollection,
             runCoordinator /* cancellationToken */,
             (reason) => runCoordinator.stop(reason), /* stopSummarizerCallback */
+            this.runtime,
             options,
         );
         this.runningSummarizer = runningSummarizer;
@@ -274,10 +274,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.handleSummaryAcks().catch((error) => {
             this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
         });
-
-        // Listen for ops
-        this.opListener = (op: ISequencedDocumentMessage) => runningSummarizer.handleOp(op);
-        this.runtime.deltaManager.on("op", this.opListener);
 
         return runningSummarizer;
     }
@@ -296,9 +292,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         if (this.runningSummarizer) {
             this.runningSummarizer.dispose();
             this.runningSummarizer = undefined;
-        }
-        if (this.opListener) {
-            this.runtime.deltaManager.off("op", this.opListener);
         }
     }
 
