@@ -256,7 +256,7 @@ export type ISummaryConfiguration =
 
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
-    // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
+
     idleTime: 5000 * 3,
 
     maxTime: 5000 * 12,
