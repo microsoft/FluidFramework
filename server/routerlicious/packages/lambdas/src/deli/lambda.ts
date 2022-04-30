@@ -1515,7 +1515,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * Checkpoints the current state once the pending kafka messages are produced
      */
     private checkpoint(reason: DeliCheckpointReason) {
-        Lumberjack.info(`Deli is checkpointing.`,
+        Lumberjack.info(`Deli is checkpointing: ${reason}.`,
                 getLumberBaseProperties(this.documentId, this.tenantId));
         this.clearCheckpointIdleTimer();
 
