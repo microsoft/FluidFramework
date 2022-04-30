@@ -213,9 +213,8 @@ export interface ISummaryBaseConfiguration {
     maxOpsSinceLastSummary: number;
 }
 
-export interface ISummaryConfigurationHeuristicsSettings extends ISummaryBaseConfiguration {
+export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
     state: "enabled";
-
     /**
      * Defines the maximum allowed time in between summarizations.
      */
@@ -243,10 +242,6 @@ export interface ISummaryConfigurationDisableSummarizer {
 
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
     state: "disableHeuristics";
-}
-
-export interface ISummaryConfigurationHeuristics extends ISummaryConfigurationHeuristicsSettings {
-    state: "enabled";
 }
 
 export type ISummaryConfiguration =

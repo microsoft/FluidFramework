@@ -10,7 +10,6 @@ export {
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,
     ISummaryBaseConfiguration,
-    ISummaryConfigurationHeuristicsSettings,
     ISummaryConfigurationHeuristics,
     ISummaryConfigurationDisableSummarizer,
     ISummaryConfigurationDisableHeuristics,

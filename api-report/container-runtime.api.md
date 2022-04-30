@@ -602,13 +602,7 @@ export interface ISummaryConfigurationDisableSummarizer {
 }
 
 // @public (undocumented)
-export interface ISummaryConfigurationHeuristics extends ISummaryConfigurationHeuristicsSettings {
-    // (undocumented)
-    state: "enabled";
-}
-
-// @public (undocumented)
-export interface ISummaryConfigurationHeuristicsSettings extends ISummaryBaseConfiguration {
+export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
     idleTime: number;
     maxOps: number;
     maxTime: number;
