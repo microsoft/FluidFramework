@@ -1485,6 +1485,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      */
     private getCheckpointReason(): DeliCheckpointReason | undefined {
         const checkpointHeuristics = this.serviceConfiguration.deli.checkpointHeuristics;
+        Lumberjack.info(`checkpointHeuristics: ${JSON.stringify(checkpointHeuristics)}`,
+        getLumberBaseProperties(this.documentId, this.tenantId));
         if (!checkpointHeuristics.enable) {
             // always checkpoint since heuristics are disabled
             return DeliCheckpointReason.EveryMessage;
