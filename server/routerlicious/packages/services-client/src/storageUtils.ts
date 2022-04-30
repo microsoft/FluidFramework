@@ -140,7 +140,7 @@ export function convertSummaryTreeToWholeSummaryTree(
  * Build a tree heirarchy from a flat tree.
  *
  * @param flatTree - a flat tree
- * @param options - conversion options
+ * @param treePrefixToRemove - tree prefix to strip
  * @returns the heirarchical tree
  */
  function buildHierarchy(
@@ -181,7 +181,7 @@ export function convertSummaryTreeToWholeSummaryTree(
  * Converts existing IWholeFlatSummary to snapshot tree, blob array, and sequence number.
  *
  * @param flatSummary - flat summary
- * @param options - conversion options
+ * @param treePrefixToRemove - tree prefix to strip
  * @returns snapshot tree, blob array, and sequence number
  */
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
