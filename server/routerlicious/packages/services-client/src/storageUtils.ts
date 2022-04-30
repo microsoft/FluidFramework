@@ -181,7 +181,7 @@ export function convertSummaryTreeToWholeSummaryTree(
  * Converts existing IWholeFlatSummary to snapshot tree, blob array, and sequence number.
  *
  * @param flatSummary - flat summary
- * @param treePrefixToRemove - tree prefix to strip
+ * @param treePrefixToRemove - tree prefix to strip. By default we are stripping ".app" prefix
  * @returns snapshot tree, blob array, and sequence number
  */
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
