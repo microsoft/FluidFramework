@@ -38,7 +38,7 @@ spec:
         - name: DEBUG
           value: "fluid:*"
         - name: NODE_ENV
-          value: production
+          value: "production"
         - name: IS_FLUID_SERVER
           value: "true"
         volumeMounts:
