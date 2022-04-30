@@ -10,6 +10,7 @@ import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
+    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
@@ -233,13 +234,32 @@ export class RunningSummarizer implements IDisposable {
         }
 
         // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
-        if (this.readyToStartSummarizing && !this.tryRunEnqueuedSummary() && !this.heuristicRunnerMicroTaskExists) {
+        if (this.readyToStartSummarizing
+            && this.opCanTriggerSummary(op)
+            && !this.tryRunEnqueuedSummary()
+            && !this.heuristicRunnerMicroTaskExists) {
             this.heuristicRunnerMicroTaskExists = true;
             Promise.resolve().then(() => {
                 this.heuristicRunner?.run();
             }).finally(() => {
                 this.heuristicRunnerMicroTaskExists = false;
             });
+        }
+    }
+
+    /**
+     * Can the given op trigger a summary?
+     * # Currently only prevents summaries for Symmarize and SummaryAck ops
+     * @param op - op to check
+     * @returns true if this type of op can trigger a summary
+     */
+    private opCanTriggerSummary(op: ISequencedDocumentMessage): boolean {
+        switch (op.type) {
+            case MessageType.Summarize:
+            case MessageType.SummaryAck:
+                return false;
+            default:
+                return true;
         }
     }
 
