@@ -6,6 +6,7 @@
 import type { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     assert,
+    IsoBuffer,
     stringToBuffer,
     Uint8ArrayToString,
 } from "@fluidframework/common-utils";
@@ -14,6 +15,9 @@ import {
     ISummaryContext,
     IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
+import {
+    SummaryTreeAssembler,
+ } from "@fluidframework/driver-utils";
 import {
     ICreateBlobResponse,
     ISnapshotTree,
@@ -147,7 +151,23 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     }
 
     public async downloadSummary(summaryHandle: ISummaryHandle): Promise<ISummaryTree> {
-        throw new Error("NOT IMPLEMENTED!");
+        const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "getWholeFlatSummary",
+                treeId: summaryHandle.handle,
+            },
+            async (event) => {
+                const response = await this.manager.getSummary(summaryHandle.handle);
+                event.end({
+                    size: response.trees[0]?.entries.length,
+                });
+                return response;
+            },
+        );
+
+        const {blobs, snapshotTree} = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
+        return this.convertSnapshotAndBlobsToSummaryTree(snapshotTree, blobs);
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
@@ -232,5 +252,25 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             blobCachePutPs.push(this.blobCache.put(id, value));
         });
         await Promise.all(blobCachePutPs);
+    }
+
+    private convertSnapshotAndBlobsToSummaryTree(
+        snapshot: ISnapshotTree,
+        blobs: Map<string, ArrayBuffer>,
+    ): ISummaryTree {
+        const builder = new SummaryTreeAssembler();
+        for (const [path, id] of Object.entries(snapshot.blobs)) {
+            const blob = blobs.get(id);
+            assert(blob !== undefined, "Cannot find blob for a given id");
+            builder.addBlob(path, IsoBuffer.from(blob).toString("utf-8"));
+        }
+        for (const [key, tree] of Object.entries(snapshot.trees)) {
+            const subtree = this.convertSnapshotAndBlobsToSummaryTree(tree, blobs);
+            builder.addTree(key, subtree);
+        }
+        return {
+            ...builder.summary,
+            unreferenced: snapshot.unreferenced,
+        };
     }
 }

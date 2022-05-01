@@ -37,6 +37,7 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
+import { SummaryType } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
 export class AuthorizationError extends LoggingError implements IAuthorizationError, IFluidErrorBase {
@@ -209,7 +210,7 @@ export class InsecureUrlResolver implements IUrlResolver {
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
-    }
+}
 
 // @public
 export interface IProgress {
@@ -237,7 +238,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "none:";
-    }
+}
 
 // @public (undocumented)
 export class MultiUrlResolver implements IUrlResolver {
@@ -247,7 +248,7 @@ export class MultiUrlResolver implements IUrlResolver {
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
-    }
+}
 
 // @public (undocumented)
 export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
@@ -288,7 +289,7 @@ export class ParallelRequests<T> {
     get canceled(): boolean;
     // (undocumented)
     run(concurrency: number): Promise<void>;
-    }
+}
 
 // @public (undocumented)
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
@@ -374,6 +375,15 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
 
 // @public
+export class SummaryTreeAssembler {
+    addAttachment(id: string): void;
+    addBlob(key: string, content: string | Uint8Array): void;
+    addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
+    addTree(key: string, summary: ISummaryTree): void;
+    get summary(): ISummaryTree;
+}
+
+// @public
 export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
     constructor(message: string, retryAfterSeconds: number, props: DriverErrorTelemetryProps);
     // (undocumented)
@@ -386,7 +396,6 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
 
 // @public
 export function waitForConnectedState(minDelay: number): Promise<void>;
-
 
 // (No @packageDocumentation comment for this package)
 
