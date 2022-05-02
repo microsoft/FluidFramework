@@ -4,6 +4,8 @@
 
 ```ts
 
+/// <reference types="node" />
+
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
@@ -129,12 +131,12 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
-    connect?(): void;
+    connect(): void;
     // @deprecated
     readonly connected: boolean;
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    disconnect?(): void;
+    disconnect(): void;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -243,8 +245,6 @@ export interface IDeltaHandlerStrategy {
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
-    // @deprecated (undocumented)
-    close(): void;
     readonly hasCheckpointSequenceNumber: boolean;
     readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
@@ -448,7 +448,7 @@ export type ILoaderOptions = {
     maxClientLeaveWaitTime?: number;
 };
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IPendingLocalState {
     // (undocumented)
     pendingRuntimeState: unknown;
@@ -502,6 +502,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     process(message: ISequencedDocumentMessage, local: boolean, context: any): any;
     processSignal(message: any, local: boolean): any;
     request(request: IRequest): Promise<IResponse>;
@@ -525,6 +526,18 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 
 // @public
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+
+// @public
+export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+    // (undocumented)
+    blobsContents: {
+        [path: string]: ArrayBufferLike;
+    };
+    // (undocumented)
+    trees: {
+        [path: string]: ISnapshotTreeWithBlobContents;
+    };
+}
 
 // @public
 export interface IThrottlingWarning extends IErrorBase {
@@ -562,7 +575,6 @@ export type ReadOnlyInfo = {
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
 };
-
 
 // (No @packageDocumentation comment for this package)
 

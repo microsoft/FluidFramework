@@ -18,7 +18,6 @@ import {
     ISummaryHandle,
     ISummaryTree,
     ITokenClaims,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "./urlResolver";
@@ -125,11 +124,6 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * Retrieves all versions of the document starting at the specified versionId - or null if from the head
      */
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
-
-    /**
-     * Writes to the object with the given ID
-     */
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 
     /**
      * Creates a blob out of the given buffer

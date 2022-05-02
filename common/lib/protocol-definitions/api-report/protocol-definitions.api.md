@@ -358,16 +358,20 @@ export interface IServerError {
 export interface ISignalClient {
     // (undocumented)
     client: IClient;
+    clientConnectionNumber?: number;
     // (undocumented)
     clientId: string;
+    referenceSequenceNumber?: number;
 }
 
 // @public (undocumented)
 export interface ISignalMessage {
+    clientConnectionNumber?: number;
     // (undocumented)
     clientId: string | null;
     // (undocumented)
     content: any;
+    referenceSequenceNumber?: number;
 }
 
 // @public (undocumented)

@@ -16,10 +16,15 @@ There are a few steps you can take to write a good change note and avoid needing
 
 # 1.0
 
+## 1.0 Upcoming changes
+
 ## 1.0 Breaking changes
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 - [Deprecate TelemetryDataTag.PackageData](#Deprecate-TelemetryDataTagPackageData)
+- [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
+- [Remove IDeltaManager.close()](#remove-ideltamanagerclose)
+- [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
 
 ### Remove IFluidSerializer from core-interfaces
 `IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
@@ -30,13 +35,31 @@ There are a few steps you can take to write a good change note and avoid needing
 ### Deprecate TelemetryDataTag.PackageData
 `TelemetryDataTag.PackageData` is deprecated and will be removed in a future release. Use `TelemetryDataTag.CodeArtifact` instead.
 
+### Remove Write Method from IDocumentStorageService
+The `IDocumentStorageService.write(...)` method within the `@fluidframework/driver-definitions` package has been removed. Please remove all usage/implementation of this method if present.
+
+### Remove IDeltaManager.close()
+The method `IDeltaManager.close()` was deprecated in 0.54 and is now removed.
+Use IContainer.close() or IContainerContext.closeFn() instead, and pass an error object if applicable.
+
+### Require enableOfflineLoad to use IContainer.closeAndGetPendingLocalState()
+Offline load functionality has been placed behind a feature flag as part of [ongoing offline work](https://github.com/microsoft/FluidFramework/pull/9557).
+In order to use `IContainer.closeAndGetPendingLocalState`, pass a set of options to the container runtime including `{ enableOfflineLoad: true }`.
+
+### connect() and disconnect() made mandatory on IContainer and IFluidContainer
+The functions `IContainer.connect()`, `IContainer.disconnect()`, `IFluidContainer.connect()`, and `IFluidContainer.disconnect()` have all been changed from optional to mandatory functions.
+
 # 0.59
 
 ## 0.59 Upcoming changes
 - [Remove ICodeLoader interface](#Remove-ICodeLoader-interface)
+- [IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release](#ifluidcontainer-connect-and-ifluidcontainer-disconnect-will-be-made-mandatory-in-future-major-release)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
+
+### IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release
+In major release 1.0, the optional functions `IFluidContainer.connect()` and `IFluidContainer.disconnect()` will be made mandatory functions.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
@@ -48,7 +71,6 @@ ICodeLoader interface was deprecated a while ago and will be removed in the next
 - [Scope is no longer an IFluidObject](#scope-is-no-longer-an-IFluidObject)
 - [IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject](#IFluidHandle-and-requestFluidObject-generics-default-no-longer-includes-IFluidObject)
 - [LazyLoadedDataObjectFactory.create no longer returns an IFluidObject](#LazyLoadedDataObjectFactory.create-no-longer-returns-an-IFluidObject)
-
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.

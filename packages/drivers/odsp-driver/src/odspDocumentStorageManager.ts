@@ -32,7 +32,7 @@ import {
     IVersionedValueWithEpoch,
     ISnapshotCachedEntry,
 } from "./contracts";
-import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
+import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem, SnapshotFormatSupportType } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import {
@@ -221,6 +221,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
         private readonly flushCallback: () => Promise<FlushResult>,
+        private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -578,7 +579,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 storageToken,
                 this.logger,
                 options,
-                this.hostPolicy.fetchBinarySnapshotFormat,
+                this.snapshotFormatFetchType,
                 controller,
                 this.epochTracker,
             );
@@ -604,7 +605,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.hostPolicy.enableRedeemFallback,
             );
             return odspSnapshot;
-        } catch (error) {
+        } catch (error: any) {
             const errorType = error.errorType;
             // If the snapshot size is too big and the host specified the size limitation(specified in hostSnapshotOptions), then don't try to fetch the snapshot again.
             if ((errorType === OdspErrorType.snapshotTooBig && hostSnapshotOptions?.mds !== undefined) && (this.hostPolicy.summarizerClient !== true)) {
@@ -632,12 +633,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
             throw error;
         }
-    }
-
-    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
-        this.checkSnapshotUrl();
-
-        throw new Error("Not supported");
     }
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
