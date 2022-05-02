@@ -55,7 +55,7 @@
     "@fluid-experimental/property-common": "^0.59.3000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/driver-definitions": "^0.46.1000",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/local-driver": "^0.59.3000",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/sequence": "^0.59.3000",

@@ -110,7 +110,7 @@ export abstract class SyncedDataObject<I extends DataObjectTypes = DataObjectTyp
      */
     public setFluidConfig<
         SV extends IViewState,
-        SF extends IFluidState
+        SF extends IFluidState,
     >(key: string, value: ISyncedStateConfig<SV, SF>) {
         this.syncedStateConfig.set(key, value);
     }
