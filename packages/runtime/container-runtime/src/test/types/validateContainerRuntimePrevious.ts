@@ -85,6 +85,7 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -289,7 +290,6 @@ declare function get_old_InterfaceDeclaration_IBaseSummarizeResult():
 declare function use_current_InterfaceDeclaration_IBaseSummarizeResult(
     use: TypeOnly<current.IBaseSummarizeResult>);
 use_current_InterfaceDeclaration_IBaseSummarizeResult(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IBaseSummarizeResult());
 
 /*
@@ -506,7 +506,6 @@ declare function get_old_InterfaceDeclaration_IGarbageCollectionRuntime():
 declare function use_current_InterfaceDeclaration_IGarbageCollectionRuntime(
     use: TypeOnly<current.IGarbageCollectionRuntime>);
 use_current_InterfaceDeclaration_IGarbageCollectionRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGarbageCollectionRuntime());
 
 /*
@@ -555,7 +554,6 @@ declare function get_old_InterfaceDeclaration_IGCStats():
 declare function use_current_InterfaceDeclaration_IGCStats(
     use: TypeOnly<current.IGCStats>);
 use_current_InterfaceDeclaration_IGCStats(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGCStats());
 
 /*
@@ -580,7 +578,6 @@ declare function get_old_InterfaceDeclaration_IGeneratedSummaryStats():
 declare function use_current_InterfaceDeclaration_IGeneratedSummaryStats(
     use: TypeOnly<current.IGeneratedSummaryStats>);
 use_current_InterfaceDeclaration_IGeneratedSummaryStats(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGeneratedSummaryStats());
 
 /*
@@ -605,7 +602,6 @@ declare function get_old_InterfaceDeclaration_IGenerateSummaryTreeResult():
 declare function use_current_InterfaceDeclaration_IGenerateSummaryTreeResult(
     use: TypeOnly<current.IGenerateSummaryTreeResult>);
 use_current_InterfaceDeclaration_IGenerateSummaryTreeResult(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGenerateSummaryTreeResult());
 
 /*
@@ -798,6 +794,7 @@ declare function get_old_InterfaceDeclaration_IProvideSummarizer():
 declare function use_current_InterfaceDeclaration_IProvideSummarizer(
     use: TypeOnly<current.IProvideSummarizer>);
 use_current_InterfaceDeclaration_IProvideSummarizer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideSummarizer());
 
 /*
@@ -822,7 +819,6 @@ declare function get_old_InterfaceDeclaration_IRootSummaryTreeWithStats():
 declare function use_current_InterfaceDeclaration_IRootSummaryTreeWithStats(
     use: TypeOnly<current.IRootSummaryTreeWithStats>);
 use_current_InterfaceDeclaration_IRootSummaryTreeWithStats(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRootSummaryTreeWithStats());
 
 /*
@@ -871,7 +867,6 @@ declare function get_old_InterfaceDeclaration_ISubmitSummaryOpResult():
 declare function use_current_InterfaceDeclaration_ISubmitSummaryOpResult(
     use: TypeOnly<current.ISubmitSummaryOpResult>);
 use_current_InterfaceDeclaration_ISubmitSummaryOpResult(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISubmitSummaryOpResult());
 
 /*
@@ -968,6 +963,7 @@ declare function get_old_InterfaceDeclaration_ISummarizer():
 declare function use_current_InterfaceDeclaration_ISummarizer(
     use: TypeOnly<current.ISummarizer>);
 use_current_InterfaceDeclaration_ISummarizer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizer());
 
 /*
@@ -1304,7 +1300,6 @@ declare function get_old_InterfaceDeclaration_IUploadSummaryResult():
 declare function use_current_InterfaceDeclaration_IUploadSummaryResult(
     use: TypeOnly<current.IUploadSummaryResult>);
 use_current_InterfaceDeclaration_IUploadSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IUploadSummaryResult());
 
 /*
@@ -1473,7 +1468,6 @@ declare function get_old_TypeAliasDeclaration_SubmitSummaryResult():
 declare function use_current_TypeAliasDeclaration_SubmitSummaryResult(
     use: TypeOnly<current.SubmitSummaryResult>);
 use_current_TypeAliasDeclaration_SubmitSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SubmitSummaryResult());
 
 /*
@@ -1498,6 +1492,7 @@ declare function get_old_ClassDeclaration_Summarizer():
 declare function use_current_ClassDeclaration_Summarizer(
     use: TypeOnly<current.Summarizer>);
 use_current_ClassDeclaration_Summarizer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Summarizer());
 
 /*

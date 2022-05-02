@@ -34,7 +34,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-runtime": "^0.60.1000",
     "@fluidframework/datastore": "^0.60.1000",
-    "@fluidframework/driver-definitions": "^0.46.1000",
+    "@fluidframework/driver-definitions": "^0.47.1000-0",
     "@fluidframework/driver-utils": "^0.60.1000",
     "@fluidframework/odsp-doclib-utils": "^0.60.1000",
     "@fluidframework/odsp-driver": "^0.60.1000",

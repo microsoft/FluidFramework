@@ -336,6 +336,7 @@ declare function get_old_InterfaceDeclaration_IContainer():
 declare function use_current_InterfaceDeclaration_IContainer(
     use: TypeOnly<current.IContainer>);
 use_current_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainer());
 
 /*
@@ -348,6 +349,7 @@ declare function get_current_InterfaceDeclaration_IContainer():
 declare function use_old_InterfaceDeclaration_IContainer(
     use: TypeOnly<old.IContainer>);
 use_old_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainer());
 
 /*
@@ -372,6 +374,7 @@ declare function get_current_InterfaceDeclaration_IContainerContext():
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<old.IContainerContext>);
 use_old_InterfaceDeclaration_IContainerContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -492,6 +495,7 @@ declare function get_current_InterfaceDeclaration_IDeltaManager():
 declare function use_old_InterfaceDeclaration_IDeltaManager(
     use: TypeOnly<old.IDeltaManager<any,any>>);
 use_old_InterfaceDeclaration_IDeltaManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltaManager());
 
 /*
@@ -1272,6 +1276,7 @@ declare function get_old_InterfaceDeclaration_IRuntime():
 declare function use_current_InterfaceDeclaration_IRuntime(
     use: TypeOnly<current.IRuntime>);
 use_current_InterfaceDeclaration_IRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRuntime());
 
 /*

@@ -56,7 +56,7 @@ export async function resolveWrapper<T>(
             return result;
         }
         return result;
-    } catch (e) {
+    } catch (e: any) {
         if (e.errorType === DriverErrorType.authorizationError && !forceTokenReauth) {
             // Re-auth
             return resolveWrapper<T>(callback, server, clientConfig, true, forToken);

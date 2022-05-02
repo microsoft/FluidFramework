@@ -61,7 +61,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000",
+    "@fluidframework/container-definitions": "^0.49.1000-63433",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.60.1000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
@@ -76,7 +76,7 @@
     "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@^0.58.0",
     "@fluidframework/mocha-test-setup": "^0.60.1000",
     "@fluidframework/test-runtime-utils": "^0.60.1000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^8.2.2",

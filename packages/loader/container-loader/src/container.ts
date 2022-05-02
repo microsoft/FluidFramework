@@ -25,7 +25,6 @@ import {
     ContainerWarning,
     AttachState,
     IThrottlingWarning,
-    IPendingLocalState,
     ReadOnlyInfo,
     IContainerLoadMode,
     IFluidCodeDetails,
@@ -64,6 +63,7 @@ import {
     IDocumentAttributes,
     IDocumentMessage,
     IProcessMessageResult,
+    IProtocolState,
     IQuorumClients,
     IQuorumProposals,
     ISequencedClient,
@@ -138,6 +138,10 @@ export interface IContainerConfig {
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
+    /**
+     * Serialized state from a previous instance of this container
+     */
+    serializedContainerState?: IPendingContainerState;
 }
 
 export enum ConnectionState {
@@ -224,6 +228,18 @@ const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
+/**
+ * State saved by a container at close time, to be used to load a new instance
+ * of the container to the same state
+ */
+export interface IPendingContainerState {
+    pendingRuntimeState: unknown;
+    url: string;
+    protocol: IProtocolState;
+    term: number;
+    clientId?: string;
+}
+
 const summarizerClientType = "summarizer";
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
@@ -235,7 +251,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async load(
         loader: Loader,
         loadOptions: IContainerLoadOptions,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<Container> {
         const container = new Container(
             loader,
@@ -243,6 +259,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
+                serializedContainerState: pendingLocalState,
             });
 
         return PerformanceEvent.timedExecAsync(
@@ -252,12 +269,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 container._lifecycleState = "loading";
                 const version = loadOptions.version;
 
-                // always load unpaused with pending ops!
-                // It is also default mode in general.
                 const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
-                assert(pendingLocalState === undefined || loadOptions.loadMode === undefined,
-                    0x1e1 /* "pending state requires immediate connection!" */);
-                const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
+                // if we have pendingLocalState, anything we cached is not useful and we shouldn't wait for connection
+                // to return container, so ignore this value and use undefined for opsBeforeReturn
+                const mode: IContainerLoadMode = pendingLocalState
+                    ? { ...(loadOptions.loadMode ?? defaultMode), opsBeforeReturn: undefined }
+                    : loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // pre-0.58 error message: containerClosedWithoutErrorDuringLoad
@@ -615,6 +632,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
             },
             this.mc.logger,
+            config.serializedContainerState?.clientId,
         );
 
         this.on(savedContainerEvent, () => {
@@ -756,9 +774,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
-        const pendingState: IPendingLocalState = {
+        assert(!!this._protocolHandler, "Must have a valid protocol handler instance");
+        const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
+            protocol: this._protocolHandler.getProtocolState(),
+            term: this._protocolHandler.term,
+            clientId: this.clientId,
         };
 
         this.close();
@@ -816,7 +838,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     // starting to attach the container to storage.
                     // Also, this should only be fired in detached container.
                     this._attachState = AttachState.Attaching;
-                    this.context.notifyAttaching();
+                    this.context.notifyAttaching(getSnapshotTreeFromSerializedContainer(summary));
                 }
 
                 // Actually go and create the resolved document
@@ -868,7 +890,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
                     this._attachState = AttachState.Attaching;
-                    this.context.notifyAttaching();
+                    this.context.notifyAttaching(getSnapshotTreeFromSerializedContainer(summary));
 
                     await this.storageService.uploadSummaryWithContext(summary, {
                         referenceSequenceNumber: 0,
@@ -1106,7 +1128,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async load(
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingContainerState,
     ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
@@ -1134,14 +1156,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectToDeltaStream(connectionArgs);
         }
 
-        await this.connectStorageService();
+        if (!pendingLocalState) {
+            await this.connectStorageService();
+        } else {
+            // if we have pendingLocalState we can load without storage; don't wait for connection
+            this.connectStorageService().catch((error) => this.close(error));
+        }
+
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot.
-        const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
-        assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
+        const { snapshot, versionId } = pendingLocalState === undefined
+            ? await this.fetchSnapshotTree(specifiedVersion)
+            : { snapshot: undefined, versionId: undefined };
+        assert(snapshot !== undefined || pendingLocalState !== undefined, 0x237 /* "Snapshot should exist" */);
 
-        const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
+        const attributes: IDocumentAttributes = pendingLocalState === undefined
+            ? await this.getDocumentAttributes(this.storageService, snapshot)
+            : {
+                sequenceNumber: pendingLocalState.protocol.sequenceNumber,
+                minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
+                term: pendingLocalState.term,
+            };
 
         let opsBeforeReturnP: Promise<void> | undefined;
 
@@ -1165,15 +1201,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // ...load in the existing quorum
         // Initialize the protocol handler
-        this._protocolHandler =
-            await this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
+        this._protocolHandler = pendingLocalState === undefined
+            ? await this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot)
+            : await this.initializeProtocolState(
+                attributes,
+                pendingLocalState.protocol.members,
+                pendingLocalState.protocol.proposals,
+                pendingLocalState.protocol.values,
+            );
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
             true, // existing
             codeDetails,
             snapshot,
-            pendingLocalState,
+            pendingLocalState?.pendingRuntimeState,
         );
 
         // Propagate current connection state through the system.
@@ -1392,13 +1434,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         // Track membership changes and update connection state accordingly
-        protocol.quorum.on("addMember", (clientId, details) => {
-            this.connectionStateHandler.receivedAddMemberEvent(clientId);
-        });
-
-        protocol.quorum.on("removeMember", (clientId) => {
-            this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
-        });
+        this.connectionStateHandler.initProtocol(protocol);
 
         protocol.quorum.on("addProposal", (proposal: ISequencedProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
@@ -1625,6 +1661,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
             checkpointSequenceNumber,
+            quorumSize: this._protocolHandler?.quorum.getMembers().size,
             ...this._deltaManager.connectionProps,
         });
 
@@ -1780,7 +1817,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async instantiateContextDetached(
         existing: boolean,
         snapshot?: ISnapshotTree,
-        pendingLocalState?: unknown,
     ) {
         const codeDetails = this.getCodeDetailsFromQuorum();
         if (codeDetails === undefined) {
@@ -1791,7 +1827,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             existing,
             codeDetails,
             snapshot,
-            pendingLocalState,
         );
     }
 

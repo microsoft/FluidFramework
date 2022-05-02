@@ -55,7 +55,7 @@
   "dependencies": {
     "@fluid-experimental/tree": "^0.60.1000",
     "@fluidframework/aqueduct": "^0.60.1000",
-    "@fluidframework/container-definitions": "^0.48.1000",
+    "@fluidframework/container-definitions": "^0.49.1000-63433",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.60.1000",
     "@fluidframework/map": "^0.60.1000",

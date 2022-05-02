@@ -980,7 +980,7 @@ describe("Runtime", () => {
                             eventName: "Running:Summarize_end",
                             summarizeCount: runCount,
                             summarizerSuccessfulAttempts: runCount,
-                            summarizeReason: "maxOps",
+                            reason: "maxOps",
                         },
                     ]), "unexpected log sequence 3");
                 });

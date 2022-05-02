@@ -30,6 +30,7 @@ import { sequencedIdNormalizer } from '../NodeIdUtilities';
 import { expectDefined } from './utilities/TestCommon';
 import { TestFluidSerializer } from './utilities/TestSerializer';
 import {
+	getEditLogInternal,
 	getIdNormalizerFromSharedTree,
 	makeNodeIdContext,
 	setUpLocalServerTestSharedTree,
@@ -421,12 +422,12 @@ async function expectSharedTreesEqual(
 		const roundTrip = <T>(obj: T): T => JSON.parse(JSON.stringify(obj)) as T;
 
 		const editA = roundTrip(
-			convertEditIds(await sharedTreeA.editsInternal.getEditAtIndex(i), (id) =>
+			convertEditIds(await getEditLogInternal(sharedTreeA).getEditAtIndex(i), (id) =>
 				sharedTreeA.convertToStableNodeId(id)
 			)
 		);
 		const editB = roundTrip(
-			convertEditIds(await sharedTreeB.editsInternal.getEditAtIndex(i), (id) =>
+			convertEditIds(await getEditLogInternal(sharedTreeB).getEditAtIndex(i), (id) =>
 				sharedTreeB.convertToStableNodeId(id)
 			)
 		);

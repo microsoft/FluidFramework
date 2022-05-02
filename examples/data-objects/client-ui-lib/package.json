@@ -54,7 +54,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000",
+    "@fluidframework/container-definitions": "^0.49.1000-63433",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.60.1000",
     "@fluidframework/ink": "^0.60.1000",

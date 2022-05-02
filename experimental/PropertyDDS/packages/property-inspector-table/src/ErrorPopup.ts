@@ -54,7 +54,7 @@ export async function ErrorPopup<
     } else {
       return Promise.resolve(result);
     }
-  } catch (err) {
+  } catch (err: any) {
     processError(err);
     if (catchErr) {
       return Promise.resolve();

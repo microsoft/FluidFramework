@@ -26,6 +26,7 @@ export enum TransactionEvent {
 
 /**
  * Events which may be emitted by `Transaction`
+ * @public
  */
 export interface TransactionEvents extends IErrorEvent {
 	(event: TransactionEvent.ViewChange, listener: (before: TreeView, after: TreeView) => void);
@@ -110,8 +111,8 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 			if (this.transaction.changes.length > 0) {
 				const result = this.transaction.close();
 				const edit: Edit<ChangeInternal> = { id: newEditId(), changes: result.changes };
-				if (this.tree.editsInternal instanceof CachingLogViewer) {
-					this.tree.editsInternal.setKnownEditingResult(edit, result);
+				if (this.tree.edits instanceof CachingLogViewer) {
+					this.tree.edits.setKnownEditingResult(edit, result);
 				}
 				this.tree.applyEditInternal(edit);
 			}

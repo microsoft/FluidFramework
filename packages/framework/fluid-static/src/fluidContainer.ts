@@ -129,6 +129,16 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
 
     /**
+     * Attempts to connect the container to the delta stream and process ops
+     */
+    connect(): void;
+
+    /**
+     * Disconnects the container from the delta stream and stops processing ops
+     */
+    disconnect(): void;
+
+    /**
      * Create a new data object or DDS of the specified type.  In order to share the data object or DDS with other
      * collaborators and retrieve it later, store its handle in a collection like a SharedDirectory from your
      * initialObjects.
@@ -211,6 +221,20 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      */
     public async attach(): Promise<string> {
         throw new Error("Cannot attach container. Container is not in detached state");
+    }
+
+    /**
+     * {@inheritDoc IFluidContainer.connect}
+     */
+    public async connect(): Promise<void> {
+        this.container.connect?.();
+    }
+
+    /**
+     * {@inheritDoc IFluidContainer.connect}
+     */
+    public async disconnect(): Promise<void> {
+        this.container.disconnect?.();
     }
 
     /**

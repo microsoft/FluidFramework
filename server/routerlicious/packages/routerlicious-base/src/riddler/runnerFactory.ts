@@ -48,10 +48,9 @@ export class RiddlerResources implements IResources {
 export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
     public async create(config: Provider): Promise<RiddlerResources> {
         // Database connection
-        const mongoUrl = config.get("mongo:operationsDbEndpoint") as string;
-        const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
-        const operationsDbMongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
-        const operationsDbMongoManager = new MongoManager(operationsDbMongoFactory);
+        const factory = await services.getDbFactory(config);
+
+        const operationsDbMongoManager = new MongoManager(factory);
         const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
         const secretManager = new services.SecretManager();
 
@@ -59,9 +58,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
         let globalDbMongoManager;
         const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
         if (globalDbEnabled) {
-            const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
-            const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
-            globalDbMongoManager = new MongoManager(globalDbMongoFactory);
+            globalDbMongoManager = new MongoManager(factory, false, null, true);
         }
 
         const mongoManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
@@ -77,7 +74,8 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
             // or don't want to automatically create (i.e. GitHub)
             if (!tenant.storage.credentials) {
                 try {
-                    await getOrCreateRepository(tenant.storage.url, tenant.storage.owner, tenant.storage.repository);
+                    const storageUrl = config.get("storage:storageUrl");
+                    await getOrCreateRepository(storageUrl, tenant.storage.owner, tenant.storage.repository);
                 } catch (err) {
                     // This is okay to fail since the repos are alreay created in production.
                     winston.error(`Error creating repos`);

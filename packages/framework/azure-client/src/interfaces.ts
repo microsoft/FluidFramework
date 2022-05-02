@@ -31,6 +31,32 @@ export interface AzureClientProps {
 }
 
 /**
+ * Container version metadata.
+ */
+export interface AzureContainerVersion {
+    /**
+     * Version ID
+     */
+    id: string;
+
+    /**
+     * Time when version was generated.
+     * ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
+     */
+    date?: string;
+}
+
+/**
+ * Options for "Get Container Versions" API.
+ */
+export interface AzureGetVersionsOptions {
+    /**
+     * Max number of versions
+     */
+    maxCount: number;
+}
+
+/**
  * Parameters for establishing a connection with the Azure Fluid Relay.
  */
 export interface AzureConnectionConfig {

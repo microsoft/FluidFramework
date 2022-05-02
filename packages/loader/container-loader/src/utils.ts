@@ -11,14 +11,8 @@ import {
     Uint8ArrayToArrayBuffer,
     unreachableCase,
 } from "@fluidframework/common-utils";
-import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-
-// This is used when we rehydrate a container from the snapshot. Here we put the blob contents
-// in separate property: blobContents.
-export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
-    blobsContents: {[path: string]: ArrayBufferLike},
-    trees: {[path: string]: ISnapshotTreeWithBlobContents},
-}
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 
 export interface IParsedUrl {
     id: string;
