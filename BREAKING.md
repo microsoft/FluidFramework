@@ -57,6 +57,7 @@ They will be removed in a future release. See [#9990](https://github.com/microso
 
 - ### `ISummarizerOptions` is deprecated
 `ISummarizerOptions` interface is deprecated and will be removed in a future release. See [#9990](https://github.com/microsoft/FluidFramework/issues/9990)
+Options that control the behavior of a running summarizer will be moved to the `ISummaryConfiguration` interface instead.
 
 ### connect() and disconnect() made mandatory on IContainer and IFluidContainer
 The functions `IContainer.connect()`, `IContainer.disconnect()`, `IFluidContainer.connect()`, and `IFluidContainer.disconnect()` have all been changed from optional to mandatory functions.

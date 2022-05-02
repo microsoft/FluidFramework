@@ -215,7 +215,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * (in the on-demand case).
      * @param onBehalfOf - ID of the client that requested that the summarizer start
      * @param runCoordinator - cancellation token
-     * @param options - options to forward to the RunningSummarizer
+     * @param newConfig - Summary configuration to override the existing config when invoking the RunningSummarizer.
      * @returns - Promise that is fulfilled when the RunningSummarizer is ready
      */
     private async start(

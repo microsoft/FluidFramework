@@ -255,8 +255,8 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     idleTime: 5000 * 3,
 
     maxTime: 5000 * 12,
-    // Summarize if 1000 ops received since last snapshot.
-    maxOps: 1000,
+
+    maxOps: 1000, // Summarize if 1000 ops received since last snapshot.
 
     minOpsForLastSummaryAttempt: 50,
 
@@ -264,7 +264,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
     maxOpsSinceLastSummary: 7000,
 
-    initialSummarizerDelayMs: 5000,
+    initialSummarizerDelayMs: 5000, // 5 secs.
 
     summarizerClientElection: false,
 };
