@@ -38,7 +38,7 @@ export interface ISyncedCounterReducer {
  */
 export interface IFluidSyncedCounterReducer<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
     > extends IFluidReducer<SV, SF, IFluidDataProps> {
     increment: FluidStateUpdateFunction<SV, SF, IFluidDataProps>;
 }
