@@ -46,7 +46,7 @@ const FloatingLabelTextField: React.FunctionComponent<IFloatingLabelTextFieldPro
     <div className={classes.horizontalContainer}>
     <TextField
       onChange={changeHandler}
-      margin='dense'
+      margin="dense"
       className={classNames(classes.floatingFormControl, className)}
       FormHelperTextProps={{
         classes: { error: classes.error },
@@ -60,9 +60,9 @@ const FloatingLabelTextField: React.FunctionComponent<IFloatingLabelTextFieldPro
     <div className={classes.warningIconContainer}>
       <SvgIcon
         style={{ visibility: error ? "visible" : "hidden" }}
-        width='20px'
-        height='20px'
-        svgId='warning-16'
+        width="20px"
+        height="20px"
+        svgId="warning-16"
       />
     </div>
     </div>

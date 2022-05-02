@@ -160,7 +160,7 @@ const styles = (theme: Theme) => createStyles({
  */
 const themedSkeleton = (inSkeleton: JSX.Element) => {
   return (
-    <SkeletonTheme color='#C4C4C4'>
+    <SkeletonTheme color="#C4C4C4">
       {inSkeleton}
     </SkeletonTheme>
   );
@@ -507,9 +507,9 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
                     {({ showModal, hideModal }) => (
                       <Button
                         className={classes.expiryButton}
-                        color='primary'
+                        color="primary"
                         disabled={!modalEnabled}
-                        variant='contained'
+                        variant="contained"
                         onClick={
                           () => {
                             const modalProps = {
@@ -895,7 +895,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         classes={{
           tooltip: classes.tooltip,
         }}
-        placement='left'
+        placement="left"
         title={message}
       >
         {this.renderUneditableCell(classes, rowData)}
