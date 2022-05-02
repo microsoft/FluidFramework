@@ -99,7 +99,7 @@ const defaultEditConfig: Required<EditGenerationConfig> = {
 const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<Operation, FuzzTestState> => {
 	const config = { ...defaultEditConfig, ...passedConfig };
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
-	const poolRand = makeRandom(0)
+	const poolRand = makeRandom(0);
 	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => poolRand.uuid4() as TraitLabel);
 	const traitLabelGenerator = ({ rand }: FuzzTestState) => rand.pick(traitLabelPool);
 
