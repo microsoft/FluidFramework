@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Timer } from "@fluidframework/common-utils";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummarizeAttempt } from "./summarizerTypes";
+import {
+    ISummarizeHeuristicData,
+    ISummarizeHeuristicRunner,
+    ISummarizeAttempt,
+} from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
 /** Simple implementation of class for tracking summarize heuristic data. */
@@ -56,6 +61,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly configuration: ISummaryConfiguration,
         private readonly trySummarize: (reason: SummarizeReason) => void,
+        private readonly logger: ITelemetryLogger,
         private readonly minOpsForAttemptOnClose = 50,
     ) {
         this.idleTimer = new Timer(
@@ -83,7 +89,15 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 
     public shouldRunLastSummary(): boolean {
         const opsSinceLastAck = this.opsSinceLastAck;
-        return (opsSinceLastAck > this.minOpsForAttemptOnClose);
+        const minOpsForAttemptOnClose = this.minOpsForAttemptOnClose;
+
+        this.logger.sendTelemetryEvent({
+            eventName: "ShouldRunLastSummary",
+            opsSinceLastAck,
+            minOpsForAttemptOnClose,
+        });
+
+        return opsSinceLastAck >= minOpsForAttemptOnClose;
     }
 
     public dispose() {

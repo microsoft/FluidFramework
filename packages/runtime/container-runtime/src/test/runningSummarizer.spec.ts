@@ -361,8 +361,8 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 0);
                 });
 
-                it("Should summarize one last time before closing >50 ops", async () => {
-                    await emitNextOp(51); // hard-coded to 50 for now
+                it("Should summarize one last time before closing >=50 ops", async () => {
+                    await emitNextOp(50); // defaulted to 50 for now
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
@@ -371,8 +371,8 @@ describe("Runtime", () => {
                     assertRunCounts(1, 0, 0, "should perform lastSummary");
                 });
 
-                it("Should not summarize one last time before closing <=50 ops", async () => {
-                    await emitNextOp(50); // hard-coded to 50 for now
+                it("Should not summarize one last time before closing <50 ops", async () => {
+                    await emitNextOp(49); // defaulted to 50 for now
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
@@ -1007,7 +1007,7 @@ describe("Runtime", () => {
                 it("Should not summarize before closing", async () => {
                     await startRunningSummarizer({ disableHeuristics: true });
 
-                    await emitNextOp(51); // hard-coded to 50 for now
+                    await emitNextOp(50); // defaulted to 50 for now
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();

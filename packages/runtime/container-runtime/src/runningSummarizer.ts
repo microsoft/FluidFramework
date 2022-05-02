@@ -125,7 +125,8 @@ export class RunningSummarizer implements IDisposable {
             this.heuristicRunner = new SummarizeHeuristicRunner(
                 heuristicData,
                 configuration,
-                (reason) => this.trySummarize(reason));
+                (reason) => this.trySummarize(reason),
+                this.logger);
         }
 
         // Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
@@ -362,7 +363,11 @@ export class RunningSummarizer implements IDisposable {
                     return;
                 }
 
-                summaryAttempts++;
+                // We only want to attempt 1 summary when reason is "lastSummary"
+                if (++summaryAttempts > 1 && reason === "lastSummary") {
+                    return;
+                }
+
                 summaryAttemptsPerPhase++;
 
                 const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[summaryAttemptPhase];

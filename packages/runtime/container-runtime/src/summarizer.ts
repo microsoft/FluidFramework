@@ -206,12 +206,23 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         // cons of #2 substantially.
 
         // Cleanup after running
-        await runningSummarizer.waitStop(!runCoordinator.cancelled /* allowLastSummary */);
+        await runningSummarizer.waitStop(
+            !runCoordinator.cancelled && Summarizer.stopReasonCanRunLastSummary(stopReason));
 
         // Propagate reason and ensure that if someone is waiting for cancellation token, they are moving to exit
         runCoordinator.stop(stopReason);
 
         return stopReason;
+    }
+
+    /**
+     * Should we try to run a last summary for the given stop reason?
+     * Currently only allows "parentNotConnected"
+     * @param stopReason - SummarizerStopReason
+     * @returns - true if the stop reason can run a last summary
+     */
+    public static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean {
+        return stopReason === "parentNotConnected";
     }
 
     /**
