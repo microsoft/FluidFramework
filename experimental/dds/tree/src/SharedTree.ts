@@ -375,12 +375,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		switch (this.writeFormat) {
 			case WriteFormat.v0_0_2:
 				return nilUuid;
-			default:
-				const attributionId = this.idCompressor.attributionId;
-                if (attributionId === ghostSessionId) {
-                    return nilUuid;
-                }
-                return attributionId;
+			default: {
+				const { attributionId } = this.idCompressor;
+				if (attributionId === ghostSessionId) {
+					return nilUuid;
+				}
+				return attributionId;
+			}
 		}
 	}
 
@@ -654,12 +655,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		switch (this.writeFormat) {
 			case WriteFormat.v0_0_2:
 				return nilUuid;
-			default:
+			default: {
 				const attributionId = this.idCompressor.attributeId(id);
-                if (attributionId === ghostSessionId) {
-                    return nilUuid;
-                }
-                return attributionId;
+				if (attributionId === ghostSessionId) {
+					return nilUuid;
+				}
+				return attributionId;
+			}
 		}
 	}
 

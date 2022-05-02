@@ -40,7 +40,7 @@ import {
 	expectSerializes,
 	roundtrip,
 	sessionNumericUuids,
-    attributionIds,
+	attributionIds,
 } from './utilities/IdCompressorTestUtilities';
 import { expectDefined } from './utilities/TestCommon';
 
@@ -255,12 +255,17 @@ describe('IdCompressor', () => {
 		expect(range1.attributionId).to.equal(attributionId);
 	});
 
-	it('only sends attribution ID on the first range from each session', () => {
+	it('only sends attribution ID until the first ID is allocated', () => {
 		const compressor = createCompressor(Client.Client1, 5, generateStableId());
-		const range1 = compressor.takeNextCreationRange();
-		expectDefined(range1.attributionId);
-		const range2 = compressor.takeNextCreationRange();
-		expect(range2.attributionId).to.be.undefined;
+		let range = compressor.takeNextCreationRange();
+		expectDefined(range.attributionId);
+		range = compressor.takeNextCreationRange();
+		expectDefined(range.attributionId);
+		compressor.generateCompressedId();
+		range = compressor.takeNextCreationRange();
+		expectDefined(range.attributionId);
+		range = compressor.takeNextCreationRange();
+		expect(range.attributionId).to.be.undefined;
 	});
 
 	it('does not send default attribution ID', () => {
@@ -269,22 +274,26 @@ describe('IdCompressor', () => {
 		expect(range.attributionId).to.be.undefined;
 	});
 
-    it('attributes correctly after unification', () => {
+	it('attributes correctly after unification', () => {
 		const compressor1 = createCompressor(Client.Client1, undefined, attributionIds.get(Client.Client1));
 		const compressor2 = createCompressor(Client.Client2, undefined, attributionIds.get(Client.Client2));
-        const id1 = compressor1.generateCompressedId('override');
-        const id2 = compressor2.generateCompressedId('override');
-        const range1 = compressor1.takeNextCreationRange();
-        const range2 = compressor2.takeNextCreationRange();
-        compressor1.finalizeCreationRange(range2); // 2 gets sequenced first
-        compressor2.finalizeCreationRange(range2);
-        compressor1.finalizeCreationRange(range1);
-        compressor2.finalizeCreationRange(range1);
+		const id1 = compressor1.generateCompressedId('override');
+		const id2 = compressor2.generateCompressedId('override');
+		const range1 = compressor1.takeNextCreationRange();
+		const range2 = compressor2.takeNextCreationRange();
+		compressor1.finalizeCreationRange(range2); // 2 gets sequenced first
+		compressor2.finalizeCreationRange(range2);
+		compressor1.finalizeCreationRange(range1);
+		compressor2.finalizeCreationRange(range1);
 		expect(compressor1.normalizeToOpSpace(id1)).to.equal(compressor2.normalizeToOpSpace(id2));
-        expect(compressor1.attributeId(id1)).to.equal(attributionIds.get(Client.Client2));
-        expect(compressor1.attributeId(compressor1.recompress(compressor2.decompress(id2)))).to.equal(attributionIds.get(Client.Client2));
-        expect(compressor2.attributeId(compressor2.recompress(compressor1.decompress(id1)))).to.equal(attributionIds.get(Client.Client2));
-        expect(compressor2.attributeId(id2)).to.equal(attributionIds.get(Client.Client2));
+		expect(compressor1.attributeId(id1)).to.equal(attributionIds.get(Client.Client2));
+		expect(compressor1.attributeId(compressor1.recompress(compressor2.decompress(id2)))).to.equal(
+			attributionIds.get(Client.Client2)
+		);
+		expect(compressor2.attributeId(compressor2.recompress(compressor1.decompress(id1)))).to.equal(
+			attributionIds.get(Client.Client2)
+		);
+		expect(compressor2.attributeId(id2)).to.equal(attributionIds.get(Client.Client2));
 	});
 
 	describe('can produce a creation range', () => {
@@ -642,14 +651,14 @@ describe('IdCompressor', () => {
 			).to.be.true;
 		});
 
-        it('can serialize local state with attribution but no IDs', () => {
-            // This is a regression test for the scenario in which an ID compressor sends its first range, which
-            // includes its attribution ID, but has made no IDs. An incorrect optimization when serializing had
-            // omitted local state if no IDs had been allocated, but then also dropped the `sentAttribution` flag
+		it('can serialize local state with attribution but no IDs', () => {
+			// This is a regression test for the scenario in which an ID compressor sends its first range, which
+			// includes its attribution ID, but has made no IDs. An incorrect optimization when serializing had
+			// omitted local state if no IDs had been allocated, but then also dropped the `sentAttribution` flag
 			const compressor = createCompressor(Client.Client1, undefined, attributionIds.get(Client.Client1));
-            const range = compressor.takeNextCreationRange();
-            expect(range.ids).to.be.undefined;
-            expect(range.attributionId).to.equal(attributionIds.get(Client.Client1));
+			const range = compressor.takeNextCreationRange();
+			expect(range.ids).to.be.undefined;
+			expect(range.attributionId).to.equal(attributionIds.get(Client.Client1));
 			expectSerializes(compressor);
 		});
 	});

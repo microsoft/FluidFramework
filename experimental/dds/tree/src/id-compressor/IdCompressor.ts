@@ -401,7 +401,7 @@ export class IdCompressor {
 	 * IDs.
 	 * @param attributionId a UUID that identifiers the user of this instance of the compressor. IDs created by this compressor will be associated
 	 * with this UUID and can be queried later via `attributeID`. If no UUID is provided, this compressor will generate its own. An `AttributionId`
-     * is an `UuidString` which may be validated via {@link isUuidString} or generated via {@link generateStableId}.
+	 * is an `UuidString` which may be validated via {@link isUuidString} or generated via {@link generateStableId}.
 	 */
 	public constructor(
 		public readonly localSessionId: SessionId,
@@ -562,6 +562,9 @@ export class IdCompressor {
 		const lastTakenNormalized = this.lastTakenLocalId ?? 0;
 		assert(lastLocalInRange <= lastTakenNormalized);
 
+		// The attribution ID is sent with each range, but it can be elided after the first IDs are allocated.
+		const sendAttributionId = this.lastTakenLocalId === undefined;
+
 		let ids: IdCreationRange.Ids | undefined;
 		if (lastLocalInRange !== lastTakenNormalized) {
 			const firstLocalInRange = (lastTakenNormalized - 1) as UnackedLocalId;
@@ -591,9 +594,9 @@ export class IdCompressor {
 		}
 
 		const range: Mutable<IdCreationRange> = { sessionId: this.localSessionId };
-        if (this.attributionId !== this.localSessionId) {
-            range.attributionId = this.attributionId;
-        }
+		if (this.attributionId !== this.localSessionId && sendAttributionId) {
+			range.attributionId = this.attributionId;
+		}
 
 		if (ids === undefined) {
 			return range;
@@ -616,12 +619,11 @@ export class IdCompressor {
 		const { sessionId, attributionId } = range;
 
 		const isLocal = sessionId === this.localSessionId;
-		let session = this.sessions.get(sessionId);
+		const session = this.sessions.get(sessionId) ?? this.createSession(sessionId, attributionId);
 		assert(
-			range.attributionId === undefined || session === undefined || isLocal,
-			'An attribution ID can only be supplied on the initial range for a session, and never modified thereafter.'
+			range.attributionId === undefined || range.attributionId === session.attributionId,
+			"A session's attribution ID may never be modified."
 		);
-		session ??= this.createSession(sessionId, attributionId);
 
 		const ids = getIds(range);
 		if (ids === undefined) {

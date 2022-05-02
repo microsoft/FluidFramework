@@ -96,7 +96,10 @@ export const sessionNumericUuids = new Map(
 ) as ClientMap<NumericUuid>;
 
 export const attributionIds = new Map(
-	Object.values(Client).map((c, i) => [c, assertIsUuidString(`00000000-0000-0000-0000-${(i + 1).toString(16).padStart(12, '0')}`)])
+	Object.values(Client).map((c, i) => [
+		c,
+		assertIsUuidString(`00000000-0000-0000-0000-${(i + 1).toString(16).padStart(12, '0')}`),
+	])
 ) as ClientMap<AttributionId>;
 
 /** An immutable view of an `IdCompressor` */
@@ -397,11 +400,11 @@ export class IdCompressorTestNetwork {
 					idDataA.originatingClient === originatingClient,
 					'Test infra gave wrong originating client to TestIdData'
 				);
-                const attributionA = compressorA.attributeId(idDataA.id);
+				const attributionA = compressorA.attributeId(idDataA.id);
 				if (attributionA !== attributionIds.get(idDataA.originatingClient)) {
-                    // Unification
-                    expectDefined(idDataA.expectedOverride);
-                }
+					// Unification
+					expectDefined(idDataA.expectedOverride);
+				}
 
 				// Only one client should have this ID as local in its session space, as only one client could have created this ID
 				if (isLocalId(sessionSpaceIdA)) {

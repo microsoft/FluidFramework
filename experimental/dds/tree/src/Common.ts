@@ -535,18 +535,28 @@ export type ReplaceRecursive<T, TReplace, TWith> = T extends TReplace
 	  };
 
 /** A union type of the first `N` positive integers */
-export type TakeWholeNumbers<N extends number, A extends never[] = []> = N extends A['length'] ? never : A['length'] | TakeWholeNumbers<N, [never, ...A]>;
+export type TakeWholeNumbers<N extends number, A extends never[] = []> = N extends A['length']
+	? never
+	: A['length'] | TakeWholeNumbers<N, [never, ...A]>;
 /** Returns a tuple type with exactly `Length` elements of type `T` */
-export type ArrayOfLength<T, Length extends number, A extends T[] = []> = Length extends A['length'] ? A : ArrayOfLength<T, Length, [T, ...A]>;
+export type ArrayOfLength<T, Length extends number, A extends T[] = []> = Length extends A['length']
+	? A
+	: ArrayOfLength<T, Length, [T, ...A]>;
 /**
  * Fails if `array` does not have exactly `length` elements
  */
-export function hasExactlyLength<T, Len extends TakeWholeNumbers<16>>(array: readonly T[], length: Len): array is ArrayOfLength<T, Len> {
-    return array.length === length;
+export function hasExactlyLength<T, Len extends TakeWholeNumbers<16>>(
+	array: readonly T[],
+	length: Len
+): array is ArrayOfLength<T, Len> {
+	return array.length === length;
 }
 /**
  * Fails if `array` does not have at least `length` elements
  */
-export function hasLength<T, Len extends TakeWholeNumbers<16>>(array: readonly T[], length: Len): array is [...ArrayOfLength<T, Len>, ...T[]] {
-    return array.length >= length;
+export function hasLength<T, Len extends TakeWholeNumbers<16>>(
+	array: readonly T[],
+	length: Len
+): array is [...ArrayOfLength<T, Len>, ...T[]] {
+	return array.length >= length;
 }
