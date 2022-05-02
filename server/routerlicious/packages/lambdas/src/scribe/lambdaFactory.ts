@@ -147,10 +147,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 scribeSessionMetric?.error("Invalid message sequence from checkpoint/summary", error);
                 await this.sendLambdaStartResult(
                     tenantId,
-                    documentId, {
+                    documentId,
+                    {
                         lambdaName: LambdaName.Scribe,
                         success: false,
-                    });
+                    },
+                );
 
                 throw error;
             }
@@ -191,10 +193,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 
         await this.sendLambdaStartResult(
             tenantId,
-            documentId, {
+            documentId,
+            {
                 lambdaName: LambdaName.Scribe,
                 success: true,
-            });
+            },
+        );
         return scribeLambda;
     }
 
