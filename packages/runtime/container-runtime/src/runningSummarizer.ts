@@ -123,8 +123,9 @@ export class RunningSummarizer implements IDisposable {
             assert(this.configuration.state === "enabled", "Configuration state should be enabled");
             this.heuristicRunner = new SummarizeHeuristicRunner(
                 heuristicData,
-                this.configuration,
-                (reason) => this.trySummarize(reason));
+                configuration,
+                (reason) => this.trySummarize(reason),
+                this.logger);
         }
 
         assert (this.configuration.state !== "disabled", "Summary not supported with configuration disabled");
@@ -364,7 +365,11 @@ export class RunningSummarizer implements IDisposable {
                     return;
                 }
 
-                summaryAttempts++;
+                // We only want to attempt 1 summary when reason is "lastSummary"
+                if (++summaryAttempts > 1 && reason === "lastSummary") {
+                    return;
+                }
+
                 summaryAttemptsPerPhase++;
 
                 const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[summaryAttemptPhase];

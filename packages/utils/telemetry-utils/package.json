@@ -101,6 +101,10 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "EnumDeclaration_TelemetryDataTag": {
+        "backCompat": false
+      }
+    }
   }
 }

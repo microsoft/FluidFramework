@@ -720,6 +720,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     run(onBehalfOf: string): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
+    static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     // (undocumented)

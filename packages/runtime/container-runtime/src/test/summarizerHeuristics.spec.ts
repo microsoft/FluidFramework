@@ -9,6 +9,7 @@ import {
     ISummaryConfiguration,
     ISummaryConfigurationHeuristics,
 } from "../containerRuntime";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerHeuristics";
 import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";
@@ -34,6 +35,7 @@ describe("Runtime", () => {
             let summaryConfig: Readonly<ISummaryConfiguration>;
             let data: ISummarizeHeuristicData;
             let runner: SummarizeHeuristicRunner;
+            let mockLogger: MockLogger;
 
             let attempts: SummarizeReason[];
             const trySummarize = (reason: SummarizeReason) => {
@@ -62,6 +64,7 @@ describe("Runtime", () => {
                 lastOpSequenceNumber: number;
                 run: boolean;
             }> = {}) {
+                mockLogger = new MockLogger();
                 data = new SummarizeHeuristicData(lastOpSequenceNumber, { refSequenceNumber, summaryTime });
                 summaryConfig = {
                     state: "enabled",
@@ -73,7 +76,13 @@ describe("Runtime", () => {
                     initialSummarizerDelayMs,
                     summarizerClientElection,
                     minOpsForLastSummaryAttempt } as const;
-                runner = new SummarizeHeuristicRunner(data, summaryConfig, trySummarize);
+
+                runner = new SummarizeHeuristicRunner(
+                    data,
+                    summaryConfig,
+                    trySummarize,
+                    mockLogger);
+
                 if (run) {
                     runner.run();
                 }
@@ -184,8 +193,9 @@ describe("Runtime", () => {
                 const minOpsForLastSummaryAttempt = 10;
                 initialize({ refSequenceNumber: lastSummary, minOpsForLastSummaryAttempt });
 
-                data.lastOpSequenceNumber = lastSummary + minOpsForLastSummaryAttempt;
-                assert(runner.shouldRunLastSummary() === false, "should not run on close");
+                data.lastOpSequenceNumber = lastSummary + minOpsForLastSummaryAttempt - 1;
+                assert(runner.shouldRunLastSummary() === false,
+                    "should not run on close");
             });
 
             it("Should not run idle timer after dispose", () => {
