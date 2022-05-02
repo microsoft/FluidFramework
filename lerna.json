@@ -2,7 +2,8 @@
   "packages": [
     "examples/**",
     "experimental/**",
-    "packages/**"
+    "packages/**",
+    "azure/**"
   ],
   "version": "0.59.3000"
 }

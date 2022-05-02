@@ -39,6 +39,44 @@
             }
         }
     },
+    "AzureAPI": {
+        "layers": {
+            "UberPackage": {
+                "dirs": [
+                    "azure/packages/fluid-framework/"
+                ],
+                "deps": [
+                    "Container-Definitions",
+                    "Framework",
+                    "Runtime"
+                ]
+            },
+            "AzureClient": {
+                "dirs": [
+                    "azure/packages/azure-client/"
+                ],
+                "deps": [
+                    "Framework",
+                    "Loader",
+                    "Routerlicious-Driver",
+                    "Server-Libs",
+                    "Server-Shared-Utils",
+                    "Test-Utils"
+                ]
+            },
+            "Azure-Service-Utils": {
+                "dot": false,
+                "dirs": [
+                    "azure/packages/azure-service-utils/"
+                ],
+                "deps": [
+                    "Protocol-Definitions",
+                    "Server-Shared-Utils",
+                    "Test-Utils"
+                ]
+            }
+        }
+    },
     "Utils": {
         "layers": {
             "Base-Utils": {
@@ -80,8 +118,7 @@
             "Other-Utils": {
                 "dot": false,
                 "packages": [
-                    "@fluidframework/odsp-doclib-utils",
-                    "@fluidframework/azure-service-utils"
+                    "@fluidframework/odsp-doclib-utils"
                 ],
                 "deps": [
                     "Driver-Definitions",
@@ -178,7 +215,6 @@
             },
             "ServiceClients": {
                 "packages": [
-                    "@fluidframework/azure-client",
                     "@fluidframework/tinylicious-client"
                 ],
                 "deps": [
@@ -188,15 +224,6 @@
                     "Server-Libs",
                     "Server-Shared-Utils",
                     "Test-Utils"
-                ]
-            },
-            "UberPackage": {
-                "packages": [
-                    "fluid-framework"
-                ],
-                "deps": [
-                    "Framework",
-                    "Runtime"
                 ]
             },
             "Examples": {
@@ -235,8 +262,8 @@
                 "packages": [
                     "@fluid-internal/test-dds-utils",
                     "@fluidframework/local-driver",
-                    "@fluidframework/test-client-utils",
                     "@fluidframework/test-runtime-utils",
+                    "@fluidframework/test-client-utils",
                     "@fluid-tools/webpack-fluid-loader"
                 ]
             }
