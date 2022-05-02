@@ -5,9 +5,8 @@
 
 import { promises as fs, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import Prando from 'prando';
 import { expect } from 'chai';
-import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
+import { makeRandom, setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
 import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
@@ -17,8 +16,8 @@ import { chain, makeOpGenerator, take } from './Generators';
 const directory = join(testDocumentsPathBase, 'fuzz-tests');
 
 // TODO: Kludge: Use this to change the seed such that the tests avoid hitting bugs in the Fluid Framework.
-// Should be removed once fuzz tests pass reliably with every seed.
-const adjustSeed = 3;
+// Should be removed once fuzz tests pass reliably with any seed.
+const adjustSeed = 0;
 
 /**
  * Performs random actions on a set of clients.
@@ -29,22 +28,18 @@ const adjustSeed = 3;
  * This can be useful for debugging why a fuzz test may have failed.
  */
 export async function performFuzzActions(
-	generator: AsyncGenerator<Operation, undefined>,
+	generator: AsyncGenerator<Operation, FuzzTestState>,
 	seed: number,
 	synchronizeAtEnd: boolean = true,
 	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
 ): Promise<Required<FuzzTestState>> {
-	const rand = new Prando(seed);
+	const rand = makeRandom(seed);
 
 	// Note: the direct fields of `state` aren't mutated, but it is mutated transitively.
 	const state: FuzzTestState = { rand, passiveCollaborators: [], activeCollaborators: [] };
 	const { activeCollaborators, passiveCollaborators } = state;
 	const operations: Operation[] = [];
-	for (
-		let operation = await generator(state, undefined);
-		operation !== done;
-		operation = await generator(state, undefined)
-	) {
+	for (let operation = await generator(state); operation !== done; operation = await generator(state)) {
 		operations.push(operation);
 		if (saveInfo !== undefined && operations.length === saveInfo.saveAt) {
 			await fs.writeFile(saveInfo.filepath, JSON.stringify(operations));
@@ -159,7 +154,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 	// - Different shared-tree instances can be distinguished (e.g. in logs) by using `tree.getRuntime().clientId`
 	describe(title, () => {
 		function runTest(
-			generatorFactory: () => AsyncGenerator<Operation, undefined>,
+			generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
 			seed: number,
 			saveOnFailure?: boolean
 		): void {

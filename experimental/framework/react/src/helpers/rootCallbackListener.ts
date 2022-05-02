@@ -34,7 +34,7 @@ import { getFluidState } from ".";
  */
 export const syncedStateCallbackListener = <
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     fluidObjectMap: FluidObjectMap,
     storedHandleMap: ISharedMap,

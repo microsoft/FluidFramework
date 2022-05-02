@@ -37,8 +37,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
         fetchReason?: string,
-    ): IStream<ISequencedDocumentMessage[]>
-    {
+    ): IStream<ISequencedDocumentMessage[]> {
         if (cachedOnly) {
             return emptyMessageStream;
         }
@@ -57,8 +56,9 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
     }
 
     private async getCore(from: number, to: number): Promise<IDeltasFetchResult> {
-        const opsFromLogTail = this.logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
-            (this.documentStorageService, this.logtailSha) : [];
+        const opsFromLogTail = this.logtailSha
+            ? await readAndParse<ISequencedDocumentMessage[]>(this.documentStorageService, this.logtailSha)
+            : [];
 
         this.logtailSha = undefined;
         if (opsFromLogTail.length > 0) {
@@ -89,8 +89,7 @@ export class DeltaStorageService implements IDeltaStorageService {
         id: string,
         from: number, // inclusive
         to: number, // exclusive
-        ): Promise<IDeltasFetchResult>
-    {
+    ): Promise<IDeltasFetchResult> {
         const ops = await PerformanceEvent.timedExecAsync(
             this.logger,
             {

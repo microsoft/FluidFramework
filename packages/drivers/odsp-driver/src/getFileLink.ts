@@ -106,7 +106,7 @@ async function getFileLinkCore(
                     getToken,
                     true /* throwOnNullToken */,
                 );
-                const storageToken = await storageTokenFetcher(options,"GetFileLinkCore");
+                const storageToken = await storageTokenFetcher(options, "GetFileLinkCore");
                 assert(storageToken !== null,
                     0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */);
 
@@ -174,14 +174,14 @@ async function getFileItemLite(
             let additionalProps;
             const fileItem = await getWithRetryForTokenRefresh(async (options) => {
                 attempts++;
-                const {siteUrl, driveId, itemId} = odspUrlParts;
+                const { siteUrl, driveId, itemId } = odspUrlParts;
                 const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
                     logger,
                     odspUrlParts,
                     getToken,
                     true /* throwOnNullToken */,
                 );
-                const storageToken = await storageTokenFetcher(options,"GetFileItemLite");
+                const storageToken = await storageTokenFetcher(options, "GetFileItemLite");
                 assert(storageToken !== null,
                     0x2bc /* "Instrumented token fetcher with throwOnNullToken =true should never return null" */);
 

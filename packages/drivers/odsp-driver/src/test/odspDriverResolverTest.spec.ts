@@ -89,7 +89,7 @@ describe("Odsp Driver Resolver", () => {
         const resolvedUrl = await resolver.resolve(request);
 
         assert.strictEqual(
-            resolvedUrl.codeHint?.containerPackageName, packageName , "containerPackageName should match");
+            resolvedUrl.codeHint?.containerPackageName, packageName, "containerPackageName should match");
     });
 
     it("Should add shareLinkInfo with link type if request contains createLinkType", async () => {
@@ -119,7 +119,7 @@ describe("Odsp Driver Resolver", () => {
 
     it("Should resolve url given container package info", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", {name: packageName});
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", { name: packageName });
 
         const [url, queryString] = response?.split("?") ?? [];
         const searchParams = new URLSearchParams(queryString);
@@ -194,7 +194,7 @@ describe("Odsp Driver Resolver", () => {
         const itemId = "item1";
         const testRequest: IRequest = {
             url: `${siteUrl}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`,
-            headers: { createNew:{ fileName:`${fileName}` } },
+            headers: { createNew: { fileName: `${fileName}` } },
         };
 
         // Act

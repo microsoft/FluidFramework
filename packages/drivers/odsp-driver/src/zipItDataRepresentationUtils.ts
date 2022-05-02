@@ -105,7 +105,7 @@ export const codeToBytesMap = {
     36: 8,
 };
 
-export function getValueSafely(map: {[index: number]: number}, key: number) {
+export function getValueSafely(map: { [index: number]: number }, key: number) {
     const val = map[key];
     assert(val !== undefined, 0x287 /* `key= ${key} must exist in the map` */);
     return val;
@@ -148,7 +148,7 @@ export function iteratePairs<T>(it: IterableIterator<T>) {
  * Helper function that returns iterator from an object
  * @param obj - object that supports iteration
  */
-export function iterate<T>(obj: {[Symbol.iterator]: () => IterableIterator<T>}) {
+export function iterate<T>(obj: { [Symbol.iterator]: () => IterableIterator<T> }) {
     return obj[Symbol.iterator]();
 }
 
@@ -238,12 +238,16 @@ class BlobDeepCopy extends BlobCore {
     }
 }
 
-export const addStringProperty = (node: NodeCore, a: string, b: string, encodeValAsConstString: boolean = false) =>
-    { node.addString(a, true); node.addString(b, encodeValAsConstString); };
-export const addNumberProperty = (node: NodeCore, a: string, b: number) =>
-    { node.addString(a, true); node.addNumber(b); };
-export const addBoolProperty = (node: NodeCore, a: string, b: boolean) =>
-    { node.addString(a, true); node.addBool(b); };
+export const addStringProperty =
+    (node: NodeCore, a: string, b: string, encodeValAsConstString: boolean = false) => {
+        node.addString(a, true); node.addString(b, encodeValAsConstString);
+    };
+export const addNumberProperty = (node: NodeCore, a: string, b: number) => {
+    node.addString(a, true); node.addNumber(b);
+};
+export const addBoolProperty = (node: NodeCore, a: string, b: boolean) => {
+    node.addString(a, true); node.addBool(b);
+};
 
 /**
  * Three leaf types supported by tree:
@@ -293,15 +297,13 @@ export class NodeCore {
         return node;
     }
 
-    public getNode(index: number): NodeCore
-    {
+    public getNode(index: number): NodeCore {
         const node = this.children[index];
         assertNodeCoreInstance(node, "getNode should return a node");
         return node;
     }
 
-    public getNumber(index: number): number
-    {
+    public getNumber(index: number): number {
         const node = this.children[index];
         assertNumberInstance(node, "getNumber should return a number");
         return node;
@@ -492,7 +494,7 @@ function throwBufferParseException(
 function getNodeType(value: NodeTypes): NodeType {
     if (typeof value === "number") {
         return "Number";
-    } else if(value instanceof BlobCore) {
+    } else if (value instanceof BlobCore) {
         return "BlobCore";
     } else if (value instanceof NodeCore) {
         return "NodeCore";

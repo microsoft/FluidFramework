@@ -19,7 +19,7 @@ import {
  */
 export function getFluidFromView<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     state: SV,
     viewKey: keyof SV,
