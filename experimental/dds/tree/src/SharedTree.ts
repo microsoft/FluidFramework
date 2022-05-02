@@ -108,11 +108,14 @@ export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat:
  * The type of shared tree options for a given write format
  * @public
  */
-export type SharedTreeOptions<WF extends WriteFormat> = WF extends WriteFormat.v0_0_2
-	? SharedTreeOptions_0_0_2
-	: WF extends WriteFormat.v0_1_1
-	? SharedTreeOptions_0_1_1
-	: never;
+export type SharedTreeOptions<WF extends WriteFormat, Compatibility extends 'Forwards' | 'None' = 'Forwards'> = Omit<
+	WF extends WriteFormat.v0_0_2
+		? SharedTreeOptions_0_0_2
+		: WF extends WriteFormat.v0_1_1
+		? SharedTreeOptions_0_1_1
+		: never,
+	Compatibility extends 'Forwards' ? 'summarizeHistory' : never
+>;
 
 /**
  * Configuration options for a SharedTree with write format 0.0.2
@@ -451,6 +454,24 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	private summarizeHistory: boolean;
 	private uploadEditChunks: boolean;
 
+	private getHistoryPolicy(options: SharedTreeOptions<WriteFormat, 'Forwards' | 'None'>): {
+		summarizeHistory: boolean;
+		uploadEditChunks: boolean;
+	} {
+		const noCompatOptions = options as SharedTreeOptions<WriteFormat, 'None'>;
+		if (typeof noCompatOptions.summarizeHistory === 'object') {
+			return {
+				summarizeHistory: true,
+				uploadEditChunks: noCompatOptions.summarizeHistory.uploadEditChunks,
+			};
+		} else {
+			return {
+				summarizeHistory: noCompatOptions.summarizeHistory ?? false,
+				uploadEditChunks: false,
+			};
+		}
+	}
+
 	/**
 	 * Create a new SharedTree.
 	 * @param runtime - The runtime the SharedTree will be associated with
@@ -470,13 +491,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		options: SharedTreeOptions<typeof writeFormat> = {}
 	) {
 		super(id, runtime, SharedTreeFactory.Attributes);
-		if (typeof options.summarizeHistory === 'object') {
-			this.summarizeHistory = true;
-			this.uploadEditChunks = options.summarizeHistory.uploadEditChunks;
-		} else {
-			this.summarizeHistory = options.summarizeHistory ?? false;
-			this.uploadEditChunks = false;
-		}
+		const historyPolicy = this.getHistoryPolicy(options);
+		this.summarizeHistory = historyPolicy.summarizeHistory;
+		this.uploadEditChunks = historyPolicy.uploadEditChunks;
 
 		// This code is somewhat duplicated from OldestClientObserver because it currently depends on the container runtime
 		// which SharedTree does not have access to.
