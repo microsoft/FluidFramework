@@ -10,7 +10,7 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
-import { ContainerKillBitInstantiationFactory } from "./containerKillBit";
+import { ContainerKillBitInstantiationFactory } from "../containerKillBit";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
 export const inventoryListId = "default-inventory-list";
