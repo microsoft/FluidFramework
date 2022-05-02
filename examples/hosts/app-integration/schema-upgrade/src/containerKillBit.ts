@@ -4,33 +4,31 @@
  */
 
 import { TaskManager } from "@fluid-experimental/task-manager";
+import { Quorum } from "@fluid-internal/quorum";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 // import { IFluidHandle } from "@fluidframework/core-interfaces";
 
+import type { IContainerKillBit } from "./interfaces";
+
+const quorumKey = "quorum";
 const crcKey = "crc";
 const taskManagerKey = "task-manager";
 const markedForDestructionKey = "marked";
 const destroyTaskName = "destroy";
 const deadKey = "dead";
 
-export interface IContainerKillBitEvents extends IEvent {
-    (event: "markedForDestruction" | "dead", listener: () => void);
-}
-
-export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvents> {
-    dead: boolean;
-    setDead(): Promise<void>;
-    markedForDestruction: boolean;
-    markForDestruction(): Promise<void>;
-    volunteerForDestruction(): Promise<void>;
-    haveDestructionTask(): boolean;
-}
-
 export class ContainerKillBit extends DataObject implements IContainerKillBit {
+    private _quorum: Quorum | undefined;
     private _crc: ConsensusRegisterCollection<boolean> | undefined;
     private _taskManager: TaskManager | undefined;
+
+    private get quorum() {
+        if (this._quorum === undefined) {
+            throw new Error("Couldn't retrieve the Quorum");
+        }
+        return this._quorum;
+    }
 
     private get crc() {
         if (this._crc === undefined) {
@@ -57,14 +55,31 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public get markedForDestruction() {
-        return this.crc.read(markedForDestructionKey) as boolean;
+        return this.quorum.get(markedForDestructionKey) as boolean;
     }
 
     public async markForDestruction() {
-        // This should probably use a quorum-type data structure here.
-        // Then, when everyone sees the quorum proposal get approved they can choose to either volunteer
-        // or close themselves
-        await this.crc.write(markedForDestructionKey, true);
+        // Early exit/resolve if already marked.
+        if (this.markedForDestruction) {
+            return;
+        }
+
+        // Note that the marking could come from another client (e.g. two clients try to mark simultaneously).
+        // Watching via the event listener will work regardless of whether our marking or a remote client's
+        // marking was the one that actually wrote the flag.
+        return new Promise<void>((resolve, reject) => {
+            const acceptedListener = (key: string) => {
+                if (key === markedForDestructionKey) {
+                    resolve();
+                    this.quorum.off("accepted", acceptedListener);
+                }
+            };
+            this.quorum.on("accepted", acceptedListener);
+            // Even if quorum.set() becomes a promise, this will remain fire-and-forget since we don't care
+            // whether our marking or a remote client's marking writes the flag (though maybe we'd do retry
+            // logic if a remote client rejects the local client's mark).
+            this.quorum.set(markedForDestructionKey, true);
+        });
     }
 
     public async volunteerForDestruction(): Promise<void> {
@@ -76,24 +91,42 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     protected async initializingFirstTime() {
+        const quorum = Quorum.create(this.runtime);
         const crc = ConsensusRegisterCollection.create(this.runtime);
         const taskManager = TaskManager.create(this.runtime);
+        this.root.set(quorumKey, quorum.handle);
         this.root.set(crcKey, crc.handle);
         this.root.set(taskManagerKey, taskManager.handle);
-        await Promise.all([
-            crc.write(markedForDestructionKey, false),
-            crc.write(deadKey, false),
-        ]);
+        // TODO: Update if/when .set() returns a promise.
+        const initialSetP = new Promise<void>((resolve) => {
+            const watchForInitialSet = (key: string) => {
+                if (key === markedForDestructionKey) {
+                    resolve();
+                    quorum.off("accepted", watchForInitialSet);
+                }
+            };
+            quorum.on("accepted", watchForInitialSet);
+        });
+        quorum.set(markedForDestructionKey, false);
+        await initialSetP;
+        await crc.write(deadKey, false);
     }
 
     protected async hasInitialized() {
+        const quorumHandle = this.root.get(quorumKey);
+        this._quorum = await quorumHandle.get();
+
         const crcHandle = this.root.get(crcKey);
         this._crc = await crcHandle.get();
 
-        this.crc.on("atomicChanged", (key) => {
+        this.quorum.on("accepted", (key: string) => {
             if (key === markedForDestructionKey) {
                 this.emit("markedForDestruction");
-            } else if (key === deadKey) {
+            }
+        });
+
+        this.crc.on("atomicChanged", (key) => {
+            if (key === deadKey) {
                 this.emit("dead");
             }
         });
@@ -114,6 +147,7 @@ export const ContainerKillBitInstantiationFactory =
         ContainerKillBit,
         [
             ConsensusRegisterCollection.getFactory(),
+            Quorum.getFactory(),
             TaskManager.getFactory(),
         ],
         {},
