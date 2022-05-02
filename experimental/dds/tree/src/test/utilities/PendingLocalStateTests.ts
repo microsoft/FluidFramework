@@ -47,6 +47,7 @@ export function runPendingLocalStateTests(
 	describe(title, () => {
 		const documentId = 'documentId';
 
+		// eslint-disable-next-line array-bracket-spacing
 		[WriteFormat.v0_0_2 /* TODO: Enable when stashed ops are supported: WriteFormat.v0_1_1 */].forEach(
 			(writeFormat) => {
 				it(`is applied to all connected containers (v${writeFormat})`, async () => {

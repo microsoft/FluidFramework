@@ -37,7 +37,7 @@ export function useReducerFluid<
     SF extends IFluidState,
     A extends IFluidReducer<SV, SF, C>,
     B extends IFluidSelector<SV, SF, C>,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
 >(
     props: IFluidReducerProps<SV, SF, A, B, C>,
     initialViewState: SV,

@@ -38,7 +38,7 @@ import { getSchema } from "./getSchema";
  */
 export function syncState<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     isSyncedStateUpdate: boolean,
     syncedStateId: string,

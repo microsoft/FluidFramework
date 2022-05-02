@@ -27,7 +27,7 @@ import {
  */
 export function getFluidState<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     syncedStateId: string,
     syncedState: ISyncedState,

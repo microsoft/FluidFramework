@@ -26,7 +26,7 @@ import { getFluidState } from "./getFluidState";
  */
 export function getViewFromFluid<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     syncedStateId: string,
     syncedState: ISyncedState,

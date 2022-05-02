@@ -51,6 +51,7 @@
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/driver-definitions": "^0.46.1000",
     "@fluidframework/driver-utils": "^0.59.3000",
+    "@fluidframework/map": "^0.59.3000",
     "@fluidframework/register-collection": "^0.59.3000",
     "@fluidframework/request-handler": "^0.59.3000",
     "@fluidframework/routerlicious-driver": "^0.59.3000",
@@ -65,7 +66,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
