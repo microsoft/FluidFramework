@@ -23,7 +23,7 @@ import {
  * */
 export function generateFluidObjectSchema<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     runtime: IFluidDataStoreRuntime,
     defaultViewState: SV,

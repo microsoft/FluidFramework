@@ -16,7 +16,7 @@ import { IFluidSyncedCounterReducer } from "./interface";
 
 export function setFluidSyncedCounterConfig<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     syncedDataObject: SyncedDataObject,
     syncedStateId: string,
@@ -71,7 +71,7 @@ export function setFluidSyncedCounterConfig<
 
 export function generateSyncedCounterReducer<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(viewKey: keyof SV, fluidKey: keyof SF): IFluidSyncedCounterReducer<SV, SF> {
     const syncedCounterReducer = {
         increment: {
@@ -93,7 +93,7 @@ export function generateSyncedCounterReducer<
 
 export function useSyncedCounterReducerFluid<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     syncedDataObject: SyncedDataObject,
     syncedStateId: string,

@@ -82,8 +82,8 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.63777",
-    "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@0.59.1000",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@0.59.2000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/test-runtime-utils": "^0.59.3000",
     "@microsoft/api-extractor": "^7.22.2",
@@ -116,17 +116,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.2000",
-    "broken": {
-      "ClassDeclaration_Summarizer": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IProvideSummarizer": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_ISummarizer": {
-        "forwardCompat": false
-      }
-    }
+    "version": "0.59.3000",
+    "broken": {}
   }
 }

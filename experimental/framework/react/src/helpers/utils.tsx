@@ -16,7 +16,7 @@ import { IFluidObjectMapItem } from "..";
 
 export function getByFluidKey<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(searchValue: string, map: Map<keyof SV, IFluidConverter<SV, SF>>) {
     for (const [key, value] of map.entries()) {
         if (value.fluidKey === searchValue) {
@@ -50,7 +50,7 @@ export async function asyncForEach(
 
 export const addFluidObject = async <
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     handle: IFluidHandle,
     fluidObjectMap: FluidObjectMap,

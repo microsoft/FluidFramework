@@ -62,6 +62,7 @@ export class TestDocumentStorage implements IDocumentStorage {
         ordererUrl: string,
         historianUrl: string,
         values: [string, ICommittedProposal][],
+        enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;

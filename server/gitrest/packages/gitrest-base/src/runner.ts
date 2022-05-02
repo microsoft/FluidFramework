@@ -5,8 +5,8 @@
 
 import { Deferred } from "@fluidframework/common-utils";
 import { IWebServer, IWebServerFactory, IRunner } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import * as app from "./app";
 import { IFileSystemManagerFactory, IRepositoryManagerFactory } from "./utils";
 
@@ -68,11 +68,11 @@ export class GitrestRunner implements IRunner {
         // handle specific listen errors with friendly messages
         switch (error.code) {
             case "EACCES":
-                winston.error(`${ bind } requires elevated privileges`);
+                Lumberjack.error(`${ bind } requires elevated privileges`);
                 process.exit(1);
                 break;
             case "EADDRINUSE":
-                winston.error(`${ bind } is already in use`);
+                Lumberjack.error(`${ bind } is already in use`);
                 process.exit(1);
                 break;
             default:
@@ -89,6 +89,6 @@ export class GitrestRunner implements IRunner {
         const bind = typeof addr === "string"
             ? `pipe ${ addr }`
             : `port ${ addr.port }`;
-        winston.info(`Listening on ${ bind }`);
+        Lumberjack.info(`Listening on ${ bind }`);
     }
 }
