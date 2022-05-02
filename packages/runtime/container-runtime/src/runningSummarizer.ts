@@ -120,7 +120,7 @@ export class RunningSummarizer implements IDisposable {
     } | undefined;
     private summarizeCount = 0;
     private totalSuccessfulAttempts = 0;
-    private readyToStartSummarizing = false;
+    private initialized = false;
 
     private constructor(
         baseLogger: ITelemetryLogger,
@@ -234,7 +234,7 @@ export class RunningSummarizer implements IDisposable {
         }
 
         // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
-        if (this.readyToStartSummarizing
+        if (this.initialized
             && this.opCanTriggerSummary(op)
             && !this.tryRunEnqueuedSummary()
             && !this.heuristicRunnerMicroTaskExists) {
@@ -310,7 +310,7 @@ export class RunningSummarizer implements IDisposable {
                 summarySequenceNumber: waitStartResult.value.summaryOp.sequenceNumber,
             });
         }
-        this.readyToStartSummarizing = true;
+        this.initialized = true;
     }
 
     /**
