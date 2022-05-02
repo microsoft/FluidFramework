@@ -17,7 +17,7 @@ import { initializeState, syncState } from "./helpers";
  */
 export function useStateFluid<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     props: IFluidProps<SV, SF>, initialViewState: SV,
 ): [SV, (newState: SV, isSyncedStateUpdate?: boolean) => void] {

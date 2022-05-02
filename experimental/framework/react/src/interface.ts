@@ -18,7 +18,7 @@ import { SyncedDataObject } from "./syncedDataObject";
 export interface ICombinedState<
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     /**
      * The react view state that will be used for all view renders
@@ -77,7 +77,7 @@ export type FluidToViewMap<SV, SF> = Map<keyof SF, IViewConverter<SV, SF>>;
 export interface IFluidReducer<
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     [key: string]:
     | FluidAsyncStateUpdateFunction<SV, SF, C>
@@ -98,7 +98,7 @@ export interface IFluidReducer<
 export interface IFluidSelector<
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     [key: string]:
     | FluidSelectorFunction<SV, SF, C>
@@ -110,7 +110,7 @@ export interface IFluidSelector<
  */
 export interface IFluidProps<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
     > {
     /**
      *  Unique ID to use for storing the synced state in the SyncedDataObject's syncedState SharedMap
@@ -135,7 +135,7 @@ export interface IFluidProps<
  */
 export interface IViewConverter<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
     > {
     /**
      * The type of object this key in the Fluid state holds
@@ -178,7 +178,7 @@ export interface IViewConverter<
  */
 export interface IFluidConverter<
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
     > {
     /**
      * The type of object this key in the view state holds
@@ -288,7 +288,7 @@ export interface IFluidDataProps {
 export interface FluidEffectFunction<
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     /**
      * The function defined here will take the combined state and apply some
@@ -300,7 +300,7 @@ export interface FluidEffectFunction<
 export const instanceOfEffectFunction = <
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
 >(
     object: any,
 ): object is FluidEffectFunction<SV, SF, C> =>
@@ -312,7 +312,7 @@ export const instanceOfEffectFunction = <
 export interface FluidAsyncEffectFunction<
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     /**
      *  The function defined here will take the combined state and apply some
@@ -327,7 +327,7 @@ export interface FluidAsyncEffectFunction<
 export const instanceOfAsyncEffectFunction = <
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
 >(
     object: any,
 ): object is FluidAsyncEffectFunction<SV, SF, C> =>
@@ -339,7 +339,7 @@ export const instanceOfAsyncEffectFunction = <
 export interface FluidStateUpdateFunction<
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     /**
      * The function defined here will take the combined state and update either
@@ -355,7 +355,7 @@ export interface FluidStateUpdateFunction<
 export const instanceOfStateUpdateFunction = <
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
 >(
     object: any,
 ): object is FluidStateUpdateFunction<SV, SF, C> =>
@@ -367,7 +367,7 @@ export const instanceOfStateUpdateFunction = <
 export interface FluidAsyncStateUpdateFunction<
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     /**
      * The function defined here will take the combined state and update either
@@ -386,7 +386,7 @@ export interface FluidAsyncStateUpdateFunction<
 export interface IStateUpdateResult<
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     /**
      * The new view and Fluid states that were updated by the function
@@ -402,7 +402,7 @@ export interface IStateUpdateResult<
 export const instanceOfAsyncStateUpdateFunction = <
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
 >(
     object: any,
 ): object is FluidAsyncStateUpdateFunction<SF, SV, C> =>
@@ -414,7 +414,7 @@ export const instanceOfAsyncStateUpdateFunction = <
 export interface FluidSelectorFunction<
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     /**
      * The function defined here will take the combined state and return
@@ -436,7 +436,7 @@ export interface FluidSelectorFunction<
 export interface FluidObjectSelectorFunction<
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     /**
      * Similar to the FluidSelectorFunction's function but this also takes in a
@@ -454,7 +454,7 @@ export interface FluidObjectSelectorFunction<
 export const instanceOfSelectorFunction = <
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
 >(
     object: any,
 ): object is FluidSelectorFunction<SV, SF, C> =>
@@ -463,7 +463,7 @@ export const instanceOfSelectorFunction = <
 export const instanceOfFluidObjectSelectorFunction = <
     SV extends IViewState,
     SF extends IFluidState,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
 >(
     object: any,
 ): object is FluidObjectSelectorFunction<SV, SF, C> =>
@@ -477,7 +477,7 @@ export interface IFluidReducerProps<
     SF extends IFluidState,
     A extends IFluidReducer<SV, SF, C>,
     B,
-    C extends IFluidDataProps
+    C extends IFluidDataProps,
     > {
     /**
      * Unique ID to use for storing the view's synced state in the SyncedDataObject's syncedState SharedMap
@@ -521,7 +521,7 @@ export interface IFluidContextProps<SV, SF, C> extends IFluidProps<SV, SF> {
  */
 export interface FluidContextState<
     SV extends IViewState,
-    C
+    C,
     > {
     /**
      * The view state
@@ -542,7 +542,7 @@ export interface FluidContextState<
  */
 export interface FluidContext<
     SV extends IViewState,
-    C
+    C,
     > {
     /**
      * The context provider React component that will give the FluidContextState to
