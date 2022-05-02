@@ -1202,11 +1202,13 @@ export class MergeTree {
                         } else {
                             // Notify maintenance event observers that the segment is being unlinked from the MergeTree
                             if (this.mergeTreeMaintenanceCallback) {
-                                this.mergeTreeMaintenanceCallback({
-                                    operation: MergeTreeMaintenanceType.UNLINK,
-                                    deltaSegments: [{ segment }],
-                                },
-                                    undefined);
+                                this.mergeTreeMaintenanceCallback(
+                                    {
+                                        operation: MergeTreeMaintenanceType.UNLINK,
+                                        deltaSegments: [{ segment }],
+                                    },
+                                    undefined,
+                                );
                             }
 
                             segment.parent = undefined;
@@ -1223,11 +1225,13 @@ export class MergeTree {
                             if (canAppend) {
                                 prevSegment!.append(segment);
                                 if (this.mergeTreeMaintenanceCallback) {
-                                    this.mergeTreeMaintenanceCallback({
-                                        operation: MergeTreeMaintenanceType.APPEND,
-                                        deltaSegments: [{ segment: prevSegment! }, { segment }],
-                                    },
-                                        undefined);
+                                    this.mergeTreeMaintenanceCallback(
+                                        {
+                                            operation: MergeTreeMaintenanceType.APPEND,
+                                            deltaSegments: [{ segment: prevSegment! }, { segment }],
+                                        },
+                                        undefined,
+                                    );
                                 }
                                 segment.parent = undefined;
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
