@@ -354,7 +354,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         );
         assert.strictEqual(
             container1.connectionState, ConnectionState.Connected,
-            "container is not connected when loaded",
+            "container is not connected after connected event fires",
         );
 
         const dataObject = await requestFluidObject<ITestDataObject>(container1, "default");
