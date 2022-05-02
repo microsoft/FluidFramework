@@ -71,10 +71,9 @@ export class RouterliciousRestWrapper extends RestWrapper {
                     isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error));
             }));
 
-        const resCloned = await response.clone();
+        const resCloned = response.clone();
         const results = await Promise.all([response.json(), resCloned.text()]);
         const responseBody = results[0] || results[1];
-    
         // Success
         if (response.ok || response.status === statusCode) {
             const result: T = responseBody;
