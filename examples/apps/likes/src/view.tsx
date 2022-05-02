@@ -25,13 +25,13 @@ export function LikesView(
 ) {
     // Use synced states
     const [likes, likesReducer] = useSyncedCounter(props.syncedDataObject, "likes");
-    const [imgUrl, setImgUrl] = useSyncedString(props.syncedDataObject,"imgUrl");
+    const [imgUrl, setImgUrl] = useSyncedString(props.syncedDataObject, "imgUrl");
 
     // Render
     return (
         <div>
             <div>
-                <img width='100%' src={imgUrl?.getText()}/>
+                <img width="100%" src={imgUrl?.getText()}/>
                 {imgUrl !== undefined
                     ? <CollaborativeInput
                         style={{ width: "90%" }}

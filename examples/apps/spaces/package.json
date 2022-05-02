@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/spaces",
   "version": "0.59.3000",
+  "private": true,
   "description": "Spaces is a grid layout component",
   "homepage": "https://fluidframework.com",
   "repository": {

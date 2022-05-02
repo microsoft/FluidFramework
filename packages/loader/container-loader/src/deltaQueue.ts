@@ -7,16 +7,14 @@ import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-defini
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
 
-export interface IDeltaQueueWriter<T>
-{
+export interface IDeltaQueueWriter<T> {
     push(task: T): void;
     clear(): void;
 }
 
 export class DeltaQueue<T>
     extends TypedEventEmitter<IDeltaQueueEvents<T>>
-    implements IDeltaQueue<T>, IDeltaQueueWriter<T>
-{
+    implements IDeltaQueue<T>, IDeltaQueueWriter<T> {
     private isDisposed: boolean = false;
     private readonly q = new Deque<T>();
 

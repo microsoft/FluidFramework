@@ -46,8 +46,9 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
-const codeDetails: IFluidCodeDetails = {package: "test"};
+const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
+
 // REVIEW: enable compat testing?
 describeNoCompat("Container", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -61,7 +62,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             this.skip();
         }
     });
-    before(async ()=>{
+    before(async () => {
         const loader = new Loader({
             logger: provider.logger,
             urlResolver: provider.urlResolver,
@@ -110,8 +111,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     itExpects(
         "Load container unsuccessfully",
         [
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure"},
-            {eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError},
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
+            { eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError },
         ],
         async () => {
             const documentServiceFactory = provider.documentServiceFactory;
@@ -129,9 +130,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
     itExpects("Load container with error",
     [
-        {eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception", error: "expectedFailure"},
-        {eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure"},
-        {eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError},
+        { eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception", error: "expectedFailure" },
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
+        { eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError },
     ],
     async () => {
         const documentServiceFactory = provider.documentServiceFactory;

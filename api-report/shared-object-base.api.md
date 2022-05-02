@@ -100,7 +100,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 // @public
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
     protected abstract applyStashedOp(content: any): unknown;
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -132,7 +131,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected runtime: IFluidDataStoreRuntime;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
-    }
+}
 
 // @public
 export class SummarySerializer extends FluidSerializer {
@@ -151,7 +150,6 @@ export enum ValueType {
     // @deprecated
     Shared = 0
 }
-
 
 // (No @packageDocumentation comment for this package)
 

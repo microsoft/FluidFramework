@@ -264,8 +264,8 @@ describe("SparseMatrix", () => {
 
                 // Create and connect the first SharedMatrix.
                 const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-                containerRuntime1 = (containerRuntimeFactory as MockContainerRuntimeFactoryForReconnection).
-                    createContainerRuntime(dataStoreRuntime1);
+                containerRuntime1 = (containerRuntimeFactory as MockContainerRuntimeFactoryForReconnection)
+                    .createContainerRuntime(dataStoreRuntime1);
                 const services1: IChannelServices = {
                     deltaConnection: containerRuntime1.createDeltaConnection(),
                     objectStorage: new MockStorage(),
@@ -276,8 +276,8 @@ describe("SparseMatrix", () => {
 
                 // Create and connect the second SharedMatrix.
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-                containerRuntime2 = (containerRuntimeFactory as MockContainerRuntimeFactoryForReconnection).
-                    createContainerRuntime(dataStoreRuntime2);
+                containerRuntime2 = (containerRuntimeFactory as MockContainerRuntimeFactoryForReconnection)
+                    .createContainerRuntime(dataStoreRuntime2);
                 const services2: IChannelServices = {
                     deltaConnection: containerRuntime2.createDeltaConnection(),
                     objectStorage: new MockStorage(),

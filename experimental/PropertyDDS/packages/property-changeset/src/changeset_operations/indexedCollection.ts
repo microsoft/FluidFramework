@@ -6,7 +6,7 @@
  * @fileoverview Helper functions and classes to work with ChangeSets with indexed collections (sets and maps)
  */
 
- import {copy as cloneDeep} from "fastest-json-copy";
+ import { copy as cloneDeep } from "fastest-json-copy";
  import isEmpty from "lodash/isEmpty";
  import isEqual from "lodash/isEqual";
  import isObject from "lodash/isObject";

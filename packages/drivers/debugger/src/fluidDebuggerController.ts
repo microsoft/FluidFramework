@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert , Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -155,7 +155,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
         let messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
 
-        if(anonymize) {
+        if (anonymize) {
             const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
             messages = sanitizer.sanitize();
         }
