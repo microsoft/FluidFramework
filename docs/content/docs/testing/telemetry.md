@@ -274,15 +274,14 @@ The purpose of `ConsoleLogger` is to demonstrate how the `ITelemetryBaseLogger` 
 
 The `DebugLogger` offers a convenient way to output all telemetry events to the console. `DebugLogger` is present by default when creating/getting a container, and no extra steps are required to use it.
 
-```suggestion
 Under the hood, `DebugLogger` uses the [debug](https://github.com/visionmedia/debug) library. The `debug` library enables Fluid to send to a unique 'namespace,' `fluid`. By default these messages are hidden but they can be enabled
 in both Node.js and a web browser.
 
 **To enable Fluid Framework logging in the browser,** set the `localStorage.debug` variable in the JavaScript console, after which you will need to reload the page.
 
-\`\`\`js
+```js
 localStorage.debug = 'fluid:*'
-\`\`\`
+```
+It's not recommended to set this in code; your users will see a very spammy console window if you do.
 
 **To enable Fluid Framework logging in a Node.js application,** set the `DEBUG` environment variable when running the app.
-
