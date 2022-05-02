@@ -7,8 +7,6 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { ConnectionState } from "@fluidframework/container-loader";
-import { timeoutPromise } from "@fluidframework/test-utils";
 import { TinyliciousClient } from "..";
 import { TestDataObject } from "./TestDataObject";
 
@@ -19,7 +17,6 @@ describe("TinyliciousClient", () => {
             map1: SharedMap,
         },
     };
-    const timeoutMs = 500;
     beforeEach(() => {
         tinyliciousClient = new TinyliciousClient();
     });
@@ -234,99 +231,5 @@ describe("TinyliciousClient", () => {
         map1.set("newpair-id", newPair.handle);
         const obj = await map1.get("newpair-id").get();
         assert.ok(obj, "container added dynamic objects incorrectly");
-    });
-
-    /**
-     * Scenario: test if connect()/disconnect() can manage a container's connection state
-     *
-     * Expected behavior: the container should be able to connect and disconnect. The connectionState
-     * value should be updated accordingly. No errors should be thrown.
-     */
-     it("can disconnect() and connect() a container", async () => {
-        const container = (await tinyliciousClient.createContainer(schema)).container;
-        assert(container.disconnect !== undefined, "container.disconnect is undefined");
-        assert(container.connect !== undefined, "container.connect is undefined");
-        await container.attach();
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "container initial connection timeout"},
-        );
-
-        container.disconnect();
-        if (container.connectionState !== ConnectionState.Disconnected) {
-            await timeoutPromise(
-                (resolve) => container.once("disconnected", () => resolve()),
-                {durationMs: timeoutMs, errorMsg: "container disconnection timeout"},
-            );
-        }
-        assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect");
-
-        container.connect();
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "container connect() timeout"},
-        );
-        assert.strictEqual(
-            container.connectionState, ConnectionState.Connected,
-            "container can't connect after calling disconnect()",
-        );
-    });
-
-    /**
-     * Scenario: test that ops processing stops when disconnect() is called, and it resumes
-     * when connect() is called.
-     *
-     * Expected behavior: We should not be able to get the updated map value after disconnect() is called.
-     * Once connect() is called and the container is reconnected we should be able to fetch the updated value.
-     */
-    it("can disconnect() to prevent processing ops and connect() to catch up", async () => {
-        const containerCreate = (await tinyliciousClient.createContainer(schema)).container;
-        const containerId = await containerCreate.attach();
-        await timeoutPromise(
-            (resolve) => containerCreate.once("connected", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "containerCreate initial connection timeout"},
-        );
-
-        const initialObjectsCreate = containerCreate.initialObjects;
-        const map1Create = initialObjectsCreate.map1 as SharedMap;
-        map1Create.set("key", "value");
-        let valueCreate = await map1Create.get("key");
-
-        const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).container;
-        assert(containerGet.disconnect !== undefined, "containerGet.disconnect is undefined");
-        assert(containerGet.connect !== undefined, "containerGet.connect is undefined");
-        const map1Get = containerGet.initialObjects.map1 as SharedMap;
-        if (containerGet.connectionState !== ConnectionState.Connected) {
-            await timeoutPromise(
-                (resolve) => containerGet.once("connected", () => resolve()),
-                {durationMs: timeoutMs, errorMsg: "containerGet initial connection timeout"},
-            );
-        }
-
-        let valueGet = await map1Get.get("key");
-        assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
-
-        containerGet.disconnect();
-        if (containerGet.connectionState !== ConnectionState.Disconnected) {
-            await timeoutPromise(
-                (resolve) => containerGet.once("disconnected", () => resolve()),
-                {durationMs: timeoutMs, errorMsg: "containerGet disconnection timeout"},
-            );
-        }
-        assert.strictEqual(containerGet.connectionState, ConnectionState.Disconnected, "container can't disconnect");
-
-        map1Create.set("key", "new-value");
-        valueCreate = await map1Create.get("key");
-
-        valueGet = await map1Get.get("key");
-        assert.notStrictEqual(valueGet, valueCreate, "container continued processing ops after disconnect()");
-
-        containerGet.connect();
-        await timeoutPromise(
-            (resolve) => map1Get.once("valueChanged", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "map1Get valueChanged timeout"},
-        );
-        valueGet = await map1Get.get("key");
-        assert.strictEqual(valueGet, valueCreate, "container did not catch up after connect()");
     });
 });
