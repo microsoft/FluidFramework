@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import { v5 } from 'uuid';
-import Prando from 'prando';
+import Random from 'random-js';
 import { expect } from 'chai';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
@@ -26,6 +26,7 @@ import type {
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
 } from '../../id-compressor';
+import { makeRandom } from './TestUtilities';
 
 /** Identifies a compressor in a network */
 export enum Client {
@@ -594,7 +595,7 @@ export function performFuzzActions(
 	maxClusterSize = 25,
 	validator?: (network: IdCompressorTestNetwork) => void
 ): void {
-	const rand = new Prando(seed);
+	const rand = makeRandom(seed);
 	const selectableClients: Client[] = network.getTargetCompressors(MetaClient.All).map(([client]) => client);
 	const activeClients = selectableClients.filter((c) => c !== observerClient);
 	// Ensure that the same UUIDs are generated for the same seed across different calls
@@ -623,7 +624,7 @@ export function performFuzzActions(
 	}
 
 	for (let i = 0; i < numUsages; i++) {
-		const weightSelected = rand.nextInt(1, prevWeight);
+		const weightSelected = rand.integer(1, prevWeight);
 		let opIndex = 0;
 		while (weightSelected > opSums[opIndex][1]) {
 			opIndex++;
@@ -631,18 +632,18 @@ export function performFuzzActions(
 		const operation = opWeights[opIndex][0];
 		switch (operation) {
 			case Operation.ChangeCapacity: {
-				clusterSize = Math.min(Math.floor(rand.next(0, 1) ** 2 * maxClusterSize) + 1, maxClusterSize);
+				clusterSize = Math.min(Math.floor(rand.real(0, 1) ** 2 * maxClusterSize) + 1, maxClusterSize);
 				network.enqueueCapacityChange(clusterSize);
 				break;
 			}
 			case Operation.AllocateIds: {
-				const client = rand.nextArrayItem(activeClients);
+				const client = rand.pick(activeClients);
 				const maxIdsPerUsage = clusterSize * 2;
-				const numIds = Math.floor(rand.next(0, 1) ** 2 * maxIdsPerUsage) + 1;
+				const numIds = Math.floor(rand.real(0, 1) ** 2 * maxIdsPerUsage) + 1;
 				const overrides: { [index: number]: string } = {};
-				if (includeOverrides && /* 25% chance: */ rand.nextInt(0, 3) === 0) {
+				if (includeOverrides && /* 25% chance: */ rand.integer(0, 3) === 0) {
 					for (let j = 0; j < numIds; j++) {
-						if (/* 33% chance: */ rand.nextInt(0, 2) === 0) {
+						if (/* 33% chance: */ rand.integer(0, 2) === 0) {
 							overrides[j] = v5((uuidNum++).toString(), uuidNamespace);
 						}
 					}
@@ -651,20 +652,20 @@ export function performFuzzActions(
 				break;
 			}
 			case Operation.DeliverOperations: {
-				const client = rand.nextArrayItem([...selectableClients, MetaClient.All]);
+				const client = rand.pick([...selectableClients, MetaClient.All]);
 				network.deliverOperations(client);
 				break;
 			}
 			case Operation.GenerateUnifyingIds: {
-				const clientA = rand.nextArrayItem(activeClients);
-				const clientB = rand.nextArrayItem(activeClients.filter((c) => c !== clientA));
+				const clientA = rand.pick(activeClients);
+				const clientB = rand.pick(activeClients.filter((c) => c !== clientA));
 				const uuid = v5((uuidNum++).toString(), uuidNamespace);
 				network.allocateAndSendIds(clientA, 1, { 0: uuid });
 				network.allocateAndSendIds(clientB, 1, { 0: uuid });
 				break;
 			}
 			case Operation.GoOfflineThenResume: {
-				const client = rand.nextArrayItem(activeClients);
+				const client = rand.pick(activeClients);
 				network.goOfflineThenResume(client);
 				break;
 			}

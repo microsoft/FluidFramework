@@ -73,7 +73,7 @@ export const InspectorTableFooter: React.FunctionComponent<IInspectorTableFooter
         >
           <span>Expand All</span>
           <div
-            id='expandAllButton'
+            id="expandAllButton"
             className={classes.svg}
           >
             <SvgIcon
@@ -91,7 +91,7 @@ export const InspectorTableFooter: React.FunctionComponent<IInspectorTableFooter
         >
           <span>Collapse All</span>
           <div
-            id='collapseAllButton'
+            id="collapseAllButton"
             className={classes.svg}
           >
             <SvgIcon
