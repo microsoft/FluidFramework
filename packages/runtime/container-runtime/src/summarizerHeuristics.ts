@@ -88,13 +88,10 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         trySummarize: (reason: SummarizeReason) => void,
         private readonly minOpsForAttemptOnClose = 50,
         private readonly summarizeStrategies: ISummarizeHeuristicStrategy[] = getDefaultSummarizeHeuristicStrategies(),
-        useIdleTimerStrategy: boolean = true,
     ) {
-        if (useIdleTimerStrategy) {
-            this.idleTimer = new Timer(
-                this.configuration.idleTime,
-                () => this.runSummarize("idle"));
-        }
+        this.idleTimer = new Timer(
+            this.configuration.idleTime,
+            () => this.runSummarize("idle"));
 
         this.runSummarize = (reason: SummarizeReason) => {
             this.idleTimer?.clear();
