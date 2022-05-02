@@ -21,6 +21,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 1.0 Breaking changes
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
+- [Deprecate TelemetryDataTag.PackageData](#Deprecate-TelemetryDataTagPackageData)
 - [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
 - [Remove IDeltaManager.close()](#remove-ideltamanagerclose)
 - [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
@@ -30,6 +31,9 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ### Remove IFluidSerializer from IFluidObject
 `IFluidSerializer` in `IFluidObject` was deprecated in 0.52 and is now removed. Use `FluidObject` instead of `IFluidObject`.
+
+### Deprecate TelemetryDataTag.PackageData
+`TelemetryDataTag.PackageData` is deprecated and will be removed in a future release. Use `TelemetryDataTag.CodeArtifact` instead.
 
 ### Remove Write Method from IDocumentStorageService
 The `IDocumentStorageService.write(...)` method within the `@fluidframework/driver-definitions` package has been removed. Please remove all usage/implementation of this method if present.
