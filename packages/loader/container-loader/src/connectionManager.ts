@@ -456,7 +456,7 @@ export class ConnectionManager implements IConnectionManager {
             if (this.closed) {
                 throw new Error("Attempting to connect a closed DeltaManager");
             }
-            if ((progress?.cancel?.aborted) ?? false) {
+            if (progress?.cancel?.aborted === true) {
                 return;
             }
             connectRepeatCount++;
@@ -504,9 +504,7 @@ export class ConnectionManager implements IConnectionManager {
                 if (retryDelayFromError !== undefined) {
                     this.props.reconnectionDelayHandler(retryDelayFromError, origError);
                 }
-                if (progress?.onRetry) {
-                    progress.onRetry(delayMs, origError);
-                }
+                progress?.onRetry?.(delayMs, origError);
                 await waitForConnectedState(delayMs);
             }
         }
@@ -524,10 +522,7 @@ export class ConnectionManager implements IConnectionManager {
             );
         }
 
-        if ((progress?.cancel?.aborted) ?? false) {
-            return;
-        }
-        this.setupNewSuccessfulConnection(connection, requestedMode);
+        this.setupNewSuccessfulConnection(connection, requestedMode, progress);
     }
 
     /**
@@ -585,7 +580,11 @@ export class ConnectionManager implements IConnectionManager {
      * initial messages.
      * @param connection - The newly established connection
      */
-     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
+     private setupNewSuccessfulConnection(
+         connection: IDocumentDeltaConnection,
+         requestedMode: ConnectionMode,
+         progress?: IProgress,
+    ) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
@@ -613,6 +612,11 @@ export class ConnectionManager implements IConnectionManager {
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
             this.disconnectFromDeltaStream("ConnectionManager already closed");
+            return;
+        }
+        if (progress?.cancel?.aborted === true) {
+            // Raise proper events, Log telemetry event and close connection.
+            this.disconnectFromDeltaStream("Connection attempt cancelled");
             return;
         }
 
