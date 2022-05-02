@@ -101,12 +101,12 @@ async function createSummary(
     if (!isNew && isContainerSummary(payload)) {
         const latestFullSummary: IWholeFlatSummary | undefined = await wholeSummaryManager.readSummary(
             writeSummaryResponse.id,
-        ).catch((err) => {
+        ).catch((error) => {
             // This read is for Historian caching purposes, so it should be ignored on failure.
             Lumberjack.error(
                 "Failed to read latest summary after writing container summary",
                 lumberjackProperties,
-                err);
+                error);
             return undefined;
         });
         if (latestFullSummary) {
@@ -118,11 +118,11 @@ async function createSummary(
                         getDocumentStorageDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
                         latestFullSummary,
                     );
-                } catch(e) {
+                } catch(error) {
                     Lumberjack.error(
                         "Failed to persist latest full summary to storage",
                         lumberjackProperties,
-                        e);
+                        error);
                     // TODO: Find and add more information about this failure so that Scribe can retry as necessary.
                     throw new NetworkError(500, "Failed to persist latest full summary to storage");
                 }
