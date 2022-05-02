@@ -154,6 +154,10 @@ class BlobCache {
     }
 }
 
+interface GetVersionsTelemetryProps {
+    cacheEntryAge?: number;
+    cacheSummarizerExpired?: boolean;
+}
 export class OdspDocumentStorageService implements IDocumentStorageService {
     readonly policies = {
         // By default, ODSP tells the container not to prefetch/cache.
@@ -403,7 +407,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
-                    const props = {};
+                    const props: GetVersionsTelemetryProps = {};
                     let retrievedSnapshot: ISnapshotContents | undefined;
                     // Here's the logic to grab the persistent cache snapshot implemented by the host
                     // Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
@@ -421,18 +425,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     // See: https://github.com/microsoft/FluidFramework/issues/8995 for additional information.
                                     if (this.hostPolicy.summarizerClient) {
                                         if (age > defaultSummarizerCacheExpiryTimeout) {
-                                            // eslint-disable-next-line @typescript-eslint/dot-notation
-                                            props["cacheSummarizerExpired"] = true;
+                                            props.cacheSummarizerExpired = true;
                                             return undefined;
                                         } else {
-                                            // eslint-disable-next-line @typescript-eslint/dot-notation
-                                            props["cacheSummarizerExpired"] = false;
+                                            props.cacheSummarizerExpired = false;
                                         }
                                     }
 
                                     // Record the cache age
-                                    // eslint-disable-next-line @typescript-eslint/dot-notation
-                                    props["cacheEntryAge"] = age;
+                                    props.cacheEntryAge = age;
                                 }
 
                                 return snapshotCachedEntry;
@@ -481,8 +482,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         }
                     }
                     if (method === "network") {
-                        // eslint-disable-next-line @typescript-eslint/dot-notation
-                        props["cacheEntryAge"] = undefined;
+                        props.cacheEntryAge = undefined;
                     }
                     event.end({ ...props, method });
                     return retrievedSnapshot;
