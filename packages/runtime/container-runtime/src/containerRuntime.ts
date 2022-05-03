@@ -192,14 +192,6 @@ export interface ContainerRuntimeMessage {
     type: ContainerMessageType;
 }
 
-export enum OrderSequentiallyFailureMode {
-    // Close container if callback fails
-    Fail,
-
-    // rollback ops if callback fails
-    Rollback,
-}
-
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
 
@@ -1826,17 +1818,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.deltaSender.flush();
     }
 
-    public orderSequentially(
-        callback: () => void,
-        failureMode: OrderSequentiallyFailureMode = OrderSequentiallyFailureMode.Fail,
-    ): void {
+    public orderSequentially(callback: () => void): void {
         // If flush mode is already TurnBased we are either
         // nested in another orderSequentially, or
         // the app is flushing manually, in which
         // case this invocation doesn't own
         // flushing.
         if (this.flushMode === FlushMode.TurnBased) {
-            this.trackOrderSequentiallyCalls(callback, failureMode);
+            this.trackOrderSequentiallyCalls(callback);
             return;
         }
 
@@ -1844,19 +1833,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.setFlushMode(FlushMode.TurnBased);
 
         try {
-            this.trackOrderSequentiallyCalls(callback, failureMode);
+            this.trackOrderSequentiallyCalls(callback);
             this.flush();
         } finally{
             this.setFlushMode(savedFlushMode);
         }
     }
 
-    private trackOrderSequentiallyCalls(
-        callback: () => void,
-        failureMode: OrderSequentiallyFailureMode,
-    ): void {
+    private trackOrderSequentiallyCalls(callback: () => void): void {
         let checkpoint: { rollback: () => void } | undefined;
-        if (failureMode === OrderSequentiallyFailureMode.Rollback) {
+        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
             checkpoint = this.pendingStateManager.checkpoint();
         }
 

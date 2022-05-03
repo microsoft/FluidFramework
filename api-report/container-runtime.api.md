@@ -153,7 +153,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
-    orderSequentially(callback: () => void, failureMode?: OrderSequentiallyFailureMode): void;
+    orderSequentially(callback: () => void): void;
     // (undocumented)
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
@@ -627,14 +627,6 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
-
-// @public (undocumented)
-export enum OrderSequentiallyFailureMode {
-    // (undocumented)
-    Fail = 0,
-    // (undocumented)
-    Rollback = 1
-}
 
 // @public
 export enum RuntimeHeaders {

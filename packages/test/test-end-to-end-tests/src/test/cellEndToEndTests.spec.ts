@@ -17,7 +17,8 @@ import {
 import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { Container } from "@fluidframework/container-loader";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { ContainerRuntime, OrderSequentiallyFailureMode } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -243,8 +244,18 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
     let sharedCell: SharedCell;
     let containerRuntime: ContainerRuntime;
 
+    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+        getRawConfig: (name: string): ConfigTypes => settings[name],
+    }));
+
     beforeEach(async () => {
-        container = await provider.makeTestContainer(testContainerConfig) as Container;
+        const configWithFeatureGates = {
+            ...testContainerConfig,
+            loaderProps: { configProvider: configProvider({
+                "Fluid.ContainerRuntime.EnableRollback": true,
+            }) },
+        };
+        container = await provider.makeTestContainer(configWithFeatureGates) as Container;
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
         containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
@@ -265,7 +276,7 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
             containerRuntime.orderSequentially(() => {
                 sharedCell.set(0);
                 throw new Error(errorMessage);
-            }, OrderSequentiallyFailureMode.Rollback);
+            });
         } catch(err) {
             error = err as Error;
         }
