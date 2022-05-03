@@ -33,12 +33,14 @@ export interface IChannel extends IFluidLoadable {
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
-     * True if the data structure is attached to storage.
+     * Checks if the channel is attached to storage.
+     * @returns True iff the channel is attached.
      */
     isAttached(): boolean;
 
     /**
-     * Enables the channel to send and receive ops
+     * Enables the channel to send and receive ops.
+     * @param services - Services to connect to
      */
     connect(services: IChannelServices): void;
 

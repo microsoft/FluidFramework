@@ -4,9 +4,9 @@
  */
 
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
@@ -23,31 +23,6 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
      * the runtime attaches.
      */
     bindToContext(): void;
-
-    /**
-     * Returns whether the given shared object is attached to storage.
-     * @returns True if the given shared object is attached
-     */
-    isAttached(): boolean;
-
-    /**
-     * Generates summary of the channel synchronously.
-     * @returns A tree representing the summary of the shared object.
-     */
-    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
-
-    /**
-     * Generates summary of the shared object asynchronously.
-     * This should not be called where the object can be modified while summarization is in progress.
-     * @returns A tree representing the summary of the channel.
-     */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
-
-    /**
-     * Enables the channel to send and receive ops.
-     * @param services - Services to connect to
-     */
-    connect(services: IChannelServices): void;
 
     /**
      * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
