@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/consistent-type-assertions */
+/*
+eslint-disable
+@typescript-eslint/no-non-null-assertion,
+@typescript-eslint/consistent-type-assertions,
+@typescript-eslint/strict-boolean-expressions,
+*/
 
 import * as MergeTree from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
@@ -861,4 +866,9 @@ export const rowIsMoribund = (rowMarker: IRowMarker) => rowMarker.properties && 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const cellIsMoribund = (cellMarker: ICellMarker) => cellMarker.properties && cellMarker.properties.moribund;
 
-/* eslint-enable @typescript-eslint/no-non-null-assertion, @typescript-eslint/consistent-type-assertions */
+/*
+eslint-enable
+@typescript-eslint/no-non-null-assertion,
+@typescript-eslint/consistent-type-assertions,
+@typescript-eslint/strict-boolean-expressions,
+*/
