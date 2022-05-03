@@ -320,6 +320,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
         let disconnectedEventFired = false;
         container.once("disconnected", () => { disconnectedEventFired = true; });
+        container.disconnect();
         assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
 
