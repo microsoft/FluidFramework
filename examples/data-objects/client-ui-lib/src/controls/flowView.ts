@@ -8,6 +8,7 @@ eslint-disable
 @typescript-eslint/no-non-null-assertion,
 @typescript-eslint/consistent-type-assertions,
 @typescript-eslint/strict-boolean-expressions,
+no-bitwise,
 */
 
 import { performance } from "@fluidframework/common-utils";

@@ -360,6 +360,7 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
     const opList = <MergeTree.IMergeTreeInsertMsg[]>[];
     const endTableId = endPrefix + tableId;
     opList.push(createMarkerOp(pos, endTableId,
+        // eslint-disable-next-line no-bitwise
         MergeTree.ReferenceType.NestEnd |
         MergeTree.ReferenceType.Tile, ["table"], ["pg"]));
     const endTablePos = <MergeTree.IRelativePosition>{

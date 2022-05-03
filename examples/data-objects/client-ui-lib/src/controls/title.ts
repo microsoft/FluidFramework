@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-bitwise */
+
 import * as ui from "../ui";
 
 export class Title extends ui.Component {
@@ -64,3 +66,5 @@ export class Title extends ui.Component {
         return [num >> 16, num >> 8 & 255, num & 255];
     }
 }
+
+/* eslint-enable no-bitwise */

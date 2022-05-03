@@ -11,7 +11,6 @@ module.exports = {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "rules": {
-        "no-bitwise": "off",
         "no-case-declarations": "off",
         "no-null/no-null": "off",
     }
