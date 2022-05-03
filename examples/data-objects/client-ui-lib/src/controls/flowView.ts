@@ -102,7 +102,7 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
                 offset += innerSpan.innerText.length;
                 break;
             case Node.TEXT_NODE:
-                offset += prevSib.nodeValue.length;
+                offset += prevSib.nodeValue!.length;
                 break;
             default:
                 break;
@@ -279,17 +279,17 @@ function renderSegmentIntoLine(
         const textStartPos = segpos + _start;
         const textEndPos = segpos + _end;
         lineContext.span = makeSegSpan(lineContext.flowView, text, segment, _start, segpos);
-        if ((lineContext.lineDiv.endPGMarker) && (lineContext.lineDiv.endPGMarker.properties.header)) {
+        if ((lineContext.lineDiv.endPGMarker) && (lineContext.lineDiv.endPGMarker.properties!.header)) {
             lineContext.span.style.color = wordHeadingColor;
         }
         lineContext.contentDiv.appendChild(lineContext.span);
-        lineContext.lineDiv.lineEnd += text.length;
+        lineContext.lineDiv.lineEnd! += text.length;
         if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos <= textEndPos)) {
             showPositionInLine(lineContext, textStartPos, text, lineContext.flowView.cursor.pos);
         }
         const presenceInfo = lineContext.flowView.presenceInfoInRange(textStartPos, textEndPos);
         if (presenceInfo) {
-            showPositionInLine(lineContext, textStartPos, text, presenceInfo.xformPos, presenceInfo);
+            showPositionInLine(lineContext, textStartPos, text, presenceInfo.xformPos!, presenceInfo);
         }
     } else if (MergeTree.Marker.is(segment)) {
         // Console.log(`marker pos: ${segpos}`);
@@ -305,7 +305,7 @@ function renderSegmentIntoLine(
             }
             return false;
         } else {
-            lineContext.lineDiv.lineEnd++;
+            lineContext.lineDiv.lineEnd!++;
         }
     }
     return true;
@@ -313,14 +313,14 @@ function renderSegmentIntoLine(
 
 function findLineDiv(pos: number, flowView: FlowView, dive = false) {
     return flowView.lineDivSelect((elm) => {
-        if ((elm.linePos <= pos) && (elm.lineEnd > pos)) {
+        if ((elm.linePos! <= pos) && (elm.lineEnd! > pos)) {
             return elm;
         }
     }, flowView.viewportDiv, dive);
 }
 
 function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: number) {
-    const indentSymbol = lineDiv.indentSymbol;
+    const indentSymbol = lineDiv.indentSymbol!;
     let indentFontstr = lineFontstr;
     if (indentSymbol.font) {
         indentFontstr = indentSymbol.font;
@@ -329,7 +329,7 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     const symbolWidth = domutils.getTextWidth(indentSymbol.text, indentFontstr);
     const symbolDiv = makeContentDiv(
         new ui.Rectangle(
-            lineDiv.indentWidth - Math.floor(em + symbolWidth), 0, symbolWidth, lineDivHeight), indentFontstr);
+            lineDiv.indentWidth! - Math.floor(em + symbolWidth), 0, symbolWidth, lineDivHeight), indentFontstr);
     symbolDiv.innerText = indentSymbol.text;
     lineDiv.appendChild(symbolDiv);
 }
@@ -345,7 +345,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
             decorateLineDiv(lineDiv, lineDiv.style.font, lineDivHeight);
         }
         if (lineDiv.indentWidth) {
-            contentDiv = makeContentDiv(new ui.Rectangle(lineDiv.indentWidth, 0, lineDiv.contentWidth,
+            contentDiv = makeContentDiv(new ui.Rectangle(lineDiv.indentWidth, 0, lineDiv.contentWidth!,
                 lineDivHeight), lineDiv.style.font);
             lineDiv.appendChild(contentDiv);
         }
@@ -358,8 +358,8 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
             outerViewportBounds,
             pgMarker: undefined,
             span: undefined,
-        } as ILineContext;
-        const lineEnd = lineDiv.lineEnd;
+        } as unknown as ILineContext;
+        const lineEnd = lineDiv.lineEnd!;
         let end = lineEnd;
         if (end === lineDiv.linePos) {
             end++;
@@ -387,7 +387,7 @@ function makeContentDiv(r: ui.Rectangle, lineFontstr) {
 function isInnerCell(cellView: ICellView, layoutInfo: ILayoutContext) {
     return (!layoutInfo.startingPosStack) || (!layoutInfo.startingPosStack.cell) ||
         (layoutInfo.startingPosStack.cell.empty()) ||
-        (layoutInfo.startingPosStack.cell.items.length === (layoutInfo.stackIndex + 1));
+        (layoutInfo.startingPosStack.cell.items.length === (layoutInfo.stackIndex! + 1));
 }
 
 interface ICellView extends Table.Cell {
@@ -452,15 +452,15 @@ function layoutCell(
         const cellPos = getPosition(layoutInfo.flowView.sharedString, cellView.marker);
         cellLayoutInfo.startPos = cellPos + cellView.marker.cachedLength;
     } else {
-        const nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
+        const nextTable = layoutInfo.startingPosStack!.table.items[layoutInfo.stackIndex! + 1];
         cellLayoutInfo.startPos = getPosition(layoutInfo.flowView.sharedString, nextTable as MergeTree.Marker);
-        cellLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
+        cellLayoutInfo.stackIndex = layoutInfo.stackIndex! + 1;
     }
     if (!cellView.emptyCell) {
         cellView.renderOutput = renderFlow(cellLayoutInfo);
         if (cellView.additionalCellMarkers) {
             for (const cellMarker of cellView.additionalCellMarkers) {
-                cellLayoutInfo.endMarker = cellMarker.cell.endMarker;
+                cellLayoutInfo.endMarker = cellMarker.cell!.endMarker;
                 const cellPos = getPosition(layoutInfo.flowView.sharedString, cellMarker);
                 cellLayoutInfo.startPos = cellPos + cellMarker.cachedLength;
                 const auxRenderOutput = renderFlow(cellLayoutInfo);
@@ -519,18 +519,18 @@ function renderTable(
     const tableWidth = Math.floor(tableView.contentPct * viewportWidth);
     tableView.updateWidth(tableWidth);
     const tableIndent = Math.floor(tableView.indentPct * viewportWidth);
-    let startRow: Table.Row;
-    let startCell: ICellView;
+    let startRow: Table.Row | undefined;
+    let startCell: ICellView | undefined;
 
     if (layoutInfo.startingPosStack) {
         if (layoutInfo.startingPosStack.row &&
-            (layoutInfo.startingPosStack.row.items.length > layoutInfo.stackIndex)) {
-            const startRowMarker = layoutInfo.startingPosStack.row.items[layoutInfo.stackIndex] as Table.IRowMarker;
+            (layoutInfo.startingPosStack.row.items.length > layoutInfo.stackIndex!)) {
+            const startRowMarker = layoutInfo.startingPosStack.row.items[layoutInfo.stackIndex!] as Table.IRowMarker;
             startRow = startRowMarker.row;
         }
         if (layoutInfo.startingPosStack.cell &&
-            (layoutInfo.startingPosStack.cell.items.length > layoutInfo.stackIndex)) {
-            const startCellMarker = layoutInfo.startingPosStack.cell.items[layoutInfo.stackIndex] as Table.ICellMarker;
+            (layoutInfo.startingPosStack.cell.items.length > layoutInfo.stackIndex!)) {
+            const startCellMarker = layoutInfo.startingPosStack.cell.items[layoutInfo.stackIndex!] as Table.ICellMarker;
             startCell = startCellMarker.cell as ICellView;
         }
     }
@@ -539,7 +539,7 @@ function renderTable(
     let tableHeight = 0;
     let deferredHeight = 0;
     let firstRendered = true;
-    let prevRenderedRow: Table.Row;
+    let prevRenderedRow: Table.Row | undefined;
     let prevCellCount;
     let topRow = (layoutInfo.startingPosStack !== undefined) && (layoutInfo.stackIndex === 0);
     for (let rowIndex = 0, rowCount = tableView.rows.length; rowIndex < rowCount; rowIndex++) {
@@ -549,9 +549,9 @@ function renderTable(
         if (startRow === rowView) {
             foundStartRow = true;
         }
-        const renderRow = (deferredHeight >= layoutInfo.deferUntilHeight) &&
+        const renderRow = (deferredHeight >= layoutInfo.deferUntilHeight!) &&
             foundStartRow && (!Table.rowIsMoribund(rowView.rowMarker));
-        let rowDiv: IRowDiv;
+        let rowDiv: IRowDiv | undefined;
         if (renderRow) {
             const y = layoutInfo.viewport.getLineTop();
             const rowRect = new ui.Rectangle(tableIndent, y, tableWidth, 0);
@@ -565,7 +565,7 @@ function renderTable(
                     startCell === rowView.cells[0],
                     firstRendered);
                 deferredHeight += startCell.renderOutput.deferredHeight;
-                rowHeight = startCell.renderedHeight;
+                rowHeight = startCell.renderedHeight!;
                 cellCount++;
             }
         }
@@ -583,15 +583,15 @@ function renderTable(
                     cell === rowView.cells[0],
                     firstRendered || noCellAbove);
                 cellCount++;
-                if (rowHeight < cell.renderedHeight) {
-                    rowHeight = cell.renderedHeight;
+                if (rowHeight < cell.renderedHeight!) {
+                    rowHeight = cell.renderedHeight!;
                 }
                 deferredHeight += cell.renderOutput.deferredHeight;
                 if (renderRow) {
                     cell.viewport.div.style.height = `${cell.renderedHeight}px`;
-                    cell.div.style.height = `${cell.renderedHeight}px`;
-                    cell.div.style.left = `${cellX}px`;
-                    rowDiv.appendChild(cell.div);
+                    cell.div!.style.height = `${cell.renderedHeight}px`;
+                    cell.div!.style.left = `${cellX}px`;
+                    rowDiv!.appendChild(cell.div!);
                 }
                 cellX += (cell.specWidth - 1);
             }
@@ -620,16 +620,16 @@ function renderTable(
                 heightAdjust = 1;
             }
             tableHeight += (rowHeight - heightAdjust);
-            layoutInfo.viewport.commitLineDiv(rowDiv, rowHeight - heightAdjust);
-            rowDiv.style.height = heightVal;
+            layoutInfo.viewport.commitLineDiv(rowDiv!, rowHeight - heightAdjust);
+            rowDiv!.style.height = heightVal;
             if (adjustRowWidth) {
-                rowDiv.style.width = `${tableWidth - adjustRowWidth}px`;
+                rowDiv!.style.width = `${tableWidth - adjustRowWidth}px`;
             }
-            rowDiv.linePos = rowView.pos;
-            rowDiv.lineEnd = rowView.endPos;
+            rowDiv!.linePos = rowView.pos;
+            rowDiv!.lineEnd = rowView.endPos;
             prevRenderedRow = rowView;
             prevCellCount = cellCount;
-            layoutInfo.viewport.div.appendChild(rowDiv);
+            layoutInfo.viewport.div.appendChild(rowDiv!);
         }
         if (topRow) {
             topRow = false;
@@ -651,7 +651,7 @@ function showCell(pos: number, flowView: FlowView) {
     if (startingPosStack.cell && (!startingPosStack.cell.empty())) {
         const cellMarker = startingPosStack.cell.top() as Table.ICellMarker;
         const start = getPosition(flowView.sharedString, cellMarker);
-        const endMarker = cellMarker.cell.endMarker;
+        const endMarker = cellMarker.cell!.endMarker;
         const end = getPosition(flowView.sharedString, endMarker) + 1;
         // eslint-disable-next-line max-len
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
@@ -664,7 +664,7 @@ function showTable(pos: number, flowView: FlowView) {
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         const tableMarker = startingPosStack.table.top() as Table.ITableMarker;
         const start = getPosition(flowView.sharedString, tableMarker);
-        const endMarker = tableMarker.table.endTableMarker;
+        const endMarker = tableMarker.table!.endTableMarker;
         const end = getPosition(flowView.sharedString, endMarker) + 1;
         console.log(`table ${tableMarker.getId()} at [${start},${end})`);
         console.log(`table contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
@@ -713,7 +713,7 @@ function gatherOverlayLayer(
     if (MergeTree.Marker.is(segment)) {
         if ((segment.refType === MergeTree.ReferenceType.Simple) &&
             (segment.hasSimpleType("inkOverlay"))) {
-            context.push({ id: segment.getId(), position: segpos });
+            context.push({ id: segment.getId()!, position: segpos });
         }
     }
 
@@ -729,7 +729,7 @@ function closestNorth(lineDivs: ILineDiv[], y: number) {
     let lo = 0;
     let hi = lineDivs.length - 1;
     while (lo <= hi) {
-        let bestBounds: ClientRect;
+        let bestBounds: ClientRect | undefined;
         const mid = lo + Math.floor((hi - lo) / 2);
         const lineDiv = lineDivs[mid];
         const bounds = lineDiv.getBoundingClientRect();
@@ -751,7 +751,7 @@ function closestSouth(lineDivs: ILineDiv[], y: number) {
     let lo = 0;
     let hi = lineDivs.length - 1;
     while (lo <= hi) {
-        let bestBounds: ClientRect;
+        let bestBounds: ClientRect | undefined;
         const mid = lo + Math.floor((hi - lo) / 2);
         const lineDiv = lineDivs[mid];
         const bounds = lineDiv.getBoundingClientRect();
@@ -814,19 +814,19 @@ class Viewport {
             // TODO: sabroner fix skip issue
             for (let i = 0; i < this.div.children.length; i++) {
                 const child = this.div.children.item(i);
-                if ((child.classList).contains("preserve")) {
-                    if (this.excludedRects.every((e) => e.id !== child.classList[1])) {
-                        this.div.removeChild(child);
+                if ((child!.classList).contains("preserve")) {
+                    if (this.excludedRects.every((e) => e.id !== child!.classList[1])) {
+                        this.div.removeChild(child!);
                     }
                 }
             }
         }
     }
 
-    private viewHasInclusion(sha: string): HTMLDivElement {
+    private viewHasInclusion(sha: string): HTMLDivElement | null {
         for (let i = 0; i < this.div.children.length; i++) {
             const child = this.div.children.item(i);
-            if ((child.classList).contains(sha)) {
+            if ((child!.classList).contains(sha)) {
                 return child as HTMLDivElement;
             }
         }
@@ -842,7 +842,7 @@ class Viewport {
         movingMarker = false) {
         let _x = x;
         let _y = y;
-        const irdoc = <IReferenceDoc>marker.properties.ref;
+        const irdoc = <IReferenceDoc>marker.properties!.ref;
         if (irdoc) {
             const borderSize = 4;
             // For now always an image
@@ -850,7 +850,7 @@ class Viewport {
             const w = Math.floor(this.width / 3);
             let h = w;
             if (irdoc.layout) {
-                h = Math.floor(w * irdoc.layout.ar);
+                h = Math.floor(w * irdoc.layout.ar!);
             }
             if ((_x + w) > this.width) {
                 _x -= w;
@@ -867,7 +867,7 @@ class Viewport {
                     exclu.floatL = true;
                 }
             }
-            let excluDiv = this.viewHasInclusion(irdoc.referenceDocId) as IRefDiv;
+            let excluDiv = this.viewHasInclusion(irdoc.referenceDocId!) as IRefDiv;
 
             // Move the inclusion
             if (excluDiv) {
@@ -882,7 +882,7 @@ class Viewport {
 
                 excluDiv = <IRefDiv>document.createElement("div");
                 excluDiv.classList.add("preserve");
-                excluDiv.classList.add(irdoc.referenceDocId);
+                excluDiv.classList.add(irdoc.referenceDocId!);
                 const innerDiv = document.createElement("div");
                 exclu.conformElement(excluDiv);
                 excluDiv.style.backgroundColor = "#DDDDDD";
@@ -916,21 +916,21 @@ class Viewport {
                     showImage.style.top = "0px";
                     showImage.src = irdoc.url;
                 } else if (irdoc.type.name === "video") {
-                    let showVideo: HTMLVideoElement;
+                    let showVideo: HTMLVideoElement | undefined;
                     if (irdoc.referenceDocId && this.inclusions.has(irdoc.referenceDocId)) {
                         showVideo = this.inclusions.get(irdoc.referenceDocId);
                     } else {
                         showVideo = document.createElement("video");
                     }
-                    innerDiv.appendChild(showVideo);
-                    excluView.conformElement(showVideo);
-                    showVideo.style.left = "0px";
-                    showVideo.style.top = "0px";
-                    showVideo.src = irdoc.url;
-                    showVideo.controls = true;
-                    showVideo.muted = true;
-                    showVideo.load();
-                    this.inclusions.set(irdoc.referenceDocId, showVideo);
+                    innerDiv.appendChild(showVideo!);
+                    excluView.conformElement(showVideo!);
+                    showVideo!.style.left = "0px";
+                    showVideo!.style.top = "0px";
+                    showVideo!.src = irdoc.url;
+                    showVideo!.controls = true;
+                    showVideo!.muted = true;
+                    showVideo!.load();
+                    this.inclusions.set(irdoc.referenceDocId!, showVideo!);
                 }
             }
         }
@@ -964,7 +964,7 @@ class Viewport {
         let w = this.width;
         let rectHit = false;
         const y = this.lineTop;
-        let e: IExcludedRectangle;
+        let e: IExcludedRectangle | undefined;
         for (const exclu of this.excludedRects) {
             if ((exclu.x >= x) && this.horizIntersect(h, exclu)) {
                 if ((this.lineX === 0) && (exclu.x === 0)) {
@@ -2252,7 +2252,7 @@ export class FlowView extends ui.Component {
         return position;
     }
 
-    private checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
+    private checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv | undefined, rev?: boolean) {
         let _lineDiv = lineDiv;
         let rowDiv = _lineDiv as IRowDiv;
         let oldRowDiv: IRowDiv;
@@ -2273,7 +2273,7 @@ export class FlowView extends ui.Component {
         return _lineDiv;
     }
 
-    public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv, viewportDiv: IViewportDiv, dive = false, rev?: boolean) {
+    public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv | undefined, viewportDiv: IViewportDiv, dive = false, rev?: boolean) {
         if (rev) {
             let elm = viewportDiv.lastElementChild as ILineDiv;
             while (elm) {
