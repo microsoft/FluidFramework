@@ -43,7 +43,7 @@ describe("joinSessions Tests", () => {
         async (_options) => "token",
         async (_options) => "token",
         new LocalPersistentCache(2000),
-        { snapshotOptions : { timeout : 2000 } },
+        { snapshotOptions: { timeout: 2000 } },
     );
 
     // Stash the real setTimeout because sinon fake timers will hijack it.
@@ -91,9 +91,27 @@ describe("joinSessions Tests", () => {
             initialSignals: [],
             version: "1.0",
             mode: "write",
-            claims: { documentId: "docId", exp:0, iat:0, scopes:[], tenantId:"ten", ver:"ver", user:{ id:"id" } },
+            claims: {
+                documentId: "docId",
+                exp: 0,
+                iat: 0,
+                scopes: [],
+                tenantId: "ten",
+                ver: "ver",
+                user: {
+                    id: "id",
+                },
+            },
             serviceConfiguration: {
-                blockSize:100, maxMessageSize:16000, summary:{ idleTime:0, maxAckWaitTime:0, maxOps:100, maxTime:10 } },
+                blockSize: 100,
+                maxMessageSize: 16000,
+                summary: {
+                    idleTime: 0,
+                    maxAckWaitTime: 0,
+                    maxOps: 100,
+                    maxTime: 10,
+                },
+            },
             dispose: (error) => {},
             disposed: false,
             submit: (message) => {},
