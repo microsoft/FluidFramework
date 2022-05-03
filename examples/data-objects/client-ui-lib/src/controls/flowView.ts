@@ -119,7 +119,7 @@ const underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-p
 const underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold.gif") bottom repeat-x`;
 
 // global until remove old render
-let textErrorRun: IRange;
+let textErrorRun: IRange | undefined;
 
 interface ILineContext {
     lineDiv: ILineDiv;
@@ -1072,7 +1072,7 @@ function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
     const glh = (fontstr: string, lineHeight?: string) => domutils.getLineHeight(fontstr, lineHeight);
 
     function getFont(pg: Paragraph.IParagraphMarker) {
-        if (pg.properties.header) {
+        if (pg.properties!.header) {
             return docContext.headerFontstr;
         } else {
             return docContext.fontstr;
@@ -1102,7 +1102,7 @@ function breakPGIntoLinesFFVP(
     startOffset = 0) {
     const items = itemInfo.items;
     const savedTop = viewport.getLineTop();
-    let lineRect = viewport.getLineRect(itemInfo.maxHeight);
+    let lineRect = viewport.getLineRect(itemInfo.maxHeight!);
     let breakInfo: IFlowBreakInfo = {
         lineHeight: defaultLineHeight,
         lineWidth: lineRect.w,
@@ -1140,7 +1140,7 @@ function breakPGIntoLinesFFVP(
                     viewport.vskip(committedItemsHeight);
                 }
                 checkViewportFirstLine(blockRunPos);
-                lineRect = viewport.getLineRect(itemInfo.maxHeight);
+                lineRect = viewport.getLineRect(itemInfo.maxHeight!);
                 breakInfo = {
                     lineHeight: committedItemsHeight,
                     lineWidth: lineRect.w,
@@ -1158,7 +1158,7 @@ function breakPGIntoLinesFFVP(
                     viewport.vskip(committedItemsHeight);
                 }
                 checkViewportFirstLine(posInPG);
-                lineRect = viewport.getLineRect(itemInfo.maxHeight);
+                lineRect = viewport.getLineRect(itemInfo.maxHeight!);
                 breakInfo = {
                     lineHeight: committedItemsHeight,
                     lineWidth: lineRect.w,
@@ -1192,7 +1192,7 @@ function breakPGIntoLinesFFVP(
                 item.height ? item.height : defaultLineHeight);
         }
     }
-    viewport.endOfParagraph(itemInfo.maxHeight);
+    viewport.endOfParagraph(itemInfo.maxHeight!);
     viewport.setLineTop(savedTop);
     return breaks;
 }
@@ -1235,15 +1235,15 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
         endPGMarker: Paragraph.IParagraphMarker,
         pgStartPos: number,
         indentPct: number,
-        indentSymbol: Paragraph.ISymbol,
+        indentSymbol: Paragraph.ISymbol | undefined,
         contentPct: number) {
-        const pgBreaks = <IFlowBreakInfo[]>endPGMarker.cache.breaks;
-        let lineDiv: ILineDiv;
+        const pgBreaks = <IFlowBreakInfo[]>endPGMarker.cache!.breaks;
+        let lineDiv: ILineDiv | undefined;
         let lineDivHeight = docContext.defaultLineDivHeight;
-        let span: ISegSpan;
-        let lineWidth: number;
-        let lineX = 0;
-        let lineY: number;
+        let span: ISegSpan | undefined;
+        let lineWidth: number | undefined;
+        let lineX: number | undefined = 0;
+        let lineY: number | undefined;
         let lineFontstr = docContext.fontstr;
         lineDivHeight = docContext.defaultLineDivHeight;
         if (endPGMarker.properties && (endPGMarker.properties.header !== undefined)) {
@@ -1251,17 +1251,17 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             lineDivHeight = docContext.headerDivHeight;
             lineFontstr = docContext.headerFontstr;
         }
-        let lineHeight = lineDivHeight;
+        let lineHeight: number | undefined = lineDivHeight;
         for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
             const breakInfo = pgBreaks[breakIndex];
             lineY = layoutContext.viewport.getLineTop();
-            if (endPGMarker.cache.isUniformWidth) {
+            if (endPGMarker.cache!.isUniformWidth) {
                 lineWidth = layoutContext.viewport.currentLineWidth();
             } else {
-                lineWidth = breakInfo.lineWidth;
-                lineHeight = breakInfo.lineHeight;
-                lineX = breakInfo.lineX;
-                lineY = breakInfo.lineY;
+                lineWidth = breakInfo.lineWidth!;
+                lineHeight = breakInfo.lineHeight!;
+                lineX = breakInfo.lineX!;
+                lineY = breakInfo.lineY!;
             }
             let indentWidth = 0;
             let contentWidth = lineWidth;
@@ -1278,14 +1278,14 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             }
 
             const lineStart = breakInfo.posInPG + pgStartPos;
-            let lineEnd: number;
+            let lineEnd: number | undefined;
             if (breakIndex < (len - 1)) {
                 lineEnd = pgBreaks[breakIndex + 1].posInPG + pgStartPos;
             } else {
                 lineEnd = undefined;
             }
-            const lineOK = (layoutContext.deferUntilHeight <= deferredHeight);
-            if (lineOK && ((lineEnd === undefined) || (lineEnd > layoutContext.requestedPosition))) {
+            const lineOK = (layoutContext.deferUntilHeight! <= deferredHeight);
+            if (lineOK && ((lineEnd === undefined) || (lineEnd > layoutContext.requestedPosition!))) {
                 lineDiv = makeLineDiv(new ui.Rectangle(lineX, lineY, lineWidth, lineHeight), lineFontstr);
                 lineDiv.endPGMarker = endPGMarker;
                 lineDiv.breakIndex = breakIndex;
@@ -1330,13 +1330,13 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                 break;
             }
         }
-        return lineDiv.lineEnd;
+        return lineDiv!.lineEnd!;
     }
 
     const fetchLog = false;
-    let segoff: ISegmentOffset;
+    let segoff: ISegmentOffset | undefined;
     const totalLength = sharedString.getLength();
-    let viewportEndPos = currentPos;
+    let viewportEndPos: number = currentPos;
     // TODO: use end of doc marker
     do {
         if (!segoff) {
@@ -1357,12 +1357,12 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             let tableView: Table.Table;
             if (asMarker.removedSeq === undefined) {
                 renderTable(asMarker, docContext, layoutContext);
-                tableView = (asMarker as Table.ITableMarker).table;
-                deferredHeight += tableView.deferredHeight;
+                tableView = (asMarker as Table.ITableMarker).table!;
+                deferredHeight += tableView.deferredHeight!;
                 layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
             } else {
                 tableView = Table.parseTable(asMarker, currentPos, flowView.sharedString,
-                    makeFontInfo(layoutContext.docContext));
+                    makeFontInfo(layoutContext.docContext))!;
             }
             const endTablePos = getPosition(layoutContext.flowView.sharedString, tableView.endTableMarker);
             currentPos = endTablePos + 1;
@@ -1388,7 +1388,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             // TODO: only set this to undefined if text changed
             curPGMarker.listCache = undefined;
             Paragraph.getListCacheInfo(layoutContext.flowView.sharedString, curPGMarker, curPGMarkerPos);
-            let indentSymbol: Paragraph.ISymbol;
+            let indentSymbol: Paragraph.ISymbol | undefined;
             const indentPct = Paragraph.getIndentPct(curPGMarker);
             const contentPct = Paragraph.getContentPct(curPGMarker);
 
@@ -1403,8 +1403,8 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                 itemsContext.itemInfo = curPGMarker.itemCache;
             }
             let startOffset = 0;
-            if (layoutContext.requestedPosition > currentPos) {
-                startOffset = layoutContext.requestedPosition - currentPos;
+            if (layoutContext.requestedPosition! > currentPos) {
+                startOffset = layoutContext.requestedPosition! - currentPos;
             }
             const breaks = breakPGIntoLinesFFVP(
                 layoutContext.flowView,
@@ -1500,11 +1500,11 @@ function makeSegSpan(
     return span;
 }
 
-function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
+function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo | undefined {
     const range = document.caretRangeFromPoint(x, y);
     if (range) {
         const result = {
-            elm: range.startContainer.parentElement,
+            elm: range.startContainer.parentElement!,
             node: range.startContainer,
             offset: range.startOffset,
         };
@@ -1518,8 +1518,8 @@ const Nope = -1;
 const presenceColors = ["darkgreen", "sienna", "olive", "purple", "lightseagreen"];
 
 class FlowCursor extends Cursor {
-    private presenceDiv: HTMLDivElement;
-    public presenceInfo: ILocalPresenceInfo;
+    private presenceDiv: HTMLDivElement | undefined;
+    public presenceInfo: ILocalPresenceInfo | undefined;
     public presenceInfoUpdated = true;
 
     constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
@@ -1530,7 +1530,7 @@ class FlowCursor extends Cursor {
         this.editSpan.style.visibility = "hidden";
 
         if (hidePresenceDiv && this.presenceInfo) {
-            this.presenceDiv.style.visibility = "hidden";
+            this.presenceDiv!.style.visibility = "hidden";
         }
     }
 
@@ -1543,7 +1543,7 @@ class FlowCursor extends Cursor {
         this.editSpan.style.visibility = "visible";
 
         if (this.presenceInfo) {
-            this.presenceDiv.style.visibility = "visible";
+            this.presenceDiv!.style.visibility = "visible";
         }
     }
 
@@ -1576,18 +1576,18 @@ class FlowCursor extends Cursor {
     }
 
     private setPresenceDivEvents(div: HTMLDivElement) {
-        this.presenceDiv.onmouseenter = (e) => {
-            div.innerText = (this.presenceInfo.user as IFlowViewUser).name;
+        this.presenceDiv!.onmouseenter = (e) => {
+            div.innerText = (this.presenceInfo!.user as IFlowViewUser).name;
         };
-        this.presenceDiv.onmouseleave = (e) => {
-            div.innerText = this.getUserDisplayString(this.presenceInfo.user as IFlowViewUser);
+        this.presenceDiv!.onmouseleave = (e) => {
+            div.innerText = this.getUserDisplayString(this.presenceInfo!.user as IFlowViewUser);
         };
     }
 
     private makePresenceDiv() {
         this.presenceDiv = document.createElement("div");
         // TODO callback to go from UID to display information
-        this.presenceDiv.innerText = this.getUserDisplayString(this.presenceInfo.user as IFlowViewUser);
+        this.presenceDiv.innerText = this.getUserDisplayString(this.presenceInfo!.user as IFlowViewUser);
         this.presenceDiv.style.zIndex = "1";
         this.presenceDiv.style.position = "absolute";
         this.presenceDiv.style.color = "white";
@@ -1602,7 +1602,7 @@ class FlowCursor extends Cursor {
 
     public onLine(pos: number) {
         const lineDiv = this.lineDiv();
-        return lineDiv && (pos >= lineDiv.linePos) && (pos < lineDiv.lineEnd);
+        return lineDiv && (pos >= lineDiv.linePos!) && (pos < lineDiv.lineEnd!);
     }
 
     public lineDiv() {
@@ -1614,7 +1614,7 @@ class FlowCursor extends Cursor {
             flowView.render(flowView.topChar, true);
         } else {
             const lineDiv = this.lineDiv();
-            if (lineDiv && (lineDiv.linePos <= this.pos) && (lineDiv.lineEnd > this.pos)) {
+            if (lineDiv && (lineDiv.linePos! <= this.pos) && (lineDiv.lineEnd! > this.pos)) {
                 reRenderLine(lineDiv, flowView);
             } else {
                 const foundLineDiv = findLineDiv(this.pos, flowView, true);
@@ -1637,19 +1637,19 @@ class FlowCursor extends Cursor {
         if (this.presenceInfo) {
             const bannerHeight = 16;
             const halfBannerHeight = bannerHeight / 2;
-            this.presenceDiv.style.left = `${x}px`;
-            this.presenceDiv.style.height = `${bannerHeight}px`;
-            this.presenceDiv.style.top = `-${halfBannerHeight}px`;
-            if (this.presenceDiv.parentElement) {
-                this.presenceDiv.parentElement.removeChild(this.presenceDiv);
+            this.presenceDiv!.style.left = `${x}px`;
+            this.presenceDiv!.style.height = `${bannerHeight}px`;
+            this.presenceDiv!.style.top = `-${halfBannerHeight}px`;
+            if (this.presenceDiv!.parentElement) {
+                this.presenceDiv!.parentElement.removeChild(this.presenceDiv!);
             }
-            lineDiv.appendChild(this.presenceDiv);
-            this.setPresenceDivEvents(this.presenceDiv);
+            lineDiv.appendChild(this.presenceDiv!);
+            this.setPresenceDivEvents(this.presenceDiv!);
         }
         if ((!this.presenceInfo) || (this.presenceInfo.fresh)) {
             if (this.presenceInfo) {
                 this.editSpan.style.opacity = "0.6";
-                this.presenceDiv.style.opacity = "0.6";
+                this.presenceDiv!.style.opacity = "0.6";
             }
             if (show) {
                 this.show();
@@ -1785,7 +1785,7 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
 }
 
 function getLocalRefPos(sharedString: Sequence.SharedString, localRef: MergeTree.LocalReference) {
-    return sharedString.getPosition(localRef.segment) + localRef.offset;
+    return sharedString.getPosition(localRef.segment!) + localRef.offset;
 }
 
 function getContainingSegment(sharedString: Sequence.SharedString, pos: number): ISegmentOffset {
@@ -1834,36 +1834,36 @@ const presenceSignalType = "presence";
 
 export class FlowView extends ui.Component {
     public static docStartPosition = 0;
-    public timeToImpression: number;
-    public timeToEdit: number;
-    public viewportStartPos: number;
-    public viewportEndPos: number;
-    public childCursor: IViewCursor;
+    public timeToImpression: number | undefined;
+    public timeToEdit: number | undefined;
+    public viewportStartPos: number | undefined;
+    public viewportEndPos: number | undefined;
+    public childCursor: IViewCursor | undefined;
     public viewportDiv: HTMLDivElement;
-    public viewportRect: ui.Rectangle;
+    public viewportRect: ui.Rectangle | undefined;
     public ticking = false;
     public wheelTicking = false;
     public topChar = -1;
     public cursor: FlowCursor;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
-    public curPG: MergeTree.Marker;
-    public lastDocContext: IDocumentContext;
-    public focusChild: FlowView;
-    public parentFlow: FlowView;
-    public keypressHandler: (e: KeyboardEvent) => void;
-    public keydownHandler: (e: KeyboardEvent) => void;
+    public curPG: MergeTree.Marker | undefined;
+    public lastDocContext: IDocumentContext | undefined;
+    public focusChild: FlowView | undefined;
+    public parentFlow: FlowView | undefined;
+    public keypressHandler: ((e: KeyboardEvent) => void) | undefined;
+    public keydownHandler: ((e: KeyboardEvent) => void) | undefined;
 
     public srcLanguage = "en";
 
     private lastVerticalX = -1;
     private pendingRender = false;
-    private activeCommandBox: boolean;
-    private formatRegister: MergeTree.PropertySet;
+    private activeCommandBox: boolean | undefined;
+    private formatRegister: MergeTree.PropertySet | undefined;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
     // sequenceDelta event.)  Used by 'updatePgInfo()' to determine if table information
     // may have been invalidated.
-    private modifiedMarkers = [];
+    private modifiedMarkers: any[] = [];
 
     private readonly undoRedoManager: UndoRedoStackManager;
 
@@ -2065,7 +2065,7 @@ export class FlowView extends ui.Component {
                 friendlyName: "table test",
                 exec: () => {
                     this.updatePGInfo(this.cursor.pos - 1);
-                    Table.createTable(this.cursor.pos, this.sharedString, this.runtime.clientId);
+                    Table.createTable(this.cursor.pos, this.sharedString, this.runtime.clientId!);
                     this.hostSearchMenu(this.cursor.pos);
                 },
             },
@@ -2127,7 +2127,7 @@ export class FlowView extends ui.Component {
     public presenceInfoInRange(start: number, end: number) {
         for (const presenceInfo of this.presenceVector.values()) {
             if (presenceInfo) {
-                if ((start <= presenceInfo.xformPos) && (presenceInfo.xformPos <= end)) {
+                if ((start <= presenceInfo.xformPos!) && (presenceInfo.xformPos! <= end)) {
                     return presenceInfo;
                 }
             }
@@ -2136,7 +2136,7 @@ export class FlowView extends ui.Component {
 
     private updatePresencePosition(localPresenceInfo: ILocalPresenceInfo) {
         if (localPresenceInfo) {
-            localPresenceInfo.xformPos = getLocalRefPos(this.sharedString, localPresenceInfo.localRef);
+            localPresenceInfo.xformPos = getLocalRefPos(this.sharedString, localPresenceInfo.localRef!);
             if (localPresenceInfo.markLocalRef) {
                 localPresenceInfo.markXformPos = getLocalRefPos(this.sharedString, localPresenceInfo.markLocalRef);
             } else {
@@ -2160,8 +2160,8 @@ export class FlowView extends ui.Component {
         if (presentPresence) {
             if (presentPresence.cursor) {
                 localPresenceInfo.cursor = presentPresence.cursor;
-                localPresenceInfo.cursor.presenceInfo = localPresenceInfo;
-                localPresenceInfo.cursor.presenceInfoUpdated = true;
+                localPresenceInfo.cursor!.presenceInfo = localPresenceInfo;
+                localPresenceInfo.cursor!.presenceInfoUpdated = true;
             }
             if (presentPresence.markLocalRef) {
                 this.sharedString.removeLocalReference(presentPresence.markLocalRef);
@@ -2176,8 +2176,8 @@ export class FlowView extends ui.Component {
             const sameLine = localPresenceInfo.cursor &&
                 localPresenceInfo.cursor.onLine(tempXformPos) &&
                 localPresenceInfo.cursor.onLine(tempMarkXformPos) &&
-                localPresenceInfo.cursor.onLine(localPresenceInfo.xformPos) &&
-                localPresenceInfo.cursor.onLine(localPresenceInfo.markXformPos);
+                localPresenceInfo.cursor.onLine(localPresenceInfo.xformPos!) &&
+                localPresenceInfo.cursor.onLine(localPresenceInfo.markXformPos!);
             this.presenceQueueRender(localPresenceInfo, sameLine);
         }
     }
@@ -2194,7 +2194,7 @@ export class FlowView extends ui.Component {
      * Returns the (x, y) coordinate of the given position relative to the FlowView's coordinate system or null
      * if the position is not visible.
      */
-    private getPositionLocation(position: number): ui.IPoint {
+    private getPositionLocation(position: number): ui.IPoint | null {
         const lineDiv = findLineDiv(position, this, true);
         if (!lineDiv) {
             return null;
@@ -2213,7 +2213,7 @@ export class FlowView extends ui.Component {
     /**
      * Retrieves the nearest sequence position relative to the given viewport location
      */
-    public getNearestPosition(location: ui.IPoint): number {
+    public getNearestPosition(location: ui.IPoint): number | undefined {
         const lineDivs: ILineDiv[] = [];
         this.lineDivSelect(
             (lineDiv) => {
@@ -2229,18 +2229,18 @@ export class FlowView extends ui.Component {
 
         // And then the nearest location within them
         let distance = Number.MAX_VALUE;
-        let position: number;
+        let position: number | undefined;
 
         if (closestUp !== -1) {
-            const upPosition = this.getPosFromPixels(lineDivs[closestUp], location.x);
-            const upLocation = this.getPositionLocation(upPosition);
+            const upPosition = this.getPosFromPixels(lineDivs[closestUp], location.x)!;
+            const upLocation = this.getPositionLocation(upPosition)!;
             distance = ui.distanceSquared(location, upLocation);
             position = upPosition;
         }
 
         if (closestDown !== -1) {
-            const downPosition = this.getPosFromPixels(lineDivs[closestDown], location.x);
-            const downLocation = this.getPositionLocation(downPosition);
+            const downPosition = this.getPosFromPixels(lineDivs[closestDown], location.x)!;
+            const downLocation = this.getPositionLocation(downPosition)!;
             const downDistance = ui.distanceSquared(location, downLocation);
 
             if (downDistance < distance) {
@@ -2252,10 +2252,10 @@ export class FlowView extends ui.Component {
         return position;
     }
 
-    private checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv | undefined, rev?: boolean) {
-        let _lineDiv = lineDiv;
+    private checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv | undefined | null, rev?: boolean) {
+        let _lineDiv: ILineDiv | undefined = lineDiv;
         let rowDiv = _lineDiv as IRowDiv;
-        let oldRowDiv: IRowDiv;
+        let oldRowDiv: IRowDiv | undefined;
         while (rowDiv && (rowDiv !== oldRowDiv) && rowDiv.rowView) {
             oldRowDiv = rowDiv;
             _lineDiv = undefined;
@@ -2273,7 +2273,7 @@ export class FlowView extends ui.Component {
         return _lineDiv;
     }
 
-    public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv | undefined, viewportDiv: IViewportDiv, dive = false, rev?: boolean) {
+    public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv | undefined | null, viewportDiv: IViewportDiv, dive = false, rev?: boolean) {
         if (rev) {
             let elm = viewportDiv.lastElementChild as ILineDiv;
             while (elm) {
@@ -2315,7 +2315,7 @@ export class FlowView extends ui.Component {
             if (span.offset) {
                 computed += span.offset;
             }
-            this.cursor.pos = span.segPos + computed;
+            this.cursor.pos = span.segPos! + computed;
             this.cursor.enable();
             if (this.childCursor) {
                 this.childCursor.leave(CursorDirection.Airlift);
@@ -2335,7 +2335,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private getSegSpan(span: ISegSpan): ISegSpan {
+    private getSegSpan(span: ISegSpan): ISegSpan | undefined {
         let _span = span;
         while (_span.tagName === "SPAN") {
             if (_span.segPos) {
@@ -2346,15 +2346,15 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private getPosFromPixels(targetLineDiv: ILineDiv, x: number) {
-        let position: number;
+    private getPosFromPixels(targetLineDiv: ILineDiv | undefined, x: number) {
+        let position: number | undefined;
 
         if (targetLineDiv && (targetLineDiv.linePos !== undefined)) {
             const targetLineBounds = targetLineDiv.getBoundingClientRect();
             const y = targetLineBounds.top + Math.floor(targetLineBounds.height / 2);
-            const elm = document.elementFromPoint(x, y);
+            const elm = document.elementFromPoint(x, y)!;
             if (elm.tagName === "DIV") {
-                if ((targetLineDiv.lineEnd - targetLineDiv.linePos) === 1) {
+                if ((targetLineDiv.lineEnd! - targetLineDiv.linePos) === 1) {
                     // Empty line
                     position = targetLineDiv.linePos;
                 } else if (targetLineDiv === elm) {
@@ -2385,7 +2385,7 @@ export class FlowView extends ui.Component {
                         if (span.offset) {
                             computed += span.offset;
                         }
-                        position = span.segPos + computed;
+                        position = span.segPos! + computed;
                         if (position === targetLineDiv.lineEnd) {
                             position--;
                         }
@@ -2400,7 +2400,7 @@ export class FlowView extends ui.Component {
     }
 
     // TODO: handle symbol div
-    private setCursorPosFromPixels(targetLineDiv: ILineDiv, x: number) {
+    private setCursorPosFromPixels(targetLineDiv: ILineDiv | undefined, x: number) {
         const position = this.getPosFromPixels(targetLineDiv, x);
         if (position !== undefined) {
             this.cursor.enable();
@@ -2444,7 +2444,7 @@ export class FlowView extends ui.Component {
                 } else if ((marker.refType === MergeTree.ReferenceType.NestEnd) && (marker.hasRangeLabel("cell"))) {
                     const cellMarker = marker as Table.ICellMarker;
                     const endId = cellMarker.getId();
-                    let beginMarker: Table.ICellMarker;
+                    let beginMarker: Table.ICellMarker | undefined;
                     if (endId) {
                         const id = Table.idFromEndId(endId);
                         beginMarker = this.sharedString.getMarkerFromId(id) as Table.ICellMarker;
@@ -2509,7 +2509,7 @@ export class FlowView extends ui.Component {
     private verticalMove(lineCount: number) {
         const up = lineCount < 0;
         const lineDiv = this.cursor.lineDiv();
-        let targetLineDiv = lineDiv;
+        let targetLineDiv: ILineDiv | undefined = lineDiv;
         if (lineCount < 0) {
             do {
                 targetLineDiv = targetLineDiv.previousElementSibling as ILineDiv;
@@ -2550,8 +2550,8 @@ export class FlowView extends ui.Component {
             const rowDiv = findRowParent(lineDiv);
             if (rowDiv && rowDiv.rowView) {
                 const rowView = rowDiv.rowView;
-                const tableView = rowView.table;
-                let targetRow: Table.Row;
+                const tableView = rowView.table!;
+                let targetRow: Table.Row | undefined;
                 if (up) {
                     targetRow = tableView.findPrecedingRow(rowView);
                 } else {
@@ -2584,7 +2584,7 @@ export class FlowView extends ui.Component {
     }
 
     private viewportCharCount() {
-        return this.viewportEndPos - this.viewportStartPos;
+        return this.viewportEndPos! - this.viewportStartPos!;
     }
 
     private clearSelection(render = true) {
@@ -2725,7 +2725,7 @@ export class FlowView extends ui.Component {
 
         const keydownHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
-                this.focusChild.keydownHandler(e);
+                this.focusChild.keydownHandler!(e);
             } else if (!this.activeCommandBox) {
                 const saveLastVertX = this.lastVerticalX;
                 let specialKey = true;
@@ -2813,14 +2813,14 @@ export class FlowView extends ui.Component {
                         this.clearSelection();
                     }
                     const maxPos = this.sharedString.getLength() - 1;
-                    if (this.viewportEndPos > maxPos) {
+                    if (this.viewportEndPos! > maxPos) {
                         this.viewportEndPos = maxPos;
                     }
                     const vpEnd = this.viewportEndPos;
                     if ((this.cursor.pos < maxPos) || (lineCount < 0)) {
                         if (!this.verticalMove(lineCount)) {
-                            if (((this.viewportStartPos > 0) && (lineCount < 0)) ||
-                                ((this.viewportEndPos < maxPos) && (lineCount > 0))) {
+                            if (((this.viewportStartPos! > 0) && (lineCount < 0)) ||
+                                ((this.viewportEndPos! < maxPos) && (lineCount > 0))) {
                                 this.scroll(lineCount < 0, true);
                                 if (lineCount > 0) {
                                     while (vpEnd === this.viewportEndPos) {
@@ -2854,7 +2854,7 @@ export class FlowView extends ui.Component {
 
         const keypressHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
-                this.focusChild.keypressHandler(e);
+                this.focusChild.keypressHandler!(e);
             } else if (!this.activeCommandBox) {
                 const pos = this.cursor.pos;
                 const code = e.charCode;
@@ -2909,7 +2909,7 @@ export class FlowView extends ui.Component {
             if (tile.hasTileLabel("list")) {
                 listStatus = true;
             }
-            const curLabels = tile.properties[MergeTree.reservedTileLabelsKey] as string[];
+            const curLabels = tile.properties![MergeTree.reservedTileLabelsKey] as string[];
 
             if (listStatus) {
                 const remainingLabels = curLabels.filter((l) => l !== "list");
@@ -2944,14 +2944,14 @@ export class FlowView extends ui.Component {
             this.sharedString.getStackContext(pos, ["table", "cell", "row"]);
         if (cursorContext.table && (!cursorContext.table.empty())) {
             const tableMarker = cursorContext.table.top() as Table.ITableMarker;
-            const tableView = tableMarker.table;
+            const tableView = tableMarker.table!;
             if (cursorContext.cell && (!cursorContext.cell.empty())) {
                 const cell = cursorContext.cell.top() as Table.ICellMarker;
-                let toCell: Table.Cell;
+                let toCell: Table.Cell | undefined;
                 if (shift) {
-                    toCell = tableView.prevcell(cell.cell);
+                    toCell = tableView.prevcell(cell.cell!);
                 } else {
-                    toCell = tableView.nextcell(cell.cell);
+                    toCell = tableView.nextcell(cell.cell!);
                 }
                 if (toCell) {
                     const position = this.sharedString.getPosition(toCell.marker);
