@@ -25,7 +25,7 @@ import { ISnapshotTreeWithBlobContents } from "./utils";
  * container attach state.
  */
 export class ContainerStorageAdapter implements IDocumentStorageService {
-    private readonly blobContents: {[id: string]: ArrayBufferLike} = {};
+    private readonly blobContents: { [id: string]: ArrayBufferLike } = {};
     constructor(private readonly storageGetter: () => IDocumentStorageService) {}
 
     public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
@@ -33,10 +33,10 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
     }
 
     private getBlobContents(snapshotTree: ISnapshotTreeWithBlobContents) {
-        for(const [id, value] of Object.entries(snapshotTree.blobsContents)) {
+        for (const [id, value] of Object.entries(snapshotTree.blobsContents)) {
             this.blobContents[id] = value;
         }
-        for(const [_, tree] of Object.entries(snapshotTree.trees)) {
+        for (const [_, tree] of Object.entries(snapshotTree.trees)) {
             this.getBlobContents(tree);
         }
     }
@@ -46,7 +46,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         // and storage is always present in >=0.41.
         try {
             return this.storageGetter().policies;
-        } catch(e) {}
+        } catch (e) {}
         return undefined;
     }
 

@@ -62,7 +62,7 @@ describe("Runtime", () => {
             }
 
             function emitBroadcast(timestamp = Date.now()) {
-                mockDeltaManager.emit("op",{
+                mockDeltaManager.emit("op", {
                     type: MessageType.Summarize,
                     clientId: summarizerClientId,
                     referenceSequenceNumber: lastRefSeq,
@@ -639,8 +639,7 @@ describe("Runtime", () => {
                     try {
                         summarizer.summarizeOnDemand(undefined, { reason: "test" });
                         resolved = true;
-                    }
-                    catch {}
+                    } catch {}
 
                     await flushPromises();
                     assert(resolved === false, "already running promise should not resolve yet");

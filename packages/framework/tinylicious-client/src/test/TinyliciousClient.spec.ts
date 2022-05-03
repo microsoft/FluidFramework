@@ -117,7 +117,7 @@ describe("TinyliciousClient", () => {
 
         await assert.rejects(
             container.attach(),
-            ()=> true,
+            () => true,
             "Container should not attached twice",
         );
     });

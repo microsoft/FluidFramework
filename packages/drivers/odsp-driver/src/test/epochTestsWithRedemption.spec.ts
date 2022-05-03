@@ -67,7 +67,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
         epochTracker.setEpoch("epoch1", true, "test");
         const cacheEntry1: IEntry = {
             type: snapshotKey,
-            key:"key1",
+            key: "key1",
         };
         await epochTracker.put(cacheEntry1, { val: "val1" });
 
@@ -85,7 +85,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
         epochTracker.setEpoch("epoch1", true, "test");
         const cacheEntry1: IEntry = {
             type: snapshotKey,
-            key:"key1",
+            key: "key1",
         };
         await epochTracker.put(cacheEntry1, { val: "val1" });
 

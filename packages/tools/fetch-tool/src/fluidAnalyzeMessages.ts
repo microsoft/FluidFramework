@@ -226,7 +226,7 @@ class DataStructureAnalyzer implements IMessageAnalyzer {
     private readonly dataType = new Map<string, string>();
     private readonly dataTypeStats = new Map<string, [number, number]>();
     private readonly objectStats = new Map<string, [number, number]>();
-    private readonly chunkMap = new Map<string, {chunks: string[], totalSize: number}>();
+    private readonly chunkMap = new Map<string, { chunks: string[], totalSize: number }>();
 
     public processOp(message: ISequencedDocumentMessage, msgSize: number, skipMessage: boolean): void {
         if (!skipMessage) {
@@ -479,7 +479,7 @@ function processOp(
     msgSize: number,
     dataTypeStats: Map<string, [number, number]>,
     messageTypeStats: Map<string, [number, number]>,
-    chunkMap: Map<string, {chunks: string[], totalSize: number}>) {
+    chunkMap: Map<string, { chunks: string[], totalSize: number }>) {
     let type = message.type;
     let recorded = false;
     let totalMsgSize = msgSize;
@@ -500,7 +500,11 @@ function processOp(
             case RuntimeMessage.ChunkedOp: {
                 const chunk = runtimeMessage.contents as IChunkedOp;
                 if (!chunkMap.has(runtimeMessage.clientId)) {
-                    chunkMap.set(runtimeMessage.clientId, {chunks: new Array<string>(chunk.totalChunks), totalSize:0});
+                    chunkMap.set(
+                        runtimeMessage.clientId, {
+                        chunks: new Array<string>(chunk.totalChunks),
+                        totalSize: 0,
+                    });
                 }
                 const value = chunkMap.get(runtimeMessage.clientId);
                 assert(value !== undefined, 0x2b8 /* "Chunk should be set in map" */);
@@ -528,68 +532,68 @@ function processOp(
             case RuntimeMessage.Alias:
             case RuntimeMessage.Rejoin:
             case RuntimeMessage.Operation:
-            {
-                let envelope = runtimeMessage.contents as IEnvelope;
-                // TODO: Legacy?
-                if (envelope && typeof envelope === "string") {
-                    envelope = JSON.parse(envelope);
-                }
-                const innerContent = envelope.contents as {
-                    content: any;
-                    type: string;
-                };
-                const address = envelope.address;
-                type = `${type}/${innerContent.type}`;
-                switch (innerContent.type) {
-                    case DataStoreMessageType.Attach: {
-                        const attachMessage = innerContent.content as IAttachMessage;
-                        let objectType = attachMessage.type;
-                        if (objectType.startsWith(objectTypePrefix)) {
-                            objectType = objectType.substring(objectTypePrefix.length);
-                        }
-                        dataType.set(getObjectId(address, attachMessage.id), objectType);
-                        break;
+                {
+                    let envelope = runtimeMessage.contents as IEnvelope;
+                    // TODO: Legacy?
+                    if (envelope && typeof envelope === "string") {
+                        envelope = JSON.parse(envelope);
                     }
-                    case DataStoreMessageType.ChannelOp:
-                    default: {
-                        const innerEnvelope = innerContent.content as IEnvelope;
-                        const innerContent2 = innerEnvelope.contents as {
-                            type?: string;
-                            value?: any;
-                        };
-
-                        const objectId = getObjectId(address, innerEnvelope.address);
-                        incr(objectStats, objectId, totalMsgSize, opCount);
-                        let objectType = dataType.get(objectId);
-                        if (objectType === undefined) {
-                            // Somehow we do not have data...
-                            dataType.set(objectId, objectId);
-                            objectType = objectId;
-                        }
-                        incr(dataTypeStats, objectType, totalMsgSize, opCount);
-                        recorded = true;
-
-                        let subType = innerContent2.type;
-                        if (innerContent2.type === "set" &&
-                            typeof innerContent2.value === "object" &&
-                            innerContent2.value !== null) {
-                            type = `${type}/${subType}`;
-                            subType = innerContent2.value.type;
-                        } else if (objectType === "mergeTree" && subType !== undefined) {
-                            const types = ["insert", "remove", "annotate", "group"];
-                            if (types[subType]) {
-                                subType = types[subType];
+                    const innerContent = envelope.contents as {
+                        content: any;
+                        type: string;
+                    };
+                    const address = envelope.address;
+                    type = `${type}/${innerContent.type}`;
+                    switch (innerContent.type) {
+                        case DataStoreMessageType.Attach: {
+                            const attachMessage = innerContent.content as IAttachMessage;
+                            let objectType = attachMessage.type;
+                            if (objectType.startsWith(objectTypePrefix)) {
+                                objectType = objectType.substring(objectTypePrefix.length);
                             }
+                            dataType.set(getObjectId(address, attachMessage.id), objectType);
+                            break;
                         }
-                        if (subType !== undefined) {
-                            type = `${type}/${subType}`;
-                        }
+                        case DataStoreMessageType.ChannelOp:
+                        default: {
+                            const innerEnvelope = innerContent.content as IEnvelope;
+                            const innerContent2 = innerEnvelope.contents as {
+                                type?: string;
+                                value?: any;
+                            };
 
-                        type = `${type} (${objectType})`;
+                            const objectId = getObjectId(address, innerEnvelope.address);
+                            incr(objectStats, objectId, totalMsgSize, opCount);
+                            let objectType = dataType.get(objectId);
+                            if (objectType === undefined) {
+                                // Somehow we do not have data...
+                                dataType.set(objectId, objectId);
+                                objectType = objectId;
+                            }
+                            incr(dataTypeStats, objectType, totalMsgSize, opCount);
+                            recorded = true;
+
+                            let subType = innerContent2.type;
+                            if (innerContent2.type === "set" &&
+                                typeof innerContent2.value === "object" &&
+                                innerContent2.value !== null) {
+                                type = `${type}/${subType}`;
+                                subType = innerContent2.value.type;
+                            } else if (objectType === "mergeTree" && subType !== undefined) {
+                                const types = ["insert", "remove", "annotate", "group"];
+                                if (types[subType]) {
+                                    subType = types[subType];
+                                }
+                            }
+                            if (subType !== undefined) {
+                                type = `${type}/${subType}`;
+                            }
+
+                            type = `${type} (${objectType})`;
+                        }
                     }
+                    break;
                 }
-                break;
-            }
             default:
                 unreachableCase(messageType, "Message type not recognized!");
         }

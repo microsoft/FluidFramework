@@ -317,7 +317,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
+        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
@@ -326,9 +326,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
                 const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
-                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData"} });
+                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData" } });
                 this.channelDeferred?.reject(errorWrapped);
-                this.logger.sendErrorEvent({ eventName: "RealizeError"}, errorWrapped);
+                this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
             });
         }
         return this.channelDeferred.promise;
@@ -641,8 +641,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             throw new Error("Runtime already bound");
         }
 
-        try
-        {
+        try {
             assert(!this.detachedRuntimeCreation, 0x148 /* "Detached runtime creation on runtime bind" */);
             assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
             assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
@@ -680,7 +679,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData"} },
+                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData" } },
                 error);
         }
     }
@@ -993,8 +992,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
  */
 export class LocalDetachedFluidDataStoreContext
     extends LocalFluidDataStoreContextBase
-    implements IFluidDataStoreContextDetached
-{
+    implements IFluidDataStoreContextDetached {
     constructor(props: ILocalFluidDataStoreContextProps) {
         super(props);
         this.detachedRuntimeCreation = true;
@@ -1002,8 +1000,7 @@ export class LocalDetachedFluidDataStoreContext
 
     public async attachRuntime(
         registry: IProvideFluidDataStoreFactory,
-        dataStoreChannel: IFluidDataStoreChannel)
-    {
+        dataStoreChannel: IFluidDataStoreChannel) {
         assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
         assert(this.channelDeferred === undefined, 0x155 /* "channel deferral is already set" */);
 

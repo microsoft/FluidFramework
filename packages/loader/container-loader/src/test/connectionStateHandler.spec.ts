@@ -203,8 +203,7 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Should wait for client 1 to leave before moving to conencted state(Client 3) when client 2 " +
-        "got disconnected from connecting state", async () =>
-    {
+        "got disconnected from connecting state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
@@ -249,8 +248,7 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Should wait for client 1 timeout before moving to conencted state(Client 3) when client 2 " +
-        "got disconnected from connecting state", async () =>
-    {
+        "got disconnected from connecting state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
@@ -301,8 +299,7 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Should wait for savedEvent before moving to conencted state(Client 3) when client 2 " +
-        "got disconnected from connecting state", async () =>
-    {
+        "got disconnected from connecting state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
@@ -353,8 +350,7 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Should wait for client 1 to leave before moving to conencted state(Client 3) when client 2 " +
-        "got disconnected from connected state", async () =>
-    {
+        "got disconnected from connected state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
@@ -403,8 +399,7 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Should wait for client 1 timeout before moving to conencted state(Client 3) when client 2 " +
-        "got disconnected from connected state", async () =>
-    {
+        "got disconnected from connected state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
@@ -458,8 +453,7 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Client 3 should wait for client 2(which got disconnected without sending any ops) to leave " +
-        "when client 2 already waited on client 1", async () =>
-    {
+        "when client 2 already waited on client 1", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });

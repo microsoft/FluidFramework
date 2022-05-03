@@ -37,8 +37,7 @@ export function getDocumentServiceFactory(
         routerliciousTokenProvider = new InsecureTokenProvider(
             "12345",
             getUser());
-    }
-    else {
+    } else {
         routerliciousTokenProvider = new InsecureTokenProvider(
             (options as IRouterliciousRouteOptions).tenantSecret,
             getUser());
