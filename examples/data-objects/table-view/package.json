@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/table-view",
-  "version": "0.59.2001",
+  "version": "0.59.2002",
   "description": "Chaincode component that provides a view for a table-document.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -41,21 +41,21 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/table-document": "^0.59.2001",
-    "@fluidframework/aqueduct": "^0.59.2001",
+    "@fluid-example/table-document": "^0.59.2002",
+    "@fluidframework/aqueduct": "^0.59.2002",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-definitions": "^0.48.1000",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/matrix": "^0.59.2001",
-    "@fluidframework/runtime-utils": "^0.59.2001",
-    "@fluidframework/sequence": "^0.59.2001",
-    "@fluidframework/view-interfaces": "^0.59.2001",
+    "@fluidframework/matrix": "^0.59.2002",
+    "@fluidframework/runtime-utils": "^0.59.2002",
+    "@fluidframework/sequence": "^0.59.2002",
+    "@fluidframework/view-interfaces": "^0.59.2002",
     "@tiny-calc/micro": "0.0.0-alpha.5",
     "source-map-loader": "^0.2.4",
     "url-loader": "^2.1.0"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.59.2001",
+    "@fluid-tools/webpack-fluid-loader": "^0.59.2002",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@rushstack/eslint-config": "^2.5.1",

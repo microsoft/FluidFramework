@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/bubblebench-sharedtree",
-  "version": "0.59.2001",
+  "version": "0.59.2002",
   "description": "Bubblemark inspired DDS benchmark",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -41,19 +41,19 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/example-utils": "^0.59.2001",
-    "@fluid-experimental/bubblebench-common": "^0.59.2001",
-    "@fluid-experimental/tree": "^0.59.2001",
-    "@fluidframework/aqueduct": "^0.59.2001",
+    "@fluid-example/example-utils": "^0.59.2002",
+    "@fluid-experimental/bubblebench-common": "^0.59.2002",
+    "@fluid-experimental/tree": "^0.59.2002",
+    "@fluidframework/aqueduct": "^0.59.2002",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-definitions": "^0.48.1000",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore-definitions": "^0.59.2001",
-    "@fluidframework/map": "^0.59.2001",
+    "@fluidframework/datastore-definitions": "^0.59.2002",
+    "@fluidframework/map": "^0.59.2002",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.59.2001",
+    "@fluid-tools/webpack-fluid-loader": "^0.59.2002",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/test-tools": "^0.2.3074",
