@@ -1548,7 +1548,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
     /**
      * Updates the time until the state is checkpointed when idle
-     * @param rawMessage The current raw message that is initiating the timer
+     * @param rawMessage - The current raw message that is initiating the timer
      */
     private updateCheckpointIdleTimer() {
         this.clearCheckpointIdleTimer();
