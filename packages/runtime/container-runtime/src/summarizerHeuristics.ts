@@ -140,6 +140,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 }
 
+/** Strategy used to run a summary when it's been a while since our last successful summary */
 class MaxTimeSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxTime";
 
@@ -149,6 +150,7 @@ class MaxTimeSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     }
 }
 
+/** Strategy used to do a weighted analysis on the ops we've processed since the last successful smmary */
 class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxOps";
 
