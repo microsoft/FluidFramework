@@ -28,7 +28,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
-import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
+import { VisibilityState } from '@fluidframework/runtime-definitions';
 
 // @public (undocumented)
 export enum DataStoreMessageType {
@@ -117,7 +117,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     // (undocumented)
-    visibilityState: VisibilityState_2;
+    visibilityState: VisibilityState;
     waitAttached(): Promise<void>;
 }
 
