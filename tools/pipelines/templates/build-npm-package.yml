@@ -194,7 +194,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'ci --unsafe-perm'
+            customCommand: 'yarn install-strict'
             customRegistry: 'useNpmrc'
 
         # Set version
