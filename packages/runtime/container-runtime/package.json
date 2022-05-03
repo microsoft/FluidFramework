@@ -118,13 +118,32 @@
       "ClassDeclaration_Summarizer": {
         "forwardCompat": false
       },
-      "InterfaceDeclaration_IProvideSummarizer": {
-        "forwardCompat": false
-      },
       "InterfaceDeclaration_ISummarizer": {
         "forwardCompat": false
       },
+      "InterfaceDeclaration_IProvideSummarizer": {
+        "forwardCompat": false
+      },
       "ClassDeclaration_ContainerRuntime": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IContainerRuntimeOptions": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummarizerOptions": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISummaryRuntimeOptions": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ISummarizerOptions": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITestContainerConfig": {
         "forwardCompat": false,
         "backCompat": false
       }

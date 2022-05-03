@@ -11,7 +11,6 @@ import { ISummarizerClientElection } from "./summarizerClientElection";
 import { IThrottler } from "./throttler";
 import {
     ISummarizer,
-    ISummarizerOptions,
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
@@ -97,7 +96,7 @@ export class SummaryManager implements IDisposable {
             initialDelayMs = defaultInitialDelayMs,
             opsToBypassInitialDelay = defaultOpsToBypassInitialDelay,
         }: Readonly<Partial<ISummaryManagerConfig>> = {},
-        private readonly summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
+        private readonly disableHeuristics?: boolean,
     ) {
         this.logger = ChildLogger.create(
             parentLogger,
@@ -141,12 +140,12 @@ export class SummaryManager implements IDisposable {
         // enforce connectedState.clientId === clientElection.electedClientId. But once we're Running, we should
         // only transition to Stopping when the electedParentId changes. Stopping the summarizer without
         // changing the electedParent will just cause us to transition to Starting again.
-        if (!this.connectedState.connected) {
-            return { shouldSummarize: false, stopReason: "parentNotConnected" };
-        } else if (this.connectedState.clientId !== this.clientElection.electedParentId ||
+        if (this.connectedState.clientId !== this.clientElection.electedParentId ||
             (this.state !== SummaryManagerState.Running &&
                 this.connectedState.clientId !== this.clientElection.electedClientId)) {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
+        } else if (!this.connectedState.connected) {
+            return { shouldSummarize: false, stopReason: "parentNotConnected" };
         } else if (this.disposed) {
             assert(false, 0x260 /* "Disposed should mean disconnected!" */);
         } else {
@@ -227,7 +226,7 @@ export class SummaryManager implements IDisposable {
             return PerformanceEvent.timedExecAsync(
                 this.logger,
                 { eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
-                async () => summarizer.run(clientId, this.summarizerOptions),
+                async () => summarizer.run(clientId, this.disableHeuristics),
             );
         }).then((reason: string) => {
             this.logger.sendTelemetryEvent({

@@ -21,8 +21,11 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 1.0 Breaking changes
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
+- [Deprecate TelemetryDataTag.PackageData](#Deprecate-TelemetryDataTagPackageData)
 - [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
 - [Remove IDeltaManager.close()](#remove-ideltamanagerclose)
+- [Deprecated Fields from ISummaryRuntimeOptions](#Deprecated-fields-from-ISummaryRuntimeOptions)
+- [`ISummarizerOptions` is deprecated](#isummarizerOptions-is-deprecated)
 - [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
 
 ### Remove IFluidSerializer from core-interfaces
@@ -30,6 +33,9 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ### Remove IFluidSerializer from IFluidObject
 `IFluidSerializer` in `IFluidObject` was deprecated in 0.52 and is now removed. Use `FluidObject` instead of `IFluidObject`.
+
+### Deprecate TelemetryDataTag.PackageData
+`TelemetryDataTag.PackageData` is deprecated and will be removed in a future release. Use `TelemetryDataTag.CodeArtifact` instead.
 
 ### Remove Write Method from IDocumentStorageService
 The `IDocumentStorageService.write(...)` method within the `@fluidframework/driver-definitions` package has been removed. Please remove all usage/implementation of this method if present.
@@ -41,6 +47,21 @@ Use IContainer.close() or IContainerContext.closeFn() instead, and pass an error
 ### Require enableOfflineLoad to use IContainer.closeAndGetPendingLocalState()
 Offline load functionality has been placed behind a feature flag as part of [ongoing offline work](https://github.com/microsoft/FluidFramework/pull/9557).
 In order to use `IContainer.closeAndGetPendingLocalState`, pass a set of options to the container runtime including `{ enableOfflineLoad: true }`.
+
+### Deprecated Fields from ISummaryRuntimeOptions
+The following fields have been deprecated from `ISummaryRuntimeOptions` and became properties from `ISummaryConfiguration` interface in order to have the Summarizer Heuristics Settings under the same object. See [#9990](https://github.com/microsoft/FluidFramework/issues/9990):
+
+`ISummaryRuntimeOptions.initialSummarizerDelayMs`
+`ISummaryRuntimeOptions.disableSummaries`
+`ISummaryRuntimeOptions.maxOpsSinceLastSummary`
+`ISummaryRuntimeOptions.summarizerClientElection`
+`ISummaryRuntimeOptions.summarizerOptions`
+
+They will be removed in a future release. See [#9990](https://github.com/microsoft/FluidFramework/issues/9990)
+
+- ### `ISummarizerOptions` is deprecated
+`ISummarizerOptions` interface is deprecated and will be removed in a future release. See [#9990](https://github.com/microsoft/FluidFramework/issues/9990)
+Options that control the behavior of a running summarizer will be moved to the `ISummaryConfiguration` interface instead.
 
 ### connect() and disconnect() made mandatory on IContainer and IFluidContainer
 The functions `IContainer.connect()`, `IContainer.disconnect()`, `IFluidContainer.connect()`, and `IFluidContainer.disconnect()` have all been changed from optional to mandatory functions.

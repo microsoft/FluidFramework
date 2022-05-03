@@ -30,7 +30,11 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         []);
     const deleteTimeoutMs = 100;
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+        },
         gcOptions: { gcAllowed: true, deleteTimeoutMs },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
