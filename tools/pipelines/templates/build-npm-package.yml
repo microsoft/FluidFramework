@@ -202,7 +202,7 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
             script: |
-              npm i -g yarn && yarn install-strict
+              npx midgard-yarn install
 
         # Set version
         - template: include-set-package-version.yml
