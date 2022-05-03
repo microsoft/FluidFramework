@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
     ISummaryConfiguration,
     ISummaryConfigurationHeuristics,
 } from "../containerRuntime";
-import { MockLogger } from "@fluidframework/telemetry-utils";
 import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerHeuristics";
 import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";

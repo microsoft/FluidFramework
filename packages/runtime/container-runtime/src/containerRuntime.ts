@@ -1124,7 +1124,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private readonly summariesDisabled: boolean;
-    private IsSummariesDisabled(): boolean {
+    private isSummariesDisabled(): boolean {
         // back-compat: disableSummaries was moved from ISummaryRuntimeOptions
         //   to ISummaryConfiguration in 0.60.
         if (this.runtimeOptions.summaryOptions.disableSummaries === true) {
@@ -1134,7 +1134,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private readonly heuristicsDisabled: boolean;
-    private IsHeuristicsDisabled(): boolean {
+    private isHeuristicsDisabled(): boolean {
         // back-compat: disableHeuristics was moved from ISummarizerOptions
         //   to ISummaryConfiguration in 0.60.
         if (this.runtimeOptions.summaryOptions.summarizerOptions?.disableHeuristics === true) {
@@ -1241,8 +1241,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
 
-        this.summariesDisabled = this.IsSummariesDisabled();
-        this.heuristicsDisabled = this.IsHeuristicsDisabled();
+        this.summariesDisabled = this.isSummariesDisabled();
+        this.heuristicsDisabled = this.isHeuristicsDisabled();
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();

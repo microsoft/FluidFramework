@@ -231,8 +231,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      */
     private async start(
         onBehalfOf: string,
-        runCoordinator: ICancellableSummarizerController,
-        newConfig?: ISummaryConfiguration): Promise<RunningSummarizer> {
+        runCoordinator: ICancellableSummarizerController): Promise<RunningSummarizer> {
         if (this.runningSummarizer) {
             if (this.runningSummarizer.disposed) {
                 throw new UsageError("Starting a disposed summarizer");
@@ -259,7 +258,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         const runningSummarizer = await RunningSummarizer.start(
             this.logger,
             this.summaryCollection.createWatcher(clientId),
-            newConfig ?? this.configurationGetter(),
+            this.configurationGetter(),
             async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
             new SummarizeHeuristicData(
                 this.runtime.deltaManager.lastSequenceNumber,
@@ -345,15 +344,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             const coordinatorCreateP = this.runCoordinatorCreateFn(this.runtime);
 
             coordinatorCreateP.then((runCoordinator) => {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                const newConfig: ISummaryConfiguration = {
-                    ...this.configurationGetter(),
-                    state: "disableHeuristics",
-                } as ISummaryConfiguration;
-
                 // Successully created the cancellation token. Start the summarizer.
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const startP = this.start(this.runtime.clientId!, runCoordinator, newConfig);
+                const startP = this.start(this.runtime.clientId!, runCoordinator);
                 startP.then(async (runningSummarizer) => {
                     // Successfully started the summarizer. Run it.
                     runningSummarizer.summarizeOnDemand(builder, ...args);

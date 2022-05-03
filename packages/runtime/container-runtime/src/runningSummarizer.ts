@@ -123,7 +123,7 @@ export class RunningSummarizer implements IDisposable {
             assert(this.configuration.state === "enabled", "Configuration state should be enabled");
             this.heuristicRunner = new SummarizeHeuristicRunner(
                 heuristicData,
-                configuration,
+                this.configuration,
                 (reason) => this.trySummarize(reason),
                 this.logger);
         }
