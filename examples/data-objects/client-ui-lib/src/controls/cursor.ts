@@ -12,8 +12,13 @@ const Nope = -1;
 
 export class Cursor {
     public off = true;
-    public parentSpan: HTMLSpanElement;
-    public editSpan: HTMLSpanElement;
+    private _editSpan: HTMLSpanElement | undefined;
+    public get editSpan(): HTMLSpanElement {
+        if (this._editSpan === undefined) {
+            throw new Error("Edit span accessed before creation");
+        }
+        return this._editSpan;
+    }
     public mark = Nope;
     protected bgColor = "blue";
     protected enabled = true;
@@ -85,7 +90,7 @@ export class Cursor {
     }
 
     public makeSpan() {
-        this.editSpan = document.createElement("span");
+        this._editSpan = document.createElement("span");
         this.editSpan.innerText = "\uFEFF";
         this.editSpan.style.zIndex = "3";
         this.editSpan.style.position = "absolute";
