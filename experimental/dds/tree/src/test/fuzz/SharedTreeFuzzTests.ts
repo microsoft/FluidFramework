@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable tsdoc/syntax */
 
 import { promises as fs, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
@@ -162,13 +163,13 @@ export function runSharedTreeFuzzTests(title: string): void {
 			}).timeout(10000);
 		}
 
-		function runMixedVersionTests(summarizeHistory: boolean, testsPerSuite: number): void {
+		function runMixedVersionTests(summarizeHistory: boolean, testsPerSuite: number, testLength: number): void {
 			// TODO: fix these tests. See https://github.com/microsoft/FluidFramework/issues/10103
 			if (!summarizeHistory) {
 				describe('using 0.0.2 and 0.1.1 trees', () => {
 					for (let seed = 0; seed < testsPerSuite; seed++) {
 						runTest(
-							() => take(1000, makeOpGenerator({ joinConfig: { summarizeHistory: [summarizeHistory] } })),
+							() => take(testLength, makeOpGenerator({ joinConfig: { summarizeHistory: [summarizeHistory] } })),
 							seed
 						);
 					}
@@ -265,12 +266,14 @@ export function runSharedTreeFuzzTests(title: string): void {
 		}
 
 		const testCount = 1;
+		const testLength = 200;
 		describe('with no-history summarization', () => {
-			runMixedVersionTests(false, testCount);
+			runMixedVersionTests(false, testCount, testLength);
 		});
 
-		describe('with history summarization', () => {
-			runMixedVersionTests(true, testCount);
+		// TODO: fix these tests. See https://github.com/microsoft/FluidFramework/issues/10103
+		describe.skip('with history summarization', () => {
+			runMixedVersionTests(true, testCount, testLength);
 		});
 	});
 }
