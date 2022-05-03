@@ -41,6 +41,20 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
+	 * @returns the min value in the map.
+	 */
+	public minValue(): V | undefined {
+		return this.elements[1] as V;
+	}
+
+	/**
+	 * @returns the min value in the map.
+	 */
+	public maxValue(): V | undefined {
+		return this.elements[this.elements.length - 1] as V;
+	}
+
+	/**
 	 * @returns the min key in the map.
 	 */
 	public first(): [K, V] | undefined {
@@ -125,7 +139,7 @@ export class AppendOnlySortedMap<K, V> {
 	public append(key: K, value: V): void {
 		const { elements } = this;
 		const { length } = elements;
-		if (length !== 0 && this.comparator(key, elements[length - 2] as K) <= 0) {
+		if (length !== 0 && this.comparator(key, this.maxKey() as K) <= 0) {
 			fail('Inserted key must be > all others in the map.');
 		}
 		elements.push(key);
@@ -328,10 +342,7 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
 	public append(key: K, value: V): void {
 		if (
 			this.elements.length !== 0 &&
-			this.valueComparator(
-				this.extractSearchValue(value),
-				this.extractSearchValue(this.elements[this.elements.length - 1] as V)
-			) <= 0
+			this.valueComparator(this.extractSearchValue(value), this.extractSearchValue(this.maxValue() as V)) <= 0
 		) {
 			fail('Inserted value must be > all others in the map.');
 		}
