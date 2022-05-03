@@ -339,6 +339,10 @@ export class RunningSummarizer implements IDisposable {
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed
             this.tryWhileSummarizing = true;
+            this.logger.sendErrorEvent({
+                eventName: "SummarizingNotCaughtUp",
+                reason,
+            });
             return;
         }
 
