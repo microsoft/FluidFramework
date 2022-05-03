@@ -252,7 +252,6 @@ declare function get_current_InterfaceDeclaration_ITelemetryBaseEvent():
 declare function use_old_InterfaceDeclaration_ITelemetryBaseEvent(
     use: TypeOnly<old.ITelemetryBaseEvent>);
 use_old_InterfaceDeclaration_ITelemetryBaseEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryBaseEvent());
 
 /*
@@ -301,7 +300,6 @@ declare function get_current_InterfaceDeclaration_ITelemetryErrorEvent():
 declare function use_old_InterfaceDeclaration_ITelemetryErrorEvent(
     use: TypeOnly<old.ITelemetryErrorEvent>);
 use_old_InterfaceDeclaration_ITelemetryErrorEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryErrorEvent());
 
 /*
@@ -326,7 +324,6 @@ declare function get_current_InterfaceDeclaration_ITelemetryGenericEvent():
 declare function use_old_InterfaceDeclaration_ITelemetryGenericEvent(
     use: TypeOnly<old.ITelemetryGenericEvent>);
 use_old_InterfaceDeclaration_ITelemetryGenericEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryGenericEvent());
 
 /*
@@ -375,7 +372,6 @@ declare function get_current_InterfaceDeclaration_ITelemetryPerformanceEvent():
 declare function use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
     use: TypeOnly<old.ITelemetryPerformanceEvent>);
 use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryPerformanceEvent());
 
 /*
@@ -400,7 +396,6 @@ declare function get_current_InterfaceDeclaration_ITelemetryProperties():
 declare function use_old_InterfaceDeclaration_ITelemetryProperties(
     use: TypeOnly<old.ITelemetryProperties>);
 use_old_InterfaceDeclaration_ITelemetryProperties(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryProperties());
 
 /*
