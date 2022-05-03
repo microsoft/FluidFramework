@@ -15,15 +15,15 @@
     "fluid-fetch": "bin/fluid-fetch"
   },
   "scripts": {
-    "build": "concurrently yarn:build:compile yarn:lint",
-    "build:compile": "yarn run tsc",
-    "build:full": "yarn run build",
-    "build:full:compile": "yarn run build:compile",
+    "build": "concurrently npm:build:compile npm:lint",
+    "build:compile": "npm run tsc",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-    "lint": "yarn run eslint",
-    "lint:fix": "yarn run eslint:fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"

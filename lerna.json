@@ -1,5 +1,12 @@
 {
     "version": "0.59.3000",
     "npmClient": "yarn",
-    "useWorkspaces": true
+    "useWorkspaces": true,
+    "packages":     [
+        "common/**",
+        "examples/**",
+        "experimental/**",
+        "packages/**",
+        "tools/**"
+    ]
 }
