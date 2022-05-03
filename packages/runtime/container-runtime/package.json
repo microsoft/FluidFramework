@@ -121,6 +121,9 @@
       "InterfaceDeclaration_ISummarizer": {
         "forwardCompat": false
       },
+      "InterfaceDeclaration_IProvideSummarizer": {
+        "forwardCompat": false
+      },
       "ClassDeclaration_ContainerRuntime": {
         "forwardCompat": false,
         "backCompat": false
