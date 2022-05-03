@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import * as MergeTree from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
 import { CharacterCodes } from "./characterCodes";
@@ -522,3 +524,5 @@ export function segmentToItems(
     }
     return true;
 }
+
+/* eslint-enable @typescript-eslint/no-non-null-assertion */

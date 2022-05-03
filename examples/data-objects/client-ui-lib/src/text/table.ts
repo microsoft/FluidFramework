@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import * as MergeTree from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
 import * as Paragraph from "./paragraph";
@@ -665,7 +667,7 @@ function parseRow(
     const rowMarkerSegOff = sharedString.getContainingSegment(rowStartPos);
     const rowMarker = <IRowMarker>rowMarkerSegOff.segment;
     const id = rowMarker.getId();
-    const endId = endPrefix + id;
+    const endId = `${endPrefix}${id}`;
     const endRowMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
     if (!endRowMarker) {
         console.log(`row parse error: ${rowStartPos}`);
@@ -715,7 +717,7 @@ export function parseColumns(sharedString: SharedString, pos: number, table: Tab
 
 export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString) {
     const id = tableMarker.getId();
-    const endId = endPrefix + id;
+    const endId = `${endPrefix}${id}`;
     const endTableMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
     const endTablePos = endTableMarker.cachedLength + getPosition(sharedString, endTableMarker);
     let lineBuf = "";
@@ -806,7 +808,7 @@ export function insertHoleFixer(
 export function parseTable(
     tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
     const id = tableMarker.getId();
-    const endId = endPrefix + id;
+    const endId = `${endPrefix}${id}`;
     const endTableMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
     const endTablePos = getPosition(sharedString, endTableMarker);
     const table = new Table(tableMarker, endTableMarker);
@@ -858,3 +860,5 @@ export const rowIsMoribund = (rowMarker: IRowMarker) => rowMarker.properties && 
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const cellIsMoribund = (cellMarker: ICellMarker) => cellMarker.properties && cellMarker.properties.moribund;
+
+/* eslint-enable @typescript-eslint/no-non-null-assertion */

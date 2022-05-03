@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { performance } from "@fluidframework/common-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
@@ -2252,7 +2254,11 @@ export class FlowView extends ui.Component {
         return position;
     }
 
-    private checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv | undefined | null, rev?: boolean) {
+    private checkRow(
+        lineDiv: ILineDiv,
+        fn: (lineDiv: ILineDiv) => ILineDiv | undefined | null,
+        rev?: boolean,
+    ): ILineDiv | undefined {
         let _lineDiv: ILineDiv | undefined = lineDiv;
         let rowDiv = _lineDiv as IRowDiv;
         let oldRowDiv: IRowDiv | undefined;
@@ -2273,7 +2279,12 @@ export class FlowView extends ui.Component {
         return _lineDiv;
     }
 
-    public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv | undefined | null, viewportDiv: IViewportDiv, dive = false, rev?: boolean) {
+    public lineDivSelect(
+        fn: (lineDiv: ILineDiv) => ILineDiv | undefined | null,
+        viewportDiv: IViewportDiv,
+        dive = false,
+        rev?: boolean,
+    ) {
         if (rev) {
             let elm = viewportDiv.lastElementChild as ILineDiv;
             while (elm) {
@@ -3262,13 +3273,13 @@ export class FlowView extends ui.Component {
         let scrollTo = this.topChar;
         if (one) {
             if (up) {
-                const firstLineDiv = this.firstLineDiv();
-                scrollTo = firstLineDiv.linePos - 2;
+                const firstLineDiv = this.firstLineDiv()!;
+                scrollTo = firstLineDiv.linePos! - 2;
                 if (scrollTo < 0) {
                     return;
                 }
             } else {
-                const nextFirstLineDiv = this.firstLineDiv().nextElementSibling as ILineDiv;
+                const nextFirstLineDiv = this.firstLineDiv()!.nextElementSibling as ILineDiv;
                 if (nextFirstLineDiv) {
                     scrollTo = nextFirstLineDiv.linePos!;
                 } else {
@@ -3608,3 +3619,5 @@ export class FlowView extends ui.Component {
         }
     }
 }
+
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
