@@ -264,7 +264,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
     maxTime: 60 * 1000, // 1 min.
 
-    maxOps: 100, // Summarize if 100 ops received since last snapshot.
+    maxOps: 100, // Summarize if 100 weighted ops received since last snapshot.
 
     minOpsForLastSummaryAttempt: 50,
 
