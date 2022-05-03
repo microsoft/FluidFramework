@@ -69,7 +69,9 @@ export interface ISummarizerInternalsProvider {
     ): Promise<void>;
 }
 
-/** Options that control the behavior of a running summarizer. */
+/**
+ * @deprecated Options that control the behavior of a running summarizer.
+ * */
 export interface ISummarizerOptions {
     /**
      * Set to true to disable the default heuristics from running; false by default.
@@ -313,7 +315,7 @@ export interface ISummarizer extends
     /* Closes summarizer. Any pending processes (summary in flight) are abandoned. */
     close(): void;
 
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
 
     /**
      * Attempts to generate a summary on demand. If already running, takes no action.

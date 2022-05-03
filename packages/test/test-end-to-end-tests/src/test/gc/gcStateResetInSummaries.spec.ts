@@ -42,7 +42,11 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
         []);
 
     const defaultRuntimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+         },
     };
     const logger = new TelemetryNullLogger();
     // Enable config provider setting to write GC data at the root.

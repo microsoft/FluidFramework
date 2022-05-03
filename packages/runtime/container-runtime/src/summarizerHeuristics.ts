@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Timer } from "@fluidframework/common-utils";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { ISummaryConfigurationHeuristics } from "./containerRuntime";
 import {
     ISummarizeHeuristicData,
     ISummarizeHeuristicRunner,
@@ -84,9 +85,9 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 
     public constructor(
         private readonly heuristicData: ISummarizeHeuristicData,
-        private readonly configuration: ISummaryConfiguration,
+        private readonly configuration: ISummaryConfigurationHeuristics,
         trySummarize: (reason: SummarizeReason) => void,
-        private readonly minOpsForAttemptOnClose = 50,
+        private readonly logger: ITelemetryLogger,
         private readonly summarizeStrategies: ISummarizeHeuristicStrategy[] = getDefaultSummarizeHeuristicStrategies(),
     ) {
         this.idleTimer = new Timer(
@@ -124,7 +125,15 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 
     public shouldRunLastSummary(): boolean {
         const opsSinceLastAck = this.opsSinceLastAck;
-        return (opsSinceLastAck > this.minOpsForAttemptOnClose);
+        const minOpsForLastSummaryAttempt = this.configuration.minOpsForLastSummaryAttempt;
+
+        this.logger.sendTelemetryEvent({
+            eventName: "ShouldRunLastSummary",
+            opsSinceLastAck,
+            minOpsForLastSummaryAttempt,
+        });
+
+        return opsSinceLastAck >= minOpsForLastSummaryAttempt;
     }
 
     public dispose() {
@@ -135,7 +144,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 export class MaxTimeSummarizeHeuristicStrategy implements ISummarizeHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxTime";
 
-    public shouldRunSummarize(configuration: ISummaryConfiguration, heuristicData: ISummarizeHeuristicData): boolean {
+    public shouldRunSummarize(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean {
         const timeSinceLastSummary = Date.now() - heuristicData.lastSuccessfulSummary.summaryTime;
         return timeSinceLastSummary > configuration.maxTime;
     }
@@ -148,7 +157,7 @@ export class WeightedOpsSummarizeHeuristicStrategy implements ISummarizeHeuristi
         private readonly weightConfiguration: ISummarizeHeuristicWeightConfiguration,
     ) { }
 
-    public shouldRunSummarize(configuration: ISummaryConfiguration, heuristicData: ISummarizeHeuristicData): boolean {
+    public shouldRunSummarize(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean {
         const weightedNumOfOps = (this.weightConfiguration.systemOpWeight    * heuristicData.numSystemOps)
                                + (this.weightConfiguration.nonSystemOpWeight * heuristicData.numNonSystemOps);
         return weightedNumOfOps > configuration.maxOps;

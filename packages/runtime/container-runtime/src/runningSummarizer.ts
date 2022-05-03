@@ -9,17 +9,18 @@ import { UsageError } from "@fluidframework/container-utils";
 import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
-    ISummaryConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import {
+    ISummaryConfiguration,
+} from "./containerRuntime";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
     IEnqueueSummarizeOptions,
     ISummarizeOptions,
     ISummarizeHeuristicData,
     ISummarizeHeuristicRunner,
-    ISummarizerOptions,
     IOnDemandSummarizeOptions,
     EnqueueSummarizeResult,
     SummarizerStopReason,
@@ -60,7 +61,6 @@ export class RunningSummarizer implements IDisposable {
         cancellationToken: ISummaryCancellationToken,
         stopSummarizerCallback: (reason: SummarizerStopReason) => void,
         runtime: ISummarizerRuntime,
-        options?: Readonly<Partial<ISummarizerOptions>>,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
             logger,
@@ -72,7 +72,6 @@ export class RunningSummarizer implements IDisposable {
             summaryCollection,
             cancellationToken,
             stopSummarizerCallback,
-            options,
             runtime);
 
         await summarizer.waitStart();
@@ -133,7 +132,6 @@ export class RunningSummarizer implements IDisposable {
         private readonly summaryCollection: SummaryCollection,
         private readonly cancellationToken: ISummaryCancellationToken,
         private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
-        { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
         private readonly runtime: ISummarizerRuntime,
     ) {
         const telemetryProps: ISummarizeRunnerTelemetry = {
@@ -148,15 +146,20 @@ export class RunningSummarizer implements IDisposable {
             },
         );
 
-        if (!disableHeuristics) {
+        if (configuration.state !== "disableHeuristics") {
+            assert(this.configuration.state === "enabled", "Configuration state should be enabled");
             this.heuristicRunner = new SummarizeHeuristicRunner(
                 heuristicData,
-                configuration,
-                (reason) => this.trySummarize(reason));
+                this.configuration,
+                (reason) => this.trySummarize(reason),
+                this.logger);
         }
+
+        assert (this.configuration.state !== "disabled", "Summary not supported with configuration disabled");
 
         // Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
         // configuration.maxAckWaitTime is composed from defaults, server values, and runtime overrides
+
         const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
 
         this.pendingAckTimer = new PromiseTimer(
@@ -409,7 +412,11 @@ export class RunningSummarizer implements IDisposable {
                     return;
                 }
 
-                summaryAttempts++;
+                // We only want to attempt 1 summary when reason is "lastSummary"
+                if (++summaryAttempts > 1 && reason === "lastSummary") {
+                    return;
+                }
+
                 summaryAttemptsPerPhase++;
 
                 const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[summaryAttemptPhase];
