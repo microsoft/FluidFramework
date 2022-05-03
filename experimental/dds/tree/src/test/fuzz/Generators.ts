@@ -12,13 +12,13 @@ import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers';
 import { fail } from '../../Common';
 import { rangeFromStableRange } from '../../TreeViewUtilities';
-import { makeRandom } from '../utilities/TestUtilities';
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
 	AsyncWeights,
 	createWeightedAsyncGenerator,
 	done,
+	makeRandom,
 } from '../stochastic-test-utilities';
 import {
 	EditGenerationConfig,
@@ -44,12 +44,12 @@ const defaultJoinConfig: Required<JoinGenerationConfig> = {
 
 function makeJoinGenerator(passedConfig: JoinGenerationConfig): AsyncGenerator<Operation, FuzzTestState> {
 	const config = { ...defaultJoinConfig, ...passedConfig };
-	return async ({ rand, activeCollaborators, passiveCollaborators }) => {
+	return async ({ random, activeCollaborators, passiveCollaborators }) => {
 		const activeAllowed = activeCollaborators.length < config.maximumActiveCollaborators;
 		const passiveAllowed = passiveCollaborators.length < config.maximumPassiveCollaborators;
 		const isObserver =
 			activeAllowed && passiveAllowed
-				? rand.bool()
+				? random.bool()
 				: activeAllowed
 				? false
 				: passiveAllowed
@@ -59,25 +59,29 @@ function makeJoinGenerator(passedConfig: JoinGenerationConfig): AsyncGenerator<O
 				  );
 		return {
 			type: 'join',
-			summarizeHistory: rand.pick(config.summarizeHistory),
-			writeFormat: rand.pick(config.writeFormat),
+			summarizeHistory: random.pick(config.summarizeHistory),
+			writeFormat: random.pick(config.writeFormat),
 			isObserver,
 		};
 	};
 }
 
-async function leaveGenerator({ rand, activeCollaborators, passiveCollaborators }: FuzzTestState): Promise<TreeLeave> {
+async function leaveGenerator({
+	random,
+	activeCollaborators,
+	passiveCollaborators,
+}: FuzzTestState): Promise<TreeLeave> {
 	const canUsePassive = passiveCollaborators.length > 0;
 	const canUseActive = activeCollaborators.length > 0;
 	const isObserver =
 		canUsePassive && canUseActive
-			? rand.bool()
+			? random.bool()
 			: canUsePassive
 			? true
 			: canUseActive
 			? false
 			: fail('Cannot generate a leave op when there are no clients.');
-	const index = rand.integer(0, (isObserver ? passiveCollaborators : activeCollaborators).length - 1);
+	const index = random.integer(0, (isObserver ? passiveCollaborators : activeCollaborators).length - 1);
 	return { type: 'leave', isObserver, index };
 }
 
@@ -101,26 +105,26 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
 	const poolRand = makeRandom(0);
 	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => poolRand.uuid4() as TraitLabel);
-	const traitLabelGenerator = ({ rand }: FuzzTestState) => rand.pick(traitLabelPool);
+	const traitLabelGenerator = ({ random }: FuzzTestState) => random.pick(traitLabelPool);
 
 	const definitionPool = Array.from(
 		{ length: insertConfig.definitionPoolSize },
 		() => poolRand.uuid4() as Definition
 	);
-	const definitionGenerator = ({ rand }: FuzzTestState) => rand.pick(definitionPool);
+	const definitionGenerator = ({ random }: FuzzTestState) => random.pick(definitionPool);
 	type EditState = FuzzTestState & TreeContext;
 
 	function traitGenerator(state: EditState): TraitLocation {
-		const { idList, rand, view } = state;
-		const id = rand.pick(idList);
+		const { idList, random, view } = state;
+		const id = random.pick(idList);
 		return view.tryGetTraitLocation(id) ?? { parent: id, label: traitLabelGenerator(state) };
 	}
 
 	function placeGenerator(state: EditState): StablePlace {
-		const { idList, rand, view } = state;
+		const { idList, random, view } = state;
 		// Note: this gives a 50% chance of adding to a new trait; we may want to tune this at some point
-		if (rand.bool()) {
-			const parent = rand.pick(idList);
+		if (random.bool()) {
+			const parent = random.pick(idList);
 			return StablePlace.atStartOf({ parent, label: traitLabelGenerator(state) });
 		}
 		const traitLocation = traitGenerator(state);
@@ -132,8 +136,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		// For a trait of length N, there are 2N + 2valid places: start, before index 1, after index 1, etc.
 		// index === trait.length is treated as either the start or end of the trait.
 		const makeDescriptor = (): Descriptor => ({
-			index: rand.integer(0, trait.length),
-			side: rand.bool() ? Side.Before : Side.After,
+			index: random.integer(0, trait.length),
+			side: random.bool() ? Side.Before : Side.After,
 		});
 		const descriptor = makeDescriptor();
 
@@ -143,7 +147,7 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	}
 
 	function rangeGenerator(state: EditState): StableRange {
-		const { rand, view } = state;
+		const { random, view } = state;
 		const traitLocation = traitGenerator(state);
 		const trait = view.getTrait(traitLocation);
 		interface Descriptor {
@@ -153,8 +157,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		// For a trait of length N, there are 2N + 2valid places: start, before index 1, after index 1, etc.
 		// index === trait.length is treated as either the start or end of the trait.
 		const makeDescriptor = (): Descriptor => ({
-			index: rand.integer(0, trait.length),
-			side: rand.bool() ? Side.Before : Side.After,
+			index: random.integer(0, trait.length),
+			side: random.bool() ? Side.Before : Side.After,
 		});
 		const descriptor1 = makeDescriptor();
 		let descriptor2: Descriptor;
@@ -193,8 +197,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	}
 
 	function treeGenerator(state: EditState): BuildNode {
-		const { rand, idGenerator } = state;
-		const treeType = rand.pick(['leaf', 'stick', 'balanced']);
+		const { random, idGenerator } = state;
+		const treeType = random.pick(['leaf', 'stick', 'balanced']);
 		const makeNode = (traits?: TraitMap<BuildNode>): BuildNode => ({
 			identifier: idGenerator.generateNodeId(),
 			definition: definitionGenerator(state),
@@ -240,7 +244,9 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 			build: {
 				type: ChangeType.Build,
 				destination: id,
-				source: Array.from({ length: state.rand.integer(1, maxTreeSequenceSize) }, () => treeGenerator(state)),
+				source: Array.from({ length: state.random.integer(1, maxTreeSequenceSize) }, () =>
+					treeGenerator(state)
+				),
 			},
 			insert: {
 				type: ChangeType.Insert,
@@ -322,23 +328,25 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		};
 	}
 
-	async function setPayloadGenerator({ dataStoreRuntime, idList, rand, view }: EditState): Promise<FuzzChange> {
-		const nodeToModify = rand.pick(idList);
-		const getPayloadContents = async (rand: Random): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
-			if (rand.bool()) {
-				return rand.string(4);
+	async function setPayloadGenerator({ dataStoreRuntime, idList, random, view }: EditState): Promise<FuzzChange> {
+		const nodeToModify = random.pick(idList);
+		const getPayloadContents = async (
+			random: Random
+		): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
+			if (random.bool()) {
+				return random.string(4);
 			}
-			const handle = await dataStoreRuntime.uploadBlob(IsoBuffer.from(rand.string(10)));
+			const handle = await dataStoreRuntime.uploadBlob(IsoBuffer.from(random.string(10)));
 			return { blob: handle };
 		};
 
 		const viewNode = view.getViewNode(nodeToModify);
 		const payload =
-			viewNode.payload !== undefined ? (rand.bool() ? await getPayloadContents(rand) : undefined) : undefined;
+			viewNode.payload !== undefined ? (random.bool() ? await getPayloadContents(random) : undefined) : undefined;
 		return {
 			fuzzType: 'setPayload',
 			type: ChangeType.SetValue,
-			nodeToModify: rand.pick(idList),
+			nodeToModify: random.pick(idList),
 			payload,
 		};
 	}
@@ -351,8 +359,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	]);
 
 	return async (state: FuzzTestState): Promise<Operation | typeof done> => {
-		const { rand, activeCollaborators } = state;
-		const index = rand.integer(0, activeCollaborators.length - 1);
+		const { random, activeCollaborators } = state;
+		const index = random.integer(0, activeCollaborators.length - 1);
 		const { tree } = activeCollaborators[index];
 		const view = tree.currentView;
 		const idList = getIdList(view);

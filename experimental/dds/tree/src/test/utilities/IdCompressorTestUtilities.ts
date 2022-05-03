@@ -5,7 +5,6 @@
 
 /* eslint-disable no-bitwise */
 
-import Random from 'random-js';
 import { expect } from 'chai';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
@@ -29,12 +28,13 @@ import {
 	Generator,
 	createWeightedGenerator,
 	interleave,
+	makeRandom,
 	performFuzzActions as performFuzzActionsBase,
 	repeat,
 	SaveInfo,
 	take,
+	BaseFuzzTestState,
 } from '../stochastic-test-utilities';
-import { makeRandom } from './TestUtilities';
 
 /** Identifies a compressor in a network */
 export enum Client {
@@ -611,8 +611,7 @@ interface Validate {
 
 type Operation = AllocateIds | DeliverOperations | ChangeCapacity | GenerateUnifyingIds | Reconnect | Validate;
 
-interface FuzzTestState {
-	rand: Random;
+interface FuzzTestState extends BaseFuzzTestState {
 	network: IdCompressorTestNetwork;
 	activeClients: Client[];
 	selectableClients: Client[];
@@ -637,15 +636,15 @@ const defaultOptions = {
 export function makeOpGenerator(options: OperationGenerationConfig): Generator<Operation, FuzzTestState> {
 	const { includeOverrides, maxClusterSize, validateInterval } = { ...defaultOptions, ...options };
 
-	function allocateIdsGenerator({ activeClients, clusterSize, rand }: FuzzTestState): AllocateIds {
-		const client = rand.pick(activeClients);
+	function allocateIdsGenerator({ activeClients, clusterSize, random }: FuzzTestState): AllocateIds {
+		const client = random.pick(activeClients);
 		const maxIdsPerUsage = clusterSize * 2;
-		const numIds = Math.floor(rand.real(0, 1) ** 2 * maxIdsPerUsage) + 1;
+		const numIds = Math.floor(random.real(0, 1) ** 2 * maxIdsPerUsage) + 1;
 		const overrides: AllocateIds['overrides'] = {};
-		if (includeOverrides && rand.bool(1 / 4)) {
+		if (includeOverrides && random.bool(1 / 4)) {
 			for (let j = 0; j < numIds; j++) {
-				if (rand.bool(1 / 3)) {
-					overrides[j] = rand.uuid4();
+				if (random.bool(1 / 3)) {
+					overrides[j] = random.uuid4();
 				}
 			}
 		}
@@ -657,28 +656,28 @@ export function makeOpGenerator(options: OperationGenerationConfig): Generator<O
 		};
 	}
 
-	function changeCapacityGenerator({ rand }: FuzzTestState): ChangeCapacity {
+	function changeCapacityGenerator({ random }: FuzzTestState): ChangeCapacity {
 		return {
 			type: 'changeCapacity',
-			newSize: Math.min(Math.floor(rand.real(0, 1) ** 2 * maxClusterSize) + 1, maxClusterSize),
+			newSize: Math.min(Math.floor(random.real(0, 1) ** 2 * maxClusterSize) + 1, maxClusterSize),
 		};
 	}
 
-	function deliverOperationsGenerator({ rand, selectableClients }: FuzzTestState): DeliverOperations {
+	function deliverOperationsGenerator({ random, selectableClients }: FuzzTestState): DeliverOperations {
 		return {
 			type: 'deliverOperations',
-			client: rand.pick([...selectableClients, MetaClient.All]),
+			client: random.pick([...selectableClients, MetaClient.All]),
 		};
 	}
 
-	function generateUnifyingIdsGenerator({ activeClients, rand }: FuzzTestState): GenerateUnifyingIds {
-		const clientA = rand.pick(activeClients);
-		const clientB = rand.pick(activeClients.filter((c) => c !== clientA));
-		return { type: 'generateUnifyingIds', clientA, clientB, uuid: rand.uuid4() };
+	function generateUnifyingIdsGenerator({ activeClients, random }: FuzzTestState): GenerateUnifyingIds {
+		const clientA = random.pick(activeClients);
+		const clientB = random.pick(activeClients.filter((c) => c !== clientA));
+		return { type: 'generateUnifyingIds', clientA, clientB, uuid: random.uuid4() };
 	}
 
-	function reconnectGenerator({ activeClients, rand }: FuzzTestState): Reconnect {
-		return { type: 'reconnect', client: rand.pick(activeClients) };
+	function reconnectGenerator({ activeClients, random }: FuzzTestState): Reconnect {
+		return { type: 'reconnect', client: random.pick(activeClients) };
 	}
 
 	return interleave(
@@ -712,11 +711,11 @@ export function performFuzzActions(
 	validator?: (network: IdCompressorTestNetwork) => void,
 	saveInfo?: SaveInfo
 ): void {
-	const rand = makeRandom(seed);
+	const random = makeRandom(seed);
 	const selectableClients: Client[] = network.getTargetCompressors(MetaClient.All).map(([client]) => client);
 
 	const initialState: FuzzTestState = {
-		rand,
+		random,
 		network,
 		activeClients: selectableClients.filter((c) => c !== observerClient),
 		selectableClients,

@@ -6,7 +6,7 @@
 import type Random from 'random-js';
 
 export interface BaseFuzzTestState {
-	rand: Random;
+	random: Random;
 }
 
 export const done = Symbol('GeneratorDone');

@@ -2,9 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { AcceptanceCondition, AsyncGenerator, AsyncWeights, done, Generator, Weights } from './types';
+import {
+	AcceptanceCondition,
+	AsyncGenerator,
+	AsyncWeights,
+	BaseFuzzTestState,
+	done,
+	Generator,
+	Weights,
+} from './types';
 
-export function createWeightedGenerator<T, TState extends { rand: Random }>(
+export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	weights: Weights<T, TState>
 ): Generator<T, TState> {
 	const cumulativeSums: [T | Generator<T, TState>, number, AcceptanceCondition<TState>?][] = [];
@@ -16,9 +24,9 @@ export function createWeightedGenerator<T, TState extends { rand: Random }>(
 	}
 
 	return (state) => {
-		const { rand } = state;
+		const { random } = state;
 		const sample = () => {
-			const weightSelected = rand.integer(1, totalWeight);
+			const weightSelected = random.integer(1, totalWeight);
 
 			let opIndex = 0;
 			while (cumulativeSums[opIndex][1] < weightSelected) {
@@ -145,7 +153,7 @@ export function repeat<T>(t: T): Generator<T, unknown> {
 	return () => t;
 }
 
-export function createWeightedAsyncGenerator<T, TState extends { rand: Random }>(
+export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState>(
 	weights: AsyncWeights<T, TState>
 ): AsyncGenerator<T, TState> {
 	const cumulativeSums: [T | AsyncGenerator<T, TState>, number, AcceptanceCondition<TState>?][] = [];
@@ -157,9 +165,9 @@ export function createWeightedAsyncGenerator<T, TState extends { rand: Random }>
 	}
 
 	return async (state) => {
-		const { rand } = state;
+		const { random } = state;
 		const sample = () => {
-			const weightSelected = rand.integer(1, totalWeight);
+			const weightSelected = random.integer(1, totalWeight);
 
 			let opIndex = 0;
 			while (cumulativeSums[opIndex][1] < weightSelected) {

@@ -4,15 +4,14 @@
  */
 
 import { promises as fs, writeFileSync } from 'fs';
-import Random from 'random-js';
 import { assert } from '@fluidframework/common-utils';
-import { AsyncGenerator, AsyncReducer, done, Generator, Reducer, SaveInfo } from './types';
+import { AsyncGenerator, AsyncReducer, BaseFuzzTestState, done, Generator, Reducer, SaveInfo } from './types';
 
 /**
  * Performs random actions on a set of clients.
  *
  * TOperation is expected to be a discriminated union of JSONable "operation" types, representing some operation to perform on the current state.
- * TState can contain arbitrary data, but must provide a source of randomness (which should be deterministic) via the `rand` field.
+ * TState can contain arbitrary data, but must provide a source of randomness (which should be deterministic) via the `random` field.
  * @param generator finite generator for a sequence of Operations to test. The test will run until this generator is exhausted.
  * @param reducer reducer function which is able to apply Operations to the current state and return the new state
  * @param initialState Initial state for the test
@@ -22,7 +21,7 @@ import { AsyncGenerator, AsyncReducer, done, Generator, Reducer, SaveInfo } from
  */
 export async function performFuzzActionsAsync<
 	TOperation extends { type: string | number },
-	TState extends { rand: Random }
+	TState extends BaseFuzzTestState
 >(
 	generator: AsyncGenerator<TOperation, TState>,
 	reducer: AsyncReducer<TOperation, TState>,
@@ -33,7 +32,7 @@ export async function performFuzzActionsAsync<
  * Performs random actions on a set of clients.
  *
  * TOperation is expected to be a discriminated union of JSONable "operation" types, representing some operation to perform on the current state.
- * TState can contain arbitrary data, but must provide a source of randomness (which should be deterministic) via the `rand` field.
+ * TState can contain arbitrary data, but must provide a source of randomness (which should be deterministic) via the `random` field.
  * @param generator finite generator for a sequence of Operations to test. The test will run until this generator is exhausted.
  * @param reducerMap Object-map containing reducers at each key for the operation of that type.
  * For example, if there is an "add" and "delete" operation with schemas
@@ -55,7 +54,7 @@ export async function performFuzzActionsAsync<
  */
 export async function performFuzzActionsAsync<
 	TOperation extends { type: string | number },
-	TState extends { rand: Random }
+	TState extends BaseFuzzTestState
 >(
 	generator: AsyncGenerator<TOperation, TState>,
 	reducerMap: { [K in TOperation['type']]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
@@ -64,7 +63,7 @@ export async function performFuzzActionsAsync<
 ): Promise<TState>;
 export async function performFuzzActionsAsync<
 	TOperation extends { type: string | number },
-	TState extends { rand: Random }
+	TState extends BaseFuzzTestState
 >(
 	generator: AsyncGenerator<TOperation, TState>,
 	reducerOrMap:
@@ -108,7 +107,7 @@ export async function performFuzzActionsAsync<
  * Performs random actions on a set of clients.
  *
  * TOperation is expected to be a discriminated union of JSONable "operation" types, representing some operation to perform on the current state.
- * TState can contain arbitrary data, but must provide a source of randomness (which should be deterministic) via the `rand` field.
+ * TState can contain arbitrary data, but must provide a source of randomness (which should be deterministic) via the `random` field.
  * @param generator finite generator for a sequence of Operations to test. The test will run until this generator is exhausted.
  * @param reducer reducer function which is able to apply Operations to the current state and return the new state
  * @param initialState Initial state for the test
@@ -116,7 +115,7 @@ export async function performFuzzActionsAsync<
  * This can be useful for debugging why a fuzz test may have failed.
  * Files can also be saved on failure.
  */
-export function performFuzzActions<TOperation extends { type: string | number }, TState extends { rand: Random }>(
+export function performFuzzActions<TOperation extends { type: string | number }, TState extends BaseFuzzTestState>(
 	generator: Generator<TOperation, TState>,
 	reducer: Reducer<TOperation, TState>,
 	initialState: TState,
@@ -126,7 +125,7 @@ export function performFuzzActions<TOperation extends { type: string | number },
  * Performs random actions on a set of clients.
  *
  * TOperation is expected to be a discriminated union of JSONable "operation" types, representing some operation to perform on the current state.
- * TState can contain arbitrary data, but must provide a source of randomness (which should be deterministic) via the `rand` field.
+ * TState can contain arbitrary data, but must provide a source of randomness (which should be deterministic) via the `random` field.
  * @param generator finite generator for a sequence of Operations to test. The test will run until this generator is exhausted.
  * @param reducerMap Object-map containing reducers at each key for the operation of that type.
  * For example, if there is an "add" and "delete" operation with schemas
@@ -146,13 +145,13 @@ export function performFuzzActions<TOperation extends { type: string | number },
  * This can be useful for debugging why a fuzz test may have failed.
  * Files can also be saved on failure.
  */
-export function performFuzzActions<TOperation extends { type: string | number }, TState extends { rand: Random }>(
+export function performFuzzActions<TOperation extends { type: string | number }, TState extends BaseFuzzTestState>(
 	generator: Generator<TOperation, TState>,
 	reducerMap: { [K in TOperation['type']]: Reducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
 	saveInfo?: SaveInfo
 ): TState;
-export function performFuzzActions<TOperation extends { type: string | number }, TState extends { rand: Random }>(
+export function performFuzzActions<TOperation extends { type: string | number }, TState extends BaseFuzzTestState>(
 	generator: Generator<TOperation, TState>,
 	reducerOrMap:
 		| Reducer<TOperation, TState>

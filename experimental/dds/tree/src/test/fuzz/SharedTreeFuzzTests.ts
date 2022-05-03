@@ -5,15 +5,15 @@
 
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import Random from 'random-js';
 import { expect } from 'chai';
-import { makeRandom, setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
+import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
 import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import {
 	AsyncGenerator,
 	chainAsync as chain,
+	makeRandom,
 	takeAsync as take,
 	performFuzzActionsAsync as performFuzzActionsBase,
 } from '../stochastic-test-utilities';
@@ -40,10 +40,10 @@ export async function performFuzzActions(
 	synchronizeAtEnd: boolean = true,
 	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
 ): Promise<Required<FuzzTestState>> {
-	const rand = makeRandom(seed);
+	const random = makeRandom(seed);
 
 	// Note: the direct fields of `state` aren't mutated, but it is mutated transitively.
-	const initialState: FuzzTestState = { rand, passiveCollaborators: [], activeCollaborators: [] };
+	const initialState: FuzzTestState = { random, passiveCollaborators: [], activeCollaborators: [] };
 	const finalState = await performFuzzActionsBase(
 		generator,
 		{
