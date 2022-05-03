@@ -613,7 +613,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.propagateConnectionState();
                     }
                 },
-                onCaughUpToKnownOps: (callback: () => void) => {
+                onCaughtUpToKnownOps: (callback: () => void) => {
                     waitToProcessKnownOps(this, callback);
                 },
             },

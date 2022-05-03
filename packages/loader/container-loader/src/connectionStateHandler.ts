@@ -18,7 +18,7 @@ export interface IConnectionStateHandler {
     maxClientLeaveWaitTime: number | undefined,
     logConnectionIssue: (eventName: string) => void,
     connectionStateChanged: () => void,
-    onCaughUpToKnownOps: (callback: () => void) => void,
+    onCaughtUpToKnownOps: (callback: () => void) => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -129,7 +129,7 @@ export class ConnectionStateHandler {
     }
 
     private transitionToConnectedStateWhenCaughtUp() {
-        this.handler.onCaughUpToKnownOps(() => this.setConnectionState(ConnectionState.Connected));
+        this.handler.onCaughtUpToKnownOps(() => this.setConnectionState(ConnectionState.Connected));
     }
 
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved") {

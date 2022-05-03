@@ -76,7 +76,7 @@ describe("ConnectionStateHandler Tests", () => {
                 shouldClientJoinWrite: () => shouldClientJoinWrite,
                 logConnectionIssue: (eventName: string) => { throw new Error("logConnectionIssue"); },
                 connectionStateChanged: () => {},
-                onCaughUpToKnownOps: (callback: () => void) => {},
+                onCaughtUpToKnownOps: (callback: () => void) => {},
             },
             new TelemetryNullLogger(),
         );
