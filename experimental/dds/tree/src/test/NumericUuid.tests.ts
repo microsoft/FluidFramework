@@ -16,10 +16,9 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 	ensureSessionUuid,
-	isStableId,
-	assertIsStableId,
 } from '../id-compressor/NumericUuid';
 import { StableId } from '../Identifiers';
+import { assertIsStableId, isStableId } from '../UuidUtilities';
 import { integerToStableId } from './utilities/IdCompressorTestUtilities';
 
 describe('NumericUuid', () => {
