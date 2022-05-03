@@ -62,7 +62,7 @@
     "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@0.59.2000",
     "@fluidframework/azure-local-service": "^0.1.38773",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/test-client-utils": "^0.59.3000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",

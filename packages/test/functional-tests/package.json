@@ -60,7 +60,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-loader": "^0.59.3000",
     "@fluidframework/container-runtime": "^0.59.3000",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/sequence": "^0.59.3000",

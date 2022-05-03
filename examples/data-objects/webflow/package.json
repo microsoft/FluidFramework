@@ -90,7 +90,7 @@
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.59.3000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/runtime-utils": "^0.59.3000",
     "@fluidframework/test-utils": "^0.59.3000",

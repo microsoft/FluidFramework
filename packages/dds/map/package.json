@@ -75,7 +75,7 @@
   "devDependencies": {
     "@fluid-internal/test-dds-utils": "^0.59.3000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/map-previous": "npm:@fluidframework/map@0.59.2000",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/test-runtime-utils": "^0.59.3000",

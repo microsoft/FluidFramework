@@ -31,12 +31,12 @@
     "@fluidframework/server-services-core": "^0.1036.2000",
     "@fluidframework/server-services-ordering-zookeeper": "^0.1036.2000",
     "kafka-node": "^5.0.0",
-    "nconf": "^0.11.4",
+    "nconf": "^0.12.0",
     "sillyname": "^0.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/server-test-utils": "^0.1036.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/debug": "^4.1.5",
