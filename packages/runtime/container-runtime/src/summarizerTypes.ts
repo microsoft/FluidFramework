@@ -421,15 +421,6 @@ export type ISummarizeTelemetryProperties =
     Pick<ITelemetryProperties, ISummarizeTelemetryRequiredProperties> &
     Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
 
-/** Op weights to use in heuristic summarizing */
-export interface ISummarizeHeuristicWeightConfiguration {
-    /** Weight to be given to system ops */
-    systemOpWeight: number;
-
-    /** Weight to be given to non-system ops */
-    nonSystemOpWeight: number;
-}
-
 /** Strategy used to heuristically determine when we should run a summarize */
 export interface ISummarizeHeuristicStrategy {
     /** Summarize reason for this summarize heuristic strategy (ex: "maxTime") */

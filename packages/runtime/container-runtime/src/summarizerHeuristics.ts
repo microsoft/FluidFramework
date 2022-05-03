@@ -11,7 +11,6 @@ import {
     ISummarizeHeuristicRunner,
     ISummarizeAttempt,
     ISummarizeHeuristicStrategy,
-    ISummarizeHeuristicWeightConfiguration,
 } from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
