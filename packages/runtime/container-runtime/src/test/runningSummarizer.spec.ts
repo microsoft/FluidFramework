@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { Deferred } from "@fluidframework/common-utils";
 import {
+    IDocumentMessage,
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryNack,
@@ -16,11 +17,19 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { neverCancelledSummaryToken } from "../runWhileConnectedCoordinator";
 import { RunningSummarizer } from "../runningSummarizer";
 import { SummaryCollection } from "../summaryCollection";
 import { SummarizeHeuristicData } from "../summarizerHeuristics";
+import { ISummarizerRuntime } from "..";
+
+class MockRuntime {
+    constructor(
+        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+    ) { }
+}
 
 describe("Runtime", () => {
     describe("Summarization", () => {
@@ -38,6 +47,7 @@ describe("Runtime", () => {
             let lastRefSeq = 0;
             let lastClientSeq: number;
             let lastSummarySeq: number;
+            let mockRuntime: MockRuntime;
             const summaryCommon = {
                 maxAckWaitTime: 120000, // 2 min
                 maxOpsSinceLastSummary: 7000,
@@ -50,6 +60,8 @@ describe("Runtime", () => {
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
+                systemOpWeight: 0.1,
+                nonSystemOpWeight: 1.0,
                 ...summaryCommon,
             };
             const summaryConfigDisableHeuristics: ISummaryConfiguration = {
@@ -194,6 +206,7 @@ describe("Runtime", () => {
                     neverCancelledSummaryToken,
                     // stopSummarizerCallback
                     (reason) => { stopCall++; },
+                    mockRuntime as any as ISummarizerRuntime,
                 );
             };
 
@@ -218,6 +231,7 @@ describe("Runtime", () => {
                 lastSummarySeq = 0; // negative/decrement for test
                 mockLogger = new MockLogger();
                 mockDeltaManager = new MockDeltaManager();
+                mockRuntime = new MockRuntime(mockDeltaManager);
                 summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
             });
 
