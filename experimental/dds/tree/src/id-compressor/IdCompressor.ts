@@ -29,7 +29,7 @@ import {
 	UuidString,
 	AttributionId,
 } from '../Identifiers';
-import { assertIsStableId, isStableId } from '../UuidUtilities';
+import { assertIsStableId, assertIsUuidString, isStableId } from '../UuidUtilities';
 import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from './AppendOnlySortedMap';
 import { getIds } from './IdRange';
 import {
@@ -399,7 +399,7 @@ export class IdCompressor {
 	 * for a given session must be constant for any compressor that contains IDs from that session (i.e. any DDS that uses the ID
 	 * compressor must have the same reservedIdCount forever). Compressors with different reserved ID counts will fail to synchronize their
 	 * IDs.
-	 * @param attributionId a UUID that identifiers the user of this instance of the compressor. IDs created by this compressor will be associated
+	 * @param attributionId a UUID that identifies the user of this instance of the compressor. IDs created by this compressor will be associated
 	 * with this UUID and can be queried later via `attributeID`. If no UUID is provided, this compressor will generate its own. An `AttributionId`
 	 * is an `UuidString` which may be validated via {@link isUuidString} or generated via {@link generateStableId}.
 	 */
@@ -409,6 +409,9 @@ export class IdCompressor {
 		attributionId?: AttributionId
 	) {
 		assert(reservedIdCount >= 0, 'reservedIdCount must be non-negative');
+		if (attributionId !== undefined) {
+			assertIsUuidString(attributionId);
+		}
 		this.localSession = this.createSession(localSessionId, attributionId);
 		if (reservedIdCount > 0) {
 			const clusterCapacity = this.clusterCapacity;

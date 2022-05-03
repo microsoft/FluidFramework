@@ -108,13 +108,16 @@ export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat:
  * The type of shared tree options for a given write format
  * @public
  */
-export type SharedTreeOptions<WF extends WriteFormat, Compatibility extends 'Forwards' | 'None' = 'Forwards'> = Omit<
+export type SharedTreeOptions<
+	WF extends WriteFormat,
+	HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'
+> = Omit<
 	WF extends WriteFormat.v0_0_2
 		? SharedTreeOptions_0_0_2
 		: WF extends WriteFormat.v0_1_1
 		? SharedTreeOptions_0_1_1
 		: never,
-	Compatibility extends 'Forwards' ? 'summarizeHistory' : never
+	HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never
 >;
 
 /**
@@ -122,7 +125,20 @@ export type SharedTreeOptions<WF extends WriteFormat, Compatibility extends 'For
  * @public
  */
 export interface SharedTreeOptions_0_0_2 {
-	/** Determines if the history is included in summaries */
+	/**
+	 * Determines if the history is included in summaries.
+	 *
+	 * Warning: enabling history summarization incurs a permanent cost in the document. It is not possible to disable history summarization
+	 * later once it has been enabled, and thus the history cannot be safely deleted.
+	 *
+	 * On 0.1.1 documents, due to current code limitations, this parameter is only impactful for newly created documents.
+	 * `SharedTree`s which load existing documents will summarize history if and only if the loaded summary included history.
+	 *
+	 * The technical limitations here relate to clients with mixed versions collaborating.
+	 * In the future we may allow modification of whether or not a particular document saves history, but only via a consensus mechanism.
+	 * See the skipped test in SharedTreeFuzzTests.ts for more details on this issue.
+	 * See docs/Breaking-Change-Migration for more details on the consensus scheme.
+	 */
 	summarizeHistory?: boolean;
 }
 
@@ -133,6 +149,9 @@ export interface SharedTreeOptions_0_0_2 {
 export interface SharedTreeOptions_0_1_1 {
 	/**
 	 * Determines if the history is included in summaries and if edit chunks are uploaded when they are full.
+	 *
+	 * Warning: enabling history summarization incurs a permanent cost in the document. It is not possible to disable history summarization
+	 * later once it has been enabled, and thus the history cannot be safely deleted.
 	 *
 	 * On 0.1.1 documents, due to current code limitations, this parameter is only impactful for newly created documents.
 	 * `SharedTree`s which load existing documents will summarize history if and only if the loaded summary included history.
