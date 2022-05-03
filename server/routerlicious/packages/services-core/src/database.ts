@@ -136,3 +136,17 @@ export interface ICollection<T> {
 
     createTTLIndex?(index: any, mongoExpireAfterSeconds?: number): Promise<void>;
 }
+
+export type IDbEvents = "close" | "reconnect" | "error" | "reconnectFailed";
+
+export interface IDb {
+    close(): Promise<void>;
+
+    on(event: IDbEvents, listener: (...args: any[]) => void);
+
+    collection<T>(name: string): ICollection<T>;
+}
+
+export interface IDbFactory {
+    connect(global: boolean): Promise<IDb>;
+}

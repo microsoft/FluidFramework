@@ -8,7 +8,8 @@
         "types": [
             "node",
             "mocha"
-        ]
+        ],
+        "skipLibCheck": true
     },
     "include": [
         "./**/*"

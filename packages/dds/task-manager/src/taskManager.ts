@@ -157,7 +157,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         super(id, runtime, attributes);
 
         this.opWatcher.on("volunteer", (taskId: string, clientId: string, local: boolean, messageId: number) => {
-            if (local) {
+            // We're tracking local ops from this connection. Filter out local ops during "connecting"
+            // state since these were sent on the prior connection and were already cleared from the latestPendingOps.
+            if (runtime.connected && local) {
                 const pendingOp = this.latestPendingOps.get(taskId);
                 assert(pendingOp !== undefined, 0x07b /* "Unexpected op" */);
                 // Need to check the id, since it's possible to volunteer and abandon multiple times before the acks
@@ -172,7 +174,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
 
         this.opWatcher.on("abandon", (taskId: string, clientId: string, local: boolean, messageId: number) => {
-            if (local) {
+            if (runtime.connected && local) {
                 const pendingOp = this.latestPendingOps.get(taskId);
                 assert(pendingOp !== undefined, 0x07d /* "Unexpected op" */);
                 // Need to check the id, since it's possible to abandon and volunteer multiple times before the acks

@@ -27,7 +27,7 @@ export class SharedTreeQuerier<TQuery> {
 		const result = (await graphql(
 			this.schema,
 			query,
-			initialTree.identifier,
+			this.tree.convertToNodeId(initialTree.identifier),
 			this.tree
 		)) as ExecutionResult<TQuery>;
 

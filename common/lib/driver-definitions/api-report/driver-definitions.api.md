@@ -12,7 +12,6 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { INack } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -23,7 +22,6 @@ import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
@@ -160,7 +158,6 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     // (undocumented)
     repositoryUrl: string;
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
 // @public (undocumented)
@@ -263,7 +260,7 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 // @public (undocumented)
 export interface IUrlResolver {
     // (undocumented)
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo): Promise<string>;
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }

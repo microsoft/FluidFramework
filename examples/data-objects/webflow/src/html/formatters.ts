@@ -4,12 +4,9 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FluidObject } from "@fluidframework/core-interfaces";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
-import * as styles from "../editor/index.css";
-import { caretEnter, Direction, emptyObject, Rect, TagName } from "../util";
+import { DocSegmentKind, getCss, getDocSegmentKind } from "../document";
+import { emptyObject, TagName } from "../util";
 import { getAttrs, syncAttrs } from "../util/attr";
 
 import { Formatter, IFormatterState, RootFormatter } from "../view/formatter";
@@ -42,11 +39,6 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
                 return { state, consumed: true };
             }
 
-            case DocSegmentKind.inclusion: {
-                layout.pushFormat(inclusionFormatter, emptyObject);
-                return { state, consumed: false };
-            }
-
             case DocSegmentKind.beginTags: {
                 layout.pushFormat(tagsFormatter, emptyObject);
                 return { state, consumed: true };
@@ -65,59 +57,6 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
     }
 
     public onChange() { }
-}
-
-interface IInclusionState {
-    root?: HTMLElement;
-    slot?: HTMLElement;
-    view?: Promise<IFluidHTMLView>;
-}
-
-export class InclusionFormatter extends Formatter<IInclusionState> {
-    public begin(layout: Layout, init: Readonly<Partial<IInclusionState>>, prevState?: Readonly<IInclusionState>) {
-        const segment = layout.segment;
-
-        const state: IInclusionState = prevState || {};
-
-        if (!state.root) {
-            const marker = segment as Marker;
-
-            state.root = document.createElement(TagName.span);
-            state.root.contentEditable = "false";
-
-            state.slot = document.createElement(
-                getComponentOptions(segment).display === "block"
-                    ? TagName.div
-                    : TagName.span);
-
-            const viewFactory = layout.viewFactoryRegistry.get(marker.properties.view);
-            state.view = layout.doc.getComponentFromMarker(marker).then((component: FluidObject) => {
-                if (viewFactory) {
-                    // We found a view class registered for this marker's view type
-                    const view = viewFactory.createView(component, layout.scope);
-                    view.render(state.slot);
-                    caretEnter(state.slot, Direction.right, Rect.empty);
-                    state.slot.focus();
-                    return view;
-                }
-            });
-        }
-
-        syncCss(state.root, getCss(segment), styles.inclusion);
-        layout.pushNode(state.root);
-        layout.emitNode(state.slot);
-        return state;
-    }
-
-    public visit(layout: Layout, state: Readonly<IInclusionState>) {
-        assert(getDocSegmentKind(layout.segment) === DocSegmentKind.inclusion, "Layout segment has unexpected kind!");
-        layout.popFormat();
-        return { state, consumed: true };
-    }
-
-    public end(layout: Layout) {
-        layout.popNode();
-    }
 }
 
 interface ITagsState extends IFormatterState { root?: HTMLElement; pTag: TagName; popCount: number; }
@@ -161,11 +100,6 @@ class TagsFormatter extends Formatter<ITagsState> {
                 const pg = layout.pushTag(state.pTag);
                 syncCss(pg, getCss(segment), undefined);
                 return { state, consumed: true };
-            }
-
-            case DocSegmentKind.inclusion: {
-                layout.pushFormat(inclusionFormatter, emptyObject);
-                return { state, consumed: false };
             }
 
             case DocSegmentKind.beginTags: {
@@ -231,16 +165,6 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
                 return { state, consumed: true };
             }
 
-            case DocSegmentKind.inclusion: {
-                // If the inclusion is a block, it implicitly terminates the current paragraph.
-                if (getComponentOptions(segment).display === "block") {
-                    layout.popFormat();
-                }
-
-                layout.pushFormat(inclusionFormatter, emptyObject);
-                return { state, consumed: false };
-            }
-
             default:
                 debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);
                 layout.popFormat();
@@ -294,7 +218,6 @@ class TextFormatter extends Formatter<ITextState> {
 }
 
 export const htmlFormatter = Object.freeze(new HtmlFormatter());
-const inclusionFormatter = Object.freeze(new InclusionFormatter());
 const paragraphFormatter = Object.freeze(new ParagraphFormatter(TagName.p));
 const tagsFormatter = Object.freeze(new TagsFormatter());
 const textFormatter = Object.freeze(new TextFormatter());

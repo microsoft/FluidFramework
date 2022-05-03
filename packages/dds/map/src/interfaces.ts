@@ -49,6 +49,12 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     set<T = any>(key: string, value: T): this;
 
     /**
+     * Get the number of sub directory within the directory.
+     * @returns The number of sub directory within a directory.
+     */
+    countSubDirectory?(): number;
+
+    /**
      * Creates an IDirectory child of this IDirectory, or retrieves the existing IDirectory child if one with the
      * same name already exists.
      * @param subdirName - Name of the new child directory to create

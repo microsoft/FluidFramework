@@ -4,6 +4,8 @@
 
 ```ts
 
+/// <reference types="node" />
+
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
@@ -16,13 +18,8 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidCodeDetails as IFluidCodeDetails_2 } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
-import { IFluidPackage as IFluidPackage_2 } from '@fluidframework/core-interfaces';
-import { IFluidPackageEnvironment as IFluidPackageEnvironment_2 } from '@fluidframework/core-interfaces';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IProvideFluidCodeDetailsComparer as IProvideFluidCodeDetailsComparer_2 } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -96,13 +93,13 @@ export interface ICodeAllowList {
 }
 
 // @public
-export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer_2> {
-    load(source: IFluidCodeDetails_2): Promise<IFluidModuleWithDetails>;
+export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
 // @public @deprecated
-export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer_2> {
-    load(source: IFluidCodeDetails_2): Promise<IFluidModule>;
+export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
+    load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
 
 // @public
@@ -134,24 +131,27 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
+    connect(): void;
+    // @deprecated
     readonly connected: boolean;
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    disconnect(): void;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getLoadedCodeDetails(): IFluidCodeDetails_2 | undefined;
+    getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
-    getSpecifiedCodeDetails(): IFluidCodeDetails_2 | undefined;
+    getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     readonly isDirty: boolean;
-    proposeCodeDetails(codeDetails: IFluidCodeDetails_2): Promise<boolean>;
+    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     readonly readOnlyInfo: ReadOnlyInfo;
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
-    // @alpha
+    // @deprecated
     resume?(): void;
     serialize(): string;
-    // @alpha
+    // @deprecated
     setAutoReconnect?(reconnect: boolean): void;
 }
 
@@ -178,7 +178,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
-    getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     // (undocumented)
     readonly loader: ILoader;
     // (undocumented)
@@ -187,9 +187,7 @@ export interface IContainerContext extends IDisposable {
     pendingLocalState?: unknown;
     // (undocumented)
     readonly quorum: IQuorumClients;
-    // @deprecated (undocumented)
-    raiseContainerWarning?(warning: ContainerWarning): void;
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
@@ -211,9 +209,9 @@ export interface IContainerEvents extends IEvent {
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
     // (undocumented)
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails_2, proposal: ISequencedProposal) => void): any;
+    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void): any;
     // (undocumented)
-    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails_2) => void): any;
+    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     // (undocumented)
     (event: "disconnected" | "attached", listener: () => void): any;
     // (undocumented)
@@ -247,8 +245,6 @@ export interface IDeltaHandlerStrategy {
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
-    // @deprecated (undocumented)
-    close(): void;
     readonly hasCheckpointSequenceNumber: boolean;
     readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
@@ -324,16 +320,16 @@ export interface IErrorBase extends Partial<Error> {
 }
 
 // @public
-export interface IFluidBrowserPackage extends IFluidPackage_2 {
+export interface IFluidBrowserPackage extends IFluidPackage {
     // (undocumented)
     fluid: {
         browser: IFluidBrowserPackageEnvironment;
-        [environment: string]: IFluidPackageEnvironment_2;
+        [environment: string]: IFluidPackageEnvironment;
     };
 }
 
 // @public
-export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment_2 {
+export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment {
     umd: {
         files: string[];
         library: string;
@@ -363,18 +359,18 @@ export interface IFluidCodeDetailsConfig {
 
 // @public
 export interface IFluidCodeResolver {
-    resolveCodeDetails(details: IFluidCodeDetails_2): Promise<IResolvedFluidCodeDetails>;
+    resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
 }
 
 // @public (undocumented)
 export interface IFluidModule {
     // (undocumented)
-    fluidExport: IFluidObject & FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer_2>;
+    fluidExport: FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
 }
 
 // @public
 export interface IFluidModuleWithDetails {
-    details: IFluidCodeDetails_2;
+    details: IFluidCodeDetails;
     module: IFluidModule;
 }
 
@@ -416,7 +412,7 @@ export interface IGenericError extends IErrorBase {
 
 // @public
 export interface IHostLoader extends ILoader {
-    createDetachedContainer(codeDetails: IFluidCodeDetails_2): Promise<IContainer>;
+    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
     rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
@@ -452,7 +448,7 @@ export type ILoaderOptions = {
     maxClientLeaveWaitTime?: number;
 };
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IPendingLocalState {
     // (undocumented)
     pendingRuntimeState: unknown;
@@ -497,8 +493,8 @@ export interface IProxyLoaderFactory {
 }
 
 // @public
-export interface IResolvedFluidCodeDetails extends IFluidCodeDetails_2 {
-    readonly resolvedPackage: Readonly<IFluidPackage_2>;
+export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
+    readonly resolvedPackage: Readonly<IFluidPackage>;
     readonly resolvedPackageCacheId: string | undefined;
 }
 
@@ -506,6 +502,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails_2 {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     process(message: ISequencedDocumentMessage, local: boolean, context: any): any;
     processSignal(message: any, local: boolean): any;
     request(request: IRequest): Promise<IResponse>;
@@ -529,6 +526,18 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 
 // @public
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+
+// @public
+export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+    // (undocumented)
+    blobsContents: {
+        [path: string]: ArrayBufferLike;
+    };
+    // (undocumented)
+    trees: {
+        [path: string]: ISnapshotTreeWithBlobContents;
+    };
+}
 
 // @public
 export interface IThrottlingWarning extends IErrorBase {
@@ -566,7 +575,6 @@ export type ReadOnlyInfo = {
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
 };
-
 
 // (No @packageDocumentation comment for this package)
 

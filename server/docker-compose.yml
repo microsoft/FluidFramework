@@ -8,6 +8,7 @@ services:
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
+            - IS_FLUID_SERVER=true
         restart: always
     deli:
         image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
@@ -15,6 +16,7 @@ services:
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
+            - IS_FLUID_SERVER=true
         restart: always
     scriptorium:
         image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
@@ -22,6 +24,7 @@ services:
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
+            - IS_FLUID_SERVER=true
         restart: always
     copier:
         image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
@@ -29,6 +32,7 @@ services:
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
+            - IS_FLUID_SERVER=true
         restart: always
     scribe:
         image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
@@ -36,6 +40,7 @@ services:
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
+            - IS_FLUID_SERVER=true
         restart: always
     foreman:
         image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
@@ -43,6 +48,7 @@ services:
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
+            - IS_FLUID_SERVER=true
         restart: always
     riddler:
         image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
@@ -52,6 +58,7 @@ services:
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
+            - IS_FLUID_SERVER=true
         restart: always
     historian:
         image: mcr.microsoft.com/fluidframework/routerlicious/historian:latest
@@ -60,12 +67,14 @@ services:
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
+            - IS_FLUID_SERVER=true
         restart: always
     gitrest:
         image: mcr.microsoft.com/fluidframework/routerlicious/gitrest:latest
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
+            - IS_FLUID_SERVER=true
         volumes:
             - git:/home/node/documents
         restart: always

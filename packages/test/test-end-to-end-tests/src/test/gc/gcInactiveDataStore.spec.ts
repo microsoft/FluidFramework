@@ -15,7 +15,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
-import { TestDataObject } from "./mockSummarizerClient";
+import { TestDataObject } from "../mockSummarizerClient";
 
 /**
  * Validates this scenario: When a data store becomes inactive (has been unreferenced for a given amount of time),
@@ -30,7 +30,11 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         []);
     const deleteTimeoutMs = 100;
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+        },
         gcOptions: { gcAllowed: true, deleteTimeoutMs },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(

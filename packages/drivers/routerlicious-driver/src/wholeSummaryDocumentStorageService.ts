@@ -13,13 +13,12 @@ import {
     IDocumentStorageService,
     ISummaryContext,
     IDocumentStorageServicePolicies,
- } from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     ICreateBlobResponse,
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -31,6 +30,7 @@ import {
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
+import { IRouterliciousDriverPolicies } from "./policies";
 
 const latestSnapshotId: string = "latest";
 
@@ -47,8 +47,10 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         protected readonly manager: GitManager,
         protected readonly logger: ITelemetryLogger,
         public readonly policies: IDocumentStorageServicePolicies = {},
+        private readonly driverPolicies?: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),
-        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> = new InMemoryCache()) {
+        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> = new InMemoryCache(),
+        protected readonly noCacheGitManager?: GitManager) {
         this.summaryUploadManager = new WholeSummaryUploadManager(manager);
     }
 
@@ -64,7 +66,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         // Fetch latest summary, cache it, and return its id.
         if (this.firstVersionsCall && count === 1) {
             this.firstVersionsCall = false;
-            const { id: _id, snapshotTree } = await this.fetchAndCacheSnapshotTree(latestSnapshotId);
+            const { id: _id, snapshotTree } = !this.driverPolicies?.enableDiscovery ?
+                await this.fetchAndCacheSnapshotTree(latestSnapshotId, false) :
+                await this.fetchAndCacheSnapshotTree(latestSnapshotId, true);
             return [{
                 id: _id,
                 treeId: snapshotTree.id!,
@@ -145,10 +149,6 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         throw new Error("NOT IMPLEMENTED!");
     }
 
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        throw new Error("NOT IMPLEMENTED!");
-    }
-
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
         const uint8ArrayFile = new Uint8Array(file);
         return PerformanceEvent.timedExecAsync(
@@ -170,7 +170,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         );
     }
 
-    private async fetchAndCacheSnapshotTree(versionId: string): Promise<ISnapshotTreeVersion> {
+    private async fetchAndCacheSnapshotTree(versionId: string, disableCache?: boolean): Promise<ISnapshotTreeVersion> {
         const cachedSnapshotTreeVersion = await this.snapshotTreeCache.get(versionId);
         if (cachedSnapshotTreeVersion !== undefined) {
             return { id: cachedSnapshotTreeVersion.id, snapshotTree: cachedSnapshotTreeVersion.snapshotTree };
@@ -183,7 +183,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
                 treeId: versionId,
             },
             async (event) => {
-                const response = await this.manager.getSummary(versionId);
+                const response = disableCache && this.noCacheGitManager !== undefined ?
+                    await this.noCacheGitManager.getSummary(versionId) :
+                    await this.manager.getSummary(versionId);
                 event.end({
                     size: response.trees[0]?.entries.length,
                 });
@@ -194,7 +196,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         const wholeFlatSummaryId: string = wholeFlatSummary.id;
         const snapshotTreeId = normalizedWholeSummary.snapshotTree.id;
         assert(snapshotTreeId !== undefined, 0x275 /* "Root tree should contain the id" */);
-        const snapshotTreeVersion = { id: wholeFlatSummaryId , snapshotTree: normalizedWholeSummary.snapshotTree };
+        const snapshotTreeVersion = { id: wholeFlatSummaryId, snapshotTree: normalizedWholeSummary.snapshotTree };
 
         const cachePs: Promise<any>[] = [
             this.snapshotTreeCache.put(

@@ -3,34 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
 
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { TinyliciousService } from "./tinyliciousService";
 import { AppView } from "./appView";
 import { containerKillBitId, InventoryListContainerRuntimeFactory } from "./containerCode";
 import { IContainerKillBit } from "./containerKillBit";
 import { extractStringData, fetchData, applyStringData, writeData } from "./dataHelpers";
 import { IInventoryList } from "./inventoryList";
-
-// In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
-// an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
-
-// In this app, we'll choose to create a new document when navigating directly to http://localhost:8080.  For the ID,
-// we'll choose to use the current timestamp.  We'll also choose to interpret the URL hash as an existing document's
-// ID to load from, so the URL for a document load will look something like http://localhost:8080/#1596520748752.
-// These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
-let createNew = false;
-if (location.hash.length === 0) {
-    createNew = true;
-    location.hash = Date.now().toString();
-}
-const documentId = location.hash.substring(1);
-document.title = documentId;
+import { TinyliciousService } from "./tinyliciousService";
 
 async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
@@ -45,8 +32,13 @@ async function getContainerKillBitFromContainer(container: IContainer): Promise<
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
-    const module = { fluidExport: new InventoryListContainerRuntimeFactory() };
-    const codeLoader = { load: async () => module };
+    const load = async (): Promise<IFluidModuleWithDetails> => {
+        return {
+            module: { fluidExport: new InventoryListContainerRuntimeFactory() },
+            details: { package: "no-dynamic-package", config: {} },
+        };
+    };
+    const codeLoader = { load };
 
     const loader = new Loader({
         urlResolver: tinyliciousService.urlResolver,
@@ -56,21 +48,42 @@ async function start(): Promise<void> {
 
     let fetchedData: string | undefined;
     let container: IContainer;
+    let containerId: string;
     let inventoryList: IInventoryList;
     let containerKillBit: IContainerKillBit;
 
-    if (createNew) {
+    // In interacting with the service, we need to be explicit about whether we're creating a new container vs.
+    // loading an existing one.  If loading, we also need to provide the unique ID for the container we are
+    // loading from.
+
+    // In this app, we'll choose to create a new container when navigating directly to http://localhost:8080.
+    // A newly created container will generate its own ID, which we'll place in the URL hash.
+    // If navigating to http://localhost:8080#containerId, we'll load from the ID in the hash.
+
+    // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
+    if (location.hash.length === 0) {
         fetchedData = await fetchData();
         container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
         inventoryList = await getInventoryListFromContainer(container);
         containerKillBit = await getContainerKillBitFromContainer(container);
         await applyStringData(inventoryList, fetchedData);
-        await container.attach({ url: documentId });
+        await container.attach(createTinyliciousCreateNewRequest());
+
+        // Discover the container ID after attaching
+        const resolved = container.resolvedUrl;
+        ensureFluidResolvedUrl(resolved);
+        containerId = resolved.id;
+
+        // Update the URL with the actual container ID
+        location.hash = containerId;
     } else {
-        container = await loader.resolve({ url: documentId });
+        containerId = location.hash.substring(1);
+        container = await loader.resolve({ url: containerId });
         containerKillBit = await getContainerKillBitFromContainer(container);
         inventoryList = await getInventoryListFromContainer(container);
     }
+    // Put the container ID in the tab title
+    document.title = containerId;
 
     const writeToExternalStorage = async () => {
         // CONSIDER: it's perhaps more-correct to spawn a new client to extract with (to avoid local changes).

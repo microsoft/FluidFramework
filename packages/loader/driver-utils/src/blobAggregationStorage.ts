@@ -15,7 +15,6 @@ import {
     ISummaryTree,
     IVersion,
     SummaryType,
-    ITree,
 } from "@fluidframework/protocol-definitions";
 import {
     assert,
@@ -99,7 +98,7 @@ export abstract class SnapshotExtractor {
                     let subTree = snapshot;
                     for (const subPath of pathSplit.slice(0, pathSplit.length - 1)) {
                         if (subTree.trees[subPath] === undefined) {
-                            subTree.trees[subPath] = { blobs: {}, commits: {}, trees: {}};
+                            subTree.trees[subPath] = { blobs: {}, trees: {}};
                         }
                         subTree = subTree.trees[subPath];
                     }
@@ -230,11 +229,6 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
     public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         throw new Error("NYI");
-    }
-
-    // This is only used through Container.snapshot() for testing purposes
-    public async write(root: ITree, parents: string[], message: string, ref: string) {
-        return this.storage.write(root, parents, message, ref);
     }
 
     // for now we are not optimizing these blobs, with assumption that this API is used only

@@ -250,7 +250,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         try {
             await deltaConnection.initialize(connectMessage, timeoutMs);
             await epochTracker.validateEpochFromPush(deltaConnection.details);
-        } catch (errorObject) {
+        } catch (errorObject: any) {
             if (errorObject !== null && typeof errorObject === "object") {
                 // We have to special-case error types here in terms of what is re-triable.
                 // These errors have to re-retried, we just need new joinSession result to connect to right server:

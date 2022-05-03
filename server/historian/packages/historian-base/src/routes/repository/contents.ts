@@ -30,11 +30,18 @@ export function create(
         authorization: string,
         path: string,
         ref: string): Promise<any> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.getContent(path, ref);
     }
 
     router.get("/repos/:ignored?/:tenantId/contents/*",
+        utils.validateRequestParams("tenantId", 0),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const contentP = getContent(

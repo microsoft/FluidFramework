@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { compare } from "semver";
 import { bufferToString } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails, ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
@@ -27,12 +27,11 @@ import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat, itExpects } from "@fluidframework/test-version-utils";
 import {
     getSnapshotTreeFromSerializedContainer,
-    ISnapshotTreeWithBlobContents,
 // eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/dist/utils";
 
