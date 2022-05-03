@@ -339,7 +339,7 @@ export class RunningSummarizer implements IDisposable {
             this.tryWhileSummarizing = true;
             this.logger.sendErrorEvent({
                 eventName: "SummarizingNotCaughtUp",
-                reason: reason,
+                reason,
             });
             return;
         }
