@@ -218,7 +218,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     /**
      * Defines the maximum allowed time in between summarizations.
      */
-     idleTime: number;
+    idleTime: number;
     /**
      * Defines the maximum allowed time, since the last received Ack,  before running the summary
      * with reason maxTime.
@@ -228,12 +228,20 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * Defines the maximum number of Ops, since the last received Ack, that can be allowed
      * before running the summary with reason maxOps.
      */
-     maxOps: number;
+    maxOps: number;
     /**
      * Defnines the minimum number of Ops, since the last received Ack, that can be allowed
      * before running the last summary.
      */
     minOpsForLastSummaryAttempt: number;
+    /**
+     * System op weight to use in heuristic summarizing
+     */
+    systemOpWeight: number;
+    /**
+     * Non-system op weight to use in heuristic summarizing
+     */
+    nonSystemOpWeight: number;
 }
 
 export interface ISummaryConfigurationDisableSummarizer {
@@ -267,6 +275,10 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     initialSummarizerDelayMs: 5000, // 5 secs.
 
     summarizerClientElection: false,
+
+    systemOpWeight: 0.1,
+
+    nonSystemOpWeight: 1.0,
 };
 
 export interface IGCRuntimeOptions {

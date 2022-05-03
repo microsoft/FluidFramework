@@ -153,26 +153,16 @@ export class MaxTimeSummarizeHeuristicStrategy implements ISummarizeHeuristicStr
 export class WeightedOpsSummarizeHeuristicStrategy implements ISummarizeHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxOps";
 
-    constructor(
-        private readonly weightConfiguration: ISummarizeHeuristicWeightConfiguration,
-    ) { }
-
     public shouldRunSummarize(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean {
-        const weightedNumOfOps = (this.weightConfiguration.systemOpWeight    * heuristicData.numSystemOps)
-                               + (this.weightConfiguration.nonSystemOpWeight * heuristicData.numNonSystemOps);
+        const weightedNumOfOps = (configuration.systemOpWeight    * heuristicData.numSystemOps)
+                               + (configuration.nonSystemOpWeight * heuristicData.numNonSystemOps);
         return weightedNumOfOps > configuration.maxOps;
     }
 }
 
-const DefaultHeuristicWeightConfiguration: ISummarizeHeuristicWeightConfiguration = {
-    systemOpWeight   : 0.1,
-    nonSystemOpWeight: 1.0,
-};
-
-export function getDefaultSummarizeHeuristicStrategies(
-        weightConfiguration: ISummarizeHeuristicWeightConfiguration = DefaultHeuristicWeightConfiguration) {
+export function getDefaultSummarizeHeuristicStrategies() {
     return [
         new MaxTimeSummarizeHeuristicStrategy(),
-        new WeightedOpsSummarizeHeuristicStrategy(weightConfiguration),
+        new WeightedOpsSummarizeHeuristicStrategy(),
     ];
 }
