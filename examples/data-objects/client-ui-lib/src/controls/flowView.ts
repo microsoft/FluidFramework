@@ -3049,7 +3049,7 @@ export class FlowView extends ui.Component {
         this.setProps({ color });
     }
 
-    private toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
+    private toggleWordOrSelection(name: string, valueOn: string, valueOff: string | null) {
         const sel = this.cursor.getSelection();
         if (sel) {
             this.clearSelection(false);
@@ -3062,7 +3062,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
+    private toggleRange(name: string, valueOn: string, valueOff: string | null, start: number, end: number) {
         let someSet = false;
         const findPropSet = (segment: MergeTree.ISegment) => {
             if (MergeTree.TextSegment.is(segment)) {
@@ -3072,7 +3072,7 @@ export class FlowView extends ui.Component {
                 return !someSet;
             }
         };
-        this.sharedString.walkSegments(findPropSet, start, end);
+        this.sharedString.walkSegments(findPropSet as (segment: MergeTree.ISegment) => boolean, start, end);
         this.undoRedoManager.closeCurrentOperation();
         if (someSet) {
             this.sharedString.annotateRange(start, end, { [name]: valueOff });
@@ -3089,9 +3089,9 @@ export class FlowView extends ui.Component {
             const rowMarker = stack.row.top() as Table.IRowMarker;
             if (!tableMarker.table) {
                 const tableMarkerPos = getPosition(this.sharedString, tableMarker);
-                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext!));
             }
-            Table.deleteRow(this.sharedString, rowMarker.row, tableMarker.table);
+            Table.deleteRow(this.sharedString, rowMarker.row!, tableMarker.table!);
         }
     }
 
@@ -3102,9 +3102,9 @@ export class FlowView extends ui.Component {
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
                 const tableMarkerPos = getPosition(this.sharedString, tableMarker);
-                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext!));
             }
-            Table.deleteCellShiftLeft(this.sharedString, cellMarker.cell, tableMarker.table);
+            Table.deleteCellShiftLeft(this.sharedString, cellMarker.cell!, tableMarker.table!);
         }
     }
 
@@ -3116,10 +3116,10 @@ export class FlowView extends ui.Component {
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
                 const tableMarkerPos = getPosition(this.sharedString, tableMarker);
-                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext!));
             }
-            Table.deleteColumn(this.sharedString, this.runtime.clientId,
-                cellMarker.cell, rowMarker.row, tableMarker.table);
+            Table.deleteColumn(this.sharedString, this.runtime.clientId!,
+                cellMarker.cell!, rowMarker.row!, tableMarker.table!);
         }
     }
 
@@ -3130,13 +3130,13 @@ export class FlowView extends ui.Component {
             const rowMarker = stack.row.top() as Table.IRowMarker;
             if (!tableMarker.table) {
                 const tableMarkerPos = getPosition(this.sharedString, tableMarker);
-                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext!));
             }
             Table.insertRow(
                 this.sharedString,
-                this.runtime.clientId,
-                rowMarker.row,
-                tableMarker.table,
+                this.runtime.clientId!,
+                rowMarker.row!,
+                tableMarker.table!,
             );
         }
     }
@@ -3147,7 +3147,7 @@ export class FlowView extends ui.Component {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const tableMarkerPos = getPosition(this.sharedString, tableMarker);
             if (!tableMarker.table) {
-                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext!));
             }
             Table.succinctPrintTable(tableMarker, tableMarkerPos, this.sharedString);
         }
@@ -3161,14 +3161,14 @@ export class FlowView extends ui.Component {
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
                 const tableMarkerPos = getPosition(this.sharedString, tableMarker);
-                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext!));
             }
             Table.insertColumn(
                 this.sharedString,
-                this.runtime.clientId,
-                cellMarker.cell,
-                rowMarker.row,
-                tableMarker.table);
+                this.runtime.clientId!,
+                cellMarker.cell!,
+                rowMarker.row!,
+                tableMarker.table!);
         }
     }
 
@@ -3195,7 +3195,7 @@ export class FlowView extends ui.Component {
                 break;
             case CharacterCodes.R: {
                 this.updatePGInfo(this.cursor.pos - 1);
-                Table.createTable(this.cursor.pos, this.sharedString, this.runtime.clientId);
+                Table.createTable(this.cursor.pos, this.sharedString, this.runtime.clientId!);
                 break;
             }
             case CharacterCodes.M: {
@@ -3245,8 +3245,8 @@ export class FlowView extends ui.Component {
     }
 
     private apresScroll(up: boolean) {
-        if ((this.cursor.pos < this.viewportStartPos) ||
-            (this.cursor.pos >= this.viewportEndPos)) {
+        if ((this.cursor.pos < this.viewportStartPos!) ||
+            (this.cursor.pos >= this.viewportEndPos!)) {
             const x = this.getCanonicalX();
             if (up) {
                 this.setCursorPosFromPixels(this.firstLineDiv(), x);
@@ -3270,7 +3270,7 @@ export class FlowView extends ui.Component {
             } else {
                 const nextFirstLineDiv = this.firstLineDiv().nextElementSibling as ILineDiv;
                 if (nextFirstLineDiv) {
-                    scrollTo = nextFirstLineDiv.linePos;
+                    scrollTo = nextFirstLineDiv.linePos!;
                 } else {
                     return;
                 }
@@ -3407,7 +3407,7 @@ export class FlowView extends ui.Component {
         const pgMarker = curTilePos.tile as Paragraph.IParagraphMarker;
         const pgPos = curTilePos.pos;
         Paragraph.clearContentCaches(pgMarker);
-        const curProps = pgMarker.properties;
+        const curProps = pgMarker.properties!;
         const newProps = MergeTree.createMap<any>();
         const newLabels = ["pg"];
 
@@ -3438,7 +3438,7 @@ export class FlowView extends ui.Component {
         const remotePresenceBase = message.content as IRemotePresenceBase;
 
         if (remotePresenceBase.type === "selection") {
-            this.remotePresenceToLocal(message.clientId, remotePresenceBase as IRemotePresenceInfo);
+            this.remotePresenceToLocal(message.clientId!, remotePresenceBase as IRemotePresenceInfo);
         }
     }
 
@@ -3473,7 +3473,7 @@ export class FlowView extends ui.Component {
                     localRef: this.sharedString.createPositionReference(
                         segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove),
                     presenceColor: this.presenceVector.has(clientId) ?
-                        this.presenceVector.get(clientId).presenceColor :
+                        this.presenceVector.get(clientId)!.presenceColor :
                         presenceColors[this.presenceVector.size % presenceColors.length],
                     shouldShowCursor: () => this.runtime.clientId !== clientId &&
                         this.getRemoteClientInfo(clientId) !== undefined,
@@ -3492,7 +3492,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private getRemoteClientInfo(clientId: string): IClient {
+    private getRemoteClientInfo(clientId: string): IClient | undefined {
         const quorumClient = this.runtime.getQuorum().getMember(clientId);
         if (quorumClient) {
             return quorumClient.client;
@@ -3517,7 +3517,7 @@ export class FlowView extends ui.Component {
     private increaseIndent(tile: Paragraph.IParagraphMarker, pos: number, decrease = false) {
         tile.listCache = undefined;
         this.undoRedoManager.closeCurrentOperation();
-        if (decrease && tile.properties.indentLevel > 0) {
+        if (decrease && tile.properties!.indentLevel > 0) {
             this.sharedString.annotateRange(pos, pos + 1,
                 { indentLevel: -1 }, { name: "incr", defaultValue: 1, minValue: 0 });
         } else if (!decrease) {
@@ -3528,7 +3528,7 @@ export class FlowView extends ui.Component {
     }
 
     private handleSharedStringDelta(event: Sequence.SequenceDeltaEvent, target: Sequence.SharedString) {
-        let opCursorPos: number;
+        let opCursorPos: number | undefined;
         event.ranges.forEach((range) => {
             if (MergeTree.Marker.is(range.segment)) {
                 this.updatePGInfo(range.position - 1);
@@ -3570,22 +3570,22 @@ export class FlowView extends ui.Component {
         } else {
             if (opCursorPos !== undefined) {
                 this.remotePresenceFromEdit(
-                    event.opArgs.sequencedMessage.clientId,
-                    event.opArgs.sequencedMessage.referenceSequenceNumber,
+                    event.opArgs.sequencedMessage!.clientId,
+                    event.opArgs.sequencedMessage!.referenceSequenceNumber,
                     opCursorPos);
             }
-            this.queueRender(undefined, this.posInViewport(event.first.position) || this.posInViewport(opCursorPos));
+            this.queueRender(undefined, this.posInViewport(event.first.position) || this.posInViewport(opCursorPos!));
         }
     }
 
     private posInViewport(pos: number) {
-        return ((this.viewportEndPos > pos) && (pos >= this.viewportStartPos));
+        return ((this.viewportEndPos! > pos) && (pos >= this.viewportStartPos!));
     }
 
     private presenceQueueRender(localPresenceInfo: ILocalPresenceInfo, sameLine = false) {
         if ((!this.pendingRender) &&
-            (this.posInViewport(localPresenceInfo.xformPos) ||
-                (this.posInViewport(localPresenceInfo.markXformPos)))) {
+            (this.posInViewport(localPresenceInfo.xformPos!) ||
+                (this.posInViewport(localPresenceInfo.markXformPos!)))) {
             if (!sameLine) {
                 this.pendingRender = true;
                 window.requestAnimationFrame(() => {
@@ -3593,12 +3593,12 @@ export class FlowView extends ui.Component {
                     this.render(this.topChar, true);
                 });
             } else {
-                reRenderLine(localPresenceInfo.cursor.lineDiv(), this);
+                reRenderLine(localPresenceInfo.cursor!.lineDiv(), this);
             }
         }
     }
 
-    private queueRender(msg: ISequencedDocumentMessage, go = false) {
+    private queueRender(msg: ISequencedDocumentMessage | undefined, go = false) {
         if ((!this.pendingRender) && (go || (msg && msg.contents))) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
