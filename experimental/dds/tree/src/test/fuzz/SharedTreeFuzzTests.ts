@@ -266,7 +266,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 			runMixedVersionTests(false, testCount, testLength);
 		});
 
-        // TODO: fix these tests. See https://github.com/microsoft/FluidFramework/issues/10103
+		// TODO: fix these tests. See https://github.com/microsoft/FluidFramework/issues/10103
 		describe.skip('with history summarization', () => {
 			runMixedVersionTests(true, testCount, testLength);
 		});
