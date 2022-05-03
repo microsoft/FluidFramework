@@ -16,7 +16,7 @@ import { BreakingIncrement, IValidator, log } from "./validatorUtils";
 
 /**
  * Total result of a class decomposition which may be reconstructed into an equivalent class
- * declaration to bypass issues with normal class type comparisions
+ * declaration to bypass issues with normal class type comparisons
  */
 interface ClassData {
     readonly name: string;
@@ -45,7 +45,7 @@ export class ClassValidator implements IValidator {
     }
 
     /**
-     * Break down a normal class declaration into all its parts to facilitate type comparision
+     * Break down a normal class declaration into all its parts to facilitate type comparison
      * - Remove external type dependencies to examine separately
      * - Convert static properties into instance properties so they affect type compatibility
      *
