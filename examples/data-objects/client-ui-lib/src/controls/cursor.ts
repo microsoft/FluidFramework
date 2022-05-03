@@ -68,12 +68,12 @@ export class Cursor {
         this.mark = Nope;
     }
 
-    public getSelection() {
+    public getSelection(): IRange | undefined {
         if (this.mark !== Nope) {
             return {
                 end: Math.max(this.mark, this.pos),
                 start: Math.min(this.mark, this.pos),
-            } as IRange;
+            };
         }
     }
 

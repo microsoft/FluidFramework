@@ -11,7 +11,6 @@ module.exports = {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "rules": {
-        "@typescript-eslint/consistent-type-assertions": "off",
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-bitwise": "off",

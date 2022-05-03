@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/consistent-type-assertions */
 
 import * as MergeTree from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
@@ -525,4 +525,4 @@ export function segmentToItems(
     return true;
 }
 
-/* eslint-enable @typescript-eslint/no-non-null-assertion */
+/* eslint-enable @typescript-eslint/no-non-null-assertion, @typescript-eslint/consistent-type-assertions */
