@@ -155,20 +155,20 @@ async function prep(allowPacking: boolean, blobSizeLimit: number | undefined) {
     const service = new FlattenedStorageService(snapshot, aggregator);
     assert(Object.keys(service.flattenedTree).length === 7,
         `Unexpected flattened tree size: ${Object.keys(service.flattenedTree).length}`);
-    assert (service.flattenedTree[".channels/blob1"] !== undefined);
-    assert (service.flattenedTree[".channels/dataStore1/.channels/blob2"] !== undefined);
-    assert (service.flattenedTree[".channels/dataStore1/.channels/blob3"] !== undefined);
-    assert (service.flattenedTree[".channels/dataStore1/.channels/channel1/blob4"] !== undefined);
-    assert (service.flattenedTree[".channels/dataStore2/.channels/blob5"] !== undefined);
+    assert(service.flattenedTree[".channels/blob1"] !== undefined);
+    assert(service.flattenedTree[".channels/dataStore1/.channels/blob2"] !== undefined);
+    assert(service.flattenedTree[".channels/dataStore1/.channels/blob3"] !== undefined);
+    assert(service.flattenedTree[".channels/dataStore1/.channels/channel1/blob4"] !== undefined);
+    assert(service.flattenedTree[".channels/dataStore2/.channels/blob5"] !== undefined);
 
-    assert(bufferToString(await service.readBlob(".channels/dataStore1/.channels/blob2"),"utf8")
+    assert(bufferToString(await service.readBlob(".channels/dataStore1/.channels/blob2"), "utf8")
         === "small string 2", "blob2 failed");
-    assert(bufferToString(await service.readBlob(".channels/dataStore1/.channels/blob3"),"utf8")
+    assert(bufferToString(await service.readBlob(".channels/dataStore1/.channels/blob3"), "utf8")
         === "not very small string - exceeding 40 bytes limit for sure", "blob3 failed");
     assert(bufferToString(await service.readBlob(".channels/dataStore1/.channels/channel1/blob4"),
         "utf8") === "small string again", "blob4 failed");
 
-    return { service, storage, snapshot};
+    return { service, storage, snapshot };
 }
 
 describe("BlobAggregationStorage", () => {

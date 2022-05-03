@@ -8,7 +8,7 @@
 
 import isObject from "lodash/isObject";
 import isString from "lodash/isString";
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 import isEmpty from "lodash/isEmpty";
 import extend from "lodash/extend";
 import each from "lodash/each";

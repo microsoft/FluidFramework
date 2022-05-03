@@ -19,7 +19,7 @@ import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/proper
 import memoize from "memoize-one";
 import { HashCalculator } from "./HashCalculator";
 import { IColumns, IExpandedMap, IInspectorRow, IInspectorSearchAbortHandler, IInspectorSearchCallback,
-  IInspectorSearchMatch, IInspectorSearchMatchMap, IInspectorTableProps} from "./InspectorTableTypes";
+  IInspectorSearchMatch, IInspectorSearchMatchMap, IInspectorTableProps } from "./InspectorTableTypes";
 import { Utils } from "./typeUtils";
 const { isEnumProperty, isEnumArrayProperty, isInt64Property, isReferenceProperty,
   isUint64Property, isCollectionProperty, isReferenceArrayProperty, isReferenceCollectionTypeid,
@@ -55,11 +55,11 @@ interface IShowNextResultResult {
  */
 export const showNextResult = (
   data: IInspectorRow[], currentlyExpanded: IExpandedMap, allMatches: IInspectorSearchMatch[],
-  resultIndex: number, childToParentMap: {[key: string]: string}): IShowNextResultResult => {
+  resultIndex: number, childToParentMap: { [key: string]: string }): IShowNextResultResult => {
   const desiredDataItem = allMatches[resultIndex];
   // sanity check
   if (!desiredDataItem) {
-    return {expandedRows: currentlyExpanded, rowIdx: -1, columnIdx: -1};
+    return { expandedRows: currentlyExpanded, rowIdx: -1, columnIdx: -1 };
   }
 
   // iterate through all the parents until root is reached
@@ -72,7 +72,7 @@ export const showNextResult = (
   }
   const rowInfo = findMatchingElementIndexInDataSet(data, currentlyExpanded, desiredDataItem);
 
-  return {expandedRows: currentlyExpanded, rowIdx: rowInfo.idx, columnIdx: desiredDataItem.indexOfColumn};
+  return { expandedRows: currentlyExpanded, rowIdx: rowInfo.idx, columnIdx: desiredDataItem.indexOfColumn };
 };
 
 /**
@@ -91,10 +91,10 @@ export const showNextResult = (
  */
 function findMatchingElementIndexInDataSet(data: IInspectorRow[], currentlyExpanded: IExpandedMap,
                                            matchingElement: IInspectorSearchMatch, rowCounter = 0):
-                                           {idx: number, found: boolean} {
+                                           { idx: number, found: boolean } {
   for (const row of data) {
     if (row.id === matchingElement.rowId) {
-      return {idx: rowCounter, found: true};
+      return { idx: rowCounter, found: true };
     }
     rowCounter++;
     // If current row is expanded - search recursively among its children
@@ -125,7 +125,7 @@ export interface IInspectorSearchState {
   levels?: ISearchLevelState[];
   matchesMap: IInspectorSearchMatchMap;
   scheduled?: number;
-  childToParentMap: {[key: string]: string};
+  childToParentMap: { [key: string]: string };
 }
 
 export interface IInspectorSearchControls {
@@ -246,7 +246,7 @@ export const search = (
           searchState.matchesMap[item.id] = [];
         }
         if (!searchState.matchesMap[item.id][columnIndex]) {
-          searchState.foundMatches.push({rowId: item.id, indexOfColumn: columnIndex});
+          searchState.foundMatches.push({ rowId: item.id, indexOfColumn: columnIndex });
           searchState.matchesMap[item.id][columnIndex] = true;
           searchState.newMatchFound = true;
           break;
@@ -267,7 +267,7 @@ export const search = (
     --searchState.chunkSize;
     if (item.children && !item.isReference) {
       if (item.children[0].context === "d") {
-        fillExpanded({[item.id]: true}, [item], toTableRowsProps, toTableRowsOptions);
+        fillExpanded({ [item.id]: true }, [item], toTableRowsProps, toTableRowsOptions);
       }
 
       if (item.children.length > 0) {
@@ -448,7 +448,7 @@ export const toTableRows = (
   options: Partial<IToTableRowsOptions> = {},
   pathPrefix: string = "",
 ): IInspectorRow[] => {
-  const { ascending, parentIsConstant } = {...OPTION_DEFAULTS, ...options};
+  const { ascending, parentIsConstant } = { ...OPTION_DEFAULTS, ...options };
   const dataCreation = (props.readOnly !== true) && !parentIsConstant &&
     !!props.dataCreationHandler && !!props.dataCreationOptionGenerationHandler;
   const subRows: IInspectorRow[] = [];
@@ -470,7 +470,7 @@ export const toTableRows = (
     case "single": {
       sortedKeys.forEach((key) => {
         const newRow = singlePropertyTableRow(data, key, id, props,
-            {...OPTION_DEFAULTS, ...options, dataCreation}, pathPrefix);
+            { ...OPTION_DEFAULTS, ...options, dataCreation }, pathPrefix);
         subRows.push(newRow);
       });
       break;
@@ -478,7 +478,7 @@ export const toTableRows = (
     default: {
       sortedKeys.forEach((key) => {
         const newRow = collectionChildTableRow(data, key, id, props,
-          {...OPTION_DEFAULTS, ...options, dataCreation}, pathPrefix);
+          { ...OPTION_DEFAULTS, ...options, dataCreation }, pathPrefix);
         subRows.push(newRow);
       });
       break;
@@ -624,7 +624,7 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
       currentContext = property.getContext();
     } else if (isReferenceCollection) {
       // Try to obtain a property
-      const {referencedPropertyParent, relativePathFromParent} =
+      const { referencedPropertyParent, relativePathFromParent } =
         PropertyProxy.getParentOfReferencedProperty(collectionProperty as ReferenceArrayProperty, propertyId);
       if (referencedPropertyParent && relativePathFromParent) {
         // Introducing this intermediate variable improves type inference in some newer versions of TypeScript.
@@ -743,7 +743,7 @@ export const fillExpanded = (
           row.children = toTableRows(
             { ...row },
             props,
-            {...toTableRowsOptions, parentIsConstant: row.isConstant || row.parentIsConstant},
+            { ...toTableRowsOptions, parentIsConstant: row.isConstant || row.parentIsConstant },
             newPathPrefix,
           );
         }

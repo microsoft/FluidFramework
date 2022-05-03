@@ -33,12 +33,14 @@ export interface IChannel extends IFluidLoadable {
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
-     * True if the data structure is attached to storage.
+     * Checks if the channel is attached to storage.
+     * @returns True iff the channel is attached.
      */
     isAttached(): boolean;
 
     /**
-     * Enables the channel to send and receive ops
+     * Enables the channel to send and receive ops.
+     * @param services - Services to connect to
      */
     connect(services: IChannelServices): void;
 
@@ -79,6 +81,14 @@ export interface IDeltaHandler {
      */
     reSubmit(message: any, localOpMetadata: unknown): void;
 
+    /**
+     * Apply changes from an op. Used when rehydrating an attached container
+     * with pending changes. This prepares the SharedObject for seeing an ACK
+     * for the op or resubmitting the op upon reconnection.
+     * @param message - Contents of a stashed op.
+     * @returns localMetadata of the op, to be passed to process() or resubmit()
+     * when the op is ACKed or resubmitted, respectively
+     */
     applyStashedOp(message: any): unknown;
 }
 
