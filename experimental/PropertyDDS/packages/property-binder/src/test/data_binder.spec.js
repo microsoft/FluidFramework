@@ -16,8 +16,8 @@
  *
  */
 import _ from 'lodash';
-import { DataBinder } from '../../src/data_binder/dataBinder';
-import { ModificationContext } from '../../src/data_binder/modificationContext';
+import { DataBinder } from '../data_binder/dataBinder';
+import { ModificationContext } from '../data_binder/modificationContext';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,
   PrimitiveChildrenTemplate, ArrayContainerTemplate, SetContainerTemplate,
@@ -26,7 +26,7 @@ import {
   positionTemplate, ReferenceParentTemplate,
   EscapingTestTemplate
 } from './testTemplates';
-import { DataBinding } from '../../src/data_binder/dataBinding';
+import { DataBinding } from '../data_binder/dataBinding';
 
 import {
   ParentDataBinding,
@@ -38,9 +38,9 @@ import {
 import {
   catchConsoleErrors, hadConsoleError, clearConsoleError
 } from './catchConsoleError';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internalUtils';
+import { unregisterAllOnPathListeners } from '../data_binder/internalUtils';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
-import { RESOLVE_NEVER } from '../../src/internal/constants';
+import { RESOLVE_NEVER } from '../internal/constants';
 import { MockSharedPropertyTree } from './mockSharedPropertyTree'
 
 const cleanupClasses = function() {
