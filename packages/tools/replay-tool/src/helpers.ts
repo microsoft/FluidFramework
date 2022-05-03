@@ -159,7 +159,7 @@ export async function uploadSummary(container: IContainer) {
     const summaryResult = await runtime.summarize({
         fullTree: true,
         trackState: false,
-        fullGC: true,
+        fullGC: false,
     });
     return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {
         referenceSequenceNumber: 0,
