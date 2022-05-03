@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { Serializable } from '@fluidframework/datastore-definitions';
-import type { FinalCompressedId, LocalCompressedId, OpSpaceCompressedId, SessionId } from '../../Identifiers';
-
-/**
- * Extensible attribution info associated with a session.
- */
-export type AttributionInfo = Serializable;
+import type {
+	AttributionId,
+	FinalCompressedId,
+	LocalCompressedId,
+	OpSpaceCompressedId,
+	SessionId,
+} from '../../Identifiers';
 
 /**
  * A serialized ID allocation session for an `IdCompressor`.
@@ -21,9 +21,9 @@ export type SerializedSessionData = readonly [
 	sessionId: SessionId,
 
 	/**
-	 * The attribution info provided for the session
+	 * Index into the serialized AttributionIDs array; points to the attribution ID provided for this session
 	 */
-	attributionInfo?: AttributionInfo
+	attributionId?: number
 ];
 
 export type SerializedClusterOverrides = readonly [
@@ -76,11 +76,6 @@ export interface SerializedLocalState {
 	overrides?: SerializedLocalOverrides;
 
 	/**
-	 * Boolean to track whether attribution has been sent with an ID range yet.
-	 */
-	sentAttributionInfo: boolean;
-
-	/**
 	 * The most recent local ID in a range returned by `takeNextCreationRange`.
 	 */
 	lastTakenLocalId: LocalCompressedId | undefined;
@@ -106,6 +101,8 @@ export interface SerializedIdCompressor extends VersionedSerializedIdCompressor 
 	readonly sessions: readonly SerializedSessionData[];
 	/** All clusters in the compressor in the order they were created. */
 	readonly clusters: readonly SerializedCluster[];
+	/** All attribution IDs for all sessions */
+	readonly attributionIds?: readonly AttributionId[];
 }
 
 /**
@@ -154,7 +151,7 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
 export interface IdCreationRange {
 	readonly sessionId: SessionId;
 	readonly ids?: IdCreationRange.Ids;
-	readonly attributionInfo?: AttributionInfo;
+	readonly attributionId?: AttributionId;
 }
 
 export type UnackedLocalId = LocalCompressedId & OpSpaceCompressedId;
