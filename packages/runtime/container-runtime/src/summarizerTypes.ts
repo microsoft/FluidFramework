@@ -18,11 +18,11 @@ import {
     ISequencedDocumentMessage,
     ISummaryTree,
     IDocumentMessage,
-    ISummaryConfiguration,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 import { SummarizeReason } from "./summaryGenerator";
+import { ISummaryConfigurationHeuristics } from ".";
 
 /**
  * @deprecated - This will be removed in a later release.
@@ -440,7 +440,7 @@ export interface ISummarizeHeuristicStrategy {
      * @param configuration - summarize configuration we are to check against
      * @param heuristicData - heuristic data used to confirm conditions are met
      */
-    shouldRunSummarize(configuration: ISummaryConfiguration, heuristicData: ISummarizeHeuristicData): boolean;
+    shouldRunSummarize(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean;
 }
 
 type SummaryGeneratorRequiredTelemetryProperties =
