@@ -260,19 +260,19 @@ export type ISummaryConfiguration =
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
 
-    idleTime: 5000 * 3,
+    idleTime: 15 * 1000, // 15 secs.
 
-    maxTime: 5000 * 12,
+    maxTime: 60 * 1000, // 1 min.
 
     maxOps: 1000, // Summarize if 1000 ops received since last snapshot.
 
     minOpsForLastSummaryAttempt: 50,
 
-    maxAckWaitTime: 6 * 10 * 1000, // 6 min.
+    maxAckWaitTime: 6 * 10 * 1000, // 60 mins.
 
     maxOpsSinceLastSummary: 7000,
 
-    initialSummarizerDelayMs: 5000, // 5 secs.
+    initialSummarizerDelayMs: 5 * 1000, // 5 secs.
 
     summarizerClientElection: false,
 
