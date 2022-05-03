@@ -93,7 +93,9 @@ describe("Runtime", () => {
                             undefined, // requestHandler
                             {
                                 summaryOptions: {
-                                    disableSummaries: true,
+                                    summaryConfigOverrides: {
+                                        state: "disabled",
+                                    },
                                 },
                             },
                         );
@@ -625,7 +627,9 @@ describe("Runtime", () => {
                     undefined, // requestHandler
                     {
                         summaryOptions: {
-                            disableSummaries: true,
+                            summaryConfigOverrides: {
+                                state: "disabled",
+                            },
                         },
                     },
                 );

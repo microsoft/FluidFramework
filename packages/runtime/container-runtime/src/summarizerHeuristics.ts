@@ -5,7 +5,8 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Timer } from "@fluidframework/common-utils";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { ISummaryConfigurationHeuristics } from "./containerRuntime";
+
 import {
     ISummarizeHeuristicData,
     ISummarizeHeuristicRunner,
@@ -56,17 +57,18 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
  */
 export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     private readonly idleTimer: Timer;
+    private readonly minOpsForLastSummaryAttempt: number;
 
     public constructor(
         private readonly heuristicData: ISummarizeHeuristicData,
-        private readonly configuration: ISummaryConfiguration,
+        private readonly configuration: ISummaryConfigurationHeuristics,
         private readonly trySummarize: (reason: SummarizeReason) => void,
         private readonly logger: ITelemetryLogger,
-        private readonly minOpsForAttemptOnClose = 50,
     ) {
         this.idleTimer = new Timer(
             this.configuration.idleTime,
             () => this.trySummarize("idle"));
+        this.minOpsForLastSummaryAttempt = this.configuration.minOpsForLastSummaryAttempt;
     }
 
     public get opsSinceLastAck(): number {
@@ -89,15 +91,15 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 
     public shouldRunLastSummary(): boolean {
         const opsSinceLastAck = this.opsSinceLastAck;
-        const minOpsForAttemptOnClose = this.minOpsForAttemptOnClose;
+        const minOpsForLastSummaryAttempt = this.minOpsForLastSummaryAttempt;
 
         this.logger.sendTelemetryEvent({
             eventName: "ShouldRunLastSummary",
             opsSinceLastAck,
-            minOpsForAttemptOnClose,
+            minOpsForLastSummaryAttempt,
         });
 
-        return opsSinceLastAck >= minOpsForAttemptOnClose;
+        return opsSinceLastAck >= minOpsForLastSummaryAttempt;
     }
 
     public dispose() {

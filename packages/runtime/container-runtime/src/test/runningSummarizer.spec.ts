@@ -9,7 +9,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,
-    ISummaryConfiguration,
     ISummaryNack,
     ISummaryProposal,
     MessageType,
@@ -17,9 +16,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { ISummaryConfiguration } from "../containerRuntime";
 import { neverCancelledSummaryToken } from "../runWhileConnectedCoordinator";
 import { RunningSummarizer } from "../runningSummarizer";
-import { ISummarizerOptions } from "../summarizerTypes";
 import { SummaryCollection } from "../summaryCollection";
 import { SummarizeHeuristicData } from "../summarizerHeuristics";
 
@@ -39,12 +38,25 @@ describe("Runtime", () => {
             let lastRefSeq = 0;
             let lastClientSeq: number;
             let lastSummarySeq: number;
+            const summaryCommon = {
+                maxAckWaitTime: 120000, // 2 min
+                maxOpsSinceLastSummary: 7000,
+                initialSummarizerDelayMs: 0,
+                summarizerClientElection: false,
+            };
             const summaryConfig: ISummaryConfiguration = {
+                state: "enabled",
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
-                maxAckWaitTime: 120000, // 2 min
+                minOpsForLastSummaryAttempt: 50,
+                ...summaryCommon,
             };
+            const summaryConfigDisableHeuristics: ISummaryConfiguration = {
+                state: "disableHeuristics",
+                ...summaryCommon,
+            };
+
             let shouldDeferGenerateSummary: boolean = false;
             let deferGenerateSummary: Deferred<void> | undefined;
 
@@ -126,12 +138,12 @@ describe("Runtime", () => {
             }
 
             const startRunningSummarizer = async (
-                summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
+                disableHeuristics?: boolean,
             ): Promise<void> => {
                 summarizer = await RunningSummarizer.start(
                     mockLogger,
                     summaryCollection.createWatcher(summarizerClientId),
-                    summaryConfig,
+                    disableHeuristics ? summaryConfigDisableHeuristics : summaryConfig,
                     // submitSummaryCallback
                     async (options) => {
                         runCount++;
@@ -182,7 +194,6 @@ describe("Runtime", () => {
                     neverCancelledSummaryToken,
                     // stopSummarizerCallback
                     (reason) => { stopCall++; },
-                    summarizerOptions,
                 );
             };
 
@@ -988,7 +999,7 @@ describe("Runtime", () => {
 
             describe("Disabled Heuristics", () => {
                 it("Should not summarize after time or ops", async () => {
-                    await startRunningSummarizer({ disableHeuristics: true });
+                    await startRunningSummarizer(true /* disableHeuristics */);
 
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(0, 0, 0, "should not summarize after maxOps");
@@ -1005,7 +1016,7 @@ describe("Runtime", () => {
                 });
 
                 it("Should not summarize before closing", async () => {
-                    await startRunningSummarizer({ disableHeuristics: true });
+                    await startRunningSummarizer(true /* disableHeuristics */);
 
                     await emitNextOp(50); // defaulted to 50 for now
                     const stopP = summarizer.waitStop(true);
@@ -1023,7 +1034,7 @@ describe("Runtime", () => {
                     emitBroadcast(summaryTimestamp);
 
                     let startStatus: "starting" | "started" | "failed" = "starting";
-                    startRunningSummarizer({ disableHeuristics: true })
+                    startRunningSummarizer(true /* disableHeuristics */)
                         .then(
                             () => { startStatus = "started"; },
                             () => { startStatus = "failed"; },

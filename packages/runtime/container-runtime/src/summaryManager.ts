@@ -11,7 +11,6 @@ import { ISummarizerClientElection } from "./summarizerClientElection";
 import { IThrottler } from "./throttler";
 import {
     ISummarizer,
-    ISummarizerOptions,
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
@@ -97,7 +96,7 @@ export class SummaryManager implements IDisposable {
             initialDelayMs = defaultInitialDelayMs,
             opsToBypassInitialDelay = defaultOpsToBypassInitialDelay,
         }: Readonly<Partial<ISummaryManagerConfig>> = {},
-        private readonly summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
+        private readonly disableHeuristics?: boolean,
     ) {
         this.logger = ChildLogger.create(
             parentLogger,
@@ -227,7 +226,7 @@ export class SummaryManager implements IDisposable {
             return PerformanceEvent.timedExecAsync(
                 this.logger,
                 { eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
-                async () => summarizer.run(clientId, this.summarizerOptions),
+                async () => summarizer.run(clientId, this.disableHeuristics),
             );
         }).then((reason: string) => {
             this.logger.sendTelemetryEvent({

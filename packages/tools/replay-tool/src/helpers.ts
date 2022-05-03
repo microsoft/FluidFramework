@@ -132,7 +132,11 @@ export async function loadContainer(
     // Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
     // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true, maxOpsSinceLastSummary: 100000 },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+        },
         gcOptions: { writeDataAtRoot: true },
     };
     const codeLoader = new ReplayCodeLoader(
