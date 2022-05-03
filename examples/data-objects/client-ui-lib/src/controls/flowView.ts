@@ -105,10 +105,11 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
     }
     while (prevSib) {
         switch (prevSib.nodeType) {
-            case Node.ELEMENT_NODE:
+            case Node.ELEMENT_NODE: {
                 const innerSpan = prevSib as HTMLSpanElement;
                 offset += innerSpan.innerText.length;
                 break;
+            }
             case Node.TEXT_NODE:
                 offset += prevSib.nodeValue!.length;
                 break;

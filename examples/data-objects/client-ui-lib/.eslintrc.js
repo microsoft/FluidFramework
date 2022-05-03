@@ -10,8 +10,4 @@ module.exports = {
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
-    "rules": {
-        "no-case-declarations": "off",
-        "no-null/no-null": "off",
-    }
 }
