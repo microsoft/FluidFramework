@@ -421,17 +421,17 @@ export type ISummarizeTelemetryProperties =
     Pick<ITelemetryProperties, ISummarizeTelemetryRequiredProperties> &
     Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
 
-/** Strategy used to heuristically determine when we should run a summarize */
-export interface ISummarizeHeuristicStrategy {
+/** Strategy used to heuristically determine when we should run a summary */
+export interface ISummaryHeuristicStrategy {
     /** Summarize reason for this summarize heuristic strategy (ex: "maxTime") */
     summarizeReason: Readonly<SummarizeReason>;
 
     /**
      * Determines if this strategy's summarize criteria been met
-     * @param configuration - summarize configuration we are to check against
+     * @param configuration - summary configuration we are to check against
      * @param heuristicData - heuristic data used to confirm conditions are met
      */
-    shouldRunSummarize(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean;
+    shouldRunSummary(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean;
 }
 
 type SummaryGeneratorRequiredTelemetryProperties =

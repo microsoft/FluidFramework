@@ -10,7 +10,7 @@ import {
     ISummarizeHeuristicData,
     ISummarizeHeuristicRunner,
     ISummarizeAttempt,
-    ISummarizeHeuristicStrategy,
+    ISummaryHeuristicStrategy,
 } from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
@@ -87,7 +87,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         private readonly configuration: ISummaryConfigurationHeuristics,
         trySummarize: (reason: SummarizeReason) => void,
         private readonly logger: ITelemetryLogger,
-        private readonly summarizeStrategies: ISummarizeHeuristicStrategy[] = getDefaultSummarizeHeuristicStrategies(),
+        private readonly summarizeStrategies: ISummaryHeuristicStrategy[] = getDefaultSummaryHeuristicStrategies(),
     ) {
         this.idleTimer = new Timer(
             this.configuration.idleTime,
@@ -114,7 +114,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 
     public run() {
         for (const strategy of this.summarizeStrategies) {
-            if (strategy.shouldRunSummarize(this.configuration, this.heuristicData)) {
+            if (strategy.shouldRunSummary(this.configuration, this.heuristicData)) {
                 return this.runSummarize(strategy.summarizeReason);
             }
         }
@@ -140,28 +140,28 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 }
 
-export class MaxTimeSummarizeHeuristicStrategy implements ISummarizeHeuristicStrategy {
+class MaxTimeSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxTime";
 
-    public shouldRunSummarize(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean {
+    public shouldRunSummary(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean {
         const timeSinceLastSummary = Date.now() - heuristicData.lastSuccessfulSummary.summaryTime;
         return timeSinceLastSummary > configuration.maxTime;
     }
 }
 
-export class WeightedOpsSummarizeHeuristicStrategy implements ISummarizeHeuristicStrategy {
+class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxOps";
 
-    public shouldRunSummarize(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean {
+    public shouldRunSummary(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean {
         const weightedNumOfOps = (configuration.systemOpWeight    * heuristicData.numSystemOps)
                                + (configuration.nonSystemOpWeight * heuristicData.numNonSystemOps);
         return weightedNumOfOps > configuration.maxOps;
     }
 }
 
-export function getDefaultSummarizeHeuristicStrategies() {
+function getDefaultSummaryHeuristicStrategies() {
     return [
-        new MaxTimeSummarizeHeuristicStrategy(),
-        new WeightedOpsSummarizeHeuristicStrategy(),
+        new MaxTimeSummaryHeuristicStrategy(),
+        new WeightedOpsSummaryHeuristicStrategy(),
     ];
 }
