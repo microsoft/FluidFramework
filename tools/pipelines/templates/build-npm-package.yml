@@ -189,13 +189,20 @@ stages:
           displayName: Use Node 14.x
           inputs:
             version: 14.x
-        - task: Npm@1
-          displayName: npm ci
+        # - task: Npm@1
+        #   displayName: npm ci
+        #   inputs:
+        #     command: 'custom'
+        #     workingDir: ${{ parameters.buildDirectory }}
+        #     customCommand: 'yarn install-strict'
+        #     customRegistry: 'useNpmrc'
+        - task: Bash@3
+          displayName: yarn install-strict
           inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'yarn install-strict'
-            customRegistry: 'useNpmrc'
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              npm i -g yarn && yarn install-strict
 
         # Set version
         - template: include-set-package-version.yml
