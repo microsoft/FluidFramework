@@ -311,24 +311,22 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const container = await localTestObjectProvider.makeTestContainer() as Container;
         await timeoutPromise(
             (resolve) => container.once("connected", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "container initial connection timeout"},
+            { durationMs: timeoutMs, errorMsg: "container initial connection timeout" },
         );
         assert.strictEqual(
             container.connectionState, ConnectionState.Connected,
             "container is not connected when loaded",
         );
 
-        container.disconnect();
-        await timeoutPromise(
-            (resolve) => container.once("disconnected", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "container disconnection timeout"},
-        );
+        let disconnectedEventFired = false;
+        container.once("disconnected", () => { disconnectedEventFired = true; });
+        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
 
         container.connect();
         await timeoutPromise(
             (resolve) => container.once("connected", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "container connect() timeout"},
+            { durationMs: timeoutMs, errorMsg: "container connect() timeout" },
         );
         assert.strictEqual(container.connectionState, ConnectionState.Connected, "container can't connect()");
     });
@@ -350,7 +348,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const container1 = await localTestObjectProvider.makeTestContainer() as Container;
         await timeoutPromise(
             (resolve) => container1.once("connected", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "container1 initial connect timeout"},
+            { durationMs: timeoutMs, errorMsg: "container1 initial connect timeout" },
         );
         assert.strictEqual(
             container1.connectionState, ConnectionState.Connected,
@@ -366,7 +364,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const container2 = await localTestObjectProvider.loadTestContainer() as Container;
         await timeoutPromise(
             (resolve) => container2.once("connected", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "container2 initial connect timeout"},
+            { durationMs: timeoutMs, errorMsg: "container2 initial connect timeout" },
         );
         const dataObjectTest = await requestFluidObject<ITestDataObject>(container2, "default");
         const directory2 = dataObjectTest._root;
@@ -374,11 +372,11 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         let value2 = await directory2.get("key");
         assert.strictEqual(value2, "value", "value2 is not set");
 
+        let disconnectedEventFired = false;
+        container2.once("disconnected", () => { disconnectedEventFired = true; });
         container2.disconnect();
-        await timeoutPromise(
-            (resolve) => container2.once("disconnected", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "container2 disconnection timeout"},
-        );
+        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
+        assert.strictEqual(container2.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
 
         directory1.set("key", "new-value");
         value1 = await directory1.get("key");
@@ -386,7 +384,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
         const valueChangePromise = timeoutPromise(
             (resolve) => directory2.once("valueChanged", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "valueChanged timeout (expected error)"},
+            { durationMs: timeoutMs, errorMsg: "valueChanged timeout (expected error)" },
         );
         await assert.rejects(
             valueChangePromise,
@@ -398,7 +396,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         container2.connect();
         await timeoutPromise(
             (resolve) => directory2.once("valueChanged", () => resolve()),
-            {durationMs: timeoutMs, errorMsg: "valueChanged timeout after connect()"},
+            { durationMs: timeoutMs, errorMsg: "valueChanged timeout after connect()" },
         );
         value2 = await directory2.get("key");
         assert.strictEqual(value1, value2, "container2 not processing ops after connect()");
