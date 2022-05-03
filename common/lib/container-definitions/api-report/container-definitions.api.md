@@ -487,9 +487,11 @@ export interface IProvideRuntimeFactory {
     readonly IRuntimeFactory: IRuntimeFactory;
 }
 
-// @public
+// @public @deprecated
 export interface IProxyLoaderFactory {
+    // @deprecated
     createProxyLoader(id: string, options: ILoaderOptions, resolved: IFluidResolvedUrl, fromSequenceNumber: number): Promise<ILoader>;
+    // @deprecated
     environment: string;
 }
 
