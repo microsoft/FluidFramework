@@ -18,13 +18,26 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		expect(() => map.append(1, 2)).to.not.throw();
 	});
 
-	it('can get the max key', () => {
+	it('can get the min and max keys', () => {
 		const map = mapBuilder();
 		const elementCount = 10;
 		expect(map.maxKey()).to.be.undefined;
 		for (let i = 0; i < elementCount; i++) {
 			map.append(i, i);
 			expect(map.maxKey()).to.equal(i);
+			expect(map.minKey()).to.equal(0);
+		}
+	});
+
+	it('can get the first and last pairs', () => {
+		const map = mapBuilder();
+		const elementCount = 10;
+		expect(map.first()).to.be.undefined;
+		expect(map.last()).to.be.undefined;
+		for (let i = 0; i < elementCount; i++) {
+			map.append(i, i);
+			expect(map.last()).to.deep.equal([i, i]);
+			expect(map.first()).to.deep.equal([0, 0]);
 		}
 	});
 
@@ -38,6 +51,19 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		expect(map.get(10)).to.be.undefined;
 		for (let i = 0; i < elementCount; i++) {
 			expect(map.get(i)).to.equal(i);
+		}
+	});
+
+	it('can get pairs by index', () => {
+		const map = mapBuilder();
+		const elementCount = 10;
+		for (let i = 0; i < elementCount; i++) {
+			map.append(i * 10, i);
+		}
+		expect(map.getAtIndex(-1)).to.be.undefined;
+		expect(map.getAtIndex(10)).to.be.undefined;
+		for (let i = 0; i < elementCount; i++) {
+			expect(map.getAtIndex(i)).to.deep.equal([i * 10, i]);
 		}
 	});
 
@@ -83,21 +109,33 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		expect(map.size).to.equal(elementCount);
 	});
 
+	it('can enumerate its keys and values', () => {
+		const map = mapBuilder();
+		const elementCount = 10;
+		const keys: number[] = [];
+		const values: number[] = [];
+		for (let i = 0; i < elementCount; i++) {
+			const key = i;
+			const value = i * 2;
+			map.append(key, value);
+			keys.push(key);
+			values.push(value);
+		}
+		expect([...map.keys()]).to.deep.equal(keys);
+		expect([...map.values()]).to.deep.equal(values);
+	});
+
 	it('can calculate the indexOf a search element', () => {
-		const elements: [number, number][] = [
-			[0, 0],
-			[2, 0],
-			[3, 0],
-		];
-		const comparator = (key: number, element: readonly [number, number]): number => {
-			return compareFiniteNumbers(key, element[0]);
+		const elements: number[] = [0, 0, 2, 0, 3, 0];
+		const comparator = (search: number, key: number, value: number): number => {
+			return compareFiniteNumbers(search, key);
 		};
-		expect(AppendOnlySortedMap.indexOf(elements, 0, comparator)).to.equal(0);
-		expect(AppendOnlySortedMap.indexOf(elements, 2, comparator)).to.equal(1);
-		expect(AppendOnlySortedMap.indexOf(elements, 3, comparator)).to.equal(2);
-		expect(AppendOnlySortedMap.indexOf(elements, -1, comparator)).to.equal(0 ^ AppendOnlySortedMap.failureXor);
-		expect(AppendOnlySortedMap.indexOf(elements, 1, comparator)).to.equal(1 ^ AppendOnlySortedMap.failureXor);
-		expect(AppendOnlySortedMap.indexOf(elements, 10, comparator)).to.equal(3 ^ AppendOnlySortedMap.failureXor);
+		expect(AppendOnlySortedMap.keyIndexOf(elements, 0, comparator)).to.equal(0);
+		expect(AppendOnlySortedMap.keyIndexOf(elements, 2, comparator)).to.equal(2);
+		expect(AppendOnlySortedMap.keyIndexOf(elements, 3, comparator)).to.equal(4);
+		expect(AppendOnlySortedMap.keyIndexOf(elements, -1, comparator)).to.equal(0 ^ AppendOnlySortedMap.failureXor);
+		expect(AppendOnlySortedMap.keyIndexOf(elements, 1, comparator)).to.equal(2 ^ AppendOnlySortedMap.failureXor);
+		expect(AppendOnlySortedMap.keyIndexOf(elements, 10, comparator)).to.equal(6 ^ AppendOnlySortedMap.failureXor);
 	});
 
 	describe('can perform range queries', () => {
