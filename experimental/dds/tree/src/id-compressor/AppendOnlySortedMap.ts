@@ -30,28 +30,28 @@ export class AppendOnlySortedMap<K, V> {
 	 * @returns the min key in the map.
 	 */
 	public minKey(): K | undefined {
-		return this.elements[0] as K;
+		return this.elements[0] as K | undefined;
 	}
 
 	/**
 	 * @returns the max key in the map.
 	 */
 	public maxKey(): K | undefined {
-		return this.elements[this.elements.length - 2] as K;
+		return this.elements[this.elements.length - 2] as K | undefined;
 	}
 
 	/**
 	 * @returns the min value in the map.
 	 */
 	public minValue(): V | undefined {
-		return this.elements[1] as V;
+		return this.elements[1] as V | undefined;
 	}
 
 	/**
 	 * @returns the min value in the map.
 	 */
 	public maxValue(): V | undefined {
-		return this.elements[this.elements.length - 1] as V;
+		return this.elements[this.elements.length - 1] as V | undefined;
 	}
 
 	/**
