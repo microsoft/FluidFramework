@@ -41,7 +41,7 @@ type anyFunction = (...args: any[]) => any;
  */
 export async function ErrorPopup<
   T extends anyFunction = anyFunction,
-  K = ReturnType<T> extends Promise<infer R> ? R : ReturnType<T>
+  K = ReturnType<T> extends Promise<infer R> ? R : ReturnType<T>,
 >(anythingThatMightEmitError: T, catchErr = true): Promise<void | K> {
   try {
     const result = anythingThatMightEmitError();

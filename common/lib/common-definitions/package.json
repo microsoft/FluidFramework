@@ -42,9 +42,9 @@
   "dependencies": {},
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.63777",
+    "@fluidframework/build-tools": "^0.2.64540",
     "@fluidframework/common-definitions-previous": "npm:@fluidframework/common-definitions@^0.20.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
@@ -68,23 +68,6 @@
   "typeValidation": {
     "version": "0.21.1000",
     "broken": {
-      "0.20.0": {
-        "InterfaceDeclaration_ITelemetryBaseEvent": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ITelemetryErrorEvent": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ITelemetryGenericEvent": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ITelemetryPerformanceEvent": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ITelemetryProperties": {
-          "backCompat": false
-        }
-      }
     }
   }
 }

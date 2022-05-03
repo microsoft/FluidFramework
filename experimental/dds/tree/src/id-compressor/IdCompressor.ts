@@ -10,6 +10,7 @@ import {
 	assert,
 	assertNotUndefined,
 	compareFiniteNumbers,
+	compareFiniteNumbersReversed,
 	compareMaps,
 	compareStrings,
 	fail,
@@ -355,11 +356,7 @@ export class IdCompressor {
 		LocalCompressedId,
 		[FinalCompressedId, IdCluster],
 		FinalCompressedId
-	> = new AppendOnlyDoublySortedMap(
-		compareFiniteNumbersReversed,
-		(value) => value[0],
-		IdCompressor.overrideComparator
-	);
+	> = new AppendOnlyDoublySortedMap(compareFiniteNumbersReversed, (value) => value[0], compareFiniteNumbers);
 
 	/**
 	 * Contains entries for cluster base UUIDs and override strings (both local and final).
@@ -1839,10 +1836,3 @@ function deserializeCluster(serializedCluster: SerializedCluster): {
  * lookup results should be extracted from the tuple immediately after invocation.
  */
 const reusedArray: [any, any] = [] as unknown as [any, any];
-
-/**
- * A numeric comparator used for sorting in descending order.
- */
-function compareFiniteNumbersReversed<T extends number>(a: T, b: T): number {
-	return b - a;
-}
