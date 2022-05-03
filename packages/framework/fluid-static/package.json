@@ -51,7 +51,7 @@
   "devDependencies": {
     "@fluid-experimental/get-container": "^0.59.3000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@0.59.2000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
