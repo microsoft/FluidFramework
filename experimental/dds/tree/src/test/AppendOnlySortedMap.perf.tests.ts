@@ -4,27 +4,28 @@
  */
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import Prando from 'prando';
+import Random from 'random-js';
 import { compareFiniteNumbers } from '../Common';
 import { AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap';
+import { makeRandom } from './utilities/TestUtilities';
 
 function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
 	const type = BenchmarkType.Measurement;
 	let map: AppendOnlySortedMap<number, number>;
-	let rand: Prando;
+	let rand: Random;
 	const keyChoices: number[] = [];
 	let localChoice = 0;
 	const before = () => {
-		rand = new Prando(42);
+		rand = makeRandom(42);
 		map = mapBuilder();
 		let curKey = 0;
 		for (let i = 0; i < 100000; i++) {
-			map.append(curKey, rand.nextInt());
-			curKey += rand.nextInt(1, 10);
+			map.append(curKey, rand.integer(0, Number.MAX_SAFE_INTEGER));
+			curKey += rand.integer(1, 10);
 		}
 		const keys = [...map.keys()];
 		for (let i = 0; i < map.size; i++) {
-			keyChoices.push(keys[rand.nextInt(0, map.size - 1)]);
+			keyChoices.push(keys[rand.integer(0, map.size - 1)]);
 		}
 		localChoice = 0;
 	};
