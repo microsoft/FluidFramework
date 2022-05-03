@@ -31,6 +31,8 @@ describe("Runtime", () => {
                 maxOpsSinceLastSummary: 7000,
                 initialSummarizerDelayMs: 0,
                 summarizerClientElection: false,
+                systemOpWeight: 0.1,
+                nonSystemOpWeight: 1.0,
             };
             let summaryConfig: Readonly<ISummaryConfiguration>;
             let data: ISummarizeHeuristicData;
@@ -60,6 +62,8 @@ describe("Runtime", () => {
                 summarizerClientElection = defaultSummaryConfig.summarizerClientElection,
                 minOpsForLastSummaryAttempt = defaultSummaryConfig.minOpsForLastSummaryAttempt,
                 run = true,
+                systemOpWeight = defaultSummaryConfig.systemOpWeight,
+                nonSystemOpWeight = defaultSummaryConfig.nonSystemOpWeight,
             }: Partial<ISummaryConfigurationHeuristics & ISummarizeAttempt & {
                 lastOpSequenceNumber: number;
                 run: boolean;
@@ -75,7 +79,9 @@ describe("Runtime", () => {
                     maxOpsSinceLastSummary,
                     initialSummarizerDelayMs,
                     summarizerClientElection,
-                    minOpsForLastSummaryAttempt } as const;
+                    minOpsForLastSummaryAttempt,
+                    systemOpWeight,
+                    nonSystemOpWeight, } as const;
 
                 runner = new SummarizeHeuristicRunner(
                     data,
