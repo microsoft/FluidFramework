@@ -27,14 +27,14 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
     }
 
     public numSystemOps: number = 0;
-    /** 
+    /**
      * Number of system ops at beginning of attempting to summarize.
      * Is used to adjust numSystemOps appropriately after successful summarization.
      */
     private numSystemOpsBefore: number = 0;
 
     public numNonSystemOps: number = 0;
-    /** 
+    /**
      * Number of non-system ops at beginning of attempting to summarize.
      * Is used to adjust numNonSystemOps appropriately after successful summarization.
      */
@@ -144,18 +144,24 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 class MaxTimeSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxTime";
 
-    public shouldRunSummary(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean {
+    public shouldRunSummary(
+        configuration: ISummaryConfigurationHeuristics,
+        heuristicData: ISummarizeHeuristicData,
+    ): boolean {
         const timeSinceLastSummary = Date.now() - heuristicData.lastSuccessfulSummary.summaryTime;
         return timeSinceLastSummary > configuration.maxTime;
     }
 }
 
-/** Strategy used to do a weighted analysis on the ops we've processed since the last successful smmary */
+/** Strategy used to do a weighted analysis on the ops we've processed since the last successful summary */
 class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxOps";
 
-    public shouldRunSummary(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean {
-        const weightedNumOfOps = (configuration.systemOpWeight    * heuristicData.numSystemOps)
+    public shouldRunSummary(
+        configuration: ISummaryConfigurationHeuristics,
+        heuristicData: ISummarizeHeuristicData,
+    ): boolean {
+        const weightedNumOfOps = (configuration.systemOpWeight * heuristicData.numSystemOps)
                                + (configuration.nonSystemOpWeight * heuristicData.numNonSystemOps);
         return weightedNumOfOps > configuration.maxOps;
     }

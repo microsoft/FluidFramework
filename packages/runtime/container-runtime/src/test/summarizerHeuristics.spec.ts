@@ -81,7 +81,7 @@ describe("Runtime", () => {
                     summarizerClientElection,
                     minOpsForLastSummaryAttempt,
                     systemOpWeight,
-                    nonSystemOpWeight, } as const;
+                    nonSystemOpWeight } as const;
 
                 runner = new SummarizeHeuristicRunner(
                     data,

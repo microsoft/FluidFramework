@@ -10,6 +10,7 @@ import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IConnectedEvents,
     IConnectedState,
@@ -29,7 +30,6 @@ import { RunningSummarizer } from "../runningSummarizer";
 import { SummarizeHeuristicData } from "../summarizerHeuristics";
 import { SummaryCollection, ISummaryOpMessage } from "../summaryCollection";
 import { neverCancelledSummaryToken } from "../runWhileConnectedCoordinator";
-import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISummarizerRuntime } from "..";
 
 class MockRuntime {

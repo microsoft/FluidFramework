@@ -201,11 +201,11 @@ export class RunningSummarizer implements IDisposable {
         );
 
         // Listen for ops
-        this.runtime.deltaManager.on("op", this.handleOp);
+        this.runtime.deltaManager.on("op", (op) => { this.handleOp(op); });
     }
 
     public dispose(): void {
-        this.runtime.deltaManager.off("op", this.handleOp);
+        this.runtime.deltaManager.off("op", (op) => { this.handleOp(op); });
         this.summaryWatcher.dispose();
         this.heuristicRunner?.dispose();
         this.heuristicRunner = undefined;
