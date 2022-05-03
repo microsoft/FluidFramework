@@ -11,7 +11,6 @@ import {
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
@@ -20,9 +19,11 @@ import {
     IContainerRuntimeOptions,
     RuntimeHeaders,
     SummaryCollection,
+    ISummaryConfiguration,
+    DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { TestDataObject } from "./mockSummarizerClient";
+import { TestDataObject } from "../mockSummarizerClient";
 
 /**
  * Validates this scenario: When a data store is shared with an external app, if the data store becomes unreferenced
@@ -39,13 +40,16 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         []);
 
     const IdleDetectionTime = 100;
-    const summaryConfigOverrides: Partial<ISummaryConfiguration> = {
-        idleTime: IdleDetectionTime,
-        maxTime: IdleDetectionTime * 12,
+    const summaryConfigOverrides: ISummaryConfiguration = {
+        ...DefaultSummaryConfiguration,
+        ...{
+            idleTime: IdleDetectionTime,
+            maxTime: IdleDetectionTime * 12,
+            initialSummarizerDelayMs: 10,
+        },
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },
         gcOptions: {
@@ -209,7 +213,6 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         // dataStore2 will have it marked as unreferenced.
         const gcDisabledRuntimeOptions: IContainerRuntimeOptions = {
             summaryOptions: {
-                initialSummarizerDelayMs: 10,
                 summaryConfigOverrides,
             },
             gcOptions: {

@@ -52,7 +52,7 @@ export async function exists(
     try {
         const fileOrDirectoryStats = await fileSystemManager.promises.stat(fileOrDirectoryPath);
         return fileOrDirectoryStats;
-    } catch (error) {
+    } catch (error: any) {
         if (error?.code === "ENOENT") {
             // File/Directory does not exist.
             return false;
@@ -92,7 +92,7 @@ export async function retrieveLatestFullSummaryFromStorage(
         // TODO: This will be converted back to a JSON string for the HTTP response
         const summary: IWholeFlatSummary = JSON.parse(summaryFile.toString());
         return summary;
-    } catch (error) {
+    } catch (error: any) {
         if (error?.code === "ENOENT") {
             // File does not exist.
             return undefined;
@@ -104,23 +104,20 @@ export async function retrieveLatestFullSummaryFromStorage(
 /**
  * Retrieves the full repository path. Or throws an error if not valid.
  */
-export function getRepoPath(owner: string, name: string) {
-    if (!owner || owner === "") {
-        throw new NetworkError(400, `Invalid arguments. A repo owner must be provided.`);
+export function getRepoPath(name: string, owner?: string): string {
+    // `name` needs to be always present and valid.
+    if (!name || path.parse(name).dir !== "") {
+        throw new NetworkError(400, `Invalid repo name provided.`);
     }
 
-    if (!name || name === "") {
-        throw new NetworkError(400, `Invalid arguments. A repo name must be provided.`);
+    // When `owner` is present, it needs to be valid.
+    if (owner && path.parse(owner).dir !== "") {
+        throw new NetworkError(400, `Invalid repo owner provided.`);
     }
 
-    // Verify that both inputs are valid folder names
-    const parsedOwner = path.parse(owner);
-    const parsedName = path.parse(name);
-    const repoPath = `${owner}/${name}`;
+    return owner ? `${owner}/${name}` : name;
+}
 
-    if (parsedName.dir !== "" || parsedOwner.dir !== "") {
-        throw new NetworkError(400, `Invalid repo name ${repoPath}`);
-    }
-
-    return repoPath;
+export function getGitDirectory(repoPath: string, baseDir?: string): string {
+    return baseDir ? `${baseDir}/${repoPath}` : repoPath;
 }

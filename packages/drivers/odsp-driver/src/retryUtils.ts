@@ -38,7 +38,7 @@ export async function runWithRetry<T>(
                     lastError);
             }
             return result;
-        } catch (error) {
+        } catch (error: any) {
             const canRetry = canRetryOnError(error);
 
             const coherencyError = error?.[Odsp409Error] === true;

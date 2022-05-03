@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_acquireAndComplete": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_acquireAndComplete():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_acquireAndComplete(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_acquireAndComplete": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_acquireAndComplete():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_acquireAndComplete(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ConsensusCallback": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ConsensusCallback():
@@ -52,7 +52,7 @@ use_current_TypeAliasDeclaration_ConsensusCallback(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ConsensusCallback": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ConsensusCallback():
@@ -64,7 +64,7 @@ use_old_TypeAliasDeclaration_ConsensusCallback(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ConsensusOrderedCollection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ConsensusOrderedCollection():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_ConsensusOrderedCollection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ConsensusOrderedCollection": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ConsensusOrderedCollection():
@@ -88,7 +88,7 @@ use_old_ClassDeclaration_ConsensusOrderedCollection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ConsensusQueue": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ConsensusQueue():
@@ -100,7 +100,7 @@ use_current_ClassDeclaration_ConsensusQueue(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ConsensusQueue": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ConsensusQueue():
@@ -112,7 +112,7 @@ use_old_ClassDeclaration_ConsensusQueue(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ConsensusResult": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ConsensusResult():
@@ -124,7 +124,7 @@ use_current_EnumDeclaration_ConsensusResult(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ConsensusResult": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_ConsensusResult():
@@ -136,7 +136,7 @@ use_old_EnumDeclaration_ConsensusResult(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusOrderedCollection": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConsensusOrderedCollection():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_IConsensusOrderedCollection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusOrderedCollection": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IConsensusOrderedCollection():
@@ -160,7 +160,7 @@ use_old_InterfaceDeclaration_IConsensusOrderedCollection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusOrderedCollectionEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConsensusOrderedCollectionEvents():
@@ -172,7 +172,7 @@ use_current_InterfaceDeclaration_IConsensusOrderedCollectionEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusOrderedCollectionEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IConsensusOrderedCollectionEvents():
@@ -184,7 +184,7 @@ use_old_InterfaceDeclaration_IConsensusOrderedCollectionEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusOrderedCollectionFactory": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConsensusOrderedCollectionFactory():
@@ -196,7 +196,7 @@ use_current_InterfaceDeclaration_IConsensusOrderedCollectionFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusOrderedCollectionFactory": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IConsensusOrderedCollectionFactory():
@@ -208,7 +208,7 @@ use_old_InterfaceDeclaration_IConsensusOrderedCollectionFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOrderedCollection": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOrderedCollection():
@@ -220,7 +220,7 @@ use_current_InterfaceDeclaration_IOrderedCollection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOrderedCollection": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IOrderedCollection():
@@ -232,7 +232,7 @@ use_old_InterfaceDeclaration_IOrderedCollection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISnapshotable": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISnapshotable():
@@ -244,7 +244,7 @@ use_current_InterfaceDeclaration_ISnapshotable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISnapshotable": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISnapshotable():
@@ -256,7 +256,7 @@ use_old_InterfaceDeclaration_ISnapshotable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_waitAcquireAndComplete": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_waitAcquireAndComplete():
@@ -268,7 +268,7 @@ use_current_FunctionDeclaration_waitAcquireAndComplete(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_waitAcquireAndComplete": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_waitAcquireAndComplete():

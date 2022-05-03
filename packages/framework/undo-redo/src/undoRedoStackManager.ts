@@ -13,7 +13,7 @@ export interface IRevertible {
 enum UndoRedoMode { None, Redo, Undo }
 
 /**
- * Helper class for createing a stack over an array
+ * Helper class for creating a stack over an array
  */
 class Stack<T> {
     public itemPushedCallback: (() => void) | undefined;

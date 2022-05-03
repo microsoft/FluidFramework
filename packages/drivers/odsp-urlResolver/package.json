@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-urlresolver",
-  "version": "0.58.3000",
+  "version": "0.60.1000",
   "description": "Url Resolver for odsp urls.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -33,19 +33,20 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.45.2000-0",
-    "@fluidframework/odsp-driver": "^0.58.3000",
-    "@fluidframework/odsp-driver-definitions": "^0.58.3000"
+    "@fluidframework/core-interfaces": "^0.43.1000",
+    "@fluidframework/driver-definitions": "^0.47.1000-0",
+    "@fluidframework/odsp-driver": "^0.60.1000",
+    "@fluidframework/odsp-driver-definitions": "^0.60.1000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
-    "@fluidframework/mocha-test-setup": "^0.58.3000",
-    "@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@0.58.2000",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/mocha-test-setup": "^0.60.1000",
+    "@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@^0.59.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
@@ -65,7 +66,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.60.1000",
     "broken": {}
   }
 }

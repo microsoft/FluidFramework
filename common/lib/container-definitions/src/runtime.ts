@@ -6,8 +6,6 @@
 import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     FluidObject,
-    IFluidCodeDetails,
-    IFluidObject,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -25,8 +23,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
-import { ICriticalContainerError, ContainerWarning } from "./error";
-import { ILoader, ILoaderOptions } from "./loader";
+import { ICriticalContainerError } from "./error";
+import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";
+import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
@@ -103,6 +102,12 @@ export interface IRuntime extends IDisposable {
      * Get pending local state in a serializable format to be given back to a newly loaded container
      */
     getPendingLocalState(): unknown;
+
+    /**
+     * Notify runtime that container is moving to "Attaching" state
+     * @param snapshot - snapshot created at attach time
+     */
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 }
 
 /**
@@ -144,12 +149,7 @@ export interface IContainerContext extends IDisposable {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject & FluidObject;
-
-    /**
-     * @deprecated 0.56, will be removed in the next release
-     */
-    raiseContainerWarning?(warning: ContainerWarning): void;
+    readonly scope: FluidObject;
 
     /**
      * Get an absolute url for a provided container-relative request.

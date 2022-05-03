@@ -9,10 +9,12 @@ import {
     ILoader,
     IRuntime,
     IRuntimeFactory,
+    ICodeDetailsLoader,
+    IFluidModuleWithDetails,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
     FluidObject,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IQuorum,
@@ -23,7 +25,6 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Container } from "../container";
 import { ContainerContext } from "../containerContext";
-import { ICodeDetailsLoader } from "../loader";
 
 describe("ContainerContext Tests", () => {
     let sandbox: Sinon.SinonSandbox;
@@ -57,19 +58,18 @@ describe("ContainerContext Tests", () => {
     })(defaultErrorHandler);
 
     const createTestContext = async (
-        codeLoader: unknown, /* ICodeDetailsLoader */
+        codeLoader: ICodeDetailsLoader,
         existing: boolean = true,
     ) => {
         return ContainerContext.createOrLoad(
             (mockContainer as unknown) as Container,
             (sandbox.stub() as unknown) as FluidObject,
-            codeLoader as ICodeDetailsLoader,
+            codeLoader,
             quorumCodeDetails,
             undefined,
             sandbox.stub() as any,
             (sandbox.stub() as unknown) as IQuorum,
             (sandbox.stub() as unknown) as ILoader,
-            Sinon.fake(),
             Sinon.fake(),
             Sinon.fake(),
             Sinon.fake(),
@@ -90,14 +90,20 @@ describe("ContainerContext Tests", () => {
     it("Should load code using legacy loader", async () => {
         // Arrange
         const proposedCodeDetails = codeDetailsForVersion("2.0.0");
+        const load = async (): Promise<IFluidModuleWithDetails> => {
+            return {
+                module: { fluidExport: { } },
+                details: proposedCodeDetails,
+            };
+        };
 
-        const simpleCodeLoader = { load: async () => {} };
+        const simpleCodeLoader = { load };
         const mockCodeLoader = sandbox.mock(simpleCodeLoader);
         // emulate legacy ICodeLoader
         mockCodeLoader
             .expects("load")
             .once()
-            .resolves({ fluidExport: mockRuntimeFactory });
+            .resolves({ module: { fluidExport: mockRuntimeFactory }, details: proposedCodeDetails });
 
         // Act
         const testContext = await createTestContext(simpleCodeLoader);
@@ -118,16 +124,23 @@ describe("ContainerContext Tests", () => {
     it("Should load code without details", async () => {
         // Arrange
         const proposedCodeDetails = codeDetailsForVersion("2.0.0");
+        const load = async (): Promise<IFluidModuleWithDetails> => {
+            return {
+                module: { fluidExport: { } },
+                details: { package: "no-dynamic-package", config: {} },
+            };
+        };
 
         const codeDetailsLoader = {
-            load: async () => {},
+            load,
             get IFluidCodeDetailsComparer() {
                 return this;
             },
             satisfies: async (
                 candidate: IFluidCodeDetails,
                 constraint: IFluidCodeDetails,
-            ) => {},
+            ) => { return true; },
+            compare: async () => { return 0; },
         };
         const mockCodeLoader = sandbox.mock(codeDetailsLoader);
         mockCodeLoader
@@ -158,16 +171,23 @@ describe("ContainerContext Tests", () => {
         // Arrange
         const proposedCodeDetails = codeDetailsForVersion("2.0.0");
         const moduleCodeDetails = codeDetailsForVersion("3.0.0");
+        const load = async (): Promise<IFluidModuleWithDetails> => {
+            return {
+                module: { fluidExport: { } },
+                details: proposedCodeDetails,
+            };
+        };
 
         const codeDetailsLoader = {
-            load: async () => {},
+            load,
             get IFluidCodeDetailsComparer() {
                 return this;
             },
             satisfies: async (
                 candidate: IFluidCodeDetails,
                 constraint: IFluidCodeDetails,
-            ) => {},
+            ) => { return true; },
+            compare: async () => { return 0; },
         };
         const mockCodeLoader = sandbox.mock(codeDetailsLoader);
         mockCodeLoader

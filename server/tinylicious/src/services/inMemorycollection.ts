@@ -93,7 +93,6 @@ export class Collection<T> implements ICollection<T> {
 
     private insertOneInternal(value: any): any {
         this.collection.push(value);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value;
     }
 
@@ -105,7 +104,6 @@ export class Collection<T> implements ICollection<T> {
             const found = this.findInternal(query);
             returnValue = found[0];
         }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return returnValue === undefined ? null : returnValue;
     }
 

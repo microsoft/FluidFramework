@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/eslint-config-fluid",
-  "version": "0.27.2000",
+  "version": "0.29.1000",
   "description": "Shareable ESLint config for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,6 +36,6 @@
     "eslint": "~8.6.0",
     "node-jq": "^2.3.3",
     "sort-json": "^2.0.1",
-    "typescript": "^4.5.3"
+    "typescript": "~4.5.5"
   }
 }

@@ -6,6 +6,7 @@
 import { AsyncLocalStorage } from "async_hooks";
 import * as uuid from "uuid";
 import { Request, Response, NextFunction } from "express";
+import { CorrelationIdHeaderName } from "@fluidframework/server-services-client";
 
 const defaultAsyncLocalStorage = new AsyncLocalStorage<string>();
 
@@ -18,7 +19,7 @@ export function getCorrelationId(altAsyncLocalStorage?: AsyncLocalStorage<string
 }
 
 export const bindCorrelationId =
-    (altAsyncLocalStorage?: AsyncLocalStorage<string>, headerName: string = "x-correlation-id") =>
+    (altAsyncLocalStorage?: AsyncLocalStorage<string>, headerName: string = CorrelationIdHeaderName) =>
         ((req: Request, res: Response, next: NextFunction): void => {
             const id: string = req.header(headerName) || uuid.v4();
             res.setHeader(headerName, id);
