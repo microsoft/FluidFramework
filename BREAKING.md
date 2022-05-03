@@ -20,7 +20,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
 
 ### Summarize heuristic changes based on telemetry
-Changes will be made in the way heuristic summaries are run based on observed telemetry. Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
+Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
 - Change `minOpsForLastSummaryAttempt` from `50` -> `10`
 
 ## 1.0 Breaking changes
