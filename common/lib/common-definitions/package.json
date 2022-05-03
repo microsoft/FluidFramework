@@ -68,22 +68,20 @@
   "typeValidation": {
     "version": "0.21.1000",
     "broken": {
-      "0.20.0": {
-        "InterfaceDeclaration_ITelemetryBaseEvent": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ITelemetryErrorEvent": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ITelemetryGenericEvent": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ITelemetryPerformanceEvent": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ITelemetryProperties": {
-          "backCompat": false
-        }
+      "InterfaceDeclaration_ITelemetryBaseEvent": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITelemetryErrorEvent": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITelemetryGenericEvent": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITelemetryPerformanceEvent": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITelemetryProperties": {
+        "backCompat": false
       }
     }
   }

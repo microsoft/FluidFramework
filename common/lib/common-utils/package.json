@@ -133,15 +133,13 @@
   "typeValidation": {
     "version": "0.33.1000",
     "broken": {
-      "0.32.1": {
-        "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "RemovedClassDeclaration_BatchManager": {
-          "forwardCompat": false,
-          "backCompat": false
-        }
+      "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_BatchManager": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
