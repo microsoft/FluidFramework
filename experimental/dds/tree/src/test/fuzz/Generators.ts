@@ -6,12 +6,6 @@
 import Random from 'random-js';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { Side, TraitMap, WriteFormat } from '../../persisted-types';
-import { BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes';
-import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView';
-import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers';
-import { fail } from '../../Common';
-import { rangeFromStableRange } from '../../TreeViewUtilities';
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -19,7 +13,13 @@ import {
 	createWeightedAsyncGenerator,
 	done,
 	makeRandom,
-} from '../stochastic-test-utilities';
+} from '@fluidframework/stochastic-test-utils';
+import { Side, TraitMap, WriteFormat } from '../../persisted-types';
+import { BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes';
+import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView';
+import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers';
+import { fail } from '../../Common';
+import { rangeFromStableRange } from '../../TreeViewUtilities';
 import {
 	EditGenerationConfig,
 	FuzzChange,

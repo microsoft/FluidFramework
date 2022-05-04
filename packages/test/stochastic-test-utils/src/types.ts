@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type Random from 'random-js';
+import type Random from "random-js";
 
 export interface BaseFuzzTestState {
-	random: Random;
+    random: Random;
 }
 
-export const done = Symbol('GeneratorDone');
+export const done = Symbol("GeneratorDone");
 
 /**
  * Given some input state, asynchronously generates outputs.
@@ -52,8 +52,8 @@ export type Weights<TOp, TState> = [TOp | Generator<TOp, TState>, number, Accept
 export type AsyncWeights<TOp, TState> = [TOp | AsyncGenerator<TOp, TState>, number, AcceptanceCondition<TState>?][];
 
 export interface SaveInfo {
-	saveAt?: number;
-	saveOnFailure: boolean;
-	/** Filepath to dump the history file. Containing folder must already be created. */
-	filepath: string;
+    saveAt?: number;
+    saveOnFailure: boolean;
+    /** Filepath to dump the history file. Containing folder must already be created. */
+    filepath: string;
 }

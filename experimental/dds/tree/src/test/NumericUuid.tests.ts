@@ -6,6 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import { expect } from 'chai';
+import { makeRandom } from '@fluidframework/stochastic-test-utils';
 import { compareStrings } from '../Common';
 import {
 	numericUuidEquals,
@@ -19,7 +20,6 @@ import {
 import { StableId } from '../Identifiers';
 import { assertIsStableId, isStableId } from '../UuidUtilities';
 import { integerToStableId } from './utilities/IdCompressorTestUtilities';
-import { makeRandom } from './stochastic-test-utilities';
 
 describe('NumericUuid', () => {
 	it('can detect non-v4 variant 2 UUIDs', () => {

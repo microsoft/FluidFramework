@@ -6,6 +6,17 @@
 /* eslint-disable no-bitwise */
 
 import { expect } from 'chai';
+import {
+	Generator,
+	createWeightedGenerator,
+	interleave,
+	makeRandom,
+	performFuzzActions as performFuzzActionsBase,
+	repeat,
+	SaveInfo,
+	take,
+	BaseFuzzTestState,
+} from '@fluidframework/stochastic-test-utils';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, IdRangeDescriptor, isLocalId } from '../../id-compressor/IdCompressor';
 import {
@@ -22,17 +33,6 @@ import type {
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
 } from '../../id-compressor';
-import {
-	Generator,
-	createWeightedGenerator,
-	interleave,
-	makeRandom,
-	performFuzzActions as performFuzzActionsBase,
-	repeat,
-	SaveInfo,
-	take,
-	BaseFuzzTestState,
-} from '../stochastic-test-utilities';
 import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities';
 import { expectDefined } from './TestCommon';
 
