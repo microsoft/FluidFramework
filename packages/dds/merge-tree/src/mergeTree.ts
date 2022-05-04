@@ -62,7 +62,6 @@ import {
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager } from "./segmentPropertiesManager";
-import { Client } from "./client";
 
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
@@ -2441,30 +2440,6 @@ export class MergeTree {
         if (this.collabWindow.collaborating) {
             node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow, recur);
         }
-    }
-
-    public removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined {
-        const segment = lref.getSegment();
-        if (segment) {
-            const removedRefs = segment?.localRefs?.removeLocalRef(lref);
-            if (removedRefs !== undefined) {
-                this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-                    LocalClientId);
-            }
-            return removedRefs;
-        }
-    }
-    public createLocalReferencePosition(
-        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
-        client: Client,
-    ): ReferencePosition {
-        const localRefs = segment.localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
-
-        const segRef = localRefs.createLocalRef(offset, refType, properties, client);
-
-        this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-            LocalClientId);
-        return segRef;
     }
 
     /**
