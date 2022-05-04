@@ -395,6 +395,26 @@ describe("SharedString", () => {
             ]);
         });
 
+        it.only("can slide intervals on create conflict with remove range", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.removeRange(1, 3);
+
+            collection2.add(1, 3, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 1 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 1 },
+            ]);
+        });
+
         it("can maintain consistency of LocalReference's when segments are packed", async () => {
             // sharedString.insertMarker(0, ReferenceType.Tile, { nodeType: "Paragraph" });
 
