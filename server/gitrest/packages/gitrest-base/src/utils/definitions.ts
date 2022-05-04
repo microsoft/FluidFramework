@@ -73,9 +73,15 @@ export interface IFileSystemManagerFactory {
     create(fileSystemManagerParams?: IFileSystemManagerParams): IFileSystemManager;
 }
 
+export interface IStorageRoutingId {
+    tenantId: string;
+    documentId: string;
+}
+
 export interface IRepoManagerParams {
     repoOwner: string;
     repoName: string;
+    storageRoutingId?: IStorageRoutingId;
     fileSystemManagerParams?: IFileSystemManagerParams;
 }
 
@@ -108,4 +114,16 @@ export enum GitObjectType {
     ext2 = 5,       /** < Reserved for future use. */
     ofsdelta = 6,   /** < A delta, base is given by an offset. */
     refdelta = 7,   /** < A delta, base is given by object id. */
+}
+
+export enum BaseGitRestTelemetryProperties {
+    directoryPath = "directoryPath",
+    method = "method",
+    pathCategory = "pathCategory",
+    ref = "ref",
+    repoName = "repoName",
+    repoOwner = "repoOwner",
+    sha = "sha",
+    storageName = "storageName",
+    summaryType = "summaryType",
 }

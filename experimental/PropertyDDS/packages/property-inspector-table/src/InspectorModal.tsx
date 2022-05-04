@@ -98,7 +98,7 @@ export const InspectorModal: React.FunctionComponent<IInspectorModalProps> = (pr
             >
               <div className={classes.modaleTitle}>{title}</div>
               {hideModal ? (
-                <IconButton key='close' onClick={hideModal} className={classes.closeButton}>
+                <IconButton key="close" onClick={hideModal} className={classes.closeButton}>
                   <SvgIcon height={26} width={26} svgId={"clear-24"} hoverable />
                 </IconButton>
               ) : null}
@@ -107,7 +107,7 @@ export const InspectorModal: React.FunctionComponent<IInspectorModalProps> = (pr
               <div className={classes.subtitleText}>
                 {subtitle}
               </div>) : null}
-            <Divider variant='middle' className={classes.dividerStyle} />
+            <Divider variant="middle" className={classes.dividerStyle} />
           </DialogTitle>
           <DialogContent className={classNames(classes.dialogBody, props.bodyClassName)}>
             {children}

@@ -11,11 +11,11 @@
 /* eslint max-nested-callbacks: ["warn", 5] */
 
 import _ from 'lodash';
-import { DataBinder } from '../../src/data_binder/dataBinder';
+import { DataBinder } from '../data_binder/dataBinder';
 import {
   DataBinding
-} from '../../src/data_binder/dataBinding';
-import { ModificationContext } from '../../src/data_binder/modificationContext';
+} from '../data_binder/dataBinding';
+import { ModificationContext } from '../data_binder/modificationContext';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,
   PrimitiveChildrenTemplate, ArrayContainerTemplate,
@@ -30,8 +30,8 @@ import {
   InheritedChildDataBinding
 } from './testDataBindings';
 import { catchConsoleErrors } from './catchConsoleError';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internalUtils';
-import { RESOLVE_NO_LEAFS, RESOLVE_NEVER } from '../../src/internal/constants';
+import { unregisterAllOnPathListeners } from '../data_binder/internalUtils';
+import { RESOLVE_NO_LEAFS, RESOLVE_NEVER } from '../internal/constants';
 import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 

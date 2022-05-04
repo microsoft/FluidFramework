@@ -12,6 +12,7 @@ module.exports = {
     },
     "rules": {
         "@typescript-eslint/ban-types": "off",
+        "@typescript-eslint/comma-spacing": "off",
         "@typescript-eslint/dot-notation": "off",
         "@typescript-eslint/no-dynamic-delete": "off",
         "@typescript-eslint/no-extraneous-class": "off",
@@ -28,6 +29,7 @@ module.exports = {
         "@typescript-eslint/no-unsafe-return": "off",
         "@typescript-eslint/no-unused-expressions": "off",
         "@typescript-eslint/no-var-requires": "off",
+        "@typescript-eslint/object-curly-spacing": "off",
         "@typescript-eslint/prefer-for-of": "off",
         "@typescript-eslint/quotes": "off",
         "@typescript-eslint/restrict-plus-operands": "off",

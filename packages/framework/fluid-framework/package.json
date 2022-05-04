@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "0.59.2000",
+  "version": "0.59.3000",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,13 +34,13 @@
   },
   "dependencies": {
     "@fluidframework/container-definitions": "^0.48.1000",
-    "@fluidframework/fluid-static": "^0.59.2000",
-    "@fluidframework/map": "^0.59.2000",
-    "@fluidframework/sequence": "^0.59.2000"
+    "@fluidframework/fluid-static": "^0.59.3000",
+    "@fluidframework/map": "^0.59.3000",
+    "@fluidframework/sequence": "^0.59.3000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",

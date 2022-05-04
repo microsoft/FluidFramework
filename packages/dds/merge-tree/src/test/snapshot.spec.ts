@@ -82,7 +82,7 @@ class TestString {
         const snapshot = new SnapshotV1(
             this.client.mergeTree,
             this.client.logger,
-            (id)=>this.client.getLongClientId(id));
+            (id) => this.client.getLongClientId(id));
 
         snapshot.extractSync();
         return snapshot.emit(TestClient.serializer, undefined!).summary;

@@ -184,7 +184,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.logger = ChildLogger.create(
             dataStoreContext.logger,
             "FluidDataStoreRuntime",
-            {all:{ dataStoreId: uuid() }},
+            { all: { dataStoreId: uuid() } },
         );
 
         this.id = dataStoreContext.id;

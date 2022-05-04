@@ -225,7 +225,7 @@ export class SnapshotV1 {
                             ? this.getLongClientId(segment.removedClientIds[0])
                             : undefined;
 
-                    raw.removedClientIds = segment.removedClientIds?.map((id)=>this.getLongClientId(id));
+                    raw.removedClientIds = segment.removedClientIds?.map((id) => this.getLongClientId(id));
                 }
 
             // Sanity check that we are preserving either the seq < minSeq or a removed segment's info.

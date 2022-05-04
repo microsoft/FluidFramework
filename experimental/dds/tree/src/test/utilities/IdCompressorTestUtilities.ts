@@ -6,26 +6,26 @@
 /* eslint-disable no-bitwise */
 
 import { v5 } from 'uuid';
-import Prando from 'prando';
 import { expect } from 'chai';
-import { Serializable } from '@fluidframework/datastore-definitions';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, IdRangeDescriptor, isLocalId } from '../../id-compressor/IdCompressor';
 import {
-	assertIsStableId,
 	createSessionId,
 	ensureSessionUuid,
 	NumericUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../../id-compressor/NumericUuid';
-import { FinalCompressedId, SessionId, StableId, SessionSpaceCompressedId } from '../../Identifiers';
+import { FinalCompressedId, SessionId, StableId, SessionSpaceCompressedId, AttributionId } from '../../Identifiers';
 import { getIds } from '../../id-compressor/IdRange';
 import type {
 	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
 } from '../../id-compressor';
+import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities';
+import { expectDefined } from './TestCommon';
+import { makeRandom } from './TestUtilities';
 
 /** Identifies a compressor in a network */
 export enum Client {
@@ -58,12 +58,8 @@ export const DestinationClient = { ...Client, ...MetaClient };
 /**
  * Creates a new compressor with the supplied cluster capacity.
  */
-export function createCompressor<T>(
-	client: Client,
-	clusterCapacity = 5,
-	attributionInfo?: Serializable<T>
-): IdCompressor {
-	const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionInfo);
+export function createCompressor(client: Client, clusterCapacity = 5, attributionId?: AttributionId): IdCompressor {
+	const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionId);
 	compressor.clusterCapacity = clusterCapacity;
 	return compressor;
 }
@@ -98,6 +94,13 @@ export const sessionNumericUuids = new Map(
 		return [client, numericUuidFromStableId(sessionId)];
 	})
 ) as ClientMap<NumericUuid>;
+
+export const attributionIds = new Map(
+	Object.values(Client).map((c, i) => [
+		c,
+		assertIsUuidString(`00000000-0000-0000-0000-${(i + 1).toString(16).padStart(12, '0')}`),
+	])
+) as ClientMap<AttributionId>;
 
 /** An immutable view of an `IdCompressor` */
 export interface ReadonlyIdCompressor
@@ -143,7 +146,7 @@ export class IdCompressorTestNetwork {
 		const clientIds = new Map<Client, TestIdData[]>();
 		const clientSequencedIds = new Map<Client, TestIdData[]>();
 		for (const client of Object.values(Client)) {
-			const compressor = createCompressor(client, initialClusterSize, client);
+			const compressor = createCompressor(client, initialClusterSize, attributionIds.get(client));
 			compressors.set(client, compressor);
 			clientProgress.set(client, 0);
 			clientIds.set(client, []);
@@ -336,7 +339,7 @@ export class IdCompressorTestNetwork {
 	 */
 	public assertNetworkState(): void {
 		const sequencedLogs = Object.values(Client).map(
-			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as [IdCompressor, TestIdData[]]
+			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as const
 		);
 
 		const maxLogLength = sequencedLogs.map(([_, data]) => data.length).reduce((p, n) => Math.max(p, n));
@@ -397,6 +400,11 @@ export class IdCompressorTestNetwork {
 					idDataA.originatingClient === originatingClient,
 					'Test infra gave wrong originating client to TestIdData'
 				);
+				const attributionA = compressorA.attributeId(idDataA.id);
+				if (attributionA !== attributionIds.get(idDataA.originatingClient)) {
+					// Unification
+					expectDefined(idDataA.expectedOverride);
+				}
 
 				// Only one client should have this ID as local in its session space, as only one client could have created this ID
 				if (isLocalId(sessionSpaceIdA)) {
@@ -594,7 +602,7 @@ export function performFuzzActions(
 	maxClusterSize = 25,
 	validator?: (network: IdCompressorTestNetwork) => void
 ): void {
-	const rand = new Prando(seed);
+	const rand = makeRandom(seed);
 	const selectableClients: Client[] = network.getTargetCompressors(MetaClient.All).map(([client]) => client);
 	const activeClients = selectableClients.filter((c) => c !== observerClient);
 	// Ensure that the same UUIDs are generated for the same seed across different calls
@@ -623,7 +631,7 @@ export function performFuzzActions(
 	}
 
 	for (let i = 0; i < numUsages; i++) {
-		const weightSelected = rand.nextInt(1, prevWeight);
+		const weightSelected = rand.integer(1, prevWeight);
 		let opIndex = 0;
 		while (weightSelected > opSums[opIndex][1]) {
 			opIndex++;
@@ -631,18 +639,18 @@ export function performFuzzActions(
 		const operation = opWeights[opIndex][0];
 		switch (operation) {
 			case Operation.ChangeCapacity: {
-				clusterSize = Math.min(Math.floor(rand.next(0, 1) ** 2 * maxClusterSize) + 1, maxClusterSize);
+				clusterSize = Math.min(Math.floor(rand.real(0, 1) ** 2 * maxClusterSize) + 1, maxClusterSize);
 				network.enqueueCapacityChange(clusterSize);
 				break;
 			}
 			case Operation.AllocateIds: {
-				const client = rand.nextArrayItem(activeClients);
+				const client = rand.pick(activeClients);
 				const maxIdsPerUsage = clusterSize * 2;
-				const numIds = Math.floor(rand.next(0, 1) ** 2 * maxIdsPerUsage) + 1;
+				const numIds = Math.floor(rand.real(0, 1) ** 2 * maxIdsPerUsage) + 1;
 				const overrides: { [index: number]: string } = {};
-				if (includeOverrides && /* 25% chance: */ rand.nextInt(0, 3) === 0) {
+				if (includeOverrides && /* 25% chance: */ rand.integer(0, 3) === 0) {
 					for (let j = 0; j < numIds; j++) {
-						if (/* 33% chance: */ rand.nextInt(0, 2) === 0) {
+						if (/* 33% chance: */ rand.integer(0, 2) === 0) {
 							overrides[j] = v5((uuidNum++).toString(), uuidNamespace);
 						}
 					}
@@ -651,20 +659,20 @@ export function performFuzzActions(
 				break;
 			}
 			case Operation.DeliverOperations: {
-				const client = rand.nextArrayItem([...selectableClients, MetaClient.All]);
+				const client = rand.pick([...selectableClients, MetaClient.All]);
 				network.deliverOperations(client);
 				break;
 			}
 			case Operation.GenerateUnifyingIds: {
-				const clientA = rand.nextArrayItem(activeClients);
-				const clientB = rand.nextArrayItem(activeClients.filter((c) => c !== clientA));
+				const clientA = rand.pick(activeClients);
+				const clientB = rand.pick(activeClients.filter((c) => c !== clientA));
 				const uuid = v5((uuidNum++).toString(), uuidNamespace);
 				network.allocateAndSendIds(clientA, 1, { 0: uuid });
 				network.allocateAndSendIds(clientB, 1, { 0: uuid });
 				break;
 			}
 			case Operation.GoOfflineThenResume: {
-				const client = rand.nextArrayItem(activeClients);
+				const client = rand.pick(activeClients);
 				network.goOfflineThenResume(client);
 				break;
 			}

@@ -156,7 +156,7 @@ describeFullCompat("GC unreferenced flag in downloaded snapshot", (getTestObject
 
     beforeEach(async function() {
         // GitHub issue: #9534
-        if(provider.driver.type === "odsp") {
+        if (provider.driver.type === "odsp") {
             this.skip();
         }
         // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
