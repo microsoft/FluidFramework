@@ -128,7 +128,7 @@ export class RunningSummarizer implements IDisposable {
                 this.logger);
         }
 
-        assert (this.configuration.state !== "disabled", "Summary not supported with configuration disabled");
+        assert(this.configuration.state !== "disabled", "Summary not supported with configuration disabled");
 
         // Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
         // configuration.maxAckWaitTime is composed from defaults, server values, and runtime overrides

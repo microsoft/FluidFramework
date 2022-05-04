@@ -6,7 +6,6 @@
 /* eslint-disable no-bitwise */
 
 import { expect } from 'chai';
-import Prando from 'prando';
 import { compareStrings } from '../Common';
 import {
 	numericUuidEquals,
@@ -20,6 +19,7 @@ import {
 import { StableId } from '../Identifiers';
 import { assertIsStableId, isStableId } from '../UuidUtilities';
 import { integerToStableId } from './utilities/IdCompressorTestUtilities';
+import { makeRandom } from './stochastic-test-utilities';
 
 describe('NumericUuid', () => {
 	it('can detect non-v4 variant 2 UUIDs', () => {
@@ -131,10 +131,10 @@ describe('NumericUuid', () => {
 	];
 
 	describe('incrementing', () => {
-		const prando = new Prando('incrementing');
+		const rand = makeRandom(0);
 		const incrementAmounts = [
 			...[...new Array(53).keys()].map((n) => 2 ** n - 1),
-			...[...new Array(10).keys()].map((_) => prando.nextInt(0, Number.MAX_SAFE_INTEGER)),
+			...[...new Array(10).keys()].map((_) => rand.integer(0, Number.MAX_SAFE_INTEGER)),
 		];
 		stableIds.forEach((stableId) => {
 			it(`can increment ${stableId}`, () => {
