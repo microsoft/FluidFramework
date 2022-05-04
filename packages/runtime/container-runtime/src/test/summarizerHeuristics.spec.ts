@@ -220,6 +220,8 @@ describe("Runtime", () => {
                 const maxTime = 1000;
                 initialize({ refSequenceNumber: lastSummary, idleTime, maxTime });
 
+                data.lastOpSequenceNumber = lastSummary + 1;
+
                 clock.tick(idleTime - 1);
                 runner.run();
                 assertAttemptCount(0, "should not run yet");
@@ -228,6 +230,28 @@ describe("Runtime", () => {
                 clock.tick(1);
                 runner.run();
                 assertAttemptCount(0, "should still run since disposed");
+            });
+
+            it("Weights ops properly", () => {
+                const maxOps = 2;
+                const systemOpWeight = 1.1;
+                const nonSystemOpWeight = 0.1;
+                initialize({ maxOps, systemOpWeight, nonSystemOpWeight });
+
+                data.lastOpSequenceNumber = maxOps;
+
+                data.numNonSystemOps += 9;
+                runner.run();
+                assertAttemptCount(0, "should not run yet");
+
+                data.numSystemOps += 1;
+                runner.run();
+                assertAttemptCount(0, "should not run yet");
+
+                data.numNonSystemOps += 1;
+                runner.run();
+                assertAttemptCount(1, "should run");
+                assert(getLastAttempt() === "maxOps");
             });
         });
     });
