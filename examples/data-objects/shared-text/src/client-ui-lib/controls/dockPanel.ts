@@ -9,9 +9,9 @@ import * as ui from "../ui";
  * Basic dock panel control
  */
 export class DockPanel extends ui.Component {
-    public bottom: ui.Component;
-    public content: ui.Component;
-    public top: ui.Component;
+    public bottom: ui.Component | undefined;
+    public content: ui.Component | undefined;
+    public top: ui.Component | undefined;
 
     constructor(element: HTMLDivElement) {
         super(element);
@@ -63,14 +63,14 @@ export class DockPanel extends ui.Component {
         this.resizeCore(this.size);
     }
 
-    private addChildIfExists(child: ui.Component) {
+    private addChildIfExists(child: ui.Component | undefined) {
         if (child) {
             this.addChild(child);
             this.element.appendChild(child.element);
         }
     }
 
-    private updateChildBoundsIfExists(child: ui.Component, bounds: ui.Rectangle) {
+    private updateChildBoundsIfExists(child: ui.Component | undefined, bounds: ui.Rectangle) {
         if (child) {
             bounds.conformElement(child.element);
             child.resize(bounds);

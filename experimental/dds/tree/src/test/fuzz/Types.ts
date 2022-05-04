@@ -4,7 +4,6 @@
  */
 
 import type { TestObjectProvider } from '@fluidframework/test-utils';
-import type Random from 'random-js';
 import type { IContainer } from '@fluidframework/container-definitions';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import type { SharedTree } from '../../SharedTree';
@@ -13,9 +12,9 @@ import type { Build, Detach, Insert, SetValue } from '../../ChangeTypes';
 import type { TreeView } from '../../TreeView';
 import type { NodeId } from '../../Identifiers';
 import type { NodeIdGenerator } from '../../NodeIdUtilities';
+import type { BaseFuzzTestState } from '../stochastic-test-utilities';
 
-export interface FuzzTestState {
-	rand: Random;
+export interface FuzzTestState extends BaseFuzzTestState {
 	testObjectProvider?: TestObjectProvider;
 	activeCollaborators: Collaborator[];
 	passiveCollaborators: Collaborator[];
@@ -62,13 +61,6 @@ export interface Synchronize {
  * - More fine-grained control of summarization processes
  */
 export type Operation = TreeEdit | TreeJoin | TreeLeave | Synchronize;
-
-export const done = Symbol('GeneratorDone');
-
-/**
- * Given some input state, asynchronously generates outputs.
- */
-export type AsyncGenerator<T, TState> = (state: TState) => Promise<T | typeof done>;
 
 export interface FuzzInsert {
 	fuzzType: 'insert';
