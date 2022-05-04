@@ -110,8 +110,12 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
-    "broken": {},
-    "disabled": true
+    "version": "0.59.3000",
+    "broken": {
+      "InterfaceDeclaration_ISequenceDeltaRange": {"forwardCompat": false, "backCompat": false},
+      "ClassDeclaration_SequenceDeltaEvent": {"forwardCompat": false, "backCompat": false},
+      "ClassDeclaration_SequenceEvent": {"forwardCompat": false, "backCompat": false},
+      "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false, "backCompat": false}
+    }
   }
 }
