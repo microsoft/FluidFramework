@@ -1788,10 +1788,10 @@
   resolved "https://registry.yarnpkg.com/@fluidframework/build-common/-/build-common-0.23.0.tgz#bda4a96a1a7c319a073e1370aaa5511feb22a9e6"
   integrity sha512-2Uz+rKTApwDIez+e9mx+UDAFK74Rh1r+emsHVpo0t29jECqa0f5NlkdmFREpjjexRS4+W/uLTKB5wN3fgN/f9w==
 
-"@fluidframework/build-tools@^0.2.63777":
-  version "0.2.63777"
-  resolved "https://registry.yarnpkg.com/@fluidframework/build-tools/-/build-tools-0.2.63777.tgz#6b9435b00a304152633ff17a63532a3df8799e38"
-  integrity sha512-8dYzL84O8uJxwblk5cclpUoIhAxD5vIP/gPV08l/ZLxZJwPSmdYTJBMAFP/QRbXIxWGpo/DNlVshYF+sW3w+Aw==
+"@fluidframework/build-tools@^0.2.64540":
+  version "0.2.64540"
+  resolved "https://registry.yarnpkg.com/@fluidframework/build-tools/-/build-tools-0.2.64540.tgz#6a3ec7960a852ff25f3fab3abf94e60fe8132fc7"
+  integrity sha512-mqmezRhvyYlqV7pJ/wKWvGVDuRbj3oLLxDzORBpQVhiIFCxdk2uPclGVdan81lNdjdm02Ex4uklyk0hfWZbrNA==
   dependencies:
     "@fluidframework/bundle-size-tools" "^0.0.8505"
     async "^3.2.0"
@@ -7374,15 +7374,6 @@
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-4.0.5.tgz#738dd390a6ecc5442f35e7f03fa1431353f7e138"
   integrity sha512-FhpRzf927MNQdRZP0J5DLIdTXhjLYzeUTmLAu69mnVksLH9CJY3IuSeEgbKUki7GQZm0WqDkGzyxju2EZGD2wA==
 
-"@types/jsdom@^12.0.0":
-  version "12.2.4"
-  resolved "https://registry.yarnpkg.com/@types/jsdom/-/jsdom-12.2.4.tgz#845cd4d43f95b8406d9b724ec30c03edadcd9528"
-  integrity sha512-q+De3S/Ri6U9uPx89YA1XuC+QIBgndIfvBaaJG0pRT8Oqa75k4Mr7G9CRZjIvlbLGIukO/31DFGFJYlQBmXf/A==
-  dependencies:
-    "@types/node" "*"
-    "@types/tough-cookie" "*"
-    parse5 "^4.0.0"
-
 "@types/json-schema@^7.0.4", "@types/json-schema@^7.0.5", "@types/json-schema@^7.0.8", "@types/json-schema@^7.0.9":
   version "7.0.11"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.11.tgz#d421b6c527a3037f7c84433fd2c4229e016863d3"
@@ -7805,11 +7796,6 @@
   integrity sha512-JAUw1iXGO1qaWwEOzxTKJZ/5JxVeON9kvGZ/osgZaJImBnyjyn0cjovPsf6FNLmyGY8Vw9DoXZCMlfMkMwHRWg==
   dependencies:
     "@types/estree" "*"
-
-"@types/tough-cookie@*":
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/@types/tough-cookie/-/tough-cookie-4.0.2.tgz#6286b4c7228d58ab7866d19716f3696e03a09397"
-  integrity sha512-Q5vtl1W5ue16D+nIaW8JWebSSraJVlK+EthKn7e7UcD4KWsaSJ8BqGPXNaPghgtcn/fhvrN17Tv8ksUsQpiplw==
 
 "@types/tunnel@^0.0.3":
   version "0.0.3"
@@ -22295,11 +22281,6 @@ parse5@6.0.1, parse5@^6.0.0, parse5@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/parse5/-/parse5-6.0.1.tgz#e1a1c085c569b3dc08321184f19a39cc27f7c30b"
   integrity sha512-Ofn/CTFzRGTTxwpNEs9PP93gXShHcTq255nzRYSKe8AkVpZY7e1fpmTfOyoIvjP5HG7Z2ZM7VS9PPhQGW2pOpw==
-
-parse5@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/parse5/-/parse5-4.0.0.tgz#6d78656e3da8d78b4ec0b906f7c08ef1dfe3f608"
-  integrity sha512-VrZ7eOd3T1Fk4XWNXMgiGBK/z0MG48BWG2uQNU4I72fkQuKUTZpl+u9k+CxEG0twMVzSmXEEz12z5Fnw1jIQFA==
 
 parseurl@~1.3.2, parseurl@~1.3.3:
   version "1.3.3"
