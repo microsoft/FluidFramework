@@ -7,9 +7,9 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable,
+    IDisposable, IEvent,
 } from "@fluidframework/common-definitions";
-import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
+import { assert, performance, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import {
     IRequest,
     IResponse,
@@ -157,30 +157,6 @@ export enum ConnectionState {
     Connected,
 }
 
-/** Invoke the callback once deltaManager has processed all ops known at the time this function is called */
-function waitToProcessKnownOps(container: IContainer, resolve: (hasCheckpointSequenceNumber: boolean) => void) {
-    assert(container.connectionState !== ConnectionState.Disconnected,
-        0x0cd /* "Container disconnected while waiting for ops!" */);
-
-    const deltaManager = container.deltaManager;
-    const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
-    const targetSeqNumber = deltaManager.lastKnownSeqNumber;
-
-    assert(targetSeqNumber >= deltaManager.lastSequenceNumber,
-        0x266 /* "Cannot wait for seqNumber below last processed sequence number" */);
-    if (deltaManager.lastSequenceNumber === targetSeqNumber) {
-        resolve(hasCheckpointSequenceNumber);
-        return;
-    }
-    const callbackOps = (message: ISequencedDocumentMessage) => {
-        if (message.sequenceNumber >= targetSeqNumber) {
-            resolve(hasCheckpointSequenceNumber);
-            deltaManager.off("op", callbackOps);
-        }
-    };
-    deltaManager.on("op", callbackOps);
-}
-
 /**
  * Waits until container connects to delta storage and gets up-to-date
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
@@ -225,6 +201,62 @@ const getCodeProposal =
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 const summarizerClientType = "summarizer";
+
+type CaughtUpListener = (hasCheckpointSequenceNumber: boolean) => void;
+
+export interface ICatchUpWaiterEvents extends IEvent {
+    (event: "caughtUp", listener: CaughtUpListener): void;
+}
+export class CatchUpWaiter extends TypedEventEmitter<ICatchUpWaiterEvents> implements IDisposable {
+    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    private readonly hasCheckpointSequenceNumber: boolean;
+    private readonly targetSeqNumber: number;
+
+    /** Once we catch up this class instance is done */
+    private readonly opHandler = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
+        if (message.sequenceNumber >= this.targetSeqNumber) {
+            this.emit("caughtUp", this.hasCheckpointSequenceNumber);
+            this.dispose();
+        }
+    };
+
+    /**
+     * Create the CatchUpWaiter, setting the targetSeqNumber to wait for based on DeltaManager's current state.
+     * Note that the "caughtUp" event will not fire until after (or while) beginWaiting is called
+     */
+    constructor(container: IContainer) {
+        super();
+
+        assert(container.connectionState !== ConnectionState.Disconnected,
+            0x0cd /* "Container disconnected while waiting for ops!" */);
+
+        this.deltaManager = container.deltaManager;
+        this.hasCheckpointSequenceNumber = this.deltaManager.hasCheckpointSequenceNumber;
+        this.targetSeqNumber = this.deltaManager.lastKnownSeqNumber;
+
+        assert(this.targetSeqNumber >= this.deltaManager.lastSequenceNumber,
+            0x266 /* "Cannot wait for seqNumber below last processed sequence number" */);
+    }
+
+    /** Emit the "caughtUp" event once deltaManager has processed all ops known at the time this function is called */
+    public beginWaiting() {
+        this.deltaManager.on("op", this.opHandler);
+
+        // Simulate the last processed op
+        this.opHandler({ sequenceNumber: this.deltaManager.lastSequenceNumber });
+    }
+
+    public disposed: boolean = false;
+    public dispose() {
+        if (this.disposed) {
+            return;
+        }
+        this.disposed = true;
+
+        this.removeAllListeners();
+        this.deltaManager.off("op", this.opHandler);
+    }
+}
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
@@ -613,9 +645,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.propagateConnectionState();
                     }
                 },
-                onCaughtUpToKnownOps: (callback: () => void) => {
-                    waitToProcessKnownOps(this, callback);
-                },
+                getCatchUpWaiter: () => new CatchUpWaiter(this),
             },
             this.mc.logger,
         );

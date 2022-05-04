@@ -8,7 +8,7 @@ import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { ConnectionState } from "./container";
+import { ConnectionState, CatchUpWaiter } from "./container";
 
 export interface IConnectionStateHandler {
     quorumClients: () => IQuorumClients | undefined,
@@ -18,7 +18,7 @@ export interface IConnectionStateHandler {
     maxClientLeaveWaitTime: number | undefined,
     logConnectionIssue: (eventName: string) => void,
     connectionStateChanged: () => void,
-    onCaughtUpToKnownOps: (callback: () => void) => void,
+    getCatchUpWaiter: () => CatchUpWaiter,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -144,16 +144,6 @@ export class ConnectionStateHandler {
         }
     }
 
-    private transitionToConnectedStateWhenCaughtUp() {
-        this.handler.onCaughtUpToKnownOps(() => {
-            // We may have disconnected while waiting
-            //* This is not really good enough - Ideally we would unregister an event handler on disconnect
-            if (this._connectionState === ConnectionState.Connecting) {
-                this.setConnectionState(ConnectionState.Connected);
-            }
-        });
-    }
-
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved") {
         const quorumClients = this.handler.quorumClients();
         assert(quorumClients !== undefined, 0x236 /* "In all cases it should be already installed" */);
@@ -194,7 +184,25 @@ export class ConnectionStateHandler {
         if (this.joinOpTimer.hasTimer) {
             this.stopJoinOpTimer();
         }
+        if (this.catchUpWaiter !== undefined) {
+            this.catchUpWaiter.dispose();
+            this.catchUpWaiter = undefined;
+        }
         this.setConnectionState(ConnectionState.Disconnected, reason);
+    }
+
+    private readonly transitionToConnectedState = () => {
+        // We may have disconnected while waiting
+        if (this._connectionState === ConnectionState.Connecting) {
+            this.setConnectionState(ConnectionState.Connected);
+        }
+    };
+
+    private transitionToConnectedStateWhenCaughtUp() {
+        assert(this.catchUpWaiter !== undefined, "Can't wait for catchup if catchUpWaiter is undefined!");
+
+        this.catchUpWaiter.on("caughtUp", this.transitionToConnectedState);
+        this.catchUpWaiter.beginWaiting();
     }
 
     /**
@@ -216,6 +224,10 @@ export class ConnectionStateHandler {
         // join message. after we see the join message for our new connection with our new client id,
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
+
+        assert(this.catchUpWaiter === undefined, "catchUpWaiter should have been disposed and cleared on disconnect");
+        // We want to catch up to known ops as of now before transitioning to Connected state
+        this.catchUpWaiter = this.handler.getCatchUpWaiter();
 
         // Report telemetry after we set client id, but before transitioning to Connected state below!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
@@ -252,6 +264,8 @@ export class ConnectionStateHandler {
             }
         }
     }
+
+    private catchUpWaiter: CatchUpWaiter | undefined;
 
     private setConnectionState(value: ConnectionState.Disconnected, reason: string): void;
     private setConnectionState(value: ConnectionState.Connected): void;

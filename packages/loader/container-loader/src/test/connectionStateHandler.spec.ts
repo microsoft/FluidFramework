@@ -9,7 +9,7 @@ import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ConnectionState } from "../container";
+import { CatchUpWaiter, ConnectionState } from "../container";
 import { ConnectionStateHandler } from "../connectionStateHandler";
 
 describe("ConnectionStateHandler Tests", () => {
@@ -76,7 +76,9 @@ describe("ConnectionStateHandler Tests", () => {
                 shouldClientJoinWrite: () => shouldClientJoinWrite,
                 logConnectionIssue: (eventName: string) => { throw new Error("logConnectionIssue"); },
                 connectionStateChanged: () => {},
-                onCaughtUpToKnownOps: (callback: () => void) => {},
+                //* ???
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                getCatchUpWaiter: () => undefined as unknown as CatchUpWaiter,
             },
             new TelemetryNullLogger(),
         );
