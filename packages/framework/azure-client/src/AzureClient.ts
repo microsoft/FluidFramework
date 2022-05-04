@@ -66,7 +66,7 @@ export class AzureClient {
         const enableWholeSummaryUpload = this.props.connection.type !== "local";
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.props.connection.tokenProvider,
-            { enableWholeSummaryUpload },
+            { enableWholeSummaryUpload, enableDiscovery: true },
         );
     }
 
