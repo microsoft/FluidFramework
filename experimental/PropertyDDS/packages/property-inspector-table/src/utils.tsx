@@ -628,8 +628,8 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
         PropertyProxy.getParentOfReferencedProperty(collectionProperty as ReferenceArrayProperty, propertyId);
       if (referencedPropertyParent && relativePathFromParent) {
         // Introducing this intermediate variable improves type inference in some newer versions of TypeScript.
-        const tmp = (referencedPropertyParent as ContainerProperty).get(relativePathFromParent)!;
-        property = tmp;
+        const baseProperty = (referencedPropertyParent as ContainerProperty).get(relativePathFromParent)!;
+        property = baseProperty;
         if (property) {
           if (PropertyFactory.instanceOf(property, "BaseProperty")) {
             currentTypeid = getTypeid(property);
@@ -642,8 +642,8 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
     } else if (isEnumProperty(collectionProperty.get(propertyId)!) && collectionProperty.getContext() === "map") {
       // TODO: Temporary fix as the full typeid of enum maps is currently wrong
       // Introducing this intermediate variable improves type inference in some newer versions of TypeScript.
-      const tmp = (collectionProperty as MapProperty).get(propertyId)!;
-      property = tmp;
+      const baseProperty = (collectionProperty as MapProperty).get(propertyId)!;
+      property = baseProperty;
       currentTypeid = property.getFullTypeid();
       currentContext = property.getContext();
     }
