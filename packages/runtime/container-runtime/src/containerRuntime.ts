@@ -948,6 +948,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._storage!;
     }
 
+    public get reSubmitFn(): (
+        type: ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown,
+        opMetadata: Record<string, unknown> | undefined,
+    ) => void {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        return this.reSubmit;
+    }
+
     public get closeFn(): (error?: ICriticalContainerError) => void {
         return this.context.closeFn;
     }
