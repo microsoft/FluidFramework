@@ -84,12 +84,12 @@ To add new reference snapshots to the repo for a document, follow tests steps:
                 3 Dir(s)  243,653,701,632 bytes free
     ```
     Copy everything in this folder except `tree-original.json` and `decode` to the `base_snapshot` directory created above.
+- Scrub the snapshots of PII manually by replacing your id, your name, your email, and any other PII.
 - Run the following from the `packages\test\snapshots` directory:
   ```
   npm run test:new
   ```
   This will generate the snapshots for this based on the current version of the runtime. These new snapshots will be under `current_snapshots` directory.
-- Scrub the snapshots of PII using this tool `packages\drivers\debugger\src\sanitize.ts`
 - Run the tests to validate that all the tests pass with the new snapshots.
 - Submit the changes by following the steps [here](#Submit-changes-to-test-content).
 
