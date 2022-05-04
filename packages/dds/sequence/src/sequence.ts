@@ -321,7 +321,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 
     /**
-     * @deprecated - use createLocalReferencePosition
+     * @deprecated - use localReferencePositionToPosition
      */
     public localRefToPos(localRef: LocalReference) {
         return this.client.localReferencePositionToPosition(localRef);
@@ -374,14 +374,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 
     /**
-     * @deprecated
+     * @deprecated - use createLocalReferencePosition
      */
     public addLocalReference(lref: LocalReference) {
         return this.client.addLocalReference(lref);
     }
 
     /**
-     * @deprecated
+     * @deprecated - use removeLocalReferencePosition
      */
     public removeLocalReference(lref: LocalReference) {
         return this.client.removeLocalReferencePosition(lref);

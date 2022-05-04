@@ -29,6 +29,10 @@ import {
 export class LocalReference implements ReferencePosition {
     public static readonly DetachedPosition: number = -1;
 
+    public properties: PropertySet | undefined;
+    public pairedRef?: LocalReference;
+    public segment: ISegment | undefined;
+
     /**
      * @deprecated - use createReferencePosition instead
      */
@@ -37,12 +41,11 @@ export class LocalReference implements ReferencePosition {
         initSegment: ISegment,
         public offset = 0,
         public refType = ReferenceType.Simple,
-        public properties?: PropertySet,
+        properties?: PropertySet,
     ) {
+        this.segment = initSegment;
+        this.properties = properties;
     }
-
-    public pairedRef?: ReferencePosition;
-    public segment: ISegment | undefined;
 
     /**
      * @deprecated - use minReferencePosition
@@ -61,6 +64,13 @@ export class LocalReference implements ReferencePosition {
      */
     public compare(b: LocalReference) {
         return compareReferencePositions(this, b);
+    }
+
+    /**
+     * @deprecated - use getLocalReferencePosition instead
+     */
+     public toPosition() {
+        return this.getClient().localReferencePositionToPosition(this);
     }
 
     /**
@@ -100,6 +110,13 @@ export class LocalReference implements ReferencePosition {
         return refGetRangeLabels(this);
     }
 
+    /**
+     * @deprecated - no longer supported
+     */
+    public getClient() {
+        return this.client;
+    }
+
     public isLeaf() {
         return false;
     }
@@ -121,20 +138,6 @@ export class LocalReference implements ReferencePosition {
 
     public getProperties() {
         return this.properties;
-    }
-
-    /**
-     * @deprecated - no longer supported
-     */
-    public getClient() {
-        return this.client;
-    }
-
-    /**
-     * @deprecated - use getLocalReferencePosition instead
-     */
-    public toPosition() {
-        return this.getClient().localReferencePositionToPosition(this);
     }
 }
 
@@ -240,7 +243,7 @@ export class LocalReferenceCollection {
         return this.refCount === 0;
     }
 
-    public createReference(
+    public createLocalRef(
         offset: number,
         refType: ReferenceType,
         properties: PropertySet | undefined,
@@ -273,7 +276,10 @@ export class LocalReferenceCollection {
         this.refCount++;
     }
 
-    public removeLocalRef(lref: LocalReference) {
+    public removeLocalRef(lref: LocalReference | ReferencePosition) {
+        if (!(lref instanceof LocalReference)) {
+            return;
+        }
         const tryRemoveRef = (refs: LocalReference[] | undefined) => {
             if (refs) {
                 const index = refs.indexOf(lref);
@@ -362,22 +368,24 @@ export class LocalReferenceCollection {
         }
     }
 
-    public addBeforeTombstones(...refs: Iterable<LocalReference>[]) {
+    public addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]) {
         const beforeRefs: LocalReference[] = [];
 
         for (const iterable of refs) {
             for (const lref of iterable) {
-                // eslint-disable-next-line no-bitwise
-                if (lref.refType & ReferenceType.SlideOnRemove) {
-                    beforeRefs.push(lref);
-                    lref.segment = this.segment;
-                    lref.offset = 0;
-                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
-                        this.hierRefCount++;
+                if (lref instanceof LocalReference) {
+                    // eslint-disable-next-line no-bitwise
+                    if (lref.refType & ReferenceType.SlideOnRemove) {
+                        beforeRefs.push(lref);
+                        lref.segment = this.segment;
+                        lref.offset = 0;
+                        if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+                            this.hierRefCount++;
+                        }
+                        this.refCount++;
+                    } else {
+                        lref.segment = undefined;
                     }
-                    this.refCount++;
-                } else {
-                    lref.segment = undefined;
                 }
             }
         }
@@ -392,22 +400,24 @@ export class LocalReferenceCollection {
         }
     }
 
-    public addAfterTombstones(...refs: Iterable<LocalReference>[]) {
+    public addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]) {
         const afterRefs: LocalReference[] = [];
 
         for (const iterable of refs) {
             for (const lref of iterable) {
-                // eslint-disable-next-line no-bitwise
-                if (lref.refType & ReferenceType.SlideOnRemove) {
-                    afterRefs.push(lref);
-                    lref.segment = this.segment;
-                    lref.offset = this.segment.cachedLength - 1;
-                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
-                        this.hierRefCount++;
+                if (lref instanceof LocalReference) {
+                    // eslint-disable-next-line no-bitwise
+                    if (lref.refType & ReferenceType.SlideOnRemove) {
+                        afterRefs.push(lref);
+                        lref.segment = this.segment;
+                        lref.offset = this.segment.cachedLength - 1;
+                        if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+                            this.hierRefCount++;
+                        }
+                        this.refCount++;
+                    } else {
+                        lref.segment = undefined;
                     }
-                    this.refCount++;
-                } else {
-                    lref.segment = undefined;
                 }
             }
         }

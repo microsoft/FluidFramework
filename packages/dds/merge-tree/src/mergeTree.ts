@@ -62,7 +62,7 @@ import {
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager } from "./segmentPropertiesManager";
-import { Client } from ".";
+import { Client } from "./client";
 
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
@@ -2444,16 +2444,14 @@ export class MergeTree {
     }
 
     public removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined {
-        if (lref instanceof LocalReference) {
-            const segment = lref.getSegment();
-            if (segment) {
-                const removedRefs = segment?.localRefs?.removeLocalRef(lref);
-                if (removedRefs !== undefined) {
-                    this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-                        LocalClientId);
-                }
-                return removedRefs;
+        const segment = lref.getSegment();
+        if (segment) {
+            const removedRefs = segment?.localRefs?.removeLocalRef(lref);
+            if (removedRefs !== undefined) {
+                this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
+                    LocalClientId);
             }
+            return removedRefs;
         }
     }
     public createLocalReferencePosition(
@@ -2462,7 +2460,7 @@ export class MergeTree {
     ): ReferencePosition {
         const localRefs = segment.localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
 
-        const segRef = localRefs.createReference(offset, refType, properties, client);
+        const segRef = localRefs.createLocalRef(offset, refType, properties, client);
 
         this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
             LocalClientId);
