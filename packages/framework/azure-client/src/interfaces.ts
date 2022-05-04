@@ -61,17 +61,17 @@ export interface AzureGetVersionsOptions {
  */
 export interface AzureConnectionConfig {
     /**
-     * URI to the Azure Fluid Relay orderer endpoint
+     * The type of connection. Whether we're connecting to a remote fluid relay server or a local instance.
      */
-    orderer: string;
+    type: "remote" | "local";
     /**
-     * URI to the Azure Fluid Relay storage endpoint
+     * URI to the Azure Fluid Relay service discovery endpoint
      */
-    storage: string;
+    endpoint: string;
     /**
-     * Unique tenant identifier
-    */
-    tenantId: "local" | string;
+     * Unique tenant identifier. Only provide if 'type' === 'remote'
+     */
+    tenantId?: string;
     /**
      * Instance that provides Azure Fluid Relay endpoint tokens
      */

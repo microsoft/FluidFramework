@@ -34,10 +34,9 @@ import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 
 const clientProps = {
     connection: {
-        tenantId: LOCAL_MODE_TENANT_ID,
+        type: "local",
         tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
-        orderer: "http://localhost:7070",
-        storage: "http://localhost:7070",
+        endpoint: "http://localhost:7070",
     },
 };
 const azureClient = new AzureClient(clientProps);
@@ -52,13 +51,13 @@ import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client
 
 const clientProps = {
     connection: {
+        type: "remote",
         tenantId: "YOUR-TENANT-ID-HERE",
         tokenProvider: new AzureFunctionTokenProvider(
             "AZURE-FUNCTION-URL"+"/api/GetAzureToken",
             { userId: "test-user",userName: "Test User" }
         ),
-        orderer: "ENTER-ORDERER-URL-HERE",
-        storage: "ENTER-STORAGE-URL-HERE",
+        endpoint: "ENTER-SERVICE-DISCOVERY-URL-HERE",
     },
 };
 const azureClient = new AzureClient(clientProps);

@@ -63,8 +63,7 @@ export class AzureClient {
         this.urlResolver = new AzureUrlResolver();
         // The local service implementation differs from the Azure Fluid Relay in blob
         // storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
-        const enableWholeSummaryUpload =
-            this.props.connection.tenantId !== LOCAL_MODE_TENANT_ID;
+        const enableWholeSummaryUpload = this.props.connection.type !== "local";
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.props.connection.tokenProvider,
             { enableWholeSummaryUpload },
