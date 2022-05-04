@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { logIfFalse, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState, CatchUpWaiter } from "./container";
 
@@ -18,7 +18,7 @@ export interface IConnectionStateHandler {
     maxClientLeaveWaitTime: number | undefined,
     logConnectionIssue: (eventName: string) => void,
     connectionStateChanged: () => void,
-    getCatchUpWaiter: () => CatchUpWaiter,
+    getCatchUpWaiter: (listener: () => void) => CatchUpWaiter,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -156,7 +156,10 @@ export class ConnectionStateHandler {
             && !this.prevClientLeftTimer.hasTimer
         ) {
             this.waitEvent?.end({ source });
-            this.transitionToConnectedStateWhenCaughtUp();
+
+            assert(this.catchUpWaiter !== undefined,
+                "catchUpWaiter should always be set if pendingClientId is set");
+            this.catchUpWaiter.beginWaiting();
         } else {
             // Adding this event temporarily so that we can get help debugging if something goes wrong.
             this.logger.sendTelemetryEvent({
@@ -184,26 +187,15 @@ export class ConnectionStateHandler {
         if (this.joinOpTimer.hasTimer) {
             this.stopJoinOpTimer();
         }
-        if (this.catchUpWaiter !== undefined) {
-            this.catchUpWaiter.dispose();
-            this.catchUpWaiter = undefined;
-        }
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
     private readonly transitionToConnectedState = () => {
-        // We may have disconnected while waiting
+        // We may have disconnected while waiting (although we attempt to stop waiting at that point)
         if (this._connectionState === ConnectionState.Connecting) {
             this.setConnectionState(ConnectionState.Connected);
         }
     };
-
-    private transitionToConnectedStateWhenCaughtUp() {
-        assert(this.catchUpWaiter !== undefined, "Can't wait for catchup if catchUpWaiter is undefined!");
-
-        this.catchUpWaiter.on("caughtUp", this.transitionToConnectedState);
-        this.catchUpWaiter.beginWaiting();
-    }
 
     /**
      * The "connect" event indicates the connection to the Relay Service is live.
@@ -225,9 +217,11 @@ export class ConnectionStateHandler {
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
-        assert(this.catchUpWaiter === undefined, "catchUpWaiter should have been disposed and cleared on disconnect");
+        // Defensive measure in case catchUpWaiter from previous connection attempt wasn't already cleared
+        this.catchUpWaiter?.dispose();
+
         // We want to catch up to known ops as of now before transitioning to Connected state
-        this.catchUpWaiter = this.handler.getCatchUpWaiter();
+        this.catchUpWaiter = this.handler.getCatchUpWaiter(this.transitionToConnectedState);
 
         // Report telemetry after we set client id, but before transitioning to Connected state below!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
@@ -254,13 +248,9 @@ export class ConnectionStateHandler {
             assert(writeConnection || !this.prevClientLeftTimer.hasTimer,
                 0x2a6 /* "There should be no timer for 'read' connections" */);
 
-            if (this.prevClientLeftTimer.hasTimer) {
-                //* Add a new source (but for now it's similar since we're in the Quorum)
-                this.applyForConnectedState("addMemberEvent");
-            } else {
-                // Wait to fire "connected" event until we are caught up to known ops
-                // as of the time the "connect" event fired
-                this.transitionToConnectedStateWhenCaughtUp();
+            if (!this.prevClientLeftTimer.hasTimer) {
+                // Wait to transition to Connected until we are caught up to known ops (as of now)
+                this.catchUpWaiter.beginWaiting();
             }
         }
     }
@@ -292,8 +282,11 @@ export class ConnectionStateHandler {
             }
             this._clientId = this.pendingClientId;
         } else if (value === ConnectionState.Disconnected) {
-            // Important as we process our own joinSession message through delta request
+            // Clear pending state immediately to prepare for reconnect
             this._pendingClientId = undefined;
+            this.catchUpWaiter?.dispose();
+            this.catchUpWaiter = undefined;
+
             // Only wait for "leave" message if the connected client exists in the quorum because only the write
             // client will exist in the quorum and only for those clients we will receive "removeMember" event and
             // the client has some unacked ops.

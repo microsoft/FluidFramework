@@ -204,29 +204,28 @@ const summarizerClientType = "summarizer";
 
 type CaughtUpListener = (hasCheckpointSequenceNumber: boolean) => void;
 
-export interface ICatchUpWaiterEvents extends IEvent {
-    (event: "caughtUp", listener: CaughtUpListener): void;
-}
-export class CatchUpWaiter extends TypedEventEmitter<ICatchUpWaiterEvents> implements IDisposable {
+export class CatchUpWaiter implements IDisposable {
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly hasCheckpointSequenceNumber: boolean;
     private readonly targetSeqNumber: number;
 
-    /** Once we catch up this class instance is done */
     private readonly opHandler = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
         if (message.sequenceNumber >= this.targetSeqNumber) {
-            this.emit("caughtUp", this.hasCheckpointSequenceNumber);
+            this.listener(this.hasCheckpointSequenceNumber);
+
+            // Once we catch up this class instance is done
             this.dispose();
         }
     };
 
     /**
      * Create the CatchUpWaiter, setting the targetSeqNumber to wait for based on DeltaManager's current state.
-     * Note that the "caughtUp" event will not fire until after (or while) beginWaiting is called
+     * Note that the listener won't be invoked until after (or while) beginWaiting is called
      */
-    constructor(container: IContainer) {
-        super();
-
+    constructor(
+        container: IContainer,
+        private readonly listener: CaughtUpListener,
+    ) {
         assert(container.connectionState !== ConnectionState.Disconnected,
             0x0cd /* "Container disconnected while waiting for ops!" */);
 
@@ -253,7 +252,6 @@ export class CatchUpWaiter extends TypedEventEmitter<ICatchUpWaiterEvents> imple
         }
         this.disposed = true;
 
-        this.removeAllListeners();
         this.deltaManager.off("op", this.opHandler);
     }
 }
@@ -645,7 +643,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.propagateConnectionState();
                     }
                 },
-                getCatchUpWaiter: () => new CatchUpWaiter(this),
+                getCatchUpWaiter: (listener: () => void) => new CatchUpWaiter(this, listener),
             },
             this.mc.logger,
         );
