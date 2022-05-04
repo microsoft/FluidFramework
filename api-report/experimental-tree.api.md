@@ -27,6 +27,9 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export function areRevisionViewsSemanticallyEqual(treeViewA: TreeView, idConverterA: NodeIdConverter, treeViewB: TreeView, idConverterB: NodeIdConverter): boolean;
 
 // @public
+export type AttributionId = UuidString;
+
+// @public
 export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValidationResult.Valid>;
 
 // @public
@@ -822,15 +825,16 @@ export interface SetValueInternal_0_0_2 {
 
 // @public
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, writeFormat: WriteFormat, summarizeHistory?: false | {
-        uploadEditChunks: boolean;
-    }, expensiveValidation?: boolean);
+    constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_0_2>);
+    constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_1_1>);
     applyEdit(...changes: Change[]): Edit<InternalizedChange>;
     // (undocumented)
     applyEdit(changes: Change[]): Edit<InternalizedChange>;
     // @internal
     applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
     protected applyStashedOp(op: unknown): void;
+    attributeNodeId(id: NodeId): AttributionId;
+    get attributionId(): AttributionId;
     convertToNodeId(id: StableNodeId): NodeId;
     convertToStableNodeId(id: NodeId): StableNodeId;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
@@ -841,12 +845,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     // @internal
     equals(sharedTree: SharedTree): boolean;
     generateNodeId(override?: string): NodeId;
-    static getFactory(writeFormat: WriteFormat, summarizeHistory?: false | {
-        uploadEditChunks: boolean;
-    }): SharedTreeFactory;
+    static getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
+    // (undocumented)
+    static getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
     // (undocumented)
     getRuntime(): IFluidDataStoreRuntime;
-    // (undocumented)
     getWriteFormat(): WriteFormat;
     // @internal
     internalizeChange(change: Change): ChangeInternal;
@@ -882,6 +885,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 }
 
 // @public
+export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
+
+// @public
 export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
 
 // @public
@@ -903,14 +909,13 @@ export enum SharedTreeEvent {
 
 // @public
 export class SharedTreeFactory implements IChannelFactory {
-    constructor(writeFormat: WriteFormat, summarizeHistory?: false | {
-        uploadEditChunks: boolean;
-    }, expensiveValidation?: boolean);
+    constructor(...args: SharedTreeArgs<WriteFormat.v0_0_2>);
+    constructor(...args: SharedTreeArgs<WriteFormat.v0_1_1>);
     // (undocumented)
     static Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTree;
+    create(runtime: IFluidDataStoreRuntime, id: string): SharedTree;
     // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel>;
     // (undocumented)
@@ -930,6 +935,22 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
     resetTreeData(tree: SharedTree): void;
     startHeartbeat(interval?: number): void;
     stopHeartbeat(): void;
+}
+
+// @public
+export type SharedTreeOptions<WF extends WriteFormat, HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'> = Omit<WF extends WriteFormat.v0_0_2 ? SharedTreeOptions_0_0_2 : WF extends WriteFormat.v0_1_1 ? SharedTreeOptions_0_1_1 : never, HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never>;
+
+// @public
+export interface SharedTreeOptions_0_0_2 {
+    summarizeHistory?: boolean;
+}
+
+// @public
+export interface SharedTreeOptions_0_1_1 {
+    attributionId?: AttributionId;
+    summarizeHistory?: false | {
+        uploadEditChunks: boolean;
+    };
 }
 
 // @public
