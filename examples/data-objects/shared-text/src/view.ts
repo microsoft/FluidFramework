@@ -6,6 +6,7 @@
 import registerDebug from "debug";
 import { performance } from "@fluidframework/common-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+
 import { controls, ui } from "./client-ui-lib";
 import { SharedTextDataObject } from "./dataObject";
 
