@@ -14,8 +14,8 @@ describe("getFileLink", () => {
     const logger = new TelemetryUTLogger();
     const storageTokenFetcher = async () => "StorageToken";
     const fileItemResponse = {
-        webDavUrl: "fetchDavUrl",
-        webUrl: "fetchWebUrl",
+        webDavUrl: `${siteUrl}/fetchDavUrl`,
+        webUrl: `${siteUrl}/fetchWebUrl`,
     };
 
     it("should return web url for Consumer user", async () => {
