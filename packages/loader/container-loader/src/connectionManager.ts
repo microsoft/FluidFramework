@@ -82,8 +82,7 @@ function getNackReconnectInfo(nackContent: INackContent) {
  */
 class NoDeltaStream
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection, IDisposable
-{
+    implements IDocumentDeltaConnection, IDisposable {
     clientId: string = "storage-only client";
     claims: ITokenClaims = {
         scopes: [ScopeType.DocRead],
@@ -467,7 +466,7 @@ export class ConnectionManager implements IConnectionManager {
                     this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
                     connection = undefined;
                 }
-            } catch (origError) {
+            } catch (origError: any) {
                 if (typeof origError === "object" && origError !== null &&
                     origError?.errorType === DeltaStreamConnectionForbiddenError.errorType) {
                     connection = new NoDeltaStream();
@@ -844,7 +843,7 @@ export class ConnectionManager implements IConnectionManager {
                     "read", // connectionMode
                     "Switch to read", // message
                 ).catch((error) => {
-                    this.logger.sendErrorEvent({ eventName: "SwitchToReadConnection"}, error);
+                    this.logger.sendErrorEvent({ eventName: "SwitchToReadConnection" }, error);
                 });
             }
         }

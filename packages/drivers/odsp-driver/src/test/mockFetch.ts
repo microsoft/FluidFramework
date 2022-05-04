@@ -59,7 +59,7 @@ export async function mockFetchSingle<T>(
 export async function mockFetchOk<T>(
     callback: () => Promise<T>,
     response: object = {},
-    headers: { [key: string]: string} = {},
+    headers: { [key: string]: string } = {},
 ): Promise<T> {
     return mockFetchSingle(
         callback,

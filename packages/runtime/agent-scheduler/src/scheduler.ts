@@ -292,8 +292,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
         const worker = this.locallyRunnableTasks.get(key);
         if (worker === undefined) {
             this.sendErrorEvent("AgentScheduler_UnwantedChange", undefined, key);
-        }
-        else {
+        } else {
             this.emit("picked", key);
             worker().catch((error) => {
                 this.sendErrorEvent("AgentScheduler_FailedWork", error, key);
@@ -307,6 +306,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             this.emit("released", key);
         }
         assert(currentClient !== undefined, 0x11e /* "client is undefined" */);
+        /* eslint-disable @typescript-eslint/brace-style */
         if (this.isActive()) {
             // attempt to pick up task if we are connected.
             // If not, initializeCore() will do it when connected
@@ -322,6 +322,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
                 await this.writeCore(key, null);
             }
         }
+        /* eslint-enable @typescript-eslint/brace-style */
     }
 
     private isActive() {

@@ -16,8 +16,7 @@ protected async initializingFirstTime() {
 }
 
 // When creating your DataObjectFactory
-export const MyDataObjectFactory = new DataObjectFactory
-(
+export const MyDataObjectFactory = new DataObjectFactory(
     "my-data-object",
     MyDataObject,
     [],

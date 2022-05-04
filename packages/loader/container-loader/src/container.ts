@@ -89,6 +89,7 @@ import {
     normalizeError,
     MonitoringContext,
     loggerToMonitoringContext,
+    wrapError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -101,8 +102,8 @@ import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionState
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
-import { getSnapshotTreeFromSerializedContainer } from "./utils";
-import { QuorumProxy } from "./quorum";
+import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
+import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 
@@ -166,17 +167,27 @@ export enum ConnectionState {
  * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
  *          false: storage does not provide indication of how far the client is. Container processed
  *          all the ops known to it, but it maybe still behind.
+ * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
  */
 export async function waitContainerToCatchUp(container: IContainer) {
     // Make sure we stop waiting if container is closed.
     if (container.closed) {
-        throw new Error("Container is closed");
+        throw new UsageError("waitContainerToCatchUp: Container closed");
     }
 
     return new Promise<boolean>((resolve, reject) => {
         const deltaManager = container.deltaManager;
 
-        container.on("closed", reject);
+        const closedCallback = (err?: ICriticalContainerError | undefined) => {
+            container.off("closed", closedCallback);
+            const baseMessage = "Container closed while waiting to catch up";
+            reject(
+                err !== undefined
+                    ? wrapError(err, (innerMessage) => new GenericError(`${baseMessage}: ${innerMessage}`))
+                    : new GenericError(baseMessage),
+            );
+        };
+        container.on("closed", closedCallback);
 
         const waitForOps = () => {
             assert(container.connectionState !== ConnectionState.Disconnected,
@@ -187,11 +198,13 @@ export async function waitContainerToCatchUp(container: IContainer) {
             assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
                 0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
             if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
+                container.off("closed", closedCallback);
                 resolve(hasCheckpointSequenceNumber);
                 return;
             }
             const callbackOps = (message: ISequencedDocumentMessage) => {
                 if (connectionOpSeqNumber <= message.sequenceNumber) {
+                    container.off("closed", closedCallback);
                     resolve(hasCheckpointSequenceNumber);
                     deltaManager.off("op", callbackOps);
                 }
@@ -517,11 +530,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._dirtyContainer;
     }
 
-    private get serviceFactory() {return this.loader.services.documentServiceFactory;}
-    private get urlResolver() {return this.loader.services.urlResolver;}
+    private get serviceFactory() { return this.loader.services.documentServiceFactory; }
+    private get urlResolver() { return this.loader.services.urlResolver; }
     public readonly options: ILoaderOptions;
-    private get scope() { return this.loader.services.scope;}
-    private get codeLoader() { return this.loader.services.codeLoader;}
+    private get scope() { return this.loader.services.scope; }
+    private get codeLoader() { return this.loader.services.codeLoader; }
 
     constructor(
         private readonly loader: Loader,
@@ -726,7 +739,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // Driver need to ensure all caches are cleared on critical errors
                 this.service?.dispose(error);
             } catch (exception) {
-                this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
+                this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, exception);
             }
 
             this.mc.logger.sendTelemetryEvent(
@@ -885,7 +898,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (!this.closed) {
                     this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
                 }
-            } catch(error) {
+            } catch (error) {
                 // add resolved URL on error object so that host has the ability to find this document and delete it
                 const newError = normalizeError(error);
                 const resolvedUrl = this.resolvedUrl;
@@ -956,11 +969,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public connect() {
         if (this.closed) {
             throw new UsageError(`The Container is closed and cannot be connected`);
-        }
-        else if (this._attachState !== AttachState.Attached) {
+        } else if (this._attachState !== AttachState.Attached) {
             throw new UsageError(`The Container is not attached and cannot be connected`);
-        }
-        else if (!this.connected) {
+        } else if (!this.connected) {
             // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
             // If there is gap, we will learn about it once connected, but the gap should be small (if any),
             // assuming that connect() is called quickly after initial container boot.
@@ -984,8 +995,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public disconnect() {
         if (this.closed) {
             throw new UsageError(`The Container is closed and cannot be disconnected`);
-        }
-        else {
+        } else {
             this.disconnectInternal();
         }
     }
@@ -1053,8 +1063,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         return this.protocolHandler.quorum.propose("code", codeDetails)
-            .then(()=>true)
-            .catch(()=>false);
+            .then(() => true)
+            .catch(() => false);
     }
 
     private async processCodeProposal(): Promise<void> {
@@ -1166,7 +1176,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // ...load in the existing quorum
         // Initialize the protocol handler
         this._protocolHandler =
-            await this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
+            await this.initializeProtocolStateFromSnapshot(attributes, this.storageService, snapshot);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
@@ -1233,27 +1243,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             minimumSequenceNumber: 0,
         };
 
-        // Seed the base quorum to be an empty list with a code quorum set
-        const committedCodeProposal: ICommittedProposal = {
-            key: "code",
-            value: source,
-            approvalSequenceNumber: 0,
-            commitSequenceNumber: 0,
-            sequenceNumber: 0,
-        };
-
-        const members: [string, ISequencedClient][] = [];
-        const proposals: [number, ISequencedProposal, string[]][] = [];
-        const values: [string, ICommittedProposal][] = [["code", committedCodeProposal]];
-
         await this.attachDeltaManagerOpHandler(attributes);
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
+        const qValues = initQuorumValuesFromCodeDetails(source);
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
-            members,
-            proposals,
-            values);
+            [], // members
+            [], // proposals
+            qValues,
+        );
 
         // The load context - given we seeded the quorum - will be great
         await this.instantiateContextDetached(
@@ -1275,13 +1274,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         this._storage.loadSnapshotForRehydratingContainer(snapshotTree);
         const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
-        assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
+
         await this.attachDeltaManagerOpHandler(attributes);
 
-        // ...load in the existing quorum
         // Initialize the protocol handler
+        const baseTree = getProtocolSnapshotTree(snapshotTree);
+        const qValues = await readAndParse<[string, ICommittedProposal][]>(
+            this._storage,
+            baseTree.blobs.quorumValues,
+        );
+        const codeDetails = getCodeDetailsFromQuorumValues(qValues);
         this._protocolHandler =
-            await this.loadAndInitializeProtocolState(attributes, this._storage, snapshotTree);
+            await this.initializeProtocolState(
+                attributes,
+                [], // members
+                [], // proposals
+                codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : []);
 
         await this.instantiateContextDetached(
             true, // existing
@@ -1304,10 +1312,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._storageService =
             new RetriableDocumentStorageService(storageService, this.mc.logger);
 
-        if(this.options.summarizeProtocolTree === true) {
-            this.mc.logger.sendTelemetryEvent({eventName:"summarizeProtocolTreeEnabled"});
+        if (this.options.summarizeProtocolTree === true) {
+            this.mc.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
             this._storageService =
-                new ProtocolTreeStorageService(this._storageService, ()=>this.captureProtocolSummary());
+                new ProtocolTreeStorageService(this._storageService, () => this.captureProtocolSummary());
         }
 
         // ensure we did not lose that policy in the process of wrapping
@@ -1342,7 +1350,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return attributes;
     }
 
-    private async loadAndInitializeProtocolState(
+    private async initializeProtocolStateFromSnapshot(
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
@@ -1352,7 +1360,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let values: [string, any][] = [];
 
         if (snapshot !== undefined) {
-            const baseTree = ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
+            const baseTree = getProtocolSnapshotTree(snapshot);
             [members, proposals, values] = await Promise.all([
                 readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
                 readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals),
@@ -1561,8 +1569,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async attachDeltaManagerOpHandler(
         attributes: IDocumentAttributes,
-        prefetchType?: "cached" | "all" | "none")
-    {
+        prefetchType?: "cached" | "all" | "none") {
         return this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
@@ -1668,7 +1675,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // this can be removed once all clients send
                 // protocol tree by default
                 const summary = contents as ISummaryContent;
-                if(summary.details === undefined) {
+                if (summary.details === undefined) {
                     summary.details = {};
                 }
                 summary.details.includesProtocolTree =
@@ -1760,8 +1767,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
     private async fetchSnapshotTree(specifiedVersion: string | undefined):
-        Promise<{snapshot?: ISnapshotTree; versionId?: string}>
-    {
+        Promise<{ snapshot?: ISnapshotTree; versionId?: string }> {
         const version = await this.getVersion(specifiedVersion ?? null);
 
         if (version === undefined && specifiedVersion !== undefined) {

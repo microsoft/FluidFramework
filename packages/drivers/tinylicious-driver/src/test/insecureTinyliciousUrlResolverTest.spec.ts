@@ -34,7 +34,7 @@ describe("Insecure Url Resolver Test", () => {
         const customEndpoint = "http://custom-endpoint.io";
         const customFluidEndpoint = "fluid://custom-endpoint.io";
         const customPort = 1234;
-        const customResolver = new InsecureTinyliciousUrlResolver(customPort,customEndpoint);
+        const customResolver = new InsecureTinyliciousUrlResolver(customPort, customEndpoint);
         const testRequest: IRequest = {
             url: `${documentId}`,
             headers: {},

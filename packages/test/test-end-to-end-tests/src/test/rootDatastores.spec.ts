@@ -358,7 +358,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
         ], async function() {
             // GitHub issue: #9534
-            if(provider.driver.type === "tinylicious") {
+            if (provider.driver.type === "tinylicious") {
                 this.skip();
             }
             const dataCorruption = allDataCorruption([container1, container2]);

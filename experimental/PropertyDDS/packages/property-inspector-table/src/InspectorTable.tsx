@@ -160,7 +160,7 @@ const styles = (theme: Theme) => createStyles({
  */
 const themedSkeleton = (inSkeleton: JSX.Element) => {
   return (
-    <SkeletonTheme color='#C4C4C4'>
+    <SkeletonTheme color="#C4C4C4">
       {inSkeleton}
     </SkeletonTheme>
   );
@@ -230,16 +230,16 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     ): Partial<IInspectorTableState> {
       let newState: Partial<IInspectorTableState> = {};
       if (props.checkoutInProgress) {
-        newState = {editReferenceRowData: null};
+        newState = { editReferenceRowData: null };
       }
       if (props.activeRepositoryGuid !== state.expandedRepoGuid) {
         return {
           ...newState,
           expanded: props.activeRepositoryGuid && props.activeRepositoryGuid in state.expandedRepoMap ?
-            {...state.expandedRepoMap[props.activeRepositoryGuid]} : {},
+            { ...state.expandedRepoMap[props.activeRepositoryGuid] } : {},
           expandedRepoGuid: props.activeRepositoryGuid,
           expandedRepoMap: state.expandedRepoGuid ?
-          {...state.expandedRepoMap, [state.expandedRepoGuid]: {...state.expanded}} : {...state.expandedRepoMap},
+          { ...state.expandedRepoMap, [state.expandedRepoGuid]: { ...state.expanded } } : { ...state.expandedRepoMap },
         };
       }
       return newState;
@@ -274,7 +274,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       this.dataCreation = !!this.props.dataCreationHandler && !!this.props.dataCreationOptionGenerationHandler;
       this.columns = this.generateColumns(props.width);
       this.toTableRowOptions = { addDummy: true, ascending: defaultSort.order === SortOrder.ASC,
-        depth: 0, followReferences};
+        depth: 0, followReferences };
 
       this.debouncedSearchChange = debounce((searchExpression: string) => {
         const newState: Pick<IInspectorTableState, "currentResult" | "foundMatches" | "matchesMap" |
@@ -316,7 +316,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       const { data } = this.props;
       const { expanded } = this.state;
       if (data && data.getProperty() && data.getProperty().getRoot().getWorkspace()) {
-        const updatedTableRows = toTableRows({ data, id: ""} as IInspectorRow, this.props,
+        const updatedTableRows = toTableRows({ data, id: "" } as IInspectorRow, this.props,
           this.toTableRowOptions);
         fillExpanded(expanded, updatedTableRows, this.props,
           this.toTableRowOptions);
@@ -343,13 +343,12 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       // This has the undesired side effect that we also restart search when the browser window is resized, for example.
       if ((prevProps !== this.props || prevState.sortBy.order !== sortBy.order) && !checkoutInProgress) {
         if (data) {
-          const updatedTableRows = toTableRows({ data, id: ""} as IInspectorRow, this.props,
+          const updatedTableRows = toTableRows({ data, id: "" } as IInspectorRow, this.props,
             this.toTableRowOptions);
           fillExpanded(expanded, updatedTableRows, this.props, this.toTableRowOptions);
           // We need to update the table rows directly, because they might be used in the search call below.
           // Treating table rows as a mutable state property is fine, since it is purely derived from props anyway, and
           // we also update it directly in other places already.
-          // eslint-disable-next-line react/no-direct-mutation-state
           this.state.tableRows = updatedTableRows;
           // We still need to add it to the new state to trigger a re-render of the table.
           newState.tableRows = updatedTableRows;
@@ -424,7 +423,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         setRepoExpiry,
         width,
         activeRepositoryGuid,
-        ...restProps} = this.props;
+        ...restProps } = this.props;
 
       const {
         searchExpression,
@@ -459,13 +458,13 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
           <Skeleton circle={true} height={14} width={14} />
         </div>
       );
-      const skeletonExpandIcon = ({...rest}) =>
+      const skeletonExpandIcon = ({ ...rest }) =>
         Object.keys(rest).length === 0 ? null : themedSkeleton(circleSkeleton);
-      const components = this.props.checkoutInProgress ? {ExpandIcon: skeletonExpandIcon} : {};
-      const fakeRows = Array.from(Array(getRandomRowsNum()), (x, i) => ({id: i.toString()}));
+      const components = this.props.checkoutInProgress ? { ExpandIcon: skeletonExpandIcon } : {};
+      const fakeRows = Array.from(Array(getRandomRowsNum()), (x, i) => ({ id: i.toString() }));
       const rowsData = this.props.checkoutInProgress ? fakeRows : rows;
       this.columns = this.generateColumns(width);
-      const getHeader = ({cells, headerIndex}) => {
+      const getHeader = ({ cells, headerIndex }) => {
         if (headerIndex === 1) {
           return cells;
         }
@@ -505,12 +504,12 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
                     }
                   </span>
                   <ModalConsumer>
-                    {({showModal, hideModal}) => (
+                    {({ showModal, hideModal }) => (
                       <Button
                         className={classes.expiryButton}
-                        color='primary'
+                        color="primary"
                         disabled={!modalEnabled}
-                        variant='contained'
+                        variant="contained"
                         onClick={
                           () => {
                             const modalProps = {
@@ -557,9 +556,9 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
             headerHeight={[36, 36]}
             headerClassName={classes.header}
             headerRenderer={getHeader}
-            rowClassName={({rowIndex}) => classNames(classes.row,
+            rowClassName={({ rowIndex }) => classNames(classes.row,
               (rowIndex % 2 === 0) ? classes.evenRow : classes.oddRow)}
-            gridStyle={{outline: "none"}}
+            gridStyle={{ outline: "none" }}
             onRowExpand={this.handleRowExpanded}
             expandedRowKeys={expandedKeys}
             height={height}
@@ -574,7 +573,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
           />
           {
             editReferenceRowData &&
-            <div style={{position: "relative", width}}>
+            <div style={{ position: "relative", width }}>
               <div className={classes.editReferenceContainer}>
                 <EditReferencePath
                   className={classes.editReference}
@@ -612,7 +611,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private handleInitiateCreate(rowData: IInspectorRow) {
-      this.setState({showFormRowID: rowData.id});
+      this.setState({ showFormRowID: rowData.id });
       this.forceUpdateBaseTable();
     }
 
@@ -620,22 +619,22 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       if (this.dataCreation) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.props.dataCreationHandler!(rowData, name, type, context);
-        this.setState({showFormRowID: "0"});
+        this.setState({ showFormRowID: "0" });
         this.forceUpdateBaseTable();
       }
     }
 
     private readonly handleCancelCreate = () => {
-      this.setState({showFormRowID: "0"});
+      this.setState({ showFormRowID: "0" });
       this.forceUpdateBaseTable();
     };
 
     private readonly handleInitialEditReference = (rowData: IInspectorRow) => {
-      this.setState({editReferenceRowData: rowData});
+      this.setState({ editReferenceRowData: rowData });
     };
 
     private readonly handleCancelEditReference = () => {
-      this.setState({editReferenceRowData: null});
+      this.setState({ editReferenceRowData: null });
     };
 
     private readonly handleEditReference = (newPath: string) => {
@@ -643,14 +642,14 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
 
       const parentProp = rowData!.parent!;
       if (Utils.isReferenceArrayProperty(parentProp) || Utils.isReferenceMapProperty(parentProp)) {
-        parentProp.setValues({[rowData.name]: newPath});
+        parentProp.setValues({ [rowData.name]: newPath });
         try {
           (parentProp as unknown as ReferenceMapProperty).isReferenceValid(rowData.name);
-        } catch (e) {
+        } catch (e: any) {
           // if maximum call stack size is exceeded, user probably created cyclic reference
           // we can't delete cyclic references so we need set reference path to some other value
           if (e.message.includes("Maximum call stack size exceeded")) {
-            parentProp.setValues({[rowData.name]: "Could not resolve the reference"});
+            parentProp.setValues({ [rowData.name]: "Could not resolve the reference" });
           }
         }
       } else {
@@ -660,7 +659,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         unresolvedProperty.setValue(newPath);
         try {
           unresolvedProperty.isReferenceValid();
-        } catch (e) {
+        } catch (e: any) {
           if (e.message.includes("Maximum call stack size exceeded")) {
             unresolvedProperty.setValue("Could not resolve the reference");
           }
@@ -687,9 +686,9 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         !this.state.searchDone) {
         this.continueSearchOnDemand();
       } else if (this.state.searchDone && this.state.currentResult === this.state.foundMatches.length - 1) {
-        this.setState({currentResult: 0});
+        this.setState({ currentResult: 0 });
       } else {
-        this.setState({currentResult: newResult});
+        this.setState({ currentResult: newResult });
       }
     };
 
@@ -742,9 +741,9 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private readonly removeIdFromExpanded = (id: string) => {
-      const newExpanded = {...this.state.expanded};
+      const newExpanded = { ...this.state.expanded };
       delete newExpanded[id];
-      this.setState({expanded: newExpanded});
+      this.setState({ expanded: newExpanded });
     };
 
     // @TODO: Add tests.
@@ -771,7 +770,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
             this.traverseTree(item, (item) => {
                 if (item.children && !item.isReference) {
                     if (item.children[0].context === "d") {
-                      fillExpanded({[item.id]: true}, [item], this.props, this.toTableRowOptions);
+                      fillExpanded({ [item.id]: true }, [item], this.props, this.toTableRowOptions);
                      }
                     }
             });
@@ -784,11 +783,11 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private readonly handleCollapseAll = () => {
-      this.setState({expanded: {}});
+      this.setState({ expanded: {} });
     };
 
     private renderCreationRow(rowData: IInspectorRow) {
-      const { dataCreationOptionGenerationHandler, classes} = this.props;
+      const { dataCreationOptionGenerationHandler, classes } = this.props;
       const result = dataCreationOptionGenerationHandler!(rowData, true);
 
       const addDataRow = (
@@ -822,19 +821,19 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     }
 
     private readonly determineCellClassName = (rowData: IInspectorRow, columnIndex: number) => {
-      const {classes} = this.props;
-      const {foundMatches, matchesMap, currentResult} = this.state;
+      const { classes } = this.props;
+      const { foundMatches, matchesMap, currentResult } = this.state;
       const highlightedResult: IInspectorSearchMatch = (
         currentResult !== -1 && currentResult !== undefined && foundMatches.length! > 0
-        ? foundMatches[currentResult] : {indexOfColumn: -1, rowId: ""});
+        ? foundMatches[currentResult] : { indexOfColumn: -1, rowId: "" });
       return highlightedResult.rowId === rowData.id && highlightedResult.indexOfColumn === columnIndex ?
         classes.currentMatch : (matchesMap[rowData.id] && matchesMap[rowData.id][columnIndex] ?
           classes.match : "");
     };
 
-    private readonly nameCellRenderer = ({rowData, cellData, columnIndex}:
-      {rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number}) => {
-        const {checkoutInProgress, rowIconRenderer, width, dataGetter} = this.props;
+    private readonly nameCellRenderer = ({ rowData, cellData, columnIndex }:
+      { rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number }) => {
+        const { checkoutInProgress, rowIconRenderer, width, dataGetter } = this.props;
         if (checkoutInProgress) {
           return getCellSkeleton(width);
         }
@@ -854,8 +853,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       };
 
     // eslint-disable-next-line max-len
-    private readonly valueCellRenderer = ({rowData, cellData, columnIndex}: {rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number}) => {
-        const {classes, checkoutInProgress, followReferences, rowIconRenderer, width, dataGetter, readOnly} =
+    private readonly valueCellRenderer = ({ rowData, cellData, columnIndex }: { rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number }) => {
+        const { classes, checkoutInProgress, followReferences, rowIconRenderer, width, dataGetter, readOnly } =
           this.props;
         if (checkoutInProgress) {
           return getCellSkeleton(width);
@@ -879,8 +878,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         }
       };
 
-    private readonly typeCellRenderer = ({rowData}: {rowData: IInspectorRow}) => {
-      const {checkoutInProgress, width} = this.props;
+    private readonly typeCellRenderer = ({ rowData }: { rowData: IInspectorRow }) => {
+      const { checkoutInProgress, width } = this.props;
       if (checkoutInProgress) {
         return getCellSkeleton(width);
       } else if (!rowData.typeid) {
@@ -896,7 +895,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         classes={{
           tooltip: classes.tooltip,
         }}
-        placement='left'
+        placement="left"
         title={message}
       >
         {this.renderUneditableCell(classes, rowData)}
@@ -914,7 +913,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
      * allows the user to come back to the state before performing the filtering
      */
     // eslint-disable-next-line max-len
-    private readonly handleRowExpanded = ({rowData, expanded: newExpandedFlag}: {rowData: IInspectorRow, expanded: boolean}) => {
+    private readonly handleRowExpanded = ({ rowData, expanded: newExpandedFlag }: { rowData: IInspectorRow, expanded: boolean }) => {
       const newExpanded = { ...this.state.expanded };
       const idInExpanded = rowData.id in newExpanded;
       if (newExpandedFlag && !idInExpanded) {
@@ -925,7 +924,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       } else if (!newExpandedFlag && idInExpanded) {
         delete newExpanded[rowData.id];
       }
-      this.setState({expanded: newExpanded});
+      this.setState({ expanded: newExpanded });
     };
     private readonly onColumnSort = (sortBy) => {
       this.setState({
@@ -943,7 +942,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private readonly updateSearchState = (foundMatches: IInspectorSearchMatch[], matchesMap: IInspectorSearchMatchMap,
-                                 done: boolean, childToParentMap: {[key: string]: string}) => {
+                                 done: boolean, childToParentMap: { [key: string]: string }) => {
       const newState = {} as Pick<IInspectorTableState, "currentResult" | "foundMatches" | "matchesMap" |
         "searchInProgress" | "searchAbortHandler" | "searchExpression" | "childToParentMap" | "searchDone" |
         "searchState">;
@@ -954,8 +953,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       }
       if (this.state.foundMatches.length < foundMatches.length) {
         newState.foundMatches = foundMatches.slice();
-        newState.matchesMap = {...matchesMap};
-        newState.childToParentMap = {...childToParentMap};
+        newState.matchesMap = { ...matchesMap };
+        newState.childToParentMap = { ...childToParentMap };
         newState.currentResult = foundMatches.length - 1;
       } else if (done && foundMatches.length > 0) {
         newState.currentResult = 0;
@@ -973,5 +972,5 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
   }
 
-const StyledInspectorTable = withStyles(styles, {name: "InspectorTable"})(InspectorTable);
+const StyledInspectorTable = withStyles(styles, { name: "InspectorTable" })(InspectorTable);
 export { StyledInspectorTable as InspectorTable };

@@ -91,7 +91,7 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
         message: string,
         readonly expiryMs: number,
     ) {
-        super(message, { timeoutMs: expiryMs});
+        super(message, { timeoutMs: expiryMs });
     }
 }
 

@@ -4,7 +4,7 @@
  */
 
 import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
-import { IClientManager } from "@fluidframework/server-services-core";
+import { IClientManager, ISequencedSignalClient } from "@fluidframework/server-services-core";
 import { executeRedisMultiWithHmsetExpire, IRedisParameters } from "@fluidframework/server-services-utils";
 import { Redis } from "ioredis";
 import * as winston from "winston";
@@ -60,6 +60,28 @@ export class ClientManager implements IClientManager {
             }
         }
         return clients;
+    }
+
+    /**
+     * Returns all clients currently connected including a keep alive time.
+     * Should be used with delis read only client functionality.
+     */
+    public async getSequencedClients(
+        tenantId: string,
+        documentId: string): Promise<Map<string, ISequencedSignalClient>> {
+        throw new Error("Not implemented");
+    }
+
+    /**
+     * Called when the expiration time of clients should be extended.
+     * @param clientTimeout Amount of time in milliseconds to add to the clients expiration time.
+     */
+    public async extendSequencedClients(
+        tenantId: string,
+        documentId: string,
+        clients: Map<string, ISequencedSignalClient>,
+        clientTimeout: number): Promise<void> {
+        throw new Error("Not implemented");
     }
 
     private getKey(tenantId: string, documentId: string): string {

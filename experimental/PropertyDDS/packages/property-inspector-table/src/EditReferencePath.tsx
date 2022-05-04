@@ -67,8 +67,7 @@ interface IEditReferencePathProps {
 }
 
 export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
-  // eslint-disable-next-line react/prop-types
-  & React.HTMLAttributes<HTMLDivElement>> = ({onCancel, onEdit, name, path, className, ...restProps}) => {
+  & React.HTMLAttributes<HTMLDivElement>> = ({ onCancel, onEdit, name, path, className, ...restProps }) => {
   const classes = useStyles();
   const [newPath, setNewPath] = React.useState(path);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -93,7 +92,7 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
         <SvgIcon
           width={iconWidth}
           height={iconHeight}
-          svgId='reference-24'
+          svgId="reference-24"
         />
         <span className={classes.bold}>
           Modifying the reference path for <span className={classes.italic}>{name}</span>
@@ -102,9 +101,9 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
       <div className={classes.horizontal}>
         <TextField
           inputRef={inputRef}
-          classes={{root: classes.root}}
+          classes={{ root: classes.root }}
           className={classes.textField}
-          id='outlined-bare'
+          id="outlined-bare"
           onChange={handleInputChange}
           onKeyPress={(event) => {
             if (event.key === "Enter") {
@@ -113,23 +112,23 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
             }
           }}
           placeholder={path}
-          margin='normal'
-          variant='outlined'
+          margin="normal"
+          variant="outlined"
           InputProps={{
             className: classes.textFieldInput,
           }}
         />
         <Button
-          color='primary'
-          variant='outlined'
+          color="primary"
+          variant="outlined"
           className={classes.cancelButton}
           onClick={onCancel}
         >
           Cancel
         </Button>
         <LoadingButton
-          variant='contained'
-          color='primary'
+          variant="contained"
+          color="primary"
           onClick={handleEdit}
         >
           Edit
