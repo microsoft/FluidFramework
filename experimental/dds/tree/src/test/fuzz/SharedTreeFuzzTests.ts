@@ -3,15 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { promises as fs, existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { expect } from 'chai';
-import { makeRandom, setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
+import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
 import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { FuzzTestState, done, EditGenerationConfig, AsyncGenerator, Operation } from './Types';
-import { chain, makeOpGenerator, take } from './Generators';
+import {
+	AsyncGenerator,
+	chainAsync as chain,
+	makeRandom,
+	takeAsync as take,
+	performFuzzActionsAsync as performFuzzActionsBase,
+} from '../stochastic-test-utilities';
+import { FuzzTestState, EditGenerationConfig, Operation } from './Types';
+import { makeOpGenerator } from './Generators';
 
 const directory = join(testDocumentsPathBase, 'fuzz-tests');
 
@@ -33,111 +40,105 @@ export async function performFuzzActions(
 	synchronizeAtEnd: boolean = true,
 	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
 ): Promise<Required<FuzzTestState>> {
-	const rand = makeRandom(seed);
+	const random = makeRandom(seed);
 
 	// Note: the direct fields of `state` aren't mutated, but it is mutated transitively.
-	const state: FuzzTestState = { rand, passiveCollaborators: [], activeCollaborators: [] };
-	const { activeCollaborators, passiveCollaborators } = state;
-	const operations: Operation[] = [];
-	for (let operation = await generator(state); operation !== done; operation = await generator(state)) {
-		operations.push(operation);
-		if (saveInfo !== undefined && operations.length === saveInfo.saveAt) {
-			await fs.writeFile(saveInfo.filepath, JSON.stringify(operations));
-		}
+	const initialState: FuzzTestState = { random, passiveCollaborators: [], activeCollaborators: [] };
+	const finalState = await performFuzzActionsBase(
+		generator,
+		{
+			edit: async (state, operation) => {
+				const { index, contents } = operation;
+				const { tree } = state.activeCollaborators[index];
+				switch (contents.fuzzType) {
+					case 'insert':
+						tree.applyEdit(contents.build, contents.insert);
+						break;
 
-		try {
-			switch (operation.type) {
-				case 'edit': {
-					const { index, contents } = operation;
-					const { tree } = activeCollaborators[index];
-					switch (contents.fuzzType) {
-						case 'insert':
-							tree.applyEdit(contents.build, contents.insert);
-							break;
+					case 'delete':
+						tree.applyEdit(contents);
+						break;
 
-						case 'delete':
-							tree.applyEdit(contents);
-							break;
+					case 'move':
+						tree.applyEdit(contents.detach, contents.insert);
+						break;
 
-						case 'move':
-							tree.applyEdit(contents.detach, contents.insert);
-							break;
-
-						case 'setPayload':
-							tree.applyEdit(contents);
-							break;
-						default:
-							fail('Invalid edit.');
-							break;
-					}
-					break;
+					case 'setPayload':
+						tree.applyEdit(contents);
+						break;
+					default:
+						fail('Invalid edit.');
+						break;
 				}
-				case 'join': {
-					const { isObserver, summarizeHistory, writeFormat } = operation;
-					const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-						writeFormat,
-						summarizeHistory,
-						testObjectProvider: state.testObjectProvider,
-					});
-					if (state.testObjectProvider === undefined) {
-						state.testObjectProvider = testObjectProvider;
-					}
-					(isObserver ? passiveCollaborators : activeCollaborators).push({ container, tree });
-					break;
+				return state;
+			},
+			join: async (state, operation) => {
+				const { isObserver, summarizeHistory, writeFormat } = operation;
+				const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
+					writeFormat,
+					summarizeHistory,
+					testObjectProvider: state.testObjectProvider,
+				});
+				(isObserver ? state.passiveCollaborators : state.activeCollaborators).push({ container, tree });
+				return { ...state, testObjectProvider };
+			},
+			leave: async (state, operation) => {
+				const { index, isObserver } = operation;
+				const treeList = isObserver ? state.passiveCollaborators : state.activeCollaborators;
+				treeList[index].container.close();
+				treeList.splice(index, 1);
+				return state;
+			},
+			synchronize: async (state) => {
+				const { testObjectProvider } = state;
+				if (testObjectProvider === undefined) {
+					fail('Attempted to synchronize with undefined testObjectProvider');
 				}
-				case 'leave': {
-					const { index, isObserver } = operation;
-					const treeList = isObserver ? passiveCollaborators : activeCollaborators;
-					treeList[index].container.close();
-					treeList.splice(index, 1);
-					break;
-				}
-				case 'synchronize': {
-					const { testObjectProvider } = state;
-					if (testObjectProvider === undefined) {
-						fail('Attempted to synchronize with undefined testObjectProvider');
-					}
-					await testObjectProvider.ensureSynchronized();
-					const trees = [...state.activeCollaborators, ...state.passiveCollaborators];
-					if (trees.length > 1) {
-						const first = trees[0].tree;
-						for (let i = 1; i < trees.length; i++) {
-							const tree = trees[i].tree;
-							const editLogA = first.edits;
-							const editLogB = tree.edits;
-							const minEdits = Math.min(editLogA.length, editLogB.length);
-							for (let j = 0; j < minEdits - 1; j++) {
-								const editA = await editLogA.getEditAtIndex(editLogA.length - j - 1);
-								const editB = await editLogB.getEditAtIndex(editLogB.length - j - 1);
-								expect(editA.id).to.equal(editB.id);
-							}
-							expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first))
-								.to.be.true;
+				await testObjectProvider.ensureSynchronized();
+				const trees = [...state.activeCollaborators, ...state.passiveCollaborators];
+				if (trees.length > 1) {
+					const first = trees[0].tree;
+					for (let i = 1; i < trees.length; i++) {
+						const tree = trees[i].tree;
+						const editLogA = first.edits;
+						const editLogB = tree.edits;
+						const minEdits = Math.min(editLogA.length, editLogB.length);
+						for (let j = 0; j < minEdits - 1; j++) {
+							const editA = await editLogA.getEditAtIndex(editLogA.length - j - 1);
+							const editB = await editLogB.getEditAtIndex(editLogB.length - j - 1);
+							expect(editA.id).to.equal(editB.id);
+						}
+						expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first)).to
+							.be.true;
+
+						for (const node of tree.currentView) {
+							expect(tree.attributeNodeId(node.identifier)).to.equal(
+								first.attributeNodeId(
+									first.convertToNodeId(tree.convertToStableNodeId(node.identifier))
+								)
+							);
 						}
 					}
-					break;
 				}
-				default:
-					throw new Error('Unknown operation.');
-			}
-		} catch (err) {
-			console.log(`Error encountered on operation number ${operations.length}`);
-			if (saveInfo !== undefined && saveInfo.saveOnFailure) {
-				await fs.writeFile(saveInfo.filepath, JSON.stringify(operations));
-			}
-			throw err;
-		}
-	}
+				return state;
+			},
+		},
+		initialState,
+		saveInfo
+	);
 
 	if (synchronizeAtEnd) {
-		await state.testObjectProvider?.ensureSynchronized();
-		const trees = [...activeCollaborators.map(({ tree }) => tree), ...passiveCollaborators.map(({ tree }) => tree)];
+		await finalState.testObjectProvider?.ensureSynchronized();
+		const trees = [
+			...finalState.activeCollaborators.map(({ tree }) => tree),
+			...finalState.passiveCollaborators.map(({ tree }) => tree),
+		];
 		for (let i = 0; i < trees.length - 1; i++) {
 			expect(trees[i].equals(trees[i + 1]));
 		}
 	}
 
-	return state as Required<FuzzTestState>;
+	return finalState as Required<FuzzTestState>;
 }
 
 export function runSharedTreeFuzzTests(title: string): void {
