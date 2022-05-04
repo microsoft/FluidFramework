@@ -153,7 +153,6 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         originalError: any,
         dataProcessingCodepath: string,
         sequencedMessage?: ISequencedDocumentMessage,
-        messagePrefix?: string,
     ): IFluidErrorBase {
         const props = {
             dataProcessingError: 1,
@@ -161,7 +160,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
             ...(sequencedMessage === undefined ? undefined : extractSafePropertiesFromMessage(sequencedMessage)),
         };
 
-        const normalizedError = normalizeError(originalError, { props }, messagePrefix);
+        const normalizedError = normalizeError(originalError, { props });
 
         if (!isExternalError(normalizedError)) {
             return normalizedError;

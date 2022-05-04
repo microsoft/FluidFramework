@@ -11,6 +11,7 @@ import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { wrapError } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
 
@@ -385,11 +386,12 @@ export class PendingStateManager implements IDisposable {
                         this.rollbackNextPendingState();
                     }
                 } catch(err) {
-                    const error = DataProcessingError.wrapIfUnrecognized(
-                        err,
-                        "checkpointRollback",
-                        undefined,
-                        "RollbackError: ");
+                    const error = wrapError(err, (message) => {
+                        return DataProcessingError.create(
+                            `RollbackError: ${message}`,
+                            "checkpointRollback",
+                            undefined) as DataProcessingError;
+                    });
                     this.stateHandler.close(error);
                     throw error;
                 }
