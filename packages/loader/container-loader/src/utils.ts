@@ -16,8 +16,8 @@ import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protoc
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
-    blobsContents: {[path: string]: ArrayBufferLike},
-    trees: {[path: string]: ISnapshotTreeWithBlobContents},
+    blobsContents: { [path: string]: ArrayBufferLike },
+    trees: { [path: string]: ISnapshotTreeWithBlobContents },
 }
 
 export interface IParsedUrl {
@@ -62,7 +62,6 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
         blobs: {},
         blobsContents: {},
         trees: {},
-        commits: {},
         id: uuid(),
         unreferenced: summary.unreferenced,
     };
@@ -131,3 +130,7 @@ export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot
     );
     return snapshotTreeWithBlobContents;
 };
+
+export function getProtocolSnapshotTree(snapshot: ISnapshotTree): ISnapshotTree {
+    return ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
+}

@@ -8,6 +8,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { stringToBuffer } from "@fluidframework/common-utils";
 import { ContainerRuntime, IContainerRuntimeOptions, IGCStats } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -15,11 +16,11 @@ import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { TestDataObject } from "./mockSummarizerClient";
+import { TestDataObject } from "../mockSummarizerClient";
 
 /**
  * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
- * nodes, number of unreferenced data stores, etc.
+ * nodes, data stores, blobs, etc.
  */
 describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
@@ -60,7 +61,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         };
 
         const channelsTree = (summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
-        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
+        for (const [id, summaryObject] of Object.entries(channelsTree)) {
             if (dataStoreIds.includes(id)) {
                 assert(
                     summaryObject.type === SummaryType.Tree,
@@ -88,26 +89,39 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
     });
 
     /**
-     * There are 7 GC nodes in total in these tests:
-     * 1 = containers root.
-     * 3 = data stores.
-     * 3 = 1 DDS for each data store.
+     * There are 9 GC nodes in total in these tests:
+     * 1 containers root.
+     * 3 data stores.
+     * 3 x 1 DDS for each data store.
+     * 2 attachment blobs.
      */
     it("can correctly generate GC stats without unreferenced nodes", async () => {
         const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
         const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
         const expectedGCStats: IGCStats = {
-            nodeCount: 7,
+            nodeCount: 9,
             unrefNodeCount: 0,
             updatedNodeCount: 0,
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
+            attachmentBlobCount: 2,
+            unrefAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 0,
         };
 
-        // Add both data store handles in root component to mark them referenced.
+        // Add both data store handles in default data store to mark them referenced.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         defaultDataStore._root.set("dataStore2", dataStore2.handle);
+
+        // Upload 2 attachment blobs and store their handles to mark them referenced.
+        const blob1Contents = "Blob contents 1";
+        const blob2Contents = "Blob contents 2";
+        const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
+        const blob2Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
+        defaultDataStore._root.set("blob1", blob1Handle);
+        defaultDataStore._root.set("blob2", blob2Handle);
+
         await provider.ensureSynchronized();
 
         // Nothing should be unreferenced.
@@ -122,57 +136,75 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
         const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
         const expectedGCStats: IGCStats = {
-            nodeCount: 7,
+            nodeCount: 9,
             unrefNodeCount: 0,
             updatedNodeCount: 0,
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
+            attachmentBlobCount: 2,
+            unrefAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 0,
         };
 
-        // Add both data store handles in root component to mark them referenced.
+        // Add both data store handles in default data store to mark them referenced.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         defaultDataStore._root.set("dataStore2", dataStore2.handle);
+
+        // Upload 2 attachment blobs and store their handles to mark them referenced.
+        const blob1Contents = "Blob contents 1";
+        const blob2Contents = "Blob contents 2";
+        const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
+        const blob2Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
+        defaultDataStore._root.set("blob1", blob1Handle);
+        defaultDataStore._root.set("blob2", blob2Handle);
+
         await provider.ensureSynchronized();
 
-        // Remove dataStore1's handle to mark it unreferenced.
+        // Remove dataStore1 and blob1's handles to mark them unreferenced.
         defaultDataStore._root.delete("dataStore1");
+        defaultDataStore._root.delete("blob1");
         await provider.ensureSynchronized();
 
-        // dataStore1 and its DDS should be now unreferenced. Also, their reference state updated from referenced
+        // dataStore1, its DDS and blob1 should be now unreferenced. Also, their reference state updated from referenced
         // to unreferenced.
-        expectedGCStats.unrefNodeCount = 2;
-        expectedGCStats.updatedNodeCount = 2;
+        expectedGCStats.unrefNodeCount = 3;
+        expectedGCStats.updatedNodeCount = 3;
         expectedGCStats.unrefDataStoreCount = 1;
         expectedGCStats.updatedDataStoreCount = 1;
+        expectedGCStats.unrefAttachmentBlobCount = 1;
+        expectedGCStats.updatedAttachmentBlobCount = 1;
 
         let gcStats = await containerRuntime.collectGarbage({});
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         let summarizeResult = await containerRuntime.summarize({ trackState: false });
-        let unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [ dataStore1.id ]);
+        let unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [dataStore1.id]);
         assert.strictEqual(
             summarizeResult.stats.unreferencedBlobSize,
             unrefDataStoreStats.totalBlobSize,
             "dataStore1's blobs should be in unreferenced blob size",
         );
 
-        // Remove dataStore2's handle to mark it unreferenced.
+        // Remove dataStore2 and blob2's handles to mark them unreferenced.
         defaultDataStore._root.delete("dataStore2");
+        defaultDataStore._root.delete("blob2");
         await provider.ensureSynchronized();
 
-        // dataStore1, dataStore2 and their DDS should be now unreferenced. Also, dataStore2's reference state updated
-        // from referenced to unreferenced.
-        expectedGCStats.unrefNodeCount = 4;
-        expectedGCStats.updatedNodeCount = 2;
+        // dataStore1, dataStore2, their DDS and blob2 should be now unreferenced. Also, dataStore2, its DDS and blob2's
+        // reference state updated from referenced to unreferenced.
+        expectedGCStats.unrefNodeCount = 6;
+        expectedGCStats.updatedNodeCount = 3;
         expectedGCStats.unrefDataStoreCount = 2;
         expectedGCStats.updatedDataStoreCount = 1;
+        expectedGCStats.unrefAttachmentBlobCount = 2;
+        expectedGCStats.updatedAttachmentBlobCount = 1;
 
         gcStats = await containerRuntime.collectGarbage({});
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         summarizeResult = await containerRuntime.summarize({ trackState: false });
-        unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [ dataStore1.id, dataStore2.id ]);
+        unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [dataStore1.id, dataStore2.id]);
         assert.strictEqual(
             summarizeResult.stats.unreferencedBlobSize,
             unrefDataStoreStats.totalBlobSize,
@@ -184,27 +216,42 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
         const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
         const expectedGCStats: IGCStats = {
-            nodeCount: 7,
+            nodeCount: 9,
             unrefNodeCount: 0,
             updatedNodeCount: 0,
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
+            attachmentBlobCount: 2,
+            unrefAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 0,
         };
 
-        // Add both data store handles in root component to mark them referenced.
+        // Add both data store handles in default data store to mark them referenced.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         defaultDataStore._root.set("dataStore2", dataStore2.handle);
+
+        // Upload 2 attachment blobs and store their handles to mark them referenced.
+        const blob1Contents = "Blob contents 1";
+        const blob2Contents = "Blob contents 2";
+        const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
+        const blob2Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
+        defaultDataStore._root.set("blob1", blob1Handle);
+        defaultDataStore._root.set("blob2", blob2Handle);
         await provider.ensureSynchronized();
 
-        // Remove both data store handles to mark them unreferenced.
+        // Remove both data store and both blob handles to mark them unreferenced.
         defaultDataStore._root.delete("dataStore1");
         defaultDataStore._root.delete("dataStore2");
+        defaultDataStore._root.delete("blob1");
+        defaultDataStore._root.delete("blob2");
         await provider.ensureSynchronized();
 
-        // Add their handle back to re-reference them.
+        // Add all handles back to re-reference them.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         defaultDataStore._root.set("dataStore2", dataStore2.handle);
+        defaultDataStore._root.set("blob1", blob1Handle);
+        defaultDataStore._root.set("blob2", blob2Handle);
         await provider.ensureSynchronized();
 
         // Nothing should be unreferenced.
@@ -225,14 +272,17 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
+            attachmentBlobCount: 0,
+            unrefAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 0,
         };
 
-        // Add both data store handles in root component to mark them referenced.
+        // Add both data store handles in default data store to mark them referenced.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         defaultDataStore._root.set("dataStore2", dataStore2.handle);
         await provider.ensureSynchronized();
 
-        // Nothins should be unreferenced.
+        // Nothing should be unreferenced.
         let gcStats = await containerRuntime.collectGarbage({});
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 

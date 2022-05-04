@@ -63,7 +63,7 @@ describe("Summary Utils", () => {
                         entries: [
                             new BlobTreeEntry("bu8", "test-u8"),
                             new BlobTreeEntry("b64", base64Content, "base64"),
-                            new TreeTreeEntry("tu", { entries: [], unreferenced: true}),
+                            new TreeTreeEntry("tu", { entries: [], unreferenced: true }),
                         ],
                         unreferenced: undefined,
                     }),
@@ -195,12 +195,8 @@ describe("Summary Utils", () => {
                                 },
                                 trees: {
                                 },
-                                commits: {
-                                },
                                 unreferenced: true,
                             },
-                        },
-                        commits: {
                         },
                     },
                     unref: {
@@ -208,12 +204,8 @@ describe("Summary Utils", () => {
                         },
                         trees: {
                         },
-                        commits: {
-                        },
                         unreferenced: true,
                     },
-                },
-                commits: {
                 },
             };
         });

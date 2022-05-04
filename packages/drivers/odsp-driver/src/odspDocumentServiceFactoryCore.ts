@@ -14,7 +14,10 @@ import {
     TelemetryLogger,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import {
+    getDocAttributesFromProtocolSummary,
+    ensureFluidResolvedUrl,
+} from "@fluidframework/driver-utils";
 import {
     TokenFetchOptions,
     OdspResourceTokenFetchOptions,
@@ -55,6 +58,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
 
@@ -71,6 +75,15 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         if (filePath === undefined || filePath === null) {
             throw new Error("File path should be provided!!");
         }
+
+        const protocolSummary = createNewSummary?.tree[".protocol"];
+        if (protocolSummary) {
+            const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary as ISummaryTree);
+            if (documentAttributes?.sequenceNumber !== 0) {
+                throw new Error("Seq number in detached ODSP container should be 0");
+            }
+        }
+
         const newFileInfo: INewFileInfo = {
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
@@ -113,7 +126,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     this.hostPolicy.cacheCreateNewSummary ?? true,
                     !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                 );
-                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger, cacheAndTracker);
+                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
+                    cacheAndTracker, clientIsSummarizer);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -147,14 +161,16 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
-        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger));
+        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger), undefined, clientIsSummarizer);
     }
 
     private async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
         odspLogger: TelemetryLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
         const resolvedUrlData: IOdspUrlParts = {
@@ -194,6 +210,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.hostPolicy,
             cacheAndTracker.epochTracker,
             this.socketReferenceKeyPrefix,
+            clientIsSummarizer,
         );
     }
 }

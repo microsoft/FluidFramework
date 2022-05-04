@@ -78,8 +78,7 @@ export class SharedMatrix<T = any>
     extends SharedObject
     implements IMatrixProducer<MatrixItem<T>>,
     IMatrixReader<MatrixItem<T>>,
-    IMatrixWriter<MatrixItem<T>>
-{
+    IMatrixWriter<MatrixItem<T>> {
     private readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
 
     public static getFactory() { return new SharedMatrixFactory(); }
@@ -507,7 +506,7 @@ export class SharedMatrix<T = any>
             default: {
                 assert(content.type === MatrixOp.set, 0x020 /* "Unknown SharedMatrix 'op' type." */);
 
-                const setOp = content as ISetOp<Serializable<T>>;
+                const setOp = content as ISetOp<T>;
                 const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
 
                 // If there are more pending local writes to the same row/col handle, it is important
@@ -564,10 +563,10 @@ export class SharedMatrix<T = any>
 
         switch (contents.target) {
             case SnapshotPath.cols:
-                this.cols.applyMsg(msg);
+                this.cols.applyMsg(msg, local);
                 break;
             case SnapshotPath.rows:
-                this.rows.applyMsg(msg);
+                this.rows.applyMsg(msg, local);
                 break;
             default: {
                 assert(contents.type === MatrixOp.set,
@@ -687,7 +686,52 @@ export class SharedMatrix<T = any>
         return `${s}\n`;
     }
 
-    protected applyStashedOp() {
-        throw new Error("not implemented");
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+     */
+    protected applyStashedOp(content: any): unknown {
+        if (content.target === SnapshotPath.cols || content.target === SnapshotPath.rows) {
+            const op = content as IMergeTreeOp;
+            const currentVector = content.target === SnapshotPath.cols ? this.cols : this.rows;
+            const oppositeVector = content.target === SnapshotPath.cols ? this.rows : this.cols;
+            const metadata = currentVector.applyStashedOp(op);
+            const localSeq = currentVector.getCollabWindow().localSeq;
+            const oppositeWindow = oppositeVector.getCollabWindow();
+
+            assert(localSeq > oppositeWindow.localSeq,
+                "The 'localSeq' of the vector applying stashed op must > the 'localSeq' of the other vector.");
+
+            oppositeWindow.localSeq = localSeq;
+
+            return metadata;
+        } else {
+            assert(content.type === MatrixOp.set, "Unknown SharedMatrix 'op' type.");
+
+            const setOp = content as ISetOp<T>;
+            const rowHandle = this.rows.getAllocatedHandle(setOp.row);
+            const colHandle = this.cols.getAllocatedHandle(setOp.col);
+            if (this.undo !== undefined) {
+                let oldValue = this.cells.getCell(rowHandle, colHandle);
+                if (oldValue === null) {
+                    oldValue = undefined;
+                }
+
+                this.undo.cellSet(
+                    rowHandle,
+                    colHandle,
+                    oldValue);
+            }
+
+            this.cells.setCell(rowHandle, colHandle, setOp.value);
+            const localSeq = this.nextLocalSeq();
+            const metadata: ISetOpMetadata = {
+                rowHandle,
+                colHandle,
+                localSeq,
+            };
+
+            this.pending.setCell(rowHandle, colHandle, localSeq);
+            return metadata;
+        }
     }
 }

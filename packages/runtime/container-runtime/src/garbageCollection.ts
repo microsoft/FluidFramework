@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
@@ -66,6 +66,8 @@ const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
 const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
+// Feature gate key to log error messages if GC reference validation fails.
+const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -76,15 +78,32 @@ export interface IGCStats {
     nodeCount: number;
     /** The number of data stores in the container. */
     dataStoreCount: number;
+    /** The number of attachment blobs in the container. */
+    attachmentBlobCount: number;
     /** The number of unreferenced nodes in the container. */
     unrefNodeCount: number;
     /** The number of unreferenced data stores in the container. */
     unrefDataStoreCount: number;
+    /** The number of unreferenced attachment blobs in the container. */
+    unrefAttachmentBlobCount: number;
     /** The number of nodes whose reference state updated since last GC run. */
     updatedNodeCount: number;
     /** The number of data stores whose reference state updated since last GC run. */
     updatedDataStoreCount: number;
+    /** The number of attachment blobs whose reference state updated since last GC run. */
+    updatedAttachmentBlobCount: number;
 }
+
+/** The types of GC nodes in the GC reference graph. */
+export const GCNodeType = {
+    // Nodes that are for data stores.
+    DataStore: "DataStore",
+    // Nodes that are for attachment blobs, i.e., blobs uploaded via BlobManager.
+    Blob: "Blob",
+    // Nodes that are neither data store not blobs. For example, root node and DDS nodes.
+    Other: "Other",
+};
+export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 
 /** The event that is logged when unreferenced node is used after a certain time. */
 interface IUnreferencedEvent {
@@ -105,6 +124,12 @@ export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     /** After GC has run, called to notify the runtime of routes that are used in it. */
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    /** After GC has run, called to delete objects in the runtime whose routes are unused. */
+    deleteUnusedRoutes(unusedRoutes: string[]): void;
+    /** Returns a referenced timestamp to be used to track unreferenced nodes. */
+    getCurrentReferenceTimestampMs(): number | undefined;
+    /** Returns the type of the GC node. */
+    getNodeType(nodePath: string): GCNodeType;
     /** Called when the runtime should close because of an error. */
     closeFn(error?: ICriticalContainerError): void;
 }
@@ -131,8 +156,8 @@ export interface IGarbageCollector {
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(): ISummaryTreeWithStats | undefined;
-    /** Returns a map of each data store id to its GC details in the base summary. */
-    getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
+    /** Returns a map of each node id to its base GC details in the base summary. */
+    getBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
     /** Called when the latest summary of the system has been refreshed. */
     latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
     /** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
@@ -204,14 +229,25 @@ class UnreferencedStateTracker {
 /**
  * The garbage collector for the container runtime. It consolidates the garbage collection functionality and maintains
  * its state across summaries.
+ *
+ * Node - represented as nodeId, it's a node on the GC graph
+ * Outbound Route - a path from one node to another node, think `nodeA` -> `nodeB`
+ * Graph - all nodes with their respective routes
+ *             GC Graph
+ *
+ *               Node
+ *        NodeId = "datastore1"
+ *           /             \
+ *    OutboundRoute   OutboundRoute
+ *         /                 \
+ *       Node               Node
+ *  NodeId = "dds1"     NodeId = "dds2"
  */
 export class GarbageCollector implements IGarbageCollector {
     public static create(
         provider: IGarbageCollectionRuntime,
         gcOptions: IGCRuntimeOptions,
-        deleteUnusedRoutes: (unusedRoutes: string[]) => void,
-        getNodePackagePath: (nodeId: string) => readonly string[] | undefined,
-        getCurrentReferenceTimestampMs: () => number | undefined,
+        getNodePackagePath: (nodePath: string) => readonly string[] | undefined,
         getLastSummaryTimestampMs: () => number | undefined,
         baseSnapshot: ISnapshotTree | undefined,
         readAndParseBlob: ReadAndParseBlob,
@@ -222,9 +258,7 @@ export class GarbageCollector implements IGarbageCollector {
         return new GarbageCollector(
             provider,
             gcOptions,
-            deleteUnusedRoutes,
             getNodePackagePath,
-            getCurrentReferenceTimestampMs,
             getLastSummaryTimestampMs,
             baseSnapshot,
             readAndParseBlob,
@@ -301,15 +335,15 @@ export class GarbageCollector implements IGarbageCollector {
     private latestSummaryGCVersion: GCVersion;
 
     // Keeps track of the GC state from the last run.
-    private gcDataFromLastRun: IGarbageCollectionData | undefined;
+    private previousGCDataFromLastRun: IGarbageCollectionData | undefined;
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
-    private readonly referencesSinceLastRun: Map<string, string[]> = new Map();
+    private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
 
     // Promise when resolved initializes the base state of the nodes from the base summary state.
     private readonly initializeBaseStateP: Promise<void>;
     // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
-    private readonly dataStoreGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
+    private readonly baseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
     // The time after which an unreferenced node can be deleted. Currently, we only set the node's state to expired.
     private readonly deleteTimeoutMs: number;
     // Map of node ids to their unreferenced state tracker.
@@ -324,18 +358,10 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly pendingEventsQueue: IUnreferencedEvent[] = [];
 
     protected constructor(
-        private readonly provider: IGarbageCollectionRuntime,
+        private readonly runtime: IGarbageCollectionRuntime,
         private readonly gcOptions: IGCRuntimeOptions,
-        /** After GC has run, called to delete objects in the runtime whose routes are unused. */
-        private readonly deleteUnusedRoutes: (unusedRoutes: string[]) => void,
         /** For a given node path, returns the node's package path. */
         private readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined,
-        /**
-         * Returns a referenced timestamp to be used to track unreferenced nodes. This is a server generated timestamp
-         * and may not be available if there aren't any ops processed yet. If so, we skip tracking unreferenced state
-         * such as time when node becomes unreferenced or inactive.
-         */
-        private readonly getCurrentReferenceTimestampMs: () => number | undefined,
         /** Returns the timestamp of the last summary generated for this container. */
         private readonly getLastSummaryTimestampMs: () => number | undefined,
         baseSnapshot: ISnapshotTree | undefined,
@@ -357,11 +383,11 @@ export class GarbageCollector implements IGarbageCollector {
         if (existing) {
             prevSummaryGCVersion = getGCVersion(metadata);
             // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
-            // other exsiting documents, GC is enabled.
+            // other existing documents, GC is enabled.
             this.gcEnabled = prevSummaryGCVersion > 0;
             this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
         } else {
-            // For new documents, GC has to be exlicitly enabled via the gcAllowed flag in GC options.
+            // For new documents, GC has to be explicitly enabled via the gcAllowed flag in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
             // Set the Session Expiry only if the flag is enabled or the test option is set.
             if (this.mc.config.getBoolean(runSessionExpiry) && this.gcEnabled) {
@@ -374,7 +400,7 @@ export class GarbageCollector implements IGarbageCollector {
             const timeoutMs = this.sessionExpiryTimeoutMs;
             setLongTimeout(timeoutMs,
                 () => {
-                    this.provider.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
+                    this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
                 },
                 (timer) => {
                     this.sessionExpiryTimer = timer;
@@ -435,10 +461,10 @@ export class GarbageCollector implements IGarbageCollector {
             // consolidate into IGarbageCollectionState format.
             // Add a node for the root node that is not present in older snapshot format.
             const gcState: IGarbageCollectionState = { gcNodes: { "/": { outboundRoutes: [] } } };
-            const dataStoreSnaphotTree = getSummaryForDatastores(baseSnapshot, metadata);
-            assert(dataStoreSnaphotTree !== undefined,
+            const dataStoreSnapshotTree = getSummaryForDatastores(baseSnapshot, metadata);
+            assert(dataStoreSnapshotTree !== undefined,
                 0x2a8 /* "Expected data store snapshot tree in base snapshot" */);
-            for (const [dsId, dsSnapshotTree] of Object.entries(dataStoreSnaphotTree.trees)) {
+            for (const [dsId, dsSnapshotTree] of Object.entries(dataStoreSnapshotTree.trees)) {
                 const blobId = dsSnapshotTree.blobs[gcBlobKey];
                 if (blobId === undefined) {
                     continue;
@@ -482,7 +508,7 @@ export class GarbageCollector implements IGarbageCollector {
          * may be out of date. This is fine because the state is updated every time GC runs based on the time then.
          */
         this.initializeBaseStateP = new LazyPromise<void>(async () => {
-            const currentReferenceTimestampMs = this.getCurrentReferenceTimestampMs();
+            const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
             const baseState = await baseSummaryStateP;
             if (baseState === undefined) {
                 return;
@@ -502,12 +528,12 @@ export class GarbageCollector implements IGarbageCollector {
                 }
                 gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
             }
-            this.gcDataFromLastRun = { gcNodes };
+            this.previousGCDataFromLastRun = { gcNodes };
         });
 
-        // Get the GC details for each data store from the GC state in the base summary. This is returned in
-        // getDataStoreBaseGCDetails and is used to initialize each data store's GC state.
-        this.dataStoreGCDetailsP = new LazyPromise<Map<string, IGarbageCollectionDetailsBase>>(async () => {
+        // Get the GC details for each node from the GC state in the base summary. This is returned in getBaseGCDetails
+        // which the caller uses to initialize each node's GC state.
+        this.baseGCDetailsP = new LazyPromise<Map<string, IGarbageCollectionDetailsBase>>(async () => {
             const baseState = await baseSummaryStateP;
             if (baseState === undefined) {
                 return new Map();
@@ -522,22 +548,22 @@ export class GarbageCollector implements IGarbageCollector {
             // each node in the summary.
             const usedRoutes = runGarbageCollection(
                 gcNodes,
-                [ "/" ],
+                ["/"],
                 this.mc.logger,
             ).referencedNodeIds;
 
-            const dataStoreGCDetailsMap = unpackChildNodesGCDetails({ gcData: { gcNodes }, usedRoutes });
-            // Currently, the data stores write the GC data. So, we need to update it's base GC details with the
+            const baseGCDetailsMap = unpackChildNodesGCDetails({ gcData: { gcNodes }, usedRoutes });
+            // Currently, the nodes may write the GC data. So, we need to update it's base GC details with the
             // unreferenced timestamp. Once we start writing the GC data here, we won't need to do this anymore.
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 if (nodeData.unreferencedTimestampMs !== undefined) {
-                    const dataStoreGCDetails = dataStoreGCDetailsMap.get(nodeId.slice(1));
+                    const dataStoreGCDetails = baseGCDetailsMap.get(nodeId.slice(1));
                     if (dataStoreGCDetails !== undefined) {
                         dataStoreGCDetails.unrefTimestamp = nodeData.unreferencedTimestampMs;
                     }
                 }
             }
-            return dataStoreGCDetailsMap;
+            return baseGCDetailsMap;
         });
 
         // Initialize the base state. The base GC data is used to detect and log when inactive / deleted objects are
@@ -561,7 +587,7 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Runs garbage collection and udpates the reference / used state of the nodes in the container.
+     * Runs garbage collection and updates the reference / used state of the nodes in the container.
      * @returns the number of data stores that have been marked as unreferenced.
      */
     public async collectGarbage(
@@ -584,13 +610,13 @@ export class GarbageCollector implements IGarbageCollector {
             await this.initializeBaseStateP;
 
             // Let the runtime update its pending state before GC runs.
-            await this.provider.updateStateBeforeGC();
+            await this.runtime.updateStateBeforeGC();
 
             // Get the runtime's GC data and run GC on the reference graph in it.
-            const gcData = await this.provider.getGCData(fullGC);
+            const gcData = await this.runtime.getGCData(fullGC);
             const gcResult = runGarbageCollection(
                 gcData.gcNodes,
-                [ "/" ],
+                ["/"],
                 logger,
             );
             const gcStats = this.generateStatsAndLogEvents(gcResult);
@@ -600,10 +626,10 @@ export class GarbageCollector implements IGarbageCollector {
             this.updateStateSinceLastRun(gcData);
 
             // Update the current state of the system based on the GC run.
-            const currentReferenceTimestampMs = this.getCurrentReferenceTimestampMs();
+            const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
             this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
 
-            this.provider.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
+            this.runtime.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
 
             if (runSweep) {
                 // Placeholder for running sweep logic.
@@ -612,7 +638,7 @@ export class GarbageCollector implements IGarbageCollector {
             // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
             // involving access to deleted data.
             if (this.testMode) {
-                this.deleteUnusedRoutes(gcResult.deletedNodeIds);
+                this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
             }
             event.end({ ...gcStats });
             return gcStats;
@@ -626,12 +652,12 @@ export class GarbageCollector implements IGarbageCollector {
      * blobs. All the blob keys should start with `gcBlobPrefix`.
      */
     public summarize(): ISummaryTreeWithStats | undefined {
-        if (!this.shouldRunGC || this.gcDataFromLastRun === undefined) {
+        if (!this.shouldRunGC || this.previousGCDataFromLastRun === undefined) {
             return;
         }
 
         const gcState: IGarbageCollectionState = { gcNodes: {} };
-        for (const [nodeId, outboundRoutes] of Object.entries(this.gcDataFromLastRun.gcNodes)) {
+        for (const [nodeId, outboundRoutes] of Object.entries(this.previousGCDataFromLastRun.gcNodes)) {
             gcState.gcNodes[nodeId] = {
                 outboundRoutes,
                 unreferencedTimestampMs: this.unreferencedNodesState.get(nodeId)?.unreferencedTimestampMs,
@@ -644,11 +670,11 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Returns a map of data store ids to their base GC details generated from the base summary.This is used to
-     * initialize the GC state of data stores.
+     * Returns a map of node ids to their base GC details generated from the base summary. This is used by the caller
+     * to initialize the GC state of the nodes.
      */
-    public async getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>> {
-        return this.dataStoreGCDetailsP;
+    public async getBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>> {
+        return this.baseGCDetailsP;
     }
 
     /**
@@ -718,9 +744,9 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        const outboundRoutes = this.referencesSinceLastRun.get(fromNodePath) ?? [];
+        const outboundRoutes = this.newReferencesSinceLastRun.get(fromNodePath) ?? [];
         outboundRoutes.push(toNodePath);
-        this.referencesSinceLastRun.set(fromNodePath, outboundRoutes);
+        this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
 
         // If the node that got referenced is inactive, log an event as that may indicate use-after-delete.
         this.logIfInactive(
@@ -761,8 +787,8 @@ export class GarbageCollector implements IGarbageCollector {
         gcResult: IGCResult,
         currentReferenceTimestampMs?: number,
     ) {
-        this.gcDataFromLastRun = cloneGCData(gcData);
-        this.referencesSinceLastRun.clear();
+        this.previousGCDataFromLastRun = cloneGCData(gcData);
+        this.newReferencesSinceLastRun.clear();
 
         // Iterate through the referenced nodes and stop tracking if they were unreferenced before.
         for (const nodeId of gcResult.referencedNodeIds) {
@@ -815,13 +841,37 @@ export class GarbageCollector implements IGarbageCollector {
      * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
      */
     private updateStateSinceLastRun(currentGCData: IGarbageCollectionData) {
-        // If we haven't run GC before or no references were added since the last run, there is nothing to do.
-        if (this.gcDataFromLastRun === undefined || this.referencesSinceLastRun.size === 0) {
+        // If we haven't run GC before there is nothing to do.
+        if (this.previousGCDataFromLastRun === undefined) {
             return;
         }
 
-        // Validate that we have identified all references correctly.
-        this.validateReferenceCorrectness(currentGCData);
+        // Find any references that haven't been identified correctly.
+        const missingExplicitReferences = this.findMissingExplicitReferences(
+            currentGCData,
+            this.previousGCDataFromLastRun,
+            this.newReferencesSinceLastRun,
+        );
+
+        // The following log will be enabled once this issue is resolved:
+        // https://github.com/microsoft/FluidFramework/issues/8878.
+        if (this.mc.config.getBoolean(logUnknownOutboundReferencesKey) === true
+            && missingExplicitReferences.length > 0) {
+            missingExplicitReferences.forEach((missingExplicitReference) => {
+                const event: ITelemetryPerformanceEvent = {
+                    eventName: "gcUnknownOutboundReferences",
+                    gcNodeId: missingExplicitReference[0],
+                    gcRoutes: JSON.stringify(missingExplicitReference[1]),
+                };
+                this.mc.logger.sendPerformanceEvent(event);
+            });
+        }
+
+        // No references were added since the last run so we don't have to update reference states of any unreferenced
+        // nodes
+        if (this.newReferencesSinceLastRun.size === 0) {
+            return;
+        }
 
         /**
          * Generate a super set of the GC data that contains the nodes and edges from last run, plus any new node and
@@ -838,8 +888,8 @@ export class GarbageCollector implements IGarbageCollector {
          *      which is tracked by https://github.com/microsoft/FluidFramework/issues/8470.
          *    - A new data store may have "root" DDSs already created and we don't detect them today.
          */
-        const gcDataSuperSet = concatGarbageCollectionData(this.gcDataFromLastRun, currentGCData);
-        this.referencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
+        const gcDataSuperSet = concatGarbageCollectionData(this.previousGCDataFromLastRun, currentGCData);
+        this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
             if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
                 gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
             } else {
@@ -865,64 +915,61 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Validates that all new references are correctly identified and processed. The basic principle for validation is
-     * that we should not have new references in the reference graph (GC data) that have not been notified to the
-     * garbage collector via `referenceAdded`.
-     * We validate that the references in the current reference graph should be a subset of the references in the last
-     * run's reference graph + references since the last run.
+     * Finds all new references or outbound routes in the current graph that haven't been explicitly notified to GC.
+     * The principle is that every new reference or outbound route must be notified to GC via the
+     * addedOutboundReference method. It it hasn't, its a bug and we want to identify these scenarios.
+     *
+     * In more simple terms:
+     * Missing Explicit References = Current References - Previous References - Explicitly Added References;
+     *
      * @param currentGCData - The GC data (reference graph) from the current GC run.
+     * @param previousGCData - The GC data (reference graph) from the previous GC run.
+     * @param explicitReferences - New references added explicity between the previous and the current run.
+     * @returns - a list of missing explicit references
      */
-    private validateReferenceCorrectness(currentGCData: IGarbageCollectionData) {
+    private findMissingExplicitReferences(
+        currentGCData: IGarbageCollectionData,
+        previousGCData: IGarbageCollectionData,
+        explicitReferences: Map<string, string[]>,
+    ): [string, string[]][] {
         assert(
-            this.gcDataFromLastRun !== undefined,
+            previousGCData !== undefined,
             0x2b7, /* "Can't validate correctness without GC data from last run" */
         );
 
-        // Get a list of all the outbound routes (or references) in the current GC data.
-        const currentReferences: string[] = [];
-        for (const [nodeId, outboundRoutes] of Object.entries(currentGCData.gcNodes)) {
-            /**
-             * Remove routes from a child node to its parent which is added implicitly by the runtime. For instance,
-             * each adds its data store as an outbound route to mark it as referenced if the DDS is referenced.
-             * We won't get any explicit notification for these references so they must be removed before validation.
-             */
-            const explicitRoutes = outboundRoutes.filter((route) => !nodeId.startsWith(route));
-            currentReferences.push(...explicitRoutes);
-        }
-
-        // Get a list of outbound routes (or references) from the last run's GC data plus references added since the
-        // last run that were notified via `referenceAdded`.
-        const explicitReferences: string[] = [];
-        for (const [, outboundRoutes] of Object.entries(this.gcDataFromLastRun.gcNodes)) {
-            explicitReferences.push(...outboundRoutes);
-        }
-        this.referencesSinceLastRun.forEach((outboundRoutes: string[]) => {
-            explicitReferences.push(...outboundRoutes);
-        });
-
-        // Validate that the current reference graph doesn't have references that we are not already aware of. If this
-        // happens, it might indicate data corruption since we may delete objects prematurely.
-        currentReferences.forEach((route: string) => {
-            // Validate references for data stores only. Currently, layers below data stores don't have GC implemented
-            // so there is no guarantee their references will be notified.
-            if (isDataStoreNode(route) && !explicitReferences.includes(route)) {
-                /**
-                 * The following log will be enabled once this issue is resolved:
-                 * https://github.com/microsoft/FluidFramework/issues/8878.
-                 */
-                // We should ideally throw a data corruption error here. However, send an error for now until we have
-                // implemented sweep and have reasonable confidence in the sweep process.
-                // this.mc.logger.sendErrorEvent({
-                //     eventName: "gcUnknownOutboundRoute",
-                //     route,
-                // });
+        const currentGraph = Object.entries(currentGCData.gcNodes);
+        const missingExplicitReferences: [string, string[]][] = [];
+        currentGraph.forEach(([nodeId, currentOutboundRoutes]) => {
+            const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
+            const explicitRoutes = explicitReferences.get(nodeId) ?? [];
+            const missingExplicitRoutes: string[] = [];
+            currentOutboundRoutes.forEach((route) => {
+                const isBlobOrDataStoreRoute =
+                    this.runtime.getNodeType(route) === GCNodeType.Blob ||
+                    this.runtime.getNodeType(route) === GCNodeType.DataStore;
+                // Ignore implicitly added DDS routes to their parent datastores
+                const notRouteFromDDSToParentDataStore = !nodeId.startsWith(route);
+                if (
+                    isBlobOrDataStoreRoute &&
+                    notRouteFromDDSToParentDataStore &&
+                    (!previousRoutes.includes(route) && !explicitRoutes.includes(route))
+                ) {
+                    missingExplicitRoutes.push(route);
+                }
+            });
+            if (missingExplicitRoutes.length > 0) {
+                missingExplicitReferences.push([nodeId, missingExplicitRoutes]);
             }
         });
+
+        // Ideally missingExplicitReferences should always have a size 0
+        return missingExplicitReferences;
     }
 
     /**
      * Generates the stats of a garbage collection run from the given results of the run. Also, logs any pending events
-     * in the pendingEventsQueue.
+     * in the pendingEventsQueue. This should be called before updating the current state because it generates stats
+     * based on previous state of the system.
      * @param gcResult - The result of a GC run.
      * @returns the GC stats of the GC run.
      */
@@ -942,44 +989,55 @@ export class GarbageCollector implements IGarbageCollector {
         const gcStats: IGCStats = {
             nodeCount: 0,
             dataStoreCount: 0,
+            attachmentBlobCount: 0,
             unrefNodeCount: 0,
             unrefDataStoreCount: 0,
+            unrefAttachmentBlobCount: 0,
             updatedNodeCount: 0,
             updatedDataStoreCount: 0,
+            updatedAttachmentBlobCount: 0,
+        };
+
+        const updateNodeStats = (nodeId: string, referenced: boolean) => {
+            gcStats.nodeCount++;
+            /**
+             * `this.unreferencedNodesState` has the previous unreferenced state of all nodes. `referenced` flag passed
+             * here is current state of the give node. Check if the reference state of the changed.
+             */
+            const stateUpdated = this.unreferencedNodesState.has(nodeId) ? referenced : !referenced;
+            if (stateUpdated) {
+                gcStats.updatedNodeCount++;
+            }
+            if (!referenced) {
+                gcStats.unrefNodeCount++;
+            }
+
+            if (this.runtime.getNodeType(nodeId) === GCNodeType.DataStore) {
+                gcStats.dataStoreCount++;
+                if (stateUpdated) {
+                    gcStats.updatedDataStoreCount++;
+                }
+                if (!referenced) {
+                    gcStats.unrefDataStoreCount++;
+                }
+            }
+            if (this.runtime.getNodeType(nodeId) === GCNodeType.Blob) {
+                gcStats.attachmentBlobCount++;
+                if (stateUpdated) {
+                    gcStats.updatedAttachmentBlobCount++;
+                }
+                if (!referenced) {
+                    gcStats.unrefAttachmentBlobCount++;
+                }
+            }
         };
 
         for (const nodeId of gcResult.referencedNodeIds) {
-            gcStats.nodeCount++;
-            const isDataStore = isDataStoreNode(nodeId);
-            if (isDataStore) {
-                gcStats.dataStoreCount++;
-            }
-            // If a referenced node has an entry in `unreferencedNodesState`, it was previously unreferenced. So, its
-            // reference state updated from the last GC run.
-            if (this.unreferencedNodesState.has(nodeId)) {
-                gcStats.updatedNodeCount++;
-                if (isDataStore) {
-                    gcStats.updatedDataStoreCount++;
-                }
-            }
+            updateNodeStats(nodeId, true /* referenced */);
         }
 
         for (const nodeId of gcResult.deletedNodeIds) {
-            gcStats.nodeCount++;
-            gcStats.unrefNodeCount++;
-            const isDataStore = isDataStoreNode(nodeId);
-            if (isDataStore) {
-                gcStats.dataStoreCount++;
-                gcStats.unrefDataStoreCount++;
-            }
-            // If an unreferenced node doesn't an entry in `unreferencedNodesState`, it was previously referenced. So,
-            // its reference state updated from the last GC run.
-            if (!this.unreferencedNodesState.has(nodeId)) {
-                gcStats.updatedNodeCount++;
-                if (isDataStore) {
-                    gcStats.updatedDataStoreCount++;
-                }
-            }
+            updateNodeStats(nodeId, false /* referenced */);
         }
 
         return gcStats;
@@ -991,7 +1049,7 @@ export class GarbageCollector implements IGarbageCollector {
     private logIfInactive(
         eventSuffix: "Changed" | "Loaded" | "Revived",
         nodeId: string,
-        currentReferenceTimestampMs = this.getCurrentReferenceTimestampMs(),
+        currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs(),
         packagePath?: readonly string[],
         requestHeaders?: IRequestHeader,
     ) {
@@ -1042,7 +1100,7 @@ async function getGCStateFromSnapshot(
 ): Promise<IGarbageCollectionState> {
     let rootGCState: IGarbageCollectionState = { gcNodes: {} };
     for (const key of Object.keys(gcSnapshotTree.blobs)) {
-        // Skip blobs that do not stsart with the GC prefix.
+        // Skip blobs that do not start with the GC prefix.
         if (!key.startsWith(gcBlobPrefix)) {
             continue;
         }
@@ -1080,13 +1138,4 @@ function setLongTimeout(
         timer = setTimeout(() => timeoutFn(), timeoutMs);
     }
     setTimerFn(timer);
-}
-
-/**
- * Given a GC nodeId, tells whether it belongs to a data store or not.
- */
-function isDataStoreNode(nodeId: string): boolean {
-    const pathParts = nodeId.split("/");
-    // Data store ids are in the format "/dataStoreId".
-    return pathParts.length === 2 && pathParts[1] !== "" ? true : false;
 }

@@ -4,7 +4,7 @@
  */
 
 import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
-import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
+import { IGitCache, IGitManager, ISession } from "@fluidframework/server-services-client";
 import {
     IDatabaseManager,
     IDeliState,
@@ -59,7 +59,10 @@ export class TestDocumentStorage implements IDocumentStorage {
         sequenceNumber: number,
         term: number,
         initialHash: string,
+        ordererUrl: string,
+        historianUrl: string,
         values: [string, ICommittedProposal][],
+        enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
@@ -105,6 +108,7 @@ export class TestDocumentStorage implements IDocumentStorage {
             expHash1: initialHash,
             logOffset: -1,
             sequenceNumber,
+            signalClientConnectionNumber: 0,
             epoch: undefined,
             term: 1,
             lastSentMSN: 0,
@@ -128,6 +132,13 @@ export class TestDocumentStorage implements IDocumentStorage {
         };
 
         const collection = await this.databaseManager.getDocumentCollection();
+
+        const session: ISession = {
+            ordererUrl,
+            historianUrl,
+            isSessionAlive: true,
+        };
+
         const result = await collection.findOrCreate(
             {
                 documentId,
@@ -137,6 +148,7 @@ export class TestDocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
+                session,
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
@@ -192,6 +204,7 @@ export class TestDocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: undefined,
                 documentId,
+                session: undefined,
                 scribe: undefined,
                 tenantId,
                 version: "0.1",

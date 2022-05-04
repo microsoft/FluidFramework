@@ -31,11 +31,18 @@ export function create(
         authorization: string,
         sha: string,
         count: number): Promise<git.ICommitDetails[]> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.getCommits(sha, count);
     }
 
     router.get("/repos/:ignored?/:tenantId/commits",
+        utils.validateRequestParams("sha"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const commitsP = getCommits(

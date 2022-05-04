@@ -132,7 +132,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
     readonly pkg: Readonly<string[]> | undefined;
     readonly snapshotTree: ISnapshotTree | undefined;
     readonly isRootDataStore: boolean | undefined;
-    readonly bindChannelFn: (channel: IFluidDataStoreChannel) => void;
+    readonly makeLocallyVisibleFn: () => void;
     /**
      * @deprecated 0.16 Issue #1635, #3631
      */
@@ -261,7 +261,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         private readonly existing: boolean,
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
-        bindChannelFn: (channel: IFluidDataStoreChannel) => void,
+        private readonly makeLocallyVisibleFn: () => void,
     ) {
         super();
 
@@ -284,7 +284,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
             this.bindState = BindState.Binding;
             assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
-            bindChannelFn(this.channel);
+            this.makeLocallyVisible();
             this.bindState = BindState.Bound;
         };
 
@@ -317,7 +317,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
+        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
@@ -326,9 +326,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
                 const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
-                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData"} });
+                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData" } });
                 this.channelDeferred?.reject(errorWrapped);
-                this.logger.sendErrorEvent({ eventName: "RealizeError"}, errorWrapped);
+                this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
             });
         }
         return this.channelDeferred.promise;
@@ -627,13 +627,21 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
+    /**
+     * This is called by the data store channel when it becomes locally visible indicating that it is ready to become
+     * globally visible now.
+     */
+    public makeLocallyVisible() {
+        assert(this.channel !== undefined, 0x2cf /* "undefined channel on datastore context" */);
+        this.makeLocallyVisibleFn();
+    }
+
     protected bindRuntime(channel: IFluidDataStoreChannel) {
         if (this.channel) {
             throw new Error("Runtime already bound");
         }
 
-        try
-        {
+        try {
             assert(!this.detachedRuntimeCreation, 0x148 /* "Detached runtime creation on runtime bind" */);
             assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
             assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
@@ -671,7 +679,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData"} },
+                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData" } },
                 error);
         }
     }
@@ -864,7 +872,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             props.snapshotTree !== undefined ? true : false /* existing */,
             props.snapshotTree ? BindState.Bound : BindState.NotBound,
             true /* isLocalDataStore */,
-            props.bindChannelFn,
+            props.makeLocallyVisibleFn,
         );
 
         this.snapshotTree = props.snapshotTree;
@@ -984,8 +992,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
  */
 export class LocalDetachedFluidDataStoreContext
     extends LocalFluidDataStoreContextBase
-    implements IFluidDataStoreContextDetached
-{
+    implements IFluidDataStoreContextDetached {
     constructor(props: ILocalFluidDataStoreContextProps) {
         super(props);
         this.detachedRuntimeCreation = true;
@@ -993,8 +1000,7 @@ export class LocalDetachedFluidDataStoreContext
 
     public async attachRuntime(
         registry: IProvideFluidDataStoreFactory,
-        dataStoreRuntime: IFluidDataStoreChannel)
-    {
+        dataStoreChannel: IFluidDataStoreChannel) {
         assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
         assert(this.channelDeferred === undefined, 0x155 /* "channel deferral is already set" */);
 
@@ -1009,10 +1015,16 @@ export class LocalDetachedFluidDataStoreContext
         this.detachedRuntimeCreation = false;
         this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
-        super.bindRuntime(dataStoreRuntime);
+        super.bindRuntime(dataStoreChannel);
 
         if (await this.isRoot()) {
-            dataStoreRuntime.bindToContext();
+            // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
+            // For older versions, we still have to call bindToContext.
+            if (dataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
+                dataStoreChannel.makeVisibleAndAttachGraph();
+            } else {
+                dataStoreChannel.bindToContext();
+            }
         }
     }
 

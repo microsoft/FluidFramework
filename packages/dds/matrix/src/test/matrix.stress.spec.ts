@@ -152,7 +152,7 @@ describe("Matrix", () => {
                     const row = int32(rowCount);
                     const col = int32(colCount);
 
-                    switch(int32(7)) {
+                    switch (int32(7)) {
                         case 0: {
                             // remove 1 or more rows (if any exist)
                             if (rowCount > 0) {

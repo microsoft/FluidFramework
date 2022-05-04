@@ -101,13 +101,15 @@ export async function processOneNode(args: IWorkerArgs) {
 
     replayArgs.verbose = false;
     replayArgs.inDirName = args.folder;
+    // we should be explicit for all channel types in our snapshot tests
+    replayArgs.strictChannels = true;
     // The output snapshots to compare against are under "currentSnapshots" sub-directory.
     replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
     if (args.mode === Mode.NewSnapshots) {
         // when generating new snapshots, match those from
         // the original file based on summarize ops
         replayArgs.testSummaries = true;
-    } else{
+    } else {
         replayArgs.snapFreq = args.snapFreq;
     }
     replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;

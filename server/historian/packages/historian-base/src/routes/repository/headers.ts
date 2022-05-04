@@ -31,7 +31,13 @@ export function create(
         authorization: string,
         sha: string,
         useCache: boolean): Promise<IHeader> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.getHeader(sha, useCache);
     }
 
@@ -40,11 +46,18 @@ export function create(
         authorization: string,
         sha: string,
         useCache: boolean): Promise<any> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.getFullTree(sha, useCache);
     }
 
     router.get("/repos/:ignored?/:tenantId/headers/:sha",
+        utils.validateRequestParams("tenantId", "sha"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const useCache = !("disableCache" in request.query);
@@ -56,6 +69,7 @@ export function create(
     });
 
     router.get("/repos/:ignored?/:tenantId/tree/:sha",
+        utils.validateRequestParams("tenantId", "sha"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const useCache = !("disableCache" in request.query);

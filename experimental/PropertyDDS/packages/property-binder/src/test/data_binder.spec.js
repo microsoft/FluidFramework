@@ -16,8 +16,8 @@
  *
  */
 import _ from 'lodash';
-import { DataBinder } from '../../src/data_binder/dataBinder';
-import { ModificationContext } from '../../src/data_binder/modificationContext';
+import { DataBinder } from '../data_binder/dataBinder';
+import { ModificationContext } from '../data_binder/modificationContext';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,
   PrimitiveChildrenTemplate, ArrayContainerTemplate, SetContainerTemplate,
@@ -26,7 +26,7 @@ import {
   positionTemplate, ReferenceParentTemplate,
   EscapingTestTemplate
 } from './testTemplates';
-import { DataBinding } from '../../src/data_binder/dataBinding';
+import { DataBinding } from '../data_binder/dataBinding';
 
 import {
   ParentDataBinding,
@@ -38,9 +38,9 @@ import {
 import {
   catchConsoleErrors, hadConsoleError, clearConsoleError
 } from './catchConsoleError';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internalUtils';
+import { unregisterAllOnPathListeners } from '../data_binder/internalUtils';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
-import { RESOLVE_NEVER } from '../../src/internal/constants';
+import { RESOLVE_NEVER } from '../internal/constants';
 import { MockSharedPropertyTree } from './mockSharedPropertyTree'
 
 const cleanupClasses = function() {
@@ -2988,6 +2988,30 @@ describe('DataBinder', function() {
       });
 
       expect(callbackSpyRegistered).toHaveBeenCalledTimes(1);
+    });
+
+    it.only('should be possible to modify property and inside requestChangesetPostProcessing and get notified on the changes', function() {
+      const callbackSpyRegistered = jest.fn();
+      const callbackNestedSpyRegistered = jest.fn();
+
+      dataBinder.attachTo(workspace);
+
+      dataBinder.registerOnPath('mypath.aString', ['modify'], () => {
+        callbackNestedSpyRegistered();
+      });
+
+      dataBinder.registerOnPath('mypath', ['insert'], () => {
+        callbackSpyRegistered();
+        dataBinder.requestChangesetPostProcessing(() => {
+          const prop = workspace.root.get('mypath');
+          prop.get('aString').setValue('modified');
+        });
+      });
+
+      workspace.root.insert('mypath', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
+
+      expect(callbackSpyRegistered).toHaveBeenCalledTimes(1);
+      expect(callbackNestedSpyRegistered).toHaveBeenCalledTimes(1);
     });
 
     it('should be possible to unregister before attaching to a workspace', function() {

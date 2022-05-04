@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, extractLogSafeErrorProperties, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -362,7 +362,7 @@ export class DocumentDeltaConnection
                         // That's a WebSocket. Clear it as we can't log it.
                         description.target = undefined;
                     }
-                } catch(_e) {}
+                } catch (_e) {}
 
                 // Handle socket transport downgrading.
                 if (isWebSocketTransportError &&
@@ -544,9 +544,7 @@ export class DocumentDeltaConnection
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - an Error object thrown by socket.io engine. Be careful with not recording PII!
         let message: string;
-        if (typeof error !== "object") {
-            message = `${error}`;
-        } else if (error?.type === "TransportError") {
+        if (error?.type === "TransportError") {
             // JSON.stringify drops Error.message
             const messagePrefix = (error?.message !== undefined)
                 ? `${error.message}: `
@@ -557,8 +555,9 @@ export class DocumentDeltaConnection
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
             message = `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
         } else {
-            message = "[object omitted]";
+            message = extractLogSafeErrorProperties(error).message;
         }
+
         const errorObj = createGenericNetworkError(
             `socket.io (${handler}): ${message}`,
             { canRetry },

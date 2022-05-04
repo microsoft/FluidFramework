@@ -48,13 +48,12 @@ describe("Tests for snapshot fetch headers", () => {
     const resolver = new OdspDriverUrlResolver();
     const nonPersistentCache = new NonPersistentCache();
     const logger = new TelemetryNullLogger();
-    const odspUrl = createOdspUrl({... newFileParams, itemId, dataStorePath: "/"});
+    const odspUrl = createOdspUrl({ ... newFileParams, itemId, dataStorePath: "/" });
 
     const content: ISnapshotContents = {
         snapshotTree: {
             id: "id",
             blobs: {},
-            commits: {},
             trees: {},
         },
         blobs: new Map(),
@@ -83,7 +82,7 @@ describe("Tests for snapshot fetch headers", () => {
             async (_options) => "token",
             logger,
             true,
-            { ...nonPersistentCache, persistedCache: epochTracker},
+            { ...nonPersistentCache, persistedCache: epochTracker },
             hostPolicy,
             epochTracker,
             async () => { return {}; },
@@ -121,7 +120,7 @@ describe("Tests for snapshot fetch headers", () => {
         try {
             await mockDownloadSnapshot(
                 Promise.resolve(response),
-                async () => service.getVersions(null,1),
+                async () => service.getVersions(null, 1),
             );
         } catch (error) {}
         assert(success, "mds limit should not be set!!");

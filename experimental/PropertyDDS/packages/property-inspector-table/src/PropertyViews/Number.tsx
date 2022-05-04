@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerProperty } from '@fluid-experimental/property-properties';
-import TextField, { TextFieldProps } from '@material-ui/core/TextField';
-import * as React from 'react';
-import { IEditableValueCellProps } from '../EditableValueCell';
-import { IInspectorRow } from '../InspectorTableTypes';
-import { getPropertyValue } from '../utils';
+import { ContainerProperty } from "@fluid-experimental/property-properties";
+import TextField, { TextFieldProps } from "@material-ui/core/TextField";
+import * as React from "react";
+import { IEditableValueCellProps } from "../EditableValueCell";
+import { IInspectorRow } from "../InspectorTableTypes";
+import { getPropertyValue } from "../utils";
 
 type NumberProps = (IEditableValueCellProps & {
   onSubmit: (val: number, props: IEditableValueCellProps) => void,
   rowData: IInspectorRow & { value: number },
   TextFieldProps: TextFieldProps,
-  classes: Record<'container' | 'tooltip' | 'info' | 'input' | 'textField', string>,
+  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>,
 });
 
 type HandleKeyDownType = (
@@ -46,11 +46,12 @@ export const NumberView: React.FunctionComponent<NumberProps> = (props) => {
     followReferences);
 
   return (
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     <TextField
       {...restProps}
-      type='number'
-      key={rowData.id + value}
+      type="number"
+      key={`${rowData.id}${value}`}
       onBlur={onBlur}
       defaultValue={value}
       className={classes.textField}
@@ -58,8 +59,8 @@ export const NumberView: React.FunctionComponent<NumberProps> = (props) => {
       InputProps={{
         onKeyDown,
         style: {
-          alignItems: 'center',
-          fontSize: '13px',
+          alignItems: "center",
+          fontSize: "13px",
         },
       }}
       {...textFieldProps}

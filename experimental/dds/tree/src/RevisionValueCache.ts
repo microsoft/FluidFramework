@@ -5,9 +5,17 @@
 
 import BTree from 'sorted-btree';
 import LRU from 'lru-cache';
-import { assert, fail } from './Common';
-import { Revision } from './LogViewer';
-import { compareFiniteNumbers } from './SnapshotUtilities';
+import { assert, fail, compareFiniteNumbers } from './Common';
+
+/**
+ * A revision corresponds to an index in an `EditLog`.
+ *
+ * It is associated with the output `RevisionView` of applying the edit at the index to the previous revision.
+ * For example:
+ *  - revision 0 corresponds to the initialRevision.
+ *  - revision 1 corresponds to the output of editLog[0] applied to the initialRevision.
+ */
+export type Revision = number;
 
 /**
  * A cache of `TValue`s corresponding to `Revision`s.
@@ -27,9 +35,10 @@ export class RevisionValueCache<TValue> {
 	private readonly sortedEntries = new BTree<Revision, TValue>(undefined, compareFiniteNumbers);
 
 	/**
-	 * Least recently used cache of evictable entries.
+	 * Cache of most recently used evictable entries.
 	 * Subset of 'sortedValues` eligible for eviction:
 	 * All entries are also in `sortedValues`, and are removed from `sortedValues` when evicted from this cache.
+	 * Evicts least recently used entries.
 	 */
 	private readonly evictableRevisions: LRU<Revision, TValue>;
 
@@ -115,7 +124,7 @@ export class RevisionValueCache<TValue> {
 		if (fromLRU !== undefined) {
 			return [requestedRevision, fromLRU];
 		}
-		return this.sortedEntries.nextLowerPair(requestedRevision + 1) ?? undefined;
+		return this.sortedEntries.getPairOrNextLower(requestedRevision) ?? undefined;
 	}
 
 	/**

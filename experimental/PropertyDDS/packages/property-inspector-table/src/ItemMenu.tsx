@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import IconButton from '@material-ui/core/IconButton';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import { makeStyles } from '@material-ui/styles';
-import * as React from 'react';
-import { ModalConsumer } from './ModalManager';
-import { SvgIcon } from './SVGIcon';
-import { DeleteModal, IDeleteOptions } from './DeleteModal';
-import { IDeleteModalTextParameters } from './DeleteModalTextParameters';
-import { IShareOptions, ShareModal } from './ShareModal';
+import IconButton from "@material-ui/core/IconButton";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import { makeStyles } from "@material-ui/styles";
+import * as React from "react";
+import { ModalConsumer } from "./ModalManager";
+import { SvgIcon } from "./SVGIcon";
+import { DeleteModal, IDeleteOptions } from "./DeleteModal";
+import { IDeleteModalTextParameters } from "./DeleteModalTextParameters";
+import { IShareOptions, ShareModal } from "./ShareModal";
 
 export interface ICopyOptions {
   /**
@@ -61,13 +61,13 @@ export interface IItemMenuProps {
 
 const useStyles = makeStyles({
   hiddenTextArea: {
-    left: '-999em',
-    position: 'absolute',
+    left: "-999em",
+    position: "absolute",
   },
   iconButton: {
-    '&:hover': {
-      background: 'transparent',
-      color: '#0696d7',
+    "&:hover": {
+      background: "transparent",
+      color: "#0696d7",
     },
   },
   meatballIcon: {
@@ -81,17 +81,16 @@ const useStyles = makeStyles({
     fontSize: 14,
   },
   styledMenu: {
-    border: '1px solid #d3d4d5',
-    marginTop: '4px',
+    border: "1px solid #d3d4d5",
+    marginTop: "4px",
   },
-}, { name: 'ItemMenu' });
+}, { name: "ItemMenu" });
 
 /**
  * A menu item that requires it's handlers to be passed through the props.
  */
 export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
   ({ openHandler, closeHandler, name, urn, options, modalTextParameters, ...restProps }) => {
-
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const ref = React.useRef<HTMLTextAreaElement>(null);
     const classes = useStyles();
@@ -114,7 +113,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
       action: string, menuOptions: any, menuName: string, urnAddress: string | undefined,
       showModal: any, hideModal: any = null) {
       setAnchorEl(null);
-      if (action === 'share') {
+      if (action === "share") {
         showModal(ShareModal,
           {
             options: menuOptions.share!,
@@ -124,7 +123,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
           closeHandler,
         );
       }
-      if (action === 'delete') {
+      if (action === "delete") {
         showModal(DeleteModal,
           {
             modalTextParameters,
@@ -137,11 +136,11 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
           closeHandler,
         );
       }
-      if (action === 'edit') {
+      if (action === "edit") {
         menuOptions.edit.handler();
         closeHandler!();
       }
-      if (action === 'copy') {
+      if (action === "copy") {
         menuOptions.copy.handler(ref);
         closeHandler!();
       }
@@ -153,25 +152,25 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
           onClick={handleClick}
           className={classes.iconButton}
         >
-          <SvgIcon svgId='meatball-menu-32' className={classes.meatballIcon} hoverable />
+          <SvgIcon svgId="meatball-menu-32" className={classes.meatballIcon} hoverable />
         </IconButton>
         <ModalConsumer>
           {({ showModal, hideModal }) => (
             <Menu
               getContentAnchorEl={null}
               anchorOrigin={{
-                horizontal: 'center',
-                vertical: 'center',
+                horizontal: "center",
+                vertical: "center",
               }}
               transformOrigin={{
-                horizontal: 'center',
-                vertical: 'top',
+                horizontal: "center",
+                vertical: "top",
               }}
               MenuListProps={{
                 disablePadding: true,
               }}
               classes={{ paper: classes.styledMenu }}
-              id='customized-menu'
+              id="customized-menu"
               anchorEl={anchorEl}
               keepMounted={true}
               open={Boolean(anchorEl)}
@@ -181,35 +180,35 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
               {options.copy !== undefined &&
                 <MenuItem
                   className={classes.menuItem}
-                  onClick={() => handleContextMenuItemClick('copy', options, name, urn, showModal)}
+                  onClick={() => handleContextMenuItemClick("copy", options, name, urn, showModal)}
                 >
-                  <SvgIcon svgId='copy-16' className={classes.menuIcon} />
+                  <SvgIcon svgId="copy-16" className={classes.menuIcon} />
                   Copy Path
                   <textarea ref={ref} className={classes.hiddenTextArea} />
                 </MenuItem>}
               {options.edit !== undefined &&
                 <MenuItem
                   className={classes.menuItem}
-                  onClick={() => handleContextMenuItemClick('edit', options, name, urn, showModal, hideModal)}
+                  onClick={() => handleContextMenuItemClick("edit", options, name, urn, showModal, hideModal)}
                 >
-                  <SvgIcon svgId='edit-16' className={classes.menuIcon} />
+                  <SvgIcon svgId="edit-16" className={classes.menuIcon} />
                   Edit Reference Path
                 </MenuItem>}
               {options.share !== undefined &&
                 <MenuItem
                   className={classes.menuItem}
-                  onClick={() => handleContextMenuItemClick('share', options, name, urn, showModal)}
+                  onClick={() => handleContextMenuItemClick("share", options, name, urn, showModal)}
                 >
-                  <SvgIcon svgId='share-16' className={classes.menuIcon} />
+                  <SvgIcon svgId="share-16" className={classes.menuIcon} />
                   Share
                 </MenuItem>
               }
               {options.delete !== undefined &&
                 <MenuItem
                   className={classes.menuItem}
-                  onClick={() => handleContextMenuItemClick('delete', options, name, urn, showModal, hideModal)}
+                  onClick={() => handleContextMenuItemClick("delete", options, name, urn, showModal, hideModal)}
                 >
-                  <SvgIcon svgId='delete-trash-16' className={classes.menuIcon} />
+                  <SvgIcon svgId="delete-trash-16" className={classes.menuIcon} />
                   Delete
                 </MenuItem>}
             </Menu>

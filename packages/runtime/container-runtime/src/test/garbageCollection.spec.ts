@@ -19,6 +19,7 @@ import {
     defaultSessionExpiryDurationMs,
     GarbageCollector,
     gcBlobPrefix,
+    GCNodeType,
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
@@ -39,21 +40,26 @@ describe("Garbage Collection Tests", () => {
     let closeCalled = false;
     // Time after which unreferenced nodes can be deleted.
     const deleteTimeoutMs = 500;
-    const testPkgPath = [ "testPkg" ];
-    // The package data is tagged in the telemetry event .
-    const eventPkg = { value:`/${testPkgPath.join("/")}`, tag: TelemetryDataTag.PackageData };
+    const testPkgPath = ["testPkg"];
+    // The package data is tagged in the telemetry event.
+    const eventPkg = { value: `/${testPkgPath.join("/")}`, tag: TelemetryDataTag.PackageData };
 
+    const getNodeType = (nodePath: string) => {
+        if (nodePath.split("/").length !== 2) {
+            return GCNodeType.Other;
+        }
+        return GCNodeType.DataStore;
+    };
     // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
     const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
-    const getGCData = async (fullGC?: boolean) => defaultGCData;
-    const updateUsedRoutes = (usedRoutes: string[]) => {
-        return { totalNodeCount: 0, unusedNodeCount: 0 };
-    };
     // The runtime to be passed to the garbage collector.
     const gcRuntime: IGarbageCollectionRuntime = {
         updateStateBeforeGC: async () => {},
-        getGCData,
-        updateUsedRoutes,
+        getGCData: async (fullGC?: boolean) => defaultGCData,
+        updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
+        deleteUnusedRoutes: (unusedRoutes: string[]) => {},
+        getNodeType,
+        getCurrentReferenceTimestampMs: () => Date.now(),
         closeFn: () => { closeCalled = true; },
     };
 
@@ -70,9 +76,7 @@ describe("Garbage Collection Tests", () => {
         return GarbageCollector.create(
             gcRuntime,
             { gcAllowed: true, deleteTimeoutMs },
-            (unusedRoutes: string[]) => {},
             (nodeId: string) => testPkgPath,
-            () => Date.now(),
             () => Date.now(),
             baseSnapshot,
             async <T>(id: string) => getNodeGCDetails(id) as T,
@@ -150,18 +154,17 @@ describe("Garbage Collection Tests", () => {
         const getDummySnapshotTree = (): ISnapshotTree => {
             return {
                 blobs: {},
-                commits: {},
                 trees: {},
             };
         };
 
         beforeEach(async () => {
             // Set up the reference graph such that all nodes are referenced. Add in a couple of cycles in the graph.
-            defaultGCData.gcNodes["/"] = [ nodes[0] ];
-            defaultGCData.gcNodes[nodes[0]] = [ nodes[1] ];
-            defaultGCData.gcNodes[nodes[1]] = [ nodes[0], nodes[2] ];
-            defaultGCData.gcNodes[nodes[2]] = [ nodes[3] ];
-            defaultGCData.gcNodes[nodes[3]] = [ nodes[0] ];
+            defaultGCData.gcNodes["/"] = [nodes[0]];
+            defaultGCData.gcNodes[nodes[0]] = [nodes[1]];
+            defaultGCData.gcNodes[nodes[1]] = [nodes[0], nodes[2]];
+            defaultGCData.gcNodes[nodes[2]] = [nodes[3]];
+            defaultGCData.gcNodes[nodes[3]] = [nodes[0]];
         });
         it("doesn't generate events for referenced nodes", async () => {
             const garbageCollector = createGarbageCollector();
@@ -431,19 +434,18 @@ describe("Garbage Collection Tests", () => {
     });
 
     /**
-     * These tests validate such scenarios where nodes transition from unreferenced -> referenced -> ureferenced state
-     * by verifing that their unreferenced timestamps are updated correctly.
+     * These tests validate such scenarios where nodes transition from unreferenced -> referenced -> unreferenced state
+     * by verifying that their unreferenced timestamps are updated correctly.
      *
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
      */
     describe("References between summaries", () => {
-        const unknownRouteEvent = "GarbageCollector:gcUnknownOutboundRoute";
-
         let garbageCollector: IGarbageCollector;
         const nodeA = "/A";
         const nodeB = "/B";
         const nodeC = "/C";
         const nodeD = "/D";
+        const nodeE = "/A/E";
 
         // Runs GC and returns the unreferenced timestamps of all nodes in the GC summary.
         async function getUnreferencedTimestamps() {
@@ -457,7 +459,7 @@ describe("Garbage Collection Tests", () => {
 
             let rootGCState: IGarbageCollectionState = { gcNodes: {} };
             for (const key of Object.keys(summaryTree.tree)) {
-                // Skip blobs that do not stsart with the GC prefix.
+                // Skip blobs that do not start with the GC prefix.
                 if (!key.startsWith(gcBlobPrefix)) {
                     continue;
                 }
@@ -474,10 +476,18 @@ describe("Garbage Collection Tests", () => {
             }
             return nodeTimestamps;
         }
-
+        const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
         beforeEach(() => {
+            closeCalled = false;
+            const settings = { "Fluid.GarbageCollection.LogUnknownOutboundReferences": "true" };
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
             defaultGCData.gcNodes = {};
             garbageCollector = createGarbageCollector();
+        });
+
+        afterEach(() => {
+            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
         });
 
         /**
@@ -490,7 +500,7 @@ describe("Garbage Collection Tests", () => {
          */
         it(`Scenario 1 - Reference added and then removed`, async () => {
             // Initialize nodes A and B.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
             defaultGCData.gcNodes[nodeB] = [];
 
@@ -503,7 +513,7 @@ describe("Garbage Collection Tests", () => {
 
             // 2. Add reference from A to B. E = [A -> B].
             garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            defaultGCData.gcNodes[nodeA] = [nodeB];
 
             // 3. Remove reference from A to B. E = [].
             defaultGCData.gcNodes[nodeA] = [];
@@ -528,9 +538,9 @@ describe("Garbage Collection Tests", () => {
          */
         it(`Scenario 2 - Reference transitively added and removed`, async () => {
             // Initialize nodes A, B and C.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
-            defaultGCData.gcNodes[nodeB] = [ nodeC ];
+            defaultGCData.gcNodes[nodeB] = [nodeC];
             defaultGCData.gcNodes[nodeC] = [];
 
             // 1. Run GC and generate summary 1. E = [B -> C].
@@ -544,7 +554,7 @@ describe("Garbage Collection Tests", () => {
 
             // 2. Add reference from A to B. E = [A -> B, B -> C].
             garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            defaultGCData.gcNodes[nodeA] = [nodeB];
 
             // 3. Remove reference from B to C. E = [A -> B].
             defaultGCData.gcNodes[nodeB] = [];
@@ -572,10 +582,10 @@ describe("Garbage Collection Tests", () => {
          */
         it(`Scenario 3 - Reference added through chain of references and removed`, async () => {
             // Initialize nodes A, B, C and D.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
-            defaultGCData.gcNodes[nodeB] = [ nodeC ];
-            defaultGCData.gcNodes[nodeC] = [ nodeD ];
+            defaultGCData.gcNodes[nodeB] = [nodeC];
+            defaultGCData.gcNodes[nodeC] = [nodeD];
             defaultGCData.gcNodes[nodeD] = [];
 
             // 1. Run GC and generate summary 1. E = [B -> C, C -> D].
@@ -591,7 +601,7 @@ describe("Garbage Collection Tests", () => {
 
             // 2. Add reference from A to B. E = [A -> B, B -> C, C -> D].
             garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            defaultGCData.gcNodes[nodeA] = [nodeB];
 
             // 3. Remove reference from A to B. E = [B -> C, C -> D].
             defaultGCData.gcNodes[nodeA] = [];
@@ -620,7 +630,7 @@ describe("Garbage Collection Tests", () => {
          */
         it(`Scenario 4 - Reference added via new nodes and removed`, async () => {
             // Initialize nodes A, B and C.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
             defaultGCData.gcNodes[nodeC] = [];
 
@@ -636,11 +646,11 @@ describe("Garbage Collection Tests", () => {
 
             // 3. Add reference from A to B. E = [A -> B].
             garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            defaultGCData.gcNodes[nodeA] = [nodeB];
 
             // 4. Add reference from B to C. E = [A -> B, B -> C].
             garbageCollector.addedOutboundReference(nodeB, nodeC);
-            defaultGCData.gcNodes[nodeB] = [ nodeC ];
+            defaultGCData.gcNodes[nodeB] = [nodeC];
 
             // 5. Remove reference from B to C. E = [A -> B].
             defaultGCData.gcNodes[nodeB] = [];
@@ -663,7 +673,7 @@ describe("Garbage Collection Tests", () => {
          */
         it(`Scenario 5 - Reference added via unreferenced nodes`, async () => {
             // Initialize nodes A, B and C.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
             defaultGCData.gcNodes[nodeB] = [];
             defaultGCData.gcNodes[nodeC] = [];
@@ -679,7 +689,7 @@ describe("Garbage Collection Tests", () => {
 
             // 2. Add reference from B to C. E = [B -> C].
             garbageCollector.addedOutboundReference(nodeB, nodeC);
-            defaultGCData.gcNodes[nodeB] = [ nodeC ];
+            defaultGCData.gcNodes[nodeB] = [nodeC];
 
             // 3. Run GC and generate summary 2. E = [B -> C].
             const timestamps2 = await getUnreferencedTimestamps();
@@ -703,7 +713,7 @@ describe("Garbage Collection Tests", () => {
          */
         it(`Scenario 6 - Multiple references added and then removed by same node`, async () => {
             // Initialize nodes A, B and C.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
             defaultGCData.gcNodes[nodeB] = [];
             defaultGCData.gcNodes[nodeC] = [];
@@ -719,14 +729,14 @@ describe("Garbage Collection Tests", () => {
 
             // 2. Add reference from A to B. E = [A -> B].
             garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            defaultGCData.gcNodes[nodeA] = [nodeB];
 
             // 3. Add reference from A to C. E = [A -> B, A -> C].
             garbageCollector.addedOutboundReference(nodeA, nodeC);
-            defaultGCData.gcNodes[nodeA] = [ nodeB, nodeC ];
+            defaultGCData.gcNodes[nodeA] = [nodeB, nodeC];
 
             // 4. Remove reference from A to B. E = [A -> C].
-            defaultGCData.gcNodes[nodeA] = [ nodeC ];
+            defaultGCData.gcNodes[nodeA] = [nodeC];
 
             // 5. Remove reference from A to C. E = [].
             defaultGCData.gcNodes[nodeA] = [];
@@ -751,27 +761,48 @@ describe("Garbage Collection Tests", () => {
          * to GC.
          */
         it(`Scenario 7 - Reference added without notifying GC`, async () => {
-            // Initialize node A.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            // Initialize nodes A & D.
+            defaultGCData.gcNodes["/"] = [nodeA, nodeD];
             defaultGCData.gcNodes[nodeA] = [];
+            defaultGCData.gcNodes[nodeD] = [];
 
             // 1. Run GC and generate summary 1. E = [].
             const timestamps1 = await getUnreferencedTimestamps();
             assert(timestamps1.get(nodeA) === undefined, "A should be referenced");
+            assert(timestamps1.get(nodeD) === undefined, "D should be referenced");
 
-            // 2. Create node B. E = [].
+            // 2. Create nodes B & C. E = [].
             defaultGCData.gcNodes[nodeB] = [];
+            defaultGCData.gcNodes[nodeC] = [];
 
-            // 3. Add reference from A to B without calling addedOutboundReference. E = [A -> B].
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            // 3. Add reference from A to B, A to C, A to E, D to C, and E to A without calling addedOutboundReference.
+            // E = [A -> B, A -> C, A -> E, D -> C, E -> A].
+            defaultGCData.gcNodes[nodeA] = [nodeB, nodeC, nodeE];
+            defaultGCData.gcNodes[nodeD] = [nodeC];
+            defaultGCData.gcNodes[nodeE] = [nodeA];
 
-            // 4. Run GC and generate summary 2. E = [A -> B].
+            // 4. Add reference from A to D with calling addedOutboundReference
+            defaultGCData.gcNodes[nodeA].push(nodeD);
+            garbageCollector.addedOutboundReference(nodeA, nodeD);
+
+            // 5. Run GC and generate summary 2. E = [A -> B, A -> C, A -> E, D -> C, E -> A].
             await getUnreferencedTimestamps();
 
-            // Validate that we got the "gcUnknownOutboundRoute" error.
-            mockLogger.matchEvents([
-                { eventName: unknownRouteEvent, route: nodeB },
+            // Validate that we got the "gcUnknownOutboundReferences" error.
+            const unknownReferencesEvent = "GarbageCollector:gcUnknownOutboundReferences";
+            const eventsFound = mockLogger.matchEvents([
+                {
+                    eventName: unknownReferencesEvent,
+                    gcNodeId: "/A",
+                    gcRoutes: JSON.stringify(["/B", "/C"]),
+                },
+                {
+                    eventName: unknownReferencesEvent,
+                    gcNodeId: "/D",
+                    gcRoutes: JSON.stringify(["/C"]),
+                },
             ]);
+            assert(eventsFound, `Expected unknownReferenceEvent event!`);
         });
     });
 });

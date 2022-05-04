@@ -31,8 +31,12 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 
     constructor(private readonly internal: IDocumentServiceFactory) { }
 
-    async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
-        const internal = await this.internal.createDocumentService(resolvedUrl, logger);
+    async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
+    ): Promise<IDocumentService> {
+        const internal = await this.internal.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
         const ds = new FaultInjectionDocumentService(internal);
         assert(!this._documentServices.has(resolvedUrl), "one ds per resolved url instance");
         this._documentServices.set(resolvedUrl, ds);
@@ -42,12 +46,14 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ):
         Promise<IDocumentService> {
         return this.internal.createContainer(
             createNewSummary,
             createNewResolvedUrl,
             logger,
+            clientIsSummarizer,
         );
     }
 }
@@ -58,8 +64,8 @@ export class FaultInjectionDocumentService implements IDocumentService {
     constructor(private readonly internal: IDocumentService) {
     }
 
-    public get resolvedUrl() {return this.internal.resolvedUrl;}
-    public get policies() {return this.internal.policies;}
+    public get resolvedUrl() { return this.internal.resolvedUrl; }
+    public get policies() { return this.internal.policies; }
     public get documentDeltaConnection() {
         return this._currentDeltaStream;
     }
@@ -135,8 +141,8 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     public injectNack(docId: string, canRetry: boolean | undefined) {
         assert(!this.disposed, "cannot inject nack into closed delta connection");
         const nack: Partial<INack> = {
-            content:{
-                code:canRetry === true ? 500 : 403,
+            content: {
+                code: canRetry === true ? 500 : 403,
                 message: "FaultInjectionNack",
                 type: NackErrorType.BadRequestError,
             },
@@ -147,14 +153,14 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     public injectError(canRetry: boolean | undefined) {
         assert(!this.disposed, "cannot inject error into closed delta connection");
         // https://nodejs.org/api/events.html#events_error_events
-        assert(this.listenerCount("error") > 0,"emitting error with no listeners will crash the process");
+        assert(this.listenerCount("error") > 0, "emitting error with no listeners will crash the process");
         this.emit(
             "error",
             new FaultInjectionError("FaultInjectionError", canRetry));
     }
     public injectDisconnect() {
         assert(!this.disposed, "cannot inject disconnect into closed delta connection");
-        this.emit("disconnect","FaultInjectionDisconnect");
+        this.emit("disconnect", "FaultInjectionDisconnect");
     }
 }
 
@@ -163,6 +169,6 @@ export class FaultInjectionError extends LoggingError {
         message: string,
         public readonly canRetry: boolean | undefined,
     ) {
-        super(message, {testCategoryOverride: "generic"});
+        super(message, { testCategoryOverride: "generic" });
     }
 }

@@ -45,13 +45,19 @@ export const choose: () => string;
 export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | undefined, tree: ISummaryTree, path?: string, rootNodeName?: string): IWholeSummaryTree;
 
 // @public
-export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary): INormalizedWholeSummary;
+export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary, treePrefixToRemove?: string): INormalizedWholeSummary;
+
+// @public (undocumented)
+export const CorrelationIdHeaderName = "x-correlation-id";
 
 // @public
 export function createFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): NetworkError;
 
 // @public (undocumented)
 export const defaultHash = "00000000";
+
+// @public (undocumented)
+export const DriverVersionHeaderName = "x-driver-version";
 
 // @public (undocumented)
 export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
@@ -69,7 +75,7 @@ export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) =
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
 // @public (undocumented)
-export function getOrCreateRepository(endpoint: string, owner: string, repository: string): Promise<void>;
+export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: AxiosRequestHeaders): Promise<void>;
 
 // @public (undocumented)
 export function getRandomName(connector?: string, capitalize?: boolean): string;
@@ -315,6 +321,7 @@ export interface INetworkErrorDetails {
     isFatal?: boolean;
     message?: string;
     retryAfter?: number;
+    retryAfterMs?: number;
 }
 
 // @public
@@ -332,6 +339,19 @@ export interface IPatchRefParamsExternal extends resources.IPatchRefParams {
     // (undocumented)
     config?: IExternalWriterConfig;
 }
+
+// @public (undocumented)
+export interface ISession {
+    // (undocumented)
+    historianUrl: string;
+    // (undocumented)
+    isSessionAlive: boolean;
+    // (undocumented)
+    ordererUrl: string;
+}
+
+// @public (undocumented)
+export function isNetworkError(error: unknown): error is NetworkError;
 
 // @public (undocumented)
 export interface ISummaryTree extends ISummaryTree_2 {
@@ -474,7 +494,11 @@ export class NetworkError extends Error {
     readonly code: number;
     get details(): INetworkErrorDetails | string;
     readonly isFatal?: boolean;
+    readonly retryAfter: number;
     readonly retryAfterMs?: number;
+    toJSON(): INetworkErrorDetails & {
+        code: number;
+    };
 }
 
 // @public (undocumented)

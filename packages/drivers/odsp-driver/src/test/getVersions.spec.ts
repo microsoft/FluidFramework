@@ -21,7 +21,7 @@ import { INewFileInfo, ISnapshotContents } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
+import { OdspDocumentStorageService, defaultSummarizerCacheExpiryTimeout } from "../odspDocumentStorageManager";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache();
@@ -45,23 +45,24 @@ describe("Tests for snapshot fetch", () => {
         filename: "filename",
     };
 
-    const hostPolicy: HostStoragePolicyInternal = {
-        snapshotOptions: { timeout: 2000 },
-        summarizerClient: false,
-        fetchBinarySnapshotFormat: false,
-        // for testing both network and cache fetch
-        concurrentSnapshotFetch: true,
-    };
-
+    function GetHostStoragePolicyInternal(isSummarizer: boolean = false): HostStoragePolicyInternal {
+        return {
+            snapshotOptions: { timeout: 2000 },
+            summarizerClient: isSummarizer,
+            fetchBinarySnapshotFormat: false,
+            // for testing both network and cache fetch
+            concurrentSnapshotFetch: true,
+        };
+    }
     const resolver = new OdspDriverUrlResolver();
     const nonPersistentCache = new NonPersistentCache();
     const logger = new TelemetryNullLogger();
-    const odspUrl = createOdspUrl({... newFileParams, itemId, dataStorePath: "/"});
+    const odspUrl = createOdspUrl({ ... newFileParams, itemId, dataStorePath: "/" });
 
     const odspSnapshot: IOdspSnapshot = {
         id: "id",
         trees: [{
-            entries:[ { path:"path", type:"tree" } ],
+            entries: [{ path: "path", type: "tree" }],
             id: "id",
             sequenceNumber: 1,
         }],
@@ -71,7 +72,6 @@ describe("Tests for snapshot fetch", () => {
         snapshotTree: {
             id: "id",
             blobs: {},
-            commits: {},
             trees: {},
         },
         blobs: new Map(),
@@ -84,141 +84,211 @@ describe("Tests for snapshot fetch", () => {
         version: persistedCacheValueVersion };
 
     // Set the cacheEntryTime to anything greater than the current maxCacheAge
-    const valueWithExpiredCache: IVersionedValueWithEpoch = {
-        value: { ...content, cacheEntryTime: Date.now() - defaultCacheExpiryTimeoutMs - 1000 },
+    function valueWithExpiredCache(cacheExpiryTimeoutMs: number): IVersionedValueWithEpoch {
+        const versionedValue: IVersionedValueWithEpoch = {
+             value: { ...content, cacheEntryTime: Date.now() - cacheExpiryTimeoutMs - 1000 },
         fluidEpoch: "epoch1",
         version: persistedCacheValueVersion };
-
-    const expectedVersion = [{ id: "id", treeId: undefined!}];
+        return versionedValue;
+    }
+    const expectedVersion = [{ id: "id", treeId: undefined! }];
 
     before(async () => {
         hashedDocumentId = await getHashedDocumentId(driveId, itemId);
     });
 
-    beforeEach(async () => {
-        localCache = createUtLocalCache();
-        // use null logger here as we expect errors
-        epochTracker = new EpochTracker(
-            localCache,
-            {
-                docId: hashedDocumentId,
-                resolvedUrl,
-            },
-            new TelemetryNullLogger(),
-        );
-
-        const resolved = await resolver.resolve({ url: odspUrl });
-        service = new OdspDocumentStorageService(
-            resolved,
-            async (_options) => "token",
-            logger,
-            true,
-            { ...nonPersistentCache, persistedCache: epochTracker},
-            hostPolicy,
-            epochTracker,
-            async () => { return {}; },
+    describe("Tests for regular snapshot fetch", () => {
+        beforeEach(async () => {
+            localCache = createUtLocalCache();
+            // use null logger here as we expect errors
+            epochTracker = new EpochTracker(
+                localCache,
+                {
+                    docId: hashedDocumentId,
+                    resolvedUrl,
+                },
+                new TelemetryNullLogger(),
             );
-    });
 
-    afterEach(async () => {
-        await epochTracker.removeEntries().catch(() => {});
-    });
+            const resolved = await resolver.resolve({ url: odspUrl });
+            service = new OdspDocumentStorageService(
+                resolved,
+                async (_options) => "token",
+                logger,
+                true,
+                { ...nonPersistentCache, persistedCache: epochTracker },
+                GetHostStoragePolicyInternal(),
+                epochTracker,
+                async () => { return {}; },
+                );
+        });
 
-    it("cache fetch throws and network fetch succeeds", async () => {
-        // overwriting get() to make cache fetch throw
-        localCache.get = async () => {
-            throw new Error("testing");
-        };
+        afterEach(async () => {
+            await epochTracker.removeEntries().catch(() => {});
+        });
 
-        const version = await mockFetchSingle(
-            async () => service.getVersions(null,1),
-            async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
-        );
+        it("cache fetch throws and network fetch succeeds", async () => {
+            // overwriting get() to make cache fetch throw
+            localCache.get = async () => {
+                throw new Error("testing");
+            };
 
-        assert.deepStrictEqual(version, expectedVersion, "incorrect version");
-    });
+            const version = await mockFetchSingle(
+                async () => service.getVersions(null, 1),
+                async () => createResponse(
+                    { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                    odspSnapshot,
+                    200,
+                ),
+            );
 
-    it("cache fetch succeeds and network fetch succeeds", async () => {
-        const cacheEntry: ICacheEntry = {
-            key:"",
-            type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        await localCache.put(cacheEntry, value);
+            assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+        });
 
-        const version = await mockFetchSingle(
-            async () => service.getVersions(null,1),
-            async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
-        );
-        assert.deepStrictEqual(version, expectedVersion, "incorrect version");
-    });
+        it("cache fetch succeeds and network fetch succeeds", async () => {
+            const cacheEntry: ICacheEntry = {
+                key: "",
+                type: "snapshot",
+                file: { docId: hashedDocumentId, resolvedUrl } };
+            await localCache.put(cacheEntry, value);
 
-    it("cache fetch throws and network fetch throws", async () => {
-        // overwriting get() to make cache fetch throw
-        localCache.get = async () => {
-            throw new Error("testing");
-        };
+            const version = await mockFetchSingle(
+                async () => service.getVersions(null, 1),
+                async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
+            );
+            assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+        });
 
-        await assert.rejects(async () => {
-            await mockFetchSingle(
-                async () => service.getVersions(null,1),
+        it("cache fetch throws and network fetch throws", async () => {
+            // overwriting get() to make cache fetch throw
+            localCache.get = async () => {
+                throw new Error("testing");
+            };
+
+            await assert.rejects(async () => {
+                await mockFetchSingle(
+                    async () => service.getVersions(null, 1),
+                    // 404 response expected so network fetch throws
+                    notFound,
+                );
+            }, /404/, "Expected 404 error to be thrown");
+        });
+
+        it("cache fetch succeeds and network fetch throws", async () => {
+            const cacheEntry: ICacheEntry = {
+                key: "",
+                type: "snapshot",
+                file: { docId: hashedDocumentId, resolvedUrl } };
+            await localCache.put(cacheEntry, value);
+
+            const version = await mockFetchSingle(
+                async () => service.getVersions(null, 1),
                 // 404 response expected so network fetch throws
                 notFound,
             );
-        }, /404/, "Expected 404 error to be thrown");
-    });
+            assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+        });
 
-    it("cache fetch succeeds and network fetch throws", async () => {
-        const cacheEntry: ICacheEntry = {
-            key:"",
-            type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        await localCache.put(cacheEntry, value);
+        it("empty cache and network fetch throws", async () => {
+            await assert.rejects(async () => {
+                await mockFetchSingle(
+                    async () => service.getVersions(null, 1),
+                    // 404 response expected so network fetch throws
+                    notFound,
+                );
+            }, /404/, "Expected 404 error to be thrown");
+        });
 
-        const version = await mockFetchSingle(
-            async () => service.getVersions(null,1),
-            // 404 response expected so network fetch throws
-            notFound,
-        );
-        assert.deepStrictEqual(version, expectedVersion, "incorrect version");
-    });
+        it("cache expires and network fetch succeeds", async () => {
+            const cacheEntry: ICacheEntry = {
+                key: "",
+                type: "snapshot",
+                file: { docId: hashedDocumentId, resolvedUrl } };
+            await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
 
-    it("empty cache and network fetch throws", async () => {
-        await assert.rejects(async () => {
-            await mockFetchSingle(
-                async () => service.getVersions(null,1),
-                // 404 response expected so network fetch throws
-                notFound,
+            const version = await mockFetchSingle(
+                async () => service.getVersions(null, 1),
+                async () => createResponse(
+                    { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                    odspSnapshot,
+                    200,
+                ),
             );
-        }, /404/, "Expected 404 error to be thrown");
+            assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+        });
+
+        it("cache expires and network fetch throws", async () => {
+            const cacheEntry: ICacheEntry = {
+                key: "",
+                type: "snapshot",
+                file: { docId: hashedDocumentId, resolvedUrl } };
+            await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
+
+            await assert.rejects(async () => {
+                await mockFetchSingle(
+                    async () => service.getVersions(null, 1),
+                    // 404 response expected so network fetch throws
+                    notFound,
+                );
+            }, /404/, "Expected 404 error to be thrown");
+        });
     });
-
-    it("cache expires and network fetch succeeds", async () => {
-        const cacheEntry: ICacheEntry = {
-            key:"",
-            type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        await localCache.put(cacheEntry, valueWithExpiredCache);
-
-        const version = await mockFetchSingle(
-            async () => service.getVersions(null,1),
-            async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
-        );
-        assert.deepStrictEqual(version, expectedVersion, "incorrect version");
-    });
-
-    it("cache expires and network fetch throws", async () => {
-        const cacheEntry: ICacheEntry = {
-            key:"",
-            type: "snapshot",
-            file: { docId: hashedDocumentId, resolvedUrl } };
-        await localCache.put(cacheEntry, valueWithExpiredCache);
-
-        await assert.rejects(async () => {
-            await mockFetchSingle(
-                async () => service.getVersions(null,1),
-                // 404 response expected so network fetch throws
-                notFound,
+    describe("Tests for snapshot fetch as Summarizer", () => {
+        beforeEach(async () => {
+            localCache = createUtLocalCache();
+            // use null logger here as we expect errors
+            epochTracker = new EpochTracker(
+                localCache,
+                {
+                    docId: hashedDocumentId,
+                    resolvedUrl,
+                },
+                new TelemetryNullLogger(),
             );
-        }, /404/, "Expected 404 error to be thrown");
+
+            const resolved = await resolver.resolve({ url: odspUrl });
+            service = new OdspDocumentStorageService(
+                resolved,
+                async (_options) => "token",
+                logger,
+                true,
+                { ...nonPersistentCache, persistedCache: epochTracker },
+                GetHostStoragePolicyInternal(true /* isSummarizer */),
+                epochTracker,
+                async () => { return {}; },
+                );
+        });
+
+        afterEach(async () => {
+            await epochTracker.removeEntries().catch(() => {});
+        });
+
+        it("cache expires and network fetch succeeds", async () => {
+            const cacheEntry: ICacheEntry = {
+                key: "",
+                type: "snapshot",
+                file: { docId: hashedDocumentId, resolvedUrl } };
+            await localCache.put(cacheEntry, valueWithExpiredCache(defaultSummarizerCacheExpiryTimeout));
+
+            const version = await mockFetchSingle(
+                async () => service.getVersions(null, 1),
+                async () => createResponse(
+                    { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                    odspSnapshot,
+                    200,
+                ),
+            );
+            assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+        });
+
+        it("cache fetch succeeds", async () => {
+            const cacheEntry: ICacheEntry = {
+                key: "",
+                type: "snapshot",
+                file: { docId: hashedDocumentId, resolvedUrl } };
+            await localCache.put(cacheEntry, valueWithExpiredCache(defaultSummarizerCacheExpiryTimeout - 5000));
+
+            assert.notEqual(cacheEntry, undefined, "Cache should have been restored");
+        });
     });
 });

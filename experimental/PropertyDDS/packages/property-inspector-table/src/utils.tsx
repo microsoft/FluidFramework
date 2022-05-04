@@ -3,22 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { forEachProperty } from '@fluid-experimental/property-binder';
-import { BaseProxifiedProperty, PropertyProxy } from '@fluid-experimental/property-proxy';
-import { Workspace} from '@fluid-experimental/property-properties';
+import { forEachProperty } from "@fluid-experimental/property-binder";
+import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+import {
+  BaseProperty,
+  ContainerProperty,
+  MapProperty,
+  PropertyFactory,
+  ReferenceArrayProperty,
+  ReferenceProperty,
+  Workspace,
+} from "@fluid-experimental/property-properties";
+import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
 
-import {TypeIdHelper} from '@fluid-experimental/property-changeset';
-import { BaseProperty, PropertyFactory,ReferenceArrayProperty, ReferenceProperty, ContainerProperty, MapProperty} from '@fluid-experimental/property-properties';
-import memoize from 'memoize-one';
-import { HashCalculator } from './HashCalculator';
+import memoize from "memoize-one";
+import { HashCalculator } from "./HashCalculator";
 import { IColumns, IExpandedMap, IInspectorRow, IInspectorSearchAbortHandler, IInspectorSearchCallback,
-  IInspectorSearchMatch, IInspectorSearchMatchMap, IInspectorTableProps} from './InspectorTableTypes';
-import { Utils } from './typeUtils';
+  IInspectorSearchMatch, IInspectorSearchMatchMap, IInspectorTableProps } from "./InspectorTableTypes";
+import { Utils } from "./typeUtils";
 const { isEnumProperty, isEnumArrayProperty, isInt64Property, isReferenceProperty,
   isUint64Property, isCollectionProperty, isReferenceArrayProperty, isReferenceCollectionTypeid,
   isReferenceMapProperty } = Utils;
 
-const idSeparator = '/';
+const idSeparator = "/";
 interface IShowNextResultResult {
   /**
    * New rows needed to expand to show next results
@@ -48,12 +55,11 @@ interface IShowNextResultResult {
  */
 export const showNextResult = (
   data: IInspectorRow[], currentlyExpanded: IExpandedMap, allMatches: IInspectorSearchMatch[],
-  resultIndex: number, childToParentMap: {[key: string]: string})
-   : IShowNextResultResult => {
+  resultIndex: number, childToParentMap: { [key: string]: string }): IShowNextResultResult => {
   const desiredDataItem = allMatches[resultIndex];
   // sanity check
   if (!desiredDataItem) {
-    return {expandedRows: currentlyExpanded, rowIdx: -1, columnIdx: -1};
+    return { expandedRows: currentlyExpanded, rowIdx: -1, columnIdx: -1 };
   }
 
   // iterate through all the parents until root is reached
@@ -66,7 +72,7 @@ export const showNextResult = (
   }
   const rowInfo = findMatchingElementIndexInDataSet(data, currentlyExpanded, desiredDataItem);
 
-  return {expandedRows: currentlyExpanded, rowIdx: rowInfo.idx, columnIdx: desiredDataItem.indexOfColumn};
+  return { expandedRows: currentlyExpanded, rowIdx: rowInfo.idx, columnIdx: desiredDataItem.indexOfColumn };
 };
 
 /**
@@ -85,11 +91,10 @@ export const showNextResult = (
  */
 function findMatchingElementIndexInDataSet(data: IInspectorRow[], currentlyExpanded: IExpandedMap,
                                            matchingElement: IInspectorSearchMatch, rowCounter = 0):
-                                           {idx: number, found: boolean} {
-
+                                           { idx: number, found: boolean } {
   for (const row of data) {
     if (row.id === matchingElement.rowId) {
-      return {idx: rowCounter, found: true};
+      return { idx: rowCounter, found: true };
     }
     rowCounter++;
     // If current row is expanded - search recursively among its children
@@ -120,7 +125,7 @@ export interface IInspectorSearchState {
   levels?: ISearchLevelState[];
   matchesMap: IInspectorSearchMatchMap;
   scheduled?: number;
-  childToParentMap: {[key: string]: string};
+  childToParentMap: { [key: string]: string };
 }
 
 export interface IInspectorSearchControls {
@@ -170,11 +175,10 @@ export const search = (
   handleUpdate: IInspectorSearchCallback, toTableRowsProps: IToTableRowsProps, toTableRowsOptions: IToTableRowsOptions,
   searchState: IInspectorSearchState = { foundMatches: [], matchesMap: {}, childToParentMap: {} },
   chunkSize = 1000, recursive = false, entryPoint = true): IInspectorSearchControls => {
-
   // Check if search should be aborted.
   if (searchState.abort) {
     return {
-      abortHandler: () => { /*noop*/ },
+      abortHandler: () => { /* noop */ },
       state: searchState,
     };
   }
@@ -237,12 +241,12 @@ export const search = (
       const validGetter = dataGetter && dataGetter({ column, columnIndex, columns, rowData: item,
         rowIndex: levelState.index });
       const cell = validGetter || item[column.dataKey];
-      if ((cell !== undefined ? String(cell).toLowerCase() : '').includes(searchState.expression!)) {
+      if ((cell !== undefined ? String(cell).toLowerCase() : "").includes(searchState.expression!)) {
         if (!searchState.matchesMap[item.id]) {
           searchState.matchesMap[item.id] = [];
         }
         if (!searchState.matchesMap[item.id][columnIndex]) {
-          searchState.foundMatches.push({rowId: item.id, indexOfColumn: columnIndex});
+          searchState.foundMatches.push({ rowId: item.id, indexOfColumn: columnIndex });
           searchState.matchesMap[item.id][columnIndex] = true;
           searchState.newMatchFound = true;
           break;
@@ -262,8 +266,8 @@ export const search = (
     // Recursively search through children.
     --searchState.chunkSize;
     if (item.children && !item.isReference) {
-      if (item.children[0].context === 'd') {
-        fillExpanded({[item.id]: true}, [item], toTableRowsProps, toTableRowsOptions);
+      if (item.children[0].context === "d") {
+        fillExpanded({ [item.id]: true }, [item], toTableRowsProps, toTableRowsOptions);
       }
 
       if (item.children.length > 0) {
@@ -307,7 +311,7 @@ export const isPrimitive = memoize((typeid: string): boolean => {
   return TypeIdHelper.isPrimitiveType(typeid);
 });
 const getTypeid = memoize((property: BaseProperty): string => {
-  return isEnumProperty(property) || property.getContext() !== 'single' ?
+  return isEnumProperty(property) || property.getContext() !== "single" ?
     property.getFullTypeid() :
     property.getTypeid();
 });
@@ -318,12 +322,12 @@ export const getCollectionTypeid = memoize((property: BaseProperty): string => {
 
 export const getReferenceValue = (rowData: IInspectorRow) => {
   const parentProp = (rowData.parent! as ContainerProperty);
-  let path = '';
+  let path = "";
   if (Utils.isReferenceCollectionTypeid(getCollectionTypeid(parentProp))) {
     path = parentProp.getValue(rowData.propertyId) as string;
   } else {
     const unresolvedProperty =
-      parentProp.get([rowData.propertyId, BaseProperty.PATH_TOKENS.REF]) as unknown as  ReferenceProperty;
+      parentProp.get([rowData.propertyId, BaseProperty.PATH_TOKENS.REF]) as unknown as ReferenceProperty;
     path = unresolvedProperty.getValue() as string;
   }
 
@@ -332,9 +336,9 @@ export const getReferenceValue = (rowData: IInspectorRow) => {
 
 const getShortId = (parentPath: string, childId: string | undefined = undefined): string => {
   const sanitizer = [
-    { searchFor: /[.]|[\[]/g, replaceWith: idSeparator },
-    { searchFor: /[\]]/g, replaceWith: '' },
-    { searchFor: /\/[\/]+/g, replaceWith: idSeparator },
+    { searchFor: /[.[]/g, replaceWith: idSeparator },
+    { searchFor: /]/g, replaceWith: "" },
+    { searchFor: /\/\/+/g, replaceWith: idSeparator },
   ];
   const absolutePath =
     childId !== undefined ?
@@ -356,8 +360,8 @@ const isExpandable = (data: any, context: string, typeid: string, dataCreation: 
   context = (data && data.getProperty) ? data.getProperty().getContext() : context;
   // If data creation is enabled everything except primitives is expandable to access the data
   // creation. Otherwise, make sure that properties contain at least one element.
-  return dataCreation ? data && (context !== 'single' || !isPrimitive(typeid)) :
-    data && ((context !== 'single' && (data.size > 0 || data.length > 0)) ||
+  return dataCreation ? data && (context !== "single" || !isPrimitive(typeid)) :
+    data && ((context !== "single" && (data.size > 0 || data.length > 0)) ||
       (!isPrimitive(typeid) && Object.keys(data).length > 0));
 };
 
@@ -365,8 +369,8 @@ const addAdditionalRow = (subRows, id, parentProperty) => {
   const undefinedRowData = {
     context: undefined,
     data: undefined,
-    id: id + '/Add',
-    name: '',
+    id: `${ id }/Add`,
+    name: "",
     parent: parentProperty,
     typeid: undefined,
     value: undefined,
@@ -418,34 +422,33 @@ interface IPropertyToTableRowOptions extends Partial<IToTableRowsOptions> {
 
 export const dummyChild = {
   children: undefined,
-  context: 'd',
-  data: 'd',
-  id: 'd',
+  context: "d",
+  data: "d",
+  id: "d",
   isConstant: false,
   isReference: false,
-  name: 'd',
-  parentId: 'd',
+  name: "d",
+  parentId: "d",
   parentIsConstant: false,
-  propertyId: 'd',
-  typeid: 'd',
-  value: 'd',
+  propertyId: "d",
+  typeid: "d",
+  value: "d",
 };
 
 const OPTION_DEFAULTS = { depth: 0, addDummy: true, followReferences: true, ascending: true, parentIsConstant: false };
 
-type IToTableRowsProps = Pick<IInspectorTableProps, 'dataCreationHandler' | 'dataCreationOptionGenerationHandler' |
-  'childGetter' | 'nameGetter' | 'readOnly'>;
+type IToTableRowsProps = Pick<IInspectorTableProps, "dataCreationHandler" | "dataCreationOptionGenerationHandler" |
+  "childGetter" | "nameGetter" | "readOnly">;
 export const toTableRows = (
   {
     data,
-    id = '',
+    id = "",
   }: IInspectorRow,
   props: IToTableRowsProps,
   options: Partial<IToTableRowsOptions> = {},
-  pathPrefix: string = '',
+  pathPrefix: string = "",
 ): IInspectorRow[] => {
-
-  const { ascending, parentIsConstant } = {...OPTION_DEFAULTS, ...options};
+  const { ascending, parentIsConstant } = { ...OPTION_DEFAULTS, ...options };
   const dataCreation = (props.readOnly !== true) && !parentIsConstant &&
     !!props.dataCreationHandler && !!props.dataCreationOptionGenerationHandler;
   const subRows: IInspectorRow[] = [];
@@ -455,7 +458,7 @@ export const toTableRows = (
   const keys = Object.keys(parentProperty.getEntriesReadOnly());
 
   let sortedKeys = keys;
-  if (dataContext === 'map' || dataContext === 'single') {
+  if (dataContext === "map" || dataContext === "single") {
     if (ascending) {
       sortedKeys = keys.sort(compareName);
     } else {
@@ -464,10 +467,10 @@ export const toTableRows = (
   }
 
   switch (dataContext) {
-    case 'single': {
+    case "single": {
       sortedKeys.forEach((key) => {
         const newRow = singlePropertyTableRow(data, key, id, props,
-            {...OPTION_DEFAULTS, ...options, dataCreation}, pathPrefix);
+            { ...OPTION_DEFAULTS, ...options, dataCreation }, pathPrefix);
         subRows.push(newRow);
       });
       break;
@@ -475,7 +478,7 @@ export const toTableRows = (
     default: {
       sortedKeys.forEach((key) => {
         const newRow = collectionChildTableRow(data, key, id, props,
-          {...OPTION_DEFAULTS, ...options, dataCreation}, pathPrefix);
+          { ...OPTION_DEFAULTS, ...options, dataCreation }, pathPrefix);
         subRows.push(newRow);
       });
       break;
@@ -493,7 +496,7 @@ const createInvalidReference = (parentData: BaseProxifiedProperty, propertyId: s
   const parentIsConstant = !!options.parentIsConstant;
   const newRow: IInspectorRow = {
     children: undefined,
-    context: 'single',
+    context: "single",
     data: undefined,
     id: newId,
     isConstant: false,
@@ -503,8 +506,8 @@ const createInvalidReference = (parentData: BaseProxifiedProperty, propertyId: s
     parentId: parentRowId,
     parentIsConstant,
     propertyId: String(propertyId),
-    typeid: 'Reference',
-    value: '',
+    typeid: "Reference",
+    value: "",
   };
   return newRow;
 };
@@ -514,8 +517,7 @@ const createInvalidReference = (parentData: BaseProxifiedProperty, propertyId: s
  */
 export const singlePropertyTableRow = (parentData: BaseProxifiedProperty, propertyId: string, parentRowId: string,
                                        props: IToTableRowsProps, options: IPropertyToTableRowOptions,
-                                       pathPrefix: string)
-                                       : IInspectorRow => {
+                                       pathPrefix: string): IInspectorRow => {
   const { depth, addDummy, dataCreation, followReferences, ascending } = options;
   const parentIsConstant = !!options.parentIsConstant;
   const parentProperty = parentData.getProperty();
@@ -595,7 +597,6 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
                                         options: IPropertyToTableRowOptions,
                                         pathPrefix: string): IInspectorRow => {
   const collectionProperty = collectionPropertyProxy.getProperty() as ContainerProperty;
-  let propertyProxy: BaseProxifiedProperty | undefined;
   let prop;
   // when we try to access an non-existing element of an array, the 'get' method throws which causes app crash
   try {
@@ -603,7 +604,7 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
   } catch {
     return createInvalidReference(collectionPropertyProxy, propertyId, parentRowId, props, options, pathPrefix);
   }
-  propertyProxy = (prop && PropertyFactory.instanceOf(prop, 'BaseProperty') ?
+  const propertyProxy = (prop && PropertyFactory.instanceOf(prop, "BaseProperty") ?
     PropertyProxy.proxify(prop) : prop) as BaseProxifiedProperty;
   const { depth, addDummy, dataCreation, followReferences, ascending } = options;
   const parentIsConstant = !!options.parentIsConstant;
@@ -611,25 +612,24 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
   const isReferenceCollection = isReferenceCollectionTypeid(collectionTypeid);
   // Always start with the collection typeid, and fresh variables
   let determinedData;
-  let determinedValue;
   let currentTypeid = collectionTypeid;
-  let currentContext = 'single';
+  let currentContext = "single";
   let property: BaseProperty | BaseProxifiedProperty | undefined = propertyProxy;
 
   if (!isReferenceCollection || (isReferenceCollection && followReferences)) {
     if (propertyProxy !== undefined && propertyProxy.getProperty &&
-      PropertyFactory.instanceOf(propertyProxy.getProperty(), 'BaseProperty')) {
-      property = propertyProxy.getProperty() ;
+      PropertyFactory.instanceOf(propertyProxy.getProperty(), "BaseProperty")) {
+      property = propertyProxy.getProperty();
       currentTypeid = getTypeid(property);
       currentContext = property.getContext();
     } else if (isReferenceCollection) {
       // Try to obtain a property
-      const {referencedPropertyParent, relativePathFromParent} =
+      const { referencedPropertyParent, relativePathFromParent } =
         PropertyProxy.getParentOfReferencedProperty(collectionProperty as ReferenceArrayProperty, propertyId);
       if (referencedPropertyParent && relativePathFromParent) {
         property = (referencedPropertyParent as ContainerProperty).get(relativePathFromParent)!;
         if (property) {
-          if (PropertyFactory.instanceOf(property as BaseProperty, 'BaseProperty')) {
+          if (PropertyFactory.instanceOf(property as BaseProperty, "BaseProperty")) {
             currentTypeid = getTypeid(property);
             currentContext = property.getContext();
           } else {
@@ -637,7 +637,7 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
           }
         }
       }
-    } else if (isEnumProperty(collectionProperty.get(propertyId)!) && collectionProperty.getContext() === 'map') {
+    } else if (isEnumProperty(collectionProperty.get(propertyId)!) && collectionProperty.getContext() === "map") {
       // TODO: Temporary fix as the full typeid of enum maps is currently wrong
       property = (collectionProperty as MapProperty).get(propertyId)!;
       currentTypeid = property.getFullTypeid();
@@ -646,8 +646,8 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
   }
 
   // In case a set is processed there is no valid key, take the guid instead.
-  propertyId = collectionProperty.getContext() === 'set' ? (propertyProxy as any).guid : propertyId;
-  determinedValue = getPropertyValue(collectionPropertyProxy, propertyId, currentContext, currentTypeid,
+  propertyId = collectionProperty.getContext() === "set" ? (propertyProxy as any).guid : propertyId;
+  const determinedValue = getPropertyValue(collectionPropertyProxy, propertyId, currentContext, currentTypeid,
     followReferences);
 
   if (propertyProxy && (followReferences || !TypeIdHelper.isReferenceTypeId(currentTypeid))) {
@@ -713,7 +713,6 @@ export const expandAll = (workspace: Workspace) => {
   const root = (workspace as any).root;
 
   forEachProperty(root, (property) => {
-
     if (!isPrimitive(property.getFullTypeid())) {
       const newId = getShortId(property.getAbsolutePath());
       expanded[newId] = true;
@@ -729,18 +728,18 @@ export const fillExpanded = (
   innerRows: IInspectorRow[],
   props: IToTableRowsProps,
   toTableRowsOptions?: IToTableRowsOptions,
-  pathPrefix: string = '',
+  pathPrefix: string = "",
 ) => {
     for (const row of innerRows) {
       if (row.id in expanded) {
         const newPathPrefix = row.parent && row.isReference ?
           pathPrefix + row.parent.getAbsolutePath() + idSeparator + row.name : pathPrefix;
 
-        if (row.children && row.children[0].context === 'd') {
+        if (row.children && row.children[0].context === "d") {
           row.children = toTableRows(
             { ...row },
             props,
-            {...toTableRowsOptions, parentIsConstant: row.isConstant || row.parentIsConstant},
+            { ...toTableRowsOptions, parentIsConstant: row.isConstant || row.parentIsConstant },
             newPathPrefix,
           );
         }
@@ -750,14 +749,14 @@ export const fillExpanded = (
 };
 
 const isPropertyProxy = (p: any): p is BaseProxifiedProperty => {
-  return p.getProperty && PropertyFactory.instanceOf(p.getProperty(), 'BaseProperty');
+  return p.getProperty && PropertyFactory.instanceOf(p.getProperty(), "BaseProperty");
 };
 
 const invalidReference = (parentProxy: BaseProxifiedProperty, id: string | number) => {
-  return 'Invalid Reference: ' +
-    (isReferenceMapProperty(parentProxy.getProperty())
-      ? (parentProxy as any).get(id + '*')
-      : parentProxy[id + '*']);
+  return `Invalid Reference: ${
+    isReferenceMapProperty(parentProxy.getProperty())
+      ? (parentProxy as any).get(`${ id }*`)
+      : parentProxy[`${ id }*`]}`;
 };
 
 /**
@@ -799,31 +798,31 @@ export const getPropertyValue = (parent: ContainerProperty | BaseProxifiedProper
     property = parentProxy.getProperty([id, BaseProperty.PATH_TOKENS.REF]) as BaseProperty;
   }
 
-  let propertyProxy = (parentProperty.getContext() === 'map'
+  let propertyProxy = (parentProperty.getContext() === "map"
     ? (parentProxy as any).get(id)
     : parentProxy[id]);
-  if (parentProperty.getContext() === 'set') {
+  if (parentProperty.getContext() === "set") {
     propertyProxy = PropertyProxy.proxify(property);
   }
 
-  const contextIsSingle = context === 'single';
-  const parentContextIsSingle = parentProperty.getContext() === 'single';
-  id = parentProperty.getContext() === 'set' ? (propertyProxy as any).guid : id;
+  const contextIsSingle = context === "single";
+  const parentContextIsSingle = parentProperty.getContext() === "single";
+  id = parentProperty.getContext() === "set" ? (propertyProxy as any).guid : id;
 
   let determinedValue;
   // If the property is a reference and we don't follow them, we store the reference path string instead.
   if (!followReferences && TypeIdHelper.isReferenceTypeId(typeid)) {
     if (parentContextIsSingle || isReferenceArrayProperty(parentProperty)) {
-      determinedValue = parentProxy[id + '*'];
+      determinedValue = parentProxy[`${ id }*`];
     } else {
-      determinedValue = (parentProxy as any).get(id + '*');
+      determinedValue = (parentProxy as any).get(`${ id }*`);
     }
   } else if (contextIsSingle && propertyProxy !== undefined && isPrimitive(typeid)) {
     try {
-      if (parentProxy[id + '^'] !== undefined) {
-        determinedValue = parentProxy[id + '^'];
-      } else if ((parentProxy as any).get(id + '^') !== undefined) {
-        determinedValue = (parentProxy as any).get(id + '^');
+      if (parentProxy[`${ id }^`] !== undefined) {
+        determinedValue = parentProxy[`${ id }^`];
+      } else if ((parentProxy as any).get(`${ id }^`) !== undefined) {
+        determinedValue = (parentProxy as any).get(`${ id }^`);
       } else {
         determinedValue = parentProxy;
       }
@@ -836,7 +835,7 @@ export const getPropertyValue = (parent: ContainerProperty | BaseProxifiedProper
     !parentProperty.isReferenceValid(id as never)
     ) ||
     (contextIsSingle &&
-    PropertyFactory.instanceOf(property, 'Reference') &&
+    PropertyFactory.instanceOf(property, "Reference") &&
     !(property as ReferenceProperty).isReferenceValid())
   ) {
     // Probably encountered an invalid Reference.

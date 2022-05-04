@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import util from "util";
-import { assert, bufferToString, stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -104,7 +104,7 @@ function fetchBlobs(prefix: string,
 
 function createTreeBlob(tree: ISnapshotTree, prefix: string, patched: boolean): IFetchedTree {
     const id = tree.id ?? "original";
-    const blob = stringToBuffer(JSON.stringify(tree),"utf8");
+    const blob = stringToBuffer(JSON.stringify(tree), "utf8");
     const filename = patched ? "tree" : `tree-${id}`;
     const treePath = `${prefix}${filename}`;
     return { treePath, blobId: "original tree $id", filename, blob, patched, reused: false };
@@ -114,11 +114,9 @@ async function fetchBlobsFromSnapshotTree(
     storage: IDocumentStorageService,
     tree: ISnapshotTree,
     prefix: string = "/",
-    perCommitBlobIdMap?: Map<string, number>): Promise<IFetchedData[]> {
-    assert(Object.keys(tree.commits).length === 0 || (prefix === "/"),
-        0x1be /* "Unexpected tree input to fetch" */);
-    const commit = !perCommitBlobIdMap;
-    if (commit && dumpSnapshotTrees) {
+    parentBlobIdMap?: Map<string, number>): Promise<IFetchedData[]> {
+    const isTopLevel = !parentBlobIdMap;
+    if (isTopLevel && dumpSnapshotTrees) {
         console.log(tree);
     }
 
@@ -128,42 +126,16 @@ async function fetchBlobsFromSnapshotTree(
     }
 
     // Create the tree info before fetching blobs (which will modify it)
-    let commitBlob: IFetchedTree | undefined;
-    if (commit) {
-        commitBlob = createTreeBlob(tree, prefix, false);
+    let topLevelBlob: IFetchedTree | undefined;
+    if (isTopLevel) {
+        topLevelBlob = createTreeBlob(tree, prefix, false);
     }
 
-    const blobIdMap = perCommitBlobIdMap ?? new Map<string, number>();
+    const blobIdMap = parentBlobIdMap ?? new Map<string, number>();
     let result: IFetchedData[] = fetchBlobs(prefix, tree, storage, blobIdMap);
-
-    for (const dataStore of Object.keys(tree.commits)) {
-        const dataStoreVersions = await storage.getVersions(tree.commits[dataStore], 1);
-        if (dataStoreVersions.length !== 1) {
-            console.error(`ERROR: Unable to get versions for ${dataStore}`);
-            continue;
-        }
-        const dataStoreSnapShotTree = await reportErrors(
-            `getSnapshotTree ${dataStoreVersions[0].id}`,
-            storage.getSnapshotTree(dataStoreVersions[0]));
-        if (dataStoreSnapShotTree === null) {
-            // eslint-disable-next-line max-len
-            console.error(`No data store tree for data store = ${dataStore}, path = ${prefix}, version = ${dataStoreVersions[0].id}`);
-            continue;
-        }
-        assert(dataStoreSnapShotTree.id === undefined || dataStoreSnapShotTree.id === tree.commits[dataStore],
-            0x1bf /* `Unexpected id for tree: ${dataStoreSnapShotTree.id}` */);
-        assert(tree.commits[dataStore] === dataStoreVersions[0].id,
-            0x1c0 /* "Mismatch between commit id and fetched tree id" */);
-        const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
-            storage,
-            dataStoreSnapShotTree,
-            `${prefix}[${dataStore}]/`);
-        result = result.concat(dataStoreBlobs);
-    }
 
     for (const subtreeId of Object.keys(tree.trees)) {
         const subtree = tree.trees[subtreeId];
-        assert(Object.keys(subtree.commits).length === 0, 0x1c1 /* "Unexpected subtree properties" */);
         const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
             subtree,
@@ -171,8 +143,8 @@ async function fetchBlobsFromSnapshotTree(
         result = result.concat(dataStoreBlobs);
     }
 
-    if (commitBlob) {
-        result.push(commitBlob);
+    if (topLevelBlob) {
+        result.push(topLevelBlob);
         result.push(createTreeBlob(tree, prefix, true));
     }
     return result;
@@ -200,7 +172,7 @@ async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]
         if (buffer === undefined) {
             continue;
         }
-        const blob = bufferToString(buffer,"utf8");
+        const blob = bufferToString(buffer, "utf8");
         // eslint-disable-next-line max-len
         console.log(`${item.treePath.padEnd(nameLength)} |    ${item.reused ? "X" : " "}   | ${formatNumber(blob.length).padStart(10)}`);
         size += blob.length;
@@ -250,7 +222,7 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
 
             // we assume that the buffer is utf8 here, which currently is true for
             // all of our snapshot blobs.  It doesn't necessary be true in the future
-            let decoded = bufferToString(buffer,"utf8");
+            let decoded = bufferToString(buffer, "utf8");
             try {
                 if (!paramActualFormatting) {
                     decoded = JSON.stringify(JSON.parse(decoded), undefined, 2);
@@ -261,7 +233,7 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
                 `${outDir}/decoded/${item.filename}.json`, decoded);
         } else {
             // Write out same data for tree decoded or not, except for formatting
-            const treeString = bufferToString(buffer,"utf8");
+            const treeString = bufferToString(buffer, "utf8");
             fs.writeFileSync(`${outDir}/${item.filename}.json`, treeString);
             fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`,
                 paramActualFormatting ? treeString : JSON.stringify(JSON.parse(treeString), undefined, 2));

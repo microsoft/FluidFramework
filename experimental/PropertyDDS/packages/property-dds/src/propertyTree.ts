@@ -7,7 +7,7 @@
 import isEmpty from "lodash/isEmpty";
 import findIndex from "lodash/findIndex";
 import range from "lodash/range";
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 import { Packr } from "msgpackr";
 
 import { AttachState } from "@fluidframework/container-definitions";
@@ -169,12 +169,14 @@ export class SharedPropertyTree extends SharedObject {
 		// for the serialization of the data structure
 		if (this.listenerCount("localModification") > 0) {
 			const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+            this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
 			const _changeSet = new ChangeSet(changes);
 			if (!isEmpty(_changeSet.getSerializedChangeSet())) {
 				this.emit("localModification", _changeSet);
 			}
-		}
-		this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+		} else {
+            this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+        }
 	}
 
 	public get changeSet(): SerializedChangeSet {
@@ -183,7 +185,7 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	public get activeCommit(): IPropertyTreeMessage {
-		if(this.localChanges.length > 0) {
+		if (this.localChanges.length > 0) {
 			return this.localChanges[this.localChanges.length - 1];
 		} else {
 			return this.remoteChanges[this.remoteChanges.length - 1];

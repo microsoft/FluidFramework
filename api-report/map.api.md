@@ -38,8 +38,9 @@ export class DirectoryFactory {
 }
 
 // @public
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, IDisposable {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
+    countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
     get<T = any>(key: string): T | undefined;
@@ -170,6 +171,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // @internal (undocumented)
     protected applyStashedOp(): void;
     clear(): void;
+    countSubDirectory(): number;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
     createSubDirectory(subdirName: string): IDirectory;
     delete(key: string): boolean;

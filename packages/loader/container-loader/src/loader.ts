@@ -7,15 +7,12 @@ import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
-    IFluidCodeDetails,
     IFluidRouter,
-    IProvideFluidCodeDetailsComparer,
     IRequest,
     IRequestHeader,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
-    ICodeLoader,
     IContainer,
     IFluidModule,
     IHostLoader,
@@ -24,6 +21,8 @@ import {
     ILoaderOptions as ILoaderOptions1,
     IProxyLoaderFactory,
     LoaderHeader,
+    IProvideFluidCodeDetailsComparer,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
     ChildLogger,
@@ -81,7 +80,7 @@ export class RelativeLoader implements ILoader {
                     {
                         canReconnect: request.headers?.[LoaderHeader.reconnect],
                         clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-                        resolvedUrl: {...resolvedUrl},
+                        resolvedUrl: { ...resolvedUrl },
                         version: request.headers?.[LoaderHeader.version] ?? undefined,
                         loadMode: request.headers?.[LoaderHeader.loadMode],
                     },
@@ -187,7 +186,7 @@ export interface ILoaderProps {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
 
     /**
      * A property bag of options used by various layers
@@ -204,6 +203,7 @@ export interface ILoaderProps {
     /**
      * Proxy loader factories for loading containers via proxy in other contexts,
      * like web workers, or worker threads.
+     * @deprecated Not recommended for general use and will be removed in an upcoming release.
      */
     readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 
@@ -243,7 +243,7 @@ export interface ILoaderServices {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
 
     /**
      * A property bag of options used by various layers
@@ -260,6 +260,7 @@ export interface ILoaderServices {
     /**
      * Proxy loader factories for loading containers via proxy in other contexts,
      * like web workers, or worker threads.
+     * @deprecated Not recommended for general use and will be removed in an upcoming release.
      */
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
 
@@ -295,7 +296,7 @@ export class Loader implements IHostLoader {
     private readonly mc: MonitoringContext;
 
     constructor(loaderProps: ILoaderProps) {
-        const scope = { ...loaderProps.scope as FluidObject<ILoader> };
+        const scope: FluidObject<ILoader> = { ...loaderProps.scope };
         if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }

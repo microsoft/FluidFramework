@@ -5,9 +5,9 @@
 
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
-import { IGitCache } from "@fluidframework/server-services-client";
+import { IGitCache, ISession } from "@fluidframework/server-services-client";
 import { LambdaName } from "./lambdas";
-import { INackMessagesControlMessageContents } from "./messages";
+import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
 
 export interface IDocumentDetails {
     existing: boolean;
@@ -34,7 +34,10 @@ export interface IDocumentStorage {
         sequenceNumber: number,
         term: number,
         initialHash: string,
-        values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
+        ordererUrl: string,
+        historianUrl: string,
+        values: [string, ICommittedProposal][],
+        enableDiscovery: boolean): Promise<IDocumentDetails>;
 }
 
 export interface IClientSequenceNumber {
@@ -62,6 +65,9 @@ export interface IDeliState {
     // Sequence number at logOffset
     sequenceNumber: number;
 
+    // Signal number for the deli client at logOffset
+    signalClientConnectionNumber: number;
+
     // Rolling hash at sequenceNumber
     expHash1: string;
 
@@ -75,7 +81,8 @@ export interface IDeliState {
     lastSentMSN: number | undefined;
 
     // Nack messages state
-    nackMessages: INackMessagesControlMessageContents | undefined;
+    nackMessages: [NackMessagesType, INackMessagesControlMessageContents][] |
+    INackMessagesControlMessageContents | undefined;
 
     // List of successfully started lambdas at session start
     successfullyStartedLambdas: LambdaName[];
@@ -113,6 +120,8 @@ export interface IDocument {
     documentId: string;
 
     tenantId: string;
+
+    session: ISession;
 
     // Scribe state
     scribe: string;

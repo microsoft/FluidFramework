@@ -7,20 +7,34 @@ import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
+import {
+    ReferenceType,
+    reservedMarkerIdKey,
+    reservedMarkerSimpleTypeKey,
+    reservedTileLabelsKey,
+} from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { SharedString } from "@fluidframework/sequence";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
     ChannelFactoryRegistry,
     createAndAttachContainer,
-    ITestFluidObject,
-    ITestContainerConfig,
-    ITestObjectProvider,
     DataObjectFactoryType,
+    ITestContainerConfig,
+    ITestFluidObject,
+    ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { SharedMatrix } from "@fluidframework/matrix";
 
 const mapId = "map";
-const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+const stringId = "sharedStringKey";
+const matrixId = "sharedMatrixKey";
+const registry: ChannelFactoryRegistry = [
+    [mapId, SharedMap.getFactory()],
+    [stringId, SharedString.getFactory()],
+    [matrixId, SharedMatrix.getFactory()],
+];
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
@@ -91,6 +105,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     let loader: IHostLoader;
     let container1: IContainer;
     let map1: SharedMap;
+    let string1: SharedString;
+    let matrix1: SharedMatrix;
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
@@ -103,6 +119,11 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         url = await container1.getAbsoluteUrl("");
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
+        string1 = await dataStore1.getSharedObject<SharedString>(stringId);
+        string1.insertText(0, "hello");
+        matrix1 = await dataStore1.getSharedObject<SharedMatrix>(matrixId);
+        matrix1.insertRows(0, 20);
+        matrix1.insertCols(0, 20);
     });
 
     it("resends op", async function() {
@@ -156,12 +177,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend a lot of successful ops", async function() {
-        // Github issue #9163
-        if ((provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
-            provider.driver.type === "tinylicious") {
-            this.skip();
-        }
-
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
@@ -236,12 +251,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend successful chunked op", async function() {
-        // Github issue #9163
-        if ((provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
-            provider.driver.type === "tinylicious") {
-            this.skip();
-        }
-
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
@@ -282,12 +291,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("successful map clear no resend", async function() {
-        // Github issue #9163
-        if ((provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
-            provider.driver.type === "tinylicious") {
-            this.skip();
-        }
-
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             map.clear();
         });
@@ -304,6 +307,260 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             async (i) => assert.strictEqual(await map1.get(i.toString()), testValue)));
         await Promise.all([...Array(lots).keys()].map(
             async (i) => assert.strictEqual(await map2.get(i.toString()), testValue)));
+    });
+
+    it("resends string insert op", async function() {
+        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+            const s = await d.getSharedObject<SharedString>(stringId);
+            s.insertText(s.getLength(), " world!");
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(string1.getText(), "hello world!");
+        assert.strictEqual(string2.getText(), "hello world!");
+    });
+
+    it("doesn't resend successful string insert op", async function() {
+        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+            const s = await d.getSharedObject<SharedString>(stringId);
+            s.insertText(s.getLength(), " world!");
+        });
+
+        // load with pending ops, which it should not resend because they were already sent successfully
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(string1.getText(), "hello world!");
+        assert.strictEqual(string2.getText(), "hello world!");
+    });
+
+    it("resends string remove op", async function() {
+        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+            const s = await d.getSharedObject<SharedString>(stringId);
+            s.removeText(0, s.getLength());
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(string1.getText(), "");
+        assert.strictEqual(string2.getText(), "");
+    });
+
+    it("doesn't resend successful string remove op", async function() {
+        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+            const s = await d.getSharedObject<SharedString>(stringId);
+            s.removeText(0, s.getLength());
+        });
+
+        string1.insertText(0, "goodbye cruel world");
+
+        // load with pending ops, which it should not resend because they were already sent successfully
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(string1.getText(), "goodbye cruel world");
+        assert.strictEqual(string2.getText(), "goodbye cruel world");
+    });
+
+    it("resends string annotate op", async function() {
+        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+            const s = await d.getSharedObject<SharedString>(stringId);
+            s.annotateRange(0, s.getLength(), { bold: true });
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(string1.getPropertiesAtPosition(0)?.bold, true);
+        assert.strictEqual(string2.getPropertiesAtPosition(0)?.bold, true);
+    });
+
+    it("doesn't resend successful string annotate op", async function() {
+        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+            const s = await d.getSharedObject<SharedString>(stringId);
+            s.annotateRange(0, s.getLength(), { bold: true });
+        });
+
+        // change annotation, which should not be overwritten by successful stashed ops
+        string1.annotateRange(0, string1.getLength(), { bold: false });
+
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(string1.getPropertiesAtPosition(0)?.bold, false);
+        assert.strictEqual(string2.getPropertiesAtPosition(0)?.bold, false);
+    });
+
+    it("resends marker ops", async function() {
+        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+            const s = await d.getSharedObject<SharedString>(stringId);
+            s.insertMarker(
+                s.getLength(),
+                ReferenceType.Simple,
+                {
+                    [reservedMarkerIdKey]: "markerId",
+                    [reservedMarkerSimpleTypeKey]: "markerKeyValue",
+                },
+            );
+
+            s.insertMarker(
+                0,
+                ReferenceType.Tile,
+                {
+                    [reservedTileLabelsKey]: ["tileLabel"],
+                    [reservedMarkerIdKey]: "tileMarkerId",
+                });
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+
+        const simpleMarker1 = string1.getMarkerFromId("markerId");
+        assert.strictEqual(simpleMarker1.type, "Marker", "Could not get simple marker");
+        assert.strictEqual(simpleMarker1.properties?.markerId, "markerId", "markerId is incorrect");
+        assert.strictEqual(simpleMarker1.properties?.markerSimpleType, "markerKeyValue");
+        const parallelMarkers1 = string1.getTextAndMarkers("tileLabel");
+        const parallelMarker1 = parallelMarkers1.parallelMarkers[0];
+        assert.strictEqual(parallelMarker1.type, "Marker", "Could not get tile marker");
+        assert.strictEqual(parallelMarker1.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
+
+        const simpleMarker2 = string2.getMarkerFromId("markerId");
+        assert.strictEqual(simpleMarker2.type, "Marker", "Could not get simple marker");
+        assert.strictEqual(simpleMarker2.properties?.markerId, "markerId", "markerId is incorrect");
+        assert.strictEqual(simpleMarker2.properties?.markerSimpleType, "markerKeyValue");
+        const parallelMarkers2 = string2.getTextAndMarkers("tileLabel");
+        const parallelMarker2 = parallelMarkers2.parallelMarkers[0];
+        assert.strictEqual(parallelMarker2.type, "Marker", "Could not get tile marker");
+        assert.strictEqual(parallelMarker2.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
+    });
+
+    it("resends matrix set op", async function() {
+        const pendingOps = await getPendingOps(provider, false, async (c, d, m) => {
+            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
+            matrix.setCell(0, 0, testValue);
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(matrix1.getCell(0, 0), testValue);
+        assert.strictEqual(matrix2.getCell(0, 0), testValue);
+    });
+
+    it("doesn't resend successful matrix set op", async function() {
+        const pendingOps = await getPendingOps(provider, true, async (c, d, m) => {
+            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
+            matrix.setCell(0, 0, testValue);
+        });
+
+        matrix1.setCell(0, 0, "a different value");
+
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(matrix1.getCell(0, 0), "a different value");
+        assert.strictEqual(matrix2.getCell(0, 0), "a different value");
+    });
+
+    it("resends matrix insert col op", async function() {
+        const pendingOps = await getPendingOps(provider, false, async (c, d, m) => {
+            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
+            matrix.insertCols(matrix.colCount, 1);
+            matrix.insertRows(matrix.rowCount, 1);
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(matrix1.colCount, 21);
+        assert.strictEqual(matrix2.colCount, 21);
+        assert.strictEqual(matrix1.rowCount, 21);
+        assert.strictEqual(matrix2.rowCount, 21);
+    });
+
+    it("doesn't resend successful matrix insert col op", async function() {
+        const pendingOps = await getPendingOps(provider, true, async (c, d, m) => {
+            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
+            matrix.insertCols(matrix.colCount, 1);
+            matrix.insertRows(matrix.rowCount, 1);
+        });
+
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(matrix1.colCount, 21);
+        assert.strictEqual(matrix2.colCount, 21);
+        assert.strictEqual(matrix1.rowCount, 21);
+        assert.strictEqual(matrix2.rowCount, 21);
+    });
+
+    it("resends matrix remove col op", async function() {
+        const pendingOps = await getPendingOps(provider, false, async (c, d, m) => {
+            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
+            matrix.removeCols(0, 1);
+            matrix.removeRows(0, 1);
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(matrix1.colCount, 19);
+        assert.strictEqual(matrix2.colCount, 19);
+        assert.strictEqual(matrix1.rowCount, 19);
+        assert.strictEqual(matrix2.rowCount, 19);
+    });
+
+    it("doesn't resend successful matrix remove col op", async function() {
+        const pendingOps = await getPendingOps(provider, true, async (c, d, m) => {
+            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
+            matrix.removeCols(0, 1);
+            matrix.removeRows(0, 1);
+        });
+
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(matrix1.colCount, 19);
+        assert.strictEqual(matrix2.colCount, 19);
+        assert.strictEqual(matrix1.rowCount, 19);
+        assert.strictEqual(matrix2.rowCount, 19);
     });
 
     it("resends attach op", async function() {

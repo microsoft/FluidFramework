@@ -10,14 +10,14 @@ import { IAnyDriverError } from "@fluidframework/driver-utils";
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { errorObjectFromSocketError, IR11sSocketError } from "./errorUtils";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
  * Wrapper over the shared one for driver specific translation.
  */
-export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
-{
+export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
     public static async create(
         tenantId: string,
         id: string,
@@ -47,6 +47,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
+            relayUserAgent: [client.details.environment, ` driverVersion:${driverVersion}`].join(";"),
         };
 
         // TODO: expose to host at factory level
@@ -62,7 +63,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
      */
     protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
         // Note: we suspect the incoming error object is either:
-        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
+        // - a socketError: add it to the R11sError object for driver to be able to parse it and reason over it.
         // - anything else: let base class handle it
         if (canRetry && Number.isInteger(error?.code) && typeof error?.message === "string") {
             return errorObjectFromSocketError(error as IR11sSocketError, handler);

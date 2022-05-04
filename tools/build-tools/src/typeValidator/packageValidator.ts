@@ -15,6 +15,7 @@ import {
     TypeData,
 } from "./typeData";
 import { BreakingIncrement, IValidator, log } from "./validatorUtils";
+import { InterfaceValidator } from "./interfaceValidator";
 
 // TODO: correlate type name with exporting package to support name aliasing
 export type BrokenTypes = Map<string, BreakingIncrement>;
@@ -37,11 +38,11 @@ export interface PackageResult {
  * @param brokenTypes
  * @returns
  */
-export function validatePackage(
+export async function validatePackage(
     packageDetails: PackageDetails,
     packageDir: string,
     brokenTypes: BrokenTypes,
-): PackageResult {
+): Promise<PackageResult> {
     // for exported symbol, check major, check minor, return total increment
     let pkgIncrement = BreakingIncrement.none;
     const pkgBrokenTypes: BrokenTypes = new Map();
@@ -55,8 +56,8 @@ export function validatePackage(
 
     // Compare only against the most recent version
     const oldVersion = packageDetails.oldVersions[packageDetails.oldVersions.length - 1];
-    const newDetails: PackageAndTypeData = generateTypeDataForProject(packageDir, undefined);
-    const oldDetails: PackageAndTypeData = generateTypeDataForProject(packageDir, oldVersion);
+    const newDetails: PackageAndTypeData = await generateTypeDataForProject(packageDir, undefined);
+    const oldDetails: PackageAndTypeData = await generateTypeDataForProject(packageDir, oldVersion);
     const newTypeMap = new Map<string, TypeData>(newDetails.typeData.map((v) => [getFullTypeName(v), v]));
     const oldTypeMap = new Map<string, TypeData>(oldDetails.typeData.map((v) => [getFullTypeName(v), v]));
 
@@ -114,6 +115,10 @@ export function createSpecificValidator(
         const validator = new ClassValidator();
         validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
         return validator;
+    } else if (Node.isInterfaceDeclaration(oldNode) && Node.isInterfaceDeclaration(newNode)) {
+        const validator = new InterfaceValidator()
+        validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
+        return validator;
     } else if (Node.isEnumDeclaration(oldNode) && Node.isEnumDeclaration(newNode)) {
         const validator = new EnumValidator();
         validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
@@ -122,5 +127,5 @@ export function createSpecificValidator(
 
     // We don't need to report if the declaration types have changed because that
     // should be detected earlier as a removal/addition pair (major increment)
-    throw new Error("Unhandled export declaration type");
+    throw new Error(`Unhandled export declaration type: ${oldNode.getKindName()}`);
 }

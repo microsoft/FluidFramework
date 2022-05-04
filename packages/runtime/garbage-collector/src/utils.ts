@@ -103,7 +103,7 @@ export function unpackChildNodesUsedRoutes(usedRoutes: string[]) {
         if (childUsedRoutes !== undefined) {
             childUsedRoutes.push(childUsedRoute);
         } else {
-            childUsedRoutesMap.set(childId, [ childUsedRoute ]);
+            childUsedRoutesMap.set(childId, [childUsedRoute]);
         }
     }
     return childUsedRoutesMap;
@@ -153,7 +153,7 @@ export function concatGarbageCollectionStates(
                     0x2b2 /* "Two entries for the same GC node with different unreferenced timestamp" */);
             }
             combinedNodedata = {
-                outboundRoutes: [ ...new Set([ ...nodeData.outboundRoutes, ...combinedNodedata.outboundRoutes ]) ],
+                outboundRoutes: [...new Set([...nodeData.outboundRoutes, ...combinedNodedata.outboundRoutes])],
                 unreferencedTimestampMs: nodeData.unreferencedTimestampMs ?? combinedNodedata.unreferencedTimestampMs,
             };
         }
@@ -171,8 +171,8 @@ export function concatGarbageCollectionData(gcData1: IGarbageCollectionData, gcD
         if (combinedGCData.gcNodes[id] === undefined) {
             combinedGCData.gcNodes[id] = Array.from(routes);
         } else {
-            const combinedRoutes = [ ...routes, ...combinedGCData.gcNodes[id] ];
-            combinedGCData.gcNodes[id] = [ ...new Set(combinedRoutes) ];
+            const combinedRoutes = [...routes, ...combinedGCData.gcNodes[id]];
+            combinedGCData.gcNodes[id] = [...new Set(combinedRoutes)];
         }
     }
     return combinedGCData;
@@ -209,6 +209,12 @@ export class GCDataBuilder implements IGarbageCollectionData {
 
             // Add the outbound routes against the normalized and prefixed id.
             this.gcNodes[normalizedId] = outboundRoutes;
+        }
+    }
+
+    public addNodes(gcNodes: { [ id: string ]: string[] }) {
+        for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
+            this.gcNodes[id] = Array.from(outboundRoutes);
         }
     }
 

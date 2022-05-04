@@ -49,8 +49,7 @@ export async function runWithRetry<T>(
             if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
                 Lumberjack.info(`Should ignore error for ${callName}`, telemetryProperties);
                 break;
-            } else if (shouldRetry !== undefined && shouldRetry(error) === false)
-            {
+            } else if (shouldRetry !== undefined && shouldRetry(error) === false) {
                 Lumberjack.error(
                     `Should not retry ${callName} for the current error, rejecting`,
                     telemetryProperties,
@@ -119,8 +118,7 @@ export async function runWithRetry<T>(
             if (onErrorFn !== undefined) {
                 onErrorFn(error);
             }
-            if (shouldRetry !== undefined && shouldRetry(error) === false)
-            {
+            if (shouldRetry !== undefined && shouldRetry(error) === false) {
                 Lumberjack.error(
                     `Should not retry ${callName} for the current error, rejecting`,
                     telemetryProperties,
@@ -135,6 +133,7 @@ export async function runWithRetry<T>(
                 return Promise.reject(error);
             }
 
+            // TODO: if error is a NetworkError, we should respect NetworkError.retryAfter or NetworkError.retryAfterMs
             const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
             await delay(intervalMs);
             retryCount++;

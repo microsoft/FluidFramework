@@ -32,7 +32,7 @@ import {
     IVersionedValueWithEpoch,
     ISnapshotCachedEntry,
 } from "./contracts";
-import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
+import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem, SnapshotFormatSupportType } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import {
@@ -44,6 +44,8 @@ import { defaultCacheExpiryTimeoutMs, EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 import { pkgVersion as driverVersion } from "./packageVersion";
+
+export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 
 /* eslint-disable max-len */
 
@@ -152,6 +154,10 @@ class BlobCache {
     }
 }
 
+interface GetVersionsTelemetryProps {
+    cacheEntryAge?: number;
+    cacheSummarizerExpired?: boolean;
+}
 export class OdspDocumentStorageService implements IDocumentStorageService {
     readonly policies = {
         // By default, ODSP tells the container not to prefetch/cache.
@@ -221,6 +227,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
         private readonly flushCallback: () => Promise<FlushResult>,
+        private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -356,38 +363,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!snapshotTree) {
             return null;
         }
-        // Decode commit paths
-        const commits = {};
 
-        for (const key of Object.keys(snapshotTree.commits)) {
-            commits[decodeURIComponent(key)] = snapshotTree.commits[key];
-        }
-
-        let finalTree: api.ISnapshotTree;
-        // For container loaded from detach new summary, we will not have a commit for ".app" in downloaded summary as the client uploaded both
-        // ".app" and ".protocol" trees by itself. For other summaries, we will have ".app" as commit because client previously only uploaded the
-        // app summary.
-        if (commits && commits[".app"]) {
-            // The latest snapshot is a summary
-            // attempt to read .protocol from commits for backwards compat
-            finalTree = await this.readSummaryTree(commits[".protocol"] || snapshotTree.trees[".protocol"], commits[".app"] as string);
-        } else {
-            if (snapshotTree.blobs) {
-                const attributesBlob = snapshotTree.blobs.attributes;
-                if (attributesBlob) {
-                    this.attributesBlobHandles.add(attributesBlob);
-                }
+        if (snapshotTree.blobs) {
+            const attributesBlob = snapshotTree.blobs.attributes;
+            if (attributesBlob) {
+                this.attributesBlobHandles.add(attributesBlob);
             }
-
-            snapshotTree.commits = commits;
-
-            // When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
-            // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
-            const appTree = snapshotTree.trees[".app"];
-            const protocolTree = snapshotTree.trees[".protocol"];
-            finalTree = this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
         }
-        return finalTree;
+
+        // When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
+        // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
+        const appTree = snapshotTree.trees[".app"];
+        const protocolTree = snapshotTree.trees[".protocol"];
+
+        return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
     }
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
@@ -418,7 +407,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
-                    const props = {};
+                    const props: GetVersionsTelemetryProps = {};
                     let retrievedSnapshot: ISnapshotContents | undefined;
                     // Here's the logic to grab the persistent cache snapshot implemented by the host
                     // Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
@@ -430,9 +419,21 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     const age = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
                                         (Date.now() - 30 * 24 * 60 * 60 * 1000));
 
+                                    // In order to decrease the number of times we have to execute a snapshot refresh,
+                                    // if this is the summarizer and we have a cache entry but it is past the defaultSummarizerCacheExpiryTimeout,
+                                    // force the network retrieval instead as there might be a more recent snapshot available.
+                                    // See: https://github.com/microsoft/FluidFramework/issues/8995 for additional information.
+                                    if (this.hostPolicy.summarizerClient) {
+                                        if (age > defaultSummarizerCacheExpiryTimeout) {
+                                            props.cacheSummarizerExpired = true;
+                                            return undefined;
+                                        } else {
+                                            props.cacheSummarizerExpired = false;
+                                        }
+                                    }
+
                                     // Record the cache age
-                                    // eslint-disable-next-line @typescript-eslint/dot-notation
-                                    props["cacheEntryAge"] = age;
+                                    props.cacheEntryAge = age;
                                 }
 
                                 return snapshotCachedEntry;
@@ -481,8 +482,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         }
                     }
                     if (method === "network") {
-                        // eslint-disable-next-line @typescript-eslint/dot-notation
-                        props["cacheEntryAge"] = undefined;
+                        props.cacheEntryAge = undefined;
                     }
                     event.end({ ...props, method });
                     return retrievedSnapshot;
@@ -596,7 +596,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 storageToken,
                 this.logger,
                 options,
-                this.hostPolicy.fetchBinarySnapshotFormat,
+                this.snapshotFormatFetchType,
                 controller,
                 this.epochTracker,
             );
@@ -622,7 +622,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.hostPolicy.enableRedeemFallback,
             );
             return odspSnapshot;
-        } catch (error) {
+        } catch (error: any) {
             const errorType = error.errorType;
             // If the snapshot size is too big and the host specified the size limitation(specified in hostSnapshotOptions), then don't try to fetch the snapshot again.
             if ((errorType === OdspErrorType.snapshotTooBig && hostSnapshotOptions?.mds !== undefined) && (this.hostPolicy.summarizerClient !== true)) {
@@ -744,7 +744,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "ReadCommit");
-                const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
+                const snapshotDownloader = async (url: string, fetchOptions: { [index: string]: any }) => {
                     return this.epochTracker.fetchAndParseAsJSON(
                         url,
                         fetchOptions,
@@ -782,39 +782,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return tree;
     }
 
-    /**
-     * Reads a summary tree
-     * @param protocolTreeOrId - Protocol snapshot tree or id of the protocol tree
-     * @param appTreeId - Id of the app tree
-     */
-    private async readSummaryTree(protocolTreeOrId: api.ISnapshotTree | string, appTreeId: string): Promise<api.ISnapshotTree> {
-        // Load the app and protocol trees and return them
-        let hierarchicalProtocolTree: api.ISnapshotTree | null;
-        if (typeof (protocolTreeOrId) === "string") {
-            // Backwards compat for older summaries
-            hierarchicalProtocolTree = await this.readTree(protocolTreeOrId);
-        } else {
-            hierarchicalProtocolTree = protocolTreeOrId;
-        }
-
-        const hierarchicalAppTree = await this.readTree(appTreeId);
-        if (!hierarchicalProtocolTree) {
-            throw new Error("Invalid protocol tree");
-        }
-
-        if (!hierarchicalAppTree) {
-            throw new Error("Invalid app tree");
-        }
-
-        if (hierarchicalProtocolTree.blobs) {
-            const attributesBlob = hierarchicalProtocolTree.blobs.attributes;
-            if (attributesBlob) {
-                this.attributesBlobHandles.add(attributesBlob);
-            }
-        }
-        return this.combineProtocolAndAppSnapshotTree(hierarchicalAppTree, hierarchicalProtocolTree);
-    }
-
     private combineProtocolAndAppSnapshotTree(
         hierarchicalAppTree: api.ISnapshotTree,
         hierarchicalProtocolTree: api.ISnapshotTree,
@@ -822,9 +789,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         const summarySnapshotTree: api.ISnapshotTree = {
             blobs: {
                 ...hierarchicalAppTree.blobs,
-            },
-            commits: {
-                ...hierarchicalAppTree.commits,
             },
             trees: {
                 ...hierarchicalAppTree.trees,
