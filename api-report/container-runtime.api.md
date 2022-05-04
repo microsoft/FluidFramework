@@ -603,9 +603,12 @@ export interface ISummaryConfigurationDisableSummarizer {
 
 // @public (undocumented)
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
+    // @deprecated
     idleTime: number;
+    maxIdleTime: number;
     maxOps: number;
     maxTime: number;
+    minIdleTime: number;
     minOpsForLastSummaryAttempt: number;
     // (undocumented)
     state: "enabled";
