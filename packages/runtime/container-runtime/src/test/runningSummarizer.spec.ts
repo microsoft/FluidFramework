@@ -50,6 +50,8 @@ describe("Runtime", () => {
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
+                minIdleTime: 5000, // 5 sec (idle)
+                maxIdleTime: 5000, // 5 sec (idle)
                 ...summaryCommon,
             };
             const summaryConfigDisableHeuristics: ISummaryConfiguration = {

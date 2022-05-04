@@ -71,6 +71,9 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         this.minOpsForLastSummaryAttempt = this.configuration.minOpsForLastSummaryAttempt;
     }
 
+    /**
+     * !!! TODO: call this getter when merging in new "start()" method
+     */
     public get idleTime(): number {
         const maxIdleTime = this.configuration.maxIdleTime;
         const minIdleTime = this.configuration.minIdleTime;
@@ -98,7 +101,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
             this.idleTimer.clear();
             this.trySummarize("maxOps");
         } else {
-            this.idleTimer.restart();
+            this.idleTimer.restart(this.idleTime);
         }
     }
 

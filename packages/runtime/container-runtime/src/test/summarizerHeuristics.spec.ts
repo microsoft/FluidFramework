@@ -31,6 +31,8 @@ describe("Runtime", () => {
                 maxOpsSinceLastSummary: 7000,
                 initialSummarizerDelayMs: 0,
                 summarizerClientElection: false,
+                minIdleTime: 5000, // 5 sec (idle)
+                maxIdleTime: 5000, // 5 sec (idle)
             };
             let summaryConfig: Readonly<ISummaryConfiguration>;
             let data: ISummarizeHeuristicData;
@@ -60,6 +62,8 @@ describe("Runtime", () => {
                 summarizerClientElection = defaultSummaryConfig.summarizerClientElection,
                 minOpsForLastSummaryAttempt = defaultSummaryConfig.minOpsForLastSummaryAttempt,
                 run = true,
+                minIdleTime = defaultSummaryConfig.minIdleTime,
+                maxIdleTime = defaultSummaryConfig.maxIdleTime,
             }: Partial<ISummaryConfigurationHeuristics & ISummarizeAttempt & {
                 lastOpSequenceNumber: number;
                 run: boolean;
@@ -75,7 +79,9 @@ describe("Runtime", () => {
                     maxOpsSinceLastSummary,
                     initialSummarizerDelayMs,
                     summarizerClientElection,
-                    minOpsForLastSummaryAttempt } as const;
+                    minOpsForLastSummaryAttempt,
+                    minIdleTime,
+                    maxIdleTime } as const;
 
                 runner = new SummarizeHeuristicRunner(
                     data,
