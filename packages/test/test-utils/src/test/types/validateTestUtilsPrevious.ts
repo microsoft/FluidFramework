@@ -300,7 +300,6 @@ declare function get_current_InterfaceDeclaration_IProvideTestFluidObject():
 declare function use_old_InterfaceDeclaration_IProvideTestFluidObject(
     use: TypeOnly<old.IProvideTestFluidObject>);
 use_old_InterfaceDeclaration_IProvideTestFluidObject(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideTestFluidObject());
 
 /*
@@ -313,7 +312,6 @@ declare function get_old_InterfaceDeclaration_ITestContainerConfig():
 declare function use_current_InterfaceDeclaration_ITestContainerConfig(
     use: TypeOnly<current.ITestContainerConfig>);
 use_current_InterfaceDeclaration_ITestContainerConfig(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITestContainerConfig());
 
 /*
@@ -326,7 +324,6 @@ declare function get_current_InterfaceDeclaration_ITestContainerConfig():
 declare function use_old_InterfaceDeclaration_ITestContainerConfig(
     use: TypeOnly<old.ITestContainerConfig>);
 use_old_InterfaceDeclaration_ITestContainerConfig(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestContainerConfig());
 
 /*
@@ -351,7 +348,6 @@ declare function get_current_InterfaceDeclaration_ITestFluidObject():
 declare function use_old_InterfaceDeclaration_ITestFluidObject(
     use: TypeOnly<old.ITestFluidObject>);
 use_old_InterfaceDeclaration_ITestFluidObject(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestFluidObject());
 
 /*
@@ -484,6 +480,7 @@ declare function get_old_VariableDeclaration_TestContainerRuntimeFactory():
 declare function use_current_VariableDeclaration_TestContainerRuntimeFactory(
     use: TypeOnly<typeof current.TestContainerRuntimeFactory>);
 use_current_VariableDeclaration_TestContainerRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_TestContainerRuntimeFactory());
 
 /*
@@ -520,7 +517,6 @@ declare function get_current_ClassDeclaration_TestFluidObject():
 declare function use_old_ClassDeclaration_TestFluidObject(
     use: TypeOnly<old.TestFluidObject>);
 use_old_ClassDeclaration_TestFluidObject(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestFluidObject());
 
 /*
