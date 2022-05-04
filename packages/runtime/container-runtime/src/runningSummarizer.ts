@@ -263,6 +263,7 @@ export class RunningSummarizer implements IDisposable {
         switch (op.type) {
             case MessageType.Summarize:
             case MessageType.SummaryAck:
+            case MessageType.SummaryNack:
                 return false;
             default:
                 return true;

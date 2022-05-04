@@ -76,12 +76,17 @@ describe("Runtime", () => {
 
             const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 
-            async function emitNextOp(increment: number = 1, timestamp: number = Date.now()) {
+            async function emitNextOp(
+                increment: number = 1,
+                timestamp: number = Date.now(),
+                type: string = MessageType.Operation,
+            ) {
                 heuristicData.numNonSystemOps += increment - 1; // -1 because we emit an op below
                 lastRefSeq += increment;
                 const op: Partial<ISequencedDocumentMessage> = {
                     sequenceNumber: lastRefSeq,
                     timestamp,
+                    type,
                 };
                 mockDeltaManager.emit("op", op);
                 await flushPromises();
@@ -396,7 +401,7 @@ describe("Runtime", () => {
                 });
 
                 it("Should summarize one last time before closing >=50 ops", async () => {
-                    await emitNextOp(50); // defaulted to 50 for now
+                    await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
@@ -406,13 +411,37 @@ describe("Runtime", () => {
                 });
 
                 it("Should not summarize one last time before closing <50 ops", async () => {
-                    await emitNextOp(49); // defaulted to 50 for now
+                    await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt - 1);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
                     await stopP;
 
                     assertRunCounts(0, 0, 0, "should not perform lastSummary");
+                });
+
+                it("Should not summarize when processing summary ack op", async () => {
+                    await emitNextOp(summaryConfig.maxOps);
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+
+                    await emitAck();
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+                });
+
+                it("Should not summarize when processing summary nack op", async () => {
+                    await emitNextOp(summaryConfig.maxOps);
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+
+                    await emitNack();
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+                });
+
+                it("Should not summarize when processing summarize op", async () => {
+                    await emitNextOp(summaryConfig.maxOps);
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+
+                    await emitNextOp(1, Date.now(), MessageType.Summarize);
+                    assertRunCounts(0, 0, 0, "should not perform summary");
                 });
             });
 
@@ -1042,7 +1071,7 @@ describe("Runtime", () => {
                 it("Should not summarize before closing", async () => {
                     await startRunningSummarizer(true /* disableHeuristics */);
 
-                    await emitNextOp(50); // defaulted to 50 for now
+                    await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
