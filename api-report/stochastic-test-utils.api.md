@@ -40,10 +40,10 @@ export function chainAsyncIterables<T, TState>(generators: AsyncGenerator_2<Asyn
 // @public
 export function chainIterables<T, TState>(generators: Generator_2<Generator_2<T, TState>, void>): Generator_2<T, TState>;
 
-// @public (undocumented)
+// @public
 export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState>(weights: AsyncWeights<T, TState>): AsyncGenerator_2<T, TState>;
 
-// @public (undocumented)
+// @public
 export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(weights: Weights<T, TState>): Generator_2<T, TState>;
 
 // @public (undocumented)

@@ -12,6 +12,30 @@ import {
     Weights,
 } from "./types";
 
+/**
+ * Returns a generator which produces a categorial distribution with the provided weights.
+ * (see https://en.wikipedia.org/wiki/Categorical_distribution)
+ *
+ * @param weights - Object defining either values or generators to yield from with corresponding likelihoods.
+ * Each potential category can also provide an acceptance function, which restricts whether that category can be
+ * chosen for a particular input state.
+ * @example
+ * ```typescript
+ * const modifyGenerator = ({ random, list }) => {
+ *     return { type: "modify", index: random.integer(0, list.length - 1) };
+ * };
+ * // Produces an infinite stochastic generator which:
+ * // - If both "insert" and "delete" are valid, generates "insert" with 3 times the likelihood as it generates
+ * //  "delete"
+ * // - Produces values from `modifyGenerator` with the same likelihood it produces an "insert"
+ * // - Only allows production of a "delete" operation if the underlying state list is non-empty
+ * const generator = createWeightedGenerator([
+ *     [{ type: "insert" }, 3],
+ *     [modifyGenerator, 3]
+ *     [{ type: "delete" }, 1, (state) => state.list.length > 0]
+ * ]);
+ * ```
+ */
 export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
     weights: Weights<T, TState>,
 ): Generator<T, TState> {
@@ -23,6 +47,9 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
         totalWeight = cumulativeWeight;
     }
 
+    // Note: if this is a perf bottleneck in usage, the cumulative weights array could be
+    // binary searched, and for small likelihood of acceptance (i.e. disproportional weights)
+    // we could pre-filter the acceptance conditions rather than rejection sample the outcome.
     return (state) => {
         const { random } = state;
         const sample = () => {
@@ -193,6 +220,30 @@ export function repeat<T>(t: T): Generator<T, void> {
     return () => t;
 }
 
+/**
+ * Returns a generator which produces a categorial distribution with the provided weights.
+ * (see https://en.wikipedia.org/wiki/Categorical_distribution)
+ *
+ * @param weights - Object defining either values or async generators to yield from with corresponding likelihoods.
+ * Each potential category can also provide an acceptance function, which restricts whether that category can be
+ * chosen for a particular input state.
+ * @example
+ * ```typescript
+ * const modifyGenerator = async ({ random, list }) => {
+ *     return { type: "modify", index: random.integer(0, list.length - 1) };
+ * };
+ * // Produces an infinite generator which:
+ * // - If both "insert" and "delete" are valid, generates "insert" with 3 times the likelihood as it generates
+ * //  "delete"
+ * // - Produces values from `modifyGenerator` with the same likelihood it produces an "insert"
+ * // - Only allows production of a "delete" operation if the underlying state list is non-empty
+ * const generator = createWeightedAsyncGenerator([
+ *     [{ type: "insert" }, 3],
+ *     [modifyGenerator, 3]
+ *     [{ type: "delete" }, 1, (state) => state.list.length > 0]
+ * ]);
+ * ```
+ */
 export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState>(
     weights: AsyncWeights<T, TState>,
 ): AsyncGenerator<T, TState> {
@@ -204,6 +255,9 @@ export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState
         totalWeight = cumulativeWeight;
     }
 
+    // Note: if this is a perf bottleneck in usage, the cumulative weights array could be
+    // binary searched, and for small likelihood of acceptance (i.e. disproportional weights)
+    // we could pre-filter the acceptance conditions rather than rejection sample the outcome.
     return async (state) => {
         const { random } = state;
         const sample = () => {
