@@ -111,13 +111,13 @@ export async function performFuzzActions(
 						expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first)).to
 							.be.true;
 
-                        for (const node of tree.currentView) {
-                            expect(tree.attributeNodeId(node.identifier)).to.equal(
-                                first.attributeNodeId(
-                                    first.convertToNodeId(tree.convertToStableNodeId(node.identifier))
-                                )
-                            );
-                        }
+						for (const node of tree.currentView) {
+							expect(tree.attributeNodeId(node.identifier)).to.equal(
+								first.attributeNodeId(
+									first.convertToNodeId(tree.convertToStableNodeId(node.identifier))
+								)
+							);
+						}
 					}
 				}
 				return state;
