@@ -203,29 +203,32 @@ const getCodeProposal =
 const summarizerClientType = "summarizer";
 
 type CaughtUpListener = (hasCheckpointSequenceNumber: boolean) => void;
+export interface ICatchUpMonitorEvents extends IEvent {
+    (event: "caughtUp", listener: CaughtUpListener): void;
+}
 
-export class CatchUpWaiter implements IDisposable {
+export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> implements IDisposable {
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly hasCheckpointSequenceNumber: boolean;
     private readonly targetSeqNumber: number;
+    private caughtUp: boolean = false;
 
     private readonly opHandler = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
-        if (message.sequenceNumber >= this.targetSeqNumber) {
-            this.listener(this.hasCheckpointSequenceNumber);
-
-            // Once we catch up this class instance is done
-            this.dispose();
+        if (!this.caughtUp && message.sequenceNumber >= this.targetSeqNumber) {
+            this.caughtUp = true;
+            this.emit("caughtUp", this.hasCheckpointSequenceNumber);
         }
     };
 
     /**
-     * Create the CatchUpWaiter, setting the targetSeqNumber to wait for based on DeltaManager's current state.
+     * Create the CatchUpMonitor, setting the targetSeqNumber to wait for based on DeltaManager's current state.
      * Note that the listener won't be invoked until after (or while) beginWaiting is called
      */
     constructor(
         container: IContainer,
-        private readonly listener: CaughtUpListener,
     ) {
+        super();
+
         assert(container.connectionState !== ConnectionState.Disconnected,
             0x0cd /* "Container disconnected while waiting for ops!" */);
 
@@ -235,14 +238,20 @@ export class CatchUpWaiter implements IDisposable {
 
         assert(this.targetSeqNumber >= this.deltaManager.lastSequenceNumber,
             0x266 /* "Cannot wait for seqNumber below last processed sequence number" */);
-    }
 
-    /** Emit the "caughtUp" event once deltaManager has processed all ops known at the time this function is called */
-    public beginWaiting() {
         this.deltaManager.on("op", this.opHandler);
 
         // Simulate the last processed op
         this.opHandler({ sequenceNumber: this.deltaManager.lastSequenceNumber });
+
+        this.on("newListener", (event: string, listener) => {
+            if (event === "caughtUp") {
+                const caughtUpListener = listener as CaughtUpListener;
+                if (this.caughtUp) {
+                    caughtUpListener(this.hasCheckpointSequenceNumber);
+                }
+            }
+        });
     }
 
     public disposed: boolean = false;
@@ -252,6 +261,7 @@ export class CatchUpWaiter implements IDisposable {
         }
         this.disposed = true;
 
+        this.removeAllListeners();
         this.deltaManager.off("op", this.opHandler);
     }
 }
@@ -643,7 +653,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.propagateConnectionState();
                     }
                 },
-                getCatchUpWaiter: (listener: () => void) => new CatchUpWaiter(this, listener),
+                createCatchUpMonitor: () => new CatchUpMonitor(this),
             },
             this.mc.logger,
         );

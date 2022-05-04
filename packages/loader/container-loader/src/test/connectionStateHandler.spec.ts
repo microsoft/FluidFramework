@@ -4,12 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+import EventEmitter from "events";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { CatchUpWaiter, ConnectionState } from "../container";
+import { CatchUpMonitor, ConnectionState } from "../container";
 import { ConnectionStateHandler } from "../connectionStateHandler";
 
 describe("ConnectionStateHandler Tests", () => {
@@ -76,9 +77,7 @@ describe("ConnectionStateHandler Tests", () => {
                 shouldClientJoinWrite: () => shouldClientJoinWrite,
                 logConnectionIssue: (eventName: string) => { throw new Error("logConnectionIssue"); },
                 connectionStateChanged: () => {},
-                //* ???
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                getCatchUpWaiter: () => undefined as unknown as CatchUpWaiter,
+                createCatchUpMonitor: () => new EventEmitter() as CatchUpMonitor,
             },
             new TelemetryNullLogger(),
         );
