@@ -660,12 +660,3 @@ export async function waitForSummary(mainContainer: IContainer): Promise<string>
 	const ackedSummary = await summaryCollection.waitSummaryAck(deltaManager.lastSequenceNumber);
 	return ackedSummary.summaryAck.contents.handle;
 }
-
-/**
- * Returns a random-js `Random` instance, optionally seeded to make it deterministic.
- * @param seed Optional seed to make the randomness source deterministic.
- * If not provided, this leverages Math.random() as an engine which is *not* deterministic.
- */
-export function makeRandom(seed?: number): Random {
-	return seed === undefined ? new Random() : new Random(Random.engines.mt19937().seed(seed));
-}
