@@ -14,8 +14,8 @@ describe("getFileLink", () => {
     const logger = new TelemetryUTLogger();
     const storageTokenFetcher = async () => "StorageToken";
     const fileItemResponse = {
-        webDavUrl: "fetchDavUrl",
-        webUrl: "fetchWebUrl",
+        webDavUrl: `${siteUrl}/fetchDavUrl`,
+        webUrl: `${siteUrl}/fetchWebUrl`,
     };
 
     it("should return web url for Consumer user", async () => {
@@ -50,7 +50,7 @@ describe("getFileLink", () => {
             async () => getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId4" }, "Enterprise", logger),
             [
                 async () => okResponse({}, fileItemResponse),
-                async () => okResponse({}, { d: { directUrl: "sharelink" } }),
+                async () => okResponse({}, { d: { LinkingUrl: "sharelink" } }),
             ],
         );
         assert.strictEqual(
