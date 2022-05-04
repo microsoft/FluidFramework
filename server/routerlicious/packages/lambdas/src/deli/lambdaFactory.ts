@@ -53,7 +53,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
 
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private readonly operationsDbMongoManager: MongoManager,
+        private readonly operationsDbMongoManager: DatabaseManager,
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
         private readonly clientManager: IClientManager | undefined,
@@ -170,7 +170,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             this.serviceConfiguration,
             sessionMetric,
             sessionStartMetric);
-DatabaseManagerDatabaseManager
         deliLambda.on("close", (closeType) => {
             const handler = async () => {
                 if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)) {
