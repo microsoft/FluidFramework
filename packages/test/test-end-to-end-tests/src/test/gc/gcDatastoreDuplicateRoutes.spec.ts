@@ -91,7 +91,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 
     const logger = new TelemetryNullLogger();
 
-    async function summarizeOnNewContainerAndGetGCTree(summaryVersion?: string): Promise<IGarbageCollectionState> {
+    async function summarizeOnNewContainerAndGetGCState(summaryVersion?: string): Promise<IGarbageCollectionState> {
         await provider.ensureSynchronized();
         const summarizerClient = await loadSummarizer(
             provider,
@@ -144,13 +144,13 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         const dds = SharedMap.create(mainDataStore.dataStoreRuntime);
         mainDataStore._root.set("dds", dds.handle);
 
-        await summarizeOnNewContainerAndGetGCTree();
+        await summarizeOnNewContainerAndGetGCState();
 
         // Change ds1 but not the root dds
         dds.set("change", "change1");
 
         assert(latestAckedSummary !== undefined, "Ack'd summary isn't available as expected");
-        const gcTree = await summarizeOnNewContainerAndGetGCTree(latestAckedSummary.summaryAck.contents.handle);
+        const gcTree = await summarizeOnNewContainerAndGetGCState(latestAckedSummary.summaryAck.contents.handle);
         assert(gcTree !== undefined, "Expected a gc tree!");
         validateGCStateHasNoDuplicateRoutes(gcTree);
     });
