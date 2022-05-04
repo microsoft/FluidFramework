@@ -7,90 +7,96 @@ import { assert } from "@fluidframework/common-utils";
 import { Client } from "./client";
 import {
     ISegment,
+} from "./mergeTree";
+import { ICombiningOp, ReferenceType } from "./ops";
+import { addProperties, PropertySet } from "./properties";
+import {
+    refHasTileLabels,
+    refHasRangeLabels,
     ReferencePosition,
     refGetRangeLabels,
     refGetTileLabels,
     refHasRangeLabel,
     refHasTileLabel,
-} from "./mergeTree";
-import { ICombiningOp, ReferenceType } from "./ops";
-import { addProperties, PropertySet } from "./properties";
+    minReferencePosition,
+    maxReferencePosition,
+    compareReferencePositions,
+} from "./referencePositions";
 
+/**
+ * @deprecated - Use ReferencePosition
+ */
 export class LocalReference implements ReferencePosition {
     public static readonly DetachedPosition: number = -1;
 
-    public properties: PropertySet | undefined;
-    public pairedRef?: LocalReference;
-    public segment: ISegment | undefined;
-
+    /**
+     * @deprecated - use createReferencePosition instead
+     */
     constructor(
         private readonly client: Client,
         initSegment: ISegment,
         public offset = 0,
         public refType = ReferenceType.Simple,
+        public properties?: PropertySet,
     ) {
-        this.segment = initSegment;
     }
 
+    public pairedRef?: ReferencePosition;
+    public segment: ISegment | undefined;
+
+    /**
+     * @deprecated - use minReferencePosition
+     */
     public min(b: LocalReference) {
-        if (this.compare(b) < 0) {
-            return this;
-        } else {
-            return b;
-        }
+        return minReferencePosition(this, b);
     }
-
+    /**
+     * @deprecated - use maxReferencePosition
+     */
     public max(b: LocalReference) {
-        if (this.compare(b) > 0) {
-            return this;
-        } else {
-            return b;
-        }
+        return maxReferencePosition(this, b);
     }
-
+    /**
+     * @deprecated - use compareReferencePositions
+     */
     public compare(b: LocalReference) {
-        if (this.segment === b.segment) {
-            return this.offset - b.offset;
-        } else {
-            if (this.segment === undefined
-                || (b.segment !== undefined &&
-                    this.segment.ordinal < b.segment.ordinal)) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
+        return compareReferencePositions(this, b);
     }
 
-    public toPosition() {
-        if (this.segment && this.segment.parent) {
-            return this.getOffset() + this.client.getPosition(this.segment);
-        } else {
-            return LocalReference.DetachedPosition;
-        }
+    /**
+     * @deprecated - use refHasTileLabels
+     */
+     hasTileLabels() {
+        return refHasTileLabels(this);
     }
-
-    public hasTileLabels() {
-        return !!this.getTileLabels();
+    /**
+     * @deprecated - use refHasRangeLabels
+     */
+    hasRangeLabels() {
+        return refHasRangeLabels(this);
     }
-
-    public hasRangeLabels() {
-        return !!this.getRangeLabels();
-    }
-
-    public hasTileLabel(label: string): boolean {
+    /**
+     * @deprecated - use refHasTileLabel
+     */
+    hasTileLabel(label: string): boolean {
         return refHasTileLabel(this, label);
     }
-
-    public hasRangeLabel(label: string): boolean {
+    /**
+     * @deprecated - use refHasRangeLabel
+     */
+    hasRangeLabel(label: string): boolean {
         return refHasRangeLabel(this, label);
     }
-
-    public getTileLabels(): string[] | undefined {
+    /**
+     * @deprecated - use refGetTileLabels
+     */
+    getTileLabels(): string[] | undefined {
         return refGetTileLabels(this);
     }
-
-    public getRangeLabels(): string[] | undefined {
+    /**
+     * @deprecated - use refGetRangeLabels
+     */
+    getRangeLabels(): string[] | undefined {
         return refGetRangeLabels(this);
     }
 
@@ -100,10 +106,6 @@ export class LocalReference implements ReferencePosition {
 
     public addProperties(newProps: PropertySet, op?: ICombiningOp) {
         this.properties = addProperties(this.properties, newProps, op);
-    }
-
-    public getClient() {
-        return this.client;
     }
 
     public getSegment() {
@@ -119,6 +121,20 @@ export class LocalReference implements ReferencePosition {
 
     public getProperties() {
         return this.properties;
+    }
+
+    /**
+     * @deprecated - no longer supported
+     */
+    public getClient() {
+        return this.client;
+    }
+
+    /**
+     * @deprecated - use getLocalReferencePosition instead
+     */
+    public toPosition() {
+        return this.getClient().localReferencePositionToPosition(this);
     }
 }
 
@@ -224,6 +240,20 @@ export class LocalReferenceCollection {
         return this.refCount === 0;
     }
 
+    public createReference(
+        offset: number,
+        refType: ReferenceType,
+        properties: PropertySet | undefined,
+        client: Client): ReferencePosition {
+        const ref = new LocalReference(
+            client,
+            this.segment,
+           refType,
+           offset,
+        );
+        return ref;
+    }
+
     public addLocalRef(lref: LocalReference) {
         const refsAtOffset = this.refsByOffset[lref.offset];
         if (refsAtOffset === undefined) {
@@ -237,7 +267,7 @@ export class LocalReferenceCollection {
             refsAtOffset.at.push(lref);
         }
 
-        if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+        if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
             this.hierRefCount++;
         }
         this.refCount++;
@@ -249,7 +279,7 @@ export class LocalReferenceCollection {
                 const index = refs.indexOf(lref);
                 if (index >= 0) {
                     refs.splice(index, 1);
-                    if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                         this.hierRefCount--;
                     }
                     this.refCount--;
@@ -319,7 +349,7 @@ export class LocalReferenceCollection {
             for (const lref of localRefs) {
                 lref.segment = splitSeg;
                 lref.offset -= offset;
-                if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                     this.hierRefCount--;
                     localRefs.hierRefCount++;
                 }
@@ -342,7 +372,7 @@ export class LocalReferenceCollection {
                     beforeRefs.push(lref);
                     lref.segment = this.segment;
                     lref.offset = 0;
-                    if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                         this.hierRefCount++;
                     }
                     this.refCount++;
@@ -372,7 +402,7 @@ export class LocalReferenceCollection {
                     afterRefs.push(lref);
                     lref.segment = this.segment;
                     lref.offset = this.segment.cachedLength - 1;
-                    if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                         this.hierRefCount++;
                     }
                     this.refCount++;

@@ -35,8 +35,6 @@ import {
     Marker,
     MergeTree,
     reservedMarkerIdKey,
-    reservedRangeLabelsKey,
-    reservedTileLabelsKey,
 } from "../mergeTree";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { createRemoveRangeOp } from "../opBuilder";
@@ -51,6 +49,7 @@ import {
     MergeTreeTextHelper,
     TextSegment,
 } from "../textSegment";
+import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions";
 import { specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
