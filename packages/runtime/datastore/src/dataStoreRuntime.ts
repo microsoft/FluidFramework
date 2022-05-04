@@ -857,6 +857,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
+    /**
+     * Revert a local op.
+     * @param content - The content of the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
     public rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
         this.verifyNotClosed();
 

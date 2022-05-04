@@ -283,6 +283,12 @@ export interface IFluidDataStoreChannel extends
 
     applyStashedOp(content: any): Promise<unknown>;
 
+    /**
+     * Revert a local message.
+     * @param type - The type of the original message.
+     * @param content - The content of the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
 }
 

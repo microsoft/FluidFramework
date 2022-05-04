@@ -89,6 +89,11 @@ export interface IDeltaHandler {
      */
     applyStashedOp(message: any): unknown;
 
+    /**
+     * Revert a local op.
+     * @param message - The original message that was submitted.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
     rollback?(message: any, localOpMetadata: unknown): void;
 }
 
