@@ -3,7 +3,7 @@
     "examples/**",
     "experimental/**",
     "packages/**",
-    "azure/**"
+    "azure/packages/**"
   ],
   "version": "0.59.3000"
 }
