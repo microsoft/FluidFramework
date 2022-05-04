@@ -467,7 +467,7 @@ export class ConnectionManager implements IConnectionManager {
                     this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
                     connection = undefined;
                 }
-            } catch (origError) {
+            } catch (origError: any) {
                 if (typeof origError === "object" && origError !== null &&
                     origError?.errorType === DeltaStreamConnectionForbiddenError.errorType) {
                     connection = new NoDeltaStream();

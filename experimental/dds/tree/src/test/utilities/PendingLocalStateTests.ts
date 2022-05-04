@@ -13,6 +13,7 @@ import type { EditLog } from '../../EditLog';
 import { SharedTree } from '../../SharedTree';
 import { Change, StablePlace } from '../../ChangeTypes';
 import {
+	getEditLogInternal,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
 	setUpTestTree,
@@ -67,9 +68,7 @@ export function runPendingLocalStateTests(
 						testObjectProvider,
 						container,
 						() =>
-							tree.applyEdit(
-								...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left))
-							) as Edit<ChangeInternal>
+							tree.applyEdit(...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left)))
 					);
 					await testObjectProvider.ensureSynchronized();
 					const leftTraitAfterOfflineClose = tree2.currentView.getTrait(
@@ -82,7 +81,7 @@ export function runPendingLocalStateTests(
 					const container3 = await loader.resolve({ url }, pendingLocalState);
 					const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, '/');
 					const tree3 = await dataObject3.getSharedObject<SharedTree>(documentId);
-					expect((tree3.editsInternal as EditLog<ChangeInternal>).isLocalEdit(edit.id)).to.be.true; // Kludge
+					expect((tree3.edits as unknown as EditLog<ChangeInternal>).isLocalEdit(edit.id)).to.be.true; // Kludge
 
 					await testObjectProvider.ensureSynchronized();
 
@@ -99,12 +98,12 @@ export function runPendingLocalStateTests(
 						'Tree collaborating with a client that applies stashed pending edits should see them.'
 					);
 
-					const stableEdit = stabilizeEdit(tree, edit);
+					const stableEdit = stabilizeEdit(tree, edit as unknown as Edit<ChangeInternal>);
 					expect(
-						stabilizeEdit(tree2, (await tree2.editsInternal.tryGetEdit(edit.id)) ?? fail())
+						stabilizeEdit(tree2, (await getEditLogInternal(tree2).tryGetEdit(edit.id)) ?? fail())
 					).to.deep.equal(stableEdit);
 					expect(
-						stabilizeEdit(tree3, (await tree3.editsInternal.tryGetEdit(edit.id)) ?? fail())
+						stabilizeEdit(tree3, (await getEditLogInternal(tree3).tryGetEdit(edit.id)) ?? fail())
 					).to.deep.equal(stableEdit);
 					expect(tree2.edits.length).to.equal(initialEditLogLength + 1);
 					expect(tree3.edits.length).to.equal(initialEditLogLength + 1);

@@ -507,7 +507,7 @@ export function runSharedTreeVersioningTests(
 					version: newVersion,
 				};
 				containerRuntimeFactory.pushMessage({ contents: op });
-				(tree.editsInternal as EditLog).getLocalEdits = () => {
+				(tree.edits as EditLog).getLocalEdits = () => {
 					throw new Error('Simulated issue in update');
 				};
 				const matchesFailedVersionUpdate = (event: ITelemetryBaseEvent) =>

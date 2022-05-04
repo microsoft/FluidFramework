@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-// See #9219
-/* eslint-disable max-lines */
 import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -62,7 +60,6 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
-    ISummaryConfiguration,
     ISummaryContent,
     ISummaryTree,
     MessageType,
@@ -191,22 +188,85 @@ export interface ContainerRuntimeMessage {
     contents: any;
     type: ContainerMessageType;
 }
+export interface ISummaryBaseConfiguration {
+    /**
+     *  Delay before first attempt to spawn summarizing container.
+     */
+    initialSummarizerDelayMs: number;
 
-// Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
-const IdleDetectionTime = 5000;
+    /**
+     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
+     * This defaults to false (disabled) and must be explicitly set to true to enable.
+     */
+    summarizerClientElection: boolean;
 
-const DefaultSummaryConfiguration: ISummaryConfiguration = {
-    idleTime: IdleDetectionTime,
+    /**
+     * Defines the maximum allowed time to wait for a pending summary ack.
+     * The maximum amount of time client will wait for a summarize is the minimum of
+     * maxSummarizeAckWaitTime (currently 10 * 60 * 1000) and maxAckWaitTime.
+     */
+    maxAckWaitTime: number;
+    /**
+     * Defines the maximum number of Ops in between Summaries that can be
+     * allowed before forcibly electing a new summarizer client.
+     */
+    maxOpsSinceLastSummary: number;
+}
 
-    maxTime: IdleDetectionTime * 12,
+export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
+    state: "enabled";
+    /**
+     * Defines the maximum allowed time in between summarizations.
+     */
+     idleTime: number;
+    /**
+     * Defines the maximum allowed time, since the last received Ack,  before running the summary
+     * with reason maxTime.
+     */
+    maxTime: number;
+    /**
+     * Defines the maximum number of Ops, since the last received Ack, that can be allowed
+     * before running the summary with reason maxOps.
+     */
+     maxOps: number;
+    /**
+     * Defnines the minimum number of Ops, since the last received Ack, that can be allowed
+     * before running the last summary.
+     */
+    minOpsForLastSummaryAttempt: number;
+}
 
-    // Snapshot if 1000 ops received since last snapshot.
-    maxOps: 1000,
+export interface ISummaryConfigurationDisableSummarizer {
+    state: "disabled";
+}
 
-    // Wait 2 minutes for summary ack
-    // this is less than maxSummarizeAckWaitTime
-    // the min of the two will be chosen
-    maxAckWaitTime: 120000,
+export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
+    state: "disableHeuristics";
+}
+
+export type ISummaryConfiguration =
+| ISummaryConfigurationDisableSummarizer
+| ISummaryConfigurationDisableHeuristics
+| ISummaryConfigurationHeuristics;
+
+export const DefaultSummaryConfiguration: ISummaryConfiguration = {
+    state: "enabled",
+
+    idleTime: 5000 * 3,
+
+    maxTime: 5000 * 12,
+
+    maxOps: 1000, // Summarize if 1000 ops received since last snapshot.
+
+    minOpsForLastSummaryAttempt: 50,
+
+    maxAckWaitTime: 6 * 10 * 1000, // 6 min.
+
+    maxOpsSinceLastSummary: 7000,
+
+    initialSummarizerDelayMs: 5000, // 5 secs.
+
+    summarizerClientElection: false,
 };
 
 export interface IGCRuntimeOptions {
@@ -241,39 +301,43 @@ export interface IGCRuntimeOptions {
 }
 
 export interface ISummaryRuntimeOptions {
-    /**
-     * Flag that disables summaries if it is set to true.
-     */
-    disableSummaries?: boolean;
-
-    /**
-     * @deprecated - To disable summaries, please set disableSummaries===true.
-     * Flag that will generate summaries if connected to a service that supports them.
-     * This defaults to true and must be explicitly set to false to disable.
-     */
-    generateSummaries?: boolean;
-
-    /* Delay before first attempt to spawn summarizing container. */
-    initialSummarizerDelayMs?: number;
 
     /** Override summary configurations set by the server. */
-    summaryConfigOverrides?: Partial<ISummaryConfiguration>;
+    summaryConfigOverrides?: ISummaryConfiguration;
 
     // Flag that disables putting channels in isolated subtrees for each data store
     // and the root node when generating a summary if set to true.
     // Defaults to FALSE (enabled) for now.
     disableIsolatedChannels?: boolean;
 
-    // Defaults to 7000 ops
-    maxOpsSinceLastSummary?: number;
+    /**
+     *  @deprecated - use `summaryConfigOverrides.initialSummarizerDelayMs` instead.
+     *  Delay before first attempt to spawn summarizing container.
+    */
+    initialSummarizerDelayMs?: number;
 
     /**
+     * @deprecated - use `summaryConfigOverrides.disableSummaries` instead.
+     * Flag that disables summaries if it is set to true.
+     */
+    disableSummaries?: boolean;
+
+    /**
+     * @deprecated - use `summaryConfigOverrides.maxOpsSinceLastSummary` instead.
+     * Defaults to 7000 ops
+     */
+     maxOpsSinceLastSummary?: number;
+
+     /**
+     * @deprecated - use `summaryConfigOverrides.summarizerClientElection` instead.
      * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-     * THis defaults to false (disabled) and must be explicitly set to true to enable.
+     * This defaults to false (disabled) and must be explicitly set to true to enable.
      */
     summarizerClientElection?: boolean;
 
-    /** Options that control the running summarizer behavior. */
+    /**
+     * @deprecated - use `summaryConfigOverrides.state = "DisableHeuristics"` instead.
+     *  Options that control the running summarizer behavior. */
     summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
 }
 
@@ -1022,17 +1086,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.summarizerClientElection?.electedClientId;
     }
 
-    private get summaryConfiguration() {
-        return {
-            // the defaults
-            ... DefaultSummaryConfiguration,
-            // the server provided values
-            ... this.context?.serviceConfiguration?.summary,
-            // the runtime configuration overrides
-            ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
-        };
-    }
-
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
@@ -1070,9 +1123,68 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._summarizer;
     }
 
-    private get summariesDisabled(): boolean {
-        return this.runtimeOptions.summaryOptions.disableSummaries === true ||
-            this.runtimeOptions.summaryOptions.summaryConfigOverrides?.disableSummaries === true;
+    private readonly summariesDisabled: boolean;
+    private isSummariesDisabled(): boolean {
+        // back-compat: disableSummaries was moved from ISummaryRuntimeOptions
+        //   to ISummaryConfiguration in 0.60.
+        if (this.runtimeOptions.summaryOptions.disableSummaries === true) {
+            return true;
+        }
+        return this.summaryConfiguration.state === "disabled";
+    }
+
+    private readonly heuristicsDisabled: boolean;
+    private isHeuristicsDisabled(): boolean {
+        // back-compat: disableHeuristics was moved from ISummarizerOptions
+        //   to ISummaryConfiguration in 0.60.
+        if (this.runtimeOptions.summaryOptions.summarizerOptions?.disableHeuristics === true) {
+            return true;
+        }
+        return this.summaryConfiguration.state === "disableHeuristics";
+    }
+
+    private readonly summarizerClientElectionEnabled: boolean;
+    private isSummarizerClientElectionEnabled(): boolean {
+        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection")) {
+            return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ?? true;
+        }
+        // back-compat: summarizerClientElection was moved from ISummaryRuntimeOptions
+        //   to ISummaryConfiguration in 0.60.
+        if (this.runtimeOptions.summaryOptions.summarizerClientElection === true) {
+            return true;
+        }
+        if (this.summaryConfiguration.state !== "disabled") {
+            return this.summaryConfiguration.summarizerClientElection === true;
+        } else {
+            return false;
+        }
+    }
+    private readonly maxOpsSinceLastSummary: number;
+    private getMaxOpsSinceLastSummary(): number {
+        // back-compat: maxOpsSinceLastSummary was moved from ISummaryRuntimeOptions
+        //   to ISummaryConfiguration in 0.60.
+        if (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary !== undefined) {
+            return this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary;
+        }
+        if (this.summaryConfiguration.state !== "disabled") {
+            return this.summaryConfiguration.maxOpsSinceLastSummary;
+        } else {
+            return 0;
+        }
+    }
+
+    private readonly initialSummarizerDelayMs: number;
+    private getInitialSummarizerDelayMs(): number {
+        // back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
+        //   to ISummaryConfiguration in 0.60.
+        if (this.runtimeOptions.summaryOptions.initialSummarizerDelayMs !== undefined) {
+            return this.runtimeOptions.summaryOptions.initialSummarizerDelayMs;
+        }
+        if (this.summaryConfiguration.state !== "disabled") {
+            return this.summaryConfiguration.initialSummarizerDelayMs;
+        } else {
+            return 0;
+        }
     }
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
@@ -1093,9 +1205,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
+        private readonly summaryConfiguration: ISummaryConfiguration = {
+            // the defaults
+            ... DefaultSummaryConfiguration,
+            // the runtime configuration overrides
+            ... runtimeOptions.summaryOptions?.summaryConfigOverrides,
+        },
     ) {
         super();
-
         this.messageAtLastSummary = metadata?.message;
 
         // If this is an existing container, we get values from metadata.
@@ -1123,6 +1240,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
+
+        this.summariesDisabled = this.isSummariesDisabled();
+        this.heuristicsDisabled = this.isHeuristicsDisabled();
+        this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
+        this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
+        this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
         this._aliasingEnabled =
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
@@ -1236,11 +1359,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             || this.pendingStateManager.hasPendingMessages();
         this.context.updateDirtyContainerState(this.dirtyContainer);
 
-        // Map the deprecated generateSummaries flag to disableSummaries.
-        if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
-            this.runtimeOptions.summaryOptions.disableSummaries = true;
-        }
-
         if (this.summariesDisabled) {
             this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         }
@@ -1258,16 +1376,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
                 SummarizerClientElection.isClientEligible,
             );
-            const summarizerClientElectionEnabled =
-                this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ??
-                this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
-            const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
+
             this.summarizerClientElection = new SummarizerClientElection(
                 orderedClientLogger,
                 this.summaryCollection,
                 orderedClientElectionForSummarizer,
-                maxOpsSinceLastSummary,
-                summarizerClientElectionEnabled,
+                this.maxOpsSinceLastSummary,
+                this.summarizerClientElectionEnabled,
             );
 
             if (this.context.clientDetails.type === summarizerClientType) {
@@ -1285,7 +1400,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Only create a SummaryManager and SummarizerClientElection
                 // if summaries are enabled and we are not the summarizer client.
                 const defaultAction = () => {
-                    if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
+                    if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
                         this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
                         // unregister default to no log on every op after falling behind
                         // and register summary ack handler to re-register this handler
@@ -1316,9 +1431,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         formExponentialFn({ coefficient: 20, initialDelay: 0 }),
                     ),
                     {
-                        initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+                        initialDelayMs: this.initialSummarizerDelayMs,
                     },
-                    this.runtimeOptions.summaryOptions.summarizerOptions,
+                    this.heuristicsDisabled,
                 );
                 this.summaryManager.start();
             }
@@ -2930,7 +3045,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // because it is a misuse of the API rather than an expected failure.
             throw new UsageError(
                 `Can't summarize, disableSummaries: ${this.summariesDisabled}`,
-            );
+                );
         }
     };
 

@@ -33,7 +33,11 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             [],
             []);
         const runtimeOptions: IContainerRuntimeOptions = {
-            summaryOptions: { disableSummaries: true },
+            summaryOptions: {
+                summaryConfigOverrides: {
+                    state: "disabled",
+                },
+             },
             gcOptions: { gcAllowed: true, runGCInTestMode: deleteUnreferencedContent, writeDataAtRoot: true },
         };
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>

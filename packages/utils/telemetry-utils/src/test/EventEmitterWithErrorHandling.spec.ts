@@ -72,7 +72,7 @@ describe("EventEmitterWithErrorHandling", () => {
             Object.assign(error, { prop: 4 });
             emitter.emit("error", error, 3);  // the extra args (e.g. 3 here) are dropped
             assert.fail("previous line should throw");
-        } catch (error) {
+        } catch (error: any) {
             assert.strictEqual(error.message, "No one is listening");
             assert.strictEqual(error.prop, 4);
             assert.strictEqual(errorHandlerCalled, true);

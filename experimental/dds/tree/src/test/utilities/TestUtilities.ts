@@ -6,7 +6,7 @@
 import { resolve } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
-import { SummaryCollection } from '@fluidframework/container-runtime';
+import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
@@ -53,6 +53,7 @@ import { newEdit, setTrait } from '../../EditUtilities';
 import { SharedTree } from '../../SharedTree';
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
 import { convertEditIds } from '../../IdConversion';
+import { OrderedEditSet } from '../../EditLog';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -283,8 +284,17 @@ export async function setUpLocalServerTestSharedTree(
 			TestDataStoreType,
 			new TestFluidObjectFactory(registry),
 			{
-				summaryOptions: { initialSummarizerDelayMs: 0 },
 				enableOfflineLoad: true,
+				summaryOptions: {
+					summaryConfigOverrides: {
+						...DefaultSummaryConfiguration,
+						...{
+							idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
+							maxTime: 1000 * 12,
+							initialSummarizerDelayMs: 0,
+						},
+					},
+				},
 			},
 			[innerRequestHandler]
 		);
@@ -584,6 +594,10 @@ export function stabilizeEdit(
 	edit: Edit<ChangeInternal>
 ): Edit<ReplaceRecursive<ChangeInternal, NodeId, StableNodeId>> {
 	return convertEditIds(edit, (id) => tree.convertToStableNodeId(id));
+}
+
+export function getEditLogInternal(tree: SharedTree): OrderedEditSet<ChangeInternal> {
+	return tree.edits as unknown as OrderedEditSet<ChangeInternal>;
 }
 
 /**

@@ -120,7 +120,7 @@ async function main() {
         }
 
         console.log(`Layer check passed (${packages.packages.length} packages)`)
-    } catch (e) {
+    } catch (e: any) {
         console.error(e.message);
         process.exit(-2);
     }

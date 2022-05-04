@@ -11,7 +11,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Trace } from "@fluidframework/common-utils";
+import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
@@ -778,7 +778,34 @@ export class Client {
         }
     }
 
-    public applyMsg(msg: ISequencedDocumentMessage) {
+    public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
+    public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
+    public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
+    public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
+        let metadata: SegmentGroup | SegmentGroup[] | undefined;
+        switch (op.type) {
+            case MergeTreeDeltaType.INSERT:
+                this.applyInsertOp({ op });
+                metadata = this.peekPendingSegmentGroups();
+                break;
+            case MergeTreeDeltaType.REMOVE:
+                this.applyRemoveRangeOp({ op });
+                metadata = this.peekPendingSegmentGroups();
+                break;
+            case MergeTreeDeltaType.ANNOTATE:
+                this.applyAnnotateRangeOp({ op });
+                metadata = this.peekPendingSegmentGroups();
+                break;
+            case MergeTreeDeltaType.GROUP:
+                return op.ops.map((o) => this.applyStashedOp(o));
+            default:
+                unreachableCase(op, "unrecognized op type");
+        }
+        assert(!!metadata, "Applying op must generate a pending segment");
+        return metadata;
+    }
+
+    public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
         // Ensure client ID is registered
         this.getOrAddShortClientId(msg.clientId);
         // Apply if an operation message
@@ -787,7 +814,7 @@ export class Client {
                 op: msg.contents as IMergeTreeOp,
                 sequencedMessage: msg,
             };
-            if (opArgs.sequencedMessage?.clientId === this.longClientId) {
+            if (opArgs.sequencedMessage?.clientId === this.longClientId || local) {
                 this.ackPendingSegment(opArgs);
             }
             else {

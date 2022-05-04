@@ -136,7 +136,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * returns the value of a sub-property
      * This is a shortcut for .get(in_ids, in_options).getValue()
-     * @param  {string|number|array<string|number>} in_ids the ID or IDs of the property or an array of IDs
+     * @param  {string|number|Array<string|number>} in_ids the ID or IDs of the property or an array of IDs
      *     if an array is passed, the .get function will be performed on each id in sequence
      *     for example .getValue(['position','x']) is equivalent to .get('position').get('x').getValue().
      *     If at any point .get resolves to a ReferenceProperty, it will, by default, return the property that the
@@ -326,8 +326,8 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * found in that object.
      * @see {setValues}
      * @param {object} in_values The object containing the nested values to assign
-     * @param {Bool} in_typed Whether the values are typed/polymorphic.
-     * @param {Bool} in_initial  - Whether we are setting default/initial values
+     * @param {boolean} in_typed Whether the values are typed/polymorphic.
+     * @param {boolean} in_initial  - Whether we are setting default/initial values
         or if the function is called directly with the values to set.
      */
     _setValues(in_values, in_typed, in_initial) {

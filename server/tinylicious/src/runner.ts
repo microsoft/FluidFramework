@@ -46,7 +46,7 @@ export class TinyliciousRunner implements IRunner {
             await this.ensurePortIsFree();
         } catch (e) {
             if (this.config.get("exitOnPortConflict")) {
-                winston.info(e.message);
+                winston.info(e);
                 return;
             }
             throw e;
