@@ -8,16 +8,18 @@ To enable flexibility both for how our users configure the system, as well as wh
 These are some building blocks.
 Names are not final.
 
-| Name           | Parameterized Over                                                                                                               | Description                                                                                                  | Possible Features                                                     | Depends on  |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- | ----------- |
-| `Tree`         | Sequence type, Definition and Label Types                                                                                        | Abstractions used for tree data models                                                                       |                                                                       |             |
-| `Forest`       | Chunk Representations, Observers (ex: parents index, identifier identity index, external observers, chance set builder?), Chunk Loader | Store and edits in memory trees, notifies observers of changes                                               | Partial trees (async loading subtrees). Copy On Write.                | `Tree`      |
-| `Schema`       |                                                                                                                                  | Allows expressing type based constraints for tree nodes. Used by `view schema` and `stored schema` |
-| `Schematize`   | Schema System (ex: Schema), Tree Type (ex: EditableTree)                                                                         | Handles differences between `stored schema` and `view schema` (schema on read)                     |                                                                       | `Tree`      |
-| `EditableTree` | RootEditor                                                                                                                       | Tree implementation allowing editing, compatible with `Schematize`                                           |                                                                       | `Tree`      |
-| `ChangeSet`    |                                                                                                                                  | Abstraction for chance sets, and an implementation. Supports needs of `Rebaser`. Can be applied to Forests.  |                                                                       | `Forest`    |
-| `Rebaser`      | ChangeSet Representation, State Tracker, Change Updater                                                                          | Adjust a stream of edits to account for their original vs sequenced preceding state                          | Could handle concept of local edits, or leave that for something else | `ChangeSet` |
-| `Checkout`     | ChangeSet / Edit Representation                                                                                                  | Translates friendly editing+viewing API into ChangeSets. Provides transactionality and snapshot isolation.   |
+| Name           | Parameterized Over                                                                                                                                | Description                                                                                                 | Possible Features (Could be implemented, works without) | Depends on                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------- |
+| `Tree`         | Sequence type, Definition and Label Types                                                                                                         | Abstractions used for tree data models                                                                      |                                                         |                                     |
+| `Forest`       | Chunk Representations, Observers (ex: parents index, identifier identity index, external observers, chance set builder?), Chunk Loader            | Store and edits in memory trees, notifies observers of changes                                              | Partial trees (async loading subtrees). Copy On Write.  | `Tree`                              |
+| `Schema`       |                                                                                                                                                   | Allows expressing type based constraints for tree nodes. Used by `view schema` and `stored schema`          |
+| `Schematize`   | Schema System (ex: Schema), Tree Type (ex: EditableTree)                                                                                          | Handles differences between `stored schema` and `view schema` (schema on read)                              |                                                         | `Tree`                              |
+| `EditableTree` | RootEditor                                                                                                                                        | Tree implementation allowing editing, compatible with `Schematize`                                          |                                                         | `Tree`                              |
+| `ChangeSet`    |                                                                                                                                                   | Abstraction for chance sets, and an implementation. Supports needs of `Rebaser`. Can be applied to Forests. |                                                         | `Forest`                            |
+| `Rebaser`      | ChangeSet Representation, State Tracker, Change Updater                                                                                           | Adjust a stream of edits to account for their original vs sequenced preceding state                         |                                                         | `ChangeSet`                         |
+| `Checkout`     | ChangeSet / Edit Representation                                                                                                                   | Translates friendly editing+viewing API into ChangeSets. Provides transactionality and snapshot isolation.  |
+| `LazyPageTree` | Page user (DDS subclass which actually provides and reads the data)                                                                               | Abstract DDS providing incremental summarization and partial checkouts of pages of data.                    |                                                         | Fluid's `SharedObject`              |
+| `SharedTree`   | Set of field kinds (includes ops for these kinds), history handling policy (keep none, keep main, keep timeline, keep branches), indexes, Rebaser |                                                                                                             |                                                         | `LazyPageTree`, `Forest`, `Rebaser` |
 
 ## Feature Libraries
 
@@ -30,11 +32,11 @@ Lists here are examples of options we could provide, and are not intended to be 
     -   UniformSequence: Highly compressed based on tree shape
 
 -   Schema importers: We will likely want at least one tool that takes input schema files and generates the types used by the `Schema` library.
-Some options are listed here, but little thought has gone into this list:
+    Some options are listed here, but little thought has gone into this list:
 
-    -   [json schema](https://json-schema.org/)
-    -   graphQL
-    -   typescript DSL (like [TypeBox](https://www.npmjs.com/package/@sinclair/typebox)) that supports runtime and compile type typing without code gen.
+        -   [json schema](https://json-schema.org/)
+        -   graphQL
+        -   typescript DSL (like [TypeBox](https://www.npmjs.com/package/@sinclair/typebox)) that supports runtime and compile type typing without code gen.
 
 -   Schema libraries: We likely want to provide some useful schema, using and compatible with some importer (above):
 
@@ -67,7 +69,15 @@ Some options are listed here, but little thought has gone into this list:
     -   Change Tracker: Tracks what changes have happened in the collaboration window.
     -   Schema Tracker: Tracks the schema associated with the document (Only makes sense for change sets which can contain schema operations, like insert schema).
 
--   Rebaser Change Updater:
+-   Rebaser Change Updater: Each supports some set of field kinds.
+    (Note that all of these can have a second variant that adds reply of higher level edits as an option to handle conflicts, or even as a first choice approach).
+
+        -   Treeless Peer Rebase: Automatic, deterministic, performant does not require Tree State Tracker.
+            Uses Schema Tracker and Change Tracker to update indexes in range traits, and conservatively mark conflicted when changes might interfere in ways it can't handle.
+        -   Treeful Rebase: Automatic, deterministic, but requires Tree State Tracker.
+            Can apply exact tree constraints. Save as above but conflicts in less cases by being less conservative.
+        -   Out-of-line User Assisted: Same as Treeful Rebase, but allows user interaction to resolve conflicts.
+            Useful for when a user explicitly initiates a merge between branches.
 
 ## Possible System / Service Configurations
 
@@ -168,7 +178,6 @@ REST: https://www.redhat.com/en/topics/api/what-is-a-rest-api
 SOAP: https://www.redhat.com/en/topics/integration/whats-the-difference-between-soap-rest
 
 how common are id uses in editing now?
-
 
 ## WASM and Native Code
 
