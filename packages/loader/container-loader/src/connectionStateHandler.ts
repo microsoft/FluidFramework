@@ -37,6 +37,7 @@ const JoinOpTimeout = 45000;
  * (A) We process the Leave op for the previous clientId. This means the server will reject any subsequent outbound ops
  *     with that clientId (important because we will likely attempt to resend pending ops with the new clientId)
  * (B) We process the Join op for the new clientId (identified when the underlying connection was first established)
+ * (C) We process all ops known at the time the underlying connection was established (so we are "caught up")
  *
  * For (A) we give up waiting after some time (same timeout as server uses), and go ahead and transition to Connected.
  * For (B) we log telemetry if it takes too long, but still only transition to Connected when the Join op is processed
@@ -144,7 +145,12 @@ export class ConnectionStateHandler {
     }
 
     private transitionToConnectedStateWhenCaughtUp() {
-        this.handler.onCaughtUpToKnownOps(() => this.setConnectionState(ConnectionState.Connected));
+        this.handler.onCaughtUpToKnownOps(() => {
+            // We may have disconnected while waiting
+            if (this._connectionState === ConnectionState.Connecting) {
+                this.setConnectionState(ConnectionState.Connected);
+            }
+        });
     }
 
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved") {
@@ -225,15 +231,24 @@ export class ConnectionStateHandler {
         const writeConnection = connectionMode === "write";
         if (writeConnection && !pendingClientAlreadyInQuorum) {
             // We are waiting for our own join op. When it is processed we'll join the quorum
-            // and code elsewhere in this class will transition us to Connected state.
+            // and we will transition to Connected state via receivedAddMemberEvent.
             this.startJoinOpTimer();
         } else {
-            // There should be no timer for 'read' connections,
-            // and if we processed our Join op we would have processed our previous Leave op prior to that
-            assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "Unexpected timer state" */);
+            // Either this is a read connection or it's write and we are already in the quorum
 
-            // Wait to fire "connected" event until we are caught up to known ops at the time the "connect" event fired
-            this.transitionToConnectedStateWhenCaughtUp();
+            //* NOTE: This assert fires sometimes (rarely) - this makes sense to me, I think,
+            //* since new Join could come before old Leave due to distributed ordering service.
+            assert(writeConnection || !this.prevClientLeftTimer.hasTimer,
+                0x2a6 /* "There should be no timer for 'read' connections" */);
+
+            if (this.prevClientLeftTimer.hasTimer) {
+                //* Add a new source (but for now it's similar since we're in the Quorum)
+                this.applyForConnectedState("addMemberEvent");
+            } else {
+                // Wait to fire "connected" event until we are caught up to known ops
+                // as of the time the "connect" event fired
+                this.transitionToConnectedStateWhenCaughtUp();
+            }
         }
     }
 
