@@ -217,7 +217,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     state: "enabled";
     /**
      * Defines the maximum allowed time in between summarizations.
-     * TO REMOVE
+     * @deprecated - please move all implementation to minIdleTime and maxIdleTime
      */
      idleTime: number;
     /**
@@ -235,7 +235,15 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * before running the last summary.
      */
     minOpsForLastSummaryAttempt: number;
+    /**
+     * Defines the minimum for the allowed time in between summarizations.
+     * Pairs with maxIdleTime to form a range.
+     */
     minIdleTime: number;
+    /**
+     * Defines the maximum for the allowed time in between summarizations.
+     * Pairs with minIdleTime to form a range.
+     */
     maxIdleTime: number;
 }
 
