@@ -59,7 +59,7 @@
     "@fluidframework/local-driver": "^0.59.3000",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/sequence": "^0.59.3000",
-    "@fluidframework/server-local-server": "^0.1036.2000-0",
+    "@fluidframework/server-local-server": "^0.1036.2000",
     "@fluidframework/test-runtime-utils": "^0.59.3000",
     "@fluidframework/test-utils": "^0.59.3000",
     "@microsoft/api-extractor": "^7.22.2",

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-ordering-kafkanode",
-  "version": "0.1036.2001",
+  "version": "0.1036.3000",
   "description": "Fluid server services kafka-node orderer implementation",
   "homepage": "https://fluidframework.com",
   "repository": {
