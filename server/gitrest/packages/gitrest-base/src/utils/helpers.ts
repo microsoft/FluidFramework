@@ -6,8 +6,21 @@
 import { PathLike, Stats } from "fs";
 import * as path from "path";
 import { Request } from "express";
-import { IGetRefParamsExternal, IWholeFlatSummary, NetworkError } from "@fluidframework/server-services-client";
-import { Constants, IExternalWriterConfig, IFileSystemManager, IRepoManagerParams } from "./definitions";
+import {
+    IGetRefParamsExternal,
+    IWholeFlatSummary,
+    isNetworkError,
+    NetworkError,
+} from "@fluidframework/server-services-client";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+    BaseGitRestTelemetryProperties,
+    Constants,
+    IExternalWriterConfig,
+    IFileSystemManager,
+    IRepoManagerParams,
+    IStorageRoutingId,
+} from "./definitions";
 
 /**
  * Validates that the input encoding is valid
@@ -36,9 +49,11 @@ export function getExternalWriterParams(params: string | undefined): IExternalWr
 
 export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerParams {
     const storageName: string | undefined = request.get(Constants.StorageNameHeader);
+    const storageRoutingId: IStorageRoutingId = parseStorageRoutingId(request.get(Constants.StorageRoutingIdHeader));
     return {
         repoOwner: request.params.owner,
         repoName: request.params.repo,
+        storageRoutingId,
         fileSystemManagerParams: {
             storageName,
         },
@@ -120,4 +135,48 @@ export function getRepoPath(name: string, owner?: string): string {
 
 export function getGitDirectory(repoPath: string, baseDir?: string): string {
     return baseDir ? `${baseDir}/${repoPath}` : repoPath;
+}
+
+export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId | undefined {
+    if (!storageRoutingId) {
+        return undefined;
+    }
+    const [tenantId,documentId] = storageRoutingId.split(":");
+    return {
+        tenantId,
+        documentId,
+    };
+}
+
+export function getLumberjackBasePropertiesFromRepoManagerParams(params: IRepoManagerParams) {
+    return {
+        [BaseTelemetryProperties.tenantId]: params?.storageRoutingId?.tenantId ?? params?.repoName,
+        [BaseTelemetryProperties.documentId]: params?.storageRoutingId?.documentId,
+        [BaseGitRestTelemetryProperties.repoOwner]: params.repoOwner,
+        [BaseGitRestTelemetryProperties.repoName]: params.repoName,
+        [BaseGitRestTelemetryProperties.storageName]: params?.fileSystemManagerParams?.storageName,
+    };
+}
+
+export function getRequestPathCategory(request: Request) {
+    return `${request.baseUrl}${request?.route?.path ?? "PATH_UNAVAILABLE"}`;
+}
+
+export function logAndThrowApiError(error: any, request: Request, params: IRepoManagerParams): never {
+    const pathCategory = getRequestPathCategory(request);
+    const lumberjackProperties = {
+        ...getLumberjackBasePropertiesFromRepoManagerParams(params),
+        [BaseGitRestTelemetryProperties.method]: request.method,
+        [BaseGitRestTelemetryProperties.pathCategory]: pathCategory,
+    };
+    Lumberjack.error(`${request.method} request to ${pathCategory} failed`, lumberjackProperties, error);
+
+    if (isNetworkError(error)) {
+        throw error;
+    }
+    // TODO: some APIs might expect 400 responses by default, like GetRef in GitManager. Since `handleResponse` uses
+    // 400 by default, using something different here would override the expected behavior and cause issues. Because
+    // of that, for now, we use 400 here. But ideally, we would revisit every RepoManager API and make sure that API
+    // is actively throwing NetworkErrors with appropriate status codes according to what the protocols expect.
+    throw new NetworkError(error?.code ?? 400, `Error when processing ${request.method} request to ${request.url}`);
 }

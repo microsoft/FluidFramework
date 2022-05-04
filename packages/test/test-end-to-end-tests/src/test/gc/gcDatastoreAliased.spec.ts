@@ -86,7 +86,7 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
     it("GC is notified when datastores are aliased.", async () => {
         const containerRuntime1 = mainDataStore1.containerRuntime;
         const aliasableDataStore1 = await containerRuntime1.createDataStore("TestDataObject");
-        const response = await aliasableDataStore1.request({url: "/"});
+        const response = await aliasableDataStore1.request({ url: "/" });
         const ds1 = response.value as TestDataObject;
 
         (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();

@@ -46,7 +46,7 @@
   "devDependencies": {
     "@fluid-tools/fluidapp-odsp-urlresolver-previous": "npm:@fluid-tools/fluidapp-odsp-urlresolver@0.59.2000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
