@@ -42,7 +42,6 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/client-ui-lib": "^0.59.3000",
     "@fluid-example/example-utils": "^0.59.3000",
     "@fluidframework/aqueduct": "^0.59.3000",
     "@fluidframework/common-utils": "^0.32.1",
@@ -54,10 +53,12 @@
     "@fluidframework/ink": "^0.59.3000",
     "@fluidframework/map": "^0.59.3000",
     "@fluidframework/merge-tree": "^0.59.3000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/request-handler": "^0.59.3000",
     "@fluidframework/runtime-definitions": "^0.59.3000",
     "@fluidframework/runtime-utils": "^0.59.3000",
     "@fluidframework/sequence": "^0.59.3000",
+    "@fluidframework/undo-redo": "^0.59.3000",
     "@fluidframework/view-interfaces": "^0.59.3000",
     "bootstrap": "^3.3.7",
     "debug": "^4.1.1",
@@ -94,6 +95,7 @@
     "jest": "^26.6.3",
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",
+    "jsdom": "^12.0.0",
     "puppeteer": "^1.20.0",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",

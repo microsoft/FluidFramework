@@ -87,9 +87,10 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
 
     const keypressHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
-            const exactMatchingCommand = filterRef.current !== null
+            const filterValue = filterRef.current?.value;
+            const exactMatchingCommand = filterValue !== undefined
                 ? commands.find(
-                    (command) => filterRef.current.value.toLowerCase() === command.friendlyName.toLowerCase(),
+                    (command) => filterValue.toLowerCase() === command.friendlyName.toLowerCase(),
                 )
                 : undefined;
 

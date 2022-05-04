@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-bitwise */
+
 import * as ui from "../ui";
 
 export class Title extends ui.Component {
-    public viewportRect: ui.Rectangle;
     public viewportDiv: HTMLDivElement;
 
     constructor(element: HTMLDivElement) {
@@ -37,8 +38,8 @@ export class Title extends ui.Component {
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
-        this.viewportRect = bounds.inner(0.92);
-        ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
+        const viewportRect = bounds.inner(0.92);
+        ui.Rectangle.conformElementToRect(this.viewportDiv, viewportRect);
     }
 
     // Implementation of java String#hashCode
@@ -65,3 +66,5 @@ export class Title extends ui.Component {
         return [num >> 16, num >> 8 & 255, num & 255];
     }
 }
+
+/* eslint-enable no-bitwise */

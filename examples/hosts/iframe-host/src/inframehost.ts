@@ -8,7 +8,6 @@ import {
     AttachState,
     IContainerContext,
     IRuntime,
-    IProxyLoaderFactory,
     ILoaderOptions,
     IContainer,
     ICodeDetailsLoader,
@@ -63,8 +62,6 @@ export interface IFrameOuterHostConfig {
     // A Fluid object that gives host provided capabilities/configurations
     // to the Fluid object in the container(such as auth).
     scope?: FluidObject;
-
-    proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 }
 
 class ProxyRuntime implements IRuntime {
