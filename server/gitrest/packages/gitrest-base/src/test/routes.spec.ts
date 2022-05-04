@@ -104,7 +104,7 @@ async function initBaseRepo(
     await createRef(supertest, owner, repoName, testRef);
 }
 
-function normalizeMessage(gitLibrary: string, message: string) {
+function normalizeMessage(gitLibrary: testUtils.gitLibType, message: string) {
     // isomorphic-git automatically adds a new line character at the end of commit
     // messages and tag annotation messages. It's something we cannot control. Because
     // of that, the SHA/OIDs could be different in nodegit vs isomorphic-git. To counter
@@ -112,10 +112,9 @@ function normalizeMessage(gitLibrary: string, message: string) {
     // the new line character, making the content exactly the same as for isomorphic-git.
     if (gitLibrary === "nodegit") {
         return `${message}\n`;
-    } else if (gitLibrary === "isomorphic-git") {
-        return message;
     }
-    throw new Error(`Cannot normalize message. Unknown gitLibrary: ${gitLibrary}`);
+    // For isomorphic-git, we keep the message as is.
+    return message;
 }
 
 const testModes: testUtils.ITestMode[] = [
@@ -173,7 +172,7 @@ testModes.forEach((mode) => {
 
         const fileSystemManagerFactory = new NodeFsManagerFactory();
         const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
-        const getRepoManagerFactory = (gitLibrary: string) =>
+        const getRepoManagerFactory = (gitLibrary: testUtils.gitLibType) =>
         {
             if (gitLibrary === "nodegit") {
                 return new NodegitRepositoryManagerFactory(
@@ -181,13 +180,13 @@ testModes.forEach((mode) => {
                     fileSystemManagerFactory,
                     externalStorageManager,
                 );
-            } else if (gitLibrary === "isomorphic-git") {
-                return new IsomorphicGitManagerFactory(
-                    testUtils.defaultProvider.get("storageDir"),
-                    fileSystemManagerFactory,
-                );
             }
-            throw new Error(`Cannot get RepoManagerFactory. Unknown gitLibrary: ${gitLibrary}`);
+
+            // The other possibility is isomorphic-git.
+            return new IsomorphicGitManagerFactory(
+                testUtils.defaultProvider.get("storageDir"),
+                fileSystemManagerFactory,
+            );
         }
         describe("Routes", () => {
             testUtils.initializeBeforeAfterTestHooks(testUtils.defaultProvider);

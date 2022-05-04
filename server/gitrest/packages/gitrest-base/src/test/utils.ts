@@ -8,9 +8,10 @@ import nconf from "nconf";
 import rimrafCallback from "rimraf";
 import { IStorageDirectoryConfig } from "../utils";
 
+export type gitLibType = "nodegit" | "isomorphic-git";
 export interface ITestMode {
     name: string;
-    gitLibrary: string;
+    gitLibrary: gitLibType;
 }
 
 export const defaultProvider = new nconf.Provider({}).defaults({
