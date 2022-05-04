@@ -50,7 +50,7 @@ describe("getFileLink", () => {
             async () => getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId4" }, "Enterprise", logger),
             [
                 async () => okResponse({}, fileItemResponse),
-                async () => okResponse({}, { d: { directUrl: "sharelink" } }),
+                async () => okResponse({}, { d: { LinkingUrl: "sharelink" } }),
             ],
         );
         assert.strictEqual(
