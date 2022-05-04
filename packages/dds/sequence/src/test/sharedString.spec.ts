@@ -395,7 +395,7 @@ describe("SharedString", () => {
             ]);
         });
 
-        it.only("can slide intervals on create conflict with remove range", () => {
+        it("can slide intervals on create conflict with remove range", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");
             containerRuntimeFactory.processAllMessages();
