@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-bitwise */
-
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { expect } from 'chai';
 import Random from 'random-js';
@@ -12,7 +10,16 @@ import { assert, fail } from '../Common';
 import { isFinalId, isLocalId } from '../id-compressor';
 import { SessionIdNormalizer } from '../id-compressor/SessionIdNormalizer';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers';
-import { makeRandom } from './utilities/TestUtilities';
+import {
+	BaseFuzzTestState,
+	chain,
+	createWeightedGenerator,
+	makeRandom,
+	performFuzzActions,
+	take,
+	Generator,
+	generatorFromArray,
+} from './stochastic-test-utilities';
 
 describe('SessionIdNormalizer', () => {
 	it('fails when adding finals with no corresponding locals', () => {
@@ -272,42 +279,6 @@ function makeNormalizerProxy(
 type DummyRange = undefined;
 const dummy: DummyRange = undefined;
 
-function fuzzNormalizer(
-	normalizerToFuzz: SessionIdNormalizer<DummyRange>,
-	numOperations: number,
-	seed: number
-): Random {
-	const locals: (LocalCompressedId | undefined)[] = [];
-	const finals: (FinalCompressedId | undefined)[] = [];
-	const normalizer: SessionIdNormalizer<DummyRange> = makeNormalizerProxy(normalizerToFuzz, locals, finals);
-
-	const rand = makeRandom(seed);
-	let currentLocal = -1;
-	let currentFinal = 0;
-	normalizer.addLocalId(local(currentLocal));
-	let prevWasLocal = false;
-	for (let i = 0; i < numOperations - 1; i++) {
-		if (rand.integer(0, 10) > 2) {
-			if (locals.length < finals.length && rand.bool()) {
-				currentLocal = -locals.length - (finals.length - locals.length) - 1;
-			} else {
-				currentLocal = -locals.length - 1;
-			}
-			normalizer.addLocalId(local(currentLocal));
-			prevWasLocal = true;
-		} else {
-			if (prevWasLocal && locals.length > finals.length && rand.integer(1, 3) === 3) {
-				currentFinal += rand.integer(1, 4);
-			}
-			const lastFinal = currentFinal + rand.integer(0, 10);
-			normalizer.addFinalIds(final(currentFinal), final(lastFinal), undefined);
-			currentFinal = lastFinal + 1;
-			prevWasLocal = false;
-		}
-	}
-	return rand;
-}
-
 function local(num: number): LocalCompressedId {
 	assert(num < 0);
 	return num as LocalCompressedId;
@@ -320,4 +291,98 @@ function final(num: number): FinalCompressedId {
 
 function makeTestNormalizer(): SessionIdNormalizer<DummyRange> {
 	return new SessionIdNormalizer<DummyRange>(true);
+}
+
+interface AddLocalId {
+	type: 'addLocalId';
+	id: LocalCompressedId;
+}
+
+interface AddFinalIds {
+	type: 'addFinalIds';
+	first: FinalCompressedId;
+	last: FinalCompressedId;
+}
+
+type Operation = AddLocalId | AddFinalIds;
+
+interface FuzzTestState extends BaseFuzzTestState {
+	normalizer: SessionIdNormalizer<DummyRange>;
+	prevWasLocal: boolean;
+	currentLocal: number;
+	currentFinal: number;
+	locals: (LocalCompressedId | undefined)[];
+	finals: (FinalCompressedId | undefined)[];
+}
+
+function makeOpGenerator(numOperations: number): Generator<Operation, FuzzTestState> {
+	function addLocalIdGenerator(state: FuzzTestState): AddLocalId {
+		const { locals, finals, random } = state;
+		if (locals.length < finals.length && random.bool()) {
+			state.currentLocal = -locals.length - (finals.length - locals.length) - 1;
+		} else {
+			state.currentLocal = -locals.length - 1;
+		}
+		state.prevWasLocal = true;
+		return { type: 'addLocalId', id: local(state.currentLocal) };
+	}
+
+	function addFinalIdsGenerator(state: FuzzTestState): AddFinalIds {
+		const { locals, finals, random } = state;
+		if (state.prevWasLocal && locals.length > finals.length && random.integer(1, 3) === 3) {
+			state.currentFinal += random.integer(1, 4);
+		}
+		const lastFinal = state.currentFinal + random.integer(0, 10);
+		const addFinal: AddFinalIds = { type: 'addFinalIds', first: final(state.currentFinal), last: final(lastFinal) };
+		state.currentFinal = lastFinal + 1;
+		state.prevWasLocal = false;
+		return addFinal;
+	}
+
+	return chain(
+		generatorFromArray([{ type: 'addLocalId', id: local(-1) }]),
+		take(
+			numOperations - 1,
+			createWeightedGenerator<Operation, FuzzTestState>([
+				[addLocalIdGenerator, 8],
+				[addFinalIdsGenerator, 2],
+			])
+		)
+	);
+}
+
+function fuzzNormalizer(
+	normalizerToFuzz: SessionIdNormalizer<DummyRange>,
+	numOperations: number,
+	seed: number
+): Random {
+	const locals: (LocalCompressedId | undefined)[] = [];
+	const finals: (FinalCompressedId | undefined)[] = [];
+	const normalizer: SessionIdNormalizer<DummyRange> = makeNormalizerProxy(normalizerToFuzz, locals, finals);
+
+	const initialState: FuzzTestState = {
+		random: makeRandom(seed),
+		currentLocal: -1,
+		currentFinal: 0,
+		prevWasLocal: false,
+		normalizer,
+		locals,
+		finals,
+	};
+
+	performFuzzActions(
+		makeOpGenerator(numOperations),
+		{
+			addLocalId: (state, { id }) => {
+				state.normalizer.addLocalId(id);
+				return state;
+			},
+			addFinalIds: (state, { first, last }) => {
+				state.normalizer.addFinalIds(first, last, undefined);
+				return state;
+			},
+		},
+		initialState
+	);
+	return initialState.random;
 }

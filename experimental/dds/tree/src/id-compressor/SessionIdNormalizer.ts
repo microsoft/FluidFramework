@@ -248,11 +248,9 @@ export class SessionIdNormalizer<TRangeObject> {
 			let firstAlignedLocal: LocalCompressedId;
 			if (isSingle) {
 				firstAlignedLocal = firstLocal;
-                // TODO: This cast can be removed on typescript 4.6
-				lastFinalRange = finalRanges as FinalRange<TRangeObject>;
+				lastFinalRange = finalRanges;
 			} else {
-                // TODO: This cast can be removed on typescript 4.6
-				[firstAlignedLocal, lastFinalRange] = (finalRanges as FinalRangesMap<TRangeObject>).last() ?? fail('Map should be non-empty.');
+				[firstAlignedLocal, lastFinalRange] = finalRanges.last() ?? fail('Map should be non-empty.');
 			}
 
 			const [firstAlignedFinal, lastAlignedFinal] = lastFinalRange;
@@ -268,8 +266,7 @@ export class SessionIdNormalizer<TRangeObject> {
 					rangeMap.append(firstAlignedLocal, lastFinalRange);
 					finalRangesObj[1] = rangeMap;
 				} else {
-			        // TODO: This cast can be removed on typescript 4.6
-					rangeMap = finalRanges as FinalRangesMap<TRangeObject>;
+					rangeMap = finalRanges;
 				}
 				rangeMap.append(alignedLocal, [firstFinal, lastFinal, rangeObject]);
 				assert(alignedLocal >= lastLocal, 'Gaps in final space must align to a local.');
@@ -385,7 +382,7 @@ export class SessionIdNormalizer<TRangeObject> {
  *
  * TODO: Move this into ID compressor persisted types when integrated.
  */
- export interface SerializedSessionIdNormalizer {
+export interface SerializedSessionIdNormalizer {
 	readonly localRanges: readonly (readonly [
 		firstLocal: LocalCompressedId,
 		lastLocal: LocalCompressedId,
