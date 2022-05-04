@@ -102,10 +102,12 @@ describe("Runtime", () => {
                 initialize({ maxOps });
 
                 data.lastOpSequenceNumber = maxOps;
+                data.numNonSystemOps = maxOps;
                 runner.run();
                 assertAttemptCount(0, "should not run yet");
 
                 data.lastOpSequenceNumber++;
+                data.numNonSystemOps++;
                 runner.run();
                 assertAttemptCount(1, "should run now");
                 assert(getLastAttempt() === "maxOps");
@@ -117,10 +119,12 @@ describe("Runtime", () => {
                 initialize({ refSequenceNumber: lastSummary, maxOps });
 
                 data.lastOpSequenceNumber = lastSummary + maxOps;
+                data.numNonSystemOps = maxOps;
                 runner.run();
                 assertAttemptCount(0, "should not run yet");
 
                 data.lastOpSequenceNumber++;
+                data.numNonSystemOps++;
                 runner.run();
                 assertAttemptCount(1, "should run now");
                 assert(getLastAttempt() === "maxOps");
@@ -133,6 +137,8 @@ describe("Runtime", () => {
                 const idlesPerActive = Math.floor((maxTime + 1) / (idleTime - 1));
                 const remainingTime = (maxTime + 1) % (idleTime - 1);
                 initialize({ refSequenceNumber: lastSummary, idleTime, maxTime });
+
+                data.lastOpSequenceNumber = lastSummary + 1;
 
                 for (let i = 0; i < idlesPerActive; i++) {
                     // Prevent idle timer from triggering with periodic "ops" (heuristic runs)
@@ -155,6 +161,8 @@ describe("Runtime", () => {
                 const maxTime = 1000;
                 initialize({ refSequenceNumber: lastSummary, idleTime, maxTime });
 
+                data.lastOpSequenceNumber = lastSummary + 1;
+
                 clock.tick(idleTime - 1);
                 assertAttemptCount(0, "should not run yet");
 
@@ -168,6 +176,8 @@ describe("Runtime", () => {
                 const idleTime = 101;
                 const maxTime = 1000;
                 initialize({ refSequenceNumber: lastSummary, idleTime, maxTime });
+
+                data.lastOpSequenceNumber = lastSummary + 1;
 
                 clock.tick(idleTime - 1);
                 assertAttemptCount(0, "should not run yet");

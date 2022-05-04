@@ -24,6 +24,7 @@ import { RunningSummarizer } from "../runningSummarizer";
 import { SummaryCollection } from "../summaryCollection";
 import { SummarizeHeuristicData } from "../summarizerHeuristics";
 import { ISummarizerRuntime } from "..";
+import { ISummarizeHeuristicData } from "../summarizerTypes";
 
 class MockRuntime {
     constructor(
@@ -48,6 +49,7 @@ describe("Runtime", () => {
             let lastClientSeq: number;
             let lastSummarySeq: number;
             let mockRuntime: MockRuntime;
+            let heuristicData: ISummarizeHeuristicData;
             const summaryCommon = {
                 maxAckWaitTime: 120000, // 2 min
                 maxOpsSinceLastSummary: 7000,
@@ -75,12 +77,12 @@ describe("Runtime", () => {
             const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 
             async function emitNextOp(increment: number = 1, timestamp: number = Date.now()) {
+                heuristicData.numNonSystemOps += increment - 1; // -1 because we emit an op below
                 lastRefSeq += increment;
                 const op: Partial<ISequencedDocumentMessage> = {
                     sequenceNumber: lastRefSeq,
                     timestamp,
                 };
-                summarizer.handleOp(op as ISequencedDocumentMessage);
                 mockDeltaManager.emit("op", op);
                 await flushPromises();
             }
@@ -107,7 +109,11 @@ describe("Runtime", () => {
                     handle: "test-ack-handle",
                     summaryProposal,
                 };
-                mockDeltaManager.emit("op", { contents, type: MessageType.SummaryAck });
+                mockDeltaManager.emit("op", {
+                    contents,
+                    type: MessageType.SummaryAck,
+                    sequenceNumber: ++lastRefSeq,
+                });
 
                 await flushPromises(); // let summarize run
             }
@@ -121,7 +127,11 @@ describe("Runtime", () => {
                     retryAfter: retryAfterSeconds,
                     message: "test-nack",
                 };
-                mockDeltaManager.emit("op", { contents, type: MessageType.SummaryNack });
+                mockDeltaManager.emit("op", {
+                    contents,
+                    type: MessageType.SummaryNack,
+                    sequenceNumber: ++lastRefSeq,
+                });
 
                 await flushPromises();
             }
@@ -152,6 +162,7 @@ describe("Runtime", () => {
             const startRunningSummarizer = async (
                 disableHeuristics?: boolean,
             ): Promise<void> => {
+                heuristicData = new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() });
                 summarizer = await RunningSummarizer.start(
                     mockLogger,
                     summaryCollection.createWatcher(summarizerClientId),
@@ -200,7 +211,7 @@ describe("Runtime", () => {
                             forcedFullTree: false,
                         } as const;
                     },
-                    new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
+                    heuristicData,
                     () => { },
                     summaryCollection,
                     neverCancelledSummaryToken,
@@ -241,10 +252,8 @@ describe("Runtime", () => {
                 });
 
                 it("Should summarize after configured number of ops when not pending", async () => {
-                    await emitNextOp();
-
                     // too early, should not run yet
-                    await emitNextOp(summaryConfig.maxOps - 1);
+                    await emitNextOp(summaryConfig.maxOps);
                     assertRunCounts(0, 0, 0);
 
                     // now should run
@@ -854,7 +863,8 @@ describe("Runtime", () => {
                     assert(submitResult.data.stage === "submit",
                         "enqueued summary submitted data stage should be submit");
 
-                    const expectedRefSeqNum = summaryConfig.maxOps * 2 + 22;
+                    // 24 = 22 regular non-system ops + 2 summary ack ops
+                    const expectedRefSeqNum = summaryConfig.maxOps * 2 + 24;
                     assert.strictEqual(submitResult.data.referenceSequenceNumber, expectedRefSeqNum, "ref seq num");
                     assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
