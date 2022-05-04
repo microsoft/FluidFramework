@@ -90,12 +90,7 @@ export const Change: {
     detach: (source: StableRange, destination?: number | undefined) => Detach;
     setPayload: (nodeToModify: NodeId, payload: Payload) => SetValue;
     clearPayload: (nodeToModify: NodeId) => SetValue;
-    constraint: (toConstrain: StableRange, effect: ConstraintEffect, identityHash?: UuidString | undefined, length?: number | undefined, contentHash?: UuidString | undefined, parentNode?: (number & {
-        readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";
-    } & SessionUnique & NodeIdBrand) | (number & {
-        readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
-        readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
-    } & SessionUnique & NodeIdBrand) | undefined, label?: TraitLabel | undefined) => Constraint;
+    constraint: (toConstrain: StableRange, effect: ConstraintEffect, identityHash?: UuidString | undefined, length?: number | undefined, contentHash?: UuidString | undefined, parentNode?: NodeId | undefined, label?: TraitLabel | undefined) => Constraint;
     delete: (stableRange: StableRange) => Change;
     insertTree: (nodes: BuildNode | TreeNodeSequence<BuildNode>, destination: StablePlace) => Change[];
     move: (source: StableRange, destination: StablePlace) => Change[];
@@ -111,12 +106,7 @@ export const ChangeInternal: {
     detach: (source: StableRangeInternal, destination?: DetachedSequenceId | undefined) => DetachInternal;
     setPayload: (nodeToModify: NodeData<NodeId> | NodeId, payload: Payload) => SetValueInternal;
     clearPayload: (nodeToModify: NodeData<NodeId> | NodeId) => SetValueInternal;
-    constraint: (toConstrain: StableRangeInternal, effect: ConstraintEffect, identityHash?: UuidString | undefined, length?: number | undefined, contentHash?: UuidString | undefined, parentNode?: (number & {
-        readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";
-    } & SessionUnique & NodeIdBrand) | (number & {
-        readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
-        readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
-    } & SessionUnique & NodeIdBrand) | undefined, label?: TraitLabel | undefined) => ConstraintInternal;
+    constraint: (toConstrain: StableRangeInternal, effect: ConstraintEffect, identityHash?: UuidString | undefined, length?: number | undefined, contentHash?: UuidString | undefined, parentNode?: NodeId | undefined, label?: TraitLabel | undefined) => ConstraintInternal;
     delete: (stableRange: StableRangeInternal) => ChangeInternal;
     insertTree: (nodes: TreeNodeSequence<BuildNodeInternal>, destination: StablePlaceInternal) => ChangeInternal[];
     move: (source: StableRangeInternal, destination: StablePlaceInternal) => ChangeInternal[];
