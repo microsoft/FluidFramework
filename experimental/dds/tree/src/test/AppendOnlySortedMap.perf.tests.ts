@@ -4,10 +4,10 @@
  */
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
+import { makeRandom } from '@fluidframework/stochastic-test-utils';
 import Random from 'random-js';
 import { compareFiniteNumbers } from '../Common';
 import { AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap';
-import { makeRandom } from './stochastic-test-utilities';
 
 function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
 	const type = BenchmarkType.Measurement;

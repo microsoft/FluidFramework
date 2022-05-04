@@ -696,7 +696,7 @@ export function makeOpGenerator(options: OperationGenerationConfig): Generator<O
 			[generateUnifyingIdsGenerator, 1],
 			[reconnectGenerator, 1],
 		]),
-		take(1, repeat({ type: 'validate' })),
+		take(1, repeat<Operation, FuzzTestState>({ type: 'validate' })),
 		validateInterval
 	);
 }

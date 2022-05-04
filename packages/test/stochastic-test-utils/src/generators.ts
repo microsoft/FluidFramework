@@ -216,7 +216,7 @@ export function interleave<T, TState>(
  * Creates a generator for an infinite stream of `t`s.
  * @param t - Output value to repeatedly generate.
  */
-export function repeat<T>(t: T): Generator<T, void> {
+export function repeat<T, TState = void>(t: T): Generator<T, TState> {
     return () => t;
 }
 
@@ -404,6 +404,6 @@ export function interleaveAsync<T, TState>(
  * Creates a generator for an infinite stream of `t`s.
  * @param t - Output value to repeatedly generate.
  */
-export function repeatAsync<T>(t: T): AsyncGenerator<T, void> {
+export function repeatAsync<T, TState = void>(t: T): AsyncGenerator<T, TState> {
     return async () => t;
 }
