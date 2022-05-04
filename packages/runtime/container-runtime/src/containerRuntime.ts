@@ -219,7 +219,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * Defines the maximum allowed time in between summarizations.
      * @deprecated - please move all implementation to minIdleTime and maxIdleTime
      */
-     idleTime: number;
+    idleTime: number;
     /**
      * Defines the maximum allowed time, since the last received Ack,  before running the summary
      * with reason maxTime.
@@ -229,7 +229,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * Defines the maximum number of Ops, since the last received Ack, that can be allowed
      * before running the summary with reason maxOps.
      */
-     maxOps: number;
+    maxOps: number;
     /**
      * Defnines the minimum number of Ops, since the last received Ack, that can be allowed
      * before running the last summary.
@@ -263,11 +263,11 @@ export type ISummaryConfiguration =
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
 
-    // TO REMOVE
     idleTime: 5000 * 3,
 
-    minIdleTime: 5 * 1000,
-    maxIdleTime: 30 * 1000,
+    minIdleTime: 5 * 1000, // 15 secs.
+
+    maxIdleTime: 30 * 1000, // 30 secs.
 
     maxTime: 5000 * 12,
 
