@@ -47,6 +47,7 @@
     "morgan": "^1.9.1",
     "nconf": "^0.11.4",
     "nodegit": "^0.27.0",
+    "serialize-error": "^8.1.0",
     "split": "^1.0.0",
     "uuid": "^3.3.2",
     "winston": "^3.6.0"

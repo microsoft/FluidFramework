@@ -8,6 +8,11 @@ import nconf from "nconf";
 import rimrafCallback from "rimraf";
 import { IStorageDirectoryConfig } from "../utils";
 
+export interface ITestMode {
+    name: string;
+    gitLibrary: string;
+}
+
 export const defaultProvider = new nconf.Provider({}).defaults({
     logger: {
         colorize: true,
