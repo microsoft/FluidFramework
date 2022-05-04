@@ -166,7 +166,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             },
         );
 
-        const {blobs, snapshotTree} = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
+        const { blobs, snapshotTree } = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
         return this.convertSnapshotAndBlobsToSummaryTree(snapshotTree, blobs);
     }
 
