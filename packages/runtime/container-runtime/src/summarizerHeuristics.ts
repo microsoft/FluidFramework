@@ -66,9 +66,21 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         private readonly logger: ITelemetryLogger,
     ) {
         this.idleTimer = new Timer(
-            this.configuration.idleTime,
+            this.idleTime,
             () => this.trySummarize("idle"));
         this.minOpsForLastSummaryAttempt = this.configuration.minOpsForLastSummaryAttempt;
+    }
+
+    private get idleTime(): number {
+        const pToMaxOps = this.opsSinceLastAck / this.configuration.maxOps;
+
+        if (pToMaxOps >= 1) {
+            return this.configuration.minIdleTime;
+        }
+
+        // Return a ratioed idle time based on the percentage of ops
+        return this.configuration.maxIdleTime
+            - ((this.configuration.maxIdleTime - this.configuration.minIdleTime) * pToMaxOps);
     }
 
     public get opsSinceLastAck(): number {

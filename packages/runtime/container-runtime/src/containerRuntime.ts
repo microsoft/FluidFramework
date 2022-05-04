@@ -217,6 +217,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     state: "enabled";
     /**
      * Defines the maximum allowed time in between summarizations.
+     * TO REMOVE
      */
      idleTime: number;
     /**
@@ -234,6 +235,8 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * before running the last summary.
      */
     minOpsForLastSummaryAttempt: number;
+    minIdleTime: number;
+    maxIdleTime: number;
 }
 
 export interface ISummaryConfigurationDisableSummarizer {
@@ -252,7 +255,11 @@ export type ISummaryConfiguration =
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
 
+    // TO REMOVE
     idleTime: 5000 * 3,
+
+    minIdleTime: 5 * 1000,
+    maxIdleTime: 30 * 1000,
 
     maxTime: 5000 * 12,
 
