@@ -15,17 +15,23 @@ import { removeAllChildren } from "./utils";
  * Hosts a UI container within the browser
  */
 export class BrowserContainerHost {
-    private root: Component = null;
-    private parent: HTMLElement = null;
+    private _root: Component | undefined;
+    private get root(): Component {
+        if (this._root === undefined) {
+            throw new Error("Root accessed before created");
+        }
+        return this._root;
+    }
+    private parent: HTMLElement | undefined;
 
     public attach(root: Component, parent?: HTMLElement) {
         debug("Attaching new component to browser host");
 
         // Make note of the root node
-        if (this.root) {
+        if (this._root) {
             throw new Error("A component has already been attached");
         }
-        this.root = root;
+        this._root = root;
         this.parent = parent;
 
         // Listen for resize messages and propagate them to child elements

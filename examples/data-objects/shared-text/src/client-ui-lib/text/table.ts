@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/*
+eslint-disable
+@typescript-eslint/no-non-null-assertion,
+@typescript-eslint/consistent-type-assertions,
+@typescript-eslint/strict-boolean-expressions,
+*/
+
 import * as MergeTree from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
 import * as Paragraph from "./paragraph";
@@ -99,8 +106,8 @@ function createCellBegin(
         before: true,
         id: cellEndId,
     };
-    let startExtraProperties: Record<string, any>;
-    let pgExtraProperties: Record<string, any>;
+    let startExtraProperties: Record<string, any> | undefined;
+    let pgExtraProperties: Record<string, any> | undefined;
     if (extraProperties) {
         startExtraProperties = MergeTree.extend(MergeTree.createMap(), extraProperties);
         pgExtraProperties = MergeTree.extend(MergeTree.createMap(), extraProperties);
@@ -118,7 +125,7 @@ function createCellRelativeWithId(
     relpos: MergeTree.IRelativePosition,
     extraProperties?: MergeTree.PropertySet) {
     const cellEndId = endPrefix + cellId;
-    let endExtraProperties: Record<string, any>;
+    let endExtraProperties: Record<string, any> | undefined;
     if (extraProperties) {
         endExtraProperties = MergeTree.extend(MergeTree.createMap(), extraProperties);
     }
@@ -155,7 +162,7 @@ function createRowCellOp(
     sharedString: SharedString,
     idBase: string, endRowId: string,
     columnId?: string) {
-    let props: MergeTree.PropertySet;
+    let props: MergeTree.PropertySet | undefined;
     if (columnId) {
         props = { columnId };
     }
@@ -216,7 +223,7 @@ export function insertColumn(
     };
     opList.push(insertColMarkerOp);
     for (const currRow of table.rows) {
-        insertColumnCellForRow(idBase, opList, currRow, prevColumnId, columnId);
+        insertColumnCellForRow(idBase, opList, currRow, prevColumnId!, columnId);
     }
     const groupOp = <MergeTree.IMergeTreeGroupMsg>{
         ops: opList,
@@ -353,6 +360,7 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
     const opList = <MergeTree.IMergeTreeInsertMsg[]>[];
     const endTableId = endPrefix + tableId;
     opList.push(createMarkerOp(pos, endTableId,
+        // eslint-disable-next-line no-bitwise
         MergeTree.ReferenceType.NestEnd |
         MergeTree.ReferenceType.Tile, ["table"], ["pg"]));
     const endTablePos = <MergeTree.IRelativePosition>{
@@ -404,9 +412,9 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
 }
 
 export class Table {
-    public width: number;
-    public renderedHeight: number;
-    public deferredHeight: number;
+    public width: number | undefined;
+    public renderedHeight: number | undefined;
+    public deferredHeight: number | undefined;
     public minContentWidth = 0;
     public indentPct = 0.0;
     public contentPct = 1.0;
@@ -419,7 +427,7 @@ export class Table {
 
     public addGridColumn(columnMarker: IColumnMarker) {
         columnMarker.columnId = columnMarker.getId();
-        this.idToColumn.set(columnMarker.columnId, columnMarker);
+        this.idToColumn.set(columnMarker.columnId!, columnMarker);
         columnMarker.indexInTable = this.gridColumns.length;
         this.gridColumns.push(columnMarker);
     }
@@ -457,7 +465,7 @@ export class Table {
     }
 
     public findPrecedingRow(startRow: Row) {
-        let prevRow: Row;
+        let prevRow: Row | undefined;
         for (let rowIndex = 0, rowCount = this.rows.length; rowIndex < rowCount; rowIndex++) {
             const row = this.rows[rowIndex];
             if (row === startRow) {
@@ -470,7 +478,7 @@ export class Table {
     }
 
     public findNextRow(startRow: Row) {
-        let nextRow: Row;
+        let nextRow: Row | undefined;
         for (let rowIndex = this.rows.length - 1; rowIndex >= 0; rowIndex--) {
             const row = this.rows[rowIndex];
             if (row === startRow) {
@@ -533,9 +541,9 @@ export class Column {
 }
 
 export class Row {
-    public table: Table;
-    public pos: number;
-    public endPos: number;
+    public table: Table | undefined;
+    public pos: number | undefined;
+    public endPos: number | undefined;
     public minContentWidth = 0;
     public cells = <Cell[]>[];
 
@@ -545,7 +553,7 @@ export class Row {
 
     // TODO: move to view layer
     public findClosestCell(x: number) {
-        let bestcell: Cell;
+        let bestcell: Cell | undefined;
         let bestDistance = -1;
         for (const cell of this.cells) {
             if (cell.div) {
@@ -565,12 +573,12 @@ export class Row {
 export class Cell {
     public minContentWidth = 0;
     public specWidth = 0;
-    public renderedHeight: number;
-    public div: HTMLDivElement;
-    public columnId: string;
+    public renderedHeight: number | undefined;
+    public div: HTMLDivElement | undefined;
+    public columnId: string | undefined;
     // TODO: update on typing in cell
     public emptyCell = false;
-    public additionalCellMarkers: ICellMarker[];
+    public additionalCellMarkers: ICellMarker[] | undefined;
     constructor(public marker: ICellMarker, public endMarker: ICellMarker) {
     }
     public addAuxMarker(marker: ICellMarker) {
@@ -599,7 +607,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
     }
     const endCellPos = getPosition(sharedString, endCellMarker);
     cellMarker.cell = new Cell(cellMarker, endCellMarker);
-    cellMarker.cell.columnId = cellMarker.properties.columnId;
+    cellMarker.cell.columnId = cellMarker.properties!.columnId;
     let nextPos = cellStartPos + cellMarker.cachedLength;
     if (markEmptyCells && (nextPos === endCellPos - 1)) {
         cellMarker.cell.emptyCell = true;
@@ -613,10 +621,10 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                 if (marker.hasRangeLabel("table")) {
                     const tableMarker = <ITableMarker>marker;
                     parseTable(tableMarker, nextPos, sharedString, fontInfo);
-                    if (tableMarker.table.minContentWidth > cellMarker.cell.minContentWidth) {
-                        cellMarker.cell.minContentWidth = tableMarker.table.minContentWidth;
+                    if (tableMarker.table!.minContentWidth > cellMarker.cell.minContentWidth) {
+                        cellMarker.cell.minContentWidth = tableMarker.table!.minContentWidth;
                     }
-                    const endTableMarker = tableMarker.table.endTableMarker;
+                    const endTableMarker = tableMarker.table!.endTableMarker;
                     nextPos = sharedString.getPosition(endTableMarker);
                     nextPos += endTableMarker.cachedLength;
                 } else {
@@ -629,7 +637,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                 const pgMarker = <Paragraph.IParagraphMarker>tilePos.tile;
                 if (!pgMarker.itemCache) {
                     if (fontInfo) {
-                        const itemsContext = <Paragraph.IItemsContext>{
+                        const itemsContext = <Paragraph.IItemsContext><unknown>{
                             curPGMarker: pgMarker,
                             fontInfo,
                             itemInfo: { items: [], minWidth: 0 },
@@ -665,7 +673,7 @@ function parseRow(
     const rowMarkerSegOff = sharedString.getContainingSegment(rowStartPos);
     const rowMarker = <IRowMarker>rowMarkerSegOff.segment;
     const id = rowMarker.getId();
-    const endId = endPrefix + id;
+    const endId = `${endPrefix}${id}`;
     const endRowMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
     if (!endRowMarker) {
         console.log(`row parse error: ${rowStartPos}`);
@@ -685,13 +693,13 @@ function parseRow(
         }
         // TODO: check for column id not in grid
         if (!cellIsMoribund(cellMarker)) {
-            const cellColumnId = cellMarker.properties.columnId;
-            rowMarker.row.minContentWidth += cellMarker.cell.minContentWidth;
-            rowMarker.row.cells.push(cellMarker.cell);
-            rowColumns[cellColumnId] = cellMarker.cell;
+            const cellColumnId = cellMarker.properties!.columnId;
+            rowMarker.row.minContentWidth += cellMarker.cell!.minContentWidth;
+            rowMarker.row.cells.push(cellMarker.cell!);
+            rowColumns[cellColumnId] = cellMarker.cell!;
         }
-        const endcellPos = getPosition(sharedString, cellMarker.cell.endMarker);
-        nextPos = endcellPos + cellMarker.cell.endMarker.cachedLength;
+        const endcellPos = getPosition(sharedString, cellMarker.cell!.endMarker);
+        nextPos = endcellPos + cellMarker.cell!.endMarker.cachedLength;
     }
     return rowMarker;
 }
@@ -715,7 +723,7 @@ export function parseColumns(sharedString: SharedString, pos: number, table: Tab
 
 export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString) {
     const id = tableMarker.getId();
-    const endId = endPrefix + id;
+    const endId = `${endPrefix}${id}`;
     const endTableMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
     const endTablePos = endTableMarker.cachedLength + getPosition(sharedString, endTableMarker);
     let lineBuf = "";
@@ -730,7 +738,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
                 reqPos = false;
             }
             if (marker.hasRangeLabels()) {
-                const rangeLabel = marker.getRangeLabels()[0];
+                const rangeLabel = marker.getRangeLabels()![0];
                 if (marker.refType === MergeTree.ReferenceType.NestEnd) {
                     lineBuf += "E";
                     if ((rangeLabel === "table") || (rangeLabel === "row")) {
@@ -758,7 +766,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
                 }
                 /* eslint-enable default-case */
             } else if (marker.refType === MergeTree.ReferenceType.Simple) {
-                if (marker.properties.columnId) {
+                if (marker.properties!.columnId) {
                     lineBuf += "CO";
                     lastWasCO = true;
                 }
@@ -806,7 +814,7 @@ export function insertHoleFixer(
 export function parseTable(
     tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
     const id = tableMarker.getId();
-    const endId = endPrefix + id;
+    const endId = `${endPrefix}${id}`;
     const endTableMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
     const endTablePos = getPosition(sharedString, endTableMarker);
     const table = new Table(tableMarker, endTableMarker);
@@ -821,7 +829,7 @@ export function parseTable(
             succinctPrintTable(tableMarker, tableMarkerPos, sharedString);
             return undefined;
         }
-        const rowView = rowMarker.row;
+        const rowView = rowMarker.row!;
         rowView.table = table;
         rowView.pos = nextPos;
         if (!rowIsMoribund(rowMarker)) {
@@ -835,19 +843,19 @@ export function parseTable(
                 if (cell.minContentWidth > columnView.minContentWidth) {
                     columnView.minContentWidth = cell.minContentWidth;
                 }
-                if (cellIsMoribund(cell.marker) && (cell.marker.properties.wholeColumn)) {
+                if (cellIsMoribund(cell.marker) && (cell.marker.properties!.wholeColumn)) {
                     columnView.moribund = true;
                 }
             }
 
-            if (rowMarker.row.minContentWidth > table.minContentWidth) {
-                table.minContentWidth = rowMarker.row.minContentWidth;
+            if (rowMarker.row!.minContentWidth > table.minContentWidth) {
+                table.minContentWidth = rowMarker.row!.minContentWidth;
             }
             table.rows[rowIndex++] = rowView;
         }
-        const endRowPos = getPosition(sharedString, rowMarker.row.endRowMarker);
+        const endRowPos = getPosition(sharedString, rowMarker.row!.endRowMarker);
         rowView.endPos = endRowPos;
-        nextPos = endRowPos + rowMarker.row.endRowMarker.cachedLength;
+        nextPos = endRowPos + rowMarker.row!.endRowMarker.cachedLength;
     }
     succinctPrintTable(tableMarker, tableMarkerPos, sharedString);
     return table;
@@ -858,3 +866,10 @@ export const rowIsMoribund = (rowMarker: IRowMarker) => rowMarker.properties && 
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const cellIsMoribund = (cellMarker: ICellMarker) => cellMarker.properties && cellMarker.properties.moribund;
+
+/*
+eslint-enable
+@typescript-eslint/no-non-null-assertion,
+@typescript-eslint/consistent-type-assertions,
+@typescript-eslint/strict-boolean-expressions,
+*/

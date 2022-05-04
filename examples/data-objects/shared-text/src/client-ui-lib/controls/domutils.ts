@@ -22,7 +22,7 @@ let cachedCanvas: HTMLCanvasElement;
 
 export function getLineHeight(fontstr: string, lineHeight?: string) {
     let _fontstr = fontstr;
-    if (lineHeight) {
+    if (lineHeight !== undefined) {
         _fontstr += (`/${lineHeight}`);
     }
     let height = lineHeightCache.get(_fontstr);
@@ -46,15 +46,16 @@ export function getLineHeight(fontstr: string, lineHeight?: string) {
 
 export function getTextWidth(text: string, font: string) {
     let fontMap = textWidthCache.get(font);
-    let w: number;
+    let w: number | undefined;
     if (!fontMap) {
         fontMap = new Map<string, number>();
     } else {
         w = fontMap.get(text);
     }
     if (w === undefined) {
-        const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
-        const context = canvas.getContext("2d");
+        const canvas = cachedCanvas ?? (cachedCanvas = document.createElement("canvas"));
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const context = canvas.getContext("2d")!;
         context.font = font;
         const metrics = context.measureText(text);
         w = metrics.width;
