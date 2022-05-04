@@ -251,12 +251,18 @@ export class LocalReferenceCollection {
         const ref = new LocalReference(
             client,
             this.segment,
-           refType,
-           offset,
+            refType,
+            offset,
+            properties,
         );
+        this.addLocalRef(ref);
         return ref;
     }
 
+    /**
+     *
+     * @deprecated - use createLocalRef instead
+     */
     public addLocalRef(lref: LocalReference) {
         const refsAtOffset = this.refsByOffset[lref.offset];
         if (refsAtOffset === undefined) {
