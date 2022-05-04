@@ -268,7 +268,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         if (provider.driver.type !== "odsp") {
             // this flow is currently only supported on ODSP, the others should explicitly reject on attach
             return assert.rejects(attachP,
-                (err) => err.message === usageErrorMessage /* "create empty file not supported" */);
+                (err) => err.message === usageErrorMessage);
         }
         await attachP;
 
@@ -319,7 +319,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         if (provider.driver.type !== "odsp") {
             // this flow is currently only supported on ODSP, the others should explicitly reject on attach
             return assert.rejects(attachP,
-                (err) => err.message === usageErrorMessage /* "create empty file not supported" */);
+                (err) => err.message === usageErrorMessage);
         }
         await attachP;
         detachedBlobStorage.blobs.clear();
@@ -349,7 +349,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         if (provider.driver.type !== "odsp") {
             // this flow is currently only supported on ODSP, the others should explicitly reject on attach
             return assert.rejects(attachP,
-                (err) => err.message === usageErrorMessage /* "create empty file not supported" */);
+                (err) => err.message === usageErrorMessage);
         }
         await attachP;
 
@@ -380,7 +380,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         if (provider.driver.type !== "odsp") {
             // this flow is currently only supported on ODSP, the others should explicitly reject on attach
             return assert.rejects(attachP,
-                (err) => err.message === usageErrorMessage /* "create empty file not supported" */);
+                (err) => err.message === usageErrorMessage);
         }
         await attachP;
 
