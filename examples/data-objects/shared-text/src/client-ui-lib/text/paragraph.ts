@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/*
+eslint-disable
+@typescript-eslint/no-non-null-assertion,
+@typescript-eslint/consistent-type-assertions,
+@typescript-eslint/strict-boolean-expressions,
+*/
+
 import * as MergeTree from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
 import { CharacterCodes } from "./characterCodes";
@@ -151,7 +158,7 @@ export class ParagraphLexer<TContext> {
     public state = ParagraphLexerState.AccumBlockChars;
     private spaceCount = 0;
     private textBuf = "";
-    private leadSegment: MergeTree.TextSegment;
+    private leadSegment: MergeTree.TextSegment | undefined;
 
     constructor(public tokenActions: ParagraphTokenActions<TContext>, public actionContext?: TContext) {
     }
@@ -206,14 +213,14 @@ export class ParagraphLexer<TContext> {
     private emitGlue() {
         if (this.spaceCount > 0) {
             this.tokenActions.textToken(MergeTree.internedSpaces(this.spaceCount), ParagraphItemType.Glue,
-                this.leadSegment, this.actionContext);
+                this.leadSegment!, this.actionContext);
             this.spaceCount = 0;
         }
     }
 
     private emitBlock() {
         if (this.textBuf.length > 0) {
-            this.tokenActions.textToken(this.textBuf, ParagraphItemType.Block, this.leadSegment, this.actionContext);
+            this.tokenActions.textToken(this.textBuf, ParagraphItemType.Block, this.leadSegment!, this.actionContext);
             this.textBuf = "";
         }
     }
@@ -239,15 +246,15 @@ export function getIndentPct(pgMarker: IParagraphMarker) {
 }
 
 export function getIndentSymbol(pgMarker: IParagraphMarker) {
-    let indentLevel = pgMarker.properties.indentLevel;
-    indentLevel = indentLevel % pgMarker.listHeadCache.series.length;
-    let series = pgMarker.listHeadCache.series[indentLevel];
+    let indentLevel = pgMarker.properties!.indentLevel;
+    indentLevel = indentLevel % pgMarker.listHeadCache!.series!.length;
+    let series = pgMarker.listHeadCache!.series![indentLevel];
     let seriesSource = listSeries;
-    if (pgMarker.properties.listKind === 1) {
+    if (pgMarker.properties!.listKind === 1) {
         seriesSource = symbolSeries;
     }
     series = series % seriesSource.length;
-    return seriesSource[series](pgMarker.listCache.itemCounts[indentLevel]);
+    return seriesSource[series](pgMarker.listCache!.itemCounts[indentLevel]);
 }
 
 export interface IListHeadInfo {
@@ -351,7 +358,7 @@ const symbolSeries = [
 
 function convertToListHead(tile: IParagraphMarker) {
     tile.listHeadCache = {
-        series: <number[]>tile.properties.series,
+        series: <number[]>tile.properties!.series,
         tile,
     };
     tile.listCache = { itemCounts: [0, 1] };
@@ -366,20 +373,20 @@ export function getListCacheInfo(
     sharedString: SharedString, tile: IParagraphMarker, tilePos: number, precedingTileCache?: ITilePos[]) {
     if (isListTile(tile)) {
         if (tile.listCache === undefined) {
-            if (tile.properties.series) {
+            if (tile.properties!.series) {
                 convertToListHead(tile);
             } else {
-                const listKind = tile.properties.listKind;
+                const listKind = tile.properties!.listKind;
                 const precedingTilePos = getPrecedingTile(sharedString, tile, tilePos, "list",
-                    (t) => isListTile(t) && (t.properties.listKind === listKind), precedingTileCache);
+                    (t) => isListTile(t) && (t.properties!.listKind === listKind), precedingTileCache);
                 if (precedingTilePos && ((tilePos - precedingTilePos.pos) < maxListDistance)) {
                     getListCacheInfo(sharedString, <MergeTree.Marker>precedingTilePos.tile,
                         precedingTilePos.pos, precedingTileCache);
                     const precedingTile = <IParagraphMarker>precedingTilePos.tile;
                     tile.listHeadCache = precedingTile.listHeadCache;
-                    const indentLevel = tile.properties.indentLevel;
-                    const precedingItemCount = precedingTile.listCache.itemCounts[indentLevel];
-                    const itemCounts = precedingTile.listCache.itemCounts.slice();
+                    const indentLevel = tile.properties!.indentLevel;
+                    const precedingItemCount = precedingTile.listCache!.itemCounts[indentLevel];
+                    const itemCounts = precedingTile.listCache!.itemCounts.slice();
                     if (indentLevel < itemCounts.length) {
                         itemCounts[indentLevel] = precedingItemCount + 1;
                     } else {
@@ -393,7 +400,7 @@ export function getListCacheInfo(
                 } else {
                     // Doesn't race because re-render is deferred
                     let series: number[];
-                    if (tile.properties.listKind === 0) {
+                    if (tile.properties!.listKind === 0) {
                         series = [0, 0, 2, 6, 3, 7, 2, 6, 3, 7];
                     } else {
                         series = [0, 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6];
@@ -500,6 +507,7 @@ export function textTokenToItems(
     }
 }
 
+// eslint-disable-next-line no-bitwise
 export const isEndBox = (marker: MergeTree.Marker) => (marker.refType & MergeTree.ReferenceType.NestEnd) &&
     marker.hasRangeLabel("box");
 
@@ -522,3 +530,10 @@ export function segmentToItems(
     }
     return true;
 }
+
+/*
+eslint-enable
+@typescript-eslint/no-non-null-assertion,
+@typescript-eslint/consistent-type-assertions,
+@typescript-eslint/strict-boolean-expressions,
+*/
