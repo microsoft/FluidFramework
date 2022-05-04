@@ -1640,6 +1640,7 @@ export class IdCompressor {
 		let attributionId: AttributionId | undefined;
 		let serializedLocalState: SerializedLocalState | undefined;
 		if (newSessionIdMaybe === undefined) {
+			// Alias of serialized, but known to be a SerializedIdCompressorWithOngoingSession
 			const [serializedWithSession] = args;
 			const serializedSessionData = serializedSessions[serializedWithSession.localSessionIndex];
 			localSessionId = serializedSessionData[0];
