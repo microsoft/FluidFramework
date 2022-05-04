@@ -147,6 +147,7 @@ export class ConnectionStateHandler {
     private transitionToConnectedStateWhenCaughtUp() {
         this.handler.onCaughtUpToKnownOps(() => {
             // We may have disconnected while waiting
+            //* This is not really good enough - Ideally we would unregister an event handler on disconnect
             if (this._connectionState === ConnectionState.Connecting) {
                 this.setConnectionState(ConnectionState.Connected);
             }
