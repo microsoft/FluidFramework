@@ -25,8 +25,23 @@ export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
-const JoinOpTimer = 45000;
+const JoinOpTimeout = 45000;
 
+/**
+ * In the lifetime of a container, the connection will likely disconnect and reconnect periodically.
+ * Due to the distributed nature of the ordering service, the transition from old clientId to new clientId
+ * (since each reconnect gets a unique clientId) is asynchronous and the sequence of events is unpredictable.
+ *
+ * The job of this class is to encapsulate that transition period, which is identified by ConnectionState.Connecting.
+ * Specifically, before moving to Connected state, it ensures that:
+ * (A) We process the Leave op for the previous clientId. This means the server will reject any subsequent outbound ops
+ *     with that clientId (important because we will likely attempt to resend pending ops with the new clientId)
+ * (B) We process the Join op for the new clientId (identified when the underlying connection was first established)
+ *
+ * For (A) we give up waiting after some time (same timeout as server uses), and go ahead and transition to Connected.
+ * For (B) we log telemetry if it takes too long, but still only transition to Connected when the Join op is processed
+ * and we are added to the Quorum.
+ */
 export class ConnectionStateHandler {
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
@@ -71,7 +86,7 @@ export class ConnectionStateHandler {
         // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
         // if retrying fixes the problem, we should not see these events.
         this.joinOpTimer = new Timer(
-            JoinOpTimer,
+            JoinOpTimeout,
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
                 // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
