@@ -719,7 +719,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public rollback(contents: any, localOpMetadata: unknown) {
-        assert(!!this.channel, "Channel must exist when rolling back ops");
+        if (!this.channel) {
+            throw new Error("Channel must exist when rolling back ops");
+        }
         if (!this.channel.rollback) {
             throw new Error("Channel doesn't support rollback");
         }
