@@ -54,7 +54,7 @@ export interface IPendingLocalState {
     pendingStates: IPendingState[];
 }
 
-export interface RuntimeStateHandler{
+export interface IRuntimeStateHandler{
     connected(): boolean,
     clientId(): string | undefined,
     flushMode(): FlushMode,
@@ -130,7 +130,7 @@ export class PendingStateManager implements IDisposable {
     }
 
     constructor(
-        private readonly stateHandler: RuntimeStateHandler,
+        private readonly stateHandler: IRuntimeStateHandler,
         initialFlushMode: FlushMode,
         initialLocalState: IPendingLocalState | undefined,
     ) {
