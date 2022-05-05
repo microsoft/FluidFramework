@@ -14,16 +14,16 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
-# 1.0
+# 0.60
 
-## 1.0 Upcoming changes
+## 0.60 Upcoming changes
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
 
 ### Summarize heuristic changes based on telemetry
 Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
 - Change `minOpsForLastSummaryAttempt` from `50` -> `10`
 
-## 1.0 Breaking changes
+## 0.60 Breaking changes
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 - [Deprecate TelemetryDataTag.PackageData](#Deprecate-TelemetryDataTagPackageData)
@@ -32,6 +32,7 @@ Changes will be made in the way heuristic summaries are run based on observed te
 - [Deprecated Fields from ISummaryRuntimeOptions](#Deprecated-fields-from-ISummaryRuntimeOptions)
 - [`ISummarizerOptions` is deprecated](#isummarizerOptions-is-deprecated)
 - [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
+- [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
 
 ### Remove IFluidSerializer from core-interfaces
 `IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
@@ -70,6 +71,15 @@ Options that control the behavior of a running summarizer will be moved to the `
 
 ### connect() and disconnect() made mandatory on IContainer and IFluidContainer
 The functions `IContainer.connect()`, `IContainer.disconnect()`, `IFluidContainer.connect()`, and `IFluidContainer.disconnect()` have all been changed from optional to mandatory functions.
+
+### Remove Const Enums from Merge Tree, Sequence, and Shared String
+
+The types RBColor, MergeTreeMaintenanceType, and MergeTreeDeltaType are no longer const enums they are now const objects with a union type. In general there should be no change necessary for consumer, unless you are using a specific value as a type. When using a specific value as a type, it is now necessary to prefix with typeof. This scenario is uncommon in consuming code. Example:
+``` diff
+export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
+-    type: MergeTreeDeltaType.INSERT;
++    type: typeof MergeTreeDeltaType.INSERT;
+```
 
 # 0.59
 
