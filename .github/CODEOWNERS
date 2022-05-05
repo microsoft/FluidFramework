@@ -81,13 +81,13 @@ api-report/runtime-utils.api.md                                           @micro
 api-report/sequence.api.md                                                @microsoft/fluid-cr-dds
 api-report/shared-object-base.api.md                                      @microsoft/fluid-cr-framework
 api-report/shared-summary-block.api.md                                    @microsoft/fluid-cr-runtime
+api-report/stochastic-test-utils.api.md                                   @microsoft/fluid-cr-test
 api-report/synthesize.api.md                                              @microsoft/fluid-cr-runtime
 api-report/task-manager.api.md                                            @microsoft/fluid-cr-dds
 api-report/telemetry-utils.api.md                                         @microsoft/fluid-cr-telemetry
 api-report/test-driver-definitions.api.md                                 @microsoft/fluid-cr-drivers
 api-report/test-drivers.api.md                                            @microsoft/fluid-cr-drivers
 api-report/test-runtime-utils.api.md                                      @microsoft/fluid-cr-runtime
-api-report/stochastic-test-utils.api.md                                   @microsoft/fluid-cr-test
 api-report/test-utils.api.md                                              @microsoft/fluid-cr-test
 api-report/tool-utils.api.md                                              @microsoft/fluid-cr-tools
 api-report/undo-redo.api.md                                               @microsoft/fluid-cr-framework
