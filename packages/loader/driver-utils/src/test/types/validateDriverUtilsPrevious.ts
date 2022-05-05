@@ -60,7 +60,6 @@ declare function get_current_ClassDeclaration_BlobAggregationStorage():
 declare function use_old_ClassDeclaration_BlobAggregationStorage(
     use: TypeOnly<old.BlobAggregationStorage>);
 use_old_ClassDeclaration_BlobAggregationStorage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_BlobAggregationStorage());
 
 /*
@@ -85,7 +84,6 @@ declare function get_current_ClassDeclaration_BlobCacheStorageService():
 declare function use_old_ClassDeclaration_BlobCacheStorageService(
     use: TypeOnly<old.BlobCacheStorageService>);
 use_old_ClassDeclaration_BlobCacheStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_BlobCacheStorageService());
 
 /*
@@ -302,7 +300,6 @@ declare function get_current_ClassDeclaration_DocumentStorageServiceProxy():
 declare function use_old_ClassDeclaration_DocumentStorageServiceProxy(
     use: TypeOnly<old.DocumentStorageServiceProxy>);
 use_old_ClassDeclaration_DocumentStorageServiceProxy(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DocumentStorageServiceProxy());
 
 /*
@@ -807,7 +804,6 @@ declare function get_current_ClassDeclaration_PrefetchDocumentStorageService():
 declare function use_old_ClassDeclaration_PrefetchDocumentStorageService(
     use: TypeOnly<old.PrefetchDocumentStorageService>);
 use_old_ClassDeclaration_PrefetchDocumentStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_PrefetchDocumentStorageService());
 
 /*
