@@ -8,9 +8,9 @@ import { UniversalSequenceNumber } from "../constants";
 import {
     Marker,
     reservedMarkerIdKey,
-    reservedTileLabelsKey,
 } from "../mergeTree";
 import { ReferenceType } from "../ops";
+import { reservedTileLabelsKey } from "../referencePositions";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 
