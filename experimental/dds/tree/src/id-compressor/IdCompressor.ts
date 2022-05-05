@@ -766,11 +766,7 @@ export class IdCompressor {
 				cluster.overrides ??= new Map();
 
 				const inversionKey = IdCompressor.createInversionKey(override);
-				// TODO: This cast can be removed on typescript 4.6
-				const existingIds = this.getExistingIdsForNewOverride(inversionKey, true) as [
-					LocalCompressedId,
-					FinalCompressedId
-				];
+				const existingIds = this.getExistingIdsForNewOverride(inversionKey, true);
 				let overrideForCluster: string | FinalCompressedId;
 				let associatedLocal: LocalCompressedId | undefined;
 				if (existingIds !== undefined) {
@@ -871,8 +867,7 @@ export class IdCompressor {
 	}
 
 	private static createInversionKey(inversionKey: string): InversionKey {
-		// TODO: This cast can be removed on typescript 4.6
-		return isStableId(inversionKey) ? inversionKey : (`${nonStableOverridePrefix}${inversionKey}` as InversionKey);
+		return isStableId(inversionKey) ? inversionKey : `${nonStableOverridePrefix}${inversionKey}`;
 	}
 
 	private static isStableInversionKey(inversionKey: InversionKey): inversionKey is StableId {
@@ -1093,8 +1088,7 @@ export class IdCompressor {
 		uncompressedUuidNumeric?: NumericUuid
 	): SessionSpaceCompressedId | undefined {
 		let numericUuid = uncompressedUuidNumeric;
-		// TODO: This cast can be removed on typescript 4.6, and should give improved typesafety.
-		const inversionKey = IdCompressor.createInversionKey(uncompressed) as StableId;
+		const inversionKey = IdCompressor.createInversionKey(uncompressed);
 		const isStable = IdCompressor.isStableInversionKey(inversionKey);
 		const closestMatch = this.clustersAndOverridesInversion.getPairOrNextLower(inversionKey, reusedArray);
 		if (closestMatch !== undefined) {
@@ -1141,7 +1135,6 @@ export class IdCompressor {
 
 		if (isStable) {
 			// May have already computed the numeric UUID, so avoid recomputing if possible
-			// TODO: This cast can be removed on typescript 4.6
 			const localId = this.getLocalIdForStableId(numericUuid ?? inversionKey);
 			if (localId !== undefined) {
 				return localId;
@@ -1283,10 +1276,7 @@ export class IdCompressor {
 	}
 
 	private getLocalIdForStableId(stableId: StableId | NumericUuid): LocalCompressedId | undefined {
-		// TODO: This cast can be removed on typescript 4.6
-		const numericUuid = (
-			typeof stableId === 'string' ? numericUuidFromStableId(stableId) : stableId
-		) as NumericUuid;
+		const numericUuid = typeof stableId === 'string' ? numericUuidFromStableId(stableId) : stableId;
 		const offset = getPositiveDelta(numericUuid, this.localSession.sessionUuid, this.localIdCount - 1);
 		if (offset === undefined) {
 			return undefined;
@@ -1637,6 +1627,7 @@ export class IdCompressor {
 			  ]
 	): IdCompressor {
 		const [serialized, newSessionIdMaybe, attributionIdMaybe] = args;
+
 		const {
 			clusterCapacity,
 			reservedIdCount,
@@ -1649,17 +1640,16 @@ export class IdCompressor {
 		let attributionId: AttributionId | undefined;
 		let serializedLocalState: SerializedLocalState | undefined;
 		if (newSessionIdMaybe === undefined) {
-			// TODO: This cast can be removed on typescript 4.6
-			const serializedSessionData =
-				serializedSessions[(serialized as SerializedIdCompressorWithOngoingSession).localSessionIndex];
+			// Alias of serialized, but known to be a SerializedIdCompressorWithOngoingSession
+			const [serializedWithSession] = args;
+			const serializedSessionData = serializedSessions[serializedWithSession.localSessionIndex];
 			localSessionId = serializedSessionData[0];
 			const attributionIndex = serializedSessionData[1];
 			if (attributionIndex !== undefined) {
 				assert(serializedAttributionIds !== undefined && serializedAttributionIds.length > attributionIndex);
 				attributionId = serializedAttributionIds[attributionIndex];
 			}
-			// TODO: This cast can be removed on typescript 4.6
-			serializedLocalState = (serialized as SerializedIdCompressorWithOngoingSession).localState;
+			serializedLocalState = serializedWithSession.localState;
 		} else {
 			localSessionId = newSessionIdMaybe;
 			attributionId = attributionIdMaybe;
@@ -1855,10 +1845,8 @@ function deserializeCluster(serializedCluster: SerializedCluster): {
 	return {
 		sessionIndex,
 		capacity,
-		// TODO: This cast can be removed on typescript 4.6
-		count: (hasCount ? countOrOverrides : capacity) as number,
-		// TODO: This cast can be removed on typescript 4.6
-		overrides: (hasCount ? overrides : countOrOverrides) as SerializedClusterOverrides,
+		count: hasCount ? countOrOverrides : capacity,
+		overrides: hasCount ? overrides : countOrOverrides,
 	};
 }
 
