@@ -87,6 +87,7 @@ api-report/telemetry-utils.api.md                                         @micro
 api-report/test-driver-definitions.api.md                                 @microsoft/fluid-cr-drivers
 api-report/test-drivers.api.md                                            @microsoft/fluid-cr-drivers
 api-report/test-runtime-utils.api.md                                      @microsoft/fluid-cr-runtime
+api-report/stochastic-test-utils.api.md                                   @microsoft/fluid-cr-test
 api-report/test-utils.api.md                                              @microsoft/fluid-cr-test
 api-report/tool-utils.api.md                                              @microsoft/fluid-cr-tools
 api-report/undo-redo.api.md                                               @microsoft/fluid-cr-framework
