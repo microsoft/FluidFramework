@@ -415,6 +415,45 @@ describe("SharedString", () => {
             ]);
         });
 
+        it.only("can slide intervals on create conflict with remove range and insert", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCDE");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.removeRange(1, 3);
+            assert.strictEqual(sharedString.getText(), "ADE");
+
+            collection2.add(1, 3, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+
+            // before fixing this, at this point the start range on sharedString
+            // is on the removed segment. Can't detect that from the interval API.
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 1 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 1 },
+            ]);
+
+            // More operations reveal the problem
+            sharedString.insertText(2, "X");
+            assert.strictEqual(sharedString.getText(), "ADXE");
+            sharedString2.removeRange(1, 2);
+            assert.strictEqual(sharedString2.getText(), "AE");
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "AXE");
+
+            assertIntervals(sharedString2, collection2, [
+                { start: 2, end: 2 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 2, end: 2 },
+            ]);
+        });
+
         it("can maintain consistency of LocalReference's when segments are packed", async () => {
             // sharedString.insertMarker(0, ReferenceType.Tile, { nodeType: "Paragraph" });
 
