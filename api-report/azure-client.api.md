@@ -41,6 +41,7 @@ export class AzureClient {
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
     }
+}
 
 // @public
 export interface AzureClientProps {
@@ -50,10 +51,10 @@ export interface AzureClientProps {
 
 // @public
 export interface AzureConnectionConfig {
-    orderer: string;
-    storage: string;
-    tenantId: "local" | string;
+    endpoint: string;
+    tenantId?: string;
     tokenProvider: ITokenProvider;
+    type: "remote" | "local";
 }
 
 // @public
@@ -74,7 +75,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
-    }
+}
 
 // @public
 export interface AzureGetVersionsOptions {
@@ -108,6 +109,5 @@ export { IUser }
 export const LOCAL_MODE_TENANT_ID = "local";
 
 export { ScopeType }
-
 
 ```
