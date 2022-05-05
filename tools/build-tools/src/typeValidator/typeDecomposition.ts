@@ -116,7 +116,7 @@ export function decomposeType(
     // enums because they are unions that don't need to be decomposed
     // these still need to be converted to strings because they are defined symbols
     if (node.getAliasSymbol() || node.isEnum()) {
-        result.typeAsString = `"${result.typeAsString}""`;
+        result.typeAsString = `"${result.typeAsString}"`;
     }
 
     // type parameters can't be string literals and should not be replaced

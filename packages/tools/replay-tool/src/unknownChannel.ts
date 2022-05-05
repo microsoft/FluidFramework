@@ -23,8 +23,7 @@ class UnknownChannel implements IChannel {
     constructor(
         public readonly id: string,
         public readonly attributes: IChannelAttributes,
-        services: IChannelServices)
-    {
+        services: IChannelServices) {
         services.deltaConnection.attach({
             process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
             },
@@ -112,8 +111,7 @@ class ObjectRegistryWithUnknownChannels implements ISharedObjectRegistry {
 }
 
 export function mixinDataStoreWithAnyChannel(
-    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
-{
+    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) {
     return class RuntimeWithRequestHandler extends Base {
         constructor(
             dataStoreContext: IFluidDataStoreContext,

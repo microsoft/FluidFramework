@@ -5,7 +5,7 @@
 /**
  * @fileoverview Helper functions and classes to work with array ChangeSets
  */
- import {copy as cloneDeep} from "fastest-json-copy";
+ import { copy as cloneDeep } from "fastest-json-copy";
  import isNumber from "lodash/isNumber";
  import isString from "lodash/isString";
  import isEqual from "lodash/isEqual";

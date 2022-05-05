@@ -103,7 +103,7 @@ export interface IFluidCodeDetails {
  * @deprecated  in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#isFluidCodeDetails}
  * to have code loading modules in same package
 */
-export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluidCodeDetails> =>{
+export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluidCodeDetails> => {
     const maybeCodeDetails = details as Partial<IFluidCodeDetails> | undefined;
     return typeof maybeCodeDetails === "object"
         && (typeof maybeCodeDetails?.package === "string" || isFluidPackage(maybeCodeDetails?.package))
