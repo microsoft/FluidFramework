@@ -291,7 +291,9 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                     [BaseGitRestTelemetryProperties.ref]: refId,
                 },
                 err);
-            throw new NetworkError(500, "Unable to get ref.");
+            // `GitManager.getRef` relies on a 404 || 400 error code to return null.
+            // That is expected by some components like Scribe.
+            throw new NetworkError(400, "Unable to get ref.");
         }
     }
 
@@ -318,7 +320,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             gitdir: this.directory,
             ref: refId,
             value: patchRefParams.sha,
-            force: true, // Isomorphic-Git requires force to be always true if we want to overwrite a ref.
+            force: patchRefParams.force,
         });
         return conversions.refToIRef(patchRefParams.sha, refId);
     }
