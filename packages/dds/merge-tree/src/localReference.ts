@@ -69,7 +69,11 @@ import { minReferencePosition,
      * @deprecated - use getLocalReferencePosition instead
      */
      public toPosition() {
-        return this.getClient().localReferencePositionToPosition(this);
+        if (this.segment && this.segment.parent) {
+            return this.getOffset() + this.client.getPosition(this.segment);
+        } else {
+            return LocalReference.DetachedPosition;
+        }
     }
 
     /**
