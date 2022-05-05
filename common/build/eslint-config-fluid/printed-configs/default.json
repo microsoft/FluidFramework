@@ -22,6 +22,7 @@
         "import",
         "unicorn",
         "react",
+        "tsdoc",
         "promise",
         "@typescript-eslint",
         "@rushstack/security",
@@ -853,6 +854,9 @@
                     ]
                 }
             }
+        ],
+        "tsdoc/syntax": [
+            "error"
         ],
         "unicorn/better-regex": [
             "error"

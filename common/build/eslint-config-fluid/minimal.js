@@ -38,6 +38,8 @@ module.exports = {
         "@typescript-eslint/eslint-plugin",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-promise
         "eslint-plugin-promise",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-tsdoc
+        "eslint-plugin-tsdoc",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
         "react",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
@@ -168,6 +170,9 @@ module.exports = {
         ],
         "jsx-quotes": "error",
         "key-spacing": "error",
+
+        // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
+        "tsdoc/syntax": "error",
     },
     "overrides": [
         {
