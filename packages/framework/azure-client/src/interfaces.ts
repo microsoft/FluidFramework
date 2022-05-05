@@ -56,6 +56,8 @@ export interface AzureGetVersionsOptions {
     maxCount: number;
 }
 
+export type AzureConnectionConfigType = "local" | "remote";
+
 /**
  * Parameters for establishing a connection with the Azure Fluid Relay.
  */
@@ -63,19 +65,55 @@ export interface AzureConnectionConfig {
     /**
      * The type of connection. Whether we're connecting to a remote Fluid relay server or a local instance.
      */
-    type: "remote" | "local";
+    type: AzureConnectionConfigType;
     /**
-     * URI to the Azure Fluid Relay service discovery endpoint
+     * URI to the Azure Fluid Relay service discovery endpoint.
      */
-    endpoint: string;
+     endpoint: string;
     /**
-     * Unique tenant identifier. Only provide if 'type' === 'remote'
-     */
-    tenantId?: string;
-    /**
-     * Instance that provides Azure Fluid Relay endpoint tokens
+     * Instance that provides Azure Fluid Relay endpoint tokens.
      */
     tokenProvider: ITokenProvider;
+}
+
+/**
+ * Parameters for establishing a remote connection with the Azure Fluid Relay.
+ */
+export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
+    /**
+     * The type of connection. Set to a remote connection.
+     */
+    type: "remote"
+    /**
+     * Unique tenant identifier.
+     */
+    tenantId: string;
+}
+
+/**
+ * Type guard for validating a given AzureConnectionConfig is a remote connection type (AzureRemoteConnectionConfig)
+ */
+ export function isAzureRemoteConnectionConfig(
+    connectionConfig: AzureConnectionConfig): connectionConfig is AzureRemoteConnectionConfig {
+    return connectionConfig.type === "remote";
+}
+
+/**
+ * Parameters for establishing a local connection with a local instance of the Azure Fluid Relay.
+ */
+export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
+    /**
+     * The type of connection. Set to a remote connection.
+     */
+    type: "local"
+}
+
+/**
+ * Type guard for validating a given AzureConnectionConfig is a local connection type (AzureLocalConnectionConfig)
+ */
+ export function isAzureLocalConnectionConfig(
+     connectionConfig: AzureConnectionConfig): connectionConfig is AzureLocalConnectionConfig {
+     return connectionConfig.type === "local";
 }
 
 /**
