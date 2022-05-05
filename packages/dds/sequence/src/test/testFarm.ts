@@ -1274,11 +1274,11 @@ function docNodeToString(docNode: DocumentNode) {
 export type DocumentNode = string | DocumentTree;
 /**
  * Generate and model documents from the following tree grammar:
- * Row -> row[Box*];
- * Box -> box[Content];
- * Content -> (Row|Paragraph)*;
- * Paragraph -> pgtile text;
- * Document-> Content
+ * Row -\> row[Box*];
+ * Box -\> box[Content];
+ * Content -\> (Row|Paragraph)*;
+ * Paragraph -\> pgtile text;
+ * Document-\> Content
  */
 export class DocumentTree {
     pos = 0;
