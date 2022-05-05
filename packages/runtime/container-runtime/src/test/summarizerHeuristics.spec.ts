@@ -219,6 +219,36 @@ describe("Runtime", () => {
                 runner.run();
                 assertAttemptCount(0, "should still run since disposed");
             });
+
+            it("Idle time value should change based on op counts", () => {
+                const lastSummary = 1000;
+                const minIdleTime = 0;
+                const maxIdleTime = 1;
+                const maxTime = 1000;
+                const maxOps = 1000;
+                initialize({ refSequenceNumber: lastSummary, minIdleTime, maxIdleTime, maxTime, maxOps });
+
+                data.lastOpSequenceNumber = lastSummary;
+                assert.strictEqual(runner.idleTime, maxIdleTime, "should start at the maxIdleTime");
+
+                data.lastOpSequenceNumber += 50;
+                assert.strictEqual(runner.idleTime, maxIdleTime - 0.05);
+
+                data.lastOpSequenceNumber += 123;
+                assert.strictEqual(runner.idleTime, maxIdleTime - 0.173);
+
+                data.lastOpSequenceNumber += 500;
+                assert.strictEqual(runner.idleTime, maxIdleTime - 0.673);
+
+                data.lastOpSequenceNumber += 326;
+                assert.strictEqual(runner.idleTime, maxIdleTime - 0.999);
+
+                data.lastOpSequenceNumber += 1;
+                assert.strictEqual(runner.idleTime, minIdleTime);
+
+                data.lastOpSequenceNumber += 100;
+                assert.strictEqual(runner.idleTime, minIdleTime, "should never go below the minIdleTime");
+            });
         });
     });
 });
