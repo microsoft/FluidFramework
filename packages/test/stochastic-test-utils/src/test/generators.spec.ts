@@ -269,7 +269,7 @@ describe("generators", () => {
     // A chi-squared test is a reasonable assessment of whether the observed distribution matches the expected one.
     // https://en.wikipedia.org/wiki/Chi-squared_test
     // These are 99% threshholds, i.e. for 1 degree of freedom, there's a 99% chance that a random sample of the
-    // expected distribution produces a result with chi squared exceeding 6.63.
+    // expected distribution produces a result with chi squared at most 6.63.
     // These are technically probabilities for underlying normal distribution, but by the central limit theorem,
     // a multinomial distribution with large sample size approaches one.
     const chiSquaredCriticalValues = new Map([
