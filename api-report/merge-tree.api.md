@@ -752,14 +752,6 @@ export interface KeyComparer<TKey> {
 }
 
 // @public (undocumented)
-export interface LabeledReference {
-    // (undocumented)
-    properties?: PropertySet;
-    // (undocumented)
-    refType: ReferenceType;
-}
-
-// @public (undocumented)
 export class List<T> {
     constructor(isHead: boolean, data: T | undefined);
     // (undocumented)
@@ -826,7 +818,7 @@ export class LocalReference implements ReferencePosition {
     // @deprecated (undocumented)
     hasTileLabel(label: string): boolean;
     // @deprecated (undocumented)
-    hasTileLabels(): boolean;
+    hasTileLabels(): any;
     // (undocumented)
     isLeaf(): boolean;
     // @deprecated (undocumented)
@@ -1340,22 +1332,22 @@ export enum ReferenceType {
 }
 
 // @public (undocumented)
-export const refGetRangeLabels: (refPos: LabeledReference) => string[] | undefined;
+export const refGetRangeLabels: (refPos: ReferencePosition) => string[] | undefined;
 
 // @public (undocumented)
-export const refGetTileLabels: (refPos: LabeledReference) => string[] | undefined;
+export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
 // @public (undocumented)
-export function refHasRangeLabel(refPos: LabeledReference, label: string): boolean;
+export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean;
 
 // @public (undocumented)
-export function refHasRangeLabels(refPos: LabeledReference): boolean;
+export function refHasRangeLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
-export function refHasTileLabel(refPos: LabeledReference, label: string): boolean;
+export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
 
 // @public (undocumented)
-export function refHasTileLabels(refPos: LabeledReference): boolean;
+export function refHasTileLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
 export const reservedMarkerIdKey = "markerId";
