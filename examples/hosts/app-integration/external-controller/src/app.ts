@@ -5,9 +5,9 @@
 import {
     AzureFunctionTokenProvider,
     AzureClient,
-    AzureConnectionConfig,
+    AzureLocalConnectionConfig,
+    AzureRemoteConnectionConfig,
     AzureContainerServices,
-    LOCAL_MODE_TENANT_ID,
 } from "@fluidframework/azure-client";
 import {
     generateTestUser,
@@ -41,16 +41,15 @@ const azureUser = {
     additionalDetails: userDetails,
 };
 
-const connectionConfig: AzureConnectionConfig = useAzure ? {
+const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure ? {
+    type: "remote",
     tenantId: "",
     tokenProvider: new AzureFunctionTokenProvider("", azureUser),
-    orderer: "",
-    storage: "",
+    endpoint: "",
 } : {
-    tenantId: LOCAL_MODE_TENANT_ID,
+    type: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", user),
-    orderer: "http://localhost:7070",
-    storage: "http://localhost:7070",
+    endpoint: "http://localhost:7070",
 };
 
 // Define the schema of our Container.
@@ -66,8 +65,8 @@ const containerSchema = {
 
 async function initializeNewContainer(container: IFluidContainer): Promise<void> {
     // Initialize both of our SharedMaps for usage with a DiceRollerController
-    const sharedMap1 = container.initialObjects.map1 as SharedMap;
-    const sharedMap2 = container.initialObjects.map2 as SharedMap;
+    const sharedMap1 = container.initialObjects.map1;
+    const sharedMap2 = container.initialObjects.map2;
     await Promise.all([
         DiceRollerController.initializeModel(sharedMap1),
         DiceRollerController.initializeModel(sharedMap2),
@@ -90,7 +89,7 @@ async function start(): Promise<void> {
     if (createNew) {
         // The client will create a new detached container using the schema
         // A detached container will enable the app to modify the container before attaching it to the client
-        ({container, services} = await client.createContainer(containerSchema));
+        ({ container, services } = await client.createContainer(containerSchema));
         // Initialize our models so they are ready for use with our controllers
         await initializeNewContainer(container);
 
@@ -103,14 +102,14 @@ async function start(): Promise<void> {
         id = location.hash.substring(1);
         // Use the unique container ID to fetch the container created earlier.  It will already be connected to the
         // collaboration session.
-        ({container, services} = await client.getContainer(id, containerSchema));
+        ({ container, services } = await client.getContainer(id, containerSchema));
     }
 
     document.title = id;
 
     // Here we are guaranteed that the maps have already been initialized for use with a DiceRollerController
-    const sharedMap1 = container.initialObjects.map1 as SharedMap;
-    const sharedMap2 = container.initialObjects.map2 as SharedMap;
+    const sharedMap1 = container.initialObjects.map1;
+    const sharedMap2 = container.initialObjects.map2;
     const diceRollerController1 = new DiceRollerController(sharedMap1);
     const diceRollerController2 = new DiceRollerController(sharedMap2);
 

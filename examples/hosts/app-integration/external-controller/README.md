@@ -66,15 +66,14 @@ to generate and sign the token such that the service will accept it.
 
 ```typescript
 const connectionConfig: AzureConnectionConfig = useAzure ? {
+    type: "remote",
     tenantId: "YOUR-TENANT-ID-HERE",
     tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetAzureToken", { userId: "test-user", userName: "Test User" }),
-    orderer: "ENTER-ORDERER-URL-HERE",
-    storage: "ENTER-STORAGE-URL-HERE",
+    endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
 } : {
-    tenantId: LOCAL_MODE_TENANT_ID,
+    type: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", user),
-    orderer: "http://localhost:7070",
-    storage: "http://localhost:7070",
+    endpoint: "http://localhost:7070",
 };
 ```
 
