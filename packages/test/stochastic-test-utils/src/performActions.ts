@@ -25,7 +25,7 @@ import { AsyncGenerator, AsyncReducer, BaseFuzzTestState, done, Generator, Reduc
  */
 export async function performFuzzActionsAsync<
     TOperation extends { type: string | number },
-    TState extends BaseFuzzTestState
+    TState extends BaseFuzzTestState,
 >(
     generator: AsyncGenerator<TOperation, TState>,
     reducer: AsyncReducer<TOperation, TState>,
@@ -62,7 +62,7 @@ export async function performFuzzActionsAsync<
  */
 export async function performFuzzActionsAsync<
     TOperation extends { type: string | number },
-    TState extends BaseFuzzTestState
+    TState extends BaseFuzzTestState,
 >(
     generator: AsyncGenerator<TOperation, TState>,
     reducerMap: { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
@@ -71,7 +71,7 @@ export async function performFuzzActionsAsync<
 ): Promise<TState>;
 export async function performFuzzActionsAsync<
     TOperation extends { type: string | number },
-    TState extends BaseFuzzTestState
+    TState extends BaseFuzzTestState,
 >(
     generator: AsyncGenerator<TOperation, TState>,
     reducerOrMap:
