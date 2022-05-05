@@ -860,9 +860,6 @@
         "switch-colon-spacing": [
             "error"
         ],
-        "template-curly-spacing": [
-            "error"
-        ],
         "unicorn/better-regex": [
             "error"
         ],
