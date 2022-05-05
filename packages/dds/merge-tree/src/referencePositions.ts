@@ -11,17 +11,17 @@ import { PropertySet, MapLike } from "./properties";
 export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
-export const refGetTileLabels = (refPos: ReferencePosition) =>
+export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
     // eslint-disable-next-line no-bitwise
     (refPos.refType & ReferenceType.Tile)
         && refPos.properties ? refPos.properties[reservedTileLabelsKey] as string[] : undefined;
 
-export const refGetRangeLabels = (refPos: ReferencePosition) =>
+export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefined =>
     // eslint-disable-next-line no-bitwise
     (refPos.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd))
         && refPos.properties ? refPos.properties[reservedRangeLabelsKey] as string[] : undefined;
 
-export function refHasTileLabel(refPos: ReferencePosition, label: string) {
+export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
     const tileLabels = refGetTileLabels(refPos);
     if (tileLabels) {
         for (const refLabel of tileLabels) {
@@ -33,7 +33,7 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string) {
     return false;
 }
 
-export function refHasRangeLabel(refPos: ReferencePosition, label: string) {
+export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean {
     const rangeLabels = refGetRangeLabels(refPos);
     if (rangeLabels) {
         for (const refLabel of rangeLabels) {
@@ -44,10 +44,10 @@ export function refHasRangeLabel(refPos: ReferencePosition, label: string) {
     }
     return false;
 }
-export function refHasTileLabels(refPos: ReferencePosition) {
+export function refHasTileLabels(refPos: ReferencePosition): boolean {
     return refGetTileLabels(refPos) !== undefined;
 }
-export function refHasRangeLabels(refPos: ReferencePosition) {
+export function refHasRangeLabels(refPos: ReferencePosition): boolean {
     return refGetRangeLabels(refPos) !== undefined;
 }
 
@@ -105,7 +105,7 @@ export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T
     }
 }
 
-export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition) {
+export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number {
     const aSeg = a.getSegment();
     const bSeg = b.getSegment();
     if (aSeg === bSeg) {
