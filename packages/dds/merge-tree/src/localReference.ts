@@ -26,18 +26,30 @@ import { minReferencePosition,
  * @deprecated - Use ReferencePosition
  */
  export class LocalReference implements ReferencePosition {
+    /**
+     * @deprecated - use DetachedReferencePosition
+     */
     public static readonly DetachedPosition: number = -1;
 
     public properties: PropertySet | undefined;
+    /**
+     * @deprecated - use properties to store pair
+     */
     public pairedRef?: LocalReference;
+    /**
+     * @deprecated - use getSegment
+     */
     public segment: ISegment | undefined;
 
     /**
-     * @deprecated - use createReferencePosition instead
+     * @deprecated - use createReferencePosition
      */
     constructor(
         private readonly client: Client,
         initSegment: ISegment,
+        /**
+         * @deprecated - use getOffset
+         */
         public offset = 0,
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
@@ -66,7 +78,7 @@ import { minReferencePosition,
     }
 
     /**
-     * @deprecated - use getLocalReferencePosition instead
+     * @deprecated - use getLocalReferencePosition
      */
      public toPosition() {
         if (this.segment && this.segment.parent) {
