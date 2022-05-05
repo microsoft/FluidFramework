@@ -114,6 +114,7 @@ jobs:
           project: internal
           pipeline: Build - client packages
           preferTriggeringPipeline: true
+          allowPartiallySucceededBuilds: true
           runVersion: latestFromBranch
           runBranch: $(Build.SourceBranch)
           artifact: pack
@@ -190,6 +191,7 @@ jobs:
             project: internal
             pipeline: Build - client packages
             preferTriggeringPipeline: true
+            allowPartiallySucceededBuilds: true
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: test-files
