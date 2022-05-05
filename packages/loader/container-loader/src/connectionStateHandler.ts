@@ -8,7 +8,8 @@ import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { ConnectionState, CatchUpMonitor } from "./container";
+import { ConnectionState } from "./container";
+import { ICatchUpMonitor } from "./catchUpMonitor";
 
 export interface IConnectionStateHandler {
     /** Provides access to the clients currently in the quorum */
@@ -24,8 +25,8 @@ export interface IConnectionStateHandler {
     logConnectionIssue: (eventName: string) => void,
     /** Callback whenever the ConnectionState changes between Disconnected and Connected */
     connectionStateChanged: () => void,
-    /** Creates the CatchUpMonitor, setting the the last known op as of now to be the target to catch up to */
-    createCatchUpMonitor: () => CatchUpMonitor,
+    /** Creates the monitor which will notify when op processing has caught up to the last known op as of now */
+    createCatchUpMonitor: () => ICatchUpMonitor,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -54,7 +55,7 @@ export class ConnectionStateHandler {
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
-    private catchUpMonitor: CatchUpMonitor | undefined;
+    private catchUpMonitor: ICatchUpMonitor | undefined;
     private readonly prevClientLeftTimer: Timer;
     private readonly joinOpTimer: Timer;
 

@@ -12,6 +12,7 @@ import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { CatchUpMonitor, ConnectionState } from "../container";
 import { ConnectionStateHandler } from "../connectionStateHandler";
+import { ImmediateCatchUpMonitor } from "../catchUpMonitor";
 
 describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
@@ -77,7 +78,7 @@ describe("ConnectionStateHandler Tests", () => {
                 shouldClientJoinWrite: () => shouldClientJoinWrite,
                 logConnectionIssue: (eventName: string) => { throw new Error("logConnectionIssue"); },
                 connectionStateChanged: () => {},
-                createCatchUpMonitor: () => new EventEmitter() as CatchUpMonitor,
+                createCatchUpMonitor: () => new ImmediateCatchUpMonitor(false /* hasCheckpointSequenceNumber */),
             },
             new TelemetryNullLogger(),
         );

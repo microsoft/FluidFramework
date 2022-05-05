@@ -7,9 +7,9 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable, IEvent,
+    IDisposable,
 } from "@fluidframework/common-definitions";
-import { assert, performance, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
     IRequest,
     IResponse,
@@ -105,6 +105,7 @@ import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
+import { CatchUpMonitor, ImmediateCatchUpMonitor } from "./catchUpMonitor";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -176,17 +177,22 @@ export async function waitContainerToCatchUp(container: IContainer) {
     return new Promise<boolean>((resolve, reject) => {
         container.on("closed", reject);
 
-        const usedCheckpointSequenceNumber = container.deltaManager.hasCheckpointSequenceNumber;
+        // This sets the target op to be last known op as of now.
+        const catchUpMonitor = new CatchUpMonitor(container);
 
-        // Transition to "connected" state includes the guarantee that all known ops have been processed.
+        // Depend on config, transition to "connected" state may include the guarantee
+        // that all known ops have been processed.  If so, we may introduce additional wait here.
+        // Waiting for "connected" state in either case gets us at least to our own Join op
+        // which is a reasonable approximation of "caught up"
+
         if (container.connectionState === ConnectionState.Connected) {
-            resolve(usedCheckpointSequenceNumber);
+            catchUpMonitor.on("caughtUp", resolve);
             return;
         }
 
         const callback = () => {
             container.off(connectedEventName, callback);
-            resolve(usedCheckpointSequenceNumber);
+            catchUpMonitor.on("caughtUp", resolve);
         };
         container.on(connectedEventName, callback);
 
@@ -201,70 +207,6 @@ const getCodeProposal =
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 const summarizerClientType = "summarizer";
-
-type CaughtUpListener = (hasCheckpointSequenceNumber: boolean) => void;
-export interface ICatchUpMonitorEvents extends IEvent {
-    (event: "caughtUp", listener: CaughtUpListener): void;
-}
-
-export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> implements IDisposable {
-    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    private readonly hasCheckpointSequenceNumber: boolean;
-    private readonly targetSeqNumber: number;
-    private caughtUp: boolean = false;
-
-    private readonly opHandler = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
-        if (!this.caughtUp && message.sequenceNumber >= this.targetSeqNumber) {
-            this.caughtUp = true;
-            this.emit("caughtUp", this.hasCheckpointSequenceNumber);
-        }
-    };
-
-    /**
-     * Create the CatchUpMonitor, setting the targetSeqNumber to wait for based on DeltaManager's current state.
-     * Note that the listener won't be invoked until after (or while) beginWaiting is called
-     */
-    constructor(
-        container: IContainer,
-    ) {
-        super();
-
-        assert(container.connectionState !== ConnectionState.Disconnected,
-            0x0cd /* "Container disconnected while waiting for ops!" */);
-
-        this.deltaManager = container.deltaManager;
-        this.hasCheckpointSequenceNumber = this.deltaManager.hasCheckpointSequenceNumber;
-        this.targetSeqNumber = this.deltaManager.lastKnownSeqNumber;
-
-        assert(this.targetSeqNumber >= this.deltaManager.lastSequenceNumber,
-            0x266 /* "Cannot wait for seqNumber below last processed sequence number" */);
-
-        this.deltaManager.on("op", this.opHandler);
-
-        // Simulate the last processed op
-        this.opHandler({ sequenceNumber: this.deltaManager.lastSequenceNumber });
-
-        this.on("newListener", (event: string, listener) => {
-            if (event === "caughtUp") {
-                const caughtUpListener = listener as CaughtUpListener;
-                if (this.caughtUp) {
-                    caughtUpListener(this.hasCheckpointSequenceNumber);
-                }
-            }
-        });
-    }
-
-    public disposed: boolean = false;
-    public dispose() {
-        if (this.disposed) {
-            return;
-        }
-        this.disposed = true;
-
-        this.removeAllListeners();
-        this.deltaManager.off("op", this.opHandler);
-    }
-}
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
@@ -653,7 +595,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.propagateConnectionState();
                     }
                 },
-                createCatchUpMonitor: () => new CatchUpMonitor(this),
+                createCatchUpMonitor:
+                    this.mc.config.getBoolean("Fluid.Container.catchUpBeforeDeclaringConnected") === true
+                        ? () => new CatchUpMonitor(this)
+                        : () => new ImmediateCatchUpMonitor(this._deltaManager.hasCheckpointSequenceNumber),
             },
             this.mc.logger,
         );
