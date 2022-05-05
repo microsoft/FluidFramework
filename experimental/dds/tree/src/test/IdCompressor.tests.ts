@@ -5,6 +5,7 @@
 
 import { expect } from 'chai';
 import { v4, v5 } from 'uuid';
+import { take } from '@fluid-internal/stochastic-test-utils';
 import {
 	IdCompressor,
 	isFinalId,
@@ -40,6 +41,7 @@ import {
 	expectSerializes,
 	roundtrip,
 	sessionNumericUuids,
+	makeOpGenerator,
 	attributionIds,
 } from './utilities/IdCompressorTestUtilities';
 import { expectDefined } from './utilities/TestCommon';
@@ -1021,9 +1023,8 @@ describe('IdCompressor', () => {
 		});
 
 		itNetwork('produces consistent IDs with large fuzz input', (network) => {
-			performFuzzActions(network, 1984, true, undefined, true, 1000, 25, (network) =>
-				network.assertNetworkState()
-			);
+			const generator = take(1000, makeOpGenerator({ includeOverrides: true }));
+			performFuzzActions(generator, network, 1984, undefined, true, (network) => network.assertNetworkState());
 			network.deliverOperations(DestinationClient.All);
 		});
 
@@ -1327,7 +1328,8 @@ describe('IdCompressor', () => {
 			});
 
 			itNetwork('can serialize after a large fuzz input', 3, (network) => {
-				performFuzzActions(network, Math.PI, true, undefined, true, 1000, 25, (network) => {
+				const generator = take(1000, makeOpGenerator({ includeOverrides: true }));
+				performFuzzActions(generator, network, Math.PI, undefined, true, (network) => {
 					// Periodically check that everyone in the network has the same serialized state
 					network.deliverOperations(DestinationClient.All);
 					const compressors = network.getTargetCompressors(DestinationClient.All);
@@ -1373,12 +1375,8 @@ function createNetworkTestFunction(validateAfter: boolean): NetworkTestFunction 
 		it(title, () => {
 			const hasCapacity = typeof testOrCapacity === 'number';
 			const capacity = hasCapacity ? testOrCapacity : undefined;
-			// TODO: This cast can be removed on typescript 4.6
-			const network = new IdCompressorTestNetwork(capacity as number);
-			// TODO: This cast can be removed on typescript 4.6
-			((hasCapacity ? assertNotUndefined(test) : testOrCapacity) as (network: IdCompressorTestNetwork) => void)(
-				network
-			);
+			const network = new IdCompressorTestNetwork(capacity);
+			(hasCapacity ? assertNotUndefined(test) : testOrCapacity)(network);
 			if (validateAfter) {
 				network.deliverOperations(DestinationClient.All);
 				network.assertNetworkState();
