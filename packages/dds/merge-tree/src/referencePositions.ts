@@ -48,7 +48,7 @@ export function refHasTileLabels(refPos: LabeledReference) {
     return refGetTileLabels(refPos) !== undefined;
 }
 export function refHasRangeLabels(refPos: LabeledReference) {
-    return !!refGetRangeLabels(refPos) !== undefined;
+    return refGetRangeLabels(refPos) !== undefined;
 }
 
 export interface ReferencePosition {
