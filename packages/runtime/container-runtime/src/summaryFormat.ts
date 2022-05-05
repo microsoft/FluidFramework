@@ -81,7 +81,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
     readonly message: ISummaryMetadataMessage | undefined;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
-    /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
+    /** 0 to disable GC, \> 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
     /** Counter of the last summary happened, increments every time we summarize */
     readonly summaryCount?: number;
@@ -168,11 +168,18 @@ export const dataStoreAttributesBlobName = ".component";
 
 /**
  * Modifies summary tree and stats to put tree under .channels tree.
- * Converts from: {
+ * Converts from:
+ * ```ts
+ * {
  *     type: SummaryType.Tree,
  *     tree: { a: {...}, b: {...}, c: {...} },
  * }
- * to: {
+ * ```
+ *
+ * to:
+ *
+ * ```ts
+ * {
  *     type: SummaryType.Tree,
  *     tree: {
  *         ".channels": {
@@ -181,6 +188,7 @@ export const dataStoreAttributesBlobName = ".component";
  *         },
  *     },
  * }
+ * ```
  * And adds +1 to treeNodeCount in stats.
  * @param summarizeResult - summary tree and stats to modify
  */
