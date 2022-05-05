@@ -132,7 +132,7 @@ describe("Runtime", () => {
                 const maxTime = 1000;
                 const idlesPerActive = Math.floor((maxTime + 1) / (idleTime - 1));
                 const remainingTime = (maxTime + 1) % (idleTime - 1);
-                initialize({ refSequenceNumber: lastSummary, idleTime, maxTime });
+                initialize({ refSequenceNumber: lastSummary, minIdleTime: idleTime, maxIdleTime: idleTime, maxTime });
 
                 for (let i = 0; i < idlesPerActive; i++) {
                     // Prevent idle timer from triggering with periodic "ops" (heuristic runs)
@@ -153,7 +153,7 @@ describe("Runtime", () => {
                 const lastSummary = 1000;
                 const idleTime = 101;
                 const maxTime = 1000;
-                initialize({ refSequenceNumber: lastSummary, idleTime, maxTime });
+                initialize({ refSequenceNumber: lastSummary, minIdleTime: idleTime, maxIdleTime: idleTime, maxTime });
 
                 clock.tick(idleTime - 1);
                 assertAttemptCount(0, "should not run yet");
@@ -167,7 +167,7 @@ describe("Runtime", () => {
                 const lastSummary = 1000;
                 const idleTime = 101;
                 const maxTime = 1000;
-                initialize({ refSequenceNumber: lastSummary, idleTime, maxTime });
+                initialize({ refSequenceNumber: lastSummary, minIdleTime: idleTime, maxIdleTime: idleTime, maxTime });
 
                 clock.tick(idleTime - 1);
                 assertAttemptCount(0, "should not run yet");
@@ -208,7 +208,7 @@ describe("Runtime", () => {
                 const lastSummary = 1000;
                 const idleTime = 101;
                 const maxTime = 1000;
-                initialize({ refSequenceNumber: lastSummary, idleTime, maxTime });
+                initialize({ refSequenceNumber: lastSummary, minIdleTime: idleTime, maxIdleTime: idleTime, maxTime });
 
                 clock.tick(idleTime - 1);
                 runner.run();
