@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { Client } from "./client";
 import {
     ISegment,
+    isSegmentRemoved,
     ReferencePosition,
     refGetRangeLabels,
     refGetTileLabels,
@@ -29,6 +30,10 @@ export class LocalReference implements ReferencePosition {
         public offset = 0,
         public refType = ReferenceType.Simple,
     ) {
+        // eslint-disable-next-line no-bitwise
+        if (this.refType & ReferenceType.SlideOnRemove && isSegmentRemoved(initSegment)) {
+            throw new Error("SlideOnRemove LocalReference on removed segment");
+        }
         this.segment = initSegment;
     }
 

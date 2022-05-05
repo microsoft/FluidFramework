@@ -47,6 +47,7 @@ import {
     IMergeTreeOp,
     IRelativePosition,
     MergeTreeDeltaType,
+    ReferenceType,
 } from "./ops";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
@@ -997,18 +998,36 @@ export class Client {
         }
     }
 
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage) {
-        let seq: number;
-        let clientId: number;
+    private getRefSeqAndClientId(op?: ISequencedDocumentMessage) {
         if (op) {
-            clientId = this.getOrAddShortClientId(op.clientId);
-            seq = op.referenceSequenceNumber;
+            return { refSeq: op.referenceSequenceNumber, clientId: this.getOrAddShortClientId(op.clientId) };
         } else {
             const segWindow = this.mergeTree.getCollabWindow();
-            seq = segWindow.currentSeq;
-            clientId = segWindow.clientId;
+            return { refSeq: segWindow.currentSeq, clientId: segWindow.clientId };
         }
-        return this.mergeTree.getContainingSegment<T>(pos, seq, clientId);
+    }
+
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage) {
+        const { refSeq, clientId } = this.getRefSeqAndClientId(op);
+        return this.mergeTree.getContainingSegment<T>(pos, refSeq, clientId);
+    }
+
+    createSlideOnRemoveReference(refType: ReferenceType, pos: number, op: ISequencedDocumentMessage):
+        LocalReference | undefined {
+        // TODO:ransomr should this assert, throw, or something else if refType is invalid?
+        // eslint-disable-next-line no-bitwise
+        assert((refType & ReferenceType.SlideOnRemove) > 0, "Reference type must be SlideOnRemove");
+        const { refSeq, clientId } = this.getRefSeqAndClientId(op);
+        const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(pos, refSeq, clientId);
+        if (segoff.segment) {
+            const lref = new LocalReference(this, segoff.segment, segoff.offset, refType);
+            if (refType !== ReferenceType.Transient) {
+                this.addLocalReference(lref);
+            }
+            return lref;
+        }
+        // TODO:ransomr what is the correct behavior if there isn't a segment for the reference?
+        return undefined;
     }
 
     getPropertiesAtPosition(pos: number) {

@@ -35,7 +35,7 @@ const reservedIntervalIdKey = "intervalId";
 export enum IntervalType {
     Simple = 0x0,
     Nest = 0x1,
-    SlideOnRemove = 0x2,
+    SlideOnRemove = 0x2, // SlideOnRemove is default behavior - all intervals are SlideOnRemove
     Transient = 0x4,
 }
 
@@ -315,15 +315,14 @@ function createPositionReference(
     pos: number,
     refType: ReferenceType,
     op?: ISequencedDocumentMessage): LocalReference {
-    const segoff = client.getContainingSegment(pos, op);
-    if (segoff && segoff.segment) {
-        const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
-        if (refType !== ReferenceType.Transient) {
-            client.addLocalReference(lref);
-        }
+    assert((refType & ReferenceType.SlideOnRemove) > 0, "IntervalCollection references must be SlideOnRemove");
+    const lref = client.createSlideOnRemoveReference(refType, pos, op);
+    if (lref) {
         return lref;
+    } else {
+        // TODO:ransomr what to do if couldn't create a SlideOnRemove reference?
+        return new LocalReference(client, undefined);
     }
-    return new LocalReference(client, undefined);
 }
 
 function createSequenceInterval(
@@ -343,11 +342,8 @@ function createSequenceInterval(
         endRefType = ReferenceType.Transient;
     }
 
-    // TODO: Should SlideOnRemove be the default behavior?
-    if (intervalType & IntervalType.SlideOnRemove) {
-        beginRefType |= ReferenceType.SlideOnRemove;
-        endRefType |= ReferenceType.SlideOnRemove;
-    }
+    beginRefType |= ReferenceType.SlideOnRemove;
+    endRefType |= ReferenceType.SlideOnRemove;
 
     const startLref = createPositionReference(client, start, beginRefType, op);
     const endLref = createPositionReference(client, end, endRefType, op);

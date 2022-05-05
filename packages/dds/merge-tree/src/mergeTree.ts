@@ -105,13 +105,18 @@ export interface IHierBlock extends IMergeBlock {
 
 export interface IRemovalInfo {
     removedSeq: number;
+    removedRefSeq: number;
     removedClientIds: number[];
 }
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
-    if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
+    if (maybe?.removedClientIds !== undefined &&
+        maybe?.removedSeq !== undefined &&
+        maybe?.removedRefSeq !== undefined) {
         return maybe as IRemovalInfo;
     }
-    assert(maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
+    assert(maybe?.removedClientIds === undefined &&
+        maybe?.removedSeq === undefined &&
+        maybe?.removedRefSeq === undefined,
         0x2bf /* "both removedClientIds and removedSeq should be set or not set" */);
 }
 
@@ -484,10 +489,15 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
     return mergeTree.localNetLength(node);
 }
 
+export function isSegmentRemoved(segment: ISegment): boolean {
+    return segment.removedSeq !== undefined || segment.localRemovedSeq !== undefined;
+}
+
 export abstract class BaseSegment extends MergeNode implements ISegment {
     public clientId: number = LocalClientId;
     public seq: number = UniversalSequenceNumber;
     public removedSeq?: number;
+    public removedRefSeq?: number;
     public removedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
@@ -529,6 +539,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         b.removedClientIds = this.removedClientIds?.slice();
         // TODO: copy removed client overlap and branch removal info
         b.removedSeq = this.removedSeq;
+        b.removedRefSeq = this.removedRefSeq;
         b.seq = this.seq;
     }
 
@@ -590,6 +601,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
                 leafSegment.removedClientIds = this.removedClientIds?.slice();
                 leafSegment.removedSeq = this.removedSeq;
+                leafSegment.removedRefSeq = this.removedRefSeq;
                 leafSegment.localRemovedSeq = this.localRemovedSeq;
                 leafSegment.seq = this.seq;
                 leafSegment.localSeq = this.localSeq;
@@ -1438,6 +1450,49 @@ export class MergeTree {
             return false;
         };
         this.searchBlock(this.root, pos, 0, refSeq, clientId, { leaf }, undefined);
+        return { segment, offset };
+    }
+
+    private getNextFartherSegment(segment: ISegment, refSeq: number, clientId: number): ISegment | undefined {
+        // TODO this walks the whole tree to find the segment - could write a more efficient
+        // walk that starts at the segment
+        let foundStart = false;
+        let nextSegment: ISegment | undefined;
+        this.walkAllSegments(this.root, (seg) => {
+            if (seg === segment) {
+                foundStart = true;
+                return true;
+            }
+            if (!foundStart) {
+                return true;
+            }
+            // TODO this doesn't do the correct thing for the local client, as nodeLength assumes
+            // the local client is aware of all changes. Need to fix it so that it doesn't slide
+            // to segments added locally after the remove, or removed locally before the remove.
+            const length = this.nodeLength(seg, refSeq, clientId);
+            if (length !== undefined && length > 0) {
+                nextSegment = seg;
+                return false;
+            }
+            return true;
+        });
+        return nextSegment;
+    }
+
+    private slideReference(segment: ISegment, refSeq: number, clientId: number): ISegment | undefined {
+        // TODO leave a breadcrumb so that we can reverse the slide if needed
+        const removalInfo = toRemovalInfo(segment);
+        assert(!!removalInfo, "slideReference requires removal info");
+        // TODO include segments referenced by the creation to preserve order
+        return this.getNextFartherSegment(segment, removalInfo.removedRefSeq, removalInfo.removedClientIds[0]);
+    }
+
+    public getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number) {
+        let { segment, offset } = this.getContainingSegment(pos, refSeq, clientId);
+        while (segment && isSegmentRemoved(segment)) {
+            segment = this.slideReference(segment, refSeq, clientId);
+            offset = 0;
+        }
         return { segment, offset };
     }
 
@@ -2377,6 +2432,7 @@ export class MergeTree {
                     // keep first removal at the head.
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
+                    existingRemovalInfo.removedRefSeq = refSeq;
                     segment.localRemovedSeq = undefined;
                 } else {
                     // Do not replace earlier sequence number for remove
@@ -2385,6 +2441,7 @@ export class MergeTree {
             } else {
                 segment.removedClientIds = [clientId];
                 segment.removedSeq = seq;
+                segment.removedRefSeq = refSeq;
                 segment.localRemovedSeq = localSeq;
 
                 removedSegments.push({ segment });

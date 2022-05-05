@@ -58,6 +58,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     removedClientIds?: number[];
     // (undocumented)
+    removedRefSeq?: number;
+    // (undocumented)
     removedSeq?: number;
     // (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
@@ -113,6 +115,8 @@ export class Client {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
+    // (undocumented)
+    createSlideOnRemoveReference(refType: ReferenceType, pos: number, op: ISequencedDocumentMessage): LocalReference | undefined;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
     protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -685,6 +689,8 @@ export interface IRemovalInfo {
     // (undocumented)
     removedClientIds: number[];
     // (undocumented)
+    removedRefSeq: number;
+    // (undocumented)
     removedSeq: number;
 }
 
@@ -738,6 +744,9 @@ export interface ISegmentChanges {
     // (undocumented)
     replaceCurrent?: ISegment;
 }
+
+// @public (undocumented)
+export function isSegmentRemoved(segment: ISegment): boolean;
 
 // @public (undocumented)
 export interface KeyComparer<TKey> {
@@ -999,6 +1008,11 @@ export class MergeTree {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
+    // (undocumented)
+    getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number): {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    };
     // (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
