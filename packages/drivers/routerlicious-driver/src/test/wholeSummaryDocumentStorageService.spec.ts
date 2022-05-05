@@ -1,8 +1,8 @@
-/* eslint-disable max-len */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable max-len */
 
 import assert from "assert";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
