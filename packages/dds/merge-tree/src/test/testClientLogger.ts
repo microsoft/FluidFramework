@@ -194,7 +194,7 @@ export class TestClientLogger {
         return str;
     }
 
-    private static getSegString(client: TestClient): { acked: string, local: string } {
+    private static getSegString(client: TestClient): { acked: string; local: string } {
         let acked: string = "";
         let local: string = "";
         const nodes = [...client.mergeTree.root.children];
