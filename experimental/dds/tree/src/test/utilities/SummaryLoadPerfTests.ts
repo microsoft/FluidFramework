@@ -5,12 +5,12 @@
 
 import { join } from 'path';
 import * as fs from 'fs';
+import { takeAsync } from '@fluid-internal/stochastic-test-utils';
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { SharedTree } from '../../SharedTree';
 import { WriteFormat } from '../../persisted-types';
 import { performFuzzActions } from '../fuzz/SharedTreeFuzzTests';
 import { makeOpGenerator } from '../fuzz/Generators';
-import { takeAsync } from '../stochastic-test-utilities';
 import { expectAssert } from '../Summary.tests';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import { setUpLocalServerTestSharedTree, setUpTestSharedTree, testDocumentsPathBase } from './TestUtilities';

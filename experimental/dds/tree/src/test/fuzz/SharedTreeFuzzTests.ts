@@ -7,17 +7,17 @@
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { expect } from 'chai';
-import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
-import { WriteFormat } from '../../persisted-types';
-import { fail } from '../../Common';
-import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import {
 	AsyncGenerator,
 	chainAsync as chain,
 	makeRandom,
 	takeAsync as take,
 	performFuzzActionsAsync as performFuzzActionsBase,
-} from '../stochastic-test-utilities';
+} from '@fluid-internal/stochastic-test-utils';
+import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
+import { WriteFormat } from '../../persisted-types';
+import { fail } from '../../Common';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import { FuzzTestState, EditGenerationConfig, Operation } from './Types';
 import { makeOpGenerator } from './Generators';
 
