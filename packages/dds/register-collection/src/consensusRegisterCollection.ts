@@ -58,7 +58,7 @@ interface IRegisterOperation {
 }
 
 /**
- * IRegisterOperation format in versions < 0.17
+ * IRegisterOperation format in versions \< 0.17
  */
 interface IRegisterOperationOld<T> {
     key: string;

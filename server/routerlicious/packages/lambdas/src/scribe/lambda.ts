@@ -481,7 +481,7 @@ export class ScribeLambda implements IPartitionLambda {
     /**
      * Protocol head is the sequence number of the last summary
      * This method updates the protocol head to the new summary sequence number
-     * @param protocolHead The sequence number of the new summary
+     * @param protocolHead - The sequence number of the new summary
      */
     private updateProtocolHead(protocolHead: number) {
         this.protocolHead = protocolHead;
@@ -490,7 +490,7 @@ export class ScribeLambda implements IPartitionLambda {
     /**
      * lastSummarySequenceNumber tracks the sequence number that was part of the latest summary
      * This method updates it to the sequence number that was part of the latest summary
-     * @param summarySequenceNumber The sequence number of the operation that was part of the latest summary
+     * @param summarySequenceNumber - The sequence number of the operation that was part of the latest summary
      */
     private updateLastSummarySequenceNumber(summarySequenceNumber: number) {
         this.lastSummarySequenceNumber = summarySequenceNumber;
