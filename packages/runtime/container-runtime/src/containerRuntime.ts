@@ -1466,10 +1466,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
+            ...this.garbageCollector.getMetadata(),
             // The last message processed at the time of summary. If there are no new messages, use the message from the
             // last summary.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.messageAtLastSummary,
-            ...this.garbageCollector.getMetadata(),
         };
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
