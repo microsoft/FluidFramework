@@ -26,8 +26,8 @@ interface ILocalData<T> {
 interface ILocalRegister<T> {
     // Register value, wrapped for backwards compatibility with < 0.17
     value: {
-        type: "Plain",
-        value: T,
+        type: "Plain";
+        value: T;
     };
 
     // The sequence number when last consensus was reached
@@ -64,8 +64,8 @@ interface IRegisterOperationOld<T> {
     key: string;
     type: "write";
     value: {
-        type: "Plain",
-        value: T,
+        type: "Plain";
+        value: T;
     };
     refSeq: number;
 }

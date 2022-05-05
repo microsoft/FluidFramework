@@ -3123,30 +3123,6 @@ use_old_ClassDeclaration_TextSegment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_toRemovalInfo": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_toRemovalInfo():
-    TypeOnly<typeof old.toRemovalInfo>;
-declare function use_current_FunctionDeclaration_toRemovalInfo(
-    use: TypeOnly<typeof current.toRemovalInfo>);
-use_current_FunctionDeclaration_toRemovalInfo(
-    get_old_FunctionDeclaration_toRemovalInfo());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_toRemovalInfo": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_toRemovalInfo():
-    TypeOnly<typeof current.toRemovalInfo>;
-declare function use_old_FunctionDeclaration_toRemovalInfo(
-    use: TypeOnly<typeof old.toRemovalInfo>);
-use_old_FunctionDeclaration_toRemovalInfo(
-    get_current_FunctionDeclaration_toRemovalInfo());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TrackingGroup": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TrackingGroup():

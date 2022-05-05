@@ -44,8 +44,8 @@ export interface ITelemetryLoggerPropertyBag {
     [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 export interface ITelemetryLoggerPropertyBags{
-    all?: ITelemetryLoggerPropertyBag,
-    error?: ITelemetryLoggerPropertyBag,
+    all?: ITelemetryLoggerPropertyBag;
+    error?: ITelemetryLoggerPropertyBag;
 }
 
 /**

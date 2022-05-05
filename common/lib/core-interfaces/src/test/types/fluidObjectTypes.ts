@@ -117,7 +117,7 @@ declare function getIFluidObject(): IFluidObject;
 // validate provider inheritance
 {
     interface IProvideFooParent{
-        IFooParent: IFooParent
+        IFooParent: IFooParent;
     }
 
     interface IFooParent extends Partial<IProvideFooParent>{
@@ -125,7 +125,7 @@ declare function getIFluidObject(): IFluidObject;
     }
 
     interface IFooProvideChild {
-        IFooChild: IFooChild
+        IFooChild: IFooChild;
     }
 
     interface IFooChild extends IFooParent, Partial<IFooProvideChild>{
