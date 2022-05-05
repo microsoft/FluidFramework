@@ -115,7 +115,7 @@ jobs:
           pipeline: Build - client packages
           preferTriggeringPipeline: true
           allowPartiallySucceededBuilds: true
-          runVersion: specific
+          runVersion: latestFromBranch
           runBranch: $(Build.SourceBranch)
           artifact: pack
           patterns: "**/${{ variables.testPackageFilePattern }}"
@@ -192,7 +192,7 @@ jobs:
             pipeline: Build - client packages
             preferTriggeringPipeline: true
             allowPartiallySucceededBuilds: true
-            runVersion: specific
+            runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: test-files
             path: $(Pipeline.Workspace)/test-files
