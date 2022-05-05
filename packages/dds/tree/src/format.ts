@@ -212,8 +212,8 @@ export namespace Original {
      *
      * While multiple slices can coexist over a given region of a trait, a new slice can only relate to an old
      * (i.e., pre-existing one) with one of the following Allen's interval relationships:
-     * - old > new
-     * - old < new
+     * - old \> new
+     * - old \< new
      * - old m new
      * - old mi new
      * - old s new
