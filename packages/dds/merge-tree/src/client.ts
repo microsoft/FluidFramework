@@ -1001,7 +1001,7 @@ export class Client {
         let clientId: number;
         if (op) {
             clientId = this.getOrAddShortClientId(op.clientId);
-            seq = op.sequenceNumber;
+            seq = op.referenceSequenceNumber;
         } else {
             const segWindow = this.mergeTree.getCollabWindow();
             seq = segWindow.currentSeq;
