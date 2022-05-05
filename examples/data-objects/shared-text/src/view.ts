@@ -4,10 +4,10 @@
  */
 
 import registerDebug from "debug";
-import { controls, ui } from "@fluid-example/client-ui-lib";
 import { performance } from "@fluidframework/common-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
+import { controls, ui } from "./client-ui-lib";
 import { SharedTextDataObject } from "./dataObject";
 
 /* eslint-disable import/no-internal-modules, import/no-unassigned-import */

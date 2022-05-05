@@ -206,11 +206,6 @@ export class CachingLogViewer implements LogViewer {
 	private readonly processEditStatus: EditStatusCallback;
 
 	/**
-	 * Iff true, additional correctness assertions will be run during LogViewer operations.
-	 */
-	private readonly expensiveValidation: boolean;
-
-	/**
 	 * The ordered queue of edits that originated from this client that have never been applied (by this log viewer) in a sequenced state.
 	 * This means these edits may be local or sequenced, and may have been applied (possibly multiple times) while still local.
 	 * Used to log telemetry about the result of edit application. Edits are removed when first applied after being sequenced.
@@ -258,21 +253,15 @@ export class CachingLogViewer implements LogViewer {
 		log: EditLog<ChangeInternal>,
 		baseView: RevisionView,
 		knownRevisions: [Revision, EditCacheEntry][] = [],
-		expensiveValidation = false,
 		processEditStatus: EditStatusCallback = noop,
 		processSequencedEditResult: SequencedEditResultCallback = noop,
 		minimumSequenceNumber = 0
 	) {
 		this.log = log;
-		if (expensiveValidation) {
-			knownRevisions.forEach(([revision]) => {
-				assert(Number.isInteger(revision), 'revision must be an integer');
-				assert(
-					this.log.isSequencedRevision(revision),
-					'revision must correspond to the result of a SequencedEdit'
-				);
-			});
-		}
+		knownRevisions.forEach(([revision]) => {
+			assert(Number.isInteger(revision), 'revision must be an integer');
+			assert(this.log.isSequencedRevision(revision), 'revision must correspond to the result of a SequencedEdit');
+		});
 
 		this.sequencedRevisionCache = new RevisionValueCache(
 			CachingLogViewer.sequencedCacheSizeMax,
@@ -281,7 +270,6 @@ export class CachingLogViewer implements LogViewer {
 		);
 		this.processEditStatus = processEditStatus ?? noop;
 		this.processSequencedEditResult = processSequencedEditResult ?? noop;
-		this.expensiveValidation = expensiveValidation;
 		this.detachFromEditLog = this.log.registerEditAddedHandler(this.handleEditAdded.bind(this));
 	}
 
@@ -503,10 +491,6 @@ export class CachingLogViewer implements LogViewer {
 			if (edit.id === this.unappliedSelfEdits.peekFront()) {
 				wasLocal = true;
 				this.unappliedSelfEdits.shift();
-			} else if (this.expensiveValidation) {
-				for (let i = 0; i < this.unappliedSelfEdits.length; i++) {
-					assert(this.unappliedSelfEdits.peekAt(i) !== edit.id, 'Local edits processed out of order.');
-				}
 			}
 		}
 		this.processSequencedEditResult({ edit, wasLocal, result, reconciliationPath });

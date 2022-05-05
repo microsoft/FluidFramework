@@ -203,6 +203,7 @@ export interface ILoaderProps {
     /**
      * Proxy loader factories for loading containers via proxy in other contexts,
      * like web workers, or worker threads.
+     * @deprecated Not recommended for general use and will be removed in an upcoming release.
      */
     readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 
@@ -259,6 +260,7 @@ export interface ILoaderServices {
     /**
      * Proxy loader factories for loading containers via proxy in other contexts,
      * like web workers, or worker threads.
+     * @deprecated Not recommended for general use and will be removed in an upcoming release.
      */
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
 
