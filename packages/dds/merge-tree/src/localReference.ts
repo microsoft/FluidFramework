@@ -11,6 +11,9 @@ import {
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import {
+    minReferencePosition,
+    maxReferencePosition,
+    compareReferencePositions,
     refHasTileLabels,
     refHasRangeLabels,
     ReferencePosition,
@@ -18,27 +21,36 @@ import {
     refGetTileLabels,
     refHasRangeLabel,
     refHasTileLabel,
-    minReferencePosition,
-    maxReferencePosition,
-    compareReferencePositions,
 } from "./referencePositions";
 
 /**
  * @deprecated - Use ReferencePosition
  */
-export class LocalReference implements ReferencePosition {
+ export class LocalReference implements ReferencePosition {
+    /**
+     * @deprecated - use DetachedReferencePosition
+     */
     public static readonly DetachedPosition: number = -1;
 
     public properties: PropertySet | undefined;
+    /**
+     * @deprecated - use properties to store pair
+     */
     public pairedRef?: LocalReference;
+    /**
+     * @deprecated - use getSegment
+     */
     public segment: ISegment | undefined;
 
     /**
-     * @deprecated - use createReferencePosition instead
+     * @deprecated - use createReferencePosition
      */
     constructor(
         private readonly client: Client,
         initSegment: ISegment,
+        /**
+         * @deprecated - use getOffset
+         */
         public offset = 0,
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
@@ -76,37 +88,37 @@ export class LocalReference implements ReferencePosition {
     /**
      * @deprecated - use refHasTileLabels
      */
-     hasTileLabels() {
+    public hasTileLabels() {
         return refHasTileLabels(this);
     }
     /**
      * @deprecated - use refHasRangeLabels
      */
-    hasRangeLabels() {
+    public hasRangeLabels() {
         return refHasRangeLabels(this);
     }
     /**
      * @deprecated - use refHasTileLabel
      */
-    hasTileLabel(label: string): boolean {
+    public hasTileLabel(label: string): boolean {
         return refHasTileLabel(this, label);
     }
     /**
      * @deprecated - use refHasRangeLabel
      */
-    hasRangeLabel(label: string): boolean {
+    public hasRangeLabel(label: string): boolean {
         return refHasRangeLabel(this, label);
     }
     /**
      * @deprecated - use refGetTileLabels
      */
-    getTileLabels(): string[] | undefined {
+    public getTileLabels(): string[] | undefined {
         return refGetTileLabels(this);
     }
     /**
      * @deprecated - use refGetRangeLabels
      */
-    getRangeLabels(): string[] | undefined {
+    public getRangeLabels(): string[] | undefined {
         return refGetRangeLabels(this);
     }
 

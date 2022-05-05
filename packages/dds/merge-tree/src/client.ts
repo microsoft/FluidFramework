@@ -53,7 +53,7 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
-import { RangeStackMap, ReferencePosition } from "./referencePositions";
+import { ReferencePosition, RangeStackMap } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -1028,7 +1028,7 @@ export class Client {
         let clientId: number;
         if (op) {
             clientId = this.getOrAddShortClientId(op.clientId);
-            seq = op.sequenceNumber;
+            seq = op.referenceSequenceNumber;
         } else {
             const segWindow = this.mergeTree.getCollabWindow();
             seq = segWindow.currentSeq;

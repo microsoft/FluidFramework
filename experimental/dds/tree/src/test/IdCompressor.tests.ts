@@ -5,6 +5,7 @@
 
 import { expect } from 'chai';
 import { v4, v5 } from 'uuid';
+import { take } from '@fluid-internal/stochastic-test-utils';
 import {
 	IdCompressor,
 	isFinalId,
@@ -44,7 +45,6 @@ import {
 	attributionIds,
 } from './utilities/IdCompressorTestUtilities';
 import { expectDefined } from './utilities/TestCommon';
-import { take } from './stochastic-test-utilities';
 
 describe('IdCompressor', () => {
 	it('detects invalid cluster sizes', () => {
@@ -1375,12 +1375,8 @@ function createNetworkTestFunction(validateAfter: boolean): NetworkTestFunction 
 		it(title, () => {
 			const hasCapacity = typeof testOrCapacity === 'number';
 			const capacity = hasCapacity ? testOrCapacity : undefined;
-			// TODO: This cast can be removed on typescript 4.6
-			const network = new IdCompressorTestNetwork(capacity as number);
-			// TODO: This cast can be removed on typescript 4.6
-			((hasCapacity ? assertNotUndefined(test) : testOrCapacity) as (network: IdCompressorTestNetwork) => void)(
-				network
-			);
+			const network = new IdCompressorTestNetwork(capacity);
+			(hasCapacity ? assertNotUndefined(test) : testOrCapacity)(network);
 			if (validateAfter) {
 				network.deliverOperations(DestinationClient.All);
 				network.assertNetworkState();
