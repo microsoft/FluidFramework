@@ -512,7 +512,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "GetVersions");
             const { url, headers } = getUrlAndHeadersWithAuth(
-                `${this.snapshotUrl}/versions?count=${count}`,
+                `${this.snapshotUrl}/versions?top=${count}`,
                 storageToken,
                 !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
             );
@@ -540,17 +540,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     { driverVersion });
             }
             return versionsResponse.value.map((version) => {
-                // Parse the date from the message
-                let date: string | undefined;
-                for (const rec of version.message.split("\n")) {
-                    const index = rec.indexOf(":");
-                    if (index !== -1 && rec.substr(0, index) === "Date") {
-                        date = rec.substr(index + 1).trim();
-                        break;
-                    }
-                }
                 return {
-                    date,
                     id: version.id,
                     treeId: undefined!,
                 };
