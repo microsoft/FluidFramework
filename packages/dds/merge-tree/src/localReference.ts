@@ -80,7 +80,7 @@ import { minReferencePosition,
     /**
      * @deprecated - use getLocalReferencePosition
      */
-     public toPosition() {
+    public toPosition() {
         if (this.segment && this.segment.parent) {
             return this.getOffset() + this.client.getPosition(this.segment);
         } else {
@@ -91,45 +91,38 @@ import { minReferencePosition,
     /**
      * @deprecated - use refHasTileLabels
      */
-     hasTileLabels() {
+    public hasTileLabels() {
         return refHasTileLabels(this);
     }
     /**
      * @deprecated - use refHasRangeLabels
      */
-    hasRangeLabels() {
+    public hasRangeLabels() {
         return refHasRangeLabels(this);
     }
     /**
      * @deprecated - use refHasTileLabel
      */
-    hasTileLabel(label: string): boolean {
+    public hasTileLabel(label: string): boolean {
         return refHasTileLabel(this, label);
     }
     /**
      * @deprecated - use refHasRangeLabel
      */
-    hasRangeLabel(label: string): boolean {
+    public hasRangeLabel(label: string): boolean {
         return refHasRangeLabel(this, label);
     }
     /**
      * @deprecated - use refGetTileLabels
      */
-    getTileLabels(): string[] | undefined {
+    public getTileLabels(): string[] | undefined {
         return refGetTileLabels(this);
     }
     /**
      * @deprecated - use refGetRangeLabels
      */
-    getRangeLabels(): string[] | undefined {
+    public getRangeLabels(): string[] | undefined {
         return refGetRangeLabels(this);
-    }
-
-    /**
-     * @deprecated - no longer supported
-     */
-    public getClient() {
-        return this.client;
     }
 
     public isLeaf() {
@@ -138,6 +131,13 @@ import { minReferencePosition,
 
     public addProperties(newProps: PropertySet, op?: ICombiningOp) {
         this.properties = addProperties(this.properties, newProps, op);
+    }
+
+    /**
+     * @deprecated - no longer supported
+     */
+    public getClient() {
+        return this.client;
     }
 
     public getSegment() {
