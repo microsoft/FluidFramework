@@ -268,7 +268,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
     minOpsForLastSummaryAttempt: 50,
 
-    maxAckWaitTime: 6 * 10 * 1000, // 60 mins.
+    maxAckWaitTime: 10 * 60 * 1000, // 10 mins.
 
     maxOpsSinceLastSummary: 7000,
 
