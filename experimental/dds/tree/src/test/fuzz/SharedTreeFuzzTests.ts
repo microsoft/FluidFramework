@@ -12,7 +12,7 @@ import {
 	makeRandom,
 	takeAsync as take,
 	performFuzzActionsAsync as performFuzzActionsBase,
-} from '@fluidframework/stochastic-test-utils';
+} from '@fluid-internal/stochastic-test-utils';
 import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
 import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';

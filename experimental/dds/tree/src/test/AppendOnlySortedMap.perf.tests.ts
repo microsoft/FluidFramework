@@ -4,7 +4,7 @@
  */
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { makeRandom } from '@fluidframework/stochastic-test-utils';
+import { makeRandom } from '@fluid-internal/stochastic-test-utils';
 import Random from 'random-js';
 import { compareFiniteNumbers } from '../Common';
 import { AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap';

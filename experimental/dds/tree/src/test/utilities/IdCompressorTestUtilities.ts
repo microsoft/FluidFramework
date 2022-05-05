@@ -16,7 +16,7 @@ import {
 	SaveInfo,
 	take,
 	BaseFuzzTestState,
-} from '@fluidframework/stochastic-test-utils';
+} from '@fluid-internal/stochastic-test-utils';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, IdRangeDescriptor, isLocalId } from '../../id-compressor/IdCompressor';
 import {

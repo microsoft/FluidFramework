@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import { expect } from 'chai';
-import { makeRandom } from '@fluidframework/stochastic-test-utils';
+import { makeRandom } from '@fluid-internal/stochastic-test-utils';
 import { compareStrings } from '../Common';
 import {
 	numericUuidEquals,

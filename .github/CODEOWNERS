@@ -81,7 +81,6 @@ api-report/runtime-utils.api.md                                           @micro
 api-report/sequence.api.md                                                @microsoft/fluid-cr-dds
 api-report/shared-object-base.api.md                                      @microsoft/fluid-cr-framework
 api-report/shared-summary-block.api.md                                    @microsoft/fluid-cr-runtime
-api-report/stochastic-test-utils.api.md                                   @microsoft/fluid-cr-test
 api-report/synthesize.api.md                                              @microsoft/fluid-cr-runtime
 api-report/task-manager.api.md                                            @microsoft/fluid-cr-dds
 api-report/telemetry-utils.api.md                                         @microsoft/fluid-cr-telemetry

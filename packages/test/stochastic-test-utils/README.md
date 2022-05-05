@@ -1,4 +1,4 @@
-# @fluidframework/stochastic-test-utils
+# @fluid-internal/stochastic-test-utils
 
 This package contains utilities for writing stochastic tests (sometimes called fuzz tests).
 Such tests can be useful for stress testing systems with well-defined inputs and expected invariants.
@@ -26,7 +26,7 @@ As part of providing these objects, the test creator will likely define types fo
 
 This package defines `Generator` and `AsyncGenerator` types for creation of operations.
 It would be possible to instead write this package in terms of built-in javascript generators/async generators.
-The downside of using built-in generators is it leads to confusing ownership semantics of the test"s state object:
+The downside of using built-in generators is it leads to confusing ownership semantics of the test's state object:
 a vanilla javascript generator must produce values without any additional context, and therefore it must capture
 the state used to create it at creation time.
 However, the "context" for these generators is effectively the global test state object.

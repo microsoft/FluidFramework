@@ -5,7 +5,7 @@
 
 import { expect } from 'chai';
 import { v4, v5 } from 'uuid';
-import { take } from '@fluidframework/stochastic-test-utils';
+import { take } from '@fluid-internal/stochastic-test-utils';
 import {
 	IdCompressor,
 	isFinalId,
