@@ -131,8 +131,7 @@
       "ClassDeclaration_SharedString": {"forwardCompat": false},
       "TypeAliasDeclaration_SharedStringSegment": {"forwardCompat": false},
       "ClassDeclaration_SparseMatrix": {"forwardCompat": false},
-      "ClassDeclaration_SubSequence": {"forwardCompat": false},
-      "ClassDeclaration_SequenceInterval": {"forwardCompat": false}
+      "ClassDeclaration_SubSequence": {"forwardCompat": false}
     }
   }
 }
