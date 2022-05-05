@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-experimental/bubblebench-baseline",
+  "name": "@fluid-example/bubblebench-baseline",
   "version": "0.60.1000",
   "private": true,
   "description": "Bubblemark inspired DDS benchmark",

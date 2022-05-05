@@ -1397,10 +1397,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Only create a SummaryManager and SummarizerClientElection
                 // if summaries are enabled and we are not the summarizer client.
                 const defaultAction = () => {
-                    if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-                        this.logger.sendErrorEvent({ eventName: "SummaryStatus:Behind" });
+                    if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
+                        this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
                         // unregister default to no log on every op after falling behind
-                        // and register summary ack handler to re-register this handler
+                        // and register summary ack handler to re-register this handlercls
                         // after successful summary
                         this.summaryCollection.once(MessageType.SummaryAck, () => {
                             this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });

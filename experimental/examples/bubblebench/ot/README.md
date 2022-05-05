@@ -1,4 +1,4 @@
-# @fluid-experimental/bubblebench-ot
+# @fluid-example/bubblebench-ot
 
 ## Getting Started
 
