@@ -30,6 +30,10 @@ import {
 import {
     AzureClientProps,
     AzureConnectionConfig,
+    AzureRemoteConnectionConfig,
+    AzureLocalConnectionConfig,
+    isAzureLocalConnectionConfig,
+    isAzureRemoteConnectionConfig,
     AzureContainerServices,
     AzureContainerVersion,
     AzureGetVersionsOptions,
@@ -43,7 +47,10 @@ import {
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
  */
-export const LOCAL_MODE_TENANT_ID = "local";
+const LOCAL_MODE_TENANT_ID = "local";
+const getTenantId = (connectionProps: AzureConnectionConfig): string => {
+    return isAzureRemoteConnectionConfig(connectionProps) ? connectionProps.tenantId : LOCAL_MODE_TENANT_ID;
+};
 
 const MAX_VERSION_COUNT = 5;
 
@@ -61,13 +68,9 @@ export class AzureClient {
      */
     constructor(private readonly props: AzureClientProps) {
         this.urlResolver = new AzureUrlResolver();
-        // Make sure that tenantId was provided if type is 'remote'
-        if (props.connection.type === "remote" && props.connection.tenantId === undefined) {
-            throw new TypeError("`tenantId` must be provided when connection type is `remote`");
-        }
         // The local service implementation differs from the Azure Fluid Relay in blob
         // storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
-        const enableWholeSummaryUpload = this.props.connection.type !== "local";
+        const enableWholeSummaryUpload = isAzureLocalConnectionConfig(this.props.connection);
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.props.connection.tokenProvider,
             { enableWholeSummaryUpload, enableDiscovery: true },
@@ -119,11 +122,11 @@ export class AzureClient {
         const loader = this.createLoader(containerSchema);
         const url = new URL(this.props.connection.endpoint);
         url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
-        url.searchParams.append("tenantId", encodeURIComponent(this.props.connection.tenantId ?? LOCAL_MODE_TENANT_ID));
+        url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
         url.searchParams.append("containerId", encodeURIComponent(id));
         const sourceContainer = await loader.resolve({ url: url.href });
 
-        if(sourceContainer.resolvedUrl === undefined) {
+        if (sourceContainer.resolvedUrl === undefined) {
             throw new Error(
                 "Source container cannot resolve URL.",
             );
@@ -166,7 +169,7 @@ export class AzureClient {
         const loader = this.createLoader(containerSchema);
         const url = new URL(this.props.connection.endpoint);
         url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
-        url.searchParams.append("tenantId", encodeURIComponent(this.props.connection.tenantId ?? LOCAL_MODE_TENANT_ID));
+        url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
         url.searchParams.append("containerId", encodeURIComponent(id));
         const container = await loader.resolve({ url: url.href });
         const rootDataObject = await requestFluidObject<RootDataObject>(
@@ -189,14 +192,14 @@ export class AzureClient {
         id: string,
         options?: AzureGetVersionsOptions,
     ): Promise<AzureContainerVersion[]> {
-        const url = new URL(this.props.connection.orderer);
+        const url = new URL(this.props.connection.endpoint);
         url.searchParams.append(
             "storage",
-            encodeURIComponent(this.props.connection.storage),
+            encodeURIComponent(this.props.connection.endpoint),
         );
         url.searchParams.append(
             "tenantId",
-            encodeURIComponent(this.props.connection.tenantId),
+            encodeURIComponent(getTenantId(this.props.connection)),
         );
         url.searchParams.append("containerId", encodeURIComponent(id));
 
@@ -247,9 +250,8 @@ export class AzureClient {
         connection: AzureConnectionConfig,
     ): Promise<FluidContainer> {
         const createNewRequest = createAzureCreateNewRequest(
-            connection.orderer,
-            connection.storage,
-            connection.tenantId,
+            connection.endpoint,
+            getTenantId(connection),
         );
 
         const rootDataObject = await requestFluidObject<RootDataObject>(

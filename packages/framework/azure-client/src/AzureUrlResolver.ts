@@ -100,12 +100,11 @@ function decodeAzureUrl(urlString: string): {
 }
 
 export const createAzureCreateNewRequest = (
-    ordererUrl: string,
-    storageUrl: string,
+    endpointUrl: string,
     tenantId: string,
 ): IRequest => {
-    const url = new URL(ordererUrl);
-    url.searchParams.append("storage", encodeURIComponent(storageUrl));
+    const url = new URL(endpointUrl);
+    url.searchParams.append("storage", encodeURIComponent(endpointUrl));
     url.searchParams.append("tenantId", encodeURIComponent(tenantId));
     return {
         url: url.href,

@@ -8,7 +8,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import {
     AzureClient,
 } from "..";
-import { AzureConnectionConfig } from "../interfaces";
+import { AzureLocalConnectionConfig, AzureRemoteConnectionConfig } from "../interfaces";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
 // This function will determine if local or remote mode is required (based on FLUID_CLIENT),
@@ -21,7 +21,7 @@ export function createAzureClient(): AzureClient {
     // use AzureClient remote mode will run against live Azure Fluid Relay.
     // Default to running Tinylicious for PR validation
     // and local testing so it's not hindered by service availability
-    const connectionProps: AzureConnectionConfig = useAzure ? {
+    const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure ? {
         tenantId,
         tokenProvider: createAzureTokenProvider(),
         endpoint: "https://alfred.westus2.fluidrelay.azure.com",
