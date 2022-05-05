@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 const common = require('./webpack.common.js');
 
 
@@ -189,7 +189,7 @@ module.exports = (env) => CommonWebpackLibTSConfig({
     }
     ],
     plugins: [
-      new ExtractTextPlugin('styles.css')
+      new HtmlWebpackPlugin('styles.css')
     ]
   })
 });
