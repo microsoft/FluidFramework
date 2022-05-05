@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-lambdas-driver",
-  "version": "0.1036.2000",
+  "version": "0.1036.3000",
   "description": "Fluid server lambda driver components",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -52,16 +52,16 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/server-services-client": "^0.1036.2000",
-    "@fluidframework/server-services-core": "^0.1036.2000",
-    "@fluidframework/server-services-telemetry": "^0.1036.2000",
+    "@fluidframework/server-services-client": "^0.1036.3000",
+    "@fluidframework/server-services-core": "^0.1036.3000",
+    "@fluidframework/server-services-telemetry": "^0.1036.3000",
     "async": "^3.2.2",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
-    "@fluidframework/server-test-utils": "^0.1036.2000",
+    "@fluidframework/server-test-utils": "^0.1036.3000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/async": "^3.2.9",
     "@types/lodash": "^4.14.118",
