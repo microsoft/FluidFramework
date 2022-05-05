@@ -16,7 +16,7 @@ import { TransactionInternal } from './TransactionInternal';
  * Only failing edits that were originally made locally are logged.
  * @param tree - The tree for which to log the telemetry.
  */
-export function useFailedSequencedEditTelemetry(tree: SharedTree): { disable: () => void } {
+export function useFailedSequencedEditTelemetry(tree: SharedTree): { disable: () => void; } {
 	function onEdit({ wasLocal, logger, outcome }: SequencedEditAppliedEventArguments): void {
 		if (wasLocal && outcome.status !== EditStatus.Applied) {
 			logger.send({
@@ -207,7 +207,7 @@ export interface MergeHealthStats {
  */
 export class SharedTreeMergeHealthTelemetryHeartbeat {
 	private heartbeatTimerId = 0;
-	private readonly treeData = new Map<SharedTree, { tally: MergeHealthStats; logger?: ITelemetryLogger }>();
+	private readonly treeData = new Map<SharedTree, { tally: MergeHealthStats; logger?: ITelemetryLogger; }>();
 
 	/**
 	 * Adds a tree to the set of tree to log merge health telemetry for.

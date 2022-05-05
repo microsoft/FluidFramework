@@ -35,7 +35,7 @@ export interface TreeViewNode extends NodeData<NodeId> {
  * etc.
  * @public
  */
-export type PlaceIndex = number & { readonly PlaceIndex: unique symbol };
+export type PlaceIndex = number & { readonly PlaceIndex: unique symbol; };
 
 /**
  * Index of a node within a trait.
@@ -44,7 +44,7 @@ export type PlaceIndex = number & { readonly PlaceIndex: unique symbol };
  * etc.
  * @public
  */
-export type TraitNodeIndex = number & { readonly TraitNodeIndex: unique symbol };
+export type TraitNodeIndex = number & { readonly TraitNodeIndex: unique symbol; };
 
 /**
  * A place within a particular `TreeView` that is anchored relative to a specific node in the tree, or relative to the outside of the trait.

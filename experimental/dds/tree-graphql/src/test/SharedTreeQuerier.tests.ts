@@ -168,7 +168,7 @@ describe('SharedTreeQuerier', () => {
 		},
 	});
 
-	function init(editTree): { tree: SharedTree; querier: SharedTreeQuerier<Query> } {
+	function init(editTree): { tree: SharedTree; querier: SharedTreeQuerier<Query>; } {
 		const tree = createTestQueryTree(editTree);
 		const querier = new SharedTreeQuerier<Query>(typeDefs, resolvers, tree);
 		return {

@@ -30,7 +30,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 const assertIntervalsHelper = (
     sharedString: SharedString,
     intervalView: IntervalCollection<SequenceInterval>,
-    expected: readonly { start: number; end: number }[],
+    expected: readonly { start: number; end: number; }[],
 ) => {
     const actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
     assert.strictEqual(actual.length, expected.length,
@@ -210,7 +210,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         let intervals: IntervalCollection<SequenceInterval>;
         let dataObject: ITestFluidObject & IFluidLoadable;
 
-        const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
+        const assertIntervals = (expected: readonly { start: number; end: number; }[]) => {
             // Make sure all ops have been sent before actually asserting
             (dataObject.context.containerRuntime as IContainerRuntime).flush();
             assertIntervalsHelper(sharedString, intervals, expected);
@@ -781,7 +781,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 (parsedContent["intervalCollections/comments"].value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             assert(serializedInterval1FromSnapshot.properties);
-            const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
+            const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string; };
             assert.equal(
                 handleLocalValueFromSnapshot.type,
                 "__fluid_handle__",

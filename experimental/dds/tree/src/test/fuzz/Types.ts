@@ -68,7 +68,7 @@ export interface FuzzInsert {
 	insert: Insert;
 }
 
-export type FuzzDelete = Detach & { fuzzType: 'delete' };
+export type FuzzDelete = Detach & { fuzzType: 'delete'; };
 
 export interface FuzzMove {
 	fuzzType: 'move';
@@ -76,7 +76,7 @@ export interface FuzzMove {
 	insert: Insert;
 }
 
-export type FuzzSetPayload = SetValue & { fuzzType: 'setPayload' };
+export type FuzzSetPayload = SetValue & { fuzzType: 'setPayload'; };
 
 export type FuzzChange = FuzzInsert | FuzzDelete | FuzzMove | FuzzSetPayload;
 

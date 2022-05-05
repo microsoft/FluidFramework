@@ -83,7 +83,7 @@ notificationContext.removeNotification.bind(notificationContext);
 
 class NotificationViewer extends React.Component<WithStyles<typeof styles> &
   Omit<SnackbarProps, "classes" | "open">,
-  { open: boolean, messageInfo: string } & Pick<INotificationContext, "notificationList">> {
+  { open: boolean; messageInfo: string; } & Pick<INotificationContext, "notificationList">> {
   public static defaultProps = {
     autoHideDuration: 6000,
   };

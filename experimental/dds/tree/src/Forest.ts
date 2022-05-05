@@ -229,7 +229,7 @@ export class Forest {
 		for (const childId of childIds) {
 			mutableNodes.editRange(childId, childId, true, (_, n) => {
 				assert(!isParentedForestNode(n), 'can not attach node that already has a parent');
-				const breakVal: { value: ParentedForestNode } = {
+				const breakVal: { value: ParentedForestNode; } = {
 					value: {
 						...n,
 						parentId,
@@ -259,7 +259,7 @@ export class Forest {
 		label: TraitLabel,
 		startIndex: number,
 		endIndex: number
-	): { forest: Forest; detached: readonly NodeId[] } {
+	): { forest: Forest; detached: readonly NodeId[]; } {
 		assert(startIndex >= 0 && endIndex >= startIndex, 'invalid detach index range');
 		const parentNode = this.nodes.get(parentId);
 		assert(parentNode, 'can not detach children under node that does not exist');
@@ -283,7 +283,7 @@ export class Forest {
 		mutableNodes.set(parentId, { ...parentNode, traits });
 		for (const childId of detached) {
 			mutableNodes.editRange(childId, childId, true, (_, n) => {
-				const breakVal: { value: ForestNode } = {
+				const breakVal: { value: ForestNode; } = {
 					value: {
 						definition: n.definition,
 						identifier: n.identifier,
@@ -372,7 +372,7 @@ export class Forest {
 		for (const trait of node.traits.values()) {
 			for (const childId of trait) {
 				mutableNodes.editRange(childId, childId, true, (_, n) => {
-					const breakVal: { value: ForestNode } = {
+					const breakVal: { value: ForestNode; } = {
 						value: {
 							definition: n.definition,
 							identifier: n.identifier,

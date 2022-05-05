@@ -389,7 +389,7 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
  * @returns
  */
 
-function breakOnDifference(): { break: boolean } {
+function breakOnDifference(): { break: boolean; } {
 	return { break: true };
 }
 

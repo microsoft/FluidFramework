@@ -24,7 +24,7 @@ async function withContainerOffline<TReturn>(
 	provider: ITestObjectProvider,
 	container: IContainer,
 	action: () => TReturn
-): Promise<{ actionReturn: TReturn; pendingLocalState: string }> {
+): Promise<{ actionReturn: TReturn; pendingLocalState: string; }> {
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();

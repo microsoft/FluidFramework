@@ -127,12 +127,12 @@ function normalizeChange<From extends NodeId | OpSpaceNodeId, To extends NodeId 
  * Compresses the provided edit by applying `compressor` to each change and leaving other fields
  * untouched.
  */
-export function compressEdit<TId extends OpSpaceNodeId, TEdit extends { changes: readonly ChangeInternal[] }>(
+export function compressEdit<TId extends OpSpaceNodeId, TEdit extends { changes: readonly ChangeInternal[]; }>(
 	compressor: ChangeCompressor,
 	interner: StringInterner,
 	idNormalizer: ContextualizedNodeIdNormalizer<TId>,
 	edit: TEdit
-): Omit<TEdit, 'changes'> & { changes: readonly CompressedChangeInternal<TId>[] } {
+): Omit<TEdit, 'changes'> & { changes: readonly CompressedChangeInternal<TId>[]; } {
 	return {
 		...edit,
 		changes: edit.changes.map((change) => compressor.compress(change, interner, idNormalizer)),
@@ -145,13 +145,13 @@ export function compressEdit<TId extends OpSpaceNodeId, TEdit extends { changes:
  */
 export function decompressEdit<
 	TId extends OpSpaceNodeId,
-	TEdit extends { changes: readonly CompressedChangeInternal<TId>[] }
+	TEdit extends { changes: readonly CompressedChangeInternal<TId>[]; }
 >(
 	compressor: ChangeCompressor,
 	interner: StringInterner,
 	idNormalizer: ContextualizedNodeIdNormalizer<TId>,
 	edit: TEdit
-): Omit<TEdit, 'changes'> & { changes: readonly ChangeInternal[] } {
+): Omit<TEdit, 'changes'> & { changes: readonly ChangeInternal[]; } {
 	return {
 		...edit,
 		changes: edit.changes.map((change) => compressor.decompress(change, interner, idNormalizer)),

@@ -422,7 +422,7 @@ describe('EditUtilities', () => {
 				...testTree.buildLeaf(testTree.generateNodeId()),
 				traits: { main: [testTree.buildLeaf(testTree.generateNodeId())] },
 			};
-			(node as unknown as { extra: string }).extra = 'This is extra data that should not be copied';
+			(node as unknown as { extra: string; }).extra = 'This is extra data that should not be copied';
 			const converted = convertTreeNodes<BuildTreeNode, TreeNode<BuildNodeInternal, NodeId>, number>(
 				node,
 				(node) => internalizeBuildNode(node, testTree),
@@ -469,7 +469,7 @@ describe('EditUtilities', () => {
 		function check(
 			a: Payload,
 			b: Payload,
-			flags: { initial: Equality; serialized: Equality; deserialized: Equality; roundtrip: Equality }
+			flags: { initial: Equality; serialized: Equality; deserialized: Equality; roundtrip: Equality; }
 		): void {
 			// Check reflexive
 			expect(comparePayloads(a, a)).equal(true);

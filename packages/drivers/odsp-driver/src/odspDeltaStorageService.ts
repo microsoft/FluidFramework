@@ -56,7 +56,7 @@ export class OdspDeltaStorageService {
 
             postBody += `_post: 1\r\n`;
             postBody += `\r\n--${formBoundary}--`;
-            const headers: { [index: string]: any } = {
+            const headers: { [index: string]: any; } = {
                 "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
             };
 

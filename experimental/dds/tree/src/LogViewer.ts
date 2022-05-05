@@ -218,7 +218,7 @@ export class CachingLogViewer implements LogViewer {
 	 * as part of the transaction, then submitting it.
 	 * This cache helps optimize that case by avoiding recomputing the edit if no other edits were added during the transaction.
 	 */
-	private cachedEditResult?: { editId: EditId; result: EditingResult };
+	private cachedEditResult?: { editId: EditId; result: EditingResult; };
 
 	/**
 	 * Cache entry for the highest revision.
@@ -368,7 +368,7 @@ export class CachingLogViewer implements LogViewer {
 	/**
 	 * @returns the cached revision view closest to the requested `revision`.
 	 */
-	private getStartingPoint(revision: Revision): { startRevision: Revision } & EditCacheEntry {
+	private getStartingPoint(revision: Revision): { startRevision: Revision; } & EditCacheEntry {
 		// Per the documentation for revision, the returned view should be the output of the edit at the largest index <= `revision`.
 		const revisionClamped = Math.min(revision, this.log.length);
 
@@ -564,7 +564,7 @@ export class CachingLogViewer implements LogViewer {
 	/**
 	 * @returns Edit information for the earliest known sequenced edit.
 	 */
-	public earliestSequencedEditInSession(): { edit: Edit<ChangeInternal>; sequenceNumber: number } | undefined {
+	public earliestSequencedEditInSession(): { edit: Edit<ChangeInternal>; sequenceNumber: number; } | undefined {
 		const earliestEditIndex = this.log.earliestAvailableEditIndex;
 		const lastSequencedEdit = this.log.numberOfSequencedEdits + earliestEditIndex - 1;
 		for (let index = earliestEditIndex; index <= lastSequencedEdit; ++index) {

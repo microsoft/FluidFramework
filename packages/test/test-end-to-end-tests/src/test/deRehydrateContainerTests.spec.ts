@@ -263,7 +263,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
                 "Blobs should contain attributes blob");
             // Check for default dataStore
             const { datastoreTree: defaultDatastore } = assertDatastoreTree(snapshotTree, "default");
-            const datastoreAttributes = assertBlobContents<{ pkg: string }>(defaultDatastore, ".component");
+            const datastoreAttributes = assertBlobContents<{ pkg: string; }>(defaultDatastore, ".component");
             assert.strictEqual(datastoreAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
         });
 

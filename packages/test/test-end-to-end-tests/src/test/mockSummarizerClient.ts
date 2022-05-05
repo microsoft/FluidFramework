@@ -86,7 +86,7 @@ export async function loadSummarizer(
  */
 export async function submitAndAckSummary(
     provider: ITestObjectProvider,
-    summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+    summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
     logger: ITelemetryLogger,
     fullTree: boolean = false,
 ) {

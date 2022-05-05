@@ -109,7 +109,7 @@ interface Session {
 	/**
 	 * `cluster` is undefined if a new cluster must be allocated when the session requests the next final ID allocation.
 	 */
-	currentClusterDetails: { readonly clusterBase: FinalCompressedId; readonly cluster: IdCluster } | undefined;
+	currentClusterDetails: { readonly clusterBase: FinalCompressedId; readonly cluster: IdCluster; } | undefined;
 
 	/**
 	 * The last local ID known to be finalized for this session.
@@ -1358,7 +1358,7 @@ export class IdCompressor {
 			return false;
 		}
 
-		const missingInOne = (_: string, value: CompressionMapping): { break: boolean } | undefined => {
+		const missingInOne = (_: string, value: CompressionMapping): { break: boolean; } | undefined => {
 			if (!compareLocalState && IdCompressor.isUnfinalizedOverride(value)) {
 				return undefined;
 			}

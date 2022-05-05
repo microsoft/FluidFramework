@@ -8,7 +8,7 @@ import type { IdCreationRange, UnackedLocalId } from './persisted-types';
 
 export function getIds(
 	range: IdCreationRange
-): { first: UnackedLocalId; last: UnackedLocalId; overrides?: IdCreationRange.Overrides } | undefined {
+): { first: UnackedLocalId; last: UnackedLocalId; overrides?: IdCreationRange.Overrides; } | undefined {
 	const { ids } = range;
 	if (ids === undefined) {
 		return undefined;
