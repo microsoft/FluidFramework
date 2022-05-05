@@ -61,6 +61,10 @@ export class AzureClient {
      */
     constructor(private readonly props: AzureClientProps) {
         this.urlResolver = new AzureUrlResolver();
+        // Make sure that tenantId was provided if type is 'remote'
+        if (props.connection.type === "remote" && props.connection.tenantId === undefined) {
+            throw new TypeError("`tenantId` must be provided when connection type is `remote`");
+        }
         // The local service implementation differs from the Azure Fluid Relay in blob
         // storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
         const enableWholeSummaryUpload = this.props.connection.type !== "local";
@@ -113,9 +117,9 @@ export class AzureClient {
         services: AzureContainerServices;
     }> {
         const loader = this.createLoader(containerSchema);
-        const url = new URL(this.props.connection.orderer);
-        url.searchParams.append("storage", encodeURIComponent(this.props.connection.storage));
-        url.searchParams.append("tenantId", encodeURIComponent(this.props.connection.tenantId));
+        const url = new URL(this.props.connection.endpoint);
+        url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
+        url.searchParams.append("tenantId", encodeURIComponent(this.props.connection.tenantId ?? LOCAL_MODE_TENANT_ID));
         url.searchParams.append("containerId", encodeURIComponent(id));
         const sourceContainer = await loader.resolve({ url: url.href });
 
@@ -160,9 +164,9 @@ export class AzureClient {
         services: AzureContainerServices;
     }> {
         const loader = this.createLoader(containerSchema);
-        const url = new URL(this.props.connection.orderer);
-        url.searchParams.append("storage", encodeURIComponent(this.props.connection.storage));
-        url.searchParams.append("tenantId", encodeURIComponent(this.props.connection.tenantId));
+        const url = new URL(this.props.connection.endpoint);
+        url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
+        url.searchParams.append("tenantId", encodeURIComponent(this.props.connection.tenantId ?? LOCAL_MODE_TENANT_ID));
         url.searchParams.append("containerId", encodeURIComponent(id));
         const container = await loader.resolve({ url: url.href });
         const rootDataObject = await requestFluidObject<RootDataObject>(
