@@ -75,9 +75,9 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
         let ignoreModelContentChanges: boolean = false;
         codeEditor.onDidChangeModelContent((e) => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-                worker(codeModel.uri.toString()).then((client) => {
-                    client.getEmitOutput(codeModel.uri.toString()).then((r) => {
+            monaco.languages.typescript.getTypeScriptWorker().then(async (worker) => {
+                await worker(codeModel.uri).then(async (client) => {
+                    await client.getEmitOutput(codeModel.uri.toString()).then((r) => {
                         outputModel.setValue(r.outputFiles[0].text);
                     });
                 });

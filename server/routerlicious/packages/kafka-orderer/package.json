@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-kafka-orderer",
-  "version": "0.1036.2000",
+  "version": "0.1036.3000",
   "description": "Fluid ordering services",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/server-services-core": "^0.1036.2000"
+    "@fluidframework/server-services-core": "^0.1036.3000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
