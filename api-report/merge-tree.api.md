@@ -799,12 +799,13 @@ export const LocalClientId = -1;
 // @public @deprecated (undocumented)
 export class LocalReference implements ReferencePosition {
     // @deprecated
-    constructor(client: Client, initSegment: ISegment, offset?: number, refType?: ReferenceType, properties?: PropertySet);
+    constructor(client: Client, initSegment: ISegment,
+    offset?: number, refType?: ReferenceType, properties?: PropertySet);
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
     // @deprecated (undocumented)
     compare(b: LocalReference): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     static readonly DetachedPosition: number;
     // @deprecated (undocumented)
     getClient(): Client;
@@ -832,15 +833,15 @@ export class LocalReference implements ReferencePosition {
     max(b: LocalReference): LocalReference;
     // @deprecated (undocumented)
     min(b: LocalReference): LocalReference;
-    // (undocumented)
+    // @deprecated (undocumented)
     offset: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     pairedRef?: LocalReference;
     // (undocumented)
     properties: PropertySet | undefined;
     // (undocumented)
     refType: ReferenceType;
-    // (undocumented)
+    // @deprecated (undocumented)
     segment: ISegment | undefined;
     // @deprecated (undocumented)
     toPosition(): number;
