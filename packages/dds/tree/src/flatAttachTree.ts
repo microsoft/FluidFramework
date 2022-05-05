@@ -6,7 +6,7 @@
 /**
  * Allows multiple marks to compete for the same relative sibling.
  * The race is represented as an array of ranked lanes where all of the content in the lane i (race[i])
- * should appear before all of the contents in lane k for i < k.
+ * should appear before all of the contents in lane k for i \< k.
  *
  * ```
  * ============
