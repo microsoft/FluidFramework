@@ -99,7 +99,7 @@
             "error"
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/member-ordering": [
             "off"
