@@ -61,7 +61,7 @@ export interface AzureGetVersionsOptions {
  */
 export interface AzureConnectionConfig {
     /**
-     * The type of connection. Whether we're connecting to a remote fluid relay server or a local instance.
+     * The type of connection. Whether we're connecting to a remote Fluid relay server or a local instance.
      */
     type: "remote" | "local";
     /**
