@@ -12,7 +12,7 @@ export interface BaseFuzzTestState {
 export const done = Symbol("GeneratorDone");
 
 /**
- * Given some input state, asynchronously generates outputs.
+ * Given some input state, synchronously generates outputs.
  */
 export type Generator<TOut, TState> = (state: TState) => TOut | typeof done;
 
