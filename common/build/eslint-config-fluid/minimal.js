@@ -165,7 +165,6 @@ module.exports = {
         "key-spacing": "error",
         "space-unary-ops": "error",
         "switch-colon-spacing": "error",
-        "template-curly-spacing": "error",
 
 
     },
