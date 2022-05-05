@@ -64,8 +64,8 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/driver-definitions": "^0.47.1000-0",
-    "@fluidframework/gitresources": "^0.1036.2000-0",
-    "@fluidframework/protocol-base": "^0.1036.2000-0",
+    "@fluidframework/gitresources": "^0.1036.3000-0",
+    "@fluidframework/protocol-base": "^0.1036.3000-0",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/telemetry-utils": "^0.60.1000",
     "axios": "^0.26.0",
@@ -105,6 +105,11 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_PrefetchDocumentStorageService": {"backCompat": false},
+      "ClassDeclaration_BlobCacheStorageService": {"backCompat": false},
+      "ClassDeclaration_BlobAggregationStorage": {"backCompat": false},
+      "ClassDeclaration_DocumentStorageServiceProxy": {"backCompat": false}
+    }
   }
 }

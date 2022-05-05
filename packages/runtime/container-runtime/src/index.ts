@@ -62,6 +62,7 @@ export {
     ISummarizer,
     ISummarizerEvents,
     ISummarizerInternalsProvider,
+    ISummarizerOptions,
     ISummarizerRuntime,
     ISummarizingWarning,
     ISummaryCancellationToken,
