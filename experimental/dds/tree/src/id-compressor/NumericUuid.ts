@@ -5,9 +5,9 @@
 
 /* eslint-disable no-bitwise */
 
-import { v4 } from 'uuid';
 import { assert, fail } from '../Common';
 import { SessionId, StableId } from '../Identifiers';
+import { generateStableId } from '../UuidUtilities';
 
 /**
  * A UUID (128 bit identifier) optimized for use as a 128 bit unsigned integer with fast addition and toString operations.
@@ -122,80 +122,11 @@ export function numericUuidFromStableId(stableId: StableId): NumericUuid {
 }
 
 /**
- * Asserts that the supplied uuid is a stable ID.
- */
-export function assertIsStableId(uuid: string): StableId {
-	assert(isStableId(uuid), `${uuid} is not a StableId.`);
-	return uuid;
-}
-
-const charCode0 = '0'.charCodeAt(0);
-const charCode9 = '9'.charCodeAt(0);
-const charCodea = 'a'.charCodeAt(0);
-const charCodef = 'f'.charCodeAt(0);
-const charCodeA = 'A'.charCodeAt(0);
-const charCodeF = 'F'.charCodeAt(0);
-
-/**
- * Returns whether the supplied string is a v4 variant 2 uuid.
- */
-export function isStableId(str: string): str is StableId {
-	if (str.length !== 36) {
-		return false;
-	}
-
-	for (let i = 0; i < str.length; i++) {
-		switch (i) {
-			case 8:
-			case 13:
-			case 18:
-			case 23: {
-				if (str.charAt(i) !== '-') {
-					return false;
-				}
-				break;
-			}
-
-			case 14: {
-				if (str.charAt(i) !== '4') {
-					return false;
-				}
-				break;
-			}
-
-			case 19: {
-				const c = str.charAt(i);
-				if (c !== '8' && c !== '9' && c !== 'a' && c !== 'b') {
-					return false;
-				}
-				break;
-			}
-
-			default: {
-				const code = str.charCodeAt(i);
-				const isUuidChar =
-					(code >= charCode0 && code <= charCode9) ||
-					(code >= charCodea && code <= charCodef) ||
-					(code >= charCodeA && code <= charCodeF);
-
-				if (!isUuidChar) {
-					return false;
-				}
-				break;
-			}
-		}
-	}
-
-	return true;
-}
-
-/**
  * Creates a session base ID.
  * This method (rather than standard uuid generation methods) should be used to generate session IDs.
  */
 export function createSessionId(): SessionId {
-	const uuid = assertIsStableId(v4());
-	return ensureSessionUuid(uuid);
+	return ensureSessionUuid(generateStableId());
 }
 
 /**

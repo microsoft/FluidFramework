@@ -19,12 +19,16 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.59 Upcoming changes
 - [Remove ICodeLoader interface](#Remove-ICodeLoader-interface)
 - [IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release](#ifluidcontainer-connect-and-ifluidcontainer-disconnect-will-be-made-mandatory-in-future-major-release)
+- [proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-to-be-removed-from-ILoaderProps-and-ILoaderServices)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
 
 ### IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release
 In major release 1.0, the optional functions `IFluidContainer.connect()` and `IFluidContainer.disconnect()` will be made mandatory functions.
+
+### proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices
+The `proxyLoaderFactories` member on `ILoaderProps` and `ILoaderServices` has been deprecated in 0.59 and will be removed in an upcoming release.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)

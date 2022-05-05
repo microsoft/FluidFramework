@@ -48,12 +48,21 @@ class SharedTreeAssertionError extends Error {
 }
 
 /**
- * Compares finite numbers to form a strict partial ordering.
+ * A numeric comparator used for sorting in ascending order.
  *
  * Handles +/-0 like Map: -0 is equal to +0.
  */
 export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
 	return a - b;
+}
+
+/**
+ * A numeric comparator used for sorting in descending order.
+ *
+ * Handles +/-0 like Map: -0 is equal to +0.
+ */
+export function compareFiniteNumbersReversed<T extends number>(a: T, b: T): number {
+	return b - a;
 }
 
 /**
@@ -317,13 +326,13 @@ export function compareMaps<K, V>(
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
  * @param map - the map to query/update
  * @param key - the key to lookup in the map
- * @param defaultValue - a function which returns a default value. This is called and used to set an initial value in the map if none exists
+ * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
-export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: () => V): V {
+export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K) => V): V {
 	let value = map.get(key);
 	if (value === undefined) {
-		value = defaultValue();
+		value = defaultValue(key);
 		map.set(key, value);
 	}
 	return value;
@@ -533,3 +542,30 @@ export type ReplaceRecursive<T, TReplace, TWith> = T extends TReplace
 	: {
 			[P in keyof T]: ReplaceRecursive<T[P], TReplace, TWith>;
 	  };
+
+/** A union type of the first `N` positive integers */
+export type TakeWholeNumbers<N extends number, A extends never[] = []> = N extends A['length']
+	? never
+	: A['length'] | TakeWholeNumbers<N, [never, ...A]>;
+/** Returns a tuple type with exactly `Length` elements of type `T` */
+export type ArrayOfLength<T, Length extends number, A extends T[] = []> = Length extends A['length']
+	? A
+	: ArrayOfLength<T, Length, [T, ...A]>;
+/**
+ * Fails if `array` does not have exactly `length` elements
+ */
+export function hasExactlyLength<T, Len extends TakeWholeNumbers<16>>(
+	array: readonly T[],
+	length: Len
+): array is ArrayOfLength<T, Len> {
+	return array.length === length;
+}
+/**
+ * Fails if `array` does not have at least `length` elements
+ */
+export function hasLength<T, Len extends TakeWholeNumbers<16>>(
+	array: readonly T[],
+	length: Len
+): array is [...ArrayOfLength<T, Len>, ...T[]] {
+	return array.length >= length;
+}
