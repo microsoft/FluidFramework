@@ -190,7 +190,7 @@ describe("Summary Manager", () => {
     function createSummaryManager({
         connected = false,
         ...config
-    }: Readonly<Partial<{ connected?: boolean; } & ISummaryManagerConfig>> = {}) {
+    }: Readonly<Partial<{ connected?: boolean } & ISummaryManagerConfig>> = {}) {
         connectedState = new TestConnectedState();
         if (connected) {
             connectedState.connect();

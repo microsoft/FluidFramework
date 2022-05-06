@@ -832,7 +832,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private readonly nameCellRenderer = ({ rowData, cellData, columnIndex }:
-      { rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number }) => {
+      { rowData: IInspectorRow; cellData: React.ReactNode | undefined; columnIndex: number; }) => {
         const { checkoutInProgress, rowIconRenderer, width, dataGetter } = this.props;
         if (checkoutInProgress) {
           return getCellSkeleton(width);
@@ -853,7 +853,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       };
 
     // eslint-disable-next-line max-len
-    private readonly valueCellRenderer = ({ rowData, cellData, columnIndex }: { rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number }) => {
+    private readonly valueCellRenderer = ({ rowData, cellData, columnIndex }: { rowData: IInspectorRow; cellData: React.ReactNode | undefined; columnIndex: number; }) => {
         const { classes, checkoutInProgress, followReferences, rowIconRenderer, width, dataGetter, readOnly } =
           this.props;
         if (checkoutInProgress) {
@@ -878,7 +878,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         }
       };
 
-    private readonly typeCellRenderer = ({ rowData }: { rowData: IInspectorRow }) => {
+    private readonly typeCellRenderer = ({ rowData }: { rowData: IInspectorRow; }) => {
       const { checkoutInProgress, width } = this.props;
       if (checkoutInProgress) {
         return getCellSkeleton(width);
@@ -913,7 +913,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
      * allows the user to come back to the state before performing the filtering
      */
     // eslint-disable-next-line max-len
-    private readonly handleRowExpanded = ({ rowData, expanded: newExpandedFlag }: { rowData: IInspectorRow, expanded: boolean }) => {
+    private readonly handleRowExpanded = ({ rowData, expanded: newExpandedFlag }: { rowData: IInspectorRow; expanded: boolean; }) => {
       const newExpanded = { ...this.state.expanded };
       const idInExpanded = rowData.id in newExpanded;
       if (newExpandedFlag && !idInExpanded) {
@@ -942,7 +942,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private readonly updateSearchState = (foundMatches: IInspectorSearchMatch[], matchesMap: IInspectorSearchMatchMap,
-                                 done: boolean, childToParentMap: { [key: string]: string }) => {
+                                 done: boolean, childToParentMap: { [key: string]: string; }) => {
       const newState = {} as Pick<IInspectorTableState, "currentResult" | "foundMatches" | "matchesMap" |
         "searchInProgress" | "searchAbortHandler" | "searchExpression" | "childToParentMap" | "searchDone" |
         "searchState">;

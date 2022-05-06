@@ -53,5 +53,5 @@ export interface IHttpServer {
 
     on(event: string, listener: (...args: any[]) => void);
 
-    address(): { port: number; family: string; address: string; };
+    address(): { port: number; family: string; address: string };
 }

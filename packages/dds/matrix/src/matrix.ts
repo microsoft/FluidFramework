@@ -44,16 +44,16 @@ const enum SnapshotPath {
 }
 
 interface ISetOp<T> {
-    type: MatrixOp.set,
-    row: number,
-    col: number,
-    value: MatrixItem<T>,
+    type: MatrixOp.set;
+    row: number;
+    col: number;
+    value: MatrixItem<T>;
 }
 
 interface ISetOpMetadata {
-    rowHandle: Handle,
-    colHandle: Handle,
-    localSeq: number,
+    rowHandle: Handle;
+    colHandle: Handle;
+    localSeq: number;
 }
 
 /**

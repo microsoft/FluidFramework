@@ -11,7 +11,7 @@ const contextSym = Symbol("proxy.context");
 type Consumer = (ops: json1.JSONOp) => void;
 
 interface IProxy extends Object {
-    [contextSym]: { parent?: IProxy, parentKey: json1.Key }
+    [contextSym]: { parent?: IProxy; parentKey: json1.Key; };
 }
 
 function getPath(target: IProxy, key: json1.Key, path: json1.Key[] = []): json1.Path {
