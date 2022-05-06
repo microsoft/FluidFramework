@@ -354,6 +354,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             applyStashedOp: (content: any): unknown => {
                 return this.applyStashedOp(content);
             },
+            rollback:  (content: any, localOpMetadata: unknown) => {
+                this.rollback(content, localOpMetadata);
+            },
         });
 
         // Trigger initial state
@@ -382,7 +385,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             // - nack could get a new msn - but might as well do it in the join?
             this.onDisconnect();
         } else {
-            // Call this for now so that DDSes like ConsensesOrderedCollection that maintain their own pending
+            // Call this for now so that DDSes like ConsensusOrderedCollection that maintain their own pending
             // messages will work.
             this.onConnect();
         }
@@ -410,6 +413,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      */
     private reSubmit(content: any, localOpMetadata: unknown) {
         this.reSubmitCore(content, localOpMetadata);
+    }
+
+    /**
+     * Revert an op
+     */
+    protected rollback(content: any, localOpMetadata: unknown) {
+        throw new Error("rollback not supported");
     }
 
     /**
