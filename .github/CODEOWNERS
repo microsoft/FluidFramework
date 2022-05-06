@@ -21,6 +21,8 @@
 /experimental/                                                            @microsoft/fluid-cr-framework
 /experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
 /experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
+/experimental/dds/tree-graphql/                                           @microsoft/fluid-cr-tree
+/experimental/dds/xtree/                                                  @microsoft/fluid-cr-tree
 /packages/dds/                                                            @microsoft/fluid-cr-dds
 /packages/drivers/                                                        @microsoft/fluid-cr-drivers
 /packages/drivers/odsp*/                                                  @microsoft/fluid-cr-drivers @microsoft/fluid-cr-odsp
@@ -61,6 +63,8 @@ api-report/dds-interceptions.api.md                                       @micro
 api-report/debugger.api.md                                                @microsoft/fluid-cr-tools
 api-report/driver-base.api.md                                             @microsoft/fluid-cr-drivers
 api-report/driver-utils.api.md                                            @microsoft/fluid-cr-drivers
+api-report/driver-web-cache.api.md                                        @microsoft/fluid-cr-drivers
+api-report/experimental-tree.api.md                                       @microsoft/fluid-cr-tree
 api-report/file-driver.api.md                                             @microsoft/fluid-cr-drivers
 api-report/fluid-static.api.md                                            @microsoft/fluid-cr-framework @microsoft/fluid-cr-api
 api-report/garbage-collector.api.md                                       @microsoft/fluid-cr-runtime
@@ -68,10 +72,12 @@ api-report/iframe-driver.api.md                                           @micro
 api-report/ink.api.md                                                     @microsoft/fluid-cr-dds
 api-report/map.api.md                                                     @microsoft/fluid-cr-dds
 api-report/matrix.api.md                                                  @microsoft/fluid-cr-dds
+api-report/merge-tree.api.md                                              @microsoft/fluid-cr-dds
 api-report/mocha-test-setup.api.md                                        @microsoft/fluid-cr-test
 api-report/odsp-driver-definitions.api.md                                 @microsoft/fluid-cr-odsp
 api-report/odsp-driver.api.md                                             @microsoft/fluid-cr-odsp
 api-report/ordered-collection.api.md                                      @microsoft/fluid-cr-dds
+api-report/quorum.api.md                                                  @microsoft/fluid-cr-dds
 api-report/register-collection.api.md                                     @microsoft/fluid-cr-dds
 api-report/replay-driver.api.md                                           @microsoft/fluid-cr-drivers
 api-report/request-handler.api.md                                         @microsoft/fluid-cr-runtime
@@ -89,6 +95,7 @@ api-report/test-drivers.api.md                                            @micro
 api-report/test-runtime-utils.api.md                                      @microsoft/fluid-cr-runtime
 api-report/test-utils.api.md                                              @microsoft/fluid-cr-test
 api-report/tool-utils.api.md                                              @microsoft/fluid-cr-tools
+api-report/tree.api.md                                                    @microsoft/fluid-cr-tree
 api-report/undo-redo.api.md                                               @microsoft/fluid-cr-framework
 api-report/view-adapters.api.md                                           @microsoft/fluid-cr-framework
 api-report/view-interfaces.api.md                                         @microsoft/fluid-cr-framework
