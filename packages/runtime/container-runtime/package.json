@@ -63,7 +63,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.49.1000-63433",
+    "@fluidframework/container-definitions": "^0.49.1000-64278",
     "@fluidframework/container-runtime-definitions": "^0.60.1000",
     "@fluidframework/container-utils": "^0.60.1000",
     "@fluidframework/core-interfaces": "^0.43.1000",
@@ -115,15 +115,6 @@
   "typeValidation": {
     "version": "0.60.1000",
     "broken": {
-      "ClassDeclaration_Summarizer": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_ISummarizer": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IProvideSummarizer": {
-        "forwardCompat": false
-      },
       "ClassDeclaration_ContainerRuntime": {
         "forwardCompat": false,
         "backCompat": false
@@ -146,7 +137,9 @@
       "InterfaceDeclaration_ITestContainerConfig": {
         "forwardCompat": false,
         "backCompat": false
-      }
+      },
+      "InterfaceDeclaration_IConnectableRuntime": {"backCompat": false},
+      "InterfaceDeclaration_ISummarizerRuntime": {"backCompat": false}
     }
   }
 }
