@@ -933,7 +933,7 @@ export class Client {
         runtime: IFluidDataStoreRuntime,
         storage: IChannelStorageService,
         serializer: IFluidSerializer,
-    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]>; }> {
         const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger, serializer);
 
         return loader.initialize(storage);

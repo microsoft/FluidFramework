@@ -30,7 +30,7 @@ export interface IGetRefParamsExternal {
  * Required params to patch ref with config
  */
 export interface IPatchRefParamsExternal extends git.IPatchRefParams {
-    config?: IExternalWriterConfig
+    config?: IExternalWriterConfig;
 }
 
 interface IExternalWriterConfig {

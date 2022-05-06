@@ -17,7 +17,7 @@ describe("MergeTree.Client", () => {
     for (const filePath of fs.readdirSync(replayResultsPath)) {
         it(`Replay ${filePath}`, async () => {
             const file: ReplayGroup[] = JSON.parse(fs.readFileSync(`${replayResultsPath}/${filePath}`).toString());
-            const msgClients = new Map<string, { client: TestClient, msgs: ISequencedDocumentMessage[] }>();
+            const msgClients = new Map<string, { client: TestClient; msgs: ISequencedDocumentMessage[]; }>();
             const originalClient = new TestClient();
             msgClients.set("A", { client: originalClient, msgs: [] });
             originalClient.insertTextLocal(0, file[0].initialText);

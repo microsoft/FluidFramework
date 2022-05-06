@@ -31,7 +31,7 @@ type ClientMap = Partial<Record<"A" | "B" | "C" | "D" | "E", TestClient>>;
 export function createClientsAtInitialState<TClients extends ClientMap>(
     initialState: string,
     ... clientIds: (string & keyof TClients)[]
-): Record<keyof TClients, TestClient> & { all: TestClient[] } {
+): Record<keyof TClients, TestClient> & { all: TestClient[]; } {
     const setup = (c: TestClient) => {
         c.insertTextLocal(0, initialState);
         while (c.getText().includes("-")) {
@@ -194,7 +194,7 @@ export class TestClientLogger {
         return str;
     }
 
-    private static getSegString(client: TestClient): { acked: string, local: string } {
+    private static getSegString(client: TestClient): { acked: string; local: string; } {
         let acked: string = "";
         let local: string = "";
         const nodes = [...client.mergeTree.root.children];
