@@ -282,7 +282,7 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
         }
 
         assert.notEqual(error, undefined, "No error");
-        assert.ok((error as Error).message.startsWith("RollbackError:"), "Unexpected error message");
+        assert.ok(error?.message.startsWith("RollbackError:"), "Unexpected error message");
         assert.equal(containerRuntime.disposed, true);
     });
 });
