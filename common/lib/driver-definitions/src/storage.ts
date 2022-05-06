@@ -226,7 +226,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
      * to better understand server environment etc. and use it in case error occurs.
      * Format: "prop1:val1;prop2:val2;prop3:val3"
      */
-    relayServiceAgent?: string,
+    relayServiceAgent?: string;
 
     /**
      * Submit a new message to the server

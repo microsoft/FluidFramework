@@ -70,13 +70,13 @@ export function printUsage() {
 // Can be used in unit test to pass in customized argument values
 // More argument options can be added when needed
 export function setArguments(values: {
-    saveDir: string,
-    paramURL: string
-    dumpMessages?: boolean,
-    dumpMessageStats?: boolean,
-    dumpSnapshotStats?: boolean,
-    dumpSnapshotTrees?: boolean,
-    overWrite?: boolean }) {
+    saveDir: string;
+    paramURL: string;
+    dumpMessages?: boolean;
+    dumpMessageStats?: boolean;
+    dumpSnapshotStats?: boolean;
+    dumpSnapshotTrees?: boolean;
+    overWrite?: boolean; }) {
     paramSaveDir = values.saveDir;
     paramURL = values.paramURL;
     dumpMessages = values.dumpMessages ?? dumpMessages;

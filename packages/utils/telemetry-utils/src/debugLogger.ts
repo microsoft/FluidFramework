@@ -62,7 +62,7 @@ export class DebugLogger extends TelemetryLogger {
 
     private static tryGetBaseLoggerProps(baseLogger?: ITelemetryBaseLogger) {
         if (baseLogger instanceof TelemetryLogger) {
-            return (baseLogger as any as { properties: ITelemetryLoggerPropertyBags }).properties;
+            return (baseLogger as any as { properties: ITelemetryLoggerPropertyBags; }).properties;
         }
         return undefined;
     }
