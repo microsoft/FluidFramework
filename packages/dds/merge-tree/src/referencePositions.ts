@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Stack } from "./collections";
 import { ISegment } from "./mergeTree";
 import { ReferenceType, ICombiningOp } from "./ops";
@@ -6,18 +11,18 @@ import { PropertySet, MapLike } from "./properties";
 export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
-export function hasRefTypeFlag(refPos: ReferencePosition, refType: ReferenceType) {
+export function refHasTypeFlag(refPos: ReferencePosition, refType: ReferenceType) {
     // eslint-disable-next-line no-bitwise
     return (refPos.refType & refType) === refType;
 }
 
 export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
-    hasRefTypeFlag(refPos, ReferenceType.Tile)
+    refHasTypeFlag(refPos, ReferenceType.Tile)
         && refPos.properties ? refPos.properties[reservedTileLabelsKey] as string[] : undefined;
 
 export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefined =>
     // eslint-disable-next-line no-bitwise
-    (hasRefTypeFlag(refPos, ReferenceType.NestBegin | ReferenceType.NestEnd))
+    (refHasTypeFlag(refPos, ReferenceType.NestBegin | ReferenceType.NestEnd))
         && refPos.properties ? refPos.properties[reservedRangeLabelsKey] as string[] : undefined;
 
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {

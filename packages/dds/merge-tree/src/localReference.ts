@@ -21,7 +21,7 @@ import {
     refGetTileLabels,
     refHasRangeLabel,
     refHasTileLabel,
-    hasRefTypeFlag,
+    refHasTypeFlag,
 } from "./referencePositions";
 
 /**
@@ -80,7 +80,7 @@ import {
     }
 
     /**
-     * @deprecated - use getLocalReferencePosition instead
+     * @deprecated - use getLocalReferencePosition
      */
      public toPosition() {
         return this.getClient().localReferencePositionToPosition(this);
@@ -123,19 +123,19 @@ import {
         return refGetRangeLabels(this);
     }
 
-    /**
-     * @deprecated - no longer supported
-     */
-    public getClient() {
-        return this.client;
-    }
-
     public isLeaf() {
         return false;
     }
 
     public addProperties(newProps: PropertySet, op?: ICombiningOp) {
         this.properties = addProperties(this.properties, newProps, op);
+    }
+
+    /**
+     * @deprecated - no longer supported
+     */
+    public getClient() {
+        return this.client;
     }
 
     public getSegment() {
@@ -161,6 +161,7 @@ interface IRefsAtOffset {
 }
 
 /**
+ * @internal - this class should only be used by mergeTree
  * Represents a collection of {@link LocalReference}s associated with one segment in a merge-tree.
  */
 export class LocalReferenceCollection {
@@ -183,6 +184,10 @@ export class LocalReferenceCollection {
     private readonly refsByOffset: (IRefsAtOffset | undefined)[];
     private refCount: number = 0;
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     constructor(
         /** Segment this `LocalReferenceCollection` is associated to. */
         private readonly segment: ISegment,
@@ -193,6 +198,10 @@ export class LocalReferenceCollection {
         this.refsByOffset = initialRefsByfOffset;
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public [Symbol.iterator]() {
         const subiterators: IterableIterator<LocalReference>[] = [];
         for (const refs of this.refsByOffset) {
@@ -229,6 +238,10 @@ export class LocalReferenceCollection {
         return iterator;
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public clear() {
         this.refCount = 0;
         this.hierRefCount = 0;
@@ -252,10 +265,18 @@ export class LocalReferenceCollection {
         }
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public get empty() {
         return this.refCount === 0;
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public createLocalRef(
         offset: number,
         refType: ReferenceType,
@@ -268,7 +289,7 @@ export class LocalReferenceCollection {
             refType,
             properties,
         );
-        if (!hasRefTypeFlag(ref, ReferenceType.Transient)) {
+        if (!refHasTypeFlag(ref, ReferenceType.Transient)) {
             this.addLocalRef(ref);
         }
         return ref;
@@ -276,11 +297,11 @@ export class LocalReferenceCollection {
 
     /**
      *
-     * @deprecated - use createLocalRef instead
+     * @internal - this method should only be called by mergeTree
      */
     public addLocalRef(lref: LocalReference) {
         assert(
-            !hasRefTypeFlag(lref, ReferenceType.Transient),
+            !refHasTypeFlag(lref, ReferenceType.Transient),
             "transient references cannot be bound to segments");
         const refsAtOffset = this.refsByOffset[lref.offset];
         if (refsAtOffset === undefined) {
@@ -300,6 +321,10 @@ export class LocalReferenceCollection {
         this.refCount++;
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public removeLocalRef(lref: LocalReference | ReferencePosition) {
         if (!(lref instanceof LocalReference)) {
             return;
@@ -337,6 +362,8 @@ export class LocalReferenceCollection {
     }
 
     /**
+     * @internal - this method should only be called by mergeTree
+     *
      * Called by 'append()' implementations to append local refs from the given 'other' segment to the
      * end of 'this' segment.
      *
@@ -360,6 +387,8 @@ export class LocalReferenceCollection {
     }
 
     /**
+     * @internal - this method should only be called by mergeTree
+     *
      * Splits this `LocalReferenceCollection` into the intervals [0, offset) and [offset, originalLength).
      * Local references in the former half of this split will remain associated with the segment used on construction.
      * Local references in the latter half of this split will be transferred to `splitSeg`,
@@ -392,13 +421,17 @@ export class LocalReferenceCollection {
         }
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]) {
         const beforeRefs: LocalReference[] = [];
 
         for (const iterable of refs) {
             for (const lref of iterable) {
                 if (lref instanceof LocalReference) {
-                    if (hasRefTypeFlag(lref, ReferenceType.SlideOnRemove)) {
+                    if (refHasTypeFlag(lref, ReferenceType.SlideOnRemove)) {
                         beforeRefs.push(lref);
                         lref.segment = this.segment;
                         lref.offset = 0;
@@ -423,13 +456,17 @@ export class LocalReferenceCollection {
         }
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]) {
         const afterRefs: LocalReference[] = [];
 
         for (const iterable of refs) {
             for (const lref of iterable) {
                 if (lref instanceof LocalReference) {
-                    if (hasRefTypeFlag(lref, ReferenceType.SlideOnRemove)) {
+                    if (refHasTypeFlag(lref, ReferenceType.SlideOnRemove)) {
                         afterRefs.push(lref);
                         lref.segment = this.segment;
                         lref.offset = this.segment.cachedLength - 1;
