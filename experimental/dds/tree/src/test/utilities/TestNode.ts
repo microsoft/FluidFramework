@@ -28,7 +28,7 @@ export type TestNode_0_0_2 = TreeNode<TestNode_0_0_2, StableNodeId>;
 /**
  * A node with no children
  */
-export type LeafNode<T> = Omit<T, 'traits'> & { traits: Record<string, never>; };
+export type LeafNode<T> = Omit<T, 'traits'> & { traits: Record<string, never> };
 
 /**
  * Test extension of {@link TraitLocation} which can be converted to stable or legacy formats

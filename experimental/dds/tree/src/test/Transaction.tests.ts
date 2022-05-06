@@ -14,7 +14,7 @@ import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
 import { expectDefined } from './utilities/TestCommon';
 
 describe('Transaction', () => {
-	function createTestTransaction(): { tree: SharedTree; testTree: TestTree; transaction: Transaction; } {
+	function createTestTransaction(): { tree: SharedTree; testTree: TestTree; transaction: Transaction } {
 		const { tree } = setUpTestSharedTree({ writeFormat: WriteFormat.v0_1_1 });
 		const testTree = setUpTestTree(tree);
 		return { tree, testTree, transaction: new Transaction(tree) };

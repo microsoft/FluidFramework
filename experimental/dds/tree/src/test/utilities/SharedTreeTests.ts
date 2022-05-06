@@ -1401,8 +1401,8 @@ export function runSharedTreeOperationsTests(
 					tree.applyEdit(...Change.move(StableRange.only(newNode), StablePlace.before(testTree.left)));
 
 					// Unit testing the interning of ops requires access violation since factory and messages are protected.
-					type WithFactory<T> = T & { factory: MockContainerRuntimeFactory; };
-					type WithMessages<T> = T & { messages: ISequencedDocumentMessage[]; };
+					type WithFactory<T> = T & { factory: MockContainerRuntimeFactory };
+					type WithMessages<T> = T & { messages: ISequencedDocumentMessage[] };
 					const factory = (remoteRuntime as unknown as WithFactory<MockContainerRuntime>).factory;
 					const messages = (factory as unknown as WithMessages<MockContainerRuntimeFactory>).messages;
 

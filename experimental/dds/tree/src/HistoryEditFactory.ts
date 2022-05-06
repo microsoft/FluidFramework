@@ -188,7 +188,7 @@ function createInvertedInsert(
 function createInvertedDetach(
 	detach: DetachInternal,
 	viewBeforeChange: TreeView
-): { invertedDetach: ChangeInternal[]; detachedNodeIds: NodeId[]; } | undefined {
+): { invertedDetach: ChangeInternal[]; detachedNodeIds: NodeId[] } | undefined {
 	const validatedSource = validateStableRange(viewBeforeChange, detach.source);
 	if (validatedSource.result !== RangeValidationResultKind.Valid) {
 		// TODO:#68574: having the reference view would potentially allow us to revert some detaches that currently conflict

@@ -169,7 +169,7 @@ export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPla
 	tree: TIn | TPlaceholder,
 	visitors:
 		| ((node: TIn) => void)
-		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void; },
+		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
 	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder
 ): void;
 
@@ -177,7 +177,7 @@ export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPla
 	tree: TIn | TPlaceholder,
 	visitors:
 		| ((node: TIn) => void)
-		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void; },
+		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
 	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder
 ): void {
 	const nodeVisitor = typeof visitors === 'function' ? visitors : visitors.nodeVisitor;
@@ -358,7 +358,7 @@ export function validateStablePlace(
 			referenceSibling?: never;
 			referenceTrait: TraitLocation;
 	  }
-	| { result: Exclude<PlaceValidationResult, PlaceValidationResult.Valid>; } {
+	| { result: Exclude<PlaceValidationResult, PlaceValidationResult.Valid> } {
 	/* A StablePlace is valid if the following conditions are met:
 	 *     1. A sibling or trait is defined.
 	 *     2. If a sibling is defined, both it and its parent exist in the `TreeView`.
@@ -424,8 +424,8 @@ export function validateStableRange(
 	view: TreeView,
 	range: StableRangeInternal
 ):
-	| { result: RangeValidationResultKind.Valid; start: StablePlaceInternal; end: StablePlaceInternal; }
-	| { result: Exclude<RangeValidationResult, RangeValidationResultKind.Valid>; } {
+	| { result: RangeValidationResultKind.Valid; start: StablePlaceInternal; end: StablePlaceInternal }
+	| { result: Exclude<RangeValidationResult, RangeValidationResultKind.Valid> } {
 	/* A StableRange is valid if the following conditions are met:
 	 *     1. Its start and end places are valid.
 	 *     2. Its start and end places are within the same trait.
@@ -524,7 +524,7 @@ export function insertIntoTrait(
 export function detachRange(
 	view: TransactionView,
 	rangeToDetach: StableRange
-): { view: TransactionView; detached: readonly NodeId[]; } {
+): { view: TransactionView; detached: readonly NodeId[] } {
 	return view.detachRange(rangeFromStableRange(view, rangeToDetach));
 }
 

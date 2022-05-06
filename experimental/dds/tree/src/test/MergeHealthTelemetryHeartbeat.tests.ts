@@ -50,7 +50,7 @@ async function flush(tree: SharedTree, containerRuntimeFactory: MockContainerRun
 
 function itAggregates(
 	nameOfAggregatedData: string,
-	paramFunc: (params: { tree: SharedTree; testTree: TestTree; concurrentTree: SharedTree; }) => {
+	paramFunc: (params: { tree: SharedTree; testTree: TestTree; concurrentTree: SharedTree }) => {
 		edits: Change[][];
 		concurrentEdits?: Change[][];
 		action: (ITelemetryBaseEvent) => void;

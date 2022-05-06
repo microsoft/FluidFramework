@@ -332,7 +332,7 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		const nodeToModify = random.pick(idList);
 		const getPayloadContents = async (
 			random: Random
-		): Promise<string | { blob: IFluidHandle<ArrayBufferLike>; }> => {
+		): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
 			if (random.bool()) {
 				return random.string(4);
 			}

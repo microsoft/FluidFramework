@@ -255,19 +255,19 @@ export class IdCompressorTestNetwork {
 	public allocateAndSendIds(
 		client: Client,
 		numIds: number
-	): { range: IdRangeDescriptor<SessionSpaceCompressedId>; sessionId: SessionId; };
+	): { range: IdRangeDescriptor<SessionSpaceCompressedId>; sessionId: SessionId };
 
 	/**
 	 * Allocates a new range of local IDs and enqueues them for future delivery via a `testIdDelivery` action.
 	 * Calls to this method determine the total order of delivery, regardless of when `deliverOperations` is called.
 	 */
-	public allocateAndSendIds(client: Client, numIds: number, overrides: { [index: number]: string; }): IdCreationRange;
+	public allocateAndSendIds(client: Client, numIds: number, overrides: { [index: number]: string }): IdCreationRange;
 
 	public allocateAndSendIds(
 		client: Client,
 		numIds: number,
-		overrides: { [index: number]: string; } = {}
-	): { range: IdRangeDescriptor<SessionSpaceCompressedId>; sessionId: SessionId; } | IdCreationRange {
+		overrides: { [index: number]: string } = {}
+	): { range: IdRangeDescriptor<SessionSpaceCompressedId>; sessionId: SessionId } | IdCreationRange {
 		assert(numIds > 0, 'Must allocate a non-zero number of IDs');
 		const compressor = this.compressors.get(client);
 		let nextIdIndex = 0;
@@ -587,7 +587,7 @@ interface AllocateIds {
 	type: 'allocateIds';
 	client: Client;
 	numIds: number;
-	overrides: { [index: number]: string; };
+	overrides: { [index: number]: string };
 }
 
 interface DeliverOperations {

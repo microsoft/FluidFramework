@@ -419,7 +419,7 @@ export const StableRangeInternal = {
 	 * @example
 	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
 	 */
-	from: (start: StablePlaceInternal): { to: (end: StablePlaceInternal) => StableRangeInternal; } => ({
+	from: (start: StablePlaceInternal): { to: (end: StablePlaceInternal) => StableRangeInternal } => ({
 		to: (end: StablePlaceInternal): StableRangeInternal => {
 			if (start.referenceTrait && end.referenceTrait) {
 				const message = 'StableRange must be constructed with endpoints from the same trait';

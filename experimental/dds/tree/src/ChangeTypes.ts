@@ -360,7 +360,7 @@ export const StableRange = {
 	 * @example
 	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
 	 */
-	from: (start: StablePlace): { to: (end: StablePlace) => StableRange; } => ({
+	from: (start: StablePlace): { to: (end: StablePlace) => StableRange } => ({
 		to: (end: StablePlace): StableRange => {
 			if (start.referenceTrait && end.referenceTrait) {
 				const message = 'StableRange must be constructed with endpoints from the same trait';

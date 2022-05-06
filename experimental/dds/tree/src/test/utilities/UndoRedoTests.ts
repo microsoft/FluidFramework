@@ -427,8 +427,8 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 /**
  * Generate all possible places in the given trait
  */
-function leftTraitPlaces(testTree: TestTree, trait: NodeData<NodeId>[]): { index: number; place: StablePlace; }[] {
-	const places: { index: number; place: StablePlace; }[] = [];
+function leftTraitPlaces(testTree: TestTree, trait: NodeData<NodeId>[]): { index: number; place: StablePlace }[] {
+	const places: { index: number; place: StablePlace }[] = [];
 	places.push({ index: 0, place: StablePlace.atStartOf(testTree.left.traitLocation) });
 	for (let i = 0; i < trait.length; i++) {
 		places.push({ index: i, place: StablePlace.before(trait[i]) });

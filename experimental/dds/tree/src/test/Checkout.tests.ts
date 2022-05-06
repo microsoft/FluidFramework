@@ -31,7 +31,7 @@ export function checkoutTests(
 ): void {
 	async function setUpTestCheckout(
 		options: SharedTreeTestingOptions = { localMode: true, noFailOnError: true }
-	): Promise<{ checkout: Checkout; tree: SharedTree; }> {
+	): Promise<{ checkout: Checkout; tree: SharedTree }> {
 		const { tree } = setUpTestSharedTree(options);
 		return { checkout: await checkoutFactory(tree), tree };
 	}
@@ -43,7 +43,7 @@ export function checkoutTests(
 	 * @param options Options object used to construct the initial SharedTree
 	 */
 	async function countViewChange(
-		action: (checkout: Checkout, simpleTestTree: TestTree, data: { changeCount: number; }) => void | Promise<void>,
+		action: (checkout: Checkout, simpleTestTree: TestTree, data: { changeCount: number }) => void | Promise<void>,
 		options: SharedTreeTestingOptions = { localMode: true }
 	): Promise<number> {
 		const { checkout, tree } = await setUpTestCheckout(options);
