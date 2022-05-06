@@ -275,7 +275,7 @@ function renderSegmentIntoLine(
         const text = segment.text.substring(_start, _end);
         const textStartPos = segpos + _start;
         const textEndPos = segpos + _end;
-        lineContext.span = makeSegSpan(lineContext.flowView, text, segment, _start, segpos);
+        lineContext.span = makeSegSpan(text, segment, _start, segpos);
         if ((lineContext.lineDiv.endPGMarker) && (lineContext.lineDiv.endPGMarker.properties!.header)) {
             lineContext.span.style.color = wordHeadingColor;
         }
@@ -417,8 +417,9 @@ function createSVGRect(r: ui.Rectangle) {
 }
 
 function layoutCell(
-    cellView: ICellView, layoutInfo: ILayoutContext,
-    leftmost = false, top = false) {
+    cellView: ICellView,
+    layoutInfo: ILayoutContext,
+) {
     const cellRect = new ui.Rectangle(0, 0, cellView.specWidth, 0);
     const cellViewportWidth = cellView.specWidth - (2 * layoutInfo.docContext.cellHMargin);
     const cellViewportRect = new ui.Rectangle(layoutInfo.docContext.cellHMargin, 0,
@@ -534,11 +535,8 @@ function renderTable(
     let tableHeight = 0;
     let deferredHeight = 0;
     let firstRendered = true;
-    let prevRenderedRow: Table.Row | undefined;
-    let prevCellCount;
     let topRow = (layoutInfo.startingPosStack !== undefined) && (layoutInfo.stackIndex === 0);
     for (let rowIndex = 0, rowCount = tableView.rows.length; rowIndex < rowCount; rowIndex++) {
-        let cellCount = 0;
         const rowView = tableView.rows[rowIndex];
         let rowHeight = 0;
         if (startRow === rowView) {
@@ -554,30 +552,16 @@ function renderTable(
             rowDiv.rowView = rowView;
             rowRect.conformElementOpenHeight(rowDiv);
             if (topRow && startCell) {
-                layoutCell(
-                    startCell,
-                    layoutInfo,
-                    startCell === rowView.cells[0],
-                    firstRendered);
+                layoutCell(startCell, layoutInfo);
                 deferredHeight += startCell.renderOutput.deferredHeight;
                 rowHeight = startCell.renderedHeight!;
-                cellCount++;
             }
         }
         let cellX = 0;
         for (let cellIndex = 0, cellsLen = rowView.cells.length; cellIndex < cellsLen; cellIndex++) {
             const cell = rowView.cells[cellIndex] as ICellView;
             if ((!topRow || (cell !== startCell)) && (!Table.cellIsMoribund(cell.marker))) {
-                let noCellAbove = false;
-                if (prevRenderedRow) {
-                    if (prevCellCount <= cellIndex) {
-                        noCellAbove = true;
-                    }
-                }
-                layoutCell(cell, layoutInfo,
-                    cell === rowView.cells[0],
-                    firstRendered || noCellAbove);
-                cellCount++;
+                layoutCell(cell, layoutInfo);
                 if (rowHeight < cell.renderedHeight!) {
                     rowHeight = cell.renderedHeight!;
                 }
@@ -622,8 +606,6 @@ function renderTable(
             }
             rowDiv!.linePos = rowView.pos;
             rowDiv!.lineEnd = rowView.endPos;
-            prevRenderedRow = rowView;
-            prevCellCount = cellCount;
             layoutInfo.viewport.div.appendChild(rowDiv!);
         }
         if (topRow) {
@@ -1252,8 +1234,11 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
 }
 
 function makeSegSpan(
-    context: FlowView, segText: string, textSegment: MergeTree.TextSegment, offsetFromSegpos: number,
-    segpos: number) {
+    segText: string,
+    textSegment: MergeTree.TextSegment,
+    offsetFromSegpos: number,
+    segpos: number,
+) {
     const span = document.createElement("span") as ISegSpan;
     span.innerText = segText;
     span.seg = textSegment;
