@@ -845,7 +845,7 @@ export class LocalReference implements ReferencePosition {
     toPosition(): number;
 }
 
-// @public (undocumented)
+// @public
 export class LocalReferenceCollection {
     // @internal
     [Symbol.iterator](): {
