@@ -111,6 +111,18 @@ const defaultOptions: Required<OperationGenerationConfig> = {
     validateInterval: 100,
 };
 
+// A few places in the fuzz testing code need to inspect existing collections on a SharedString
+// to determine where to insert/modify/delete an interval from. There's some logic to scope all
+// provided labels with "intervalCollections/", which is what the iterator returns. This works
+// around that.
+function* getUnscopedLabels(string: SharedString): Iterable<string> {
+    const prefix = 'intervalCollections/';
+    for (const label of string.getIntervalCollectionLabels()) {
+        assert(label.startsWith(prefix));
+        yield label.substring(prefix.length)
+    }
+}
+
 function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Generator<Operation, FuzzTestState> {
     const options = { ...defaultOptions, ...(optionsParam ?? {}) };
     type ClientOpState = FuzzTestState & { sharedString: SharedString };
@@ -128,14 +140,20 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return random.integer(0, sharedString.getLength() - 1);
     }
 
-    function range(state: ClientOpState): RangeSpec {
+    function exclusiveRange(state: ClientOpState): RangeSpec {
         const start = position(state);
         const end = state.random.integer(start + 1, state.sharedString.getLength());
         return { start, end };
     }
 
+    function inclusiveRange(state: ClientOpState): RangeSpec {
+        const start = position(state);
+        const end = state.random.integer(start, state.sharedString.getLength() - 1);
+        return { start, end };
+    }
+
     function nonEmptyIntervalCollection({ sharedString, random }: ClientOpState): string {
-        const nonEmptyLabels = Array.from(sharedString.getIntervalCollectionLabels()).filter((label) => {
+        const nonEmptyLabels = Array.from(getUnscopedLabels(sharedString)).filter((label) => {
             const collection = sharedString.getIntervalCollection(label);
             return isNonEmpty(collection);
         });
@@ -162,13 +180,13 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     }
 
     function removeRange(state: ClientOpState): RemoveRange {
-        return { type: "removeRange", ...range(state), stringId: state.sharedString.id };
+        return { type: "removeRange", ...exclusiveRange(state), stringId: state.sharedString.id };
     }
 
     function addInterval(state: ClientOpState): AddInterval {
         return {
             type: "addInterval",
-            ...range(state),
+            ...inclusiveRange(state),
             collectionName: state.random.pick(options.intervalCollectionNamePool),
             stringId: state.sharedString.id,
         };
@@ -186,13 +204,13 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return {
             type: "changeInterval",
             ...interval(state),
-            ...range(state),
+            ...inclusiveRange(state),
             stringId: state.sharedString.id,
         };
     }
 
     const hasAnInterval = ({ sharedString }: ClientOpState): boolean =>
-        Array.from(sharedString.getIntervalCollectionLabels()).some((label) => {
+        Array.from(getUnscopedLabels(sharedString)).some((label) => {
             const collection = sharedString.getIntervalCollection(label);
             return isNonEmpty(collection);
         });
@@ -204,7 +222,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 
     const hasNotTooManyIntervals: AcceptanceCondition<ClientOpState> = ({ sharedString }) => {
         let intervalCount = 0;
-        for (const label of sharedString.getIntervalCollectionLabels()) {
+        for (const label of getUnscopedLabels(sharedString)) {
             for (const _ of sharedString.getIntervalCollection(label)) {
                 intervalCount++;
                 if (intervalCount >= options.maxIntervals) {
@@ -249,8 +267,8 @@ function runIntervalCollectionFuzz(
                 other.getText(),
                 `Non-equal text between strings ${first.id} and ${other.id}.`,
             );
-            const firstLabels = Array.from(first.getIntervalCollectionLabels()).sort();
-            const otherLabels = Array.from(other.getIntervalCollectionLabels()).sort();
+            const firstLabels = Array.from(getUnscopedLabels(first)).sort();
+            const otherLabels = Array.from(getUnscopedLabels(other)).sort();
             assert.deepEqual(
                 firstLabels,
                 otherLabels,
