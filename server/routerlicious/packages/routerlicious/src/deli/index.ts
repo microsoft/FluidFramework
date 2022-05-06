@@ -43,7 +43,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const checkpointHeuristics = config.get("deli:checkpointHeuristics") as
                             IDeliCheckpointHeuristicsServerConfiguration;
     if (checkpointHeuristics && checkpointHeuristics.enable) {
-        core.DefaultServiceConfiguration.deli.checkpointHeuristics = config.get("deli:checkpointHeuristics");
+        core.DefaultServiceConfiguration.deli.checkpointHeuristics = checkpointHeuristics;
     }
 
     let globalDb;
