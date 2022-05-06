@@ -106,7 +106,7 @@ export interface IGCMetadata {
      * The version of the GC code that was run to generate the GC data that is written in the summary.
      * Also, used to determine whether GC is enabled for this container or not:
      * - A value of 0 or undefined means GC is disabled.
-     * - A value > 0 means GC is enabled.
+     * - A value greater than 0 means GC is enabled.
      */
     readonly gcFeature?: GCVersion;
     /** If this is present, the session for this container will expire after this time and the container will close */
