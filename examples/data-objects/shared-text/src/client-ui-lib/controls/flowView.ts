@@ -59,13 +59,6 @@ function findRowParent(lineDiv: ILineDiv) {
         parent = parent.parentElement as IRowDiv;
     }
 }
-interface IRefInclusion {
-    marker: MergeTree.Marker;
-    exclu: IExcludedRectangle;
-}
-
-interface IRefDiv extends HTMLDivElement, IRefInclusion {
-}
 
 interface ISegSpan extends HTMLSpanElement {
     seg: MergeTree.TextSegment;
@@ -761,14 +754,6 @@ interface IExcludedRectangle extends ui.Rectangle {
     floatL?: boolean;
 }
 
-function makeExcludedRectangle(x: number, y: number, w: number, h: number, id?: string) {
-    const r = new ui.Rectangle(x, y, w, h) as IExcludedRectangle;
-    r.id = id;
-    r.left = true;
-    r.curY = 0;
-    return r;
-}
-
 interface ILineRect {
     e?: IExcludedRectangle;
     h: number;
@@ -787,7 +772,6 @@ class Viewport {
     private lineTop = 0;
     private excludedRects = <IExcludedRectangle[]>[];
     private lineX = 0;
-    private readonly inclusions: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
 
     constructor(private readonly maxHeight: number, public div: IViewportDiv, private readonly width: number) {
     }
@@ -802,119 +786,6 @@ class Viewport {
                     if (this.excludedRects.every((e) => e.id !== child!.classList[1])) {
                         this.div.removeChild(child!);
                     }
-                }
-            }
-        }
-    }
-
-    private viewHasInclusion(sha: string): HTMLDivElement | null {
-        for (let i = 0; i < this.div.children.length; i++) {
-            const child = this.div.children.item(i);
-            if ((child!.classList).contains(sha)) {
-                return child as HTMLDivElement;
-            }
-        }
-
-        return null;
-    }
-
-    public addInclusion(
-        flowView: FlowView,
-        marker: MergeTree.Marker,
-        x: number, y: number,
-        lineHeight: number,
-        movingMarker = false) {
-        let _x = x;
-        let _y = y;
-        const irdoc = <IReferenceDoc>marker.properties!.ref;
-        if (irdoc) {
-            const borderSize = 4;
-            // For now always an image
-            const minX = Math.floor(this.width / 5);
-            const w = Math.floor(this.width / 3);
-            let h = w;
-            if (irdoc.layout) {
-                h = Math.floor(w * irdoc.layout.ar!);
-            }
-            if ((_x + w) > this.width) {
-                _x -= w;
-            }
-            if (_x < minX) {
-                _x = 0;
-            }
-            _y += lineHeight;
-            const exclu = makeExcludedRectangle(_x, _y, w, h, irdoc.referenceDocId);
-            // This logic eventually triggers the marker to get moved based on the requiresUL property
-            if (movingMarker) {
-                exclu.requiresUL = true;
-                if (exclu.x === 0) {
-                    exclu.floatL = true;
-                }
-            }
-            let excluDiv = this.viewHasInclusion(irdoc.referenceDocId!) as IRefDiv;
-
-            // Move the inclusion
-            if (excluDiv) {
-                exclu.conformElement(excluDiv);
-                excluDiv.exclu = exclu;
-                excluDiv.marker = marker;
-
-                this.excludedRects = this.excludedRects.filter((e) => e.id !== exclu.id);
-                this.excludedRects.push(exclu);
-            } else {
-                // Create inclusion for first time
-
-                excluDiv = <IRefDiv>document.createElement("div");
-                excluDiv.classList.add("preserve");
-                excluDiv.classList.add(irdoc.referenceDocId!);
-                const innerDiv = document.createElement("div");
-                exclu.conformElement(excluDiv);
-                excluDiv.style.backgroundColor = "#DDDDDD";
-                const toHlt = (e: MouseEvent) => {
-                    excluDiv.style.backgroundColor = "green";
-                };
-                const toOrig = (e: MouseEvent) => {
-                    excluDiv.style.backgroundColor = "#DDDDDD";
-                };
-                excluDiv.onmouseleave = toOrig;
-                innerDiv.onmouseenter = toOrig;
-                excluDiv.onmouseenter = toHlt;
-                innerDiv.onmouseleave = toHlt;
-
-                const excluView = exclu.innerAbs(borderSize);
-                excluView.x = borderSize;
-                excluView.y = borderSize;
-                excluView.conformElement(innerDiv);
-                excluDiv.exclu = exclu;
-                excluDiv.marker = marker;
-                this.div.appendChild(excluDiv);
-                excluDiv.appendChild(innerDiv);
-
-                // Excluded Rects is checked when remaking paragraphs in getLineRect
-                this.excludedRects.push(exclu);
-                if (irdoc.type.name === "image") {
-                    const showImage = document.createElement("img");
-                    innerDiv.appendChild(showImage);
-                    excluView.conformElement(showImage);
-                    showImage.style.left = "0px";
-                    showImage.style.top = "0px";
-                    showImage.src = irdoc.url;
-                } else if (irdoc.type.name === "video") {
-                    let showVideo: HTMLVideoElement | undefined;
-                    if (irdoc.referenceDocId && this.inclusions.has(irdoc.referenceDocId)) {
-                        showVideo = this.inclusions.get(irdoc.referenceDocId);
-                    } else {
-                        showVideo = document.createElement("video");
-                    }
-                    innerDiv.appendChild(showVideo!);
-                    excluView.conformElement(showVideo!);
-                    showVideo!.style.left = "0px";
-                    showVideo!.style.top = "0px";
-                    showVideo!.src = irdoc.url;
-                    showVideo!.controls = true;
-                    showVideo!.muted = true;
-                    showVideo!.load();
-                    this.inclusions.set(irdoc.referenceDocId!, showVideo!);
                 }
             }
         }
@@ -1164,10 +1035,6 @@ function breakPGIntoLinesFFVP(
         } else if (item.type === Paragraph.ParagraphItemType.Glue) {
             posInPG++;
             prevIsGlue = true;
-        } else if (item.type === Paragraph.ParagraphItemType.Marker) {
-            viewport.addInclusion(flowView, item.segment,
-                lineRect.x + committedItemsWidth,
-                viewport.getLineTop(), committedItemsHeight);
         }
         committedItemsWidth += item.width;
         if (item.type !== Paragraph.ParagraphItemType.Marker) {
@@ -1781,30 +1648,6 @@ function preventD(e: Event) {
     e.returnValue = false;
     e.preventDefault();
     return false;
-}
-
-interface IReferenceDocType {
-    name: string;
-}
-
-interface IRefLayoutSpec {
-    inline?: boolean;
-    minWidth?: number;
-    minHeight?: number;
-    reqWidth?: number;
-    reqHeight?: number;
-    heightPct?: number;
-    heightLines?: number;
-    ar?: number;
-    dx?: number;
-    dy?: number;
-}
-
-interface IReferenceDoc {
-    type: IReferenceDocType;
-    referenceDocId?: string;
-    url: string;
-    layout?: IRefLayoutSpec;
 }
 
 const presenceSignalType = "presence";
