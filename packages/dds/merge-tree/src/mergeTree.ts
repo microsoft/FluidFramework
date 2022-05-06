@@ -51,7 +51,7 @@ import {
     PropertySet,
 } from "./properties";
 import {
-    refHasTypeFlag,
+    refTypeIncludesFlag,
     RangeStackMap,
     ReferencePosition,
     refGetRangeLabels,
@@ -296,14 +296,14 @@ function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeSta
 }
 
 function applyRangeReference(stack: Stack<ReferencePosition>, delta: ReferencePosition) {
-    if (refHasTypeFlag(delta, ReferenceType.NestBegin)) {
+    if (refTypeIncludesFlag(delta, ReferenceType.NestBegin)) {
         stack.push(delta);
         return true;
     } else {
         // Assume delta is end reference
         const top = stack.top();
         // TODO: match end with begin
-        if (top && (refHasTypeFlag(top, ReferenceType.NestBegin))) {
+        if (top && (refTypeIncludesFlag(top, ReferenceType.NestBegin))) {
             stack.pop();
         } else {
             stack.push(delta);
@@ -334,7 +334,7 @@ function addNodeReferences(
                 if (markerId) {
                     mergeTree.mapIdToSegment(markerId, segment);
                 }
-                if (refHasTypeFlag(segment, ReferenceType.Tile)) {
+                if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
                     addTile(segment, rightmostTiles);
                     addTileIfNotPresent(segment, leftmostTiles);
                 }
@@ -351,7 +351,7 @@ function addNodeReferences(
                 if (baseSegment.localRefs && (baseSegment.localRefs.hierRefCount !== undefined) &&
                     (baseSegment.localRefs.hierRefCount > 0)) {
                     for (const lref of baseSegment.localRefs) {
-                        if (refHasTypeFlag(lref, ReferenceType.Tile)) {
+                        if (refTypeIncludesFlag(lref, ReferenceType.Tile)) {
                             addTile(lref, rightmostTiles);
                             addTileIfNotPresent(lref, leftmostTiles);
                         }
@@ -727,16 +727,16 @@ export class Marker extends BaseSegment implements ReferencePosition {
 
     toString() {
         let bbuf = "";
-        if (refHasTypeFlag(this, ReferenceType.Tile)) {
+        if (refTypeIncludesFlag(this, ReferenceType.Tile)) {
             bbuf += "Tile";
         }
-        if (refHasTypeFlag(this, ReferenceType.NestBegin)) {
+        if (refTypeIncludesFlag(this, ReferenceType.NestBegin)) {
             if (bbuf.length > 0) {
                 bbuf += "; ";
             }
             bbuf += "RangeBegin";
         }
-        if (refHasTypeFlag(this, ReferenceType.NestEnd)) {
+        if (refTypeIncludesFlag(this, ReferenceType.NestEnd)) {
             if (bbuf.length > 0) {
                 bbuf += "; ";
             }
@@ -761,7 +761,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         const rangeLabels = refGetRangeLabels(this);
         if (rangeLabels) {
             let rangeKind = "begin";
-            if (refHasTypeFlag(this, ReferenceType.NestEnd)) {
+            if (refTypeIncludesFlag(this, ReferenceType.NestEnd)) {
                 rangeKind = "end";
             }
             if (tileLabels) {

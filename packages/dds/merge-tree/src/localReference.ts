@@ -21,7 +21,7 @@ import {
     refGetTileLabels,
     refHasRangeLabel,
     refHasTileLabel,
-    refHasTypeFlag,
+    refTypeIncludesFlag,
 } from "./referencePositions";
 
 /**
@@ -289,7 +289,7 @@ export class LocalReferenceCollection {
             refType,
             properties,
         );
-        if (!refHasTypeFlag(ref, ReferenceType.Transient)) {
+        if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
             this.addLocalRef(ref);
         }
         return ref;
@@ -301,7 +301,7 @@ export class LocalReferenceCollection {
      */
     public addLocalRef(lref: LocalReference) {
         assert(
-            !refHasTypeFlag(lref, ReferenceType.Transient),
+            !refTypeIncludesFlag(lref, ReferenceType.Transient),
             "transient references cannot be bound to segments");
         const refsAtOffset = this.refsByOffset[lref.offset];
         if (refsAtOffset === undefined) {
@@ -431,7 +431,7 @@ export class LocalReferenceCollection {
         for (const iterable of refs) {
             for (const lref of iterable) {
                 if (lref instanceof LocalReference) {
-                    if (refHasTypeFlag(lref, ReferenceType.SlideOnRemove)) {
+                    if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
                         beforeRefs.push(lref);
                         lref.segment = this.segment;
                         lref.offset = 0;
@@ -466,7 +466,7 @@ export class LocalReferenceCollection {
         for (const iterable of refs) {
             for (const lref of iterable) {
                 if (lref instanceof LocalReference) {
-                    if (refHasTypeFlag(lref, ReferenceType.SlideOnRemove)) {
+                    if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
                         afterRefs.push(lref);
                         lref.segment = this.segment;
                         lref.offset = this.segment.cachedLength - 1;

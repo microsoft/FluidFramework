@@ -45,6 +45,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     hasProperty(key: string): boolean;
     // (undocumented)
     isLeaf(): boolean;
+    // Warning: (ae-incompatible-release-tags) The symbol "localRefs" is marked as @public, but its signature references "LocalReferenceCollection" which is marked as @internal
+    //
     // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
@@ -190,7 +192,7 @@ export class Client {
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     // @deprecated (undocumented)
-    removeLocalReference(lref: LocalReference): void;
+    removeLocalReference(lref: LocalReference): ReferencePosition | undefined;
     // (undocumented)
     removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
@@ -308,9 +310,6 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
-
-// @public (undocumented)
-export function hasRefTypeFlag(refPos: ReferencePosition, refType: ReferenceType): boolean;
 
 // @public (undocumented)
 export class Heap<T> {
@@ -716,6 +715,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     clientId: number;
     // (undocumented)
     clone(): ISegment;
+    // Warning: (ae-incompatible-release-tags) The symbol "localRefs" is marked as @public, but its signature references "LocalReferenceCollection" which is marked as @internal
+    //
     // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
@@ -827,7 +828,7 @@ export class LocalReference implements ReferencePosition {
     // @deprecated (undocumented)
     hasTileLabel(label: string): boolean;
     // @deprecated (undocumented)
-    hasTileLabels(): any;
+    hasTileLabels(): boolean;
     // (undocumented)
     isLeaf(): boolean;
     // @deprecated (undocumented)
@@ -848,9 +849,10 @@ export class LocalReference implements ReferencePosition {
     toPosition(): number;
 }
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "LocalReferenceCollection" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export class LocalReferenceCollection {
-    // (undocumented)
     [Symbol.iterator](): {
         next(): IteratorResult<LocalReference>;
         [Symbol.iterator](): any;
@@ -858,24 +860,17 @@ export class LocalReferenceCollection {
     // Warning: (ae-forgotten-export) The symbol "IRefsAtOffset" needs to be exported by the entry point index.d.ts
     constructor(
     segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
-    // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
-    // (undocumented)
     addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
-    // @deprecated (undocumented)
     addLocalRef(lref: LocalReference): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
     append(other: LocalReferenceCollection): void;
-    // (undocumented)
     clear(): void;
-    // (undocumented)
     createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): ReferencePosition;
-    // (undocumented)
     get empty(): boolean;
     // (undocumented)
     hierRefCount: number;
-    // (undocumented)
     removeLocalRef(lref: LocalReference | ReferencePosition): LocalReference | undefined;
     split(offset: number, splitSeg: ISegment): void;
 }
@@ -1363,6 +1358,9 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string): boole
 
 // @public (undocumented)
 export function refHasTileLabels(refPos: ReferencePosition): boolean;
+
+// @public (undocumented)
+export function refTypeIncludesFlag(refPos: ReferencePosition, flags: ReferenceType): boolean;
 
 // @public (undocumented)
 export const reservedMarkerIdKey = "markerId";

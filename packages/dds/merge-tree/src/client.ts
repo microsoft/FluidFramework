@@ -329,10 +329,7 @@ export class Client {
      * @deprecated - use removeReferencePosition instead
      */
     public removeLocalReference(lref: LocalReference) {
-        const seg = lref.getSegment();
-        if (seg) {
-            return this.mergeTree.removeLocalReference(seg, lref);
-        }
+        return this.removeLocalReferencePosition(lref);
     }
 
     public createLocalReferencePosition(
