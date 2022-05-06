@@ -282,7 +282,8 @@ export async function fluidFetchSnapshot(
 
     let version: IVersion | undefined;
     const versions = await reportErrors(
-        `getVersions ${latestVersionsId}`, storage.getVersions(latestVersionsId, paramNumSnapshotVersions));
+        `getVersions ${latestVersionsId}`,
+        storage.getVersions(latestVersionsId, paramNumSnapshotVersions));
     if (dumpSnapshotVersions) {
         console.log("Snapshot versions");
         console.log(versions);
