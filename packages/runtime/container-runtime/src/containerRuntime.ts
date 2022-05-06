@@ -265,7 +265,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
     idleTime: 5000 * 3,
 
-    minIdleTime: 5 * 1000, // 15 secs.
+    minIdleTime: 5 * 1000, // 5 secs.
 
     maxIdleTime: 30 * 1000, // 30 secs.
 
