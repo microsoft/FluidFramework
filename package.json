@@ -12,9 +12,13 @@
   "author": "Microsoft and contributors",
   "workspaces": {
     "packages": [
+      "azure/packages/*",
       "packages/*/*",
       "examples/**",
       "experimental/**",
+      "server/routerlicious/packages/gitresources",
+      "server/routerlicious/packages/gitresources",
+      "server/routerlicious/**",
       "common/**",
       "tools/**"
     ]
