@@ -34,6 +34,8 @@ class UnknownChannel implements IChannel {
             },
             applyStashedOp: (content: any) => {
             },
+            rollback: (content: any, localOpMetadata: unknown) => {
+            },
         });
     }
 

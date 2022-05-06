@@ -723,6 +723,17 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
+    public rollback(contents: any, localOpMetadata: unknown) {
+        if (!this.channel) {
+            throw new Error("Channel must exist when rolling back ops");
+        }
+        if (!this.channel.rollback) {
+            throw new Error("Channel doesn't support rollback");
+        }
+        const innerContents = contents as FluidDataStoreMessage;
+        this.channel.rollback(innerContents.type, innerContents.content, localOpMetadata);
+    }
+
     public async applyStashedOp(contents: any): Promise<unknown> {
         if (!this.channel) {
             await this.realize();
