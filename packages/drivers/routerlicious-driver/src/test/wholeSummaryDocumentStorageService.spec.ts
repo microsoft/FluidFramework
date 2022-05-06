@@ -86,24 +86,25 @@ const flatSummary: IWholeFlatSummary = {
 const iSummary = {
     tree: {
         ".app": {
-            tree: {},
-            type: 1,
-            unreferenced: undefined,
-        },
-        ".channels": {
             tree: {
-                rootDOId: {
-                    tree: {},
+                ".channels": {
+                    tree: {
+                        rootDOId: {
+                            tree: {},
+                            type: 1,
+                            unreferenced: undefined,
+                        },
+                    },
                     type: 1,
                     unreferenced: undefined,
+                },
+                ".metadata": {
+                    content: "{\"createContainerRuntimeVersion\":\"0.59.1000\",\"createContainerTimestamp\":1651351060440,\"summaryFormatVersion\":1,\"gcFeature\":0}",
+                    type: 2,
                 },
             },
             type: 1,
             unreferenced: undefined,
-        },
-        ".metadata": {
-            content: "{\"createContainerRuntimeVersion\":\"0.59.1000\",\"createContainerTimestamp\":1651351060440,\"summaryFormatVersion\":1,\"gcFeature\":0}",
-            type: 2,
         },
         ".protocol": {
             tree: {
