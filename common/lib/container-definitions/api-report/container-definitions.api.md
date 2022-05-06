@@ -132,8 +132,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
     connect(): void;
-    // @deprecated
-    readonly connected: boolean;
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
@@ -148,11 +146,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly readOnlyInfo: ReadOnlyInfo;
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
-    // @deprecated
-    resume?(): void;
     serialize(): string;
-    // @deprecated
-    setAutoReconnect?(reconnect: boolean): void;
 }
 
 // @public

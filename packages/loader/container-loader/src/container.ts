@@ -928,30 +928,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
     }
 
-    /**
-     * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
-     * after receiving a disconnect event
-     * @param reconnect - Boolean indicating if reconnect should automatically occur
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` and `disconnect()` instead of `setAutoReconnect(true)` and `setAutoReconnect(false)` respectively
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    public setAutoReconnect(reconnect: boolean) {
-        if (this.closed) {
-            throw new Error("Attempting to setAutoReconnect() a closed Container");
-        }
-
-        const mode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
-        this.setAutoReconnectInternal(mode);
-
-        // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
-        // manual reconnection flag to true as we haven't made the initial connection yet.
-        if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
-            // Ensure connection to web socket
-            this.connectToDeltaStream({ reason: "autoReconnect" });
-        }
-    }
-
     private setAutoReconnectInternal(mode: ReconnectMode) {
         const currentMode = this._deltaManager.connectionManager.reconnectMode;
 
@@ -1016,21 +992,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Set Auto Reconnect Mode
         const mode = ReconnectMode.Disabled;
         this.setAutoReconnectInternal(mode);
-    }
-
-    /**
-     * Have the container attempt to resume processing ops
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` instead
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    public resume() {
-        if (!this.closed) {
-            // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
-            // If there is gap, we will learn about it once connected, but the gap should be small (if any),
-            // assuming that resume() is called quickly after initial container boot.
-            this.resumeInternal({ reason: "DocumentOpenResume", fetchOpsFromStorage: false });
-        }
     }
 
     private resumeInternal(args: IConnectionArgs) {

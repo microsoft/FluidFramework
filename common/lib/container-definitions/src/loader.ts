@@ -254,14 +254,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly connectionState: ConnectionState;
 
     /**
-     * Boolean indicating whether the container is currently connected or not
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Check `connectionState === ConnectionState.Connected` instead
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    readonly connected: boolean;
-
-    /**
      * Attempts to connect the container to the delta stream and process ops
      */
     connect(): void;
@@ -270,24 +262,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * Disconnects the container from the delta stream and stops processing ops
      */
     disconnect(): void;
-
-    /**
-     * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
-     * after receiving a disconnect event
-     * @param reconnect - Boolean indicating if reconnect should automatically occur
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` and `disconnect()` instead of `setAutoReconnect(true)` and `setAutoReconnect(false)` respectively
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    setAutoReconnect?(reconnect: boolean): void;
-
-    /**
-     * Have the container attempt to resume processing ops
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` instead
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    resume?(): void;
 
     /**
      * The audience information for all clients currently associated with the document in the current session

@@ -101,21 +101,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)
     get resolvedUrl(): IResolvedUrl | undefined;
-    // @deprecated
-    resume(): void;
     get scopes(): string[] | undefined;
     // (undocumented)
     serialize(): string;
     get serviceConfiguration(): IClientConfiguration | undefined;
-    // @deprecated
-    setAutoReconnect(reconnect: boolean): void;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
     subLogger: TelemetryLogger;
     // (undocumented)
     static version: string;
-    }
+}
 
 // @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
@@ -229,7 +225,6 @@ export class RelativeLoader implements ILoader {
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
-
 
 // (No @packageDocumentation comment for this package)
 
