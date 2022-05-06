@@ -51,7 +51,8 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     const summaryConfigOverrides: ISummaryConfiguration = {
         ...DefaultSummaryConfiguration,
         ...{
-            idleTime: IdleDetectionTime,
+            minIdleTime: IdleDetectionTime,
+            maxIdleTime: IdleDetectionTime,
             maxTime: IdleDetectionTime * 12,
             initialSummarizerDelayMs: 10,
         },

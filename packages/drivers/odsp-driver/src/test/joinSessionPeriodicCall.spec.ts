@@ -93,7 +93,13 @@ describe("joinSessions Tests", () => {
             mode: "write",
             claims: {documentId: "docId", exp:0, iat:0, scopes:[], tenantId:"ten", ver:"ver", user:{id:"id"}},
             serviceConfiguration: {
-                blockSize:100, maxMessageSize:16000, summary:{idleTime:0,maxAckWaitTime:0,maxOps:100,maxTime:10}},
+                blockSize:100, maxMessageSize:16000, summary:{
+                    minIdleTime:0,
+                    maxIdleTime:0,
+                    maxAckWaitTime:0,
+                    maxOps:100,
+                    maxTime:10
+                }},
             dispose: (error) => {},
             disposed: false,
             submit: (message) => {},
