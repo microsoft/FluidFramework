@@ -238,7 +238,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         // this binds newDataStore to dataStore1
         dataStore1._root.set("key", newDataStore.handle);
 
-        (container1 as Container).resume();
+        (container1 as Container).connect();
 
         // Flush all the ops
         await provider.ensureSynchronized();
