@@ -53,24 +53,14 @@ module.exports = (env) => {
             libraryTarget: "umd",
         },
         plugins: [
-            // Packages we use expect these to be defined (errors at runtime if they are not), so provide them:
-            new webpack.DefinePlugin({
-                'process.env.NODE_DEBUG': undefined,
-                'global': {
-                    'Symbol': 'Symbol',
-                    'BigInt64Array':'BigInt64Array',
-                    'BigUint64Array':'BigUint64Array',
-                    'Float32Array':'Float32Array',
-                    'Float64Array':'Float64Array',
-                    'Int16Array':'Int16Array',
-                    'Int32Array':'Int32Array',
-                    'Int8Array':'Int8Array',
-                    'Uint16Array':'Uint16Array',
-                    'Uint32Array':'Uint32Array',
-                    'Uint8Array':'Uint8Array',
-                    'Uint8ClampedArray':'Uint8ClampedArray',
-                }
-              }),
+            // As of webpack 5, we no longer automatically get node polyfills.
+            // We do however transitively depend on the `util` npm package (node_modules/util/util.js) which requires `process.env` to be defined.
+            // We can explicitly load the polyfill for process to make this work:
+            // https://github.com/browserify/node-util/issues/57#issuecomment-764436352
+            // Note that using DefinePlugin with `process.env.NODE_DEBUG': undefined` would also handle this case.
+            new webpack.ProvidePlugin({
+                process: 'process/browser'
+            }),
             new HtmlWebpackPlugin({
                 template: "./public/index.html",
             }),
