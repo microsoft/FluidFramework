@@ -8,11 +8,25 @@ import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 
 /**
- * Generates a JWT token to authorize routerlicious. This function uses a browser friendly auth library (jsrsasign)
- * and should only be used in client context.
- * If a token ever needs to be generated on the client side, it should re-use this function. If it needs to be used on
- * the service side,  please use the copy available in the server-services-client package in order to avoid
- * interdependencies between service and client packages
+ * IMPORTANT: This function is duplicated in ./azure/packages/azure-service-utils/src/generateToken.ts. There is no need
+ * for different implementations, so they should be kept in sync if changes are needed.
+ *
+ * The reason they are duplicated is because we don't want the core Fluid libraries depending on the Azure libraries
+ * (enforced by layer-check), but both need to expose this function. The test-runtime-utils library is a test lib, which
+ * layer-check (correctly) reuires only be used as a dev dependency. But in the azure case, we want the function
+ * exported, so it needs to be sourced from either the package itself or a non-dev dependency.
+ *
+ * The previous solution to this was to import the function from azure-service-utils into test-runtime-utils, but that
+ * no longer works because the azure packages are in a separate release group.
+ *
+ * If a token needs to be generated on the client side, you should re-use this function. If you need service-side token
+ * generation, you should use the function available in the server-services-client package in order to avoid
+ * interdependencies between service and client packages.
+ */
+
+/**
+ * Generates a JWT token to authorize access to a Routerlicious-based Fluid service. This function uses a browser
+ * friendly auth library (jsrsasign) and should only be used in client (browser) context.
  */
 export function generateToken(
     tenantId: string,
