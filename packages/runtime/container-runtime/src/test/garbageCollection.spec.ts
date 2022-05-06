@@ -105,7 +105,7 @@ describe("Garbage Collection Tests", () => {
         const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
         const injectedSettings = {};
         const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-        const testOverrideSessionExpiryDaysKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryDays";
+        const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
         before(() => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
@@ -140,10 +140,10 @@ describe("Garbage Collection Tests", () => {
         });
 
         it("Session expiry overridden via TestOverride setting (existing container)", async () => {
-            // Override expiry to 2 days
-            injectedSettings[testOverrideSessionExpiryDaysKey] = "2";
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryDaysKey)! * (24 * 60 * 60 * 1000);
+            // Override expiry to 2 seconds
+            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
+            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
+            assert(customExpiryMs, "setting not found!");
 
             const metadata: IContainerRuntimeMetadata =
                 { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10};
@@ -152,10 +152,10 @@ describe("Garbage Collection Tests", () => {
         });
 
         it("Session expiry overridden via TestOverride setting (new container)", async () => {
-            // Override expiry to 2 days
-            injectedSettings[testOverrideSessionExpiryDaysKey] = "2";
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryDaysKey)! * (24 * 60 * 60 * 1000);
+            // Override expiry to 2 seconds
+            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
+            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
+            assert(customExpiryMs, "setting not found!");
 
             createGarbageCollector();
             assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
@@ -163,9 +163,9 @@ describe("Garbage Collection Tests", () => {
 
         it("Session expiry override ignored if RunSessionExpiry setting disabled", async () => {
             injectedSettings[runSessionExpiryKey] = "false";
-            injectedSettings[testOverrideSessionExpiryDaysKey] = "2";
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryDaysKey)! * (24 * 60 * 60 * 1000);
+            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
+            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
+            assert(customExpiryMs, "setting not found!");
 
             createGarbageCollector();
 

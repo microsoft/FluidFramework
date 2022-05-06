@@ -398,10 +398,10 @@ export class GarbageCollector implements IGarbageCollector {
         // If session expiry is enabled, we need to close the container when the timeout expires
         if (this.sessionExpiryTimeoutMs !== undefined) {
             // If Test Override config is set, override Session Expiry timeout
-            const sessionExpiryTimeoutDays =
-                this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryDays");
-            if (sessionExpiryTimeoutDays !== undefined) {
-                this.sessionExpiryTimeoutMs = sessionExpiryTimeoutDays * 24 * 60 * 60 * 1000;
+            const overrideSessionExpiryTimeoutMs =
+                this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
+            if (overrideSessionExpiryTimeoutMs !== undefined) {
+                this.sessionExpiryTimeoutMs = overrideSessionExpiryTimeoutMs;
             }
 
             const timeoutMs = this.sessionExpiryTimeoutMs;
