@@ -706,7 +706,7 @@ function processQuorumMessages(
         const clientId = JSON.parse(dataString);
         session = sessionsInProgress.get(clientId);
         sessionsInProgress.delete(clientId);
-        assert(!!session, 0x1b7 /* "Bad session state for processing quorum messages" */);
+      //  assert(!!session, 0x1b7 /* "Bad session state for processing quorum messages" */);
         if (session) {
             if (!skipMessage) {
                 session.reportOp(message.timestamp);
