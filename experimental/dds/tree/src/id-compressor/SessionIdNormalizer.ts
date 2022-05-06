@@ -10,7 +10,7 @@ import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '
 import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap';
 
 /**
- * Maps contiguous range of IDs created by a session between their local and final forms (i.e. normalization).
+ * Maps IDs created by a session between their local and final forms (i.e. normalization). These IDs are in a contiguous range.
  * The local and final forms of IDs made by a session can be thought of as two equal-length sparse arrays, aligned such
  * that normalizeLocalToFinal(locals[i]) === finals[i] and vice versa.
  * Below is an example, with certain events marked with a ^ aligning with when they happened to illustrate how certain mappings can arise:
