@@ -19,6 +19,13 @@ module.exports = (env) => {
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
+            fallback: {
+                dgram: false,
+                fs: false,
+                net: false,
+                tls: false,
+                child_process: false,
+            }
         },
         module: {
             rules: [
@@ -34,13 +41,6 @@ module.exports = (env) => {
                     ],
                 },
             ],
-        },
-        node: {
-            dgram: "empty",
-            fs: "empty",
-            net: "empty",
-            tls: "empty",
-            child_process: "empty",
         },
         output: {
             filename: "[name].bundle.js",
