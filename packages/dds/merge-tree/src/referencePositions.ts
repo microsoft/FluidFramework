@@ -6,14 +6,18 @@ import { PropertySet, MapLike } from "./properties";
 export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
-export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
+export function hasRefTypeFlag(refPos: ReferencePosition, refType: ReferenceType) {
     // eslint-disable-next-line no-bitwise
-    (refPos.refType & ReferenceType.Tile)
+    return (refPos.refType & refType) === refType;
+}
+
+export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
+    hasRefTypeFlag(refPos, ReferenceType.Tile)
         && refPos.properties ? refPos.properties[reservedTileLabelsKey] as string[] : undefined;
 
 export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefined =>
     // eslint-disable-next-line no-bitwise
-    (refPos.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd))
+    (hasRefTypeFlag(refPos, ReferenceType.NestBegin | ReferenceType.NestEnd))
         && refPos.properties ? refPos.properties[reservedRangeLabelsKey] as string[] : undefined;
 
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {

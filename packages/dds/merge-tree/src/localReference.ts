@@ -21,6 +21,7 @@ import {
     refGetTileLabels,
     refHasRangeLabel,
     refHasTileLabel,
+    hasRefTypeFlag,
 } from "./referencePositions";
 
 /**
@@ -51,7 +52,7 @@ import {
         /**
          * @deprecated - use getOffset
          */
-        public offset = 0,
+        public offset: number = 0,
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
     ) {
@@ -263,11 +264,13 @@ export class LocalReferenceCollection {
         const ref = new LocalReference(
             client,
             this.segment,
-            refType,
             offset,
+            refType,
             properties,
         );
-        this.addLocalRef(ref);
+        if (!hasRefTypeFlag(ref, ReferenceType.Transient)) {
+            this.addLocalRef(ref);
+        }
         return ref;
     }
 
@@ -276,6 +279,9 @@ export class LocalReferenceCollection {
      * @deprecated - use createLocalRef instead
      */
     public addLocalRef(lref: LocalReference) {
+        assert(
+            !hasRefTypeFlag(lref, ReferenceType.Transient),
+            "transient references cannot be bound to segments");
         const refsAtOffset = this.refsByOffset[lref.offset];
         if (refsAtOffset === undefined) {
             this.refsByOffset[lref.offset] = {
@@ -392,8 +398,7 @@ export class LocalReferenceCollection {
         for (const iterable of refs) {
             for (const lref of iterable) {
                 if (lref instanceof LocalReference) {
-                    // eslint-disable-next-line no-bitwise
-                    if (lref.refType & ReferenceType.SlideOnRemove) {
+                    if (hasRefTypeFlag(lref, ReferenceType.SlideOnRemove)) {
                         beforeRefs.push(lref);
                         lref.segment = this.segment;
                         lref.offset = 0;
@@ -424,8 +429,7 @@ export class LocalReferenceCollection {
         for (const iterable of refs) {
             for (const lref of iterable) {
                 if (lref instanceof LocalReference) {
-                    // eslint-disable-next-line no-bitwise
-                    if (lref.refType & ReferenceType.SlideOnRemove) {
+                    if (hasRefTypeFlag(lref, ReferenceType.SlideOnRemove)) {
                         afterRefs.push(lref);
                         lref.segment = this.segment;
                         lref.offset = this.segment.cachedLength - 1;

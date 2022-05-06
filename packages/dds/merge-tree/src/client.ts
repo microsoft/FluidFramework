@@ -53,7 +53,7 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
-import { ReferencePosition, RangeStackMap } from "./referencePositions";
+import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -348,7 +348,7 @@ export class Client {
     public localReferencePositionToPosition(lref: ReferencePosition) {
         const segment = lref.getSegment();
         if (segment === undefined) {
-            return LocalReference.DetachedPosition;
+            return DetachedReferencePosition;
         }
         return this.getPosition(segment) + lref.getOffset();
     }

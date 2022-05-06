@@ -310,6 +310,9 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
 
 // @public (undocumented)
+export function hasRefTypeFlag(refPos: ReferencePosition, refType: ReferenceType): boolean;
+
+// @public (undocumented)
 export class Heap<T> {
     constructor(a: T[], comp: Comparer<T>);
     // (undocumented)

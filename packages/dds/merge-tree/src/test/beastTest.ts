@@ -1779,7 +1779,7 @@ describe("Routerlicious", () => {
             testPack.firstTest();
         });
 
-        it("hierarchy", () => {
+        it.only("hierarchy", () => {
             assert(DocumentTree.test1() === 0, logLines.join("\n"));
         }).timeout(testTimeout);
 
