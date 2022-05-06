@@ -160,10 +160,6 @@ interface IRefsAtOffset {
     after?: LocalReference[];
 }
 
-/**
- * @internal - this class should only be used by mergeTree
- * Represents a collection of {@link LocalReference}s associated with one segment in a merge-tree.
- */
 export class LocalReferenceCollection {
     public static append(seg1: ISegment, seg2: ISegment) {
         if (seg2.localRefs && !seg2.localRefs.empty) {
@@ -180,6 +176,10 @@ export class LocalReferenceCollection {
         }
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public hierRefCount: number = 0;
     private readonly refsByOffset: (IRefsAtOffset | undefined)[];
     private refCount: number = 0;

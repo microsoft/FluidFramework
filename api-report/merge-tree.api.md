@@ -45,8 +45,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     hasProperty(key: string): boolean;
     // (undocumented)
     isLeaf(): boolean;
-    // Warning: (ae-incompatible-release-tags) The symbol "localRefs" is marked as @public, but its signature references "LocalReferenceCollection" which is marked as @internal
-    //
     // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
@@ -715,8 +713,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     clientId: number;
     // (undocumented)
     clone(): ISegment;
-    // Warning: (ae-incompatible-release-tags) The symbol "localRefs" is marked as @public, but its signature references "LocalReferenceCollection" which is marked as @internal
-    //
     // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
@@ -828,7 +824,7 @@ export class LocalReference implements ReferencePosition {
     // @deprecated (undocumented)
     hasTileLabel(label: string): boolean;
     // @deprecated (undocumented)
-    hasTileLabels(): boolean;
+    hasTileLabels(): any;
     // (undocumented)
     isLeaf(): boolean;
     // @deprecated (undocumented)
@@ -849,29 +845,39 @@ export class LocalReference implements ReferencePosition {
     toPosition(): number;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "LocalReferenceCollection" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
+// @public (undocumented)
 export class LocalReferenceCollection {
+    // @internal
     [Symbol.iterator](): {
         next(): IteratorResult<LocalReference>;
         [Symbol.iterator](): any;
     };
     // Warning: (ae-forgotten-export) The symbol "IRefsAtOffset" needs to be exported by the entry point index.d.ts
+    //
+    // @internal
     constructor(
     segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
+    // @internal
     addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
+    // @internal
     addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
+    // @internal
     addLocalRef(lref: LocalReference): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
+    // @internal
     append(other: LocalReferenceCollection): void;
+    // @internal
     clear(): void;
+    // @internal
     createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): ReferencePosition;
+    // @internal
     get empty(): boolean;
-    // (undocumented)
+    // @internal
     hierRefCount: number;
+    // @internal
     removeLocalRef(lref: LocalReference | ReferencePosition): LocalReference | undefined;
+    // @internal
     split(offset: number, splitSeg: ISegment): void;
 }
 
