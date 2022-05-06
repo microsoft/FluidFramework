@@ -31,7 +31,7 @@ export namespace Original {
 
     export interface ConstrainedTraitSet {
         type: "ConstrainedTraitSet";
-        traits: { [key: string]: ConstraintSequence };
+        traits: { [key: string]: ConstraintSequence; };
     }
 
     export type ConstraintSequence = (Offset | ConstrainedRange | ConstrainedTraitSet)[];
@@ -86,8 +86,8 @@ export namespace Original {
         /**
          * We need this setValue (in addition to the SetValue mark because non-leaf nodes can have values)
          */
-        value?: If<AllowSetValue, Value | [Value, DrillDepth] | { seq: SeqNumber }>;
-        modify?: { [key: string]: (Offset | TInner | Modify<TInner, AllowSetValue>)[] };
+        value?: If<AllowSetValue, Value | [Value, DrillDepth] | { seq: SeqNumber; }>;
+        modify?: { [key: string]: (Offset | TInner | Modify<TInner, AllowSetValue>)[]; };
     }
 
     export type TraitMarks = (Offset | Mark)[];
@@ -393,7 +393,7 @@ export namespace Rebased {
 
     export interface ConstrainedTraitSet {
         type: "ConstrainedTraitSet";
-        traits: { [key: string]: ConstraintSequence };
+        traits: { [key: string]: ConstraintSequence; };
     }
 
     export type ConstraintSequence = (Offset | Prior | ConstrainedRange | ConstrainedTraitSet)[];
@@ -423,7 +423,7 @@ export namespace Rebased {
 
     export interface ChangeFrame {
         moves?: MoveEntry[];
-        priorMoves?: { [key: number]: MoveEntry[] };
+        priorMoves?: { [key: number]: MoveEntry[]; };
         marks: TraitMarks;
     }
 
