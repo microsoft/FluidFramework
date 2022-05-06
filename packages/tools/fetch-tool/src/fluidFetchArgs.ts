@@ -31,7 +31,6 @@ export const messageTypeFilter = new Set<string>();
 
 export let paramURL: string | undefined;
 export let paramJWT: string;
-export let paramAzureKey: string;
 
 export let connectToWebSocket = false;
 
@@ -50,7 +49,6 @@ const optionsArray =
         ["--stat", "Show both messages & snapshot stats"],
         ["--filter:messageType <type>", "filter message by <type>"],
         ["--jwt <token>", "token to be used for routerlicious URLs"],
-        ["--azureKey <key>", "secret key for Azure Fluid Relay instance"],
         ["--numSnapshotVersions <number>", "Number of versions to load (default:10)"],
         ["--noUnpack", "Do not unpack aggregated blobs"],
         ["--actualPayload", "Do not format json payloads nicely, preserve actual bytes / formatting in storage"],
@@ -121,12 +119,8 @@ export function parseArguments() {
             case "--help":
                 printUsage();
                 process.exit(0);
-            // fallthrough
             case "--jwt":
                 paramJWT = parseStrArg(i++, "jwt token");
-                break;
-            case "--azureKey":
-                paramAzureKey = parseStrArg(i++, "Azure Fluid Relay key");
                 break;
             case "--forceTokenReauth":
                 paramForceTokenReauth = true;
