@@ -367,12 +367,12 @@ describe("Error Logging", () => {
             const e1 = createSampleError();
 
             const stack = extractLogSafeErrorProperties(e1, false /* sanitizeStack */).stack;
-            assert(typeof(stack) === "string");
+            assert(typeof (stack) === "string");
             assert(stack?.includes("asdf"), "stack is expected to contain the message");
             assert(stack?.includes("FooError"), "stack is expected to contain the name");
 
             const sanitizedStack = extractLogSafeErrorProperties(e1, true /* sanitizeStack */).stack;
-            assert(typeof(sanitizedStack) === "string");
+            assert(typeof (sanitizedStack) === "string");
             assert(!sanitizedStack?.includes("asdf"), "message should have been removed from sanitized stack");
             assert(sanitizedStack?.includes("FooError"), "name should still be in the sanitized stack");
         });

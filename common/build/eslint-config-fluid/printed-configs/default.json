@@ -854,6 +854,9 @@
         "space-infix-ops": [
             "off"
         ],
+        "space-unary-ops": [
+            "error"
+        ],
         "spaced-comment": [
             "error",
             "always",
@@ -865,6 +868,9 @@
                     ]
                 }
             }
+        ],
+        "switch-colon-spacing": [
+            "error"
         ],
         "tsdoc/syntax": [
             "error"

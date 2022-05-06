@@ -541,8 +541,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(interval, interval2, "Oddball interval found in client 2");
             }
 
-            if (typeof(intervals1.change) === "function" &&
-                typeof(intervals2.change) === "function") {
+            if (typeof (intervals1.change) === "function" &&
+                typeof (intervals2.change) === "function") {
                 // Conflicting changes
                 intervals1.change(id1, 1, 2);
                 intervals2.change(id1, 2, 1);
@@ -598,8 +598,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(interval2.end.getOffset(), 2, "Conflicting transparent change");
             }
 
-            if (typeof(intervals1.changeProperties) === "function" &&
-                typeof(intervals2.changeProperties) === "function") {
+            if (typeof (intervals1.changeProperties) === "function" &&
+                typeof (intervals2.changeProperties) === "function") {
                 const assertPropertyChangedArg = (p: any, v: any, m: string) => {
                     // Check expected values of args passed to the propertyChanged event only if IntervalCollection
                     // is a TypedEventEmitter. (This is not true of earlier versions,

@@ -183,6 +183,8 @@ module.exports = {
         ],
         "jsx-quotes": "error",
         "key-spacing": "error",
+        "space-unary-ops": "error",
+        "switch-colon-spacing": "error",
 
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",
