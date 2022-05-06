@@ -18,5 +18,6 @@ module.exports = {
         "@typescript-eslint/restrict-plus-operands": "off",
         "prefer-arrow-callback": "off",
         "prefer-rest-params": "off",
+        "tsdoc/syntax": "off",
     }
 }
