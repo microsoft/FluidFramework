@@ -25,6 +25,7 @@ module.exports = {
 		// Prettier
 		'comma-dangle': 'off',
 		'@typescript-eslint/comma-dangle': 'off',
+		'@typescript-eslint/member-delimiter-style': 'off',
 		'max-len': 'off',
 		'no-mixed-spaces-and-tabs': 'off',
 
