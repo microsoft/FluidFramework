@@ -7,6 +7,7 @@ module.exports = {
 	extends: ['@fluidframework/eslint-config-fluid'],
 	root: true,
 	rules: {
+		'@typescript-eslint/member-delimiter-style': 'off',
 		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
 		// '@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
 		'@typescript-eslint/quotes': [
