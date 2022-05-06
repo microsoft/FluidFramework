@@ -61,7 +61,7 @@ export interface IDeltaStorageService {
     ): Promise<IDeltasFetchResult>;
 }
 
-export type IStreamResult<T> = { done: true } | { done: false; value: T };
+export type IStreamResult<T> = { done: true; } | { done: false; value: T; };
 
 /**
  * Read interface for the Queue

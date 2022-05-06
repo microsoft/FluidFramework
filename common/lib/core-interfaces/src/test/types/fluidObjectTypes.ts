@@ -106,7 +106,7 @@ declare function getIFluidObject(): IFluidObject;
 // validate nested property is FluidObject too
 {
     interface IFoo {
-        z: { z: { z: boolean } };
+        z: { z: { z: boolean; }; };
       }
 
     const foo: FluidObject<IFoo> = getFluidObject();

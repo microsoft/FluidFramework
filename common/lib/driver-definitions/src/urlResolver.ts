@@ -22,8 +22,8 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
      */
     id: string;
     url: string;
-    tokens: { [name: string]: string };
-    endpoints: { [name: string]: string };
+    tokens: { [name: string]: string; };
+    endpoints: { [name: string]: string; };
 }
 
 /**
