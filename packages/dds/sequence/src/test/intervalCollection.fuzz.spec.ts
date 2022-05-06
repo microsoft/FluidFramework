@@ -116,10 +116,10 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 // provided labels with "intervalCollections/", which is what the iterator returns. This works
 // around that.
 function* getUnscopedLabels(string: SharedString): Iterable<string> {
-    const prefix = 'intervalCollections/';
+    const prefix = "intervalCollections/";
     for (const label of string.getIntervalCollectionLabels()) {
         assert(label.startsWith(prefix));
-        yield label.substring(prefix.length)
+        yield label.substring(prefix.length);
     }
 }
 
