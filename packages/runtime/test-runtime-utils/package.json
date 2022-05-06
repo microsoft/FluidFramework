@@ -58,7 +58,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/azure-service-utils": "^0.59.3000",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.48.1000",
@@ -72,6 +71,7 @@
     "@fluidframework/runtime-utils": "^0.59.3000",
     "@fluidframework/telemetry-utils": "^0.59.3000",
     "axios": "^0.26.0",
+    "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
