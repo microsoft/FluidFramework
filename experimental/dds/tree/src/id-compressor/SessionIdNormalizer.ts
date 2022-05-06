@@ -61,7 +61,7 @@ export class SessionIdNormalizer<TRangeObject> {
 	public constructor(private readonly expensiveAsserts = false) {}
 
 	/**
-	 * Converts the final ID to it's session-space representation.
+	 * Converts the final ID to its session-space representation.
 	 * This will be the corresponding local if a local form exists, and `finalId` otherwise.
 	 */
 	public getSessionSpaceId(finalId: FinalCompressedId): SessionSpaceCompressedId | undefined {
@@ -86,12 +86,12 @@ export class SessionIdNormalizer<TRangeObject> {
 	}
 
 	/**
-	 * Converts the local ID to it's corresponding final ID, if one exists.
+	 * Converts the local ID to its corresponding final ID, if one exists.
 	 */
 	public getFinalId(localId: LocalCompressedId): [FinalCompressedId, TRangeObject] | undefined {
 		const localRange =
 			this.idRanges.getPairOrNextLower(localId) ?? fail('Local ID was never recorded with this normalizer.');
-		const [firstLocal, [__, finalRanges]] = localRange;
+		const [firstLocal, [_, finalRanges]] = localRange;
 		const finalRange = getPairOrNextLower(firstLocal, finalRanges, localId);
 		if (finalRange !== undefined) {
 			const [alignedLocal, [firstFinal, lastFinal, rangeObject]] = finalRange;
@@ -112,7 +112,7 @@ export class SessionIdNormalizer<TRangeObject> {
 	public getCreationIndex(finalId: FinalCompressedId): number | undefined {
 		const localRange = this.idRanges.getPairOrNextLowerByValue(finalId);
 		if (localRange !== undefined) {
-			const [firstLocal, [__, finalRanges]] = localRange;
+			const [firstLocal, [_, finalRanges]] = localRange;
 			const finalRange = getPairOrNextLowerByValue(firstLocal, finalRanges, finalId);
 			if (finalRange !== undefined) {
 				const [alignedLocal, [firstFinal, lastFinal]] = finalRange;
@@ -168,8 +168,7 @@ export class SessionIdNormalizer<TRangeObject> {
 	 * Returns the last final ID known to this normalizer.
 	 */
 	public getLastFinalId(): FinalCompressedId | undefined {
-		const numLocalRanges = this.idRanges.size;
-		const lastIndex = numLocalRanges - 1;
+		const lastIndex = this.idRanges.size - 1;
 		const secondToLast = Math.max(0, lastIndex - 1);
 		for (let i = lastIndex; i >= secondToLast; i--) {
 			const localRange = this.idRanges.getAtIndex(i);
@@ -236,10 +235,10 @@ export class SessionIdNormalizer<TRangeObject> {
 	 *                            ^final ID 9 is not contiguous and does not have a corresponding local ID
 	 */
 	public addFinalIds(firstFinal: FinalCompressedId, lastFinal: FinalCompressedId, rangeObject: TRangeObject): void {
+		assert(lastFinal >= firstFinal, 'Malformed normalization range.');
 		const [firstLocal, finalRangesObj] =
 			this.idRanges.last() ?? fail('Final IDs must be added to an existing local range.');
 		const [lastLocal, finalRanges] = finalRangesObj;
-		assert(lastFinal >= firstFinal, 'Malformed normalization range.');
 		if (finalRanges === undefined) {
 			finalRangesObj[1] = [firstFinal, lastFinal, rangeObject];
 		} else {
