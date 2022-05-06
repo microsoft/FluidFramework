@@ -32,6 +32,8 @@ Here's the breakdown of the repo:
 * Fluid Framework Client Monorepo ([lerna.json](./lerna.json))
   * [Packages](./packages)
   * [Fluid Examples](./examples)
+* Azure-related Monorepo ([dir](./azure) | [lerna.json](azure/lerna.json)
+  * [Packages](./azure/packages)
 * Reference Fluid Ordering Service ("Routerlicious") Monorepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
   * [Packages](./server/routerlicious/packages)
 * Common Packages
