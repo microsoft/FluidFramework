@@ -73,8 +73,8 @@ export interface OdspErrorResponse {
 /** Empirically-based type guard for error responses from ODSP */
 function isOdspErrorResponse(x: any): x is OdspErrorResponse {
     const error = x?.error;
-    return typeof(error?.message) === "string" &&
-        (error?.code === undefined || typeof(error?.code) === "string");
+    return typeof (error?.message) === "string" &&
+        (error?.code === undefined || typeof (error?.code) === "string");
 }
 
 export function tryParseErrorResponse(
