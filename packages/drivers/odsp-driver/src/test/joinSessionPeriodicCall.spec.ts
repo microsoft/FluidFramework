@@ -98,7 +98,7 @@ describe("joinSessions Tests", () => {
                     maxIdleTime:0,
                     maxAckWaitTime:0,
                     maxOps:100,
-                    maxTime:10
+                    maxTime:10,
                 }},
             dispose: (error) => {},
             disposed: false,
