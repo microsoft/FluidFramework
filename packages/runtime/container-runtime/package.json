@@ -115,15 +115,6 @@
   "typeValidation": {
     "version": "0.60.1000",
     "broken": {
-      "ClassDeclaration_Summarizer": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_ISummarizer": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IProvideSummarizer": {
-        "forwardCompat": false
-      },
       "ClassDeclaration_ContainerRuntime": {
         "forwardCompat": false,
         "backCompat": false
@@ -146,7 +137,9 @@
       "InterfaceDeclaration_ITestContainerConfig": {
         "forwardCompat": false,
         "backCompat": false
-      }
+      },
+      "InterfaceDeclaration_IConnectableRuntime": {"backCompat": false},
+      "InterfaceDeclaration_ISummarizerRuntime": {"backCompat": false}
     }
   }
 }
