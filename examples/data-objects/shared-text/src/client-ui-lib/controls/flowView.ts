@@ -762,37 +762,13 @@ interface ILineRect {
     y: number;
 }
 
-function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
-    return (y >= rect.y) && (y <= (rect.y + rect.height));
-}
-
 class Viewport {
     // Keep the line divs in order
     private readonly lineDivs: ILineDiv[] = [];
     private lineTop = 0;
-    private excludedRects = <IExcludedRectangle[]>[];
     private lineX = 0;
 
     constructor(private readonly maxHeight: number, public div: IViewportDiv, private readonly width: number) {
-    }
-
-    // Remove inclusions that are not in the excluded rect list
-    public removeInclusions() {
-        if (this.div) {
-            // TODO: sabroner fix skip issue
-            for (let i = 0; i < this.div.children.length; i++) {
-                const child = this.div.children.item(i);
-                if ((child!.classList).contains("preserve")) {
-                    if (this.excludedRects.every((e) => e.id !== child!.classList[1])) {
-                        this.div.removeChild(child!);
-                    }
-                }
-            }
-        }
-    }
-
-    private horizIntersect(h: number, rect: IExcludedRectangle) {
-        return lineIntersectsRect(this.lineTop, rect) || (lineIntersectsRect(this.lineTop + h, rect));
     }
 
     public firstLineDiv() {
@@ -815,37 +791,16 @@ class Viewport {
     }
 
     public getLineRect(h: number) {
-        let x = this.lineX;
-        let w = this.width;
-        let rectHit = false;
-        const y = this.lineTop;
-        let e: IExcludedRectangle | undefined;
-        for (const exclu of this.excludedRects) {
-            if ((exclu.x >= x) && this.horizIntersect(h, exclu)) {
-                if ((this.lineX === 0) && (exclu.x === 0)) {
-                    x = exclu.x + exclu.width;
-                    // TODO: assume for now only one rect across
-                    this.lineX = 0;
-                    w = this.width - x;
-                } else {
-                    this.lineX = exclu.x + exclu.width;
-                    w = exclu.x - x;
-                }
-                if (exclu.requiresUL) {
-                    e = exclu;
-                    exclu.requiresUL = false;
-                }
-                rectHit = true;
-                break;
-            }
-        }
-        if (!rectHit) {
-            // Hit right edge
-            w = this.width - x;
-            this.lineX = 0;
-        }
+        const w = this.width - this.lineX;
+        this.lineX = 0;
 
-        return <ILineRect>{ e, h, w, x, y };
+        return <ILineRect>{
+            e: undefined,
+            h,
+            w,
+            x: this.lineX,
+            y: this.lineTop,
+        };
     }
 
     public currentLineWidth(h?: number) {
@@ -1288,8 +1243,6 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             }
         }
     } while (layoutContext.viewport.remainingHeight() >= docContext.defaultLineDivHeight);
-
-    layoutContext.viewport.removeInclusions();
 
     return {
         deferredHeight,
