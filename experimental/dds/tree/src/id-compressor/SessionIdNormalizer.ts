@@ -13,22 +13,24 @@ import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap';
  * Maps IDs created by a session between their local and final forms (i.e. normalization). These IDs are in a contiguous range.
  * The local and final forms of IDs made by a session can be thought of as two equal-length sparse arrays, aligned such
  * that normalizeLocalToFinal(locals[i]) === finals[i] and vice versa.
- * Below is an example, with certain events marked with a ^ aligning with when they happened to illustrate how certain mappings can arise:
- * Creation index:    0    1    2    3    4    5    6    7    8    9    10
- *          Locals: [-1,  -2,   X,   X,   X,  -6,   X,  -8,   X,   X   -11]
- *          Finals: [ 0,   1,   2,   3,   4,   10,  11,  12,  13,  14,   X]
+ * Below is an example to illustrate how various mappings can arise:
  *
- *                    ^    ^two IDs allocated as locals since no cluster exists, new cluster created when acked
- *
- *                              ^    ^    ^next three IDs allocated as finals eagerly, since cluster exists with capacity available
- *
- *                                             ^ID allocated as local (overflowed the existing cluster) and new cluster created when acked
- *
- *                                                  ^eager final allocated into cluster
- *
- *                                                       ^local ID with override allocated, forcing it to be local
- *
- *          ID allocated as local (no final exists, ack has not occurred)^
+ *     +- Creation Index
+ *    /     +- Locals
+ *   /     /    +- Finals
+ *  /     /    /
+ * ---+-----+----
+ * 0  | -1  | 0   <-\___ Two IDs are allocated as locals since no cluster exists. A new cluster is created when acked.
+ * 1  | -2  | 1   <-/
+ * 2  |     | 2   <-\
+ * 3  |     | 3   <--|-- Three more IDs are allocated as finals eagerly since a cluster exists with available capacity.
+ * 4  |     | 4   <-/
+ * 5  | -6  | 10  <----- One ID is allocated as a local (it overflows the existing cluster) and a new cluster is created after ack.
+ * 6  |     | 11  <----- One ID is allocated as a final eagerly into the existing cluster.
+ * 7  | -8  | 12  <----- A local ID with an override is allocated. The override forces it to be a local ID.
+ * 8  |     | 13
+ * 9  |     | 14
+ * 10 | -11 |     <----- A local ID is allocated. It has no corresponding final ID since it has not been acked.
  *
  * Note that in this example, some IDs (those at indices 2, 3, 4, 6, 8, and 9) have no local form. The ID at index 10 has no final form.
  * These kinds of "gaps" occur due to the timing of allocation calls on the client and how they relate to finalization/cluster creation,
