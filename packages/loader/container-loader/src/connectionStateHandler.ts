@@ -12,13 +12,13 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
-    quorumClients: () => IQuorumClients | undefined,
+    quorumClients: () => IQuorumClients | undefined;
     logConnectionStateChangeTelemetry:
-        (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
-    shouldClientJoinWrite: () => boolean,
-    maxClientLeaveWaitTime: number | undefined,
-    logConnectionIssue: (eventName: string) => void,
-    connectionStateChanged: () => void,
+        (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void;
+    shouldClientJoinWrite: () => boolean;
+    maxClientLeaveWaitTime: number | undefined;
+    logConnectionIssue: (eventName: string) => void;
+    connectionStateChanged: () => void;
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {

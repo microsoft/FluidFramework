@@ -18,7 +18,7 @@ interface ITextListViewProps {
  * This is an example of using react hooks with listeners
  */
 export function TextListView(props: ITextListViewProps) {
-    const [sharedStrings, setSharedStrings] = useState<{ id: string, text: SharedString }[]>([]);
+    const [sharedStrings, setSharedStrings] = useState<{ id: string; text: SharedString; }[]>([]);
     const sharedStringRef = useRef(sharedStrings);
 
     // We have a hook that we only want to run once. This will setup our listeners to modify our array of SharedStrings
@@ -29,7 +29,7 @@ export function TextListView(props: ITextListViewProps) {
             const currentIds = sharedStringRef.current.map((x) => x.id);
 
             // Get SharedStrings for newly added items
-            const sharedStringList: { id: string, text: SharedString }[] = [];
+            const sharedStringList: { id: string; text: SharedString; }[] = [];
             const sharedStringsP: Promise<SharedString>[] = [];
             const addedItems = newIds.filter((x) => !currentIds.includes(x));
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
