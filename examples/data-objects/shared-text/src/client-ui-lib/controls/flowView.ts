@@ -36,11 +36,6 @@ interface IFlowViewUser extends IUser {
     name: string;
 }
 
-interface IOverlayMarker {
-    id: string;
-    position: number;
-}
-
 interface ILineDiv extends HTMLDivElement {
     linePos?: number;
     lineEnd?: number;
@@ -474,8 +469,6 @@ function layoutCell(
                 cellLayoutInfo.startPos = cellPos + cellMarker.cachedLength;
                 const auxRenderOutput = renderFlow(cellLayoutInfo);
                 cellView.renderOutput.deferredHeight += auxRenderOutput.deferredHeight;
-                cellView.renderOutput.overlayMarkers =
-                    cellView.renderOutput.overlayMarkers.concat(auxRenderOutput.overlayMarkers);
                 cellView.renderOutput.viewportEndPos = auxRenderOutput.viewportEndPos;
             }
         }
@@ -487,7 +480,7 @@ function layoutCell(
         cellView.viewport.vskip(layoutInfo.docContext.defaultLineDivHeight);
         cellView.viewport.vskip(layoutInfo.docContext.cellVspace);
         cellView.renderOutput = {
-            deferredHeight: 0, overlayMarkers: [],
+            deferredHeight: 0,
             viewportEndPos: cellLayoutInfo.startPos + 3,
             viewportStartPos: cellLayoutInfo.startPos,
         };
@@ -709,24 +702,6 @@ function renderTree(
         }
     }
     return renderFlow(layoutContext);
-}
-
-function gatherOverlayLayer(
-    segment: MergeTree.ISegment,
-    segpos: number,
-    refSeq: number,
-    clientId: number,
-    start: number,
-    end: number,
-    context: IOverlayMarker[]) {
-    if (MergeTree.Marker.is(segment)) {
-        if ((segment.refType === MergeTree.ReferenceType.Simple) &&
-            (segment.hasSimpleType("inkOverlay"))) {
-            context.push({ id: segment.getId()!, position: segpos });
-        }
-    }
-
-    return true;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -1069,7 +1044,6 @@ interface ILayoutContext {
 
 interface IRenderOutput {
     deferredHeight: number;
-    overlayMarkers: IOverlayMarker[];
     // TODO: make this an array for tables that extend past bottom of viewport
     viewportStartPos: number;
     viewportEndPos: number;
@@ -1448,16 +1422,10 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
         }
     } while (layoutContext.viewport.remainingHeight() >= docContext.defaultLineDivHeight);
 
-    // Find overlay annotations
-
-    const overlayMarkers: IOverlayMarker[] = [];
-    sharedString.walkSegments(gatherOverlayLayer, viewportStartPos, viewportEndPos, overlayMarkers);
-
     layoutContext.viewport.removeInclusions();
 
     return {
         deferredHeight,
-        overlayMarkers,
         viewportEndPos,
         viewportStartPos,
     };
@@ -3341,7 +3309,6 @@ export class FlowView extends ui.Component {
         this.viewportEndPos = renderOutput.viewportEndPos;
 
         this.emit("render", {
-            overlayMarkers: renderOutput.overlayMarkers,
             range: { min: 1, max: this.sharedString.getLength(), value: this.viewportStartPos },
             viewportEndPos: this.viewportEndPos,
             viewportStartPos: this.viewportStartPos,
