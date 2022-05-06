@@ -1014,7 +1014,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
-    private summaryCount: number | undefined;
+    // The summary number of the next summary that will be generated for this container. This is incremented every time
+    // a summary is generated.
+    private nextSummaryNumber: number;
     private readonly opTracker: OpTracker;
 
     private constructor(
@@ -1035,21 +1037,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         super();
 
         this.messageAtLastSummary = metadata?.message;
-
-        // If this is an existing container, we get values from metadata.
-        // otherwise, we initialize them.
-        if (existing) {
-            this.createContainerMetadata = {
-                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
-                createContainerTimestamp: metadata?.createContainerTimestamp,
-            };
-            this.summaryCount = metadata?.summaryCount;
-        } else {
-            this.createContainerMetadata = {
-                createContainerRuntimeVersion: pkgVersion,
-                createContainerTimestamp: Date.now(),
-            };
-        }
 
         // Default to false (enabled).
         this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
@@ -1290,12 +1277,31 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             ...getDeviceSpec(),
         });
 
-        // logging container load stats
+        let loadSummaryNumber: number;
+        // Get the container creation metadata. For new container, we initialize these. For existing containers,
+        // get the values from the metadata blob.
+        if (existing) {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
+                createContainerTimestamp: metadata?.createContainerTimestamp,
+            };
+            // For older documents that did not have the summaryCount / summaryNumber added to their metadata, this
+            // will be initialized to 0.
+            loadSummaryNumber = metadata?.summaryNumber ?? metadata?.summaryCount ?? 0;
+        } else {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: pkgVersion,
+                createContainerTimestamp: Date.now(),
+            };
+            loadSummaryNumber = 0;
+        }
+        this.nextSummaryNumber = loadSummaryNumber + 1;
+
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
             ...this.createContainerMetadata,
             ...this.dataStores.containerLoadStats,
-            summaryCount: this.summaryCount,
+            summaryNumber: loadSummaryNumber,
             summaryFormatVersion: metadata?.summaryFormatVersion,
             disableIsolatedChannels: metadata?.disableIsolatedChannels,
             gcVersion: metadata?.gcFeature,
@@ -1446,7 +1452,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private formMetadata(): IContainerRuntimeMetadata {
         return {
             ...this.createContainerMetadata,
-            summaryCount: this.summaryCount,
+            // Increment the summary number for the next summary that will be generated,
+            summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             gcFeature: this.garbageCollector.gcSummaryFeatureVersion,
@@ -2250,14 +2257,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
+        const summaryNumberLogger = ChildLogger.create(
+            summaryLogger,
+            undefined,
+            {
+                all: { summaryNumber: this.nextSummaryNumber },
+            },
+        );
+
         if (refreshLatestAck) {
             const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
-                ChildLogger.create(summaryLogger, undefined, { all: { safeSummary: true } }));
+                ChildLogger.create(summaryNumberLogger, undefined, { all: { safeSummary: true } }));
 
             if (latestSummaryRefSeq > this.deltaManager.lastSequenceNumber) {
                 // We need to catch up to the latest summary's reference sequence number before pausing.
                 await PerformanceEvent.timedExecAsync(
-                    summaryLogger,
+                    summaryNumberLogger,
                     {
                         eventName: "WaitingForSeq",
                         lastSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -2280,13 +2295,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // We should be here is we haven't processed be here. If we are of if the last message's sequence number
             // doesn't match the last processed sequence number, log an error.
             if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
-                summaryLogger.sendErrorEvent({
+                summaryNumberLogger.sendErrorEvent({
                     eventName: "LastSequenceMismatch",
                     error: message,
                 });
             }
 
-            this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
+            this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
 
             // Helper function to check whether we should still continue between each async step.
             const checkContinue = (): { continue: true; } | { continue: false; error: string; } => {
@@ -2327,13 +2342,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 };
             }
 
-            // increment summary count
-            if (this.summaryCount !== undefined) {
-                this.summaryCount++;
-            } else {
-                this.summaryCount = 1;
-            }
-
             const trace = Trace.start();
             let summarizeResult: IRootSummaryTreeWithStats;
             // If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
@@ -2343,7 +2351,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summarizeResult = await this.summarize({
                     fullTree: fullTree || forcedFullTree,
                     trackState: true,
-                    summaryLogger,
+                    summaryLogger: summaryNumberLogger,
                     runGC: this.garbageCollector.shouldRunGC,
                 });
             } catch (error) {
