@@ -1400,7 +1400,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
                         this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
                         // unregister default to no log on every op after falling behind
-                        // and register summary ack handler to re-register this handlercls
+                        // and register summary ack handler to re-register this handler
                         // after successful summary
                         this.summaryCollection.once(MessageType.SummaryAck, () => {
                             this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });
