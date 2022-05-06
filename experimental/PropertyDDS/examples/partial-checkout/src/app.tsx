@@ -11,6 +11,7 @@ import { PropertyTreeContainerRuntimeFactory as ContainerFactory } from "./conta
 
 // import { renderCheckoutView } from "./checkout_view";
 import { renderApp, renderInspector } from "./view";
+import { IPropertyTree } from "./dataObject";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are loading from.
