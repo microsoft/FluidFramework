@@ -160,6 +160,9 @@ interface IRefsAtOffset {
     after?: LocalReference[];
 }
 
+/**
+ * Represents a collection of {@link ReferencePosition}s associated with one segment in a merge-tree.
+ */
 export class LocalReferenceCollection {
     public static append(seg1: ISegment, seg2: ISegment) {
         if (seg2.localRefs && !seg2.localRefs.empty) {
