@@ -52,8 +52,8 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
  * Information from a snapshot needed to load BlobManager
  */
 export interface IBlobManagerLoadInfo {
-    ids?: string[],
-    redirectTable?: [string, string][],
+    ids?: string[];
+    redirectTable?: [string, string][];
 }
 
 export class BlobManager {

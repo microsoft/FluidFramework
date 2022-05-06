@@ -9,8 +9,8 @@ import { runGarbageCollection } from "../garbageCollector";
 import { IGCResult } from "../interfaces";
 
 interface IGCNode {
-    id: string,
-    outboundRoutes: string[],
+    id: string;
+    outboundRoutes: string[];
 }
 
 describe("Garbage Collector", () => {

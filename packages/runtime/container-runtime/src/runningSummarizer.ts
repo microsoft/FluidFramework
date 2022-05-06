@@ -357,7 +357,7 @@ export class RunningSummarizer implements IDisposable {
             let summaryAttempts = 0;
             let summaryAttemptsPerPhase = 0;
 
-            let lastResult: { message: string; error: any; } | undefined;
+            let lastResult: { message: string; error: any } | undefined;
 
             for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length;) {
                 if (this.cancellationToken.cancelled) {
