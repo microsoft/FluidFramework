@@ -7,7 +7,7 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, fail } from './Common';
 import { EditLog } from './EditLog';
 import { convertTreeNodes, newEdit } from './EditUtilities';
-import { DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers';
+import { AttributionId, DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers';
 import { initialTree } from './InitialTree';
 import {
 	ContextualizedNodeIdNormalizer,
@@ -151,19 +151,22 @@ export class SharedTreeEncoder_0_1_1 {
 	/**
 	 * Decodes an encoded summary.
 	 */
-	public decodeSummary({
-		editHistory,
-		currentTree: compressedTree,
-		internedStrings,
-		idCompressor: serializedIdCompressor,
-		version,
-	}: SharedTreeSummary): SummaryContents {
+	public decodeSummary(
+		{
+			editHistory,
+			currentTree: compressedTree,
+			internedStrings,
+			idCompressor: serializedIdCompressor,
+			version,
+		}: SharedTreeSummary,
+		attributionId: AttributionId
+	): SummaryContents {
 		assert(version === WriteFormat.v0_1_1, `Invalid summary version to decode: ${version}, expected: 0.1.1`);
 		assert(typeof editHistory === 'object', '0.1.1 summary encountered with non-object edit history.');
 
 		const idCompressor = hasOngoingSession(serializedIdCompressor)
 			? IdCompressor.deserialize(serializedIdCompressor)
-			: IdCompressor.deserialize(serializedIdCompressor, createSessionId()); // TODO attribution
+			: IdCompressor.deserialize(serializedIdCompressor, createSessionId(), attributionId);
 
 		const interner = new MutableStringInterner(internedStrings);
 		const sequencedNormalizer = sequencedIdNormalizer(getNodeIdContext(idCompressor));
@@ -371,9 +374,12 @@ export class SharedTreeEncoder_0_0_2 {
 	/**
 	 * Decodes an encoded summary.
 	 */
-	public decodeSummary({ currentTree, sequencedEdits }: SharedTreeSummary_0_0_2): SummaryContents {
+	public decodeSummary(
+		{ currentTree, sequencedEdits }: SharedTreeSummary_0_0_2,
+		attributionId?: AttributionId
+	): SummaryContents {
 		assert(sequencedEdits !== undefined, '0.0.2 summary encountered with missing sequencedEdits field.');
-		const idCompressor = new IdCompressor(createSessionId(), reservedIdCount);
+		const idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId);
 		const idGenerator = getNodeIdContext(idCompressor);
 		const generateId = (id) => idGenerator.generateNodeId(id);
 

@@ -5,28 +5,36 @@
 
 /* eslint-disable no-bitwise */
 
-import { v5 } from 'uuid';
-import Random from 'random-js';
 import { expect } from 'chai';
-import { Serializable } from '@fluidframework/datastore-definitions';
+import {
+	Generator,
+	createWeightedGenerator,
+	interleave,
+	makeRandom,
+	performFuzzActions as performFuzzActionsBase,
+	repeat,
+	SaveInfo,
+	take,
+	BaseFuzzTestState,
+} from '@fluid-internal/stochastic-test-utils';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, IdRangeDescriptor, isLocalId } from '../../id-compressor/IdCompressor';
 import {
-	assertIsStableId,
 	createSessionId,
 	ensureSessionUuid,
 	NumericUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../../id-compressor/NumericUuid';
-import { FinalCompressedId, SessionId, StableId, SessionSpaceCompressedId } from '../../Identifiers';
+import { FinalCompressedId, SessionId, StableId, SessionSpaceCompressedId, AttributionId } from '../../Identifiers';
 import { getIds } from '../../id-compressor/IdRange';
 import type {
 	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
 } from '../../id-compressor';
-import { makeRandom } from './TestUtilities';
+import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities';
+import { expectDefined } from './TestCommon';
 
 /** Identifies a compressor in a network */
 export enum Client {
@@ -59,12 +67,8 @@ export const DestinationClient = { ...Client, ...MetaClient };
 /**
  * Creates a new compressor with the supplied cluster capacity.
  */
-export function createCompressor<T>(
-	client: Client,
-	clusterCapacity = 5,
-	attributionInfo?: Serializable<T>
-): IdCompressor {
-	const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionInfo);
+export function createCompressor(client: Client, clusterCapacity = 5, attributionId?: AttributionId): IdCompressor {
+	const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionId);
 	compressor.clusterCapacity = clusterCapacity;
 	return compressor;
 }
@@ -99,6 +103,13 @@ export const sessionNumericUuids = new Map(
 		return [client, numericUuidFromStableId(sessionId)];
 	})
 ) as ClientMap<NumericUuid>;
+
+export const attributionIds = new Map(
+	Object.values(Client).map((c, i) => [
+		c,
+		assertIsUuidString(`00000000-0000-0000-0000-${(i + 1).toString(16).padStart(12, '0')}`),
+	])
+) as ClientMap<AttributionId>;
 
 /** An immutable view of an `IdCompressor` */
 export interface ReadonlyIdCompressor
@@ -144,7 +155,7 @@ export class IdCompressorTestNetwork {
 		const clientIds = new Map<Client, TestIdData[]>();
 		const clientSequencedIds = new Map<Client, TestIdData[]>();
 		for (const client of Object.values(Client)) {
-			const compressor = createCompressor(client, initialClusterSize, client);
+			const compressor = createCompressor(client, initialClusterSize, attributionIds.get(client));
 			compressors.set(client, compressor);
 			clientProgress.set(client, 0);
 			clientIds.set(client, []);
@@ -337,7 +348,7 @@ export class IdCompressorTestNetwork {
 	 */
 	public assertNetworkState(): void {
 		const sequencedLogs = Object.values(Client).map(
-			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as [IdCompressor, TestIdData[]]
+			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as const
 		);
 
 		const maxLogLength = sequencedLogs.map(([_, data]) => data.length).reduce((p, n) => Math.max(p, n));
@@ -398,6 +409,11 @@ export class IdCompressorTestNetwork {
 					idDataA.originatingClient === originatingClient,
 					'Test infra gave wrong originating client to TestIdData'
 				);
+				const attributionA = compressorA.attributeId(idDataA.id);
+				if (attributionA !== attributionIds.get(idDataA.originatingClient)) {
+					// Unification
+					expectDefined(idDataA.expectedOverride);
+				}
 
 				// Only one client should have this ID as local in its session space, as only one client could have created this ID
 				if (isLocalId(sessionSpaceIdA)) {
@@ -567,115 +583,186 @@ export function mergeArrayMaps<K, V>(
 	return to;
 }
 
-enum Operation {
-	AllocateIds,
-	DeliverOperations,
-	ChangeCapacity,
-	GenerateUnifyingIds,
-	GoOfflineThenResume,
+interface AllocateIds {
+	type: 'allocateIds';
+	client: Client;
+	numIds: number;
+	overrides: { [index: number]: string };
+}
+
+interface DeliverOperations {
+	type: 'deliverOperations';
+	client: DestinationClient;
+}
+
+interface ChangeCapacity {
+	type: 'changeCapacity';
+	newSize: number;
+}
+
+interface GenerateUnifyingIds {
+	type: 'generateUnifyingIds';
+	clientA: Client;
+	clientB: Client;
+	uuid: string;
+}
+
+// Represents intent to go offline then resume.
+interface Reconnect {
+	type: 'reconnect';
+	client: Client;
+}
+
+interface Validate {
+	type: 'validate';
+}
+
+type Operation = AllocateIds | DeliverOperations | ChangeCapacity | GenerateUnifyingIds | Reconnect | Validate;
+
+interface FuzzTestState extends BaseFuzzTestState {
+	network: IdCompressorTestNetwork;
+	activeClients: Client[];
+	selectableClients: Client[];
+	clusterSize: number;
+}
+
+export interface OperationGenerationConfig {
+	/** whether or not the fuzz actions will generate override UUIDs */
+	includeOverrides: boolean;
+	/** maximum cluster size of the network. Default: 25 */
+	maxClusterSize?: number;
+	/** Number of ops between validation ops. Default: 200 */
+	validateInterval?: number;
+}
+
+const defaultOptions = {
+	includeOverrides: false,
+	maxClusterSize: 25,
+	validateInterval: 200,
+};
+
+export function makeOpGenerator(options: OperationGenerationConfig): Generator<Operation, FuzzTestState> {
+	const { includeOverrides, maxClusterSize, validateInterval } = { ...defaultOptions, ...options };
+
+	function allocateIdsGenerator({ activeClients, clusterSize, random }: FuzzTestState): AllocateIds {
+		const client = random.pick(activeClients);
+		const maxIdsPerUsage = clusterSize * 2;
+		const numIds = Math.floor(random.real(0, 1) ** 2 * maxIdsPerUsage) + 1;
+		const overrides: AllocateIds['overrides'] = {};
+		if (includeOverrides && random.bool(1 / 4)) {
+			for (let j = 0; j < numIds; j++) {
+				if (random.bool(1 / 3)) {
+					overrides[j] = random.uuid4();
+				}
+			}
+		}
+		return {
+			type: 'allocateIds',
+			client,
+			numIds,
+			overrides,
+		};
+	}
+
+	function changeCapacityGenerator({ random }: FuzzTestState): ChangeCapacity {
+		return {
+			type: 'changeCapacity',
+			newSize: Math.min(Math.floor(random.real(0, 1) ** 2 * maxClusterSize) + 1, maxClusterSize),
+		};
+	}
+
+	function deliverOperationsGenerator({ random, selectableClients }: FuzzTestState): DeliverOperations {
+		return {
+			type: 'deliverOperations',
+			client: random.pick([...selectableClients, MetaClient.All]),
+		};
+	}
+
+	function generateUnifyingIdsGenerator({ activeClients, random }: FuzzTestState): GenerateUnifyingIds {
+		const clientA = random.pick(activeClients);
+		const clientB = random.pick(activeClients.filter((c) => c !== clientA));
+		return { type: 'generateUnifyingIds', clientA, clientB, uuid: random.uuid4() };
+	}
+
+	function reconnectGenerator({ activeClients, random }: FuzzTestState): Reconnect {
+		return { type: 'reconnect', client: random.pick(activeClients) };
+	}
+
+	return interleave(
+		createWeightedGenerator<Operation, FuzzTestState>([
+			[changeCapacityGenerator, 1],
+			[allocateIdsGenerator, 8],
+			[deliverOperationsGenerator, 4],
+			[generateUnifyingIdsGenerator, 1],
+			[reconnectGenerator, 1],
+		]),
+		take(1, repeat<Operation, FuzzTestState>({ type: 'validate' })),
+		validateInterval
+	);
 }
 
 /**
  * Performs random actions on a test network.
+ * @param generator the generator used to provide operations
  * @param network the test network to test
  * @param seed the seed for the random generation of the fuzz actions
- * @param includeOverrides whether or not the fuzz actions will generate override UUIDs
  * @param observerClient if provided, this client will never generate local ids
  * @param synchronizeAtEnd if provided, all client will have all operations delivered from the server at the end of the test
- * @param numUsages if provided, the number of operations to perform as part of this test. Defaults to 1000.
  * @param validator if provided, this callback will be invoked periodically during the fuzz test.
  */
 export function performFuzzActions(
+	generator: Generator<Operation, FuzzTestState>,
 	network: IdCompressorTestNetwork,
 	seed: number,
-	includeOverrides: boolean,
 	observerClient?: Client,
 	synchronizeAtEnd: boolean = true,
-	numUsages = 1000,
-	maxClusterSize = 25,
-	validator?: (network: IdCompressorTestNetwork) => void
+	validator?: (network: IdCompressorTestNetwork) => void,
+	saveInfo?: SaveInfo
 ): void {
-	const rand = makeRandom(seed);
+	const random = makeRandom(seed);
 	const selectableClients: Client[] = network.getTargetCompressors(MetaClient.All).map(([client]) => client);
-	const activeClients = selectableClients.filter((c) => c !== observerClient);
-	// Ensure that the same UUIDs are generated for the same seed across different calls
-	let uuidNum = 0;
-	const uuidNamespace = 'ece2be2e-f374-4ca8-b034-a0bac2da69da';
-	let clusterSize: number = network.initialClusterSize;
-	if (clusterSize > maxClusterSize) {
-		network.enqueueCapacityChange(maxClusterSize);
-		clusterSize = maxClusterSize;
-	}
 
-	const opWeights: [Operation, number][] = [
-		[Operation.ChangeCapacity, 1],
-		[Operation.AllocateIds, 8],
-		[Operation.DeliverOperations, 4],
-		[Operation.GenerateUnifyingIds, 1],
-		[Operation.GoOfflineThenResume, 1],
-	];
+	const initialState: FuzzTestState = {
+		random,
+		network,
+		activeClients: selectableClients.filter((c) => c !== observerClient),
+		selectableClients,
+		clusterSize: network.initialClusterSize,
+	};
 
-	const opSums: [Operation, number][] = [];
-	let prevWeight = 0;
-	for (const opWeight of opWeights) {
-		const weight = prevWeight + opWeight[1];
-		opSums.push([opWeight[0], weight]);
-		prevWeight = weight;
-	}
-
-	for (let i = 0; i < numUsages; i++) {
-		const weightSelected = rand.integer(1, prevWeight);
-		let opIndex = 0;
-		while (weightSelected > opSums[opIndex][1]) {
-			opIndex++;
-		}
-		const operation = opWeights[opIndex][0];
-		switch (operation) {
-			case Operation.ChangeCapacity: {
-				clusterSize = Math.min(Math.floor(rand.real(0, 1) ** 2 * maxClusterSize) + 1, maxClusterSize);
-				network.enqueueCapacityChange(clusterSize);
-				break;
-			}
-			case Operation.AllocateIds: {
-				const client = rand.pick(activeClients);
-				const maxIdsPerUsage = clusterSize * 2;
-				const numIds = Math.floor(rand.real(0, 1) ** 2 * maxIdsPerUsage) + 1;
-				const overrides: { [index: number]: string } = {};
-				if (includeOverrides && /* 25% chance: */ rand.integer(0, 3) === 0) {
-					for (let j = 0; j < numIds; j++) {
-						if (/* 33% chance: */ rand.integer(0, 2) === 0) {
-							overrides[j] = v5((uuidNum++).toString(), uuidNamespace);
-						}
-					}
-				}
+	performFuzzActionsBase(
+		generator,
+		{
+			allocateIds: (state, { client, numIds, overrides }) => {
 				network.allocateAndSendIds(client, numIds, overrides);
-				break;
-			}
-			case Operation.DeliverOperations: {
-				const client = rand.pick([...selectableClients, MetaClient.All]);
-				network.deliverOperations(client);
-				break;
-			}
-			case Operation.GenerateUnifyingIds: {
-				const clientA = rand.pick(activeClients);
-				const clientB = rand.pick(activeClients.filter((c) => c !== clientA));
-				const uuid = v5((uuidNum++).toString(), uuidNamespace);
+				return state;
+			},
+			changeCapacity: (state, op) => {
+				network.enqueueCapacityChange(op.newSize);
+				return { ...state, clusterSize: op.newSize };
+			},
+			deliverOperations: (state, op) => {
+				network.deliverOperations(op.client);
+				return state;
+			},
+			generateUnifyingIds: (state, { clientA, clientB, uuid }) => {
 				network.allocateAndSendIds(clientA, 1, { 0: uuid });
 				network.allocateAndSendIds(clientB, 1, { 0: uuid });
-				break;
-			}
-			case Operation.GoOfflineThenResume: {
-				const client = rand.pick(activeClients);
+				return state;
+			},
+			reconnect: (state, { client }) => {
 				network.goOfflineThenResume(client);
-				break;
-			}
-			default:
-				throw new Error('Unknown operation.');
-		}
-		if (i !== 0 && i % Math.round(numUsages / 5) === 0) {
-			validator?.(network);
-		}
-	}
+				return state;
+			},
+			validate: (state) => {
+				network.deliverOperations(DestinationClient.All);
+				validator?.(network);
+				return state;
+			},
+		},
+		initialState,
+		saveInfo
+	);
 
 	if (synchronizeAtEnd) {
 		network.deliverOperations(DestinationClient.All);

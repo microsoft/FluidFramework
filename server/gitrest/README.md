@@ -81,15 +81,15 @@ curl -H "Content-Type: application/json" -X POST -d '{"content": "Hello, World!"
 curl -H "Content-Type: application/json" -X POST -d '{"tree": [{"path": "file.txt", "mode": "100644", "type": "blob", "sha": "b45ef6fec89518d314f546fd6c3025367b721684"}]}' --verbose localhost:3000/repos/prague/test/git/trees
 curl --verbose localhost:3000/repos/prague/test/git/trees/bf4db183cbd07f48546a5dde098b4510745d79a1
 curl -H "Content-Type: application/json" -X POST -d '{"message": "first commit", "tree": "bf4db183cbd07f48546a5dde098b4510745d79a1", "parents": [], "author": { "name": "Kurt Berglund", "email": "kurtb@microsoft.com", "date": "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)" }}' --verbose localhost:3000/repos/prague/test/git/commits
-curl --verbose localhost:3000/repos/prague/test/git/commits/cf0b592907d683143b28edd64d274ca70f68998e
-curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/main", "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}' --verbose localhost:3000/repos/prague/test/git/refs
+curl --verbose localhost:3000/repos/prague/test/git/commits/38421e18f9cf4ec024ae98f687e79c0bdf8f3f18
+curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/main", "sha": "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18"}' --verbose localhost:3000/repos/prague/test/git/refs
 curl --verbose http://localhost:3000/repos/prague/test/git/refs
 ```
 
 Submodule example
 ```
 curl -H "Content-Type: application/json" -X POST -d '{"content": "[submodule \"module\"]\n\tpath = module\n\turl = ssh://git@localhost:3022/home/git/prague/test", "encoding": "utf-8"}' --verbose localhost:3000/repos/prague/test/git/blobs
-curl -H "Content-Type: application/json" -X POST -d '{"tree": [{"path": ".gitmodules", "mode": "100644", "type": "blob", "sha": "54a2d1738d0c62529ada54d32c5d05e1d1ea0fae"},{"path": "file.txt", "mode": "100644", "type": "blob", "sha": "b45ef6fec89518d314f546fd6c3025367b721684"},{"path": "module", "mode": "160000", "type": "commit", "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}]}' --verbose localhost:3000/repos/prague/test/git/trees
+curl -H "Content-Type: application/json" -X POST -d '{"tree": [{"path": ".gitmodules", "mode": "100644", "type": "blob", "sha": "54a2d1738d0c62529ada54d32c5d05e1d1ea0fae"},{"path": "file.txt", "mode": "100644", "type": "blob", "sha": "b45ef6fec89518d314f546fd6c3025367b721684"},{"path": "module", "mode": "160000", "type": "commit", "sha": "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18"}]}' --verbose localhost:3000/repos/prague/test/git/trees
 curl -H "Content-Type: application/json" -X POST -d '{"message": "submodule commit", "tree": "f007d4f4ebe654785e87634a2e8f91d02993361d", "parents": [], "author": { "name": "Kurt Berglund", "email": "kurtb@microsoft.com", "date": "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)" }}' --verbose localhost:3000/repos/prague/test/git/commits
 curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/modules", "sha": "b02301e7f2a6e1cc0bdb8cb33f4905f7c7b17ecc"}' --verbose localhost:3000/repos/prague/test/git/refs
 ```
@@ -97,12 +97,12 @@ curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/modules
 Reference deletion and tags
 ```
 curl -X DELETE --verbose http://localhost:3000/repos/prague/test/git/refs/heads/main
-curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/main", "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}' --verbose localhost:3000/repos/prague/test/git/refs
+curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/main", "sha": "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18"}' --verbose localhost:3000/repos/prague/test/git/refs
 # first fails - second works
-curl -H "Content-Type: application/json" -X PATCH -d '{"force": false, "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}' --verbose http://localhost:3000/repos/prague/test/git/refs/heads/main
-curl -H "Content-Type: application/json" -X PATCH -d '{"force": true, "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}' --verbose http://localhost:3000/repos/prague/test/git/refs/heads/main
-curl -H "Content-Type: application/json" -X POST -d '{"tag": "v1.0", "message": "Hello, World!", "object": "cf0b592907d683143b28edd64d274ca70f68998e", "type": "commit", "tagger": { "name": "Kurt Berglund", "email": "kurtb@microsoft.com", "date": "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)" }}' --verbose localhost:3000/repos/prague/test/git/tags
-curl --verbose localhost:3000/repos/prague/test/git/tags/a8588b3913aa692c3642697d6f136cec470dd82c
+curl -H "Content-Type: application/json" -X PATCH -d '{"force": false, "sha": "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18"}' --verbose http://localhost:3000/repos/prague/test/git/refs/heads/main
+curl -H "Content-Type: application/json" -X PATCH -d '{"force": true, "sha": "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18"}' --verbose http://localhost:3000/repos/prague/test/git/refs/heads/main
+curl -H "Content-Type: application/json" -X POST -d '{"tag": "v1.0", "message": "Hello, World!", "object": "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18", "type": "commit", "tagger": { "name": "Kurt Berglund", "email": "kurtb@microsoft.com", "date": "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)" }}' --verbose localhost:3000/repos/prague/test/git/tags
+curl --verbose localhost:3000/repos/prague/test/git/tags/2f208d6d4c5698feada2b5dad3886a0ceff4f80b
 ```
 
 ## Trademark

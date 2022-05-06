@@ -38,7 +38,7 @@
     "@fluidframework/local-driver": "^0.59.3000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/routerlicious-driver": "^0.59.3000",
-    "@fluidframework/server-local-server": "^0.1036.2000-0",
+    "@fluidframework/server-local-server": "^0.1036.3000-0",
     "@fluidframework/test-runtime-utils": "^0.59.3000",
     "@fluidframework/tinylicious-driver": "^0.59.3000",
     "jsonwebtoken": "^8.4.0"
@@ -65,7 +65,7 @@
     "eslint-plugin-unicorn": "~40.0.0",
     "mocha": "^8.4.0",
     "rimraf": "^2.6.2",
-    "typescript": "~4.1.3",
+    "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
   }
 }

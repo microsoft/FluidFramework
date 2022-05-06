@@ -66,7 +66,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
+        if (createNewSummary === undefined) {
+            throw new Error("Empty file summary creation isn't supported in this driver.");
+        }
         assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
         let parsedUrl = parseFluidUrl(resolvedUrl.url);
         if (!parsedUrl.pathname) {

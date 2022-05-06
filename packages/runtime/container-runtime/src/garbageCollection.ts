@@ -231,15 +231,15 @@ class UnreferencedStateTracker {
  * its state across summaries.
  *
  * Node - represented as nodeId, it's a node on the GC graph
- * Outbound Route - a path from one node to another node, think `nodeA` -> `nodeB`
+ * Outbound Route - a path from one node to another node, think `nodeA` -\> `nodeB`
  * Graph - all nodes with their respective routes
  *             GC Graph
  *
  *               Node
  *        NodeId = "datastore1"
- *           /             \
+ *           /             \\
  *    OutboundRoute   OutboundRoute
- *         /                 \
+ *         /                 \\
  *       Node               Node
  *  NodeId = "dds1"     NodeId = "dds2"
  */

@@ -22,6 +22,7 @@
         "import",
         "unicorn",
         "react",
+        "tsdoc",
         "promise",
         "@typescript-eslint",
         "@rushstack/security",
@@ -842,6 +843,9 @@
         "space-infix-ops": [
             "off"
         ],
+        "space-unary-ops": [
+            "error"
+        ],
         "spaced-comment": [
             "error",
             "always",
@@ -853,6 +857,12 @@
                     ]
                 }
             }
+        ],
+        "switch-colon-spacing": [
+            "error"
+        ],
+        "tsdoc/syntax": [
+            "error"
         ],
         "unicorn/better-regex": [
             "error"
