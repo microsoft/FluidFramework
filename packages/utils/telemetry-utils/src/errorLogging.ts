@@ -40,7 +40,7 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
         ? error.message as string
         : String(error);
 
-    const safeProps: { message: string; errorType?: string; stack?: string } = {
+    const safeProps: { message: string; errorType?: string; stack?: string; } = {
         message,
     };
 

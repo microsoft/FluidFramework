@@ -26,7 +26,7 @@ export interface IFluidPackageEnvironment {
          * of Library, the entrypoint for umd packages
          */
         [key: string]: unknown;
-    }
+    };
 }
 
 /**

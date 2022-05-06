@@ -54,9 +54,9 @@ interface IMapMessageHandler {
 }
 
 interface IMapMessageLocalMetadata{
-    pendingClearMessageId?: number,
-    pendingMessageId?: number,
-    lastProcessedSeq: number
+    pendingClearMessageId?: number;
+    pendingMessageId?: number;
+    lastProcessedSeq: number;
 }
 
 /**
