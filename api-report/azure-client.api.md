@@ -40,7 +40,6 @@ export class AzureClient {
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
-    }
 }
 
 // @public
@@ -52,10 +51,12 @@ export interface AzureClientProps {
 // @public
 export interface AzureConnectionConfig {
     endpoint: string;
-    tenantId?: string;
     tokenProvider: ITokenProvider;
-    type: "remote" | "local";
+    type: AzureConnectionConfigType;
 }
+
+// @public (undocumented)
+export type AzureConnectionConfigType = "local" | "remote";
 
 // @public
 export interface AzureContainerServices {
@@ -83,6 +84,11 @@ export interface AzureGetVersionsOptions {
 }
 
 // @public
+export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
+    type: "local";
+}
+
+// @public
 export interface AzureMember<T = any> extends IMember {
     // (undocumented)
     additionalDetails?: T;
@@ -91,7 +97,19 @@ export interface AzureMember<T = any> extends IMember {
 }
 
 // @public
+export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
+    tenantId: string;
+    type: "remote";
+}
+
+// @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
+
+// @public
+export function isAzureLocalConnectionConfig(connectionConfig: AzureConnectionConfig): connectionConfig is AzureLocalConnectionConfig;
+
+// @public
+export function isAzureRemoteConnectionConfig(connectionConfig: AzureConnectionConfig): connectionConfig is AzureRemoteConnectionConfig;
 
 export { ITelemetryBaseEvent }
 
@@ -104,9 +122,6 @@ export { ITokenProvider }
 export { ITokenResponse }
 
 export { IUser }
-
-// @public
-export const LOCAL_MODE_TENANT_ID = "local";
 
 export { ScopeType }
 
