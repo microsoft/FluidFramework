@@ -1750,6 +1750,7 @@ declare function get_old_ClassDeclaration_List():
 declare function use_current_ClassDeclaration_List(
     use: TypeOnly<current.List<any>>);
 use_current_ClassDeclaration_List(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_List());
 
 /*
@@ -2062,6 +2063,7 @@ declare function get_old_ClassDeclaration_MergeTree():
 declare function use_current_ClassDeclaration_MergeTree(
     use: TypeOnly<current.MergeTree>);
 use_current_ClassDeclaration_MergeTree(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MergeTree());
 
 /*
@@ -3010,6 +3012,7 @@ declare function get_old_ClassDeclaration_SnapshotLegacy():
 declare function use_current_ClassDeclaration_SnapshotLegacy(
     use: TypeOnly<current.SnapshotLegacy>);
 use_current_ClassDeclaration_SnapshotLegacy(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SnapshotLegacy());
 
 /*

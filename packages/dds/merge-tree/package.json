@@ -126,8 +126,10 @@
       "EnumDeclaration_MergeTreeDeltaType": {"forwardCompat": false, "backCompat": false},
       "EnumDeclaration_MergeTreeMaintenanceType": {"forwardCompat": false, "backCompat": false},
       "EnumDeclaration_RBColor": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_RBNode": {"forwardCompat": false, "backCompat": false}
-
+      "InterfaceDeclaration_RBNode": {"forwardCompat": false, "backCompat": false},
+      "ClassDeclaration_List": {"forwardCompat": false},
+      "ClassDeclaration_MergeTree": {"forwardCompat": false},
+      "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false}
     }
   }
 }

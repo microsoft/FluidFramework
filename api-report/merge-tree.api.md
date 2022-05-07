@@ -753,11 +753,15 @@ export interface KeyComparer<TKey> {
 
 // @public (undocumented)
 export class List<T> {
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<T>;
     constructor(isHead: boolean, data: T | undefined);
     // (undocumented)
     clear(): void;
     // (undocumented)
     count(): number;
+    // (undocumented)
+    data: T | undefined;
     // (undocumented)
     dequeue(): T | undefined;
     // (undocumented)
@@ -784,6 +788,9 @@ export class List<T> {
 
 // @public (undocumented)
 export function ListMakeHead<U>(): List<U>;
+
+// @public (undocumented)
+export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 
 // @public (undocumented)
 export const LocalClientId = -1;
