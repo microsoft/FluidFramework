@@ -19,6 +19,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.60 Upcoming changes
 
 ## 0.60 Breaking changes
+- [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 - [Deprecate TelemetryDataTag.PackageData](#Deprecate-TelemetryDataTagPackageData)
@@ -28,6 +29,14 @@ There are a few steps you can take to write a good change note and avoid needing
 - [`ISummarizerOptions` is deprecated](#isummarizerOptions-is-deprecated)
 - [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
+
+### Changed AzureConnectionConfig API
+- `AzureConnectionConfig` format was changed
+- Added a `type` field that's used to differentiate between remote and local connections.
+- Defined 2 subtypes of `AzureConnectionConfig`: `AzureLocalConnectionConfig` and `AzureRemoteConnectionConfig` with their `type` set to `"local"` and `"remote"` respectively
+- Previously we supplies `orderer` and `storage` fields, now replaced with `endpoint` url.
+- Previously `LOCAL_MODE_TENANT_ID` was supplied for the `tenantId` field when running app locally, now in "local" mode,
+  no tenantId field is `provided` and `LOCAL_MODE_TENANT_ID` is no longer available.
 
 ### Remove IFluidSerializer from core-interfaces
 `IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
