@@ -30,8 +30,6 @@ import {
 import {
     AzureClientProps,
     AzureConnectionConfig,
-    AzureRemoteConnectionConfig,
-    AzureLocalConnectionConfig,
     isAzureLocalConnectionConfig,
     isAzureRemoteConnectionConfig,
     AzureContainerServices,
