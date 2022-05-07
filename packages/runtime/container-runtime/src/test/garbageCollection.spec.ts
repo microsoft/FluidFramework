@@ -105,6 +105,7 @@ describe("Garbage Collection Tests", () => {
         const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
         const injectedSettings = {};
         const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
+        const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
         const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
         before(() => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -135,6 +136,20 @@ describe("Garbage Collection Tests", () => {
         });
 
         it("Session expires for a new container", async () => {
+            createGarbageCollector();
+            assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exact expiry.");
+        });
+
+        it("Session expiry disabled via DisableSessionExpiry config", async () => {
+            // disable expiry even though it's set to run (meaning expiry value will present)
+            injectedSettings[disableSessionExpiryKey] = "true";
+            createGarbageCollector();
+            assert(!closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should NOT have been called due to disable.");
+        });
+
+        it("Session expiry explicitly not disabled via DisableSessionExpiry config", async () => {
+            // Explicitly set value to false (instead of relying on undefined)
+            injectedSettings[disableSessionExpiryKey] = "false";
             createGarbageCollector();
             assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exact expiry.");
         });
@@ -173,6 +188,20 @@ describe("Garbage Collection Tests", () => {
             assert(!closeCalled, "Close should not have been called since runSessionExpiry disabled.");
             clock.tick(defaultSessionExpiryDurationMs);
             assert(!closeCalled, "Close should not have been called since runSessionExpiry disabled.");
+        });
+
+        it("Session expiry override ignored if DisableSessionExpiry is true", async () => {
+            injectedSettings[disableSessionExpiryKey] = "true";
+            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
+            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
+            assert(customExpiryMs, "setting not found!");
+
+            createGarbageCollector();
+
+            clock.tick(customExpiryMs);
+            assert(!closeCalled, "Close should not have been called since DisableSessionExpiry true.");
+            clock.tick(defaultSessionExpiryDurationMs);
+            assert(!closeCalled, "Close should not have been called since DisableSessionExpiry true.");
         });
     });
 

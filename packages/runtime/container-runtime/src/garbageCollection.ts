@@ -66,6 +66,8 @@ const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
 const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
+// Feature gate key to disable expiring session after a set period of time, even if expiry value is present
+const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to log error messages if GC reference validation fails.
 const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 
@@ -396,7 +398,8 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         // If session expiry is enabled, we need to close the container when the timeout expires
-        if (this.sessionExpiryTimeoutMs !== undefined) {
+        if (this.sessionExpiryTimeoutMs !== undefined
+            && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
             // If Test Override config is set, override Session Expiry timeout
             const overrideSessionExpiryTimeoutMs =
                 this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
