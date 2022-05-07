@@ -63,53 +63,57 @@ declare function use_old_ClassDeclaration_AzureClient(
 use_old_ClassDeclaration_AzureClient(
     get_current_ClassDeclaration_AzureClient());
 
-// /*
-// * Validate forward compat by using old type in place of current type
-// * If breaking change required, add in package.json under typeValidation.broken:
-// * "InterfaceDeclaration_AzureClientProps": {"forwardCompat": false}
-// */
-// declare function get_old_InterfaceDeclaration_AzureClientProps():
-//     TypeOnly<old.AzureClientProps>;
-// declare function use_current_InterfaceDeclaration_AzureClientProps(
-//     use: TypeOnly<current.AzureClientProps>);
-// use_current_InterfaceDeclaration_AzureClientProps(
-//     get_old_InterfaceDeclaration_AzureClientProps());
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureClientProps": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_AzureClientProps():
+    TypeOnly<old.AzureClientProps>;
+declare function use_current_InterfaceDeclaration_AzureClientProps(
+    use: TypeOnly<current.AzureClientProps>);
+use_current_InterfaceDeclaration_AzureClientProps(
+    // @ts-expect-error compatibility expected to be broken
+    get_old_InterfaceDeclaration_AzureClientProps());
 
-// /*
-// * Validate back compat by using current type in place of old type
-// * If breaking change required, add in package.json under typeValidation.broken:
-// * "InterfaceDeclaration_AzureClientProps": {"backCompat": false}
-// */
-// declare function get_current_InterfaceDeclaration_AzureClientProps():
-//     TypeOnly<current.AzureClientProps>;
-// declare function use_old_InterfaceDeclaration_AzureClientProps(
-//     use: TypeOnly<old.AzureClientProps>);
-// use_old_InterfaceDeclaration_AzureClientProps(
-//     get_current_InterfaceDeclaration_AzureClientProps());
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureClientProps": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_AzureClientProps():
+    TypeOnly<current.AzureClientProps>;
+declare function use_old_InterfaceDeclaration_AzureClientProps(
+    use: TypeOnly<old.AzureClientProps>);
+use_old_InterfaceDeclaration_AzureClientProps(
+    // @ts-expect-error compatibility expected to be broken
+    get_current_InterfaceDeclaration_AzureClientProps());
 
-// /*
-// * Validate forward compat by using old type in place of current type
-// * If breaking change required, add in package.json under typeValidation.broken:
-// * "InterfaceDeclaration_AzureConnectionConfig": {"forwardCompat": false}
-// */
-// declare function get_old_InterfaceDeclaration_AzureConnectionConfig():
-//     TypeOnly<old.AzureConnectionConfig>;
-// declare function use_current_InterfaceDeclaration_AzureConnectionConfig(
-//     use: TypeOnly<current.AzureConnectionConfig>);
-// use_current_InterfaceDeclaration_AzureConnectionConfig(
-//     get_old_InterfaceDeclaration_AzureConnectionConfig());
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureConnectionConfig": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_AzureConnectionConfig():
+    TypeOnly<old.AzureConnectionConfig>;
+declare function use_current_InterfaceDeclaration_AzureConnectionConfig(
+    use: TypeOnly<current.AzureConnectionConfig>);
+use_current_InterfaceDeclaration_AzureConnectionConfig(
+    // @ts-expect-error compatibility expected to be broken
+    get_old_InterfaceDeclaration_AzureConnectionConfig());
 
-// /*
-// * Validate back compat by using current type in place of old type
-// * If breaking change required, add in package.json under typeValidation.broken:
-// * "InterfaceDeclaration_AzureConnectionConfig": {"backCompat": false}
-// */
-// declare function get_current_InterfaceDeclaration_AzureConnectionConfig():
-//     TypeOnly<current.AzureConnectionConfig>;
-// declare function use_old_InterfaceDeclaration_AzureConnectionConfig(
-//     use: TypeOnly<old.AzureConnectionConfig>);
-// use_old_InterfaceDeclaration_AzureConnectionConfig(
-//     get_current_InterfaceDeclaration_AzureConnectionConfig());
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureConnectionConfig": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_AzureConnectionConfig():
+    TypeOnly<current.AzureConnectionConfig>;
+declare function use_old_InterfaceDeclaration_AzureConnectionConfig(
+    use: TypeOnly<old.AzureConnectionConfig>);
+use_old_InterfaceDeclaration_AzureConnectionConfig(
+    // @ts-expect-error compatibility expected to be broken
+    get_current_InterfaceDeclaration_AzureConnectionConfig());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -351,29 +355,31 @@ declare function use_old_InterfaceDeclaration_IUser(
 use_old_InterfaceDeclaration_IUser(
     get_current_InterfaceDeclaration_IUser());
 
-// /*
-// * Validate forward compat by using old type in place of current type
-// * If breaking change required, add in package.json under typeValidation.broken:
-// * "VariableDeclaration_LOCAL_MODE_TENANT_ID": {"forwardCompat": false}
-// */
-// declare function get_old_VariableDeclaration_LOCAL_MODE_TENANT_ID():
-//     TypeOnly<typeof old.LOCAL_MODE_TENANT_ID>;
-// declare function use_current_VariableDeclaration_LOCAL_MODE_TENANT_ID(
-//     use: TypeOnly<typeof current.LOCAL_MODE_TENANT_ID>);
-// use_current_VariableDeclaration_LOCAL_MODE_TENANT_ID(
-//     get_old_VariableDeclaration_LOCAL_MODE_TENANT_ID());
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedVariableDeclaration_LOCAL_MODE_TENANT_ID": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_LOCAL_MODE_TENANT_ID():
+    TypeOnly<typeof old.LOCAL_MODE_TENANT_ID>;
+declare function use_current_RemovedVariableDeclaration_LOCAL_MODE_TENANT_ID(
+    // @ts-expect-error compatibility expected to be broken
+    use: TypeOnly<typeof current.LOCAL_MODE_TENANT_ID>);
+use_current_RemovedVariableDeclaration_LOCAL_MODE_TENANT_ID(
+    get_old_VariableDeclaration_LOCAL_MODE_TENANT_ID());
 
-// /*
-// * Validate back compat by using current type in place of old type
-// * If breaking change required, add in package.json under typeValidation.broken:
-// * "VariableDeclaration_LOCAL_MODE_TENANT_ID": {"backCompat": false}
-// */
-// declare function get_current_VariableDeclaration_LOCAL_MODE_TENANT_ID():
-//     TypeOnly<typeof current.LOCAL_MODE_TENANT_ID>;
-// declare function use_old_VariableDeclaration_LOCAL_MODE_TENANT_ID(
-//     use: TypeOnly<typeof old.LOCAL_MODE_TENANT_ID>);
-// use_old_VariableDeclaration_LOCAL_MODE_TENANT_ID(
-//     get_current_VariableDeclaration_LOCAL_MODE_TENANT_ID());
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedVariableDeclaration_LOCAL_MODE_TENANT_ID": {"backCompat": false}
+*/
+declare function get_current_RemovedVariableDeclaration_LOCAL_MODE_TENANT_ID():
+    // @ts-expect-error compatibility expected to be broken
+    TypeOnly<typeof current.LOCAL_MODE_TENANT_ID>;
+declare function use_old_VariableDeclaration_LOCAL_MODE_TENANT_ID(
+    use: TypeOnly<typeof old.LOCAL_MODE_TENANT_ID>);
+use_old_VariableDeclaration_LOCAL_MODE_TENANT_ID(
+    get_current_RemovedVariableDeclaration_LOCAL_MODE_TENANT_ID());
 
 /*
 * Validate forward compat by using old type in place of current type
