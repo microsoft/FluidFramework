@@ -68,8 +68,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         if (this.firstVersionsCall && count === 1) {
             this.firstVersionsCall = false;
             const { id: _id, snapshotTree } = !this.driverPolicies?.enableDiscovery ?
-                await this.fetchAndCacheSnapshotTree(latestSnapshotId, false) :
-                await this.fetchAndCacheSnapshotTree(latestSnapshotId, true);
+                await this.fetchAndCacheSnapshotTree(latestSnapshotId, true) :
+                await this.fetchAndCacheSnapshotTree(latestSnapshotId, false);
             return [{
                 id: _id,
                 treeId: snapshotTree.id!,
