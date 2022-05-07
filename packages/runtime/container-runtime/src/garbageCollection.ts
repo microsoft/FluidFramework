@@ -65,7 +65,9 @@ const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
-const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
+const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
+// Feature gate key to disable expiring session after a set period of time, even if expiry value is present
+const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to log error messages if GC reference validation fails.
 const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 
@@ -390,13 +392,21 @@ export class GarbageCollector implements IGarbageCollector {
             // For new documents, GC has to be explicitly enabled via the gcAllowed flag in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
             // Set the Session Expiry only if the flag is enabled or the test option is set.
-            if (this.mc.config.getBoolean(runSessionExpiry) && this.gcEnabled) {
+            if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = defaultSessionExpiryDurationMs;
             }
         }
 
         // If session expiry is enabled, we need to close the container when the timeout expires
-        if (this.sessionExpiryTimeoutMs !== undefined) {
+        if (this.sessionExpiryTimeoutMs !== undefined
+            && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
+            // If Test Override config is set, override Session Expiry timeout
+            const overrideSessionExpiryTimeoutMs =
+                this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
+            if (overrideSessionExpiryTimeoutMs !== undefined) {
+                this.sessionExpiryTimeoutMs = overrideSessionExpiryTimeoutMs;
+            }
+
             const timeoutMs = this.sessionExpiryTimeoutMs;
             setLongTimeout(timeoutMs,
                 () => {
