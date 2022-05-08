@@ -395,15 +395,15 @@ describe("SharedString", () => {
             ]);
         });
 
-        it("can slide intervals on create conflict with remove range", () => {
+        it("can slide intervals on create before remove", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");
             containerRuntimeFactory.processAllMessages();
             const collection2 = sharedString2.getIntervalCollection("test");
 
-            sharedString.removeRange(1, 3);
-
             collection2.add(1, 3, IntervalType.SlideOnRemove);
+
+            sharedString.removeRange(1, 3);
 
             containerRuntimeFactory.processAllMessages();
 
@@ -415,7 +415,7 @@ describe("SharedString", () => {
             ]);
         });
 
-        it.only("can slide intervals on create conflict with remove range and insert", () => {
+        it("can slide intervals on remove before create", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCDE");
             containerRuntimeFactory.processAllMessages();

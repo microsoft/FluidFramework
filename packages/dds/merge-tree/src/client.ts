@@ -93,7 +93,7 @@ export class Client {
     private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
     private readonly shortClientIdMap: string[] = [];
     private readonly pendingConsensus = new Map<string, IConsensusInfo>();
-    private readonly clientSequenceToReferences = new Map<number, LocalReference[]>();
+    private readonly pendingReferences: LocalReference[] = [];
 
     constructor(
         // Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
@@ -1019,18 +1019,15 @@ export class Client {
         assert((refType & ReferenceType.SlideOnRemove) > 0, "Reference type must be SlideOnRemove");
         const { refSeq, clientId } = this.getRefSeqAndClientId(op);
         const segoff = this.mergeTree.getContainingSegment(pos, refSeq, clientId);
+        if (segoff.segment && segoff.segment.removedSeq !== undefined) {
+            segoff.segment = this.mergeTree.getSlideToSegment(segoff.segment);
+        }
         if (segoff.segment) {
             const lref = new LocalReference(this, segoff.segment, segoff.offset, refType);
             if (refType !== ReferenceType.Transient) {
                 this.addLocalReference(lref);
-            }
-            if (op.sequenceNumber === UnassignedSequenceNumber) {
-                // Creating this locally - store the reference so we can find it on ack
-                const refArray = this.clientSequenceToReferences[op.clientSequenceNumber];
-                if (refArray) {
-                    refArray.push(lref);
-                } else {
-                    this.clientSequenceToReferences[op.clientSequenceNumber] = [lref];
+                if (op === undefined) {
+                    this.pendingReferences.push(lref);
                 }
             }
             return lref;
@@ -1039,13 +1036,13 @@ export class Client {
         return undefined;
     }
 
-    ackCreateSlideOnRemoveReferences(op: ISequencedDocumentMessage): void {
-        const refArray = this.clientSequenceToReferences[op.clientSequenceNumber];
-        assert(refArray, "ackCreateSlideOnRemoveReferences requires created references");
-        for (const ref of refArray) {
-            this.mergeTree.slideReference(ref);
+    ackCreateSlideOnRemoveReferences(numReferences: number): void {
+        assert(numReferences <= this.pendingReferences.length,
+            "ackCreateSlideOnRemoveReferences requires created references");
+        for (let i = 0; i < numReferences; ++i) {
+            this.mergeTree.slideReference(this.pendingReferences[i]);
         }
-        this.clientSequenceToReferences.delete(op.clientSequenceNumber);
+        this.pendingReferences.splice(0, numReferences);
     }
 
     getPropertiesAtPosition(pos: number) {

@@ -365,7 +365,7 @@ function createSequenceInterval(
 function ackCreateSequenceInterval(
     client: Client,
     op: ISequencedDocumentMessage): void {
-    client.ackCreateSlideOnRemoveReferences(op);
+    client.ackCreateSlideOnRemoveReferences(2);
 }
 
 export function defaultIntervalConflictResolver(a: Interval, b: Interval) {

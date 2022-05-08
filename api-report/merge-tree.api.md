@@ -97,7 +97,7 @@ export class Client {
     // (undocumented)
     accumWindowTime: number;
     // (undocumented)
-    ackCreateSlideOnRemoveReferences(op: ISequencedDocumentMessage): void;
+    ackCreateSlideOnRemoveReferences(numReferences: number): void;
     // (undocumented)
     addLocalReference(lref: LocalReference): void;
     // (undocumented)
@@ -1014,6 +1014,8 @@ export class MergeTree {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
+    // (undocumented)
+    getSlideToSegment(currentSegment: ISegment): ISegment | undefined;
     // (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)

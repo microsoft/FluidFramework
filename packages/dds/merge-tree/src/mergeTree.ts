@@ -1412,7 +1412,7 @@ export class MergeTree {
         return { segment, offset };
     }
 
-    private getSlideToSegment(currentSegment: ISegment): ISegment | undefined {
+    public getSlideToSegment(currentSegment: ISegment): ISegment | undefined {
         // TODO this walks the whole tree to find the segment - could write a more efficient
         // walk that starts at the segment
         let foundStart = false;
@@ -1424,7 +1424,7 @@ export class MergeTree {
                 }
                 return true;
             }
-            if (seg.removedSeq === undefined) {
+            if (seg.seq !== UnassignedSequenceNumber && seg.removedSeq === undefined) {
                 slideToSegment = seg;
                 return false;
             }
@@ -1433,12 +1433,21 @@ export class MergeTree {
         return slideToSegment;
     }
 
+    // TODO:ransomr modify markRangeRemoved to use this method for sliding
     public slideReference(ref: LocalReference) {
         const segment = ref.getSegment();
         assert(!!segment, "slideReference requires a segment");
         // We only slide the reference if the segment remove has been sequenced by the server
         if (segment.removedSeq !== undefined) {
-            this.getSlideToSegment(segment);
+            const newSegment = this.getSlideToSegment(segment);
+            if (!newSegment) {
+                // TODO:ransomr handle no valid location to slide references
+                return;
+            }
+            if (!newSegment.localRefs) {
+                newSegment.localRefs = new LocalReferenceCollection(newSegment);
+            }
+            newSegment.localRefs.addBeforeTombstones([ref]);
         }
     }
 
