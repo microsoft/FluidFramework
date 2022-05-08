@@ -701,6 +701,9 @@ describe("SharedString", () => {
             };
             sharedString2.on("createIntervalCollection", createCallback2);
 
+            sharedString.insertText(0, "hello world");
+            containerRuntimeFactory.processAllMessages();
+
             const collection1: IntervalCollection<SequenceInterval> = sharedString.getIntervalCollection("test1");
             const interval1 = collection1.add(0, 1, IntervalType.SlideOnRemove);
             collection1.change(interval1.getIntervalId(), 1, 4);

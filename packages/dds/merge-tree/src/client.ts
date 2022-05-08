@@ -1033,7 +1033,7 @@ export class Client {
             return lref;
         }
         // TODO:ransomr what is the correct behavior if there isn't a segment for the reference?
-        return undefined;
+        assert(false, "No segment for SlideOnRemove reference");
     }
 
     ackCreateSlideOnRemoveReferences(numReferences: number): void {
