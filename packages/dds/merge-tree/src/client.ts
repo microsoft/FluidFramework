@@ -93,6 +93,8 @@ export class Client {
     private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
     private readonly shortClientIdMap: string[] = [];
     private readonly pendingConsensus = new Map<string, IConsensusInfo>();
+    // TODO:ransomr does pendingReferences belong here or in mergeTree?
+    // TODO:ransomr when does this need to be cleared? Or is there a better way to store this?
     private readonly pendingReferences: LocalReference[] = [];
 
     constructor(
@@ -1018,10 +1020,7 @@ export class Client {
         // eslint-disable-next-line no-bitwise
         assert((refType & ReferenceType.SlideOnRemove) > 0, "Reference type must be SlideOnRemove");
         const { refSeq, clientId } = this.getRefSeqAndClientId(op);
-        const segoff = this.mergeTree.getContainingSegment(pos, refSeq, clientId);
-        if (segoff.segment && segoff.segment.removedSeq !== undefined) {
-            segoff.segment = this.mergeTree.getSlideToSegment(segoff.segment);
-        }
+        const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(pos, refSeq, clientId);
         if (segoff.segment) {
             const lref = new LocalReference(this, segoff.segment, segoff.offset, refType);
             if (refType !== ReferenceType.Transient) {
@@ -1036,6 +1035,12 @@ export class Client {
         assert(false, "No segment for SlideOnRemove reference");
     }
 
+    // TODO:ransomr using the num references is fragile - want to find another way to do it
+    // Originally I planned to use the local sequence for this, but clientSequence isn't set
+    // on the op received from the server - is that expected? A limitation of the test mocks?
+    // Another option would be to map from an id to a pending reference. The id could be stored
+    // in the LocalOpMetadata for the interval command, except the current implementation as
+    // of the IntervalCollection as a ValueType doesn't support LocalOpMetadata.
     ackCreateSlideOnRemoveReferences(numReferences: number): void {
         assert(numReferences <= this.pendingReferences.length,
             "ackCreateSlideOnRemoveReferences requires created references");
