@@ -1631,7 +1631,6 @@ declare function get_old_InterfaceDeclaration_IRemovalInfo():
 declare function use_current_InterfaceDeclaration_IRemovalInfo(
     use: TypeOnly<current.IRemovalInfo>);
 use_current_InterfaceDeclaration_IRemovalInfo(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRemovalInfo());
 
 /*
@@ -2064,7 +2063,6 @@ declare function get_old_ClassDeclaration_MergeTree():
 declare function use_current_ClassDeclaration_MergeTree(
     use: TypeOnly<current.MergeTree>);
 use_current_ClassDeclaration_MergeTree(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MergeTree());
 
 /*
@@ -3013,7 +3011,6 @@ declare function get_old_ClassDeclaration_SnapshotLegacy():
 declare function use_current_ClassDeclaration_SnapshotLegacy(
     use: TypeOnly<current.SnapshotLegacy>);
 use_current_ClassDeclaration_SnapshotLegacy(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SnapshotLegacy());
 
 /*

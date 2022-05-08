@@ -101,14 +101,6 @@ export class SnapshotLoader {
 
             if (spec.removedSeq !== undefined) {
                 seg.removedSeq = spec.removedSeq;
-                if (spec.removedRefSeq !== undefined) {
-                    seg.removedRefSeq = spec.removedRefSeq;
-                } else {
-                    // spec is prior to change to store the removedRefSeq
-                    // use removedSeq as removedRefSeq, in rare cases this could cause
-                    // an incorrect slide of SlideOnRemove references
-                    seg.removedRefSeq = seg.removedSeq;
-                }
             }
             // this format had a bug where it didn't store all the overlap clients
             // this is for back compat, so we change the singular id to an array

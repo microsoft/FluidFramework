@@ -218,7 +218,6 @@ export class SnapshotV1 {
                     assert(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
                         0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */);
                     raw.removedSeq = segment.removedSeq;
-                    raw.removedRefSeq = segment.removedRefSeq;
 
                     // back compat for when we split overlap and removed client
                     raw.removedClient =

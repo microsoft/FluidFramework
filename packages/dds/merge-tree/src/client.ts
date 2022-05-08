@@ -1017,7 +1017,7 @@ export class Client {
         // eslint-disable-next-line no-bitwise
         assert((refType & ReferenceType.SlideOnRemove) > 0, "Reference type must be SlideOnRemove");
         const { refSeq, clientId } = this.getRefSeqAndClientId(op);
-        const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(pos, refSeq, clientId);
+        const segoff = this.mergeTree.getContainingSegment(pos, refSeq, clientId);
         if (segoff.segment) {
             const lref = new LocalReference(this, segoff.segment, segoff.offset, refType);
             if (refType !== ReferenceType.Transient) {

@@ -58,8 +58,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     removedClientIds?: number[];
     // (undocumented)
-    removedRefSeq?: number;
-    // (undocumented)
     removedSeq?: number;
     // (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
@@ -695,8 +693,6 @@ export interface IRemovalInfo {
     // (undocumented)
     removedClientIds: number[];
     // (undocumented)
-    removedRefSeq: number;
-    // (undocumented)
     removedSeq: number;
 }
 
@@ -1019,11 +1015,6 @@ export class MergeTree {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
-    // (undocumented)
-    getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    };
     // (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
