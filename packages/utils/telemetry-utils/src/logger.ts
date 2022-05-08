@@ -44,8 +44,8 @@ export interface ITelemetryLoggerPropertyBag {
     [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 export interface ITelemetryLoggerPropertyBags{
-    all?: ITelemetryLoggerPropertyBag,
-    error?: ITelemetryLoggerPropertyBag,
+    all?: ITelemetryLoggerPropertyBag;
+    error?: ITelemetryLoggerPropertyBag;
 }
 
 /**
@@ -139,7 +139,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
      protected sendTelemetryEventCore(
-        event: ITelemetryGenericEvent & { category: TelemetryEventCategory },
+        event: ITelemetryGenericEvent & { category: TelemetryEventCategory; },
         error?: any) {
         const newEvent = { ...event };
         if (error !== undefined) {

@@ -107,7 +107,7 @@ const CommonWebpackLibTSConfig = function (args) {
   const params = getParams(args);
 
   const commonLibConfig = {
-    devtool: 'source-maps',
+    devtool: 'source-map',
     output: {
       library: params.name,
       path: params.distPath

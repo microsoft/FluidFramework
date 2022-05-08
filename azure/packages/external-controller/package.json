@@ -41,14 +41,14 @@
   "dependencies": {
     "@fluidframework/azure-client": "^0.59.3000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/test-client-utils": "^0.59.3000",
-    "fluid-framework": "^0.59.3000"
+    "fluid-framework": "^0.59.2001"
   },
   "devDependencies": {
-    "@fluid-experimental/get-container": "^0.59.3000",
+    "@fluid-experimental/get-container": "^0.59.2001",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
-    "@fluidframework/fluid-static": "^0.59.3000",
+    "@fluidframework/fluid-static": "^0.59.2001",
+    "@fluidframework/test-client-utils": "^0.59.2001",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",
@@ -80,7 +80,7 @@
     "puppeteer": "^1.20.0",
     "rimraf": "^2.6.2",
     "ts-jest": "^26.4.4",
-    "ts-loader": "^6.1.2",
+    "ts-loader": "^8.4.0",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0",
     "webpack": "^4.46.0",

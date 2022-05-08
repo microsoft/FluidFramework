@@ -25,7 +25,7 @@ describe("client.applyMsg", () => {
     });
 
     it("Interleaved inserts, annotates, and deletes", () => {
-        const changes = new Map<number, { msg: ISequencedDocumentMessage, segmentGroup: SegmentGroup }>();
+        const changes = new Map<number, { msg: ISequencedDocumentMessage; segmentGroup: SegmentGroup; }>();
         assert.equal(client.mergeTree.pendingSegments?.count(), 0);
         for (let i = 0; i < 100; i++) {
             const len = client.getLength();

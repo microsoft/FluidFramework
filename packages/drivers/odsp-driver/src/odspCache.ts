@@ -100,7 +100,7 @@ export interface INonPersistentCache {
      * Cache of joined/joining session info
      */
     readonly sessionJoinCache: PromiseCache<string,
-        { entryTime: number, joinSessionResponse: ISocketStorageDiscovery }>;
+        { entryTime: number; joinSessionResponse: ISocketStorageDiscovery; }>;
 
     /**
      * Cache of resolved/resolving file URLs
@@ -120,7 +120,7 @@ export interface IOdspCache extends INonPersistentCache {
 
 export class NonPersistentCache implements INonPersistentCache {
     public readonly sessionJoinCache =
-        new PromiseCache<string, { entryTime: number, joinSessionResponse: ISocketStorageDiscovery }>();
+        new PromiseCache<string, { entryTime: number; joinSessionResponse: ISocketStorageDiscovery; }>();
 
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 }

@@ -942,7 +942,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
         }
-        if (typeof(id) !== "string") {
+        if (typeof (id) !== "string") {
             throw new Error("Change API requires an ID that is a string");
         }
         if (!props) {
@@ -969,7 +969,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
         }
-        if (typeof(id) !== "string") {
+        if (typeof (id) !== "string") {
             throw new Error("Change API requires an ID that is a string");
         }
 

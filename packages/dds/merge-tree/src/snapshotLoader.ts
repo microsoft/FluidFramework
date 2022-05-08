@@ -38,7 +38,7 @@ export class SnapshotLoader {
 
     public async initialize(
         services: IChannelStorageService,
-    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]>; }> {
         const headerLoadedP =
             services.readBlob(SnapshotLegacy.header).then((header) => {
                 assert(!!header, 0x05f /* "Missing blob header on legacy snapshot!" */);

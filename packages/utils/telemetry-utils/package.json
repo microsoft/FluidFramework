@@ -105,6 +105,8 @@
   },
   "typeValidation": {
     "version": "0.59.3000",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_MockLogger": {"forwardCompat": false}
+    }
   }
 }

@@ -55,7 +55,7 @@ interface IShowNextResultResult {
  */
 export const showNextResult = (
   data: IInspectorRow[], currentlyExpanded: IExpandedMap, allMatches: IInspectorSearchMatch[],
-  resultIndex: number, childToParentMap: { [key: string]: string }): IShowNextResultResult => {
+  resultIndex: number, childToParentMap: { [key: string]: string; }): IShowNextResultResult => {
   const desiredDataItem = allMatches[resultIndex];
   // sanity check
   if (!desiredDataItem) {
@@ -91,7 +91,7 @@ export const showNextResult = (
  */
 function findMatchingElementIndexInDataSet(data: IInspectorRow[], currentlyExpanded: IExpandedMap,
                                            matchingElement: IInspectorSearchMatch, rowCounter = 0):
-                                           { idx: number, found: boolean } {
+                                           { idx: number; found: boolean; } {
   for (const row of data) {
     if (row.id === matchingElement.rowId) {
       return { idx: rowCounter, found: true };
@@ -125,7 +125,7 @@ export interface IInspectorSearchState {
   levels?: ISearchLevelState[];
   matchesMap: IInspectorSearchMatchMap;
   scheduled?: number;
-  childToParentMap: { [key: string]: string };
+  childToParentMap: { [key: string]: string; };
 }
 
 export interface IInspectorSearchControls {
