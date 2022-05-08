@@ -72,7 +72,8 @@
       "InterfaceDeclaration_ISequenceDeltaRange": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceDeltaEvent": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceEvent": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false, "backCompat": false}
+      "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false, "backCompat": false},
+      "InterfaceDeclaration_IIntervalHelpers": {"forwardCompat": false}
     }
   }
 }

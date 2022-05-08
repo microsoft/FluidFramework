@@ -93,6 +93,7 @@ export class Client {
     private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
     private readonly shortClientIdMap: string[] = [];
     private readonly pendingConsensus = new Map<string, IConsensusInfo>();
+    private readonly clientSequenceToReferences = new Map<number, LocalReference[]>();
 
     constructor(
         // Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
@@ -1023,10 +1024,28 @@ export class Client {
             if (refType !== ReferenceType.Transient) {
                 this.addLocalReference(lref);
             }
+            if (op.sequenceNumber === UnassignedSequenceNumber) {
+                // Creating this locally - store the reference so we can find it on ack
+                const refArray = this.clientSequenceToReferences[op.clientSequenceNumber];
+                if (refArray) {
+                    refArray.push(lref);
+                } else {
+                    this.clientSequenceToReferences[op.clientSequenceNumber] = [lref];
+                }
+            }
             return lref;
         }
         // TODO:ransomr what is the correct behavior if there isn't a segment for the reference?
         return undefined;
+    }
+
+    ackCreateSlideOnRemoveReferences(op: ISequencedDocumentMessage): void {
+        const refArray = this.clientSequenceToReferences[op.clientSequenceNumber];
+        assert(refArray, "ackCreateSlideOnRemoveReferences requires created references");
+        for (const ref of refArray) {
+            this.mergeTree.slideReference(ref);
+        }
+        this.clientSequenceToReferences.delete(op.clientSequenceNumber);
     }
 
     getPropertiesAtPosition(pos: number) {

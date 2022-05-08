@@ -132,6 +132,9 @@
       "ClassDeclaration_SequenceMaintenanceEvent": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "InterfaceDeclaration_IIntervalHelpers": {
+        "forwardCompat": false
       }
     }
   }

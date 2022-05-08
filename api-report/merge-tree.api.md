@@ -97,6 +97,8 @@ export class Client {
     // (undocumented)
     accumWindowTime: number;
     // (undocumented)
+    ackCreateSlideOnRemoveReferences(op: ISequencedDocumentMessage): void;
+    // (undocumented)
     addLocalReference(lref: LocalReference): void;
     // (undocumented)
     addLongClientId(longClientId: string): void;
@@ -748,9 +750,6 @@ export interface ISegmentChanges {
 }
 
 // @public (undocumented)
-export function isSegmentRemoved(segment: ISegment): boolean;
-
-// @public (undocumented)
 export interface KeyComparer<TKey> {
     // (undocumented)
     (a: TKey, b: TKey): number;
@@ -1062,6 +1061,8 @@ export class MergeTree {
     root: IMergeBlock;
     // (undocumented)
     setMinSeq(minSeq: number): void;
+    // (undocumented)
+    slideReference(ref: LocalReference): void;
     // (undocumented)
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
     // (undocumented)

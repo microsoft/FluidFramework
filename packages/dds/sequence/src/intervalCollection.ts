@@ -60,6 +60,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     compareEnds(a: TInterval, b: TInterval): number;
     create(label: string, start: number, end: number,
         client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
+    ackCreate(client: Client, op: ISequencedDocumentMessage): void;
 }
 
 export class Interval implements ISerializableInterval {
@@ -361,6 +362,12 @@ function createSequenceInterval(
     }
 }
 
+function ackCreateSequenceInterval(
+    client: Client,
+    op: ISequencedDocumentMessage): void {
+    client.ackCreateSlideOnRemoveReferences(op);
+}
+
 export function defaultIntervalConflictResolver(a: Interval, b: Interval) {
     a.addPropertySet(b.properties);
     return a;
@@ -370,6 +377,7 @@ export function createIntervalIndex(conflict?: IntervalConflictResolver<Interval
     const helpers: IIntervalHelpers<Interval> = {
         compareEnds: compareIntervalEnds,
         create: createInterval,
+        ackCreate: (client: Client, op: ISequencedDocumentMessage) => {},
     };
     const lc = new LocalIntervalCollection<Interval>(undefined, "", helpers);
     if (conflict) {
@@ -594,6 +602,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return interval;
     }
 
+    public ackAddInterval(op: ISequencedDocumentMessage) {
+        this.helpers.ackCreate(this.client, op);
+    }
+
     public add(interval: TInterval) {
         assert(Object.prototype.hasOwnProperty.call(interval.properties, reservedIntervalIdKey),
             0x2c0 /* "ID must be created before adding interval to collection" */);
@@ -646,6 +658,7 @@ class SequenceIntervalCollectionFactory
         const helpers: IIntervalHelpers<SequenceInterval> = {
             compareEnds: compareSequenceIntervalEnds,
             create: createSequenceInterval,
+            ackCreate: ackCreateSequenceInterval,
         };
         return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw);
     }
@@ -680,11 +693,6 @@ export class SequenceIntervalCollectionValueType
                 "add",
                 {
                     process: (value, params, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
                         value.addInternal(params, local, op);
                     },
                 },
@@ -728,6 +736,7 @@ class IntervalCollectionFactory
         const helpers: IIntervalHelpers<Interval> = {
             compareEnds: compareIntervalEnds,
             create: createInterval,
+            ackCreate: (client: Client, op: ISequencedDocumentMessage) => {},
         };
         const collection = new IntervalCollection<Interval>(helpers, false, emitter, raw);
         collection.attachGraph(undefined, "");
@@ -763,11 +772,6 @@ export class IntervalCollectionValueType
                 "add",
                 {
                     process: (value, params, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
                         value.addInternal(params, local, op);
                     },
                 },
@@ -1144,6 +1148,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             throw new Error("attachSequence must be called");
         }
 
+        if (local) {
+            this.localCollection.ackAddInterval(op);
+            return;
+        }
+
         this.localCollection.ensureSerializedId(serializedInterval);
 
         const interval: TInterval = this.localCollection.addInterval(
@@ -1154,14 +1163,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             op);
 
         if (interval) {
-            // Local ops get submitted to the server. Remote ops have the deserializer run.
-            if (local) {
-                // Review: Is this case possible?
-                this.emitter.emit("add", undefined, serializedInterval);
-            } else {
-                if (this.onDeserialize) {
-                    this.onDeserialize(interval);
-                }
+            if (this.onDeserialize) {
+                this.onDeserialize(interval);
             }
         }
 

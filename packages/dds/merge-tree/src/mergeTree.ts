@@ -476,10 +476,6 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
     return mergeTree.localNetLength(node);
 }
 
-export function isSegmentRemoved(segment: ISegment): boolean {
-    return segment.removedSeq !== undefined || segment.localRemovedSeq !== undefined;
-}
-
 export abstract class BaseSegment extends MergeNode implements ISegment {
     public clientId: number = LocalClientId;
     public seq: number = UniversalSequenceNumber;
@@ -1416,31 +1412,35 @@ export class MergeTree {
         return { segment, offset };
     }
 
-    // private getNextFartherSegment(segment: ISegment, refSeq: number, clientId: number): ISegment | undefined {
-    //     // TODO this walks the whole tree to find the segment - could write a more efficient
-    //     // walk that starts at the segment
-    //     let foundStart = false;
-    //     let nextSegment: ISegment | undefined;
-    //     this.walkAllSegments(this.root, (seg) => {
-    //         if (seg === segment) {
-    //             foundStart = true;
-    //             return true;
-    //         }
-    //         if (!foundStart) {
-    //             return true;
-    //         }
-    //         // TODO this doesn't do the correct thing for the local client, as nodeLength assumes
-    //         // the local client is aware of all changes. Need to fix it so that it doesn't slide
-    //         // to segments added locally after the remove, or removed locally before the remove.
-    //         const length = this.nodeLength(seg, refSeq, clientId);
-    //         if (length !== undefined && length > 0) {
-    //             nextSegment = seg;
-    //             return false;
-    //         }
-    //         return true;
-    //     });
-    //     return nextSegment;
-    // }
+    private getSlideToSegment(currentSegment: ISegment): ISegment | undefined {
+        // TODO this walks the whole tree to find the segment - could write a more efficient
+        // walk that starts at the segment
+        let foundStart = false;
+        let slideToSegment: ISegment | undefined;
+        this.walkAllSegments(this.root, (seg) => {
+            if (!foundStart) {
+                if (seg === currentSegment) {
+                    foundStart = true;
+                }
+                return true;
+            }
+            if (seg.removedSeq === undefined) {
+                slideToSegment = seg;
+                return false;
+            }
+            return true;
+        });
+        return slideToSegment;
+    }
+
+    public slideReference(ref: LocalReference) {
+        const segment = ref.getSegment();
+        assert(!!segment, "slideReference requires a segment");
+        // We only slide the reference if the segment remove has been sequenced by the server
+        if (segment.removedSeq !== undefined) {
+            this.getSlideToSegment(segment);
+        }
+    }
 
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
         if ((this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)) {
