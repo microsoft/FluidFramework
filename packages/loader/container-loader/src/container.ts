@@ -1198,7 +1198,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             switch (loadMode.deltaConnection) {
                 case undefined:
-                    this.connect();
+                    this.resumeInternal({ reason: "DocumentLoad", fetchOpsFromStorage: false });
                     break;
                 case "delayed":
                     this.resumedOpProcessingAfterLoad = true;
