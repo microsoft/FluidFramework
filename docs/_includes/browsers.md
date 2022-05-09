@@ -3,7 +3,7 @@ that you use the most up-to-date browser that's compatible with your operating s
 supported.
 
 * The new [Microsoft Edge](https://www.microsoft.com/edge)
-* Safari (latest version, Mac only)
+* [Safari](https://www.apple.com/safari/?msclkid=b320ccfccfe311ecb979b11cc68335e8) (latest version, Mac only)
 * [Mozilla Firefox](https://www.mozilla.org/firefox) (latest version)
 * [Google Chrome](https://www.google.com/chrome/browser/index.html) (latest version)
 
