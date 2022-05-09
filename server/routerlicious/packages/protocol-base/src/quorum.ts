@@ -204,11 +204,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
      * Returns the consensus value for the given key
      */
     public get(key: string): any {
-        const keyMap = this.values.get(key);
-        if (keyMap !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return keyMap.value;
-        }
+        return this.values.get(key)?.value;
     }
 
     /**
