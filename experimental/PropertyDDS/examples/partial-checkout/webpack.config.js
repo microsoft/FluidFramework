@@ -23,7 +23,7 @@ module.exports = env => {
             ]
         },
         output: {
-            filename: "[name].[hash].js",
+            filename: "[name].[contenthash].js",
         },
         plugins: [
             new HtmlWebpackPlugin({
