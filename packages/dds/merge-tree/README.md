@@ -89,7 +89,7 @@ A segment was inserted and/or removed on the remote client at the time client se
 
 * The referenced sequence number is greater than or equal the server-assigned sequence number of the operation
   that inserted/removed the segment.
-* The client sent the operation that resulted in insertion/removal. (In which case, the client hadn't yet recieved
+* The client sent the operation that resulted in insertion/removal. (In which case, the client hadn't yet received
   their sequenced op from the server but was aware of the insertion/removal because the client produced it locally.)
 
 If both above conditions are false, then the insertion/removal happened "after" the remote operation, and

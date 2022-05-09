@@ -400,7 +400,7 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 0);
                 });
 
-                it("Should summarize one last time before closing >=50 ops", async () => {
+                it("Should summarize one last time before closing >=min ops", async () => {
                     await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
@@ -410,7 +410,7 @@ describe("Runtime", () => {
                     assertRunCounts(1, 0, 0, "should perform lastSummary");
                 });
 
-                it("Should not summarize one last time before closing <50 ops", async () => {
+                it("Should not summarize one last time before closing <min ops", async () => {
                     await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt - 1);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();

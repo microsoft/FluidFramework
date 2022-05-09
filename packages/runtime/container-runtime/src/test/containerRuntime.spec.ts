@@ -13,7 +13,13 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
+import {
+    ConfigTypes,
+    DebugLogger,
+    IConfigProviderBase,
+    mixinMonitoringContext,
+    MockLogger,
+} from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
@@ -161,6 +167,66 @@ describe("Runtime", () => {
                         assert.ok(error instanceof GenericError);
                         assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
                         assert.strictEqual(error.error.message, "Any");
+                    });
+                });
+            }));
+
+            describe("orderSequentially with rollback", () =>
+            [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
+                describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
+                    let containerRuntime: ContainerRuntime;
+                    const containerErrors: ICriticalContainerError[] = [];
+
+                    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+                        getRawConfig: (name: string): ConfigTypes => settings[name],
+                    }));
+
+                    const getMockContext = ((): Partial<IContainerContext> => {
+                        return {
+                            deltaManager: new MockDeltaManager(),
+                            quorum: new MockQuorum(),
+                            taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
+                                "Fluid.ContainerRuntime.EnableRollback": true,
+                            })) as unknown as MockLogger,
+                            clientDetails: { capabilities: { interactive: true } },
+                            closeFn: (error?: ICriticalContainerError): void => {
+                                if (error !== undefined) {
+                                    containerErrors.push(error);
+                                }
+                            },
+                            updateDirtyContainerState: (dirty: boolean) => { },
+                        };
+                    });
+
+                    beforeEach(async () => {
+                        containerRuntime = await ContainerRuntime.load(
+                            getMockContext() as IContainerContext,
+                            [],
+                            undefined, // requestHandler
+                            {
+                                summaryOptions: {
+                                    disableSummaries: true,
+                                },
+                            },
+                        );
+                        containerRuntime.setFlushMode(flushMode);
+                        containerErrors.length = 0;
+                    });
+
+                    it("No errors propagate to the container on rollback", () => {
+                        assert.throws(
+                            () => containerRuntime.orderSequentially(
+                                () => {
+                                    throw new Error("Any");
+                                }));
+
+                        assert.strictEqual(containerErrors.length, 0);
+                    });
+
+                    it("No errors on successful callback with rollback set", () => {
+                        containerRuntime.orderSequentially(() => {});
+
+                        assert.strictEqual(containerErrors.length, 0);
                     });
                 });
             }));
