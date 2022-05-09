@@ -17,6 +17,11 @@ There are a few steps you can take to write a good change note and avoid needing
 # 0.60
 
 ## 0.60 Upcoming changes
+- [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
+
+### Summarize heuristic changes based on telemetry
+Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
+- Change `minOpsForLastSummaryAttempt` from `50` -> `10`
 
 ## 0.60 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
