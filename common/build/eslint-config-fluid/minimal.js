@@ -142,9 +142,27 @@ module.exports = {
         "@typescript-eslint/comma-spacing": "error",
         "@typescript-eslint/func-call-spacing": "error",
         "@typescript-eslint/keyword-spacing": "error",
+        "@typescript-eslint/member-delimiter-style": [
+            "error",
+            {
+                "multiline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "singleline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "multilineDetection": "brackets"
+            },
+        ],
         "@typescript-eslint/object-curly-spacing": [
             "error",
             "always",
+        ],
+        "@typescript-eslint/semi": [
+            "error",
+            "always"
         ],
         "@typescript-eslint/space-before-function-paren": [
             "error",
@@ -165,6 +183,8 @@ module.exports = {
         ],
         "jsx-quotes": "error",
         "key-spacing": "error",
+        "space-unary-ops": "error",
+        "switch-colon-spacing": "error",
 
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",

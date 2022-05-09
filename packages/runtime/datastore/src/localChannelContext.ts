@@ -46,8 +46,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         protected readonly registry: ISharedObjectRegistry,
         protected readonly runtime: IFluidDataStoreRuntime,
         private readonly servicesGetter: () => Lazy<{
-                readonly deltaConnection: ChannelDeltaConnection,
-                readonly objectStorage: ChannelStorageService,
+                readonly deltaConnection: ChannelDeltaConnection;
+                readonly objectStorage: ChannelStorageService;
             }>,
     ) {
     }
@@ -142,8 +142,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
 export class RehydratedLocalChannelContext extends LocalChannelContextBase {
     private readonly services: Lazy<{
-        readonly deltaConnection: ChannelDeltaConnection,
-        readonly objectStorage: ChannelStorageService,
+        readonly deltaConnection: ChannelDeltaConnection;
+        readonly objectStorage: ChannelStorageService;
     }>;
 
     private readonly dirtyFn: () => void;
@@ -262,8 +262,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 
 export class LocalChannelContext extends LocalChannelContextBase {
     private readonly services: Lazy<{
-        readonly deltaConnection: ChannelDeltaConnection,
-        readonly objectStorage: ChannelStorageService,
+        readonly deltaConnection: ChannelDeltaConnection;
+        readonly objectStorage: ChannelStorageService;
     }>;
     private readonly dirtyFn: () => void;
     constructor(

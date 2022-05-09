@@ -348,7 +348,7 @@ function scheduleContainerClose(
 
 async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number) {
     // Use map to cache userName instead of recomputing.
-    const clientIdUserNameMap: { [clientId: string]: string } = {};
+    const clientIdUserNameMap: { [clientId: string]: string; } = {};
 
     const getUserName = (userContainer: IContainer) => {
         const clientId = userContainer.clientId;

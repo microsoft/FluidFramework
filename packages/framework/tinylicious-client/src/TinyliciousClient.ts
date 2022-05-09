@@ -62,7 +62,7 @@ export class TinyliciousClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
         const loader = this.createLoader(containerSchema);
 
         // We're not actually using the code proposal (our code loader always loads the same module
@@ -101,7 +101,7 @@ export class TinyliciousClient {
     public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
-    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");

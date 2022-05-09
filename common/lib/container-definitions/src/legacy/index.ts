@@ -21,7 +21,7 @@ export interface IProvideFluidTokenProvider {
  * @deprecated - This will be removed in a later release.
  */
 export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
-    intelligence: { [service: string]: any };
+    intelligence: { [service: string]: any; };
 }
 
 declare module "@fluidframework/core-interfaces" {
