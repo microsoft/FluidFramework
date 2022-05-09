@@ -33,6 +33,7 @@ Changes will be made in the way heuristic summaries are run based on observed te
 - [`ISummarizerOptions` is deprecated](#isummarizerOptions-is-deprecated)
 - [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
+- [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
 
 ### Remove IFluidSerializer from core-interfaces
 `IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
@@ -80,6 +81,10 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 -    type: MergeTreeDeltaType.INSERT;
 +    type: typeof MergeTreeDeltaType.INSERT;
 ```
+
+### Deprecate ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please migrate all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
 
 # 0.59
 
