@@ -68,9 +68,11 @@ function createDiceRollerControllerProps(map: SharedMap): DiceRollerControllerPr
         get: (key: string) => map.get(key) as number,
         set: (key: string, value: any) => () => {map.set(key, value);},
         on(event: "valueChanged", listener: (args: IValueChanged) => void) {
+            map.on(event, listener);
             return this;
         },
         off(event: "valueChanged", listener: (args: IValueChanged) => void) {
+            map.on(event, listener);
             return this;
         },
     };
