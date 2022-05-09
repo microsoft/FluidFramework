@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -23,7 +22,6 @@ import {
     ITestObjectProvider,
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
@@ -50,7 +48,7 @@ function generate(
         });
         let dataStore1: ITestFluidObject;
         let dataStore2: ITestFluidObject;
-        let deltaManager2: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+        let closeContainer2: () => void;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
@@ -65,7 +63,7 @@ function generate(
             const container2 = await provider.loadTestContainer(testContainerConfig);
             dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-            deltaManager2 = container2.deltaManager;
+            closeContainer2 = () => container2.close();
 
             // Load the Container that was created by the first client.
             const container3 = await provider.loadTestContainer(testContainerConfig);
@@ -272,7 +270,7 @@ function generate(
             let waitRejected = false;
             waitAcquireAndComplete(collection2)
                 .catch(() => { waitRejected = true; });
-            deltaManager2.close();
+            closeContainer2();
 
             await collection1.add("testValue");
 
