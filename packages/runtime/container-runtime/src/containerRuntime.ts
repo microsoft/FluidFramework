@@ -1330,7 +1330,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobId, localId) => this.submit(
+                ContainerMessageType.BlobAttach,
+                undefined, undefined,
+                localId ? { blobId, localId } : { blobId }),
             this,
             this.logger,
         );
@@ -1561,12 +1564,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
-                const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
-                if (handle) {
+                const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+                if (blob) {
                     return {
                         status: 200,
                         mimeType: "fluid/object",
-                        value: handle.get(),
+                        value: blob,
                     };
                 } else {
                     return create404Response(request);
@@ -1751,7 +1754,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public setConnectionState(connected: boolean, clientId?: string) {
+private delayConnectedP?: { canceled: boolean, promise: Promise<void> };
+
+public setConnectionState(connected: boolean, clientId?: string) {
+    if (connected === false) {
+        if (this.delayConnectedP !== undefined) {
+            this.delayConnectedP.canceled = true;
+            this.delayConnectedP = undefined;
+        }
+        this.setConnectionStateCore(connected, clientId);
+    }
+    const changeOfState = this._connected !== connected;
+    if (connected && changeOfState && !this.deltaManager.readOnlyInfo.readonly && this.blobManager.hasPendingUploads) {
+        const canceled = false;
+        const P = this.blobManager.onConnected().then(() => {
+            if (!canceled && !this._disposed) {
+                this.setConnectionStateCore(connected, clientId);
+            }
+        }, (reason) => {
+            this.closeFn(reason);
+        });
+        this.delayConnectedP = { canceled, promise: P };
+    } else {
+        this.setConnectionStateCore(connected, clientId);
+    }
+}
+
+private setConnectionStateCore(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -1832,8 +1861,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
-                    assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
+                    this.blobManager.processBlobAttachOp(message, local);
                     break;
                 default:
             }
@@ -2892,7 +2920,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
-                this.submit(type, content, localOpMetadata, opMetadata);
+                this.blobManager.reSubmit(opMetadata);
                 break;
             case ContainerMessageType.Rejoin:
                 this.submit(type, content);

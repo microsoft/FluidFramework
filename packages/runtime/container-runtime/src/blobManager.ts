@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ICreateBlobResponse, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Deferred } from "@fluidframework/common-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
@@ -56,115 +57,267 @@ export interface IBlobManagerLoadInfo {
     redirectTable?: [string, string][],
 }
 
+export type IBlobManagerRuntime =
+    Pick<IContainerRuntime, "attachState" | "connected"> & TypedEventEmitter<IContainerRuntimeEvents>;
+
+// OnlinePendingUpload -> OnlinePendingOp -> (fin)
+// OnlinePendingUpload -> (disconnect) -> OfflinePendingUpload -> OfflinePendingOp -> (fin)
+// OfflinePendingUpload -> OfflinePendingOp -> (fin)
+// Note that while offline we "submit" an op before uploading the blob, but we always
+// expect blobs to be uploaded before we actually see the op round-trip
+enum PendingBlobStatus {
+    OnlinePendingUpload,
+    OnlinePendingOp,
+    OfflinePendingUpload,
+    OfflinePendingOp,
+}
+
+interface PendingBlob {
+    blob: ArrayBufferLike;
+    storageId?: string;
+    status: PendingBlobStatus;
+    deferred: Deferred<string>;
+}
+
 export class BlobManager {
     public static readonly basePath = "_blobs";
     private static readonly redirectTableBlobName = ".redirectTable";
-    // uploaded blob IDs
-    private readonly blobIds: Set<string> = new Set();
-    // blobs for which upload is pending. maps to a promise that will resolve once the blob has been uploaded and a
-    // BlobAttach op has round-tripped.
-    private readonly pendingBlobIds: Map<string, Deferred<void>> = new Map();
-    // blobs uploaded while detached; cleared upon attach
-    private readonly detachedBlobIds: Set<string> = new Set();
-    // map of detached blob IDs to IDs used by storage. used to support blob handles given out while detached
-    private redirectTable: Map<string, string> | undefined;
+
+    // Map of local (offline/detached) IDs to storage IDs. Contains identity entries
+    // (id -> id) for storage IDs, so all requested IDs should be a key in this map.
+    private readonly redirectTable: Map<string, string | undefined>;
+
+    // Blobs which have not been uploaded or for which we have not yet seen a BlobAttach op round-trip
+    private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
+
+    // Map of storage IDs to list of local IDs waiting for the BlobAttach op with that storage ID.
+    // Note this doesn't include "offline" BlobAttach ops since they will be 1:1 with "offline" blobs.
+    private readonly opsInFlight: Map<string, string[]> = new Map();
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
         snapshot: IBlobManagerLoadInfo,
         private readonly getStorage: () => IDocumentStorageService,
-        private readonly attachBlobCallback: (blobId: string) => void,
-        private readonly runtime: IContainerRuntime,
+        private readonly sendBlobAttachOp: (blobId?: string, localId?: string) => void,
+        private readonly runtime: IBlobManagerRuntime,
         private readonly logger: ITelemetryLogger,
     ) {
-        this.runtime.once("dispose", () => {
-            for (const promise of this.pendingBlobIds.values()) {
-                promise.reject(new Error("runtime disposed while blobAttach op in flight"));
+        this.runtime.on("disconnected", () => this.onDisconnected());
+        this.redirectTable = this.load(snapshot);
+    }
+
+    /**
+     * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
+     */
+    public async onConnected() {
+        const uploadPs: Promise<void>[] = [];
+        for (const entry of this.pendingBlobs.values()) {
+            assert(entry.status !== PendingBlobStatus.OnlinePendingUpload,
+                "Must submit BlobAttach op before uploading offline blob");
+            if (entry.status === PendingBlobStatus.OfflinePendingUpload) {
+                uploadPs.push(this.getStorage().createBlob(entry.blob).then((response) => {
+                    entry.status = PendingBlobStatus.OfflinePendingOp;
+                    entry.storageId = response.id;
+                }));
             }
+        }
+        return Promise.all(uploadPs);
+    }
+
+    private onDisconnected() {
+        // switch all blobs that haven't been uploaded yet to offline (local ID) flow
+        for (const [id, entry] of this.pendingBlobs) {
+            if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
+                this.transitionToOffline(id);
+            }
+        }
+    }
+
+    /**
+     * Resubmit a BlobAttach op. Used to add storage IDs to ops that were
+     * submitted to runtime while disconnected.
+     * @param metadata - op metadata containing storage and/or local IDs
+     */
+    public reSubmit(metadata) {
+        assert(metadata.blobId || metadata.localId, "Submitted BlobAttach ops must have a blobId or localId");
+        if (!metadata.blobId) {
+            // We submitted this op while offline. The blob should have been uploaded by now.
+            const pendingEntry = this.pendingBlobs.get(metadata.localId);
+            assert(!!pendingEntry && pendingEntry.status === PendingBlobStatus.OfflinePendingOp &&
+                !!pendingEntry.storageId, "blob must be uploaded before resubmitting BlobAttach op");
+            return this.sendBlobAttachOp(pendingEntry.storageId, metadata.localId);
+        }
+        return this.sendBlobAttachOp(metadata.blobId, metadata.localId);
+    }
+
+    /**
+     * Returns true if there are blobs that need to be uploaded before runtime
+     * transitions to "connected" state.
+     */
+    public get hasPendingUploads(): boolean {
+        return Array.from(this.pendingBlobs.values())
+            .filter((e) => e.status === PendingBlobStatus.OfflinePendingUpload).length > 0;
+    }
+
+    private get storageIds(): Set<string> {
+        const s = new Set(this.redirectTable.values());
+        assert(!s.delete(undefined) || this.runtime.attachState === AttachState.Detached && s.size === 0,
+            "redirect table must not have an undefined value while attached");
+        return s as Set<string>;
+    }
+
+    public async getBlob(blobId: string): Promise<ArrayBufferLike> {
+        const pending = this.pendingBlobs.get(blobId);
+        if (pending) {
+            return pending.blob;
+        }
+        let storageId;
+        if (this.runtime.attachState === AttachState.Detached) {
+            assert(this.redirectTable.has(blobId), "requesting unknown blobs");
+            storageId = blobId;
+        } else {
+            storageId = this.redirectTable.get(blobId);
+            assert(!!storageId, 0x11f /* "requesting unknown blobs" */);
+        }
+
+        return this.getStorage().readBlob(storageId).catch((error) => {
+            this.logger.sendErrorEvent(
+                {
+                    eventName: "AttachmentReadBlobError",
+                    id: storageId,
+                },
+                error,
+            );
+            throw error;
         });
-        this.load(snapshot);
     }
 
-    private hasBlob(id: string): boolean {
-        return this.blobIds.has(id) || this.detachedBlobIds.has(id);
-    }
-
-    public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
-        const storageId = this.redirectTable?.get(blobId) ?? blobId;
-        assert(this.hasBlob(storageId), 0x11f /* "requesting unknown blobs" */);
-
+    public getBlobHandle(id: string): IFluidHandle<ArrayBufferLike> {
+        assert(this.redirectTable.has(id) || this.pendingBlobs.has(id) || this.opsInFlight.has(id),
+            "requesting handle for unknown blob");
         return new BlobHandle(
-            `${BlobManager.basePath}/${storageId}`,
+            `${BlobManager.basePath}/${id}`,
             this.routeContext,
-            async () => {
-                return this.getStorage().readBlob(storageId).catch((error) => {
-                    this.logger.sendErrorEvent(
-                        {
-                            eventName:"AttachmentReadBlobError",
-                            id: storageId,
-                        },
-                        error,
-                    );
-                    throw error;
-                });
-            },
+            async () => this.getBlob(id),
         );
     }
 
+    /**
+     * Transition a blob added while online to the offline flow due to disconnect.
+     * @param id - Local blob ID
+     */
+    private transitionToOffline(id: string) {
+        const pendingEntry = this.pendingBlobs.get(id);
+        assert(!!pendingEntry && pendingEntry.status === PendingBlobStatus.OnlinePendingUpload,
+            "Blob must not be uploaded or already transitioned to offline flow");
+        pendingEntry.status = PendingBlobStatus.OfflinePendingUpload;
+        pendingEntry.deferred.resolve(id);
+
+        assert(this.runtime.connected === false, "Must not transition to offline when connected");
+        // since we are offline, we will have a chance to add the storage ID when reSubmit() is called
+        this.sendBlobAttachOp(undefined, id);
+        return this.getBlobHandle(id);
+    }
+
+    private async createBlobDetached(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+        const response = await this.getStorage().createBlob(blob);
+        // while detached we get local IDs
+        this.redirectTable.set(response.id, undefined);
+        return this.getBlobHandle(response.id);
+    }
+
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+        if (this.runtime.attachState === AttachState.Detached) {
+            return this.createBlobDetached(blob);
+        }
         if (this.runtime.attachState === AttachState.Attaching) {
             // blob upload is not supported in "Attaching" state
             this.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
             await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
         }
 
-        if (!this.runtime.connected && this.runtime.attachState === AttachState.Attached) {
-            // see https://github.com/microsoft/FluidFramework/issues/8246
-            // Avoid getting storage if we are offline since it might be undefined. In the future we will return
-            // handles immediately while offline
-            await new Promise((resolve) => this.runtime.once("connected", resolve));
+        const localId = uuid();
+        const pendingEntry: PendingBlob = {
+            blob,
+            deferred: new Deferred<string>(),
+            status: PendingBlobStatus.OnlinePendingUpload,
+        };
+        this.pendingBlobs.set(localId, pendingEntry);
+
+        if (!this.runtime.connected) {
+            // not connected; return local ID handle
+            return this.transitionToOffline(localId);
         }
 
-        const response = await this.getStorage().createBlob(blob);
-        const handle = new BlobHandle(
-            `${BlobManager.basePath}/${response.id}`,
-            this.routeContext,
-            // get() should go through BlobManager.getBlob() so handles created while detached can be redirected
-            // to the correct storage id after they are uploaded
-            async () => this.getBlob(response.id).then(async (h) => h.get()),
-        );
-
-        if (this.runtime.attachState === AttachState.Detached) {
-            this.detachedBlobIds.add(response.id);
-            return handle;
+        const maybeResponse: string | ICreateBlobResponse = await Promise.race([
+            pendingEntry.deferred.promise,
+            this.getStorage().createBlob(blob),
+        ]);
+        // Note: we check the status here because it's possible that createBlob() won the race, but
+        // the disconnect logic is executed (synchronously) before our async code here runs
+        if (typeof maybeResponse === "string" || pendingEntry.status !== PendingBlobStatus.OnlinePendingUpload) {
+            // disconnected while uploading; return local ID handle
+            assert(pendingEntry.status === PendingBlobStatus.OfflinePendingUpload, "Unexpected pending blob status");
+            return this.getBlobHandle(localId);
         }
 
-        // Note - server will de-dup blobs, so we might get existing blobId!
-        if (this.pendingBlobIds.has(response.id)) {
-            await this.pendingBlobIds.get(response.id)?.promise;
-        } else if (!this.blobIds.has(response.id)) {
-            this.pendingBlobIds.set(response.id, new Deferred<void>());
+        const storageId = maybeResponse.id;
+        if (this.storageIds.has(storageId)) {
+            // This blob was already uploaded; don't send a BlobAttach op
+            this.pendingBlobs.delete(localId);
+            return this.getBlobHandle(storageId);
+        }
+        // set id. entry
+        // this.redirectTable.set(storageId, storageId);
+        pendingEntry.storageId = storageId;
+        pendingEntry.status = PendingBlobStatus.OnlinePendingOp;
 
-            // send blob attach op and wait until we see it to return the handle
-            this.attachBlobCallback(response.id);
-            await this.pendingBlobIds.get(response.id)?.promise;
+        // storage may dedupe blobs; check for a BlobAttach op in flight with the same storageId
+        const inFlight = this.opsInFlight.get(storageId);
+        if (inFlight) {
+            this.opsInFlight.set(storageId, inFlight.concat(localId));
+            return this.getBlobHandle(storageId);
         }
 
-        return handle;
+        // submit a BlobAttach op and return a handle
+        this.opsInFlight.set(storageId, [localId]);
+        this.sendBlobAttachOp(storageId);
+        return this.getBlobHandle(storageId);
     }
 
-    public processBlobAttachOp(blobId: string, local: boolean) {
+    public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
+        assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
         if (local) {
-            const pendingBlobP = this.pendingBlobIds.get(blobId);
-            assert(pendingBlobP !== undefined, 0x1f8 /* "local BlobAttach op with no pending blob" */);
-            pendingBlobP.resolve();
-            this.pendingBlobIds.delete(blobId);
+            if (message.metadata.localId === undefined) {
+                const waitingIds = this.opsInFlight.get(message.metadata.blobId);
+                assert(!!waitingIds && waitingIds.length > 0, "Unexpected local BlobAttach op");
+                for (const id of waitingIds) {
+                    const entry = this.pendingBlobs.get(id);
+                    assert(!!entry && entry.status === PendingBlobStatus.OnlinePendingOp,
+                        "Unexpected pending blob status");
+                    this.pendingBlobs.delete(id);
+                }
+                this.opsInFlight.delete(message.metadata.blobId);
+            } else {
+                const pendingBlobEntry = this.pendingBlobs.get(message.metadata.localId);
+                assert(pendingBlobEntry !== undefined, 0x1f8 /* "local BlobAttach op with no pending blob" */);
+                assert(pendingBlobEntry.status === PendingBlobStatus.OfflinePendingOp,
+                    "Unexpected pending blob status");
+                this.pendingBlobs.delete(message.metadata.blobId);
+            }
         }
-        this.blobIds.add(blobId);
+        if (message.metadata.localId !== undefined) {
+            this.redirectTable.set(message.metadata.localId, message.metadata.blobId);
+        }
+        // set id. entry
+        this.redirectTable.set(message.metadata.blobId, message.metadata.blobId);
     }
 
     /**
      * Reads blobs needed to load BlobManager from storage.
+     * @param blobsTree - Tree containing IDs of previously attached blobs. We
+     * look for the IDs in the blob entries of the tree since the both the r11s
+     * and SPO drivers replace the attachment types returned in snapshot() with blobs.
      */
     public static async load(
         blobsTree: ISnapshotTree | undefined,
@@ -184,32 +337,21 @@ export class BlobManager {
     }
 
     /**
-     * Load a set of previously attached blob IDs from a previous snapshot. Note
-     * that BlobManager tracking and reporting attached blobs is a temporary
-     * solution since storage expects attached blobs to be reported and any that
-     * are not reported as attached may be GCed. In the future attached blob
-     * IDs will be collected at summarization time, and runtime will not care
-     * about the existence or specific formatting of this tree in returned
-     * snapshots.
-     *
-     * @param blobsTree - Tree containing IDs of previously attached blobs. This
-     * corresponds to snapshot() below. We look for the IDs in the blob entries
-     * of the tree since the both the r11s and SPO drivers replace the
-     * attachment types returned in snapshot() with blobs.
+     * Load a set of previously attached blob IDs and redirect table from a previous snapshot.
      */
-    private load(snapshot: IBlobManagerLoadInfo): void {
-        if (snapshot.ids) {
-            const detached = this.runtime.attachState === AttachState.Detached;
-            snapshot.ids.map((entry) => detached ? this.detachedBlobIds.add(entry) : this.blobIds.add(entry));
-        }
-        if (snapshot.redirectTable) {
-            this.redirectTable = new Map(snapshot.redirectTable);
-        }
+    private load(snapshot: IBlobManagerLoadInfo): Map<string, string | undefined> {
         this.logger.sendTelemetryEvent({
             eventName: "AttachmentBlobsLoaded",
             count: snapshot.ids?.length ?? 0,
             redirectTable: snapshot.redirectTable?.length,
         });
+        const table = new Map<string, string | undefined>(snapshot.redirectTable);
+        if (snapshot.ids) {
+            const detached = this.runtime.attachState === AttachState.Detached;
+            // if we are detached, these are local IDs
+            snapshot.ids.map((entry) => table.set(entry, detached ? undefined : entry));
+        }
+        return table;
     }
 
     /**
@@ -225,7 +367,7 @@ export class BlobManager {
           * The node path is of the format `/_blobs/blobId`. This path must match the path of the blob handle returned
           * by the createBlob API because blobs are marked referenced by storing these handles in a referenced DDS.
           */
-        this.blobIds.forEach((blobId: string) => {
+        this.storageIds.forEach((blobId: string) => {
             gcData.gcNodes[getGCNodePath(blobId)] = [];
         });
 
@@ -238,6 +380,7 @@ export class BlobManager {
          */
         if (this.redirectTable !== undefined) {
             for (const [localId, storageId] of this.redirectTable) {
+                assert(!!storageId, "Must be attached to get GC data");
                 // Add node for the localId and add a route to the storageId node. The storageId node will have been
                 // added above when adding nodes for this.blobIds.
                 gcData.gcNodes[getGCNodePath(localId)] = [getGCNodePath(storageId)];
@@ -267,24 +410,22 @@ export class BlobManager {
                 this.redirectTable.delete(blobId);
                 continue;
             }
-            this.blobIds.delete(blobId);
         }
     }
 
     public summarize(): ISummaryTreeWithStats {
-        // If we have a redirect table it means the container is about to transition to "Attaching" state, so we need
-        // to return an actual snapshot containing all the real storage IDs we know about.
-        const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;
-        const blobIds = attachingOrAttached ? this.blobIds : this.detachedBlobIds;
+        // if storageIds is empty, it means we are detached and have only local IDs, or that there are no blobs attached
+        const blobIds = this.storageIds.size > 0 ? Array.from(this.storageIds) : Array.from(this.redirectTable.keys());
         const builder = new SummaryTreeBuilder();
         blobIds.forEach((blobId) => {
             builder.addAttachment(blobId);
         });
 
-        if (this.redirectTable && this.redirectTable.size > 0) {
+        if (this.redirectTable.size > blobIds.length) {
             builder.addBlob(
                 BlobManager.redirectTableBlobName,
-                JSON.stringify(Array.from(this.redirectTable.entries())),
+                // filter out identity entries
+                JSON.stringify(Array.from(this.redirectTable.entries()).filter(([k, v]) => k !== v)),
             );
         }
 
@@ -294,12 +435,12 @@ export class BlobManager {
     public setRedirectTable(table: Map<string, string>) {
         assert(this.runtime.attachState === AttachState.Detached,
             0x252 /* "redirect table can only be set in detached container" */);
-        assert(!this.redirectTable, 0x253 /* "redirect table already exists" */);
+        assert(this.redirectTable.size === table.size, "");
         for (const [localId, storageId] of table) {
-            assert(this.detachedBlobIds.delete(localId), 0x254 /* "unrecognized id in redirect table" */);
-            this.blobIds.add(storageId);
+            assert(this.redirectTable.has(localId), 0x254 /* "unrecognized id in redirect table" */);
+            this.redirectTable.set(localId, storageId);
+            // set id. entry
+            this.redirectTable.set(storageId, storageId);
         }
-        assert(this.detachedBlobIds.size === 0, 0x255 /* "detached blob id absent in redirect table" */);
-        this.redirectTable = table;
     }
 }
