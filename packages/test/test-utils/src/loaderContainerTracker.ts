@@ -148,6 +148,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     /**
      * Make sure all the tracked containers are synchronized.
      * - No isDirty (non-readonly) containers
+     * - No disconnected containers (connectionState === ConnectionState.Disconnected)
      * - No extra clientId in quorum of any container that is not tracked and still opened.
      *      - i.e. no pending Join/Leave message.
      * - No unresolved proposal (minSeqNum \>= lastProposalSeqNum)
