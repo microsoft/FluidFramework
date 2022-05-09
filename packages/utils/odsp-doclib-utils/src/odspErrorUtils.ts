@@ -26,7 +26,7 @@ export const fetchIncorrectResponse = 712;
 // and is not likely to change.
 export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
-export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null }) {
+export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null; }) {
     interface LoggingHeader {
         headerName: string;
         logName: string;
@@ -60,14 +60,14 @@ export interface IFacetCodes {
 /** Empirically-based model of error response inner error from ODSP */
 export interface OdspErrorResponseInnerError {
     code?: string;
-    innerError?: OdspErrorResponseInnerError
+    innerError?: OdspErrorResponseInnerError;
 }
 
 /** Empirically-based model of error responses from ODSP */
 export interface OdspErrorResponse {
     error: OdspErrorResponseInnerError & {
         message: string;
-    }
+    };
 }
 
 /** Empirically-based type guard for error responses from ODSP */
@@ -79,7 +79,7 @@ function isOdspErrorResponse(x: any): x is OdspErrorResponse {
 
 export function tryParseErrorResponse(
     response: string | undefined,
-): { success: true, errorResponse: OdspErrorResponse } | { success: false } {
+): { success: true; errorResponse: OdspErrorResponse; } | { success: false; } {
     try {
         if (response !== undefined) {
             const parsed = JSON.parse(response);

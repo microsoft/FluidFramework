@@ -45,8 +45,8 @@ export class RemoteChannelContext implements IChannelContext {
     private channelP: Promise<IChannel> | undefined;
     private channel: IChannel | undefined;
     private readonly services: {
-        readonly deltaConnection: ChannelDeltaConnection,
-        readonly objectStorage: ChannelStorageService,
+        readonly deltaConnection: ChannelDeltaConnection;
+        readonly objectStorage: ChannelStorageService;
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;

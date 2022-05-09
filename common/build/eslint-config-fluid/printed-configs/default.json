@@ -100,7 +100,18 @@
             "error"
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "off"
+            "error",
+            {
+                "multiline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "multilineDetection": "brackets",
+                "singleline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                }
+            }
         ],
         "@typescript-eslint/member-ordering": [
             "off"

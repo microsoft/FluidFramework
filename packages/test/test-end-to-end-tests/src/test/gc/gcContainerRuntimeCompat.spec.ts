@@ -156,7 +156,7 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
          * @returns a map of nodeId to its unreferenced timestamp.
          */
         async function getUnreferencedTimestamps(
-            summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+            summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
         ) {
             const summary = await submitAndAckSummary(provider, summarizerClient, logger);
             latestAckedSummary = summary.ackedSummary;

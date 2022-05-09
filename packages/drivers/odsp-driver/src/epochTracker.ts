@@ -198,8 +198,8 @@ export class EpochTracker implements IPersistedFileCache {
 
     private async fetchCore<T>(
         url: string,
-        fetchOptions: { [index: string]: any },
-        fetcher: (url: string, fetchOptions: { [index: string]: any }) => Promise<IOdspResponse<T>>,
+        fetchOptions: { [index: string]: any; },
+        fetcher: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<T>>,
         fetchType: FetchType,
         addInBody: boolean = false,
         fetchReason?: string,
@@ -239,7 +239,7 @@ export class EpochTracker implements IPersistedFileCache {
      */
     public async fetchArray(
         url: string,
-        fetchOptions: { [index: string]: any },
+        fetchOptions: { [index: string]: any; },
         fetchType: FetchType,
         addInBody: boolean = false,
         fetchReason?: string,
@@ -254,7 +254,7 @@ export class EpochTracker implements IPersistedFileCache {
     ) {
         const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp;
         if (addInBody) {
-            const headers: { [key: string]: string } = {};
+            const headers: { [key: string]: string; } = {};
             headers["X-RequestStats"] = clientCorrelationId;
             if (this.fluidEpoch !== undefined) {
                 headers["x-fluid-epoch"] = this.fluidEpoch;
@@ -281,7 +281,7 @@ export class EpochTracker implements IPersistedFileCache {
         }
     }
 
-    private addParamInBody(fetchOptions: RequestInit, headers: { [key: string]: string }) {
+    private addParamInBody(fetchOptions: RequestInit, headers: { [key: string]: string; }) {
         // We use multi part form request for post body where we want to use this.
         // So extract the form boundary to mark the end of form.
         const body = fetchOptions.body;
@@ -412,7 +412,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 
     public async fetchAndParseAsJSON<T>(
         url: string,
-        fetchOptions: { [index: string]: any },
+        fetchOptions: { [index: string]: any; },
         fetchType: FetchType,
         addInBody: boolean = false,
         fetchReason?: string,

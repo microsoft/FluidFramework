@@ -279,7 +279,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
     private readonly requestOpsNoncePrefix: string;
     private pushCallCounter = 0;
-    private readonly getOpsMap: Map<string, { start: number, from: number, to: number }> = new Map();
+    private readonly getOpsMap: Map<string, { start: number; from: number; to: number; }> = new Map();
     private flushOpNonce: string | undefined;
     private flushDeferred: Deferred<FlushResult> | undefined;
 
