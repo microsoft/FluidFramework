@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
+
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
@@ -140,6 +142,8 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     private isDisposed: boolean = false;
     public get disposed() { return this.isDisposed; }
 
+    // Event emitter for changes to the environment that affect pending proposal promises.
+    private readonly stateEvents = new EventEmitter();
     // Locally generated proposals
     private readonly localProposals = new Map<number, Deferred<void>>();
 
@@ -319,9 +323,16 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             // clear the proposals cache
             this.proposalsSnapshotCache = undefined;
         }
+
+        this.stateEvents.emit("msnChanged", msn);
     }
 
     public setConnectionState(connected: boolean) {
+        if (connected) {
+            this.stateEvents.emit("connected");
+        } else {
+            this.stateEvents.emit("disconnected");
+        }
         if (!connected) {
             this.localProposals.forEach((deferral) => {
                 deferral.reject(new Error("Client got disconnected"));
@@ -331,6 +342,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     }
 
     public dispose(): void {
+        this.stateEvents.emit("disposed");
         this.localProposals.forEach((deferral) => {
             deferral.reject(new Error("QuorumProposals was disposed"));
         });
