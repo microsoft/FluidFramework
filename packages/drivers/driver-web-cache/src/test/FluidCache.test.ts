@@ -54,7 +54,7 @@ function setupDateMock(startMockTime: number) {
 // Gets a mock cache entry from an item key, all entries returned will be for the same document.
 function getMockCacheEntry(
     itemKey: string,
-    options?: { docId: string },
+    options?: { docId: string; },
 ): ICacheEntry {
     return {
         file: {
