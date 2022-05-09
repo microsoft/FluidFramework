@@ -1537,7 +1537,7 @@ export function intervalTest() {
             a = b;
             b = temp;
         }
-        arr.push(intervalIndex.addInterval(a, b, false, SharedString.IntervalType.Simple, { id: i }));
+        arr.push(intervalIndex.addInterval(a, b, SharedString.IntervalType.Simple, { id: i }));
     }
     let dup = 0;
     for (let i = 0; i < intCount; i++) {
