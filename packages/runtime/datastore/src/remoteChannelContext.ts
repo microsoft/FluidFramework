@@ -138,6 +138,12 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
+    public rollback(content: any, localOpMetadata: unknown) {
+        assert(this.isLoaded,"Remote channel must be loaded when rolling back op");
+
+        this.services.deltaConnection.rollback(content, localOpMetadata);
+    }
+
     /**
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
