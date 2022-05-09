@@ -30,7 +30,7 @@ class TestDataObject extends DataObject {
     }
 }
 
-describeNoCompat.only("Generate Summary Stats", (getTestObjectProvider) => {
+describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
