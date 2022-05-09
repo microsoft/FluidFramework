@@ -11,7 +11,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime";
 
 // eslint-disable-next-line @rushstack/no-new-null
-function setNavigator(navigator: Partial<Navigator & { deviceMemory?: number }> | undefined | null) {
+function setNavigator(navigator: Partial<Navigator & { deviceMemory?: number; }> | undefined | null) {
     global.navigator = navigator as Navigator;
 }
 

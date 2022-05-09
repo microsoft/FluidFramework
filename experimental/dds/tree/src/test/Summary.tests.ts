@@ -48,7 +48,7 @@ export function applyTestEdits(sharedTree: SharedTree): void {
 		sharedTree.applyEditInternal({ id: uuid.getNextEditId(), changes: internalChanges });
 	}
 
-	/**
+	/*
 	 * Build a tree that looks like the following:
 	 *
 	 *          ROOT

@@ -45,7 +45,7 @@ export interface IGitCache {
     blobs: git.IBlob[];
 
     // Reference mapping
-    refs: { [key: string]: string };
+    refs: { [key: string]: string; };
 
     // All trees contained in the commit (includes submodules)
     trees: git.ITree[];

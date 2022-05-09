@@ -47,19 +47,19 @@ interface IntervalCollectionSpec {
 }
 
 interface AddText extends ClientSpec {
-    type: "addText",
+    type: "addText";
     index: number;
     content: string;
 }
 
 interface RemoveRange extends ClientSpec, RangeSpec {
-    type: "removeRange"
+    type: "removeRange";
 }
 
 // For non-interval collection fuzzing, annotating text would also be useful.
 
 interface AddInterval extends ClientSpec, IntervalCollectionSpec, RangeSpec {
-    type: "addInterval"
+    type: "addInterval";
 }
 
 interface ChangeInterval extends ClientSpec, IntervalCollectionSpec, RangeSpec {
@@ -68,7 +68,7 @@ interface ChangeInterval extends ClientSpec, IntervalCollectionSpec, RangeSpec {
 }
 
 interface DeleteInterval extends ClientSpec, IntervalCollectionSpec {
-    type: "deleteInterval",
+    type: "deleteInterval";
     id: string;
 }
 
@@ -125,7 +125,7 @@ function* getUnscopedLabels(string: SharedString): Iterable<string> {
 
 function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Generator<Operation, FuzzTestState> {
     const options = { ...defaultOptions, ...(optionsParam ?? {}) };
-    type ClientOpState = FuzzTestState & { sharedString: SharedString };
+    type ClientOpState = FuzzTestState & { sharedString: SharedString; };
 
     function isNonEmpty(collection: IntervalCollection<SequenceInterval>): boolean {
         for (const _ of collection) {
@@ -160,7 +160,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return random.pick(nonEmptyLabels);
     }
 
-    function interval(state: ClientOpState): { collectionName: string; id: string } {
+    function interval(state: ClientOpState): { collectionName: string; id: string; } {
         const collectionName = nonEmptyIntervalCollection(state);
         const intervals = Array.from(state.sharedString.getIntervalCollection(collectionName));
         return {
