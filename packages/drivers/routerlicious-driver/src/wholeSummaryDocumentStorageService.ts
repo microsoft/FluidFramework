@@ -6,7 +6,6 @@
 import type { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     assert,
-    IsoBuffer,
     stringToBuffer,
     Uint8ArrayToString,
 } from "@fluidframework/common-utils";
@@ -16,7 +15,7 @@ import {
     IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
 import {
-    SummaryTreeAssembler,
+    convertSnapshotAndBlobsToSummaryTree,
  } from "@fluidframework/driver-utils";
 import {
     ICreateBlobResponse,
@@ -167,7 +166,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         );
 
         const { blobs, snapshotTree } = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary, "");
-        return this.convertSnapshotAndBlobsToSummaryTree(snapshotTree, blobs);
+        return convertSnapshotAndBlobsToSummaryTree(snapshotTree, blobs);
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
@@ -252,25 +251,5 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             blobCachePutPs.push(this.blobCache.put(id, value));
         });
         await Promise.all(blobCachePutPs);
-    }
-
-    private convertSnapshotAndBlobsToSummaryTree(
-        snapshot: ISnapshotTree,
-        blobs: Map<string, ArrayBuffer>,
-    ): ISummaryTree {
-        const builder = new SummaryTreeAssembler();
-        for (const [path, id] of Object.entries(snapshot.blobs)) {
-            const blob = blobs.get(id);
-            assert(blob !== undefined, "Cannot find blob for a given id");
-            builder.addBlob(path, IsoBuffer.from(blob).toString("utf-8"));
-        }
-        for (const [key, tree] of Object.entries(snapshot.trees)) {
-            const subtree = this.convertSnapshotAndBlobsToSummaryTree(tree, blobs);
-            builder.addTree(key, subtree);
-        }
-        return {
-            ...builder.summary,
-            unreferenced: snapshot.unreferenced,
-        };
     }
 }

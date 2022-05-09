@@ -115,6 +115,9 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
 // @public
+export function convertSnapshotAndBlobsToSummaryTree(snapshot: ISnapshotTree, blobs: Map<string, ArrayBuffer>): ISummaryTree;
+
+// @public
 export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree;
 
 // @public (undocumented)
@@ -223,6 +226,11 @@ export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolve
 
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
+
+// @public
+export interface ISummaryTreeAssemblerProps {
+    unreferenced?: true;
+}
 
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
@@ -376,6 +384,7 @@ export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamRe
 
 // @public
 export class SummaryTreeAssembler {
+    constructor(props?: ISummaryTreeAssemblerProps | undefined);
     addAttachment(id: string): void;
     addBlob(key: string, content: string | Uint8Array): void;
     addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;

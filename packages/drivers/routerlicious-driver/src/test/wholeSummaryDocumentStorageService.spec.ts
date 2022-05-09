@@ -8,6 +8,7 @@ import assert from "assert";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     SummaryType,
+    ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import {
     IWholeFlatSummary,
@@ -16,6 +17,7 @@ import {
 } from "@fluidframework/server-services-client";
 import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService";
 
+/* Blobs contained within source summary tree returned by git manager */
 const summaryBlobs: IWholeFlatSummaryBlob[] = [
     {
         id: "bARCTBK4PQiMLVK2gR5hPRkId",
@@ -37,6 +39,7 @@ const summaryBlobs: IWholeFlatSummaryBlob[] = [
     },
 ];
 
+/* Tree entries contained within source summary tree returned by git manager */
 const treeEntries: IWholeFlatSummaryTreeEntry[] = [
     {
         path: ".protocol",
@@ -71,6 +74,7 @@ const treeEntries: IWholeFlatSummaryTreeEntry[] = [
     },
 ];
 
+/* Source summary returned by git manager */
 const flatSummary: IWholeFlatSummary = {
     id: "bBwAAAAAHAAAA",
     trees: [
@@ -83,7 +87,8 @@ const flatSummary: IWholeFlatSummary = {
     blobs: summaryBlobs,
 };
 
-const iSummary = {
+/* Expoected summary to be returned by downloadSummary */
+const expectedSummary: ISummaryTree = {
     tree: {
         ".app": {
             tree: {
@@ -126,7 +131,7 @@ const iSummary = {
 };
 
 class MockGitManager {
-    public async getSummary(sha: string): Promise<any> {
+    public async getSummary(sha: string): Promise<IWholeFlatSummary> {
         return flatSummary;
     }
 }
@@ -144,6 +149,6 @@ describe("WholeSummaryDocumentStorageService", () => {
             handleType: SummaryType.Tree,
             handle: "testHandle",
         });
-        assert.deepStrictEqual(res, iSummary);
+        assert.deepStrictEqual(res, expectedSummary, "Unexpected summary returned.");
     });
 });
