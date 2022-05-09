@@ -10,9 +10,9 @@ import {
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 
-// The name of the metadata blob added to the root of the container runtime.
+/** The name of the metadata blob added to the root of the container runtime. */
 const metadataBlobName = ".metadata";
-// The prefix that all GC blob names start with.
+/** The prefix that all GC blob names start with. */
 export const gcBlobPrefix = "__gc";
 
 export interface ISnapshotNormalizerConfig {
@@ -95,14 +95,19 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
     }
 
     /**
-      * The metadata blob has "summaryNumber" that tells which summary this is for a container. This can be different in
-      * summaries of two clients even if they are generated at the same sequence number. For instance, at seq# 1000, if
-      * one client has summarized 10 times and other has summarizer 15 times, summaryNumber will be different for them.
-      * So, update "summaryNumber" to 0 for purposes of comparing snapshots.
+      * The metadata blob has "summaryNumber" or "summaryCount" that tells which summary this is for a container. It can
+      * be different in summaries of two clients even if they are generated at the same sequence#. For instance, at seq#
+      * 1000, if one client has summarized 10 times and other has summarizer 15 times, summaryNumber will be different
+      * for them. So, update "summaryNumber" to 0 for purposes of comparing snapshots.
       */
     if (blobName === metadataBlobName) {
         const metadata = JSON.parse(content);
-        metadata.summaryNumber = 0;
+        if (metadata.summaryNumber !== undefined) {
+            metadata.summaryNumber = 0;
+        }
+        if (metadata.summaryCount !== undefined) {
+            metadata.summaryCount = 0;
+        }
         content = JSON.stringify(metadata);
     }
 

@@ -1014,8 +1014,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
-    // The summary number of the next summary that will be generated for this container. This is incremented every time
-    // a summary is generated.
+    /**
+     * The summary number of the next summary that will be generated for this container. This is incremented every time
+     * a summary is generated.
+     */
     private nextSummaryNumber: number;
     private readonly opTracker: OpTracker;
 
@@ -1285,8 +1287,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
                 createContainerTimestamp: metadata?.createContainerTimestamp,
             };
-            // For older documents that did not have the summaryCount / summaryNumber added to their metadata, this
-            // will be initialized to 0.
+            // back-compat 0.59.3000 - Older document may either write summaryCount or not write it at all. If it does
+            // not write it, initialize summaryNumber to 0.
             loadSummaryNumber = metadata?.summaryNumber ?? metadata?.summaryCount ?? 0;
         } else {
             this.createContainerMetadata = {
@@ -1453,6 +1455,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
         const metadata: IContainerRuntimeMetadata = {
             ...this.createContainerMetadata,
+            // back-compat 0.59.3000: This is renamed to summaryNumber. Can be removed when 0.59.3000 saturates.
+            summaryCount: this.nextSummaryNumber,
             // Increment the summary number for the next summary that will be generated.
             summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
@@ -2260,11 +2264,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
+        // The summary number for this summary. This will be updated during the summary process, so get it now and
+        // use it for all events logged during this summary.
+        const summaryNumber = this.nextSummaryNumber;
         const summaryNumberLogger = ChildLogger.create(
             summaryLogger,
             undefined,
             {
-                all: { summaryNumber: this.nextSummaryNumber },
+                all: { summaryNumber },
             },
         );
 
@@ -2390,6 +2397,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
                 opsSizesSinceLastSummary: this.opTracker.opsSizeAccumulator,
                 nonSystemOpsSinceLastSummary: this.opTracker.nonSystemOpCount,
+                summaryNumber,
                 ...partialStats,
             };
             const generateSummaryData = {

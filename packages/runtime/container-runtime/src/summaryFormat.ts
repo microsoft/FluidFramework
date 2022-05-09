@@ -83,7 +83,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, \> 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
-    /** Represents the summary number for a document. Incremented on summary throughout a document's lifetime. */
+    /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
     readonly summaryNumber?: number;
     /** If this is present, the session for this container will expire after this time and the container will close */
     readonly sessionExpiryTimeoutMs?: number;
