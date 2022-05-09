@@ -1449,10 +1449,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return dataStoreChannel;
     }
 
-    private formMetadata(): IContainerRuntimeMetadata {
-        return {
+    /** Adds the container's metadata to the given summary tree. */
+    private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
+        const metadata: IContainerRuntimeMetadata = {
             ...this.createContainerMetadata,
-            // Increment the summary number for the next summary that will be generated,
+            // Increment the summary number for the next summary that will be generated.
             summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
@@ -1462,10 +1463,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.messageAtLastSummary,
             sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
+        addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
 
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
-        addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
+        this.addMetadataToSummary(summaryTree);
+
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
@@ -1481,11 +1484,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
         }
 
-        const summary = this.blobManager.summarize();
+        const blobManagerSummary = this.blobManager.summarize();
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
         // and the blob manager can handle the tree not existing when loading
-        if (Object.keys(summary.summary.tree).length > 0) {
-            addTreeToSummary(summaryTree, blobsTreeName, summary);
+        if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
+            addTreeToSummary(summaryTree, blobsTreeName, blobManagerSummary);
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
