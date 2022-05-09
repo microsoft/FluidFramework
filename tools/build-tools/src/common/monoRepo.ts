@@ -10,6 +10,7 @@ import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync } fr
 export enum MonoRepoKind {
     Client,
     Server,
+    Azure,
 };
 
 export class MonoRepo {

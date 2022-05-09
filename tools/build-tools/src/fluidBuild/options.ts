@@ -58,6 +58,7 @@ export const options: FastBuildOptions = {
     fix: false,
     all: false,
     server: false,
+    azure: false,
     services: false,
     worker: false,
     workerThreads: false,
@@ -83,6 +84,7 @@ Options:
      --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
   -s --script <name>  npm script to execute (default:build)
      --server         Operate on the server monorepo
+     --azure          Operate on the azure monorepo
      --symlink        Fix symlink between packages within monorepo (isolate mode)
      --symlink:full   Fix symlink between packages across monorepo (full mode)
      --uninstall      Clean all node_modules
@@ -208,6 +210,11 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--all") {
             options.all = true;
+            continue;
+        }
+
+        if (arg === "--azure") {
+            options.azure = true;
             continue;
         }
 

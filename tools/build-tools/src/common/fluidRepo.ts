@@ -24,10 +24,22 @@ export interface IFluidRepoPackage {
 export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
-    public readonly clientMonoRepo: MonoRepo;
-    public readonly serverMonoRepo?: MonoRepo;
+    public readonly monoRepos = new Map<MonoRepoKind, MonoRepo>();
 
     public readonly packages: Packages;
+
+    public get clientMonoRepo(): MonoRepo {
+        return this.monoRepos.get(MonoRepoKind.Client)!;
+    }
+
+    public get serverMonoRepo(): MonoRepo | undefined {
+        return this.monoRepos.get(MonoRepoKind.Server);
+    }
+
+    public get azureMonoRepo(): MonoRepo | undefined {
+        return this.monoRepos.get(MonoRepoKind.Azure)!;
+    }
+
     constructor(public readonly resolvedRoot: string, services: boolean) {
         const packageManifest = getPackageManifest(resolvedRoot);
 
@@ -47,17 +59,23 @@ export class FluidRepo {
         }
 
         const loadedPackages: Package[] = [];
-        let clientMonoRepo: MonoRepo | undefined;
         for (const group in packageManifest.repoPackages) {
             const item = normalizeEntry(packageManifest.repoPackages[group]);
             if (group === "client") {
                 const { directory, ignoredDirs } = item as IFluidRepoPackage;
-                clientMonoRepo = new MonoRepo(MonoRepoKind.Client, directory, ignoredDirs);
-                loadedPackages.push(...clientMonoRepo.packages);
+                const monorepo = new MonoRepo(MonoRepoKind.Client, directory, ignoredDirs);
+                this.monoRepos.set(MonoRepoKind.Client, monorepo);
+                loadedPackages.push(...monorepo.packages);
             } else if (group === "server") {
                 const { directory, ignoredDirs } = item as IFluidRepoPackage;
-                this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, directory, ignoredDirs);
-                loadedPackages.push(...this.serverMonoRepo.packages);
+                const monorepo = new MonoRepo(MonoRepoKind.Server, directory, ignoredDirs);
+                this.monoRepos.set(MonoRepoKind.Server, monorepo);
+                loadedPackages.push(...monorepo.packages);
+            } else if (group === "azure") {
+                const { directory, ignoredDirs } = item as IFluidRepoPackage;
+                const monorepo = new MonoRepo(MonoRepoKind.Azure, directory, ignoredDirs);
+                this.monoRepos.set(MonoRepoKind.Azure, monorepo);
+                loadedPackages.push(...monorepo.packages);
             } else if (group !== "services" || services) {
                 if (Array.isArray(item)) {
                     for (const i of item) {
@@ -69,10 +87,9 @@ export class FluidRepo {
             }
         }
 
-        if (!clientMonoRepo) {
+        if (!this.monoRepos.has(MonoRepoKind.Client)) {
             throw new Error("client entry does not exist in package.json")
         }
-        this.clientMonoRepo = clientMonoRepo;
         this.packages = new Packages(loadedPackages);
     }
 

@@ -131,7 +131,7 @@
       "protocol-def": "common/lib/protocol-definitions",
       "driver-def": "common/lib/driver-definitions",
       "container-def": "common/lib/container-definitions",
-      "azure": "azure/packages",
+      "azure": "azure",
       "server": "server/routerlicious",
       "client": {
         "directory": "",
