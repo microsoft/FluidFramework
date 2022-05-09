@@ -25,7 +25,7 @@ import { ISnapshotTreeWithBlobContents } from "./utils";
  * container attach state.
  */
 export class ContainerStorageAdapter implements IDocumentStorageService {
-    private readonly blobContents: { [id: string]: ArrayBufferLike } = {};
+    private readonly blobContents: { [id: string]: ArrayBufferLike; } = {};
     constructor(private readonly storageGetter: () => IDocumentStorageService) {}
 
     public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {

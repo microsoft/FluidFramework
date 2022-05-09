@@ -64,8 +64,8 @@ interface LoginTenants {
 
 /**
  * Get from the env a set of credential to use from a single tenant
- * @param tenantIndex interger to choose the tenant from an array
- * @param requestedUserName specific user name to filter to
+ * @param tenantIndex - interger to choose the tenant from an array
+ * @param requestedUserName - specific user name to filter to
  */
 function getCredentials(tenantIndex: number, requestedUserName?: string) {
     const creds: { [user: string]: string; } = {};
