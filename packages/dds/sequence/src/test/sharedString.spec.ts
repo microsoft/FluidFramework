@@ -395,6 +395,77 @@ describe("SharedString", () => {
             ]);
         });
 
+        // TODO:ransomr enable test once sliding in markRangeRemoved is fixed
+        it.skip("can slide intervals to segment not referenced by remove", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.insertText(2, "X");
+            assert.strictEqual(sharedString.getText(), "ABXCD");
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+
+            sharedString2.removeRange(1, 2);
+            assert.strictEqual(sharedString2.getText(), "ACD");
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "AXCD");
+            assert.strictEqual(sharedString2.getText(), "AXCD");
+
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 2 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 2 },
+            ]);
+        });
+
+        // TODO:ransomr test breaks until we fix remove to not slide un-acked positions
+        it.skip("can slide intervals on create ack", () => {
+            // Create and connect a third SharedString.
+            const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
+            const containerRuntime3 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
+            const services3 = {
+                deltaConnection: containerRuntime3.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+
+            const sharedString3 = new SharedString(
+                dataStoreRuntime3, "shared-string-3", SharedStringFactory.Attributes);
+            sharedString3.initializeLocal();
+            sharedString3.connect(services3);
+
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+            const collection3 = sharedString3.getIntervalCollection("test");
+
+            sharedString.removeRange(1, 2);
+            assert.strictEqual(sharedString.getText(), "ACD");
+
+            sharedString2.insertText(2, "X");
+            assert.strictEqual(sharedString2.getText(), "ABXCD");
+
+            collection3.add(1, 3, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "AXCD");
+            assert.strictEqual(sharedString2.getText(), "AXCD");
+            assert.strictEqual(sharedString3.getText(), "AXCD");
+
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 3 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 3 },
+            ]);
+            assertIntervals(sharedString3, collection3, [
+                { start: 1, end: 3 },
+            ]);
+        });
+
         it("can slide intervals on create before remove", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");
