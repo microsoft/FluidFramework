@@ -34,7 +34,7 @@ export interface ISocketIoRedisOptions {
     // when set, enables per room health checks. messages are periodically published
     healthChecks?: {
         // how often to health check each room in milliseconds
-        interval: number,
+        interval: number;
 
         // how long to wait for a health check to complete before failing it in milliseconds
         timeout: number;

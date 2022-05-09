@@ -30,9 +30,9 @@ const fiftyThirdBit = 2 ** 52;
 
 /**
  * Calculates the numeric delta between a and b (i.e. a - b).
- * @param a an uuid
- * @param b an other uuid
- * @param maxDelta the maximum integer delta (inclusive) to tolerate.
+ * @param a - an uuid
+ * @param b - an other uuid
+ * @param maxDelta - the maximum integer delta (inclusive) to tolerate.
  * @returns undefined if the delta is negative or greater than `maxDelta`
  */
 export function getPositiveDelta(a: NumericUuid, b: NumericUuid, maxDelta: number): number | undefined {
@@ -97,7 +97,7 @@ function padToLengthWithZeros(str: string, count: number): string {
 }
 
 /**
- * @param offset an optional offset to increment the returned StableId
+ * @param offset - an optional offset to increment the returned StableId
  * @returns the string representation of a `NumericUuid`.
  */
 export function stableIdFromNumericUuid(uuid: NumericUuid, offset = 0): StableId {
@@ -111,7 +111,7 @@ export function stableIdFromNumericUuid(uuid: NumericUuid, offset = 0): StableId
 }
 
 /**
- * @param stableId a minimal uuid string
+ * @param stableId - a minimal uuid string
  * @returns a numeric representation of `stableId`.
  */
 export function numericUuidFromStableId(stableId: StableId): NumericUuid {
@@ -144,7 +144,7 @@ const maxUpperNumber = 2 ** 48 - 1;
 
 /**
  * Increments the uuid. `amount` must be a positive integer.
- * @returns the result of incrementing the uuid by `amount`.`
+ * @returns the result of incrementing the uuid by `amount`.
  */
 export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
 	/*
@@ -266,9 +266,9 @@ namespace ChunkMath {
 	}
 
 	/**
-	 * Returns the number representation of the given bits corresponding to the variant chunk. The value is derived by parsing all bits
-	 * except for reserved bits (i.e. the variant bits).
-	 * @param variantChunkBits
+	 * Returns the number representation of the given bits corresponding to the variant chunk. The value is derived by
+	 * parsing all bits except for reserved bits (i.e. the variant bits).
+	 * @param variantChunk - the variantChunk
 	 */
 	export function getNumericValue(variantChunk: string): number {
 		const variantChunkBits = Number.parseInt(variantChunk, 16);

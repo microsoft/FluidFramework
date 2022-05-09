@@ -154,7 +154,7 @@ export interface IGarbageCollector {
     readonly writeDataAtRoot: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
-        options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean },
+        options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean; },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(): ISummaryTreeWithStats | undefined;
@@ -524,7 +524,7 @@ export class GarbageCollector implements IGarbageCollector {
                 return;
             }
 
-            const gcNodes: { [ id: string ]: string[] } = {};
+            const gcNodes: { [ id: string ]: string[]; } = {};
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 if (nodeData.unreferencedTimestampMs !== undefined) {
                     this.unreferencedNodesState.set(
@@ -549,7 +549,7 @@ export class GarbageCollector implements IGarbageCollector {
                 return new Map();
             }
 
-            const gcNodes: { [ id: string ]: string[] } = {};
+            const gcNodes: { [ id: string ]: string[]; } = {};
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
             }
