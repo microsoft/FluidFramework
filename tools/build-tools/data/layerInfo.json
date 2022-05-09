@@ -231,7 +231,7 @@
             },
             "AzureClient": {
                 "dirs": [
-                    "azure/packages/"
+                    "azure/"
                 ],
                 "deps": [
                     "Container-Definitions",
