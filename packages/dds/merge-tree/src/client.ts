@@ -93,9 +93,6 @@ export class Client {
     private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
     private readonly shortClientIdMap: string[] = [];
     private readonly pendingConsensus = new Map<string, IConsensusInfo>();
-    // TODO:ransomr does pendingReferences belong here or in mergeTree?
-    // TODO:ransomr when does this need to be cleared? Or is there a better way to store this?
-    private readonly pendingReferences: LocalReference[] = [];
 
     constructor(
         // Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
@@ -1014,8 +1011,8 @@ export class Client {
         return this.mergeTree.getContainingSegment<T>(pos, refSeq, clientId);
     }
 
-    createSlideOnRemoveReference(refType: ReferenceType, pos: number, op: ISequencedDocumentMessage):
-        LocalReference | undefined {
+    createSlideOnRemoveReference(refType: ReferenceType, pos: number, pending: boolean, op?: ISequencedDocumentMessage):
+        ReferencePosition {
         // TODO:ransomr should this assert, throw, or something else if refType is invalid?
         // eslint-disable-next-line no-bitwise
         assert((refType & ReferenceType.SlideOnRemove) > 0, "Reference type must be SlideOnRemove");
@@ -1023,11 +1020,12 @@ export class Client {
         const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(pos, refSeq, clientId);
         if (segoff.segment) {
             const lref = new LocalReference(this, segoff.segment, segoff.offset, refType);
-            if (refType !== ReferenceType.Transient) {
+            lref.pending = pending;
+            // eslint-disable-next-line no-bitwise
+            if ((refType & ReferenceType.Transient) === 0) {
                 this.addLocalReference(lref);
-                if (op === undefined) {
-                    this.pendingReferences.push(lref);
-                }
+            } else {
+                assert(!pending, "Transient reference can not be pending");
             }
             return lref;
         }
@@ -1035,19 +1033,10 @@ export class Client {
         assert(false, "No segment for SlideOnRemove reference");
     }
 
-    // TODO:ransomr using the num references is fragile - want to find another way to do it
-    // Originally I planned to use the local sequence for this, but clientSequence isn't set
-    // on the op received from the server - is that expected? A limitation of the test mocks?
-    // Another option would be to map from an id to a pending reference. The id could be stored
-    // in the LocalOpMetadata for the interval command, except the current implementation as
-    // of the IntervalCollection as a ValueType doesn't support LocalOpMetadata.
-    ackCreateSlideOnRemoveReferences(numReferences: number): void {
-        assert(numReferences <= this.pendingReferences.length,
-            "ackCreateSlideOnRemoveReferences requires created references");
-        for (let i = 0; i < numReferences; ++i) {
-            this.mergeTree.slideReference(this.pendingReferences[i]);
-        }
-        this.pendingReferences.splice(0, numReferences);
+    ackCreateSlideOnRemoveReference(reference: ReferencePosition): void {
+        assert(reference instanceof LocalReference, "ackCreateSlideOnRemoveReference must be called on LocalReference");
+        this.mergeTree.slideReference(reference);
+        reference.pending = false;
     }
 
     getPropertiesAtPosition(pos: number) {

@@ -65,11 +65,9 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 // @public (undocumented)
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
-    ackCreate(client: Client, op: ISequencedDocumentMessage): void;
-    // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
+    create(label: string, start: number, end: number, client: Client, pending: boolean, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
 }
 
 // @public (undocumented)

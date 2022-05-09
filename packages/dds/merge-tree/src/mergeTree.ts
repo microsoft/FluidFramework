@@ -1433,6 +1433,7 @@ export class MergeTree {
         return slideToSegment;
     }
 
+    // @internal - this method should only be called by client
     public getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number) {
         const segoff = this.getContainingSegment(pos, refSeq, clientId);
         if (segoff.segment && segoff.segment.removedSeq !== undefined) {
@@ -1443,6 +1444,7 @@ export class MergeTree {
     }
 
     // TODO:ransomr modify markRangeRemoved to use this method for sliding
+    // @internal - this method should only be called by client
     public slideReference(ref: LocalReference) {
         const segment = ref.getSegment();
         assert(!!segment, "slideReference requires a segment");

@@ -133,7 +133,7 @@
         "forwardCompat": false,
         "backCompat": false
       },
-      "InterfaceDeclaration_IIntervalHelpers": {
+      "ClassDeclaration_SequenceInterval": {
         "forwardCompat": false
       }
     }

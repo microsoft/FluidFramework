@@ -97,7 +97,7 @@ export class Client {
     // (undocumented)
     accumWindowTime: number;
     // (undocumented)
-    ackCreateSlideOnRemoveReferences(numReferences: number): void;
+    ackCreateSlideOnRemoveReference(reference: ReferencePosition): void;
     // (undocumented)
     addLocalReference(lref: LocalReference): void;
     // (undocumented)
@@ -116,7 +116,7 @@ export class Client {
     // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)
-    createSlideOnRemoveReference(refType: ReferenceType, pos: number, op: ISequencedDocumentMessage): LocalReference | undefined;
+    createSlideOnRemoveReference(refType: ReferenceType, pos: number, pending: boolean, op?: ISequencedDocumentMessage): ReferencePosition;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
     protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -833,6 +833,8 @@ export class LocalReference implements ReferencePosition {
     offset: number;
     // @deprecated (undocumented)
     pairedRef?: LocalReference;
+    // (undocumented)
+    pending: boolean;
     // (undocumented)
     properties: PropertySet | undefined;
     // (undocumented)

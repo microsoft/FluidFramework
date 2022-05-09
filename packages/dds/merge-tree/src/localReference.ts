@@ -41,6 +41,8 @@ import { minReferencePosition,
      */
     public segment: ISegment | undefined;
 
+    public pending: boolean = false;
+
     /**
      * @deprecated - use createReferencePosition
      */

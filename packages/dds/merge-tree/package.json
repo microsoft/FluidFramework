@@ -129,7 +129,8 @@
       "InterfaceDeclaration_RBNode": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_Client": {"forwardCompat": false},
       "ClassDeclaration_MergeTree": {"forwardCompat": false},
-      "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false}
+      "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false},
+      "ClassDeclaration_LocalReference": {"forwardCompat": false}
     }
   }
 }
