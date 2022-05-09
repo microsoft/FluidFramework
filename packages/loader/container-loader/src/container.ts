@@ -1747,7 +1747,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
         if (message.clientId === null) {
-            const innerContent = message.content as { content: any; type: string };
+            const innerContent = message.content as { content: any; type: string; };
             if (innerContent.type === MessageType.ClientJoin) {
                 const newClient = innerContent.content as ISignalClient;
                 this._audience.addMember(newClient.clientId, newClient.client);
@@ -1767,7 +1767,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
     private async fetchSnapshotTree(specifiedVersion: string | undefined):
-        Promise<{ snapshot?: ISnapshotTree; versionId?: string }> {
+        Promise<{ snapshot?: ISnapshotTree; versionId?: string; }> {
         const version = await this.getVersion(specifiedVersion ?? null);
 
         if (version === undefined && specifiedVersion !== undefined) {

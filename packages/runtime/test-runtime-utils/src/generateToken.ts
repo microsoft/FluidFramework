@@ -45,7 +45,7 @@ export function generateToken(
     const now = Math.round(Date.now() / 1000);
     const docId = documentId ?? "";
 
-    const claims: ITokenClaims & { jti: string } = {
+    const claims: ITokenClaims & { jti: string; } = {
         documentId: docId,
         scopes,
         tenantId,

@@ -195,8 +195,8 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
  * Directly used in JSON.stringify, direct result from JSON.parse.
  */
 export interface IDirectoryDataObject {
-    storage?: { [key: string]: ISerializableValue };
-    subdirectories?: { [subdirName: string]: IDirectoryDataObject };
+    storage?: { [key: string]: ISerializableValue; };
+    subdirectories?: { [subdirName: string]: IDirectoryDataObject; };
 }
 
 export interface IDirectoryNewStorageFormat {

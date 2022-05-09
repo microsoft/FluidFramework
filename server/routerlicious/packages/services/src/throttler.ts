@@ -42,7 +42,7 @@ export class Throttler implements IThrottler {
     /**
      * Increments operation count and calculates throttle status of given operation id.
      * Uses most recently calculated throttle status to determine current throttling, while updating in the background.
-     * @throws {ThrottlingError} if throttled
+     * @throws {@link ThrottlingError} if throttled
      */
     public incrementCount(id: string, weight: number = 1): void {
         this.updateCountDelta(id, weight);
