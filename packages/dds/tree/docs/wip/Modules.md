@@ -89,7 +89,7 @@ A service could run a Rebaser with a Tree State Tracker that output a stream of 
 
 Clients may or may not (depending on their `Rebaser` setup) be able to run with no actual copy of the tree in the DDS at all.
 
-TODO
+TODO: Enumerate some possible configurations and their motivations. Unify this with the list of use-cases below somehow.
 
 ## Use Cases
 
