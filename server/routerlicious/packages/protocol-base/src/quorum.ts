@@ -8,7 +8,7 @@ import { EventEmitter } from "events";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
-import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ICommittedProposal,
     IQuorum,
@@ -31,8 +31,7 @@ class PendingProposal implements ISequencedProposal {
         public sequenceNumber: number,
         public key: string,
         public value: any,
-        public deferred?: Deferred<void>) {
-    }
+    ) { }
 }
 
 /**
@@ -144,8 +143,6 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
 
     // Event emitter for changes to the environment that affect pending proposal promises.
     private readonly stateEvents = new EventEmitter();
-    // Locally generated proposals
-    private readonly localProposals = new Map<number, Deferred<void>>();
 
     /**
      * Cached snapshot state, to avoid unnecessary deep clones on repeated snapshot calls.
@@ -233,9 +230,57 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             throw new Error("Can't propose in disconnected state");
         }
 
-        const deferred = new Deferred<void>();
-        this.localProposals.set(clientSequenceNumber, deferred);
-        return deferred.promise;
+        return new Promise<void>((resolve, reject) => {
+            // The sequence number that our proposal went pending, which the msn must advance past.
+            // If undefined, then it's not sequenced yet.
+            let targetSequenceNumber: number | undefined;
+
+            // To resolve, a proposal goes through two phases:
+            // 1. Sequencing - waiting for the proposal to be ack'd, to learn the target msn value for approval.
+            // 2. Approval - waiting for the msn to advance past the target value.
+            const localProposalSequencedHandler = (sequencedCSN: number, sequenceNumber: number) => {
+                if (sequencedCSN === clientSequenceNumber) {
+                    targetSequenceNumber = sequenceNumber;
+                    this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
+                    this.stateEvents.off("disconnected", disconnectedHandler);
+                    this.stateEvents.on("msnChanged", msnChangedHandler);
+                }
+            };
+            const msnChangedHandler = (msn: number) => {
+                if (targetSequenceNumber !== undefined && msn >= targetSequenceNumber) {
+                    resolve();
+                    removeListeners();
+                }
+            };
+
+            // There are two error flows we consider:  disconnect and disposal.
+            // If we get disconnected before the proposal is sequenced, it has one of two possible futures:
+            // 1. We reconnect and see the proposal was sequenced in the meantime.  The promise resolves.
+            // 2. We reconnect and see the proposal was not sequenced in the meantime.  The promise rejects.
+            const disconnectedHandler = () => {
+                if (targetSequenceNumber === undefined) {
+                    this.stateEvents.once("connected", () => {
+                        reject(new Error("Client disconnected without successfully sending proposal"));
+                    });
+                }
+            };
+            // If the QuorumProposals is disposed of, we assume something catastrophic has happened
+            // All outstanding proposals are considered rejected.
+            const disposedHandler = () => {
+                reject(new Error("QuorumProposals was disposed"));
+                removeListeners();
+            };
+            // Convenience function to clean up our listeners.
+            const removeListeners = () => {
+                this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
+                this.stateEvents.off("msnChanged", msnChangedHandler);
+                this.stateEvents.off("disconnected", disconnectedHandler);
+                this.stateEvents.off("disposed", disposedHandler);
+            };
+            this.stateEvents.on("localProposalSequenced", localProposalSequencedHandler);
+            this.stateEvents.on("disconnected", disconnectedHandler);
+            this.stateEvents.on("disposed", disposedHandler);
+        });
     }
 
     /**
@@ -248,15 +293,11 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
         local: boolean,
         clientSequenceNumber: number) {
         assert(!this.proposals.has(sequenceNumber), 0x1d0 /* `!this.proposals.has(${sequenceNumber})` */);
-        assert(
-            !local || this.localProposals.has(clientSequenceNumber),
-            0x1d1 /* `!${local} || this.localProposals.has(${clientSequenceNumber})` */);
 
         const proposal = new PendingProposal(
             sequenceNumber,
             key,
             value,
-            local ? this.localProposals.get(clientSequenceNumber) : undefined,
         );
         this.proposals.set(sequenceNumber, proposal);
 
@@ -266,7 +307,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
         this.emit("addProposal", proposal);
 
         if (local) {
-            this.localProposals.delete(clientSequenceNumber);
+            this.stateEvents.emit("localProposalSequenced", clientSequenceNumber, sequenceNumber);
         }
 
         // clear the proposal cache
@@ -293,9 +334,6 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
         completed.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 
         for (const proposal of completed) {
-            // If it was a local proposal - resolve the promise
-            proposal.deferred?.resolve();
-
             const committedProposal: ICommittedProposal = {
                 approvalSequenceNumber: message.sequenceNumber,
                 // No longer used.  We still stamp a -1 for compat with older versions of the quorum.
@@ -333,21 +371,11 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
         } else {
             this.stateEvents.emit("disconnected");
         }
-        if (!connected) {
-            this.localProposals.forEach((deferral) => {
-                deferral.reject(new Error("Client got disconnected"));
-            });
-            this.localProposals.clear();
-        }
     }
 
     public dispose(): void {
-        this.stateEvents.emit("disposed");
-        this.localProposals.forEach((deferral) => {
-            deferral.reject(new Error("QuorumProposals was disposed"));
-        });
-        this.localProposals.clear();
         this.isDisposed = true;
+        this.stateEvents.emit("disposed");
     }
 }
 
