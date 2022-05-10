@@ -80,8 +80,6 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
     readonly message: ISummaryMetadataMessage | undefined;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
-    /** 0 to disable GC, \> 0 to enable GC, undefined defaults to disabled. */
-    readonly gcFeature?: GCVersion;
     /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
     readonly summaryNumber?: number;
     /**
@@ -89,8 +87,6 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
      * Counter of the last summary happened, increments every time we summarize
      */
     readonly summaryCount?: number;
-    /** If this is present, the session for this container will expire after this time and the container will close */
-    readonly sessionExpiryTimeoutMs?: number;
 }
 
 export interface ICreateContainerMetadata {
