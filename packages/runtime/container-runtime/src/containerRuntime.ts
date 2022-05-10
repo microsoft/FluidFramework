@@ -2188,18 +2188,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Returns the type of the GC node. Currently, there are nodes that belong to data store and nodes that belong
+     * Returns the type of the GC node. Currently, there are nodes that belong to data stores and nodes that belong
      * to the blob manager.
      */
     public getNodeType(nodePath: string): GCNodeType {
         if (this.isBlobPath(nodePath)) {
             return GCNodeType.Blob;
         }
-        if (this.dataStores.isDataStoreNode(nodePath)) {
-            return GCNodeType.DataStore;
-        }
-        // Root node ("/") and DDS nodes belong to "Other" node types.
-        return GCNodeType.Other;
+        return this.dataStores.getGCNodeType(nodePath) ?? GCNodeType.Other;
     }
 
     /**
@@ -2207,13 +2203,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * data store or an attachment blob.
      */
     public getGCNodePackagePath(nodePath: string): readonly string[] | undefined {
-        // If the node is a blob, return "_blobs" as the package path.
-        if (this.isBlobPath(nodePath)) {
-            return ["_blobs"];
+        switch (this.getNodeType(nodePath)) {
+            case GCNodeType.Blob:
+                return ["_blobs"];
+            case GCNodeType.DataStore:
+            case GCNodeType.SubDataStore:
+                return this.dataStores.getDataStorePackagePath(nodePath);
+            default:
+                assert(false, "Package path requested for unsupported node type.");
         }
-        const dataStorePkgPath = this.dataStores.getDataStorePackagePath(nodePath);
-        assert(dataStorePkgPath !== undefined, 0x2d6 /* "Package path requested for unknown node type." */);
-        return dataStorePkgPath;
     }
 
     /**
