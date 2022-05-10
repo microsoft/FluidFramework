@@ -29,22 +29,10 @@ describe('SessionIdNormalizer', () => {
 		);
 	});
 
-	it('fails when adding locals out of order', () => {
-		const normalizer = makeTestNormalizer();
-		normalizer.addLocalId(local(-1));
-		expect(() => normalizer.addLocalId(local(-1))).to.throw('Inserted key must be > all others in the map.');
-	});
-
 	it('fails when adding finals out of order', () => {
 		const normalizer = makeTestNormalizer();
-		normalizer.addLocalId(local(-1));
+		normalizer.addLocalId();
 		expect(() => normalizer.addFinalIds(final(1), final(0), undefined)).to.throw('Malformed normalization range.');
-	});
-
-	it('fails when adding non-contiguous locals', () => {
-		const normalizer = makeTestNormalizer();
-		normalizer.addLocalId(local(-1));
-		expect(() => normalizer.addLocalId(local(-3))).to.throw('Local ID space must be contiguous.');
 	});
 
 	it('fails when gaps in finals do not align with a local', () => {
@@ -57,66 +45,80 @@ describe('SessionIdNormalizer', () => {
 		 *                            ^should fail
 		 */
 		const normalizer = makeTestNormalizer();
-		normalizer.addLocalId(local(-1));
-		normalizer.addLocalId(local(-2));
+		normalizer.addLocalId(); // -1
+		normalizer.addLocalId(); // -2
 		normalizer.addFinalIds(final(0), final(2), undefined);
-		normalizer.addLocalId(local(-4));
+		normalizer.addLocalId();  // -4
 		normalizer.addFinalIds(final(5), final(5), undefined);
 		expect(() => normalizer.addFinalIds(final(9), final(9), undefined)).to.throw(
 			'Gaps in final space must align to a local.'
 		);
 	});
 
+    it('fails when attempting to normalize a local ID that was never registered', () => {
+		const normalizer = makeTestNormalizer();
+		expect(() => normalizer.getFinalId(-1 as LocalCompressedId)).to.throw('Local ID was never recorded with this normalizer.');
+        const local = normalizer.addLocalId();
+        const secondLocal = (local - 1) as LocalCompressedId;
+		expect(() => normalizer.getFinalId(secondLocal)).to.throw('Local ID was never recorded with this normalizer.');
+        normalizer.addFinalIds(final(0), final(5), undefined);
+		expect(() => normalizer.getFinalId(secondLocal)).to.throw('Local ID was never recorded with this normalizer.');
+	});
+
 	itWithNormalizer('can normalize IDs with only local forms', (normalizer) => {
-		normalizer.addLocalId(local(-1));
-		normalizer.addLocalId(local(-2));
-		normalizer.addLocalId(local(-3));
-		normalizer.addLocalId(local(-4));
+		const local1 = normalizer.addLocalId();
+		const local2 = normalizer.addLocalId();
+		const local3 = normalizer.addLocalId();
+		const local4 = normalizer.addLocalId();
+        expect(local1).to.equal(-1);
+        expect(local2).to.equal(-2);
+        expect(local3).to.equal(-3);
+        expect(local4).to.equal(-4);
 	});
 
 	itWithNormalizer('can normalize IDs with trailing finals', (normalizer) => {
-		normalizer.addLocalId(local(-1));
+		normalizer.addLocalId();
 		normalizer.addFinalIds(final(0), final(1), undefined);
 		normalizer.addFinalIds(final(2), final(3), undefined);
 		normalizer.addFinalIds(final(4), final(10), undefined);
 	});
 
 	itWithNormalizer('can normalize IDs with trailing locals', (normalizer) => {
-		normalizer.addLocalId(local(-1));
+		normalizer.addLocalId();
 		normalizer.addFinalIds(final(0), final(1), undefined);
-		normalizer.addLocalId(local(-2));
-		normalizer.addLocalId(local(-3));
+		normalizer.addLocalId();
+		normalizer.addLocalId();
 	});
 
 	itWithNormalizer('can normalize IDs with a gap in final space', (normalizer) => {
-		normalizer.addLocalId(local(-1));
-		normalizer.addLocalId(local(-2));
-		normalizer.addLocalId(local(-3));
+		normalizer.addLocalId();
+		normalizer.addLocalId();
+		normalizer.addLocalId();
 		normalizer.addFinalIds(final(0), final(1), undefined);
 		normalizer.addFinalIds(final(10), final(11), undefined);
 	});
 
 	itWithNormalizer('can normalize IDs with and without corresponding local forms', (normalizer) => {
-		normalizer.addLocalId(local(-1));
-		normalizer.addLocalId(local(-2));
-		normalizer.addLocalId(local(-3));
+		normalizer.addLocalId(); // -1
+		normalizer.addLocalId(); // -2
+		normalizer.addLocalId(); // -3
 		normalizer.addFinalIds(final(0), final(3), dummy);
-		normalizer.addLocalId(local(-5));
-		normalizer.addLocalId(local(-6));
+		normalizer.addLocalId(); // -5
+		normalizer.addLocalId(); // -6
 		normalizer.addFinalIds(final(4), final(5), dummy);
-		normalizer.addLocalId(local(-7));
+		normalizer.addLocalId(); // -7
 		normalizer.addFinalIds(final(8), final(9), dummy);
-		normalizer.addLocalId(local(-9));
+		normalizer.addLocalId(); // -9
 		normalizer.addFinalIds(final(14), final(15), dummy);
-		normalizer.addLocalId(local(-11));
-		normalizer.addLocalId(local(-12));
+		normalizer.addLocalId(); // -11
+		normalizer.addLocalId(); // -12
 	});
 
 	itWithNormalizer('can get the last final ID', (normalizer) => {
-		normalizer.addLocalId(local(-1));
-		normalizer.addLocalId(local(-2));
-		normalizer.addLocalId(local(-3));
-		normalizer.addLocalId(local(-4));
+		normalizer.addLocalId(); // -1
+		normalizer.addLocalId(); // -2
+		normalizer.addLocalId(); // -3
+		normalizer.addLocalId(); // -4
 		expect(normalizer.getLastFinalId()).to.be.undefined;
 		normalizer.addFinalIds(final(0), final(1), undefined);
 		expect(normalizer.getLastFinalId()).to.equal(1);
@@ -248,14 +250,14 @@ function makeNormalizerProxy(
 				if (property === 'addLocalId') {
 					return new Proxy(target[property], {
 						apply: (func, thisArg, argumentsList) => {
-							const local: LocalCompressedId = argumentsList[0];
+							const local = Reflect.apply(func, thisArg, argumentsList);
 							if (locals.length > 0) {
 								for (let i = (locals[locals.length - 1] ?? fail()) - 1; i > local; i--) {
 									locals.push(undefined);
 								}
 							}
 							locals.push(local);
-							return Reflect.apply(func, thisArg, argumentsList);
+                            return local;
 						},
 					});
 				} else if (property === 'addFinalIds') {
@@ -279,11 +281,6 @@ function makeNormalizerProxy(
 type DummyRange = undefined;
 const dummy: DummyRange = undefined;
 
-function local(num: number): LocalCompressedId {
-	assert(num < 0);
-	return num as LocalCompressedId;
-}
-
 function final(num: number): FinalCompressedId {
 	assert(num >= 0);
 	return num as FinalCompressedId;
@@ -295,7 +292,6 @@ function makeTestNormalizer(): SessionIdNormalizer<DummyRange> {
 
 interface AddLocalId {
 	type: 'addLocalId';
-	id: LocalCompressedId;
 }
 
 interface AddFinalIds {
@@ -324,7 +320,7 @@ function makeOpGenerator(numOperations: number): Generator<Operation, FuzzTestSt
 			state.currentLocal = -locals.length - 1;
 		}
 		state.prevWasLocal = true;
-		return { type: 'addLocalId', id: local(state.currentLocal) };
+		return { type: 'addLocalId' };
 	}
 
 	function addFinalIdsGenerator(state: FuzzTestState): AddFinalIds {
@@ -340,7 +336,7 @@ function makeOpGenerator(numOperations: number): Generator<Operation, FuzzTestSt
 	}
 
 	return chain(
-		generatorFromArray([{ type: 'addLocalId', id: local(-1) }]),
+		generatorFromArray([{ type: 'addLocalId' }]),
 		take(
 			numOperations - 1,
 			createWeightedGenerator<Operation, FuzzTestState>([
@@ -373,8 +369,8 @@ function fuzzNormalizer(
 	performFuzzActions(
 		makeOpGenerator(numOperations),
 		{
-			addLocalId: (state, { id }) => {
-				state.normalizer.addLocalId(id);
+			addLocalId: (state) => {
+				state.normalizer.addLocalId();
 				return state;
 			},
 			addFinalIds: (state, { first, last }) => {
