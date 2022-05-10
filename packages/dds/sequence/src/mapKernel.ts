@@ -23,8 +23,6 @@ import {
     ISharedMapEvents,
 } from "./mapKernelInterfaces";
 
-// TODO: Handle stuff probably doesn't work. Should be removed if it's not tested explicitly.
-
 /**
  * Defines the means to process and submit a given op on a map.
  */
@@ -245,7 +243,7 @@ export class MapKernel<T> {
     }
 
     private createCore(key: string, local: boolean): ILocalValue<T> {
-        const localValue = this.localValueMaker.makeValueType(
+        const localValue: ILocalValue<T> = this.localValueMaker.makeValueType(
             this.type.name,
             this.makeMapValueOpEmitter(key),
             undefined,
@@ -413,7 +411,8 @@ export class MapKernel<T> {
             "act",
             {
                 process: (op: IMapValueTypeOperation, local, message, localOpMetadata) => {
-                    const localValue = (this.data.get(op.key) ?? this.createCore(op.key, local)) as ValueTypeLocalValue<T>;
+                    const localValue = (this.data.get(op.key) ??
+                        this.createCore(op.key, local)) as ValueTypeLocalValue<T>;
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
                     const translatedValue = parseHandles(
@@ -424,7 +423,10 @@ export class MapKernel<T> {
                     this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
                 },
                 submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
-                    this.submitMessage(op, { actLocalMetadata: localOpMetadata, lastProcessedSeq: this.lastProcessedSeq });
+                    this.submitMessage(
+                        op,
+                        { actLocalMetadata: localOpMetadata, lastProcessedSeq: this.lastProcessedSeq },
+                    );
                 },
                 getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
                     assert(false, 0x016 /* "apply stashed op not implemented for custom value type ops" */);

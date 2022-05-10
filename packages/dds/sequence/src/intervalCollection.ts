@@ -820,18 +820,14 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void);
 }
 
-// interface IntervalCollectionLocalOpMetadata {
-//     pendingMessageId: number;
-// }
-
 export class IntervalCollection<TInterval extends ISerializableInterval>
     extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     private savedSerializedIntervals?: ISerializedInterval[];
     private localCollection: LocalIntervalCollection<TInterval>;
     private onDeserialize: DeserializeCallback;
     private client: Client;
-    private pendingChangeStart: Map<string, ISerializedInterval[]>;
-    private pendingChangeEnd: Map<string, ISerializedInterval[]>;
+    private pendingChangesStart: Map<string, ISerializedInterval[]>;
+    private pendingChangesEnd: Map<string, ISerializedInterval[]>;
 
     public get attached(): boolean {
         return !!this.localCollection;
@@ -986,16 +982,16 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
     private addPendingChange(id: string, serializedInterval: ISerializedInterval) {
         if (serializedInterval.start !== undefined) {
-            if (!this.pendingChangeStart) {
-                this.pendingChangeStart = new Map<string, ISerializedInterval[]>();
+            if (!this.pendingChangesStart) {
+                this.pendingChangesStart = new Map<string, ISerializedInterval[]>();
             }
-            this.addPendingChangeHelper(id, this.pendingChangeStart, serializedInterval);
+            this.addPendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
         }
         if (serializedInterval.end !== undefined) {
-            if (!this.pendingChangeEnd) {
-                this.pendingChangeEnd = new Map<string, ISerializedInterval[]>();
+            if (!this.pendingChangesEnd) {
+                this.pendingChangesEnd = new Map<string, ISerializedInterval[]>();
             }
-            this.addPendingChangeHelper(id, this.pendingChangeEnd, serializedInterval);
+            this.addPendingChangeHelper(id, this.pendingChangesEnd, serializedInterval);
         }
     }
 
@@ -1016,10 +1012,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         // Change ops always have an ID.
         const id: string = serializedInterval.properties[reservedIntervalIdKey];
         if (serializedInterval.start !== undefined) {
-            this.removePendingChangeHelper(id, this.pendingChangeStart, serializedInterval);
+            this.removePendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
         }
         if (serializedInterval.end !== undefined) {
-            this.removePendingChangeHelper(id, this.pendingChangeEnd, serializedInterval);
+            this.removePendingChangeHelper(id, this.pendingChangesEnd, serializedInterval);
         }
     }
 
@@ -1042,12 +1038,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     private hasPendingChangeStart(id: string) {
-        const entries = this.pendingChangeStart?.get(id);
+        const entries = this.pendingChangesStart?.get(id);
         return entries && entries.length !== 0;
     }
 
     private hasPendingChangeEnd(id: string) {
-        const entries = this.pendingChangeEnd?.get(id);
+        const entries = this.pendingChangesEnd?.get(id);
         return entries && entries.length !== 0;
     }
 

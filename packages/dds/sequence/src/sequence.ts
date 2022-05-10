@@ -224,7 +224,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            new SequenceIntervalCollectionValueType()
+            new SequenceIntervalCollectionValueType(),
         );
     }
 

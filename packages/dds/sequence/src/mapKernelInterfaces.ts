@@ -75,7 +75,13 @@ export interface IValueOperation<T> {
      * @param localOpMetadata - any metadata submitted with this operation, if it was submitted locally.
      * @alpha
      */
-    process(value: T, params: any, local: boolean, message: ISequencedDocumentMessage | undefined, localOpMetadata: unknown | undefined);
+    process(
+        value: T,
+        params: any,
+        local: boolean,
+        message: ISequencedDocumentMessage | undefined,
+        localOpMetadata: unknown | undefined
+    );
 }
 
 /**
