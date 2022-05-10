@@ -44,7 +44,7 @@ import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap';
  * normalization between local and final space.
  */
 export class SessionIdNormalizer<TRangeObject> {
-    private nextLocalId: LocalCompressedId = -1 as LocalCompressedId;
+	private nextLocalId: LocalCompressedId = -1 as LocalCompressedId;
 	private readonly idRanges: AppendOnlyDoublySortedMap<
 		LocalCompressedId,
 		[lastLocal: LocalCompressedId, finalRanges: FinalRanges<TRangeObject> | undefined],
@@ -95,9 +95,9 @@ export class SessionIdNormalizer<TRangeObject> {
 		const localRange =
 			this.idRanges.getPairOrNextLower(localId) ?? fail('Local ID was never recorded with this normalizer.');
 		const [firstLocal, [lastLocal, finalRanges]] = localRange;
-        if (localId < lastLocal) {
-            fail('Local ID was never recorded with this normalizer.');
-        }
+		if (localId < lastLocal) {
+			fail('Local ID was never recorded with this normalizer.');
+		}
 		const finalRange = getPairOrNextLower(firstLocal, finalRanges, localId);
 		if (finalRange !== undefined) {
 			const [alignedLocal, [firstFinal, lastFinal, rangeObject]] = finalRange;
@@ -156,7 +156,7 @@ export class SessionIdNormalizer<TRangeObject> {
 			return finalId as SessionSpaceCompressedId;
 		}
 		return undefined;
-    }
+	}
 
 	private static makeFinalRangesMap<TRangeObject>(): FinalRangesMap<TRangeObject> {
 		return new AppendOnlyDoublySortedMap(
@@ -192,10 +192,10 @@ export class SessionIdNormalizer<TRangeObject> {
 	 * In this scenario, a call to this method would generate and return -5.
 	 */
 	public addLocalId(): LocalCompressedId {
-        const localId = this.nextLocalId-- as LocalCompressedId;
+		const localId = this.nextLocalId-- as LocalCompressedId;
 		const lastLocalRange = this.idRanges.last();
 		if (lastLocalRange !== undefined) {
-            const lastLocal = lastLocalRange[1][0];
+			const lastLocal = lastLocalRange[1][0];
 			if (localId === lastLocal - 1) {
 				// New local simply expands the last local range tracked
 				lastLocalRange[1][0] = localId;
@@ -203,21 +203,21 @@ export class SessionIdNormalizer<TRangeObject> {
 			}
 		}
 
-        if (this.expensiveAsserts) {
-            if (lastLocalRange === undefined) {
-                assert(localId === -1, 'Local ID space must start at -1.');
-            } else {
-                const [firstLocal, [_, finalRanges]] = lastLocalRange;
-                let finalDelta = 0;
-                for (const [_, [firstFinal, lastFinal]] of entries(firstLocal, finalRanges)) {
-                    finalDelta += lastFinal - firstFinal + 1;
-                }
-                assert(localId === firstLocal - finalDelta, 'Local ID space must be contiguous.');
-            }
-        }
+		if (this.expensiveAsserts) {
+			if (lastLocalRange === undefined) {
+				assert(localId === -1, 'Local ID space must start at -1.');
+			} else {
+				const [firstLocal, [_, finalRanges]] = lastLocalRange;
+				let finalDelta = 0;
+				for (const [_, [firstFinal, lastFinal]] of entries(firstLocal, finalRanges)) {
+					finalDelta += lastFinal - firstFinal + 1;
+				}
+				assert(localId === firstLocal - finalDelta, 'Local ID space must be contiguous.');
+			}
+		}
 
 		this.idRanges.append(localId, [localId, undefined]);
-        return localId;
+		return localId;
 	}
 
 	/**
@@ -246,10 +246,10 @@ export class SessionIdNormalizer<TRangeObject> {
 		const [firstLocal, finalRangesObj] =
 			this.idRanges.last() ?? fail('Final IDs must be added to an existing local range.');
 		const [lastLocal, finalRanges] = finalRangesObj;
-        let nextLocal: LocalCompressedId;
+		let nextLocal: LocalCompressedId;
 		if (finalRanges === undefined) {
 			finalRangesObj[1] = [firstFinal, lastFinal, rangeObject];
-            nextLocal = Math.min(this.nextLocalId, firstLocal - (lastFinal - firstFinal) - 1) as LocalCompressedId;
+			nextLocal = Math.min(this.nextLocalId, firstLocal - (lastFinal - firstFinal) - 1) as LocalCompressedId;
 		} else {
 			const isSingle = isSingleRange(finalRanges);
 			let lastFinalRange: FinalRange<TRangeObject>;
@@ -262,8 +262,11 @@ export class SessionIdNormalizer<TRangeObject> {
 			}
 
 			const [firstAlignedFinal, lastAlignedFinal] = lastFinalRange;
-            const lastAlignedLocal = firstAlignedLocal - (lastAlignedFinal - firstAlignedFinal);
-            nextLocal = Math.min(this.nextLocalId, lastAlignedLocal - (lastFinal - firstFinal) - 2) as LocalCompressedId;
+			const lastAlignedLocal = firstAlignedLocal - (lastAlignedFinal - firstAlignedFinal);
+			nextLocal = Math.min(
+				this.nextLocalId,
+				lastAlignedLocal - (lastFinal - firstFinal) - 2
+			) as LocalCompressedId;
 			if (firstFinal === lastAlignedFinal + 1) {
 				lastFinalRange[1] = lastFinal;
 			} else {
@@ -280,18 +283,18 @@ export class SessionIdNormalizer<TRangeObject> {
 				rangeMap.append(alignedLocal, [firstFinal, lastFinal, rangeObject]);
 				assert(alignedLocal >= lastLocal, 'Gaps in final space must align to a local.');
 			}
-            if (this.expensiveAsserts) {
-                this.idRanges.assertValid();
-            }
+			if (this.expensiveAsserts) {
+				this.idRanges.assertValid();
+			}
 		}
 
-        this.nextLocalId = nextLocal;
+		this.nextLocalId = nextLocal;
 	}
 
 	/**
 	 * Returns an enumerable of all session-space IDs known to this normalizer, in creation order.
 	 */
-    public *[Symbol.iterator](): IterableIterator<SessionSpaceCompressedId> {
+	public *[Symbol.iterator](): IterableIterator<SessionSpaceCompressedId> {
 		for (const [firstLocal, [lastLocal, finalRanges]] of this.idRanges.entries()) {
 			for (let i = firstLocal; i >= lastLocal; i--) {
 				yield i;
@@ -441,7 +444,7 @@ function getFirstRange<TRangeObject>(finalRanges: FinalRanges<TRangeObject>): Fi
 }
 
 function extractFirstFinalFromRange<TRangeObject>(finalRange: FinalRange<TRangeObject>): FinalCompressedId {
-    return finalRange[0];
+	return finalRange[0];
 }
 
 function getPairOrNextLowerByValue<TRangeObject>(

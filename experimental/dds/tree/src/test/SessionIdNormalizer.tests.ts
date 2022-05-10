@@ -48,20 +48,22 @@ describe('SessionIdNormalizer', () => {
 		normalizer.addLocalId(); // -1
 		normalizer.addLocalId(); // -2
 		normalizer.addFinalIds(final(0), final(2), undefined);
-		normalizer.addLocalId();  // -4
+		normalizer.addLocalId(); // -4
 		normalizer.addFinalIds(final(5), final(5), undefined);
 		expect(() => normalizer.addFinalIds(final(9), final(9), undefined)).to.throw(
 			'Gaps in final space must align to a local.'
 		);
 	});
 
-    it('fails when attempting to normalize a local ID that was never registered', () => {
+	it('fails when attempting to normalize a local ID that was never registered', () => {
 		const normalizer = makeTestNormalizer();
-		expect(() => normalizer.getFinalId(-1 as LocalCompressedId)).to.throw('Local ID was never recorded with this normalizer.');
-        const local = normalizer.addLocalId();
-        const secondLocal = (local - 1) as LocalCompressedId;
+		expect(() => normalizer.getFinalId(-1 as LocalCompressedId)).to.throw(
+			'Local ID was never recorded with this normalizer.'
+		);
+		const local = normalizer.addLocalId();
+		const secondLocal = (local - 1) as LocalCompressedId;
 		expect(() => normalizer.getFinalId(secondLocal)).to.throw('Local ID was never recorded with this normalizer.');
-        normalizer.addFinalIds(final(0), final(5), undefined);
+		normalizer.addFinalIds(final(0), final(5), undefined);
 		expect(() => normalizer.getFinalId(secondLocal)).to.throw('Local ID was never recorded with this normalizer.');
 	});
 
@@ -70,10 +72,10 @@ describe('SessionIdNormalizer', () => {
 		const local2 = normalizer.addLocalId();
 		const local3 = normalizer.addLocalId();
 		const local4 = normalizer.addLocalId();
-        expect(local1).to.equal(-1);
-        expect(local2).to.equal(-2);
-        expect(local3).to.equal(-3);
-        expect(local4).to.equal(-4);
+		expect(local1).to.equal(-1);
+		expect(local2).to.equal(-2);
+		expect(local3).to.equal(-3);
+		expect(local4).to.equal(-4);
 	});
 
 	itWithNormalizer('can normalize IDs with trailing finals', (normalizer) => {
@@ -257,7 +259,7 @@ function makeNormalizerProxy(
 								}
 							}
 							locals.push(local);
-                            return local;
+							return local;
 						},
 					});
 				} else if (property === 'addFinalIds') {

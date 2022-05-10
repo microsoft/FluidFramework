@@ -227,7 +227,7 @@ describe('AppendOnlyDoublySortedMap', () => {
 		});
 	});
 
-    it('validity assertion detects out-of-order keys', () => {
+	it('validity assertion detects out-of-order keys', () => {
 		const map = new AppendOnlyDoublySortedMap<[number], [number], number>(
 			(a, b) => compareFiniteNumbers(a[0], b[0]),
 			(value) => value[0],

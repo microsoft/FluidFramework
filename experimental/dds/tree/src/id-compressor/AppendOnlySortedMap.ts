@@ -204,18 +204,18 @@ export class AppendOnlySortedMap<K, V> {
 		return true;
 	}
 
-    /**
-     * Test-only expensive assertions to check the internal validity of the data structure.
-     */
-    public assertValid(): void {
-        let prev: readonly [K, unknown] | undefined;
-        for (const kv of this.entries()) {
-            if (prev !== undefined) {
-                assert(this.comparator(kv[0], prev[0]) > 0, 'Keys in map must be sorted.');
-            }
-            prev = kv;
-        }
-    }
+	/**
+	 * Test-only expensive assertions to check the internal validity of the data structure.
+	 */
+	public assertValid(): void {
+		let prev: readonly [K, unknown] | undefined;
+		for (const kv of this.entries()) {
+			if (prev !== undefined) {
+				assert(this.comparator(kv[0], prev[0]) > 0, 'Keys in map must be sorted.');
+			}
+			prev = kv;
+		}
+	}
 
 	/**
 	 * Queries a range of entries.
@@ -395,17 +395,20 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
 		return this.getPairOrNextHigherBy(searchValue, this.compareValues);
 	}
 
-    /**
-     * Test-only expensive assertions to check the internal validity of the data structure.
-     */
-    public assertValid(): void {
-        super.assertValid();
-        let prev: readonly [unknown, V] | undefined;
-        for (const kv of this.entries()) {
-            if (prev !== undefined) {
-                assert(this.valueComparator(this.extractSearchValue(kv[1]), this.extractSearchValue(prev[1])) > 0, 'Values in map must be sorted.');
-            }
-            prev = kv;
-        }
-    }
+	/**
+	 * Test-only expensive assertions to check the internal validity of the data structure.
+	 */
+	public assertValid(): void {
+		super.assertValid();
+		let prev: readonly [unknown, V] | undefined;
+		for (const kv of this.entries()) {
+			if (prev !== undefined) {
+				assert(
+					this.valueComparator(this.extractSearchValue(kv[1]), this.extractSearchValue(prev[1])) > 0,
+					'Values in map must be sorted.'
+				);
+			}
+			prev = kv;
+		}
+	}
 }
