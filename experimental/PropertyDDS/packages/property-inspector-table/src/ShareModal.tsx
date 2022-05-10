@@ -72,7 +72,7 @@ export interface IShareModalState {
   /**
    * A list of user ids with their permissions on this item.
    */
-  sharedWith: { [userId: string]: string[] };
+  sharedWith: { [userId: string]: string[]; };
   toolTipsIsOpen: {
     copy: boolean;
   };
@@ -91,7 +91,7 @@ export interface IShareOptions {
   /**
    * A list of user ids with their permissions on this item.
    */
-  sharedWith: { [userId: string]: string[] };
+  sharedWith: { [userId: string]: string[]; };
 }
 
 export interface IShareModalProps {

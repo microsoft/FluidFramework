@@ -59,7 +59,7 @@ export async function fetchSnapshot(
     fetchFullSnapshot: boolean,
     forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
-    snapshotDownloader: (url: string, fetchOptions: { [index: string]: any }) => Promise<IOdspResponse<unknown>>,
+    snapshotDownloader: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
@@ -366,16 +366,16 @@ async function fetchLatestSnapshotCore(
 }
 
 interface ISnapshotRequestAndResponseOptions {
-    odspSnapshotResponse: IOdspResponse<ISnapshotContents>,
-    requestUrl: string,
-    requestHeaders: { [index: string]: any },
+    odspSnapshotResponse: IOdspResponse<ISnapshotContents>;
+    requestUrl: string;
+    requestHeaders: { [index: string]: any; };
 }
 
 function getFormBodyAndHeaders(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
     snapshotOptions: ISnapshotOptions | undefined,
-    headers?: { [index: string]: string },
+    headers?: { [index: string]: string; },
 ) {
     const formBoundary = uuid();
     const formParams: string[] = [];
@@ -402,7 +402,7 @@ function getFormBodyAndHeaders(
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
     const postBody = formParams.join("\r\n");
-    const header: { [index: string]: any } = {
+    const header: { [index: string]: any; } = {
         "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
     };
     return { body: postBody, headers: header };

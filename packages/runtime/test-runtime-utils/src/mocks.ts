@@ -96,9 +96,9 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
 export interface IMockContainerRuntimePendingMessage {
-    content: any,
-    clientSequenceNumber: number,
-    localOpMetadata: unknown,
+    content: any;
+    clientSequenceNumber: number;
+    localOpMetadata: unknown;
 }
 
 /**
@@ -578,7 +578,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
  * Mock implementation of IChannelStorageService
  */
 export class MockObjectStorageService implements IChannelStorageService {
-    public constructor(private readonly contents: { [key: string]: string }) {
+    public constructor(private readonly contents: { [key: string]: string; }) {
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
@@ -602,7 +602,7 @@ export class MockObjectStorageService implements IChannelStorageService {
  */
 export class MockSharedObjectServices implements IChannelServices {
     public static createFromSummary(summaryTree: ISummaryTree) {
-        const contents: { [key: string]: string } = {};
+        const contents: { [key: string]: string; } = {};
         for (const [key, value] of Object.entries(summaryTree.tree)) {
             assert(value.type === SummaryType.Blob, "Unexpected summary type on mock createFromSummary");
             contents[key] = value.content as string;
@@ -613,7 +613,7 @@ export class MockSharedObjectServices implements IChannelServices {
     public deltaConnection: IDeltaConnection = new MockEmptyDeltaConnection();
     public objectStorage: MockObjectStorageService;
 
-    public constructor(contents: { [key: string]: string }) {
+    public constructor(contents: { [key: string]: string; }) {
         this.objectStorage = new MockObjectStorageService(contents);
     }
 }

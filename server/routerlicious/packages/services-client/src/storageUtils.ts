@@ -147,7 +147,7 @@ export function convertSummaryTreeToWholeSummaryTree(
     flatTree: IWholeFlatSummaryTree,
     treePrefixToRemove: string,
 ): ISnapshotTree {
-    const lookup: { [path: string]: ISnapshotTree } = {};
+    const lookup: { [path: string]: ISnapshotTree; } = {};
     // Root tree id will be used to determine which version was downloaded.
     const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
     lookup[""] = root;

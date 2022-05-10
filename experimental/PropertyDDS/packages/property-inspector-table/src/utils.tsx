@@ -55,7 +55,7 @@ interface IShowNextResultResult {
  */
 export const showNextResult = (
   data: IInspectorRow[], currentlyExpanded: IExpandedMap, allMatches: IInspectorSearchMatch[],
-  resultIndex: number, childToParentMap: { [key: string]: string }): IShowNextResultResult => {
+  resultIndex: number, childToParentMap: { [key: string]: string; }): IShowNextResultResult => {
   const desiredDataItem = allMatches[resultIndex];
   // sanity check
   if (!desiredDataItem) {
@@ -91,7 +91,7 @@ export const showNextResult = (
  */
 function findMatchingElementIndexInDataSet(data: IInspectorRow[], currentlyExpanded: IExpandedMap,
                                            matchingElement: IInspectorSearchMatch, rowCounter = 0):
-                                           { idx: number, found: boolean } {
+                                           { idx: number; found: boolean; } {
   for (const row of data) {
     if (row.id === matchingElement.rowId) {
       return { idx: rowCounter, found: true };
@@ -125,7 +125,7 @@ export interface IInspectorSearchState {
   levels?: ISearchLevelState[];
   matchesMap: IInspectorSearchMatchMap;
   scheduled?: number;
-  childToParentMap: { [key: string]: string };
+  childToParentMap: { [key: string]: string; };
 }
 
 export interface IInspectorSearchControls {
@@ -627,9 +627,11 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
       const { referencedPropertyParent, relativePathFromParent } =
         PropertyProxy.getParentOfReferencedProperty(collectionProperty as ReferenceArrayProperty, propertyId);
       if (referencedPropertyParent && relativePathFromParent) {
-        property = (referencedPropertyParent as ContainerProperty).get(relativePathFromParent)!;
+        // Introducing this intermediate variable improves type inference in some newer versions of TypeScript.
+        const baseProperty = (referencedPropertyParent as ContainerProperty).get(relativePathFromParent)!;
+        property = baseProperty;
         if (property) {
-          if (PropertyFactory.instanceOf(property as BaseProperty, "BaseProperty")) {
+          if (PropertyFactory.instanceOf(property, "BaseProperty")) {
             currentTypeid = getTypeid(property);
             currentContext = property.getContext();
           } else {
@@ -639,7 +641,9 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
       }
     } else if (isEnumProperty(collectionProperty.get(propertyId)!) && collectionProperty.getContext() === "map") {
       // TODO: Temporary fix as the full typeid of enum maps is currently wrong
-      property = (collectionProperty as MapProperty).get(propertyId)!;
+      // Introducing this intermediate variable improves type inference in some newer versions of TypeScript.
+      const baseProperty = (collectionProperty as MapProperty).get(propertyId)!;
+      property = baseProperty;
       currentTypeid = property.getFullTypeid();
       currentContext = property.getContext();
     }

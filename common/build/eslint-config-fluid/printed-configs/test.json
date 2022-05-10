@@ -22,6 +22,7 @@
         "import",
         "unicorn",
         "react",
+        "tsdoc",
         "promise",
         "@typescript-eslint",
         "@rushstack/security",
@@ -99,7 +100,18 @@
             "error"
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "off"
+            "error",
+            {
+                "multiline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "multilineDetection": "brackets",
+                "singleline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                }
+            }
         ],
         "@typescript-eslint/member-ordering": [
             "off"
@@ -842,6 +854,9 @@
         "space-infix-ops": [
             "off"
         ],
+        "space-unary-ops": [
+            "error"
+        ],
         "spaced-comment": [
             "error",
             "always",
@@ -853,6 +868,12 @@
                     ]
                 }
             }
+        ],
+        "switch-colon-spacing": [
+            "error"
+        ],
+        "tsdoc/syntax": [
+            "error"
         ],
         "unicorn/better-regex": [
             "error"
