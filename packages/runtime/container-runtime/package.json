@@ -117,6 +117,22 @@
   },
   "typeValidation": {
     "version": "0.59.3000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IGeneratedSummaryStats": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IGenerateSummaryTreeResult": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISubmitSummaryOpResult": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IUploadSummaryResult": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_SubmitSummaryResult": {
+        "forwardCompat": false
+      }
+    }
   }
 }
