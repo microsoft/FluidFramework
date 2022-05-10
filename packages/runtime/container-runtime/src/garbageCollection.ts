@@ -629,11 +629,11 @@ export class GarbageCollector implements IGarbageCollector {
                 ["/"],
                 logger,
             );
-            const gcStats = this.generateStatsAndLogEvents(gcResult);
+            const gcStats = this.generateStatsAndLogEvents(gcResult, logger);
 
             // Update the state since the last GC run. There can be nodes that were referenced between the last and
             // the current run. We need to identify than and update their unreferenced state if needed.
-            this.updateStateSinceLastRun(gcData);
+            this.updateStateSinceLastRun(gcData, logger);
 
             // Update the current state of the system based on the GC run.
             const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
@@ -850,7 +850,7 @@ export class GarbageCollector implements IGarbageCollector {
      * This function identifies nodes that were referenced since last run and removes their unreferenced state, if any.
      * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
      */
-    private updateStateSinceLastRun(currentGCData: IGarbageCollectionData) {
+    private updateStateSinceLastRun(currentGCData: IGarbageCollectionData, logger: ITelemetryLogger) {
         // If we haven't run GC before there is nothing to do.
         if (this.previousGCDataFromLastRun === undefined) {
             return;
@@ -873,7 +873,7 @@ export class GarbageCollector implements IGarbageCollector {
                     gcNodeId: missingExplicitReference[0],
                     gcRoutes: JSON.stringify(missingExplicitReference[1]),
                 };
-                this.mc.logger.sendPerformanceEvent(event);
+                logger.sendPerformanceEvent(event);
             });
         }
 
@@ -912,7 +912,7 @@ export class GarbageCollector implements IGarbageCollector {
          * unreferenced, stop tracking them and remove from unreferenced list.
          * Some of these nodes may be unreferenced now and if so, the current run will add unreferenced state for them.
          */
-        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"], this.mc.logger);
+        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"], logger);
         for (const nodeId of gcResult.referencedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
@@ -983,13 +983,13 @@ export class GarbageCollector implements IGarbageCollector {
      * @param gcResult - The result of a GC run.
      * @returns the GC stats of the GC run.
      */
-    private generateStatsAndLogEvents(gcResult: IGCResult): IGCStats {
+    private generateStatsAndLogEvents(gcResult: IGCResult, logger: ITelemetryLogger): IGCStats {
         // Log pending events for unreferenced nodes after GC has run. We should have the package data available for
         // them now since the GC run should have loaded these nodes.
         let event = this.pendingEventsQueue.shift();
         while (event !== undefined) {
             const pkg = this.getNodePackagePath(event.id);
-            this.mc.logger.sendErrorEvent({
+            logger.sendErrorEvent({
                 ...event,
                 pkg: pkg ? { value: `/${pkg.join("/")}`, tag: TelemetryDataTag.PackageData } : undefined,
             });
