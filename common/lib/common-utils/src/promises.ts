@@ -12,12 +12,25 @@ export class Deferred<T> {
     private rej: ((reason?: any) => void) | undefined;
     private completed: boolean = false;
 
-    constructor() {
+    /**
+     * Create the Deferred, initializing the backing Promise
+     * If there may be a case where reject is called but no one awaits or .catch's the Promise,
+     * pass onRejection to avoid triggering an unhandledRejection.
+     * @param onRejection - (Optional) callback to pass to .catch on the Promise to ensure it isn't left floating.
+     */
+    constructor(onRejection?: (e: any) => void) {
         this.p = new Promise<T>((resolve, reject) => {
             this.res = resolve;
             this.rej = reject;
         });
+
+        // This guards against the case where reject is called but no one properly handles this.p,
+        // which results in an unhandledRejection event on the process/window.
+        if (onRejection !== undefined) {
+            this.p.catch(onRejection);
+        }
     }
+
     /**
      * Returns whether the underlying promise has been completed
      */
