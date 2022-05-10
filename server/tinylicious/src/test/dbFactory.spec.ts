@@ -11,7 +11,7 @@ import * as util from "util";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import rimrafCallback from "rimraf";
-import { DbFactory } from "../services";
+import { getDbFactory } from "../services";
 
 const rimraf = util.promisify(rimrafCallback);
 
@@ -133,9 +133,9 @@ describe("Tinylicious", () => {
                 beforeEach(async () => {
                     config = configFactory.create();
                     const provider = new Provider().defaults(config.value);
-                    const dbFactory = new DbFactory(provider);
+                    const dbFactory = await getDbFactory(provider);
 
-                    db = await dbFactory.connect();
+                    db = await dbFactory.connect(false);
                 });
 
                 afterEach(async () => {

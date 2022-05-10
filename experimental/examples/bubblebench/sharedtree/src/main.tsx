@@ -8,7 +8,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IArrayish, IClient } from "@fluid-experimental/bubblebench-common";
+import { IArrayish, IClient } from "@fluid-example/bubblebench-common";
 import { SharedTree, WriteFormat } from "@fluid-experimental/tree";
 import { TreeObjectProxy } from "./proxy";
 import { AppState } from "./state";
@@ -16,7 +16,7 @@ import { AppState } from "./state";
 interface IApp { clients: IArrayish<IClient>; }
 
 export class Bubblebench extends DataObject {
-    public static get Name() { return "@fluid-experimental/bubblebench-sharedtree"; }
+    public static get Name() { return "@fluid-example/bubblebench-sharedtree"; }
     private maybeTree?: SharedTree = undefined;
     private maybeAppState?: AppState = undefined;
 

@@ -32,9 +32,9 @@ import {
 import { IClientSummaryWatcher } from "./summaryCollection";
 
 export type raceTimerResult<T> =
-    { result: "done"; value: T } |
-    { result: IPromiseTimerResult["timerResult"] } |
-    { result: "cancelled" };
+    { result: "done"; value: T; } |
+    { result: IPromiseTimerResult["timerResult"]; } |
+    { result: "cancelled"; };
 
 /** Helper function to wait for a promise or PromiseTimer to elapse. */
 export async function raceTimer<T>(
@@ -195,6 +195,8 @@ export class SummaryGenerator {
         const { refreshLatestAck, fullTree } = options;
         const logger = ChildLogger.create(this.logger, undefined, { all: summarizeProps });
 
+        // Note: timeSinceLastAttempt and timeSinceLastSummary for the
+        // first summary are basically the time since the summarizer was loaded.
         const timeSinceLastAttempt = Date.now() - this.heuristicData.lastAttempt.summaryTime;
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
         let summarizeTelemetryProps: SummaryGeneratorTelemetry = {
@@ -312,7 +314,7 @@ export class SummaryGenerator {
             }
 
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
-            summarizeEvent.reportEvent("generate", {...summarizeTelemetryProps});
+            summarizeEvent.reportEvent("generate", { ...summarizeTelemetryProps });
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
             return fail("submitSummaryFailure", error);
@@ -381,7 +383,7 @@ export class SummaryGenerator {
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
                     summaryAckOp: ackNackOp,
                     ackNackDuration,
-                }});
+                } });
             } else {
                 // Check for retryDelay in summaryNack response.
                 assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);

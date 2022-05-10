@@ -194,17 +194,17 @@ export interface ContainerRuntimeMessage {
 const IdleDetectionTime = 5000;
 
 const DefaultSummaryConfiguration: ISummaryConfiguration = {
-    idleTime: IdleDetectionTime,
+    idleTime: IdleDetectionTime * 3,
 
     maxTime: IdleDetectionTime * 12,
 
-    // Snapshot if 1000 ops received since last snapshot.
+    // Summarize if 1000 ops received since last snapshot.
     maxOps: 1000,
 
-    // Wait 2 minutes for summary ack
+    // Wait 10 minutes for summary ack
     // this is less than maxSummarizeAckWaitTime
     // the min of the two will be chosen
-    maxAckWaitTime: 120000,
+    maxAckWaitTime: 600000,
 };
 
 export interface IGCRuntimeOptions {
@@ -706,8 +706,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         IGarbageCollectionRuntime,
         IRuntime,
         ISummarizerRuntime,
-        ISummarizerInternalsProvider
-{
+        ISummarizerInternalsProvider {
     public get IContainerRuntime() { return this; }
     public get IFluidRouter() { return this; }
 
@@ -967,8 +966,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return {
             // the defaults
             ... DefaultSummaryConfiguration,
-            // the server provided values
-            ... this.context?.serviceConfiguration?.summary,
             // the runtime configuration overrides
             ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
         };
@@ -1017,7 +1014,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
-    private summaryCount: number | undefined;
+    /**
+     * The summary number of the next summary that will be generated for this container. This is incremented every time
+     * a summary is generated.
+     */
+    private nextSummaryNumber: number;
     private readonly opTracker: OpTracker;
 
     private constructor(
@@ -1038,21 +1039,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         super();
 
         this.messageAtLastSummary = metadata?.message;
-
-        // If this is an existing container, we get values from metadata.
-        // otherwise, we initialize them.
-        if (existing) {
-            this.createContainerMetadata = {
-                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
-                createContainerTimestamp: metadata?.createContainerTimestamp,
-            };
-            this.summaryCount = metadata?.summaryCount;
-        } else {
-            this.createContainerMetadata = {
-                createContainerRuntimeVersion: pkgVersion,
-                createContainerTimestamp: Date.now(),
-            };
-        }
 
         // Default to false (enabled).
         this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
@@ -1181,8 +1167,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.summariesDisabled) {
             this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-        }
-        else {
+        } else {
             const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
             const orderedClientCollection = new OrderedClientCollection(
                 orderedClientLogger,
@@ -1218,18 +1203,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.summaryCollection,
                     async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
                 );
-            }
-            else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
+            } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
                 // Only create a SummaryManager and SummarizerClientElection
                 // if summaries are enabled and we are not the summarizer client.
                 const defaultAction = () => {
                     if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-                        this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
+                        this.logger.sendErrorEvent({ eventName: "SummaryStatus:Behind" });
                         // unregister default to no log on every op after falling behind
                         // and register summary ack handler to re-register this handler
                         // after successful summary
                         this.summaryCollection.once(MessageType.SummaryAck, () => {
-                            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+                            this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });
                             // we've caught up, so re-register the default action to monitor for
                             // falling behind, and unregister ourself
                             this.summaryCollection.on("default", defaultAction);
@@ -1291,16 +1275,35 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // logging hardware telemetry
         logger.sendTelemetryEvent({
-            eventName:"DeviceSpec",
+            eventName: "DeviceSpec",
             ...getDeviceSpec(),
         });
 
-        // logging container load stats
+        let loadSummaryNumber: number;
+        // Get the container creation metadata. For new container, we initialize these. For existing containers,
+        // get the values from the metadata blob.
+        if (existing) {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
+                createContainerTimestamp: metadata?.createContainerTimestamp,
+            };
+            // back-compat 0.59.3000 - Older document may either write summaryCount or not write it at all. If it does
+            // not write it, initialize summaryNumber to 0.
+            loadSummaryNumber = metadata?.summaryNumber ?? metadata?.summaryCount ?? 0;
+        } else {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: pkgVersion,
+                createContainerTimestamp: Date.now(),
+            };
+            loadSummaryNumber = 0;
+        }
+        this.nextSummaryNumber = loadSummaryNumber + 1;
+
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
             ...this.createContainerMetadata,
             ...this.dataStores.containerLoadStats,
-            summaryCount: this.summaryCount,
+            summaryNumber: loadSummaryNumber,
             summaryFormatVersion: metadata?.summaryFormatVersion,
             disableIsolatedChannels: metadata?.disableIsolatedChannels,
             gcVersion: metadata?.gcFeature,
@@ -1448,10 +1451,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return dataStoreChannel;
     }
 
-    private formMetadata(): IContainerRuntimeMetadata {
-        return {
+    /** Adds the container's metadata to the given summary tree. */
+    private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
+        const metadata: IContainerRuntimeMetadata = {
             ...this.createContainerMetadata,
-            summaryCount: this.summaryCount,
+            // back-compat 0.59.3000: This is renamed to summaryNumber. Can be removed when 0.59.3000 saturates.
+            summaryCount: this.nextSummaryNumber,
+            // Increment the summary number for the next summary that will be generated.
+            summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             gcFeature: this.garbageCollector.gcSummaryFeatureVersion,
@@ -1460,10 +1467,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.messageAtLastSummary,
             sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
+        addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
 
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
-        addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
+        this.addMetadataToSummary(summaryTree);
+
         if (this.chunkMap.size > 0) {
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
@@ -1479,11 +1488,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
         }
 
-        const summary = this.blobManager.summarize();
+        const blobManagerSummary = this.blobManager.summarize();
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
         // and the blob manager can handle the tree not existing when loading
-        if (Object.keys(summary.summary.tree).length > 0) {
-            addTreeToSummary(summaryTree, blobsTreeName, summary);
+        if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
+            addTreeToSummary(summaryTree, blobsTreeName, blobManagerSummary);
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
@@ -1882,8 +1891,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
-        rootDataStoreId: string): IFluidDataStoreContextDetached
-    {
+        rootDataStoreId: string): IFluidDataStoreContextDetached {
         return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
     }
 
@@ -2066,17 +2074,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async summarize(options: {
         /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-        fullTree?: boolean,
+        fullTree?: boolean;
         /** True to track the state for this summary in the SummarizerNodes; defaults to true */
-        trackState?: boolean,
+        trackState?: boolean;
         /** Logger to use for correlated summary events */
-        summaryLogger?: ITelemetryLogger,
+        summaryLogger?: ITelemetryLogger;
         /** True to run garbage collection before summarizing; defaults to true */
-        runGC?: boolean,
+        runGC?: boolean;
         /** True to generate full GC data */
-        fullGC?: boolean,
+        fullGC?: boolean;
         /** True to run GC sweep phase after the mark phase */
-        runSweep?: boolean,
+        runSweep?: boolean;
     }): Promise<IRootSummaryTreeWithStats> {
         this.verifyNotClosed();
 
@@ -2226,11 +2234,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async collectGarbage(
         options: {
             /** Logger to use for logging GC events */
-            logger?: ITelemetryLogger,
+            logger?: ITelemetryLogger;
             /** True to run GC sweep phase after the mark phase */
-            runSweep?: boolean,
+            runSweep?: boolean;
             /** True to generate full GC data */
-            fullGC?: boolean,
+            fullGC?: boolean;
         },
     ): Promise<IGCStats> {
         return this.garbageCollector.collectGarbage(options);
@@ -2256,14 +2264,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
+        // The summary number for this summary. This will be updated during the summary process, so get it now and
+        // use it for all events logged during this summary.
+        const summaryNumber = this.nextSummaryNumber;
+        const summaryNumberLogger = ChildLogger.create(
+            summaryLogger,
+            undefined,
+            {
+                all: { summaryNumber },
+            },
+        );
+
         if (refreshLatestAck) {
             const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
-                ChildLogger.create(summaryLogger, undefined, { all: { safeSummary: true } }));
+                ChildLogger.create(summaryNumberLogger, undefined, { all: { safeSummary: true } }));
 
             if (latestSummaryRefSeq > this.deltaManager.lastSequenceNumber) {
                 // We need to catch up to the latest summary's reference sequence number before pausing.
                 await PerformanceEvent.timedExecAsync(
-                    summaryLogger,
+                    summaryNumberLogger,
                     {
                         eventName: "WaitingForSeq",
                         lastSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -2286,16 +2305,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // We should be here is we haven't processed be here. If we are of if the last message's sequence number
             // doesn't match the last processed sequence number, log an error.
             if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
-                summaryLogger.sendErrorEvent({
+                summaryNumberLogger.sendErrorEvent({
                     eventName: "LastSequenceMismatch",
                     error: message,
                 });
             }
 
-            this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
+            this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
 
             // Helper function to check whether we should still continue between each async step.
-            const checkContinue = (): { continue: true; } | { continue: false; error: string } => {
+            const checkContinue = (): { continue: true; } | { continue: false; error: string; } => {
                 // Do not check for loss of connectivity directly! Instead leave it up to
                 // RunWhileConnectedCoordinator to control policy in a single place.
                 // This will allow easier change of design if we chose to. For example, we may chose to allow
@@ -2333,13 +2352,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 };
             }
 
-            // increment summary count
-            if (this.summaryCount !== undefined) {
-                this.summaryCount++;
-            } else {
-                this.summaryCount = 1;
-            }
-
             const trace = Trace.start();
             let summarizeResult: IRootSummaryTreeWithStats;
             // If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
@@ -2349,7 +2361,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summarizeResult = await this.summarize({
                     fullTree: fullTree || forcedFullTree,
                     trackState: true,
-                    summaryLogger,
+                    summaryLogger: summaryNumberLogger,
                     runGC: this.garbageCollector.shouldRunGC,
                 });
             } catch (error) {
@@ -2385,6 +2397,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
                 opsSizesSinceLastSummary: this.opTracker.opsSizeAccumulator,
                 nonSystemOpsSinceLastSummary: this.opTracker.nonSystemOpCount,
+                summaryNumber,
                 ...partialStats,
             };
             const generateSummaryData = {
@@ -2808,7 +2821,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getVersionDuration?: number | undefined;
                     getSnapshotDuration?: number | undefined;
                 }) => void; }) => {
-                    const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+                    const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
                     const trace = Trace.start();
 
                     const versions = await this.storage.getVersions(versionId, 1);

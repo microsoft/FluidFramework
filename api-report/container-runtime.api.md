@@ -377,6 +377,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly nonSystemOpsSinceLastSummary: number;
     readonly opsSizesSinceLastSummary: number;
     readonly summarizedDataStoreCount: number;
+    readonly summaryNumber: number;
 }
 
 // @public

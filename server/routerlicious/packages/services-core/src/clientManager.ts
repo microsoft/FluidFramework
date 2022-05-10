@@ -5,11 +5,30 @@
 
 import { IClient, ISignalClient, ISignalMessage } from "@fluidframework/protocol-definitions";
 
-export interface ITimedClient extends IClient {
+/**
+ * Represents a client that has some sequence numbers attached
+ */
+export interface ISequencedSignalClient {
     /**
-     * Timestamp for the last time deli heard about this client
+     * The client object
      */
-    lastKeepAlive: number;
+    client: IClient;
+
+    /**
+     * Counts the number of signals sent by the client
+     */
+    clientConnectionNumber: number;
+
+    /**
+     * Sequence number that indicates when the signal was created in relation to the delta stream
+     */
+    referenceSequenceNumber: number;
+
+    /**
+     * The time when the client will expire.
+     * The client will expire if Date.now() exceeds this value.
+     */
+    exp: number;
 }
 
 /**
@@ -40,5 +59,15 @@ export interface IClientManager {
      * Returns all clients currently connected including a keep alive time.
      * Should be used with delis read only client functionality.
      */
-    getTimedClients?(tenantId: string, documentId: string): Promise<Map<string, ITimedClient>>;
+    getSequencedClients(tenantId: string, documentId: string): Promise<Map<string, ISequencedSignalClient>>;
+
+    /**
+     * Called when the expiration time of clients should be extended.
+     * @param clientTimeout - Amount of time in milliseconds to add to the clients expiration time.
+     */
+    extendSequencedClients(
+        tenantId: string,
+        documentId: string,
+        clients: Map<string, ISequencedSignalClient>,
+        clientTimeout: number): Promise<void>;
 }

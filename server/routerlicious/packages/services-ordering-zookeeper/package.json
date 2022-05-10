@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-ordering-zookeeper",
-  "version": "0.1036.2000",
+  "version": "0.1036.3000",
   "description": "Fluid server services zookeeper client implementation",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -28,13 +28,13 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/server-services-core": "^0.1036.2000",
+    "@fluidframework/server-services-core": "^0.1036.3000",
     "zookeeper": "^5.3.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@fluidframework/server-test-utils": "^0.1036.2000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
+    "@fluidframework/server-test-utils": "^0.1036.3000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/debug": "^4.1.5",
     "@types/lru-cache": "^5.1.0",
@@ -48,8 +48,11 @@
     "eslint-plugin-editorconfig": "~3.2.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.25.4",
-    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-jest": "~26.1.3",
+    "eslint-plugin-mocha": "~10.0.3",
+    "eslint-plugin-promise": "~6.0.0",
     "eslint-plugin-react": "~7.28.0",
+    "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
     "mocha": "^8.4.0",
     "nyc": "^15.0.0",

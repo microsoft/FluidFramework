@@ -25,7 +25,6 @@ import {
     ISegmentAction,
     Marker,
     MergeTree,
-    RangeStackMap,
     SegmentGroup,
 } from "./mergeTree";
 import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
@@ -53,11 +52,11 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
+import { ReferencePosition, RangeStackMap } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
     MergeTreeMaintenanceCallback,
-    ReferencePosition,
 } from "./index";
 
 function elapsedMicroseconds(trace: Trace) {
@@ -629,8 +628,7 @@ export class Client {
     getLongClientId(shortClientId: number) {
         if (shortClientId >= 0) {
             return this.shortClientIdMap[shortClientId];
-        }
-        else {
+        } else {
             return "original";
         }
     }
@@ -780,22 +778,29 @@ export class Client {
 
     public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
     public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
-    public applyStashedOp(op: IMergeTreeOp) {
+    public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
+    public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
+        let metadata: SegmentGroup | SegmentGroup[] | undefined;
         switch (op.type) {
             case MergeTreeDeltaType.INSERT:
                 this.applyInsertOp({ op });
-                return this.peekPendingSegmentGroups();
+                metadata = this.peekPendingSegmentGroups();
+                break;
             case MergeTreeDeltaType.REMOVE:
                 this.applyRemoveRangeOp({ op });
-                return this.peekPendingSegmentGroups();
+                metadata = this.peekPendingSegmentGroups();
+                break;
             case MergeTreeDeltaType.ANNOTATE:
                 this.applyAnnotateRangeOp({ op });
-                return this.peekPendingSegmentGroups();
+                metadata = this.peekPendingSegmentGroups();
+                break;
             case MergeTreeDeltaType.GROUP:
                 return op.ops.map((o) => this.applyStashedOp(o));
             default:
                 unreachableCase(op, "unrecognized op type");
         }
+        assert(!!metadata, "Applying op must generate a pending segment");
+        return metadata;
     }
 
     public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
@@ -809,8 +814,7 @@ export class Client {
             };
             if (opArgs.sequencedMessage?.clientId === this.longClientId || local) {
                 this.ackPendingSegment(opArgs);
-            }
-            else {
+            } else {
                 this.applyRemoteOp(opArgs);
             }
         }
@@ -915,7 +919,7 @@ export class Client {
             assert(
                 catchUpMsgs === undefined || catchUpMsgs.length === 0,
                 0x03f /* "New format should not emit catchup ops" */);
-            const snap = new SnapshotV1(this.mergeTree, this.logger, (id)=>this.getLongClientId(id));
+            const snap = new SnapshotV1(this.mergeTree, this.logger, (id) => this.getLongClientId(id));
             snap.extractSync();
             return snap.emit(serializer, handle);
         } else {
@@ -929,7 +933,7 @@ export class Client {
         runtime: IFluidDataStoreRuntime,
         storage: IChannelStorageService,
         serializer: IFluidSerializer,
-    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]>; }> {
         const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger, serializer);
 
         return loader.initialize(storage);
@@ -943,8 +947,7 @@ export class Client {
         const segWindow = this.getCollabWindow();
         if (segWindow.collaborating) {
             return UnassignedSequenceNumber;
-        }
-        else {
+        } else {
             return UniversalSequenceNumber;
         }
     }
@@ -998,9 +1001,8 @@ export class Client {
         let clientId: number;
         if (op) {
             clientId = this.getOrAddShortClientId(op.clientId);
-            seq = op.sequenceNumber;
-        }
-        else {
+            seq = op.referenceSequenceNumber;
+        } else {
             const segWindow = this.mergeTree.getCollabWindow();
             seq = segWindow.currentSeq;
             clientId = segWindow.clientId;

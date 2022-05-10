@@ -85,17 +85,17 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         // this was removed, but some partners have trouble with back compat where they
         // use invalid patterns with FluidObject and IFluidDependencySynthesizer
         // this is just for back compat until those are removed
-        if(this.has(provider)) {
-            if(this.providers.has(provider)) {
+        if (this.has(provider)) {
+            if (this.providers.has(provider)) {
                 return this.providers.get(provider);
             }
-            for(const parent of this.parents) {
-                if(parent instanceof DependencyContainer) {
+            for (const parent of this.parents) {
+                if (parent instanceof DependencyContainer) {
                     return parent.getProvider(provider);
-                }else{
+                } else {
                     // older implementations of the IFluidDependencySynthesizer exposed getProvider
-                    const maybeGetProvider: {getProvider?(provider: string & keyof TMap)} = parent as any;
-                    if(maybeGetProvider?.getProvider !== undefined) {
+                    const maybeGetProvider: { getProvider?(provider: string & keyof TMap); } = parent as any;
+                    if (maybeGetProvider?.getProvider !== undefined) {
                         return maybeGetProvider.getProvider(provider);
                     }
                 }
@@ -110,7 +110,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         if (types === undefined) { return; }
         for (const key of Object.keys(types) as unknown as (keyof TMap)[]) {
             const provider = this.resolveProvider(key);
-            if(provider === undefined) {
+            if (provider === undefined) {
                 throw new Error(`Object attempted to be created without registered required provider ${key}`);
             }
             Object.defineProperty(

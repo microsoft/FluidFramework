@@ -31,7 +31,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
     public get policies(): IDocumentStorageServicePolicies | undefined {
         return this.internalStorageService.policies;
     }
-    public get disposed() {return this._disposed;}
+    public get disposed() { return this._disposed; }
     public dispose() {
         this._disposed = true;
     }

@@ -22,8 +22,8 @@ export const snapshotMinReadVersion = "1.0";
 export const currentReadVersion = "1.0";
 
 interface ISnapshotSection {
-    snapshotTree: ISnapshotTree,
-    sequenceNumber: number,
+    snapshotTree: ISnapshotTree;
+    sequenceNumber: number;
 }
 
 /**

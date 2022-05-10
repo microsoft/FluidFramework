@@ -14,11 +14,11 @@
  *
  */
 import _ from 'lodash';
-import { DataBinder } from '../../src/data_binder/dataBinder';
+import { DataBinder } from '../data_binder/dataBinder';
 import {
   onValuesChanged, onPropertyChanged, onPathChanged, DataBinding
-} from '../../src/data_binder/dataBinding';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internalUtils';
+} from '../data_binder/dataBinding';
+import { unregisterAllOnPathListeners } from '../data_binder/internalUtils';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate, ReferenceParentTemplate,
   PrimitiveChildrenTemplate, NodeContainerTemplate, ArrayContainerTemplate,
@@ -31,9 +31,9 @@ import {
   DerivedDataBinding, DerivedDerivedDataBinding
 } from './testDataBindings';
 import { catchConsoleErrors } from './catchConsoleError';
-import { RESOLVE_NO_LEAFS } from '../../src/internal/constants';
+import { RESOLVE_NO_LEAFS } from '../internal/constants';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
-import { ModificationContext } from '../../src/data_binder/modificationContext';
+import { ModificationContext } from '../data_binder/modificationContext';
 import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 
 // Create a mock THREE.Object3D

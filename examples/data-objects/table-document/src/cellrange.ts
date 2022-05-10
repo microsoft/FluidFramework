@@ -43,7 +43,7 @@ export function parseRange(range: string) {
 export class CellRange {
     constructor(
         private readonly interval: SequenceInterval,
-        private readonly resolve: (localRef: LocalReference) => { row: number; col: number },
+        private readonly resolve: (localRef: LocalReference) => { row: number; col: number; },
     ) {
         // Ensure CellInterval was not created with a null/undefined interval.
         assert(!!interval, "CellInterval created with bad interval!");

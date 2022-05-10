@@ -27,7 +27,7 @@ describe("Insecure Url Resolver Test", () => {
         if (typeof window === "undefined" && typeof global === "object") {
             // eslint-disable-next-line @typescript-eslint/dot-notation
             global["window"] = {
-                location: { host:"localhost" } as unknown as Location,
+                location: { host: "localhost" } as unknown as Location,
             } as unknown as (Window & typeof globalThis);
         }
     });
