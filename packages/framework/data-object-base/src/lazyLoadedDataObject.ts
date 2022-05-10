@@ -73,5 +73,6 @@ export abstract class LazyLoadedDataObject<
     // #endregion IFluidLoadable
 
     public abstract create(props?: any);
-    public abstract load(): Promise<void>;
+    public abstract load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime,
+         existing: boolean): Promise<void>;
 }

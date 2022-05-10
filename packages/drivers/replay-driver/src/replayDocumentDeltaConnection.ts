@@ -57,7 +57,7 @@ export class ReplayControllerStatic extends ReplayController {
         return true;
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return [];
     }
 
@@ -201,7 +201,7 @@ export class ReplayDocumentDeltaConnection
             mode: "read",
             serviceConfiguration: {
                 blockSize: 64436,
-                maxMessageSize: 16 * 1024,
+                maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
                 summary: {
                     idleTime: 5000,
                     maxOps: 1000,
@@ -291,9 +291,6 @@ export class ReplayDocumentDeltaConnection
     private _disposed = false;
     public get disposed() { return this._disposed; }
     public dispose() { this._disposed = true; }
-
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close(): void { this.dispose(); }
 
     /**
      * This gets the specified ops from the delta storage endpoint and replays them in the replayer.

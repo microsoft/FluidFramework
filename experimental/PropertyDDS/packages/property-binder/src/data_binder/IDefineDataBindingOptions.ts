@@ -23,4 +23,5 @@ export interface IDefineDataBindingOptions {
    * databinding Y.
    */
   upgradeType?: UpgradeType;
+  exactPath?: string;
 }

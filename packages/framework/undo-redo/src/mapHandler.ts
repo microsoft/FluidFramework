@@ -20,7 +20,7 @@ export class SharedMapUndoRedoHandler {
         map.off("valueChanged", this.mapDeltaHandler);
     }
 
-    private readonly mapDeltaHandler = (changed: IValueChanged, local: boolean, op, target: ISharedMap) => {
+    private readonly mapDeltaHandler = (changed: IValueChanged, local: boolean, target: ISharedMap) => {
         if (local) {
             this.stackManager.pushToCurrentOperation(new SharedMapRevertible(changed, target));
         }

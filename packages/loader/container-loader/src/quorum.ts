@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventForwarder, doIfNotDisposed } from "@fluidframework/common-utils";
+import { assert, EventForwarder, doIfNotDisposed } from "@fluidframework/common-utils";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
     ICommittedProposal,
     IQuorum,
@@ -17,7 +18,6 @@ export class QuorumProxy extends EventForwarder<IQuorumEvents> implements IQuoru
     public readonly propose: (key: string, value: any) => Promise<void>;
     public readonly has: (key: string) => boolean;
     public readonly get: (key: string) => any;
-    public readonly getApprovalData: (key: string) => ICommittedProposal | undefined;
     public readonly getMembers: () => Map<string, ISequencedClient>;
     public readonly getMember: (clientId: string) => ISequencedClient | undefined;
 
@@ -30,8 +30,30 @@ export class QuorumProxy extends EventForwarder<IQuorumEvents> implements IQuoru
         this.propose = doIfNotDisposed(this, quorum.propose.bind(quorum));
         this.has = doIfNotDisposed(this, quorum.has.bind(quorum));
         this.get = doIfNotDisposed(this, quorum.get.bind(quorum));
-        this.getApprovalData = doIfNotDisposed(this, quorum.getApprovalData.bind(quorum));
         this.getMembers = doIfNotDisposed(this, quorum.getMembers.bind(quorum));
         this.getMember = doIfNotDisposed(this, quorum.getMember.bind(quorum));
     }
+}
+
+export function getCodeDetailsFromQuorumValues(
+    quorumValues: [string, ICommittedProposal][],
+): IFluidCodeDetails {
+    const qValuesMap = new Map(quorumValues);
+    const proposal = qValuesMap.get("code");
+    assert(proposal !== undefined, "Cannot find code proposal");
+    return proposal?.value as IFluidCodeDetails;
+}
+
+export function initQuorumValuesFromCodeDetails(
+    source: IFluidCodeDetails,
+): [string, ICommittedProposal][] {
+    // Seed the base quorum to be an empty list with a code quorum set
+    const committedCodeProposal: ICommittedProposal = {
+        key: "code",
+        value: source,
+        approvalSequenceNumber: 0,
+        commitSequenceNumber: 0,
+        sequenceNumber: 0,
+    };
+    return [["code", committedCodeProposal]];
 }

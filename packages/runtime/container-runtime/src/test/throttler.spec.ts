@@ -14,7 +14,7 @@ import {
 describe("Throttler", () => {
     let throttler: Throttler;
     let clock: sinon.SinonFakeTimers;
-    before(() => clock = sinon.useFakeTimers());
+    before(() => { clock = sinon.useFakeTimers(); });
     after(() => clock.restore());
     afterEach(() => clock.reset());
 
@@ -45,14 +45,14 @@ describe("Throttler", () => {
         delayFn,
         expectedDelays,
     }: {
-        message: string,
-        delayWindowMs: number,
-        maxDelayMs: number,
-        delayFn: (numAttempts: number) => number,
-        expectedDelays: number[],
+        message: string;
+        delayWindowMs: number;
+        maxDelayMs: number;
+        delayFn: (numAttempts: number) => number;
+        expectedDelays: number[];
     }) {
         describe(message, () => {
-            beforeEach(() => throttler = new Throttler(delayWindowMs, maxDelayMs, delayFn));
+            beforeEach(() => { throttler = new Throttler(delayWindowMs, maxDelayMs, delayFn); });
             const expectedMaxAttempts = expectedDelays.length;
             const expectedDelayAt = (attempt: number) => attempt >= expectedMaxAttempts
                 ? maxDelayMs

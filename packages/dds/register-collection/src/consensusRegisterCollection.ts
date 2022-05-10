@@ -4,20 +4,14 @@
  */
 
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
 
@@ -32,8 +26,8 @@ interface ILocalData<T> {
 interface ILocalRegister<T> {
     // Register value, wrapped for backwards compatibility with < 0.17
     value: {
-        type: "Plain",
-        value: T,
+        type: "Plain";
+        value: T;
     };
 
     // The sequence number when last consensus was reached
@@ -64,14 +58,14 @@ interface IRegisterOperation {
 }
 
 /**
- * IRegisterOperation format in versions < 0.17
+ * IRegisterOperation format in versions \< 0.17
  */
 interface IRegisterOperationOld<T> {
     key: string;
     type: "write";
     value: {
-        type: "Plain",
-        value: T,
+        type: "Plain";
+        value: T;
     };
     refSeq: number;
 }
@@ -186,25 +180,11 @@ export class ConsensusRegisterCollection<T>
         return [...this.data.keys()];
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const dataObj: { [key: string]: ILocalData<T> } = {};
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+        const dataObj: { [key: string]: ILocalData<T>; } = {};
         this.data.forEach((v, k) => { dataObj[k] = v; });
 
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: this.stringify(dataObj, serializer),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+        return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));
     }
 
     /**
@@ -223,8 +203,6 @@ export class ConsensusRegisterCollection<T>
             this.data.set(key, dataObj[key]);
         }
     }
-
-    protected registerCore() { }
 
     protected onDisconnect() {}
 
@@ -303,8 +281,7 @@ export class ConsensusRegisterCollection<T>
             } else {
                 data.atomic = atomicUpdate;
             }
-        }
-        else {
+        } else {
             assert(!!data, 0x06f /* "data missing for non-atomic inbound update!" */);
         }
 
@@ -322,8 +299,7 @@ export class ConsensusRegisterCollection<T>
         if (!this.isAttached()) {
             assert(refSeq === 0 && sequenceNumber === 0,
                 0x070 /* "sequence numbers are expected to be 0 when unattached" */);
-        }
-        else if (data.versions.length > 0) {
+        } else if (data.versions.length > 0) {
             assert(sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
                 0x071 /* "Versions should naturally be ordered by sequenceNumber" */);
         }

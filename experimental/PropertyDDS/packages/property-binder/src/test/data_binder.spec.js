@@ -15,9 +15,9 @@
  * we plan to get rid of modificationSet mid-term, it makes no sense to try and fix those.
  *
  */
-import _ from 'underscore';
-import { DataBinder } from '../../src/data_binder/data_binder';
-import { ModificationContext } from '../../src/data_binder/modification_context';
+import _ from 'lodash';
+import { DataBinder } from '../data_binder/dataBinder';
+import { ModificationContext } from '../data_binder/modificationContext';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,
   PrimitiveChildrenTemplate, ArrayContainerTemplate, SetContainerTemplate,
@@ -26,7 +26,7 @@ import {
   positionTemplate, ReferenceParentTemplate,
   EscapingTestTemplate
 } from './testTemplates';
-import { DataBinding } from '../../src/data_binder/data_binding.js';
+import { DataBinding } from '../data_binder/dataBinding';
 
 import {
   ParentDataBinding,
@@ -37,11 +37,11 @@ import {
 } from './testDataBindings';
 import {
   catchConsoleErrors, hadConsoleError, clearConsoleError
-} from './catch_console_errors';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internal_utils';
+} from './catchConsoleError';
+import { unregisterAllOnPathListeners } from '../data_binder/internalUtils';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
-import { RESOLVE_NEVER } from '../../src/internal/constants';
-import { MockSharedPropertyTree } from './mock_shared_property_tree'
+import { RESOLVE_NEVER } from '../internal/constants';
+import { MockSharedPropertyTree } from './mockSharedPropertyTree'
 
 const cleanupClasses = function() {
   // Unregister DataBinding paths
@@ -101,7 +101,7 @@ describe('DataBinder', function() {
       var dataBinder;
       expect(() => { dataBinder = new DataBinder(workspace) }).not.toThrow();
       expect(dataBinder.isAttached()).toEqual(true);
-      expect(dataBinder.getWorkspace()).toEqual(workspace);
+      expect(dataBinder.getPropertyTree()).toEqual(workspace);
     });
 
     it('should be possible to modify a workspace that was passed to the constructor', function() {
@@ -2988,6 +2988,30 @@ describe('DataBinder', function() {
       });
 
       expect(callbackSpyRegistered).toHaveBeenCalledTimes(1);
+    });
+
+    it.only('should be possible to modify property and inside requestChangesetPostProcessing and get notified on the changes', function() {
+      const callbackSpyRegistered = jest.fn();
+      const callbackNestedSpyRegistered = jest.fn();
+
+      dataBinder.attachTo(workspace);
+
+      dataBinder.registerOnPath('mypath.aString', ['modify'], () => {
+        callbackNestedSpyRegistered();
+      });
+
+      dataBinder.registerOnPath('mypath', ['insert'], () => {
+        callbackSpyRegistered();
+        dataBinder.requestChangesetPostProcessing(() => {
+          const prop = workspace.root.get('mypath');
+          prop.get('aString').setValue('modified');
+        });
+      });
+
+      workspace.root.insert('mypath', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
+
+      expect(callbackSpyRegistered).toHaveBeenCalledTimes(1);
+      expect(callbackNestedSpyRegistered).toHaveBeenCalledTimes(1);
     });
 
     it('should be possible to unregister before attaching to a workspace', function() {

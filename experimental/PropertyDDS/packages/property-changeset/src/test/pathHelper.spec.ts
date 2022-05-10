@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions*/
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview In this file, we will test the path helper
  *    functions described in /src/properties/path_helper.js
@@ -12,7 +12,6 @@ import { expect } from 'chai';
 import { PathHelper } from "../pathHelper";
 
 describe('PathHelper', function() {
-
     describe('tokenizePathString', function() {
         it('should work for simple paths separated by dots', function() {
             let types = [];
@@ -25,7 +24,7 @@ describe('PathHelper', function() {
             expect(PathHelper.tokenizePathString('test.test2', types)).to.deep.equal(['test', 'test2']);
             expect(types).to.deep.equal([
                 PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
-                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN
+                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
             ]);
 
             expect(function() { PathHelper.tokenizePathString('.test2'); }).to.throw();
@@ -62,7 +61,7 @@ describe('PathHelper', function() {
                 PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
                 PathHelper.TOKEN_TYPES.ARRAY_TOKEN,
                 PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
-                PathHelper.TOKEN_TYPES.ARRAY_TOKEN
+                PathHelper.TOKEN_TYPES.ARRAY_TOKEN,
             ]);
 
             expect(function() { PathHelper.tokenizePathString('[test]parameter'); }).to.throw();
@@ -84,17 +83,17 @@ describe('PathHelper', function() {
 
             expect(PathHelper.tokenizePathString('"test1".test2', types)).to.deep.equal(['test1', 'test2']);
             expect(types).to.deep.equal([
-                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN
+                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
             ]);
 
             expect(PathHelper.tokenizePathString('"test1"."test2"', types)).to.deep.equal(['test1', 'test2']);
             expect(types).to.deep.equal([
-                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN
+                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
             ]);
 
             expect(PathHelper.tokenizePathString('test1."test2"', types)).to.deep.equal(['test1', 'test2']);
             expect(types).to.deep.equal([
-                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN
+                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
             ]);
 
             expect(PathHelper.tokenizePathString('test1["test2"]', types)).to.deep.equal(['test1', 'test2']);
@@ -123,12 +122,12 @@ describe('PathHelper', function() {
 
             expect(PathHelper.tokenizePathString('test*', types)).to.deep.equal(['test', '*']);
             expect(types).to.deep.equal([
-                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN
+                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN,
             ]);
 
             expect(PathHelper.tokenizePathString('*.test', types)).to.deep.equal(['*', 'test']);
             expect(types).to.deep.equal([
-                PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN, PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN
+                PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN, PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
             ]);
 
             expect(function() { PathHelper.tokenizePathString('*test', types); }).to.throw();
@@ -140,7 +139,7 @@ describe('PathHelper', function() {
                 PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
                 PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN,
                 PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
-                PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN
+                PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN,
             ]);
 
             expect(PathHelper.tokenizePathString('/*', types)).to.deep.equal(['/', '*']);
@@ -156,14 +155,14 @@ describe('PathHelper', function() {
             expect(types).to.deep.equal([
                 PathHelper.TOKEN_TYPES.ARRAY_TOKEN,
                 PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN,
-                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN
+                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
             ]);
 
             expect(PathHelper.tokenizePathString('[test]*[test2]', types)).to.deep.equal(['test', '*', 'test2']);
             expect(types).to.deep.equal([
                 PathHelper.TOKEN_TYPES.ARRAY_TOKEN,
                 PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN,
-                PathHelper.TOKEN_TYPES.ARRAY_TOKEN
+                PathHelper.TOKEN_TYPES.ARRAY_TOKEN,
             ]);
 
             expect(function() { PathHelper.tokenizePathString('[test]*test', types); }).to.throw();
@@ -178,23 +177,22 @@ describe('PathHelper', function() {
             let types = [];
             expect(PathHelper.tokenizePathString('../test', types)).to.deep.equal(['../', 'test']);
             expect(types).to.deep.equal([PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN,
-                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN
+                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
             ]);
 
             expect(PathHelper.tokenizePathString('../../../test', types)).to.deep.equal(['../', '../', '../', 'test']);
             expect(types).to.deep.equal([PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN, PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN,
-                PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN, PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN
+                PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN, PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
             ]);
 
             expect(PathHelper.tokenizePathString('../../test[0].test2[key]', types)).to.deep.equal(
                 ['../', '../', 'test', '0', 'test2', 'key']);
             expect(types).to.deep.equal([PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN, PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN,
                 PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.ARRAY_TOKEN,
-                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.ARRAY_TOKEN
+                PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.ARRAY_TOKEN,
             ]);
 
             expect(function() { PathHelper.tokenizePathString('/../test2'); }).to.throw();
-
         });
     });
 
@@ -236,7 +234,6 @@ describe('PathHelper', function() {
             expect(PathHelper.quotePathSegmentIfNeeded('test_string')).to.equal('test_string');
         });
     });
-
 
     describe('unquotePathSegment', function() {
         it('should unquote simple strings', function() {
@@ -373,6 +370,5 @@ describe('PathHelper', function() {
             expect(res.coverageExtent).to.equal(PathHelper.CoverageExtent.PARTLY_COVERED);
             expect(res.pathList).to.deep.equal(['a.b.c', 'a.b.d']);
         });
-
     });
 });

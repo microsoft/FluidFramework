@@ -5,12 +5,13 @@
 
 import { EventEmitter } from "events";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IFluidHandle , IRequest, IResponse} from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { SharedPropertyTree, PropertyTreeFactory } from "@fluid-experimental/property-dds";
-import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
+import { IDirectory, ISharedDirectory, IValueChanged, SharedDirectory } from "@fluidframework/map";
 
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { BaseProperty } from "@fluid-experimental/property-properties";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 export interface IPropertyTree extends EventEmitter {
     pset: any;
@@ -26,12 +27,34 @@ export interface IPropertyTree extends EventEmitter {
 // The root is map-like, so we'll use this key for storing the value.
 const propertyKey = "propertyKey";
 
+const directoryWait = async <T = any>(directory: IDirectory, key: string): Promise<T> => {
+    const maybeValue = directory.get<T>(key);
+    if (maybeValue !== undefined) {
+        return maybeValue;
+    }
+
+    return new Promise((resolve) => {
+        const handler = (changed: IValueChanged) => {
+            if (changed.key === key) {
+                directory.off("containedValueChanged", handler);
+                const value = directory.get<T>(changed.key);
+                if (value === undefined) {
+                    throw new Error("Unexpected containedValueChanged result");
+                }
+                resolve(value);
+            }
+        };
+        directory.on("containedValueChanged", handler);
+    });
+};
+
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
 export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> implements IPropertyTree {
     private _tree?: SharedPropertyTree;
     private _queryString: string | undefined;
+    private _existing: boolean = false;
 
     stopTransmission(stopped: boolean): void {
         this._tree?.stopTransmission(stopped);
@@ -43,7 +66,8 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
      */
     protected async initialize(existing: boolean) {
         if (existing) {
-            const treeHandle = await this.root.wait<IFluidHandle<SharedPropertyTree>>(propertyKey);
+            // The SharedPropertyTree isn't created until after attach, so we potentially need to wait for it.
+            const treeHandle = await directoryWait<IFluidHandle<SharedPropertyTree>>(this.root, propertyKey);
             if (this._queryString !== undefined) {
                 // The absolutePath of the DDS should not be updated. Instead, a new handle can be created with the new
                 // path. To be fixed with this issue - https://github.com/microsoft/FluidFramework/issues/6036
@@ -91,7 +115,8 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
         /* this.initialize(false); */
         console.log("A");
     }
-    public async load() {
+    public async load(_context: IFluidDataStoreContext, _runtime: IFluidDataStoreRuntime, existing: boolean) {
+        this._existing = existing;
         /* this.initialize(true); */
         console.log("B");
     }
@@ -100,7 +125,7 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
         const url = request.url;
         console.log(url);
         this._queryString = url.split("?")[1];
-        await this.initialize(false);
+        await this.initialize(this._existing);
         return super.request(request);
     }
 }

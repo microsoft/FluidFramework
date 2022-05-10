@@ -15,6 +15,7 @@ import {
     LambdaCloseType,
     IContextErrorData,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Partition } from "./partition";
 
 /**
@@ -60,6 +61,7 @@ export class PartitionManager extends EventEmitter {
         this.stopped = true;
 
         this.logger?.info("Stop requested");
+        Lumberjack.info("Stop requested");
 
         // Drain all pending messages from the partitions
         const partitionsStoppedP: Promise<void>[] = [];
@@ -87,6 +89,8 @@ export class PartitionManager extends EventEmitter {
         if (this.isRebalancing) {
             this.logger?.info(
                 `Ignoring ${message.topic}:${message.partition}@${message.offset} due to pending rebalance`);
+            Lumberjack.info(
+                `Ignoring ${message.topic}:${message.partition}@${message.offset} due to pending rebalance`);
             return;
         }
 
@@ -104,15 +108,17 @@ export class PartitionManager extends EventEmitter {
     /**
      * Called when rebalancing starts
      * Note: The consumer may decide to only emit "rebalanced" if it wants to skip closing existing partitions
-     * @param partitions Assigned partitions before the rebalance
+     * @param partitions - Assigned partitions before the rebalance
      */
     private rebalancing(partitions: IPartition[]) {
         this.logger?.info(`Rebalancing partitions: ${JSON.stringify(partitions)}`);
+        Lumberjack.info(`Rebalancing partitions: ${JSON.stringify(partitions)}`);
 
         this.isRebalancing = true;
 
         for (const [id, partition] of this.partitions) {
             this.logger?.info(`Closing partition ${id} due to rebalancing`);
+            Lumberjack.info(`Closing partition ${id} due to rebalancing`);
             partition.close(LambdaCloseType.Rebalance);
         }
 
@@ -121,7 +127,7 @@ export class PartitionManager extends EventEmitter {
 
     /**
      * Called when rebalanced occurs
-     * @param partitions Assigned partitions after the rebalance.
+     * @param partitions - Assigned partitions after the rebalance.
      * May contain partitions that have been previously assigned to this consumer
      */
     private rebalanced(partitions: IPartitionWithEpoch[]) {
@@ -138,6 +144,7 @@ export class PartitionManager extends EventEmitter {
         for (const [id, partition] of existingPartitions) {
             if (!partitionsMap.has(id)) {
                 this.logger?.info(`Closing partition ${id} due to rebalancing`);
+                Lumberjack.info(`Closing partition ${id} due to rebalancing`);
                 partition.close(LambdaCloseType.Rebalance);
                 this.partitions.delete(id);
             }
@@ -153,6 +160,8 @@ export class PartitionManager extends EventEmitter {
 
             // eslint-disable-next-line max-len
             this.logger?.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);
+            // eslint-disable-next-line max-len
+            Lumberjack.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);
 
             const newPartition = new Partition(
                 partition.partition,

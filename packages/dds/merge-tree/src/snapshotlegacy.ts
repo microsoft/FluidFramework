@@ -6,34 +6,26 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, IsoBuffer } from "@fluidframework/common-utils";
-import {
-    IFluidHandle,
-    IFluidSerializer,
-} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/common-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
-import * as MergeTree from "./mergeTree";
-import * as ops from "./ops";
-import * as Properties from "./properties";
+import {
+    ISegment,
+    MergeTree,
+} from "./mergeTree";
+import { IJSONSegment } from "./ops";
+import { matchProperties } from "./properties";
 import {
     MergeTreeChunkLegacy,
     serializeAsMinSupportedVersion,
 } from "./snapshotChunks";
 
-// first three are index entry
-export interface SnapChunk {
-    /**
-     * Offset from beginning of segments.
-     */
-    position: number;
-    lengthBytes: number;
-    sequenceLength: number;
-    buffer?: IsoBuffer;
-}
-
-export interface SnapshotHeader {
+interface SnapshotHeader {
     chunkCount?: number;
     segmentsTotalLength: number;
     indexOffset?: number;
@@ -47,7 +39,7 @@ export interface SnapshotHeader {
 export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";
-    public static readonly catchupOps = "catchupOps";
+    private static readonly catchupOps = "catchupOps";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
@@ -57,27 +49,25 @@ export class SnapshotLegacy {
     // for very chunky text, blob size can easily be 4x-8x of that number.
     public static readonly sizeOfFirstChunk: number = 10000;
 
-    header: SnapshotHeader | undefined;
-    seq: number | undefined;
-    buffer: IsoBuffer | undefined;
-    pendingChunk: SnapChunk | undefined;
-    segments: ops.IJSONSegment[] | undefined;
-    segmentLengths: number[] | undefined;
-    logger: ITelemetryLogger;
+    private header: SnapshotHeader | undefined;
+    private seq: number | undefined;
+    private segments: IJSONSegment[] | undefined;
+    private segmentLengths: number[] | undefined;
+    private readonly logger: ITelemetryLogger;
     private readonly chunkSize: number;
 
-    constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
+    constructor(public mergeTree: MergeTree, logger: ITelemetryLogger, public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
         this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotLegacy.sizeOfFirstChunk;
     }
 
-    getSeqLengthSegs(
-        allSegments: ops.IJSONSegment[],
+    private getSeqLengthSegs(
+        allSegments: IJSONSegment[],
         allLengths: number[],
         approxSequenceLength: number,
         startIndex = 0): MergeTreeChunkLegacy {
-        const segs: ops.IJSONSegment[] = [];
+        const segs: IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
@@ -99,57 +89,38 @@ export class SnapshotLegacy {
     }
 
     /**
-     * Emits the snapshot to an ITree. If provided the optional IFluidSerializer will be used when serializing
-     * the summary data rather than JSON.stringify.
+     * Emits the snapshot to an ISummarizeResult. If provided the optional IFluidSerializer will be used when
+     * serializing the summary data rather than JSON.stringify.
      */
     emit(
         catchUpMsgs: ISequencedDocumentMessage[],
         serializer: IFluidSerializer,
         bind: IFluidHandle,
-    ): ITree {
+    ): ISummaryTreeWithStats {
         const chunk1 = this.getSeqLengthSegs(this.segments!, this.segmentLengths!, this.chunkSize);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: SnapshotLegacy.header,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: serializeAsMinSupportedVersion(
-                            SnapshotLegacy.header,
-                            chunk1,
-                            this.logger,
-                            this.mergeTree.options,
-                            serializer,
-                            bind),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
+        const builder = new SummaryTreeBuilder();
+        builder.addBlob(SnapshotLegacy.header, serializeAsMinSupportedVersion(
+            SnapshotLegacy.header,
+            chunk1,
+            this.logger,
+            this.mergeTree.options,
+            serializer,
+            bind));
 
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount!) {
             const chunk2 = this.getSeqLengthSegs(this.segments!, this.segmentLengths!,
                 this.header!.segmentsTotalLength, chunk1.chunkSegmentCount);
             length += chunk2.chunkLengthChars;
             segments += chunk2.chunkSegmentCount;
-            tree.entries.push({
-                mode: FileMode.File,
-                path: SnapshotLegacy.body,
-                type: TreeEntry.Blob,
-                value: {
-                    contents: serializeAsMinSupportedVersion(
-                        SnapshotLegacy.body,
-                        chunk2,
-                        this.logger,
-                        this.mergeTree.options,
-                        serializer,
-                        bind),
-                    encoding: "utf-8",
-                },
-            });
+            builder.addBlob(SnapshotLegacy.body, serializeAsMinSupportedVersion(
+                SnapshotLegacy.body,
+                chunk2,
+                this.logger,
+                this.mergeTree.options,
+                serializer,
+                bind));
         }
 
         assert(
@@ -160,19 +131,13 @@ export class SnapshotLegacy {
             segments === chunk1.totalSegmentCount,
             0x05e /* "emit: mismatch in totalSegmentCount" */);
 
-        if(catchUpMsgs !== undefined && catchUpMsgs.length > 0) {
-            tree.entries.push({
-                mode: FileMode.File,
-                path: this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
-                type: TreeEntry.Blob,
-                value: {
-                    contents: serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs),
-                    encoding: "utf-8",
-                },
-            });
+        if (catchUpMsgs !== undefined && catchUpMsgs.length > 0) {
+            builder.addBlob(
+                this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
+                serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs));
         }
 
-        return tree;
+        return builder.getSummaryTree();
     }
 
     extractSync() {
@@ -184,18 +149,16 @@ export class SnapshotLegacy {
             seq: this.mergeTree.collabWindow.minSeq,
         };
 
-        const segs: MergeTree.ISegment[] = [];
-        let prev: MergeTree.ISegment | undefined;
+        const segs: ISegment[] = [];
+        let prev: ISegment | undefined;
         const extractSegment =
             // eslint-disable-next-line max-len
-            (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined) => {
-                // eslint-disable-next-line eqeqeq
-                if ((segment.seq != UnassignedSequenceNumber) && (segment.seq! <= this.seq!) &&
-                    // eslint-disable-next-line eqeqeq
-                    ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
+            (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined) => {
+                if ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= this.seq!) &&
+                    ((segment.removedSeq === undefined) || (segment.removedSeq === UnassignedSequenceNumber) ||
                         (segment.removedSeq > this.seq!))) {
                     if (prev && prev.canAppend(segment)
-                        && Properties.matchProperties(prev.properties, segment.properties)
+                        && matchProperties(prev.properties, segment.properties)
                     ) {
                         prev = prev.clone();
                         prev.append(segment.clone());
@@ -227,8 +190,8 @@ export class SnapshotLegacy {
         // When this condition happens, we might not write out all segments in getSeqLengthSegs()
         // when writing out "body". Issue #1995 tracks following up on the core of the problem.
         // In the meantime, this code makes sure we will write out all segments properly
-        // eslint-disable-next-line eqeqeq
-        if (this.header.segmentsTotalLength != totalLength) {
+
+        if (this.header.segmentsTotalLength !== totalLength) {
             this.logger.sendErrorEvent({
                 eventName: "SegmentsTotalLengthMismatch",
                 totalLength,

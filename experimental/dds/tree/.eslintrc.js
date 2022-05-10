@@ -4,11 +4,12 @@
  */
 
 module.exports = {
-	extends: ['@fluidframework/eslint-config-fluid/eslint7'],
+	extends: ['@fluidframework/eslint-config-fluid'],
 	root: true,
 	rules: {
 		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
 		// '@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
+		'@typescript-eslint/brace-style': 'off',
 		'@typescript-eslint/quotes': [
 			'error',
 			'single',
@@ -24,13 +25,14 @@ module.exports = {
 		// Prettier
 		'comma-dangle': 'off',
 		'@typescript-eslint/comma-dangle': 'off',
+		'@typescript-eslint/member-delimiter-style': 'off',
 		'max-len': 'off',
 		'no-mixed-spaces-and-tabs': 'off',
 
 		// Rules which could be re-enabled (by dropping these overrides, as they are enabled in base config) with some minor fixes:
 		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
-		'prefer-arrow/prefer-arrow-functions': 'off',
+		'@typescript-eslint/no-unsafe-return': 'off',
 	},
 	overrides: [
 		{

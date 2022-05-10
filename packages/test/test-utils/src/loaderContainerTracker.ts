@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -46,12 +47,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 return container;
             };
         };
-        // eslint-disable-next-line @typescript-eslint/unbound-method
+        /* eslint-disable @typescript-eslint/unbound-method */
         loader.resolve = patch(loader.resolve);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         loader.createDetachedContainer = patch(loader.createDetachedContainer);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         loader.rehydrateDetachedContainerFromSnapshot = patch(loader.rehydrateDetachedContainerFromSnapshot);
+        /* eslint-enable @typescript-eslint/unbound-method */
     }
 
     /**
@@ -91,37 +91,41 @@ export class LoaderContainerTracker implements IOpProcessingController {
             for (const msg of messages) {
                 if (msg.type === MessageType.NoOp) {
                     // Track the NoOp that was sent.
-                    if (record.startTrailingNoOps === 0) {
+                    if (record.trailingNoOps === 0) {
+                        // record the starting sequence number of the trailing no ops if we haven't been tracking yet.
                         record.startTrailingNoOps = msg.clientSequenceNumber;
                     }
                     record.trailingNoOps++;
                 } else {
                     // Other ops has been sent. We would like to see those ack'ed, so no more need to track NoOps
-                    record.startTrailingNoOps = 0;
                     record.trailingNoOps = 0;
                 }
             }
         });
 
         container.deltaManager.inbound.on("push", (message) => {
-            // Received the no op back, update the record.
+            // Received the no op back, update the record if we are tracking
             if (message.type === MessageType.NoOp
                 && message.clientId === (container as Container).clientId
-                && message.clientSequenceNumber === record.startTrailingNoOps) {
-                record.trailingNoOps--;
-                record.startTrailingNoOps++;
+                && record.trailingNoOps !== 0
+                && record.startTrailingNoOps <= message.clientSequenceNumber
+            ) {
+                // NoOp might have coalesced and skipped ahead some sequence number
+                // update the record and skip ahead as well
+                const oldStartTrailingNoOps = record.startTrailingNoOps;
+                record.startTrailingNoOps = message.clientSequenceNumber + 1;
+                record.trailingNoOps -= (record.startTrailingNoOps - oldStartTrailingNoOps);
             }
         });
 
         container.on("disconnected", () => {
             // reset on disconnect.
-            record.startTrailingNoOps = 0;
             record.trailingNoOps = 0;
         });
     }
 
     private trackLastProposal(container: IContainer) {
-        container.getQuorum().on("addProposal", (proposal) => {
+        container.on("codeDetailsProposed", (value, proposal) => {
             if (proposal.sequenceNumber > this.lastProposalSeqNum) {
                 this.lastProposalSeqNum = proposal.sequenceNumber;
             }
@@ -162,8 +166,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
             if (containersToApply.length === 0) { break; }
 
             // Ignore readonly dirty containers, because it can't sent up and nothing can be done about it being dirty
-            const dirtyContainers =
-                containersToApply.filter((c) => c.deltaManager.readOnlyInfo.readonly !== true && c.isDirty);
+            const dirtyContainers = containersToApply.filter((c) => {
+                const { deltaManager, isDirty } = c;
+                return deltaManager.readOnlyInfo.readonly !== true && isDirty;
+            });
             if (dirtyContainers.length === 0) {
                 // Wait for all the leave messages
                 const pendingClients = this.getPendingClients(containersToApply);
@@ -187,11 +193,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
-                await Promise.all(dirtyContainers.map(async (c) => new Promise((res) => c.once("saved", res))));
+                await Promise.all(dirtyContainers.map(async (c) => new Promise((resolve) => c.once("saved", resolve))));
             }
 
             // yield a turn to allow side effect of the ops we just processed execute before we check again
-            await new Promise<void>((res) => { setTimeout(res, 0); });
+            await new Promise<void>((resolve) => { setTimeout(resolve, 0); });
         }
 
         // Pause all container that was resumed
@@ -254,9 +260,15 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 return true;
             }
             // Note that in read only mode, the op won't be submitted
-            const deltaManager = (container.deltaManager as any);
+            let deltaManager = (container.deltaManager as any);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const { trailingNoOps } = this.containers.get(container)!;
+            // Back-compat: clientSequenceNumber & clientSequenceNumberObserved moved to ConnectionManager in 0.53
+            if (!("clientSequenceNumber" in deltaManager)) {
+                deltaManager = deltaManager.connectionManager;
+            }
+            assert("clientSequenceNumber" in deltaManager, "no clientSequenceNumber");
+            assert("clientSequenceNumberObserved" in deltaManager, "no clientSequenceNumber");
             return deltaManager.clientSequenceNumber ===
                 (deltaManager.clientSequenceNumberObserved as number) + trailingNoOps;
         });
@@ -288,7 +300,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const unconnectedClients =
             Array.from(this.containers.keys()).filter((c) => !c.closed && !(c as Container).connected);
         return Promise.all(pendingClients.map(async ([container, pendingClientId]) => {
-            return new Promise<void>((res) => {
+            return new Promise<void>((resolve) => {
                 const cleanup = () => {
                     unconnectedClients.forEach((c) => c.off("connected", handler));
                     container.getQuorum().off("removeMember", handler);
@@ -297,7 +309,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                     pendingClientId.delete(clientId);
                     if (pendingClientId.size === 0) {
                         cleanup();
-                        res();
+                        resolve();
                     }
                 };
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -307,7 +319,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 container.getQuorum().on("removeMember", handler);
                 container.on("closed", () => {
                     cleanup();
-                    res();
+                    resolve();
                 });
             });
         }));
@@ -318,12 +330,12 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * @param containersToApply - the set of containers to wait for any inbound ops for
      */
     private async waitForAnyInboundOps(containersToApply: IContainer[]) {
-        return new Promise<void>((res) => {
+        return new Promise<void>((resolve) => {
             const handler = () => {
                 containersToApply.map((c) => {
                     c.deltaManager.inbound.off("push", handler);
                 });
-                res();
+                resolve();
             };
             containersToApply.map((c) => {
                 c.deltaManager.inbound.on("push", handler);
@@ -409,7 +421,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
         while (resumed.some((queue) => !queue.idle)) {
             debugWait("Wait until queue is idle");
-            await new Promise<void>((res) => { setTimeout(res, 0); });
+            await new Promise<void>((resolve) => { setTimeout(resolve, 0); });
         }
 
         // Make sure all the op that we sent out are acked first
@@ -476,7 +488,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
                     // But already parsed when apply ("op" event)
                     let contents = typeof msgContents === "string" ?
                         JSON.parse(msgContents) : msgContents;
-                    // eslint-disable-next-line no-null/no-null
                     while (contents !== undefined && contents !== null) {
                         if (contents.contents?.address !== undefined) {
                             address += `/${contents.contents.address}`;
@@ -492,7 +503,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         return `${address} ${JSON.stringify(contents)}`;
                     }
                     return JSON.stringify(contents);
-                } catch (e) {
+                } catch (e: any) {
                     return `${e.message}: ${e.stack}`;
                 }
             };

@@ -21,7 +21,6 @@ import { SharedString } from "@fluidframework/sequence";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
-import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -48,7 +47,7 @@ class TestDataObject extends DataObject {
     }
 
     protected async hasInitialized() {
-        const matrixHandle = await this.root.wait<IFluidHandle<SharedMatrix>>(this.matrixKey);
+        const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
         assert(matrixHandle !== undefined, "SharedMatrix not found");
         this.matrix = await matrixHandle.get();
 
@@ -57,22 +56,29 @@ class TestDataObject extends DataObject {
         this.matrix.insertCols(0, 3);
         this.matrix.openUndo(this.undoRedoStackManager);
 
-        const sharedStringHandle = await this.root.wait<IFluidHandle<SharedString>>(this.sharedStringKey);
+        const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
         assert(sharedStringHandle !== undefined, "SharedMatrix not found");
         this.sharedString = await sharedStringHandle.get();
     }
 }
 
+/**
+ * Validates this scenario: When all references to a data store are deleted, the data store is marked as unreferenced
+ * in the next summary. When a reference to the data store is re-added, it is marked as referenced in the next summary.
+ * Basically, if the handle to a data store is not stored in any DDS, its summary tree will have the "unreferenced"
+ * property set to true. If the handle to a data store exists or it's a root data store, its summary tree does not have
+ * the "unreferenced" property.
+ */
 describeFullCompat("GC reference updates in local summary", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
-        [ SharedMatrix.getFactory(), SharedString.getFactory() ],
+        [SharedMatrix.getFactory(), SharedString.getFactory()],
         []);
 
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { generateSummaries: false },
+        summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -82,7 +88,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     let containerRuntime: ContainerRuntime;
@@ -95,7 +101,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
      * For unreferenced data stores:
      *   - The unreferenced property in its entry in the summary should be true.
      */
-     async function validateDataStoreInSummary(dataStoreId: string, referenced: boolean) {
+    async function validateDataStoreInSummary(dataStoreId: string, referenced: boolean) {
         await provider.ensureSynchronized();
         const { summary } = await containerRuntime.summarize({
             runGC: true,
@@ -106,7 +112,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 
         let dataStoreTree: ISummaryTree | undefined;
         const channelsTree = (summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
-        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
+        for (const [id, summaryObject] of Object.entries(channelsTree)) {
             if (id === dataStoreId) {
                 assert(
                     summaryObject.type === SummaryType.Tree,
@@ -128,8 +134,16 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 
     const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
 
-    beforeEach(async () => {
+    before(function() {
         provider = getTestObjectProvider();
+        // These tests validate the GC state in summary by calling summarize directly on the container runtime.
+        // They do not post these summaries or download them. So, it doesn't need to run against real services.
+        if (provider.driver.type !== "local") {
+            this.skip();
+        }
+    });
+
+    beforeEach(async () => {
         const container = await createContainer();
         mainDataStore = await requestFluidObject<TestDataObject>(container, "/");
         containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;

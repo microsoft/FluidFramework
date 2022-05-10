@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { TextSegment } from "../";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
+import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 
 describe("MergeTree.markRangeRemoved", () => {
@@ -128,7 +129,7 @@ describe("MergeTree.markRangeRemoved", () => {
 
             // Client 1 inserts "c" having received acks for its own edits, but has not yet having
             // observed the insertion of "X" from client 2.
-            expected.insertTextRemote(0, "c", undefined, ++seq, refSeqAt2,         /* longClientId: */ "1");
+            expected.insertTextRemote(0, "c", undefined, ++seq, refSeqAt2, /* longClientId: */ "1");
         }
 
         // Next, we run through the same sequence from the perspective of client 1:
@@ -139,7 +140,7 @@ describe("MergeTree.markRangeRemoved", () => {
             let seq = 0;
 
             // Client 1 locally inserts and removes the letter "a".
-            const op1 = actual.insertTextLocal(0, "a");
+            const op1 = actual.insertTextLocal(0, "a")!;
             const op2 = actual.removeRangeLocal(0, 1);
 
             // Client 1 receives ACKs for op1 and op2.

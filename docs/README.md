@@ -88,7 +88,6 @@ understanding of how it gets built. The steps are as follows:
     1. Run the @mattetti/api-extractor tool to transform the JSON format into Markdown.  The generated Markdown is
        placed at `/docs/content/apis`. We maintain this fork of @microsoft/api-extractor
        [here](https://github.com/mattetti/custom-api-documenter).
-    1. Run ditaa to build some of the diagrams in the site.
     1. Run hugo to build the site itself. The generated output is placed at `/docs/public/apis`.
 1. `/docs`: `start`
     1. Run the hugo server to host the site at <http://localhost:1313>.
@@ -203,34 +202,21 @@ The site theme/template lives in `themes/thxvscode`.
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
+| `build:api` | `npm run build:uber-package && npm run build:api-documenter` |
 | `build:api-documenter` | Convert API JSON into Markdown. |
 | `build:api-documenter:default` | --- |
 | `build:api-documenter:win32` | --- |
-| `build:diagrams` | Generate the diagram images using ditaa. |
+| `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
+| `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
+| `ci:build` | `npm run download && npm run build` |
 | `clean` | Remove all generated files. |
-| `copyfiles` | `copyfiles _replacements/ content/` |
-| `ditaa` | Run the local copy of ditaa. |
-| `ditaa:default` | --- |
-| `ditaa:win32` | --- |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
-| `download:playground` | Download and extract the Playground files locally. |
 | `hugo` | Run the local copy of Hugo. |
-| `hugo:default` | --- |
-| `hugo:win32` | --- |
-| `install:ditaa` | Install ditaa to generate diagrams unless it already exists. |
-| `install:ditaa:default` | --- |
-| `install:ditaa:force` | Install ditaa to generate diagrams. |
-| `install:ditaa:win32` | --- |
-| `install:hugo` | Install Hugo unless it already exists. |
-| `install:hugo:default` | --- |
-| `install:hugo:force` | Install the version of Hugo used by the documentation. |
-| `install:hugo:win32` | --- |
+| `linkcheck` | `npm run linkcheck:site` |
+| `linkcheck:fast` | `linkcheck http://localhost:1313 --skip-file skipped-urls.txt` |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
-| `postinstall` | --- |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
-| `start:default` | --- |
-| `start:win32` | --- |
 <!-- AUTO-GENERATED-CONTENT:END -->

@@ -19,6 +19,18 @@ import {
 } from "./storageContracts";
 
 /**
+ * Convert a list of nodes to a tree path.
+ * If a node is empty (blank) it will be removed.
+ * If a node's name begins and/or ends with a "/", it will be removed.
+ * @param nodeNames - node names in path
+ */
+export const buildTreePath = (...nodeNames: string[]): string =>
+    nodeNames
+        .map((nodeName) => nodeName.replace(/^\//, "").replace(/\/$/, ""))
+        .filter((nodeName) => !!nodeName)
+        .join("/");
+
+/**
  * Converts the summary tree to a whole summary tree to be uploaded. Always upload full whole summary tree.
  * @param parentHandle - Handle of the last uploaded summary or detach new summary.
  * @param tree - Summary Tree which will be converted to whole summary tree to be uploaded.
@@ -28,6 +40,7 @@ export function convertSummaryTreeToWholeSummaryTree(
     parentHandle: string | undefined,
     tree: ISummaryTree,
     path: string = "",
+    rootNodeName: string = "",
 ): IWholeSummaryTree {
     const wholeSummaryTree: IWholeSummaryTree = {
         type: "tree",
@@ -42,13 +55,17 @@ export function convertSummaryTreeToWholeSummaryTree(
         let value: WholeSummaryTreeValue | undefined;
         let unreferenced: true | undefined;
 
-        const currentPath = path === "" ? key : `${path}/${key}`;
+        const currentPath = path === ""
+            ? buildTreePath(rootNodeName, key)
+            : buildTreePath(path, key);
         switch (summaryObject.type) {
             case SummaryType.Tree: {
                 const result = convertSummaryTreeToWholeSummaryTree(
                     parentHandle,
                     summaryObject,
-                    currentPath);
+                    currentPath,
+                    rootNodeName,
+                );
                 value = result;
                 unreferenced = summaryObject.unreferenced || undefined;
                 break;
@@ -77,11 +94,7 @@ export function convertSummaryTreeToWholeSummaryTree(
                     if (!parentHandle) {
                         throw Error("Parent summary does not exist to reference by handle.");
                     }
-                    let handlePath = summaryObject.handle;
-                    if (handlePath.length > 0 && !handlePath.startsWith("/")) {
-                        handlePath = `/${handlePath}`;
-                    }
-                    id = `${parentHandle}${handlePath}`;
+                    id = buildTreePath(parentHandle, rootNodeName, summaryObject.handle);
                 }
                 break;
             }
@@ -127,17 +140,21 @@ export function convertSummaryTreeToWholeSummaryTree(
  * Build a tree heirarchy from a flat tree.
  *
  * @param flatTree - a flat tree
+ * @param treePrefixToRemove - tree prefix to strip
  * @returns the heirarchical tree
  */
-function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
-    const lookup: { [path: string]: ISnapshotTree } = {};
+ function buildHierarchy(
+    flatTree: IWholeFlatSummaryTree,
+    treePrefixToRemove: string,
+): ISnapshotTree {
+    const lookup: { [path: string]: ISnapshotTree; } = {};
     // Root tree id will be used to determine which version was downloaded.
-    const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {}, commits: {}};
+    const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.entries) {
-        // Strip the .app/ path from app tree entries such that they are stored under root.
-        const entryPath = entry.path.replace(/^\.app\//, "");
+        // Strip the `treePrefixToRemove` path from tree entries such that they are stored under root.
+        const entryPath = entry.path.replace(new RegExp(`^${treePrefixToRemove}/`), "");
         const lastIndex = entryPath.lastIndexOf("/");
         const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
         const entryPathBase = entryPath.slice(lastIndex + 1);
@@ -147,13 +164,13 @@ function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
 
         // Add in either the blob or tree
         if (entry.type === "tree") {
-            const newTree: ISnapshotTree = { blobs: {}, commits: {}, trees: {}, unreferenced: entry.unreferenced };
+            const newTree: ISnapshotTree = { blobs: {}, trees: {}, unreferenced: entry.unreferenced };
             node.trees[decodeURIComponent(entryPathBase)] = newTree;
             lookup[entryPath] = newTree;
         } else if (entry.type === "blob") {
             node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
-        } else if (entry.type === "commit") {
-            node.commits[decodeURIComponent(entryPathBase)] = entry.id;
+        } else {
+            throw new Error(`Unknown entry type!!`);
         }
     }
 
@@ -164,19 +181,25 @@ function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
  * Converts existing IWholeFlatSummary to snapshot tree, blob array, and sequence number.
  *
  * @param flatSummary - flat summary
+ * @param treePrefixToRemove - tree prefix to strip. By default we are stripping ".app" prefix
+ * @returns snapshot tree, blob array, and sequence number
  */
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
     flatSummary: IWholeFlatSummary,
+    treePrefixToRemove: string = ".app",
 ): INormalizedWholeSummary {
     const blobs = new Map<string, ArrayBuffer>();
     if (flatSummary.blobs) {
         flatSummary.blobs.forEach((blob) => {
-            blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf8"));
+            blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
         });
     }
     const flatSummaryTree = flatSummary.trees && flatSummary.trees[0];
     const sequenceNumber = flatSummaryTree?.sequenceNumber;
-    const snapshotTree = buildHeirarchy(flatSummaryTree);
+    const snapshotTree = buildHierarchy(
+        flatSummaryTree,
+        treePrefixToRemove,
+    );
 
     return {
         blobs,

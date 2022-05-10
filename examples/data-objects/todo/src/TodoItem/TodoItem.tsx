@@ -6,7 +6,6 @@
 import { Clicker, ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { DataObject, DataObjectFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
@@ -38,10 +37,9 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements IFluidHTMLView {
+export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; }> implements IFluidHTMLView {
     private text: SharedString;
-    private innerIdCell: ISharedCell<{ type: TodoItemSupportedComponents, handle: IFluidHandle }>;
+    private innerIdCell: ISharedCell<{ type: TodoItemSupportedComponents; handle: IFluidHandle; }>;
     private _absoluteUrl: string | undefined;
 
     public get IFluidHTMLView() { return this; }
@@ -110,8 +108,7 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
     public static getFactory() { return TodoItem.factory; }
 
     private static readonly factory =
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        new DataObjectFactory<TodoItem, object, ITodoItemInitialState, IEvent>(
+        new DataObjectFactory(
             TodoItemName,
             TodoItem,
             [
@@ -163,7 +160,7 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
             return undefined;
         }
 
-        switch(innerComponentInfo.type) {
+        switch (innerComponentInfo.type) {
             case "todo":
                 return {
                     type: innerComponentInfo.type,

@@ -3,23 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    ISequencedDocumentMessage,
-    ITree,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SharedXTreeFactory } from "./runtime";
 
-export class SharedXTree extends SharedObject
-{
+export class SharedXTree extends SharedObject {
     public static getFactory() { return new SharedXTreeFactory(); }
 
     constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
@@ -33,13 +30,13 @@ export class SharedXTree extends SharedObject
         return runtime.createChannel(id, SharedXTreeFactory.Type) as SharedXTree;
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         throw new Error("not implemented");
     }
 
-    protected didAttach() {  }
+    protected didAttach() { }
 
-    protected onConnect() {  }
+    protected onConnect() { }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) { throw new Error("not implemented"); }
 
@@ -56,8 +53,6 @@ export class SharedXTree extends SharedObject
 
         throw new Error("not implemented");
     }
-
-    protected registerCore() { throw new Error("not implemented"); }
 
     protected applyStashedOp() { throw new Error("not implemented"); }
 }

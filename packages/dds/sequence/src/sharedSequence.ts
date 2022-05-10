@@ -51,7 +51,7 @@ export class SubSequence<T> extends BaseSegment {
         return b;
     }
 
-    public canAppend(segment: ISegment) {
+    public canAppend(segment: ISegment): boolean {
         return SubSequence.is(segment)
             && (this.cachedLength <= MaxRun || segment.cachedLength <= MaxRun);
     }

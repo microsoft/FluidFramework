@@ -121,7 +121,6 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
  *
  * @returns A new IDirectory object that intercepts the set method and calls the setInterceptionCallback.
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createDirectoryWithInterception<T extends IDirectory>(
     baseDirectory: T,
     context: IFluidDataStoreContext,

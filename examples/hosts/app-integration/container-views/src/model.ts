@@ -7,25 +7,17 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IValueChanged } from "@fluidframework/map";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-
-import React from "react";
-import ReactDOM from "react-dom";
 
 import { IDiceRoller } from "./interface";
-import { DiceRollerView } from "./view";
 
 const diceValueKey = "diceValue";
 
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
-export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLView {
+export class DiceRoller extends DataObject implements IDiceRoller {
     public static get Name() { return "@fluid-example/dice-roller"; }
-
-    public get IFluidHTMLView() { return this; }
 
     /**
      * initializingFirstTime is called only once, it is executed only by the first client to open the
@@ -45,16 +37,6 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
         });
     }
 
-    /**
-     * Render the dice.
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            React.createElement(DiceRollerView, { model: this }),
-            div,
-        );
-    }
-
     public get value() {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.root.get(diceValueKey);
@@ -70,9 +52,7 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export const DiceRollerInstantiationFactory = new DataObjectFactory<DiceRoller, undefined, undefined, IEvent>
-(
+export const DiceRollerInstantiationFactory = new DataObjectFactory(
     DiceRoller.Name,
     DiceRoller,
     [],

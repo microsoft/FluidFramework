@@ -5,8 +5,11 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MergeTree, MergeTreeDeltaType, MergeTreeMaintenanceType, TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
+import { MergeTree } from "../mergeTree";
+import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
+import { MergeTreeDeltaType } from "../ops";
+import { TextSegment } from "../textSegment";
 import { countOperations } from "./testUtils";
 
 describe("MergeTree", () => {
@@ -40,7 +43,7 @@ describe("MergeTree", () => {
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
@@ -62,7 +65,7 @@ describe("MergeTree", () => {
                 /* clientId: */ localClientId,
                 /* seq: */ UnassignedSequenceNumber,
                 /* overwrite: */ false,
-                /* opArgs */ undefined);
+                /* opArgs */ undefined as any);
 
             // In order for the removed segment to unlinked by zamboni, we need to ACK the segment
             // and advance the collaboration window's minSeq past the removedSeq.
@@ -101,7 +104,7 @@ describe("MergeTree", () => {
                 remoteClientId,
                 ++remoteSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             const count = countOperations(mergeTree);
 
@@ -112,7 +115,7 @@ describe("MergeTree", () => {
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
@@ -131,7 +134,7 @@ describe("MergeTree", () => {
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             const count = countOperations(mergeTree);
 
@@ -142,10 +145,40 @@ describe("MergeTree", () => {
                 remoteClientId,
                 ++remoteSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
+        });
+
+        it("Local delete shadows remote", () => {
+            const remoteClientId: number = 35;
+            let remoteSequenceNumber = currentSequenceNumber;
+
+            mergeTree.markRangeRemoved(
+                3,
+                6,
+                currentSequenceNumber,
+                localClientId,
+                UnassignedSequenceNumber,
+                false,
+                undefined as any);
+
+            const count = countOperations(mergeTree);
+
+            mergeTree.markRangeRemoved(
+                4,
+                5,
+                remoteSequenceNumber,
+                remoteClientId,
+                ++remoteSequenceNumber,
+                false,
+                undefined as any);
+
+            assert.deepStrictEqual(count, {
+                /* MergeTreeDeltaType.REMOVE is absent as it should not be fired. */
                 [MergeTreeMaintenanceType.SPLIT]: 2,
             });
         });

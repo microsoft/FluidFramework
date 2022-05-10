@@ -10,20 +10,46 @@ export interface IDeliServerConfiguration {
     // Enables nack messages logic
     enableNackMessages: boolean;
 
+    // Enables hashing of sequenced ops
+    enableOpHashing: boolean;
+
+    // Enables creating join/leave signals for write clients
+    enableWriteClientSignals: boolean;
+
     // Expire clients after this amount of inactivity
     clientTimeout: number;
 
     // Timeout for sending no-ops to trigger inactivity checker
     activityTimeout: number;
 
+    // How often to check for idle read clients
+    readClientIdleTimer: number;
+
     // Timeout for sending consolidated no-ops
     noOpConsolidationTimeout: number;
+
+    // Controller how often deli should checkpoint
+    checkpointHeuristics: IDeliCheckpointHeuristicsServerConfiguration;
 
     // Controls how deli should track of certain op events
     opEvent: IDeliOpEventServerConfiguration;
 
     // Controls if ops should be nacked if a summary hasn't been made for a while
     summaryNackMessages: IDeliSummaryNackMessagesServerConfiguration;
+}
+
+export interface IDeliCheckpointHeuristicsServerConfiguration {
+    // Enables checkpointing based on the heuristics
+    enable: boolean;
+
+    // Checkpoint after not processing any messages after this amount of time
+    idleTime: number;
+
+    // Checkpoint if there hasn't been a checkpoint for this amount of time
+    maxTime: number;
+
+    // Checkpoint after processing this amount of messages since the last checkpoint
+    maxMessages: number;
 }
 
 export interface IDeliOpEventServerConfiguration {
@@ -38,6 +64,11 @@ export interface IDeliOpEventServerConfiguration {
 
     // Causes an event to fire based on the number of ops since the last emit
     maxOps: number | undefined;
+}
+
+export interface IBroadcasterServerConfiguration {
+    // Enables including the event name in the topic name for message batching
+    includeEventInMessageBatchName: boolean;
 }
 
 // Scribe lambda configuration
@@ -59,6 +90,10 @@ export interface IDeliSummaryNackMessagesServerConfiguration {
     // Enables nacking non-system & non-summarizer client message if
     // the op count since the last summary exceeds this limit
     enable: boolean;
+
+    // Check the summary nack messages state when starting up
+    // It will potentionally reset the nackMessages flag
+    checkOnStartup: boolean;
 
     // Amount of ops since the last summary before starting to nack
     maxOps: number;
@@ -97,6 +132,9 @@ export interface IServerConfiguration {
     // Deli lambda configuration
     deli: IDeliServerConfiguration;
 
+    // Broadcaster lambda configuration
+    broadcaster: IBroadcasterServerConfiguration;
+
     // Scribe lambda configuration
     scribe: IScribeServerConfiguration;
 
@@ -109,19 +147,15 @@ export interface IServerConfiguration {
     // Enable adding a traces array to operation messages
     enableTraces: boolean;
 
-    // Enable lambda metrics using the Lumber telemetry framework
-    enableLambdaMetrics: boolean;
-
-    // Enable metrics using the Lumber telemetry framework
-    enableLumberMetrics: boolean;
+    // Enable telemetry using the Lumberjack framework
+    enableLumberjack: boolean;
 }
 
 export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
     enableTraces: true,
-    enableLambdaMetrics: false,
-    enableLumberMetrics: true,
+    enableLumberjack: true,
     summary: {
         idleTime: 5000,
         maxOps: 1000,
@@ -130,9 +164,18 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     },
     deli: {
         enableNackMessages: true,
+        enableOpHashing: true,
+        enableWriteClientSignals: false,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
+        readClientIdleTimer: 60 * 1000,
         noOpConsolidationTimeout: 250,
+        checkpointHeuristics: {
+            enable: false,
+            idleTime: 10 * 1000,
+            maxTime: 1 * 60 * 1000,
+            maxMessages: 500,
+        },
         opEvent: {
             enable: false,
             idleTime: 15 * 1000,
@@ -141,6 +184,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         },
         summaryNackMessages: {
             enable: false,
+            checkOnStartup: false,
             maxOps: 5000,
             nackContent: {
                 code: 429,
@@ -149,6 +193,9 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
                 message: "Submit a summary before inserting additional operations",
             },
         },
+    },
+    broadcaster: {
+        includeEventInMessageBatchName: false,
     },
     scribe: {
         generateServiceSummary: true,

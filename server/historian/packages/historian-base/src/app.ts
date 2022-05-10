@@ -15,15 +15,18 @@ import * as nconf from "nconf";
 import split = require("split");
 import * as winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
+import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { RestLessServer } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
-import { getTenantIdFromRequest } from "./utils";
+import { getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
  */
 const stream = split().on("data", (message) => {
     winston.info(message);
+    Lumberjack.info(message);
 });
 
 export function create(
@@ -35,20 +38,38 @@ export function create(
     // Express app configuration
     const app: express.Express = express();
 
+    // initialize RestLess server translation
+    const restLessMiddleware: () => express.RequestHandler = () => {
+        const restLessServer = new RestLessServer();
+        return (req, res, next) => {
+            restLessServer
+                .translate(req)
+                .then(() => next())
+                .catch(next);
+        };
+    };
+    app.use(restLessMiddleware());
+
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
+            const tenantId = getTenantIdFromRequest(req.params);
             const messageMetaData = {
                 method: tokens.method(req, res),
+                pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
+                // TODO: replace "x-driver-version" with DriverVersionHeaderName from services-client
+                driverVersion: tokens.req(req, res, "x-driver-version"),
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
                 responseTime: tokens["response-time"](req, res),
-                tenantId: getTenantIdFromRequest(req.params),
+                tenantId,
+                documentId: getDocumentIdFromRequest(tenantId, req.get("Authorization")),
                 serviceName: "historian",
                 eventName: "http_requests",
              };
              winston.info("request log generated", { messageMetaData });
+             logRequestMetric(messageMetaData);
              return undefined;
         }, { stream }));
     } else {

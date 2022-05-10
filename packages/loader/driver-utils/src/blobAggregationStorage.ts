@@ -26,27 +26,7 @@ import {
     Uint8ArrayToString,
  } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-
-// Gate that when flipped, instructs to compress small blobs.
-// We have to first ship with this gate off, such that we can get to saturation bits
-// that can understand compressed format. And only after that flip it.
-function gatesAllowPacking() {
-    try {
-        // Leave override for testing purposes
-        // eslint-disable-next-line no-null/no-null
-        if (typeof localStorage === "object" && localStorage !== null) {
-            if  (localStorage.FluidAggregateBlobs === "1") {
-                return true;
-            }
-            if  (localStorage.FluidAggregateBlobs === "0") {
-                return false;
-            }
-        }
-    } catch (e) {}
-
-    // We are starting disabled.
-    return false;
-}
+import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 
 /*
  * Work around for bufferToString having a bug - it can't consume IsoBuffer!
@@ -63,7 +43,7 @@ function bufferToString2(blob: ArrayBufferLike, encoding: "utf-8" | "base64"): s
   * Class responsible for aggregating smaller blobs into one and unpacking it later on.
   */
 class BlobAggregator {
-    private readonly content: [string, string][]= [];
+    private readonly content: [string, string][] = [];
 
     public addBlob(key: string, content: string) {
         this.content.push([key, content]);
@@ -119,7 +99,7 @@ export abstract class SnapshotExtractor {
                     let subTree = snapshot;
                     for (const subPath of pathSplit.slice(0, pathSplit.length - 1)) {
                         if (subTree.trees[subPath] === undefined) {
-                            subTree.trees[subPath] = { blobs: {}, commits: {}, trees: {}};
+                            subTree.trees[subPath] = { blobs: {}, trees: {} };
                         }
                         subTree = subTree.trees[subPath];
                     }
@@ -185,17 +165,20 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     static wrap(
         storage: IDocumentStorageService,
         logger: ITelemetryLogger,
-        allowPacking = gatesAllowPacking(),
+        allowPacking?: boolean,
         packingLevel = 2,
     ) {
         if (storage instanceof BlobAggregationStorage) {
             return storage;
         }
+        const mc = loggerToMonitoringContext(logger);
+        const realAllowPackaging = mc.config.getBoolean("FluidAggregateBlobs") ?? allowPacking ?? false;
+
         // Always create BlobAggregationStorage even if storage is not asking for packing.
         // This is mostly to avoid cases where future changes in policy would result in inability to
         // load old files that were created with aggregation on.
         const minBlobSize = storage.policies?.minBlobSize;
-        return new BlobAggregationStorage(storage, logger, allowPacking, packingLevel, minBlobSize);
+        return new BlobAggregationStorage(storage, logger, realAllowPackaging, packingLevel, minBlobSize);
     }
 
     static async unpackSnapshot(snapshot: ISnapshotTree) {
@@ -224,8 +207,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         private readonly logger: ITelemetryLogger,
         private readonly allowPacking: boolean,
         private readonly packingLevel: number,
-        private readonly blobCutOffSize?: number)
-    {
+        private readonly blobCutOffSize?: number) {
         super();
     }
 
@@ -306,8 +288,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         summary: ISummaryTree,
         path = "",
         level = 0,
-        aggregatorArg?: BlobAggregator): Promise<ISummaryTree>
-    {
+        aggregatorArg?: BlobAggregator): Promise<ISummaryTree> {
         if (this.blobCutOffSize === undefined || this.blobCutOffSize < 0) {
             return summary;
         }
@@ -325,8 +306,8 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
             assert(level !== this.packingLevel, 0x23c /* "we are not packing at the right level" */);
         }
 
-        const newSummary: ISummaryTree = {...summary};
-        newSummary.tree = { ...newSummary.tree};
+        const newSummary: ISummaryTree = { ...summary };
+        newSummary.tree = { ...newSummary.tree };
         for (const key of Object.keys(summary.tree)) {
             const obj = summary.tree[key];
             // Get path relative to root of data store (where we do aggregation)

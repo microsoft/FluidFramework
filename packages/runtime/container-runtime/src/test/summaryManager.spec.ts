@@ -5,9 +5,11 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidHandle, IFluidLoadable, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { MessageType } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import {
     IConnectedEvents,
     IConnectedState,
@@ -22,18 +24,26 @@ import {
     SummarizerStopReason,
 } from "../summarizerTypes";
 import { ISummarizerClientElection, ISummarizerClientElectionEvents } from "../summarizerClientElection";
+import { RunningSummarizer } from "../runningSummarizer";
+import { SummarizeHeuristicData } from "../summarizerHeuristics";
+import { SummaryCollection, ISummaryOpMessage } from "../summaryCollection";
+import { neverCancelledSummaryToken } from "../runWhileConnectedCoordinator";
 
 describe("Summary Manager", () => {
     let clock: sinon.SinonFakeTimers;
-    before(() => clock = sinon.useFakeTimers());
+    before(() => { clock = sinon.useFakeTimers(); });
     after(() => clock.restore());
     const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
     const thisClientId = "this";
     const mockLogger = new MockLogger();
+    const mockDeltaManager = new MockDeltaManager();
     let summaryManager: SummaryManager;
+    let runningSummarizer: RunningSummarizer;
+    // let runCount: number;
+    const summarizerClientId = "test";
 
     // Fake objects
-    const summaryCollection = { opsSinceLastAck: 0 };
+    const summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
     const throttler = {
         delayMs: 0,
         numAttempts: 0,
@@ -41,6 +51,23 @@ describe("Summary Manager", () => {
         maxDelayMs: 0,
         delayWindowMs: 0,
         delayFn: () => 0,
+    };
+
+    const summaryOp: ISummaryOpMessage = {
+        clientId: "clientId",
+        clientSequenceNumber: 5,
+        minimumSequenceNumber: 5,
+        referenceSequenceNumber: 5,
+        sequenceNumber: 6,
+        term: 0,
+        timestamp: 6,
+        type: MessageType.Summarize,
+        contents: {
+            handle: "OpHandle",
+            head: "head",
+            message: "message",
+            parents: ["parents"],
+        },
     };
 
     class TestConnectedState extends TypedEventEmitter<IConnectedEvents> implements IConnectedState {
@@ -76,25 +103,50 @@ describe("Summary Manager", () => {
             // Approximation, as ideally it should become cancelled immediately after stop() call
             return this.state !== "running";
         }
+        public close() {}
         public stop(reason?: string): void {
             this.stopDeferred.resolve(reason);
         }
         public async run(onBehalfOf: string): Promise<SummarizerStopReason> {
             this.onBehalfOf = onBehalfOf;
             this.state = "running";
+            runningSummarizer = await RunningSummarizer.start(
+                mockLogger,
+                summaryCollection.createWatcher(summarizerClientId),
+                {
+                    idleTime: 5000, // 5 sec (idle)
+                    maxTime: 5000 * 12, // 1 min (active)
+                    maxOps: 1000, // 1k ops (active)
+                    maxAckWaitTime: 120000, // 2 min
+                },
+                // submitSummaryCallback
+                async (options) => {
+                    return {
+                        stage: "base",
+                        minimumSequenceNumber: 0,
+                        referenceSequenceNumber: 0,
+                        error: undefined,
+                    } as const;
+                },
+                new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
+                () => { },
+                summaryCollection,
+                neverCancelledSummaryToken,
+                // stopSummarizerCallback
+                (reason) => { },
+            );
             await Promise.all([
                 this.stopDeferred.promise,
                 this.runDeferred.promise,
             ]);
+            await runningSummarizer.waitStop(true);
             this.state = "stopped";
             return "summarizerClientDisconnected";
         }
 
         public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = () => this.notImplemented();
         public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = () => this.notImplemented();
-        public readonly request: ISummarizer["request"] = () => this.notImplemented();
         public get IFluidLoadable(): IFluidLoadable { return this.notImplemented(); }
-        public get IFluidRouter(): IFluidRouter { return this.notImplemented(); }
         public get handle(): IFluidHandle { return this.notImplemented(); }
     }
 
@@ -102,6 +154,7 @@ describe("Summary Manager", () => {
         extends TypedEventEmitter<ISummarizerClientElectionEvents>
         implements ISummarizerClientElection {
         public electedClientId: string | undefined;
+        public get electedParentId() { return this.electedClientId; }
 
         public electClient(clientId: string | undefined) {
             this.electedClientId = clientId;
@@ -166,10 +219,9 @@ describe("Summary Manager", () => {
     afterEach(() => {
         clientElection.removeAllListeners();
         summarizer.removeAllListeners();
-        summaryManager.removeAllListeners();
         connectedState.removeAllListeners();
         throttler.delayMs = 0;
-        summaryCollection.opsSinceLastAck = 0;
+        mockDeltaManager.lastSequenceNumber = 0;
         requestCalls = 0;
         clock.reset();
     });
@@ -185,7 +237,7 @@ describe("Summary Manager", () => {
         assertState(SummaryManagerState.Off, "connected but other client elected");
         clientElection.electClient(thisClientId);
         await flushPromises();
-        assertState(SummaryManagerState.Starting, "should request summarizer");
+        assertState(SummaryManagerState.Running, "should request summarizer");
         assertRequests(1, "should have requested summarizer");
         completeSummarizerRequest();
         await flushPromises();
@@ -207,7 +259,7 @@ describe("Summary Manager", () => {
         assertState(SummaryManagerState.Off, "elected but not yet connected");
         connectedState.connect();
         await flushPromises();
-        assertState(SummaryManagerState.Starting, "should request summarizer");
+        assertState(SummaryManagerState.Running, "should request summarizer");
         assertRequests(1, "should have requested summarizer");
         completeSummarizerRequest();
         await flushPromises();
@@ -229,7 +281,7 @@ describe("Summary Manager", () => {
         assertState(SummaryManagerState.Off, "connected but not yet elected");
         clientElection.electClient(thisClientId);
         await flushPromises();
-        assertState(SummaryManagerState.Starting, "should request summarizer");
+        assertState(SummaryManagerState.Running, "should request summarizer");
         assertRequests(1, "should have requested summarizer");
         completeSummarizerRequest();
         await flushPromises();
@@ -237,7 +289,7 @@ describe("Summary Manager", () => {
         summarizer.stop(); // Simulate summarizer stopping itself
         summarizer.runDeferred.resolve();
         await flushPromises();
-        assertState(SummaryManagerState.Starting, "should restart itself");
+        assertState(SummaryManagerState.Running, "should restart itself");
         assertRequests(2, "should have requested a new summarizer");
         completeSummarizerRequest();
         await flushPromises();
@@ -246,7 +298,7 @@ describe("Summary Manager", () => {
 
     describe("Start Summarizer Delay", () => {
         it("Should wait for initial delay before first start", async () => {
-            summaryCollection.opsSinceLastAck = 999; // 999 < 1000, so do not bypass
+            mockDeltaManager.lastSequenceNumber = 999; // 999 < 1000, so do not bypass
             createSummaryManager({
                 initialDelayMs: 2000,
                 opsToBypassInitialDelay: 1000,
@@ -267,7 +319,7 @@ describe("Summary Manager", () => {
         });
 
         it("Should bypass initial delay if enough ops have already passed", async () => {
-            summaryCollection.opsSinceLastAck = 1000; // 1000 >= 1000, so bypass
+            mockDeltaManager.lastSequenceNumber = 1000; // seq >= opsToBypass, so bypass
             createSummaryManager({
                 initialDelayMs: 2000,
                 opsToBypassInitialDelay: 1000,
@@ -275,7 +327,7 @@ describe("Summary Manager", () => {
             });
             clientElection.electClient(thisClientId);
             await flushPromises();
-            assertState(SummaryManagerState.Starting, "should enter starting state immediately");
+            assertState(SummaryManagerState.Running, "should enter starting state immediately");
             assertRequests(1, "should request summarizer immediately, bypassing initial delay");
             completeSummarizerRequest();
             await flushPromises();
@@ -288,11 +340,11 @@ describe("Summary Manager", () => {
         // client was selected to be a summarizer in the past, then got disconnected and later
         // again was elected a summarizer and at that moment we had enough ops to cut short wait.
         // If we want to cut short such wait, we should do it properly by listening for incoming ops
-        // and cut wait short based on op count when an a single op triggers overflow, i.e.
-        // make it work in main scenario, not a some corner case that does not matter.
+        // and cut wait short based on op count when a single op triggers overflow, i.e.
+        // make it work in main scenario, not some corner case that does not matter.
         // Issue #7273 tracks making appropriate product and test change and re-enable the test.
-        it.skip("Should bypass initial delay if enough ops pass later", async () => {
-            summaryCollection.opsSinceLastAck = 500; // 500 < 1000, so do not bypass yet
+        it("Should bypass initial delay if enough ops pass later", async () => {
+            mockDeltaManager.lastSequenceNumber = 500;
             createSummaryManager({
                 initialDelayMs: 2000,
                 opsToBypassInitialDelay: 1000,
@@ -304,17 +356,41 @@ describe("Summary Manager", () => {
             clock.tick(1999);
             await flushPromises();
             assertRequests(0, "should not have requested summarizer yet");
-            summaryCollection.opsSinceLastAck = 999; // 999 < 1000, still do not bypass
+            mockDeltaManager.lastSequenceNumber = 999; // seq < opsToBypass. No bypass.
+            mockDeltaManager.emit("op", summaryOp);
             clientElection.electClient(thisClientId); // force trigger refresh
             await flushPromises();
             assertRequests(0, "still should not have requested summarizer yet");
-            summaryCollection.opsSinceLastAck = 1000; // 1000 >= 1000, so should bypass now
+            mockDeltaManager.lastSequenceNumber = 1000; // Bypass now
+            mockDeltaManager.emit("op", summaryOp);
             clientElection.electClient(thisClientId); // force trigger refresh
             await flushPromises();
             assertRequests(1, "should request summarizer, bypassing initial delay");
             completeSummarizerRequest();
             await flushPromises();
             assertState(SummaryManagerState.Running, "summarizer should be running");
+        });
+
+        it("Should create last summary when summarizer created without delay, then disconnected", async () => {
+            throttler.delayMs = 0;
+            createSummaryManager({
+                opsToBypassInitialDelay: 0,
+                connected: false,
+            });
+            clientElection.electClient(thisClientId);
+            await flushPromises();
+            assertState(SummaryManagerState.Off, "not connected");
+            mockDeltaManager.lastSequenceNumber = 10001;
+            connectedState.connect();
+            await flushPromises();
+            assertState(SummaryManagerState.Running, "Summarizer should be starting");
+            assertRequests(1, "Should begin without delay");
+            completeSummarizerRequest();
+            await flushPromises();
+            assertState(SummaryManagerState.Running, "Should be running");
+            connectedState.disconnect();
+            await flushPromises();
+            assertState(SummaryManagerState.Stopping, "Should be stopping");
         });
 
         it("Should wait for throttler delay before starting summarizer", async () => {

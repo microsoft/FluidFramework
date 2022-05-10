@@ -66,7 +66,7 @@ export interface IEmbeddedSummaryHandle extends ISummaryHandle {
 export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
 
 export interface ISummaryTree extends BaseSummaryTree {
-    tree: { [path: string]: ExtendedSummaryObject };
+    tree: { [path: string]: ExtendedSummaryObject; };
 }
 
 /*
@@ -82,12 +82,6 @@ export interface IWholeFlatSummaryTreeEntryTree {
     unreferenced?: true;
 }
 
-export interface IWholeFlatSummaryTreeEntryCommit {
-    id: string;
-    path: string;
-    type: "commit";
-}
-
 export interface IWholeFlatSummaryTreeEntryBlob {
     id: string;
     path: string;
@@ -96,7 +90,6 @@ export interface IWholeFlatSummaryTreeEntryBlob {
 
 export type IWholeFlatSummaryTreeEntry =
     | IWholeFlatSummaryTreeEntryTree
-    | IWholeFlatSummaryTreeEntryCommit
     | IWholeFlatSummaryTreeEntryBlob;
 
 export interface IWholeFlatSummaryTree {
@@ -107,7 +100,7 @@ export interface IWholeFlatSummaryTree {
 
 export interface IWholeFlatSummaryBlob {
     content: string;
-    encoding: "base64" | "utf8";
+    encoding: "base64" | "utf-8";
     id: string;
     size: number;
 }

@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance, Deferred } from "@fluidframework/common-utils";
+import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
+import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { DriverError } from "@fluidframework/driver-definitions";
+import { OdspError } from "@fluidframework/odsp-driver-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-utils";
+import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
     IClient,
     IConnect,
@@ -14,10 +16,12 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
+import type { Socket, io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
+import { pkgVersion } from "./packageVersion";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
@@ -32,10 +36,14 @@ export interface FlushResult {
 // This allows reconnection after receiving a nack to be smooth
 const socketReferenceBufferTime = 2000;
 
-class SocketReference {
+export interface ISocketEvents extends IEvent {
+    (event: "server_disconnect", listener: (error: IFluidErrorBase & OdspError) => void);
+}
+
+class SocketReference extends TypedEventEmitter<ISocketEvents> {
     private references: number = 1;
     private delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
-    private _socket: SocketIOClient.Socket | undefined;
+    private _socket: Socket | undefined;
 
     // When making decisions about socket reuse, we do not reuse disconnected socket.
     // But we want to differentiate the following case from disconnected case:
@@ -99,7 +107,9 @@ class SocketReference {
         return this._socket;
     }
 
-    public constructor(public readonly key: string, socket: SocketIOClient.Socket) {
+    public constructor(public readonly key: string, socket: Socket) {
+        super();
+
         this._socket = socket;
         assert(!SocketReference.socketIoSockets.has(key), 0x220 /* "socket key collision" */);
         SocketReference.socketIoSockets.set(key, this);
@@ -117,7 +127,8 @@ class SocketReference {
             // comes in from "disconnect" listener below, before we close socket.
             this.isPendingInitialConnection = false;
 
-            socket.emit("disconnect", error);
+            // Explicitly cast error to the specified event args type to ensure type compatibility
+            this.emit("server_disconnect", error as IFluidErrorBase & OdspError);
             this.closeSocket();
         });
     }
@@ -188,13 +199,15 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         tenantId: string,
         documentId: string,
         token: string | null,
-        io: SocketIOClientStatic,
+        io: typeof SocketIOClientStatic,
         client: IClient,
         url: string,
         telemetryLogger: ITelemetryLogger,
         timeoutMs: number,
         epochTracker: EpochTracker,
         socketReferenceKeyPrefix: string | undefined): Promise<OdspDocumentDeltaConnection> {
+        const mc = loggerToMonitoringContext(telemetryLogger);
+
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
         const enableMultiplexing = !parsedUrl.searchParams.has("documentId") && !parsedUrl.searchParams.has("tenantId");
@@ -218,11 +231,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             versions: protocolVersions,
             nonce: uuid(),
             epoch: epochTracker.fluidEpoch,
+            relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
         };
 
         // Reference to this client supporting get_ops flow.
-        // back-compat: remove cast to any once new definition of IConnect comes through.
-        (connectMessage as any).supportedFeatures = { [feature_get_ops]: true };
+        connectMessage.supportedFeatures = { };
+        if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") !== false) {
+            connectMessage.supportedFeatures[feature_get_ops] = true;
+        }
 
         const deltaConnection = new OdspDocumentDeltaConnection(
             socket,
@@ -234,7 +250,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         try {
             await deltaConnection.initialize(connectMessage, timeoutMs);
             await epochTracker.validateEpochFromPush(deltaConnection.details);
-        } catch (errorObject) {
+        } catch (errorObject: any) {
             if (errorObject !== null && typeof errorObject === "object") {
                 // We have to special-case error types here in terms of what is re-triable.
                 // These errors have to re-retried, we just need new joinSession result to connect to right server:
@@ -263,20 +279,19 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
     private readonly requestOpsNoncePrefix: string;
     private pushCallCounter = 0;
-    private readonly getOpsMap: Map<string, { start: number, from: number, to: number }> = new Map();
+    private readonly getOpsMap: Map<string, { start: number; from: number; to: number; }> = new Map();
     private flushOpNonce: string | undefined;
     private flushDeferred: Deferred<FlushResult> | undefined;
 
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
         // Note: we suspect the incoming error object is either:
-        // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
-        //   over it.
-        if (canRetry && typeof error === "object" && error !== null) {
-            return errorObjectFromSocketError(error, handler) as DriverError;
+        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
+        // - anything else: let base class handle it
+        if (canRetry && Number.isInteger(error?.code) && typeof error?.message === "string") {
+            return errorObjectFromSocketError(error as IOdspSocketError, handler);
         } else {
             return super.createErrorObject(handler, error, canRetry);
         }
@@ -286,7 +301,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * Gets or create a socket io connection for the given key
      */
     private static getOrCreateSocketIoReference(
-        io: SocketIOClientStatic,
+        io: typeof SocketIOClientStatic,
         timeoutMs: number,
         key: string,
         url: string,
@@ -323,7 +338,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * @param enableMultiplexing - If the websocket is multiplexing multiple documents
      */
     private constructor(
-        socket: SocketIOClient.Socket,
+        socket: Socket,
         documentId: string,
         socketReference: SocketReference,
         logger: ITelemetryLogger,
@@ -331,10 +346,19 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     ) {
         super(socket, documentId, logger);
         this.socketReference = socketReference;
-        this.requestOpsNoncePrefix = `${this.documentId}-`;
+        this.requestOpsNoncePrefix = `${uuid()}-`;
     }
 
-    public requestOps(from: number, to: number) {
+    /**
+     * Retrieves ops from PUSH
+     * @param from - inclusive
+     * @param to - exclusive
+     * @returns ops retrieved
+     */
+     public requestOps(from: number, to: number) {
+        // Given that to is exclusive, we should be asking for at least something!
+        assert(to > from, 0x272 /* "empty request" */);
+
         // PUSH may disable this functionality
         // back-compat: remove cast to any once latest version of IConnected is consumed
         if ((this.details as any).supportedFeatures?.[feature_get_ops] !== true) {
@@ -353,9 +377,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         // So track some number of requests, but log if we get too many in flight - that likely
         // indicates an error somewhere.
         if (this.getOpsMap.size >= 5) {
-            this.logger.sendTelemetryEvent({
-                eventName: "GetOpsTooMany",
-            });
             let time = start;
             let key: string | undefined;
             for (const [keyCandidate, value] of this.getOpsMap.entries()) {
@@ -364,6 +385,15 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                     key = keyCandidate;
                 }
             }
+            const payloadToDelete = this.getOpsMap.get(key!)!;
+            this.logger.sendErrorEvent({
+                eventName: "GetOpsTooMany",
+                nonce,
+                from: payloadToDelete.from,
+                to: payloadToDelete.to,
+                length: payloadToDelete.to - payloadToDelete.from,
+                duration: performance.now() - payloadToDelete.start,
+            });
             this.getOpsMap.delete(key!);
         }
         this.getOpsMap.set(
@@ -377,7 +407,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         this.socket.emit("get_ops", this.clientId, {
             nonce,
             from,
-            to,
+            to: to - 1,
         });
     }
 
@@ -396,7 +426,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         this.pushCallCounter++;
         const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
         // There should be only one flush ops in flight, kicked out by upload summary workflow
-        // That said, it could timeout, and request could be repeated, so theoretically we can
+        // That said, it could timeout and request could be repeated, so theoretically we can
         // get overlapping requests, but it should be very rare
         if (this.flushDeferred !== undefined) {
             this.logger.sendErrorEvent({ eventName: "FlushOpsTooMany" });
@@ -408,6 +438,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         this.flushDeferred = new Deferred<FlushResult>();
         return this.flushDeferred.promise;
     }
+
+    protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
+        this.disposeCore(true, error);
+    };
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
         if (this.enableMultiplexing) {
@@ -425,25 +459,39 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             };
         }
 
+        this.socketReference!.once("server_disconnect", this.serverDisconnectHandler);
+
         this.socket.on("get_ops_response", (result: IGetOpsResponse) => {
             const messages = result.messages;
             const data = this.getOpsMap.get(result.nonce);
             // Due to socket multiplexing, this client may not have asked for any data
             // If so, there it most likely does not need these ops (otherwise it already asked for them)
-            if (data !== undefined) {
+            // Also we may have deleted entry in this.getOpsMap due to too many requests and too slow response.
+            // But not processing such result may push us into infinite loop of fast requests and dropping all responses
+            if (data !== undefined || result.nonce.indexOf(this.requestOpsNoncePrefix) === 0) {
                 this.getOpsMap.delete(result.nonce);
+                const common = {
+                    eventName: "GetOps",
+                    // We need nonce only to pair with GetOpsTooMany events, i.e. when record was deleted
+                    nonce: data === undefined ? result.nonce : undefined,
+                    code: result.code,
+                    from: data?.from,
+                    to: data?.to,
+                    duration: data === undefined ? undefined : performance.now() - data.start,
+                };
                 if (messages !== undefined && messages.length > 0) {
                     this.logger.sendPerformanceEvent({
-                        eventName: "GetOps",
+                        ...common,
                         first: messages[0].sequenceNumber,
                         last: messages[messages.length - 1].sequenceNumber,
-                        code: result.code,
-                        from: data.from,
-                        to: data.to,
-                        duration: performance.now() - data.start,
                         length: messages.length,
                     });
                     this.emit("op", this.documentId, messages);
+                } else {
+                    this.logger.sendPerformanceEvent({
+                        ...common,
+                        length: 0,
+                    });
                 }
             }
         });
@@ -521,10 +569,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Disconnect from the websocket
      */
-    protected disconnect(socketProtocolError: boolean, reason: DriverError) {
+    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
         this.socketReference = undefined;
+
+        this.socket.off("server_disconnect", this.serverDisconnectHandler);
 
         if (!socketProtocolError && this.hasDetails) {
             // tell the server we are disconnecting this client from the document

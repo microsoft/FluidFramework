@@ -124,7 +124,7 @@ export const handler: Handler = {
                 s.saveSync();
             }
         }
-        const result =  errors.length > 0 ? {error: errors.join("\n")} : undefined;
+        const result = errors.length > 0 ? {error: errors.join("\n")} : undefined;
         return result;
     }
 };

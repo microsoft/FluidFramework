@@ -5,7 +5,7 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -15,11 +15,10 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -29,6 +28,9 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
+
+// @public
+export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
 
 // @public (undocumented)
 export const channelsTreeName = ".channels";
@@ -80,17 +82,18 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>, IProvideFluidHandleContext {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // @internal @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
     request(request: IRequest): Promise<IResponse>;
+    // @deprecated
     setFlushMode(mode: FlushMode): void;
     submitSignal(type: string, content: any): void;
     // (undocumented)
@@ -108,6 +111,11 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 }
 
 // @public
+export interface IDataStore extends IFluidRouter {
+    trySetAlias(alias: string): Promise<AliasResult>;
+}
+
+// @public
 export interface IEnvelope {
     address: string;
     contents: any;
@@ -117,25 +125,33 @@ export interface IEnvelope {
 export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
+    // @deprecated (undocumented)
+    attachGraph(): void;
     readonly attachState: AttachState;
+    // @deprecated (undocumented)
     bindToContext(): void;
     getAttachSummary(): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;
+    makeVisibleAndAttachGraph?(): void;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    // (undocumented)
+    readonly visibilityState?: VisibilityState_2;
 }
 
 // @public
 export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
+    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
+    // @deprecated (undocumented)
     bindToContext(): void;
     // (undocumented)
     readonly clientDetails: IClientDetails;
@@ -151,22 +167,24 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
+    getBaseGCDetails?(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(
     id: string,
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
+    // @deprecated (undocumented)
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
+    makeLocallyVisible?(): void;
     // (undocumented)
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];
-    raiseContainerWarning(warning: ContainerWarning): void;
-    readonly scope: IFluidObject;
+    readonly scope: FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
     readonly storage: IDocumentStorageService;
@@ -213,11 +231,28 @@ export interface IGarbageCollectionData {
 }
 
 // @public
-export interface IGarbageCollectionSummaryDetails {
+export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
     unrefTimestamp?: number;
     usedRoutes?: string[];
 }
+
+// @public
+export interface IGarbageCollectionNodeData {
+    outboundRoutes: string[];
+    unreferencedTimestampMs?: number;
+}
+
+// @public
+export interface IGarbageCollectionState {
+    // (undocumented)
+    gcNodes: {
+        [id: string]: IGarbageCollectionNodeData;
+    };
+}
+
+// @public @deprecated (undocumented)
+export type IGarbageCollectionSummaryDetails = IGarbageCollectionDetailsBase;
 
 // @public
 export interface IInboundSignalMessage extends ISignalMessage {
@@ -307,9 +342,11 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
+    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    // @deprecated (undocumented)
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
     // (undocumented)
@@ -348,6 +385,16 @@ export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRe
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
 
+// @public
+const VisibilityState_2: {
+    NotVisible: string;
+    LocallyVisible: string;
+    GloballyVisible: string;
+};
+
+// @public (undocumented)
+type VisibilityState_2 = typeof VisibilityState_2[keyof typeof VisibilityState_2];
+export { VisibilityState_2 as VisibilityState }
 
 // (No @packageDocumentation comment for this package)
 

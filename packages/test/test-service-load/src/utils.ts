@@ -2,22 +2,25 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import crypto from "crypto";
 import fs from "fs";
-import { Loader } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { createFluidTestDriver, generateOdspHostStoragePolicy } from "@fluidframework/test-drivers";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import random from "random-js";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { Container, IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBufferedLogger, ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { createFluidTestDriver, generateOdspHostStoragePolicy, OdspTestDriver } from "@fluidframework/test-drivers";
+import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { createFluidExport, ILoadTest } from "./loadTestDataStore";
+import { generateConfigurations, generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { createFluidExport } from "./loadTestDataStore";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
-import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -27,10 +30,10 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private logs: ITelemetryBaseEvent[] = [];
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-        super();
+        super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
     }
 
-    async flush(runInfo?: { url: string, runId?: number }): Promise<void> {
+    async flush(runInfo?: { url: string; runId?: number; }): Promise<void> {
         const baseFlushP = this.baseLogger?.flush();
 
         if (this.error && runInfo !== undefined) {
@@ -55,6 +58,11 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
         return baseFlushP;
     }
     send(event: ITelemetryBaseEvent): void {
+        if (typeof event.testCategoryOverride === "string") {
+            event.category = event.testCategoryOverride;
+        } else if (typeof event.message === "string" && event.message.indexOf("FaultInjectionNack") > -1) {
+            event.category = "generic";
+        }
         this.baseLogger?.send({ ...event, hostName: pkgName });
 
         event.Event_Time = Date.now();
@@ -87,15 +95,46 @@ export const createCodeLoader =
     (options: IContainerRuntimeOptions) =>
         new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
-export async function initialize(testDriver: ITestDriver, seed: number) {
+class MockDetachedBlobStorage implements IDetachedBlobStorage {
+    public readonly blobs = new Map<string, ArrayBufferLike>();
+
+    public get size() { return this.blobs.size; }
+
+    public getBlobIds(): string[] {
+        return Array.from(this.blobs.keys());
+    }
+
+    public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        const id = this.size.toString();
+        this.blobs.set(id, content);
+        return { id };
+    }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const blob = this.blobs.get(blobId);
+        assert(!!blob, "blob not found");
+        return blob;
+    }
+}
+
+export async function initialize(testDriver: ITestDriver, seed: number, testConfig: ILoadTestConfig, verbose: boolean) {
     const randEng = random.engines.mt19937();
     randEng.seed(seed);
-    const options = random.pick(randEng, generateLoaderOptions(seed));
+    const loaderOptions = random.pick(
+        randEng,
+        generateLoaderOptions(seed, testConfig.optionOverrides?.[testDriver.type]?.loader));
+    const containerOptions = random.pick(
+        randEng,
+        generateRuntimeOptions(seed, testConfig.optionOverrides?.[testDriver.type]?.container));
+    const configurations = random.pick(
+        randEng,
+        generateConfigurations(seed, testConfig?.optionOverrides?.[testDriver.type]?.configurations));
+
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
-        codeLoader: createCodeLoader(random.pick(randEng, generateRuntimeOptions(seed))),
+        codeLoader: createCodeLoader(containerOptions),
         logger: ChildLogger.create(await loggerP, undefined,
             {
                 all: {
@@ -103,20 +142,43 @@ export async function initialize(testDriver: ITestDriver, seed: number) {
                     driverEndpointName: testDriver.endpointName,
                 },
             }),
-        options,
+        options: loaderOptions,
+        detachedBlobStorage: new MockDetachedBlobStorage(),
+        configProvider: {
+            getRawConfig(name) {
+                return configurations[name];
+            },
+        },
     });
 
-    const container = await loader.createDetachedContainer(codeDetails);
-    container.on("error", (error) => {
+    const container: IContainer = await loader.createDetachedContainer(codeDetails);
+    (container as Container).on("error", (error) => {
         console.log(error);
         process.exit(-1);
     });
-    const testId = Date.now().toString();
+
+    if ((testConfig.detachedBlobCount ?? 0) > 0) {
+        assert(testDriver.type === "odsp", "attachment blobs in detached container not supported on this service");
+        const ds = await requestFluidObject<ILoadTest>(container, "/");
+        const dsm = await ds.detached({ testConfig, verbose, randEng });
+        await Promise.all([...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)));
+    }
+
+    // Currently odsp binary snapshot format only works for special file names. This won't affect any other test
+    // since we have a unique dateId as prefix. So we can just add the required suffix.
+    const testId = `${Date.now().toString()}-WireFormatV1RWOptimizedSnapshot_45e4`;
     const request = testDriver.createCreateNewRequest(testId);
     await container.attach(request);
+    assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
+    const resolvedUrl = container.resolvedUrl;
     container.close();
 
-    return testDriver.createContainerUrl(testId);
+    if ((testConfig.detachedBlobCount ?? 0) > 0) {
+        // TODO: #7684 this should be driver-agnostic
+        const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);
+        return url;
+    }
+    return testDriver.createContainerUrl(testId, resolvedUrl);
 }
 
 export async function createTestDriver(
@@ -153,7 +215,7 @@ export function getProfile(profileArg: string) {
 
 export async function safeExit(code: number, url: string, runId?: number) {
     // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
-    await (new Promise((res) => { setTimeout(res, 1000); }));
+    await (new Promise((resolve) => { setTimeout(resolve, 1000); }));
     // Flush the logs
     await loggerP.then(async (l) => l.flush({ url, runId }));
 

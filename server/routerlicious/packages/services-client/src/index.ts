@@ -4,6 +4,7 @@
  */
 
 export * from "./auth";
+export * from "./constants";
 export * from "./error";
 export * from "./generateNames";
 export * from "./gitManager";
@@ -12,6 +13,7 @@ export * from "./interfaces";
 export * from "./promiseTimeout";
 export * from "./restLessClient";
 export * from "./restWrapper";
+export * from "./rollingHash";
 export * from "./scopes";
 export * from "./storage";
 export * from "./storageContracts";

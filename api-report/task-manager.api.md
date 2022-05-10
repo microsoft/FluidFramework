@@ -11,12 +11,12 @@ import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ITree } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
@@ -29,7 +29,7 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
     // (undocumented)
     connected: boolean;
     // (undocumented)
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 }
 
 // @public (undocumented)
@@ -85,22 +85,22 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     _getTaskQueues(): Map<string, string[]>;
     // (undocumented)
     haveTaskLock(taskId: string): boolean;
-    // (undocumented)
+    // @internal (undocumented)
     protected initializeLocalCore(): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     lockTask(taskId: string): Promise<void>;
-    // (undocumented)
+    // @internal (undocumented)
     protected onDisconnect(): void;
+    // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     queued(taskId: string): boolean;
-    // (undocumented)
-    protected registerCore(): void;
-    // (undocumented)
+    // @internal
     protected reSubmitCore(): void;
-    protected snapshotCore(serializer: IFluidSerializer): ITree;
+    // @internal
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     }
 
 

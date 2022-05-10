@@ -22,8 +22,7 @@ describe("Parallel Requests", () => {
         to: number,
         expectedRequests: number,
         knownTo: boolean,
-        howMany: HowMany = HowMany.Exact)
-    {
+        howMany: HowMany = HowMany.Exact) {
         let nextElement = from;
         let requests = 0;
         let dispatches = 0;
@@ -62,7 +61,7 @@ describe("Parallel Requests", () => {
                     payload.push(i);
                 }
 
-                return { partial: _from !== to && howMany === HowMany.Partial, cancel: false, payload};
+                return { partial: _from !== to && howMany === HowMany.Partial, cancel: false, payload };
             },
             (deltas: number[]) => {
                 dispatches++;
@@ -87,8 +86,7 @@ describe("Parallel Requests", () => {
         to: number | undefined,
         cancelAt: number,
         payloadSize,
-        expectedRequests: number)
-    {
+        expectedRequests: number) {
         let nextElement = from;
         let requests = 0;
         let dispatches = 0;
@@ -108,7 +106,7 @@ describe("Parallel Requests", () => {
                 assert(to === undefined || _to <= to);
 
                 if (_to > cancelAt) {
-                    return { partial: false, cancel: true, payload: []};
+                    return { partial: false, cancel: true, payload: [] };
                 }
 
                 const payload: number[] = [];
@@ -116,7 +114,7 @@ describe("Parallel Requests", () => {
                     payload.push(i);
                 }
 
-                return { partial: false, cancel: false, payload};
+                return { partial: false, cancel: false, payload };
             },
             (deltas: number[]) => {
                 dispatches++;
@@ -209,7 +207,7 @@ describe("Parallel Requests", () => {
         let success = true;
         try {
             await manager.run(10);
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert(error.message === "request");
         }
@@ -233,7 +231,7 @@ describe("Parallel Requests", () => {
         let success = true;
         try {
             await manager.run(10);
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert(error.message === "response");
         }

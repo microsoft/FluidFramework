@@ -4,16 +4,16 @@
 
 ```ts
 
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IFluidHTMLOptions } from '@fluidframework/view-interfaces';
 import { IFluidHTMLView } from '@fluidframework/view-interfaces';
 import { IFluidMountableView } from '@fluidframework/view-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { default as React_2 } from 'react';
 
 // @public
 export class HTMLViewAdapter implements IFluidHTMLView {
-    constructor(view: IFluidObject);
-    static canAdapt(view: IFluidObject): boolean;
+    constructor(view: FluidObject);
+    static canAdapt(view: FluidObject): boolean;
     // (undocumented)
     get IFluidHTMLView(): this;
     // (undocumented)
@@ -24,14 +24,14 @@ export class HTMLViewAdapter implements IFluidHTMLView {
 
 // @public (undocumented)
 export interface IReactViewAdapterProps {
-    view: IFluidObject;
+    view: FluidObject;
 }
 
 // @public
 export class MountableView implements IFluidMountableView {
-    constructor(view: IFluidObject);
+    constructor(view: FluidObject);
     // (undocumented)
-    static canMount(view: IFluidObject): boolean;
+    static canMount(view: FluidObject): boolean;
     // (undocumented)
     get IFluidMountableView(): this;
     // (undocumented)
@@ -43,7 +43,7 @@ export class MountableView implements IFluidMountableView {
 // @public
 export class ReactViewAdapter extends React_2.Component<IReactViewAdapterProps> {
     constructor(props: IReactViewAdapterProps);
-    static canAdapt(view: IFluidObject): boolean;
+    static canAdapt(view: FluidObject): boolean;
     // (undocumented)
     render(): JSX.Element;
 }

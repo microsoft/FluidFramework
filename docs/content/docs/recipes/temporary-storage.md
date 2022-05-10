@@ -11,7 +11,7 @@ In this scenario, we assume the data in the primary data store will be temporari
 
 ## Getting data into the container
 
-The developer is responsible for connecting to the external data store from their client-side web application, finding the appropriate data, and marshalling the data into a new Fluid container. We recommend creating the container in a detached state, inserting the external data into new Fluid objects, and then attaching the container. This avoids the situation where another user opens the container and the seed data is not yet present.
+The developer is responsible for connecting to the external data store from their client-side web application, finding the appropriate data, and marshalling the data into a new Fluid container. We recommend creating the container in a detached state, inserting the external data into new shared objects, and then attaching the container. This avoids the situation where another user opens the container and the seed data is not yet present.
 
 ## Locking the source data
 

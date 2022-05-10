@@ -8,6 +8,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { gcTreeKey } from "./garbageCollection";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -69,20 +70,35 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
     return 0;
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
     return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
 
 export type GCVersion = number;
-export interface IContainerRuntimeMetadata {
+export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
     readonly summaryFormatVersion: 1;
-    /** The last message processed at the time of summary. Only primitive propertiy types are added to the summary. */
+    /** The last message processed at the time of summary. Only primitive property types are added to the summary. */
     readonly message: ISummaryMetadataMessage | undefined;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
-    /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
+    /** 0 to disable GC, \> 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
+    /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
+    readonly summaryNumber?: number;
+    /** If this is present, the session for this container will expire after this time and the container will close */
+    readonly sessionExpiryTimeoutMs?: number;
+    /**
+     * @deprecated - User summaryNumber instead.
+     * Counter of the last summary happened, increments every time we summarize
+     * */
+    readonly summaryCount?: number;
+}
+
+export interface ICreateContainerMetadata {
+    /** Runtime version of the container when it was first created */
+    createContainerRuntimeVersion?: string;
+    /** Timestamp of the container when it was first created */
+    createContainerTimestamp?: number;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
@@ -111,7 +127,6 @@ export const extractSummaryMetadataMessage = (
     type: message.type,
 };
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): number {
     /**
      * Version 2+: Introduces runtime sequence number for data verification.
@@ -126,12 +141,12 @@ export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): 
     return metadata?.summaryFormatVersion ?? 0;
 }
 
+export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
     return !!metadata && !metadata.disableIsolatedChannels;
 }
@@ -152,17 +167,24 @@ export const protocolTreeName = ".protocol";
  * isolated data stores namespace. Without the namespace, this must
  * be used to prevent name collisions with data store IDs.
  */
-export const nonDataStorePaths = [protocolTreeName, ".logTail", ".serviceProtocol", blobsTreeName];
+export const nonDataStorePaths = [protocolTreeName, ".logTail", ".serviceProtocol", blobsTreeName, gcTreeKey];
 
 export const dataStoreAttributesBlobName = ".component";
 
 /**
  * Modifies summary tree and stats to put tree under .channels tree.
- * Converts from: {
+ * Converts from:
+ * ```ts
+ * {
  *     type: SummaryType.Tree,
  *     tree: { a: {...}, b: {...}, c: {...} },
  * }
- * to: {
+ * ```
+ *
+ * to:
+ *
+ * ```ts
+ * {
  *     type: SummaryType.Tree,
  *     tree: {
  *         ".channels": {
@@ -171,6 +193,7 @@ export const dataStoreAttributesBlobName = ".component";
  *         },
  *     },
  * }
+ * ```
  * And adds +1 to treeNodeCount in stats.
  * @param summarizeResult - summary tree and stats to modify
  */

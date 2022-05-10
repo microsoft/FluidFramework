@@ -5,63 +5,40 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ConnectionMode } from '@fluidframework/protocol-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
-import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { ICodeLoader } from '@fluidframework/container-definitions';
-import { IConnectionDetails } from '@fluidframework/container-definitions';
+import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerEvents } from '@fluidframework/container-definitions';
 import { IContainerLoadMode } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
-import { IDeltaHandlerStrategy } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
-import { IDeltaQueue } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidModule } from '@fluidframework/container-definitions';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
-import { IProvideFluidCodeDetailsComparer } from '@fluidframework/core-interfaces';
+import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
-import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
-import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
-import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
-
-// @public (undocumented)
-export class CollabWindowTracker {
-    constructor(submit: (type: MessageType, contents: any) => void, activeConnection: () => boolean, NoopTimeFrequency?: number, NoopCountFrequency?: number);
-    scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void;
-    // (undocumented)
-    stopSequenceNumberUpdate(): void;
-    }
 
 // @public (undocumented)
 export enum ConnectionState {
@@ -78,8 +55,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get attachState(): AttachState;
     get audience(): IAudience;
-    // @deprecated (undocumented)
-    get chaincodePackage(): IFluidCodeDetails | undefined;
     // (undocumented)
     get clientDetails(): IClientDetails;
     get clientId(): string | undefined;
@@ -90,7 +65,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get closed(): boolean;
     // (undocumented)
-    get codeDetails(): IFluidCodeDetails | undefined;
+    get closeSignal(): AbortSignal;
+    // (undocumented)
+    connect(): void;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -98,12 +75,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // (undocumented)
+    disconnect(): void;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getQuorum(): IQuorum;
-    // (undocumented)
-    get id(): string;
+    getLoadedCodeDetails(): IFluidCodeDetails | undefined;
+    getQuorum(): IQuorumClients;
+    getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
@@ -111,33 +90,24 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
     // (undocumented)
-    get options(): ILoaderOptions;
+    readonly options: ILoaderOptions;
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
-    raiseContainerWarning(warning: ContainerWarning): void;
-    // @deprecated
-    get readonly(): boolean | undefined;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
-    // @deprecated
-    get readonlyPermissions(): boolean | undefined;
     static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;
     // (undocumented)
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)
     get resolvedUrl(): IResolvedUrl | undefined;
-    // (undocumented)
+    // @deprecated
     resume(): void;
-    // (undocumented)
-    protected resumeInternal(args: IConnectionArgs): void;
     get scopes(): string[] | undefined;
     // (undocumented)
     serialize(): string;
     get serviceConfiguration(): IClientConfiguration | undefined;
-    // (undocumented)
+    // @deprecated
     setAutoReconnect(reconnect: boolean): void;
-    // (undocumented)
-    snapshot(tagMessage: string, fullTree?: boolean): Promise<void>;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
@@ -146,91 +116,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static version: string;
 }
 
-// @public
-export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, IEventProvider<IDeltaManagerInternalEvents> {
-    constructor(serviceProvider: () => IDocumentService | undefined, client: IClient, logger: ITelemetryLogger, reconnectAllowed: boolean, _active: () => boolean);
-    // (undocumented)
-    get active(): boolean;
-    attachOpHandler(minSequenceNumber: number, sequenceNumber: number, term: number, handler: IDeltaHandlerStrategy): void;
-    // (undocumented)
-    readonly clientDetails: IClientDetails;
-    close(error?: ICriticalContainerError): void;
-    // (undocumented)
-    connect(args: IConnectionArgs): Promise<IConnectionDetails>;
-    get connectionMode(): ConnectionMode;
-    connectionProps(): ITelemetryProperties;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    emitDelayInfo(id: string, delayMs: number, error: unknown): void;
-    // (undocumented)
-    flush(): void;
-    forceReadonly(readonly: boolean): void;
-    get hasCheckpointSequenceNumber(): boolean;
-    // (undocumented)
-    get IDeltaSender(): this;
-    // (undocumented)
-    get inbound(): IDeltaQueue<ISequencedDocumentMessage>;
-    // (undocumented)
-    get inboundSignal(): IDeltaQueue<ISignalMessage>;
-    // (undocumented)
-    get initialSequenceNumber(): number;
-    // (undocumented)
-    get lastKnownSeqNumber(): number;
-    // (undocumented)
-    get lastMessage(): ISequencedDocumentMessage | undefined;
-    // (undocumented)
-    get lastSequenceNumber(): number;
-    logConnectionIssue(event: ITelemetryErrorEvent): void;
-    // (undocumented)
-    get maxMessageSize(): number;
-    // (undocumented)
-    get minimumSequenceNumber(): number;
-    // (undocumented)
-    get outbound(): IDeltaQueue<IDocumentMessage[]>;
-    // (undocumented)
-    preFetchOps(cacheOnly: boolean): Promise<void>;
-    // @deprecated
-    get readonly(): boolean | undefined;
-    // (undocumented)
-    get readOnlyInfo(): ReadOnlyInfo;
-    // @deprecated
-    get readonlyPermissions(): boolean | undefined;
-    get reconnectMode(): ReconnectMode;
-    // (undocumented)
-    get referenceTerm(): number;
-    // (undocumented)
-    refreshDelayInfo(id: string): void;
-    // (undocumented)
-    get scopes(): string[] | undefined;
-    // (undocumented)
-    get serviceConfiguration(): IClientConfiguration | undefined;
-    setAutomaticReconnect(reconnect: boolean): void;
-    // (undocumented)
-    shouldJoinWrite(): boolean;
-    // (undocumented)
-    get socketDocumentId(): string | undefined;
-    submit(type: MessageType, contents: any, batch?: boolean, metadata?: any): number;
-    // (undocumented)
-    submitSignal(content: any): void;
-    // (undocumented)
-    get version(): string;
-}
-
-// @public
+// @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
-}
-
-// @public (undocumented)
-export interface IConnectionArgs {
-    // (undocumented)
-    fetchOpsFromStorage?: boolean;
-    // (undocumented)
-    mode?: ConnectionMode;
-    // (undocumented)
-    reason: string;
 }
 
 // @public (undocumented)
@@ -253,20 +141,12 @@ export interface IContainerLoadOptions {
 }
 
 // @public
-export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
-    // (undocumented)
-    (event: "throttled", listener: (error: IThrottlingWarning) => void): any;
-    // (undocumented)
-    (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
-}
-
-// @public
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
     getBlobIds(): string[];
 };
 
-// @public
+// @public @deprecated (undocumented)
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
@@ -275,29 +155,32 @@ export interface IFluidModuleWithDetails {
 // @public (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {
     // (undocumented)
-    summarizeProtocolTree?: true;
+    summarizeProtocolTree?: boolean;
 }
 
 // @public
 export interface ILoaderProps {
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
+    readonly configProvider?: IConfigProviderBase;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
+    // @deprecated
     readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
-    readonly scope?: IFluidObject;
+    readonly scope?: FluidObject;
     readonly urlResolver: IUrlResolver;
 }
 
 // @public
 export interface ILoaderServices {
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
+    // @deprecated
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
-    readonly scope: IFluidObject;
+    readonly scope: FluidObject;
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
 }
@@ -305,30 +188,18 @@ export interface ILoaderServices {
 // @public
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
-    // @deprecated (undocumented)
-    static _create(resolver: IUrlResolver | IUrlResolver[], documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[], codeLoader: ICodeDetailsLoader | ICodeLoader, options: ILoaderOptions, scope: IFluidObject, proxyLoaderFactories: Map<string, IProxyLoaderFactory>, logger?: ITelemetryBaseLogger): Loader;
     // (undocumented)
-    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container>;
+    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     // (undocumented)
-    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    resolve(request: IRequest, pendingLocalState?: string): Promise<Container>;
+    resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
     // (undocumented)
     readonly services: ILoaderServices;
-}
-
-// @public (undocumented)
-export enum ReconnectMode {
-    // (undocumented)
-    Disabled = "Disabled",
-    // (undocumented)
-    Enabled = "Enabled",
-    // (undocumented)
-    Never = "Never"
 }
 
 // @public (undocumented)
@@ -343,8 +214,7 @@ export class RelativeLoader implements ILoader {
 }
 
 // @public
-export function waitContainerToCatchUp(container: Container): Promise<boolean>;
-
+export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 
 // (No @packageDocumentation comment for this package)
 

@@ -17,7 +17,7 @@ module.exports = {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: 'ts-loader',
+                use: require.resolve('ts-loader'),
                 exclude: /node_modules/
             },
         ]
@@ -32,7 +32,7 @@ module.exports = {
         libraryTarget: "umd"
     },
     devServer: {
-        publicPath: '/dist',
+        devMiddleware: { publicPath: '/dist' },
         watchOptions: {
             ignored: "**/node_modules/**",
         }

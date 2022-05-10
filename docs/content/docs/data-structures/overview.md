@@ -9,8 +9,8 @@ who've used common data structures before.
 
 {{% callout note %}}
 
-This article assumes that you are familiar with [Introducing distributed data structures]({{< relref
-"dds.md" >}}).
+This article assumes that you are familiar with
+[Introducing distributed data structures]({{< relref "dds.md" >}}).
 
 {{% /callout %}}
 
@@ -61,15 +61,6 @@ Key-value data structures are the most common choice for many scenarios.
 - Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
   value rather than merging two updates. Try splitting the data across multiple keys.
 
-## Sequences
-
-These DDSes are used for storing sequential data. They are optimistic. Sequence data structures are useful when you'll
-need to insert, or remove, data at a specified position in a list or array. Unlike the key-value data structures,
-sequences have a sequential order and can handle simultaneous inserts from multiple users.
-
-- [SharedNumberSequence][] -- a sequence of numbers.
-- [SharedObjectSequence][] -- a sequence of plain objects.
-
 ### Sequence scenarios
 
 - Tabular data
@@ -110,7 +101,7 @@ Consensus data structures have one or both of these characteristics:
 These DDSes are **not** optimistic. Before a change to a consensus data structure is confirmed, the connected clients
 must acknowledge the change.
 
-- [TaskManager][] -- Tracks queues of clients that want to exclusively run a task.
+- [TaskManager]({{< relref "task-manager.md" >}}) -- Tracks queues of clients that want to exclusively run a task.
 
 ### Consensus scenarios
 
@@ -148,17 +139,11 @@ DDS will be available over time.
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "dataobject.md" >}}
-[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
-[PureDataObject]: {{< relref "puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
-[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

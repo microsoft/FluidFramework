@@ -7,15 +7,16 @@ import { strict as assert } from "assert";
 import Axios from "axios";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
+import { CorrelationIdHeaderName } from "../constants";
 import { BasicRestWrapper } from "../restWrapper";
 
 describe("BasicRestWrapper", () => {
     const baseurl = "https://fake.microsoft.com";
     const requestUrl = "/fakerequesturl/";
-    const correlationIdHeader = "x-correlation-id";
     const headerCount = 1;
     const maxBodyLength = 1000 * 1024 * 1024;
     const maxContentLength = 1000 * 1024 * 1024;
+    const axiosInstance = Axios.create();
     let axiosMock: Partial<AxiosInstance>;
     let axiosErrorMock: Partial<AxiosInstance>;
     let axiosTooManyRequestsErrorZeroRetryAfterMock: Partial<AxiosInstance>;
@@ -132,7 +133,7 @@ describe("BasicRestWrapper", () => {
             ),
         };
 
-        axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter  = new AxiosMockAdapter(Axios);
+        axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter = new AxiosMockAdapter(axiosInstance);
 
         // For axios mock for testing 429 throttled requests with a valid retryAfter value,
         // first request should return 429 and then a 200 should be returned
@@ -188,7 +189,7 @@ describe("BasicRestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, axiosInstance);
 
             // act/assert
             await rw.get(requestUrl).then(
@@ -210,7 +211,7 @@ describe("BasicRestWrapper", () => {
             assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
             assert.strictEqual(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
-            assert.strictEqual(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
+            assert.strictEqual(CorrelationIdHeaderName, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {
@@ -307,7 +308,7 @@ describe("BasicRestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, axiosInstance);
 
             // act/assert
             await rw.post(requestUrl, {}).then(
@@ -329,7 +330,7 @@ describe("BasicRestWrapper", () => {
             assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
             assert.strictEqual(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
-            assert.strictEqual(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
+            assert.strictEqual(CorrelationIdHeaderName, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {
@@ -427,7 +428,7 @@ describe("BasicRestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, axiosInstance);
 
             // act/assert
             await rw.delete(requestUrl, {}).then(
@@ -449,7 +450,7 @@ describe("BasicRestWrapper", () => {
             assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
             assert.strictEqual(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
-            assert.strictEqual(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
+            assert.strictEqual(CorrelationIdHeaderName, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {
@@ -547,7 +548,7 @@ describe("BasicRestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, axiosInstance);
 
             // act/assert
             await rw.patch(requestUrl, {}).then(
@@ -569,7 +570,7 @@ describe("BasicRestWrapper", () => {
             assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
             assert.strictEqual(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
-            assert.strictEqual(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
+            assert.strictEqual(CorrelationIdHeaderName, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {

@@ -8,9 +8,10 @@
 import { strict as assert } from "assert";
 import { DriverErrorType, IThrottlingWarning } from "@fluidframework/driver-definitions";
 import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils";
-import { OdspErrorType, OdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
-import { createOdspNetworkError, invalidFileNameStatusCode, enrichOdspError } from "../odspErrorUtils";
+import { createOdspNetworkError, enrichOdspError } from "../odspErrorUtils";
+import { pkgVersion } from "../packageVersion";
 
 describe("OdspErrorUtils", () => {
     function assertCustomPropertySupport(err: any) {
@@ -92,15 +93,6 @@ describe("OdspErrorUtils", () => {
             assertCustomPropertySupport(networkError);
         });
 
-        it("InvalidFileNameError Test", () => {
-            const networkError = createOdspNetworkError(
-                "Test Message",
-                invalidFileNameStatusCode /* statusCode */);
-            assert(networkError.errorType === OdspErrorType.invalidFileNameError,
-                "Error should be an InvalidFileNameError");
-            assertCustomPropertySupport(networkError);
-        });
-
         it("ThrottlingError 400 Test", () => {
             const networkError = createOdspNetworkError(
                 "Test Message",
@@ -124,7 +116,7 @@ describe("OdspErrorUtils", () => {
 
     describe("enrichError", () => {
         it("enriched with online flag", () => {
-            const error = new GenericNetworkError("Some message", false) as GenericNetworkError & OdspError;
+            const error = new GenericNetworkError("Some message", false, { driverVersion: pkgVersion }) as GenericNetworkError & OdspError;
             enrichOdspError(error);
 
             assert(typeof error.online === "string");
@@ -134,7 +126,7 @@ describe("OdspErrorUtils", () => {
         it("enriched with facetCodes", () => {
             const responseText = '{ "error": { "message":"hello", "code": "foo", "innerError": { "code": "bar" } } }';
             const error = createOdspNetworkError(
-                "Some message",
+                "Test Message",
                 400,
                 undefined,
                 undefined, /* response */
@@ -156,7 +148,7 @@ describe("OdspErrorUtils", () => {
                 },
             };
             const error = createOdspNetworkError(
-                "Some message",
+                "Test Message",
                 400,
                 undefined,
                 { type: "fooType", headers: mockHeaders } as unknown as Response, /* response */
@@ -173,11 +165,12 @@ describe("OdspErrorUtils", () => {
             assert.equal(error.getTelemetryProperties().sprequestduration, 5);
             assert.equal(error.getTelemetryProperties().contentsize, 5);
             assert.equal(error.getTelemetryProperties().serverEpoch, "mock header x-fluid-epoch");
+            assert.equal((error as IOdspError).serverEpoch, "mock header x-fluid-epoch");
         });
     });
 
     it("WriteError Test", () => {
-        const writeError = createWriteError("Test Error");
+        const writeError = createWriteError("Test Error", { driverVersion: pkgVersion });
         assertCustomPropertySupport(writeError);
         assert(writeError.errorType === DriverErrorType.writeError, "Error should be a writeError");
         assert.equal(writeError.canRetry, false, "Error should be critical");

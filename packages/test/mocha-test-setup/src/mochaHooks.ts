@@ -8,12 +8,19 @@ import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { Context } from "mocha";
 import { pkgName } from "./packageVersion";
 
+const testVariant = process.env.FLUID_TEST_VARIANT;
+
 const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {
     send(event: ITelemetryBaseEvent) {
-        if (this.testName !== undefined) {
-            event.testName = this.testName;
+        // TODO: Remove when issue #7061 is resolved.
+        // Don't log this event as we generate too much.
+        if (event.eventName === "fluid:telemetry:RouterliciousDriver:readBlob_end") {
+            return;
         }
+
+        event.testName = this.testName;
+        event.testVariant = testVariant;
         event.hostName = pkgName;
         this.parentLogger.send(event);
     }
@@ -21,7 +28,7 @@ class TestLogger implements ITelemetryBufferedLogger {
         return this.parentLogger.flush();
     }
     constructor(private readonly parentLogger: ITelemetryBufferedLogger,
-        private readonly testName?: string) { }
+        private readonly testName: string) { }
 }
 const nullLogger: ITelemetryBufferedLogger = {
     send: () => { },
@@ -62,6 +69,8 @@ export const mochaHooks = {
             category: "generic",
             eventName: "fluid:telemetry:Test_start",
             testName: currentTestName,
+            testVariant,
+            hostName: pkgName,
         });
     },
     afterEach() {
@@ -73,6 +82,9 @@ export const mochaHooks = {
             testName: currentTestName,
             state: context.currentTest?.state,
             duration: context.currentTest?.duration,
+            timedOut: context.currentTest?.timedOut,
+            testVariant,
+            hostName: pkgName,
         });
 
         console.log = log;

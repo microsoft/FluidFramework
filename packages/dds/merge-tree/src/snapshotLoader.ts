@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert, bufferToString } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
@@ -38,18 +38,18 @@ export class SnapshotLoader {
 
     public async initialize(
         services: IChannelStorageService,
-    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]>; }> {
         const headerLoadedP =
             services.readBlob(SnapshotLegacy.header).then((header) => {
                 assert(!!header, 0x05f /* "Missing blob header on legacy snapshot!" */);
-                return this.loadHeader(bufferToString(header,"utf8"));
+                return this.loadHeader(bufferToString(header, "utf8"));
             });
 
         const catchupOpsP =
             this.loadBodyAndCatchupOps(headerLoadedP, services);
 
         catchupOpsP.catch(
-            (err)=>this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" },err));
+            (err) => this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" }, err));
 
         await headerLoadedP;
 
@@ -102,8 +102,16 @@ export class SnapshotLoader {
             if (spec.removedSeq !== undefined) {
                 seg.removedSeq = spec.removedSeq;
             }
+            // this format had a bug where it didn't store all the overlap clients
+            // this is for back compat, so we change the singular id to an array
+            // this will only cause problems if there is an overlapping delete
+            // spanning the snapshot, which should be rare
             if (spec.removedClient !== undefined) {
-                seg.removedClientId = this.client.getOrAddShortClientId(spec.removedClient);
+                seg.removedClientIds = [this.client.getOrAddShortClientId(spec.removedClient)];
+            }
+            if (spec.removedClientIds !== undefined) {
+                seg.removedClientIds = spec.removedClientIds?.map(
+                    (sid) => this.client.getOrAddShortClientId(sid));
             }
         } else {
             seg = this.client.specToSegment(spec);

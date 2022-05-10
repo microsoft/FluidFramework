@@ -5,11 +5,6 @@
 
 import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext";
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideFluidDataStoreFactory>> { }
-}
-
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory = "IFluidDataStoreFactory";
 
 export interface IProvideFluidDataStoreFactory {

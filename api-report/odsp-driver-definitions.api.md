@@ -5,6 +5,7 @@
 ```ts
 
 import { DriverError } from '@fluidframework/driver-definitions';
+import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 
 // @public (undocumented)
@@ -18,6 +19,8 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
     // (undocumented)
     enableRedeemFallback?: boolean;
+    enableShareLinkWithCreate?: boolean;
+    // @deprecated (undocumented)
     fetchBinarySnapshotFormat?: boolean;
     isolateSocketCache?: boolean;
     // (undocumented)
@@ -35,6 +38,7 @@ export interface ICacheEntry extends IEntry {
 
 // @public (undocumented)
 export interface ICollabSessionOptions {
+    forceAccessTokenViaAuthorizationHeader?: boolean;
     unauthenticatedUserDisplayName?: string;
 }
 
@@ -57,15 +61,10 @@ export interface IFileEntry {
 export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
 
 // @public
-export interface IOdspError {
-    // (undocumented)
-    canRetry: boolean;
+export interface IOdspError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: OdspErrorType;
-    // (undocumented)
-    readonly message: string;
-    // (undocumented)
-    online?: string;
+    serverEpoch?: string;
 }
 
 // @public (undocumented)
@@ -88,9 +87,10 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     // (undocumented)
     hashedDocumentId: string;
     // (undocumented)
-    odspResolvedUrl: true;
+    isClpCompliantApp?: boolean;
     // (undocumented)
-    sharingLinkToRedeem?: string;
+    odspResolvedUrl: true;
+    shareLinkInfo?: ShareLinkInfoType;
     // (undocumented)
     summarizer: boolean;
     // (undocumented)
@@ -156,6 +156,8 @@ export enum OdspErrorType {
     // (undocumented)
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
+    // (undocumented)
+    locationRedirection = "locationRedirection",
     outOfStorageError = "outOfStorageError",
     // (undocumented)
     serviceReadOnly = "serviceReadOnly",
@@ -167,6 +169,22 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
     driveId?: string;
     itemId?: string;
     siteUrl: string;
+}
+
+// @public
+export interface ShareLinkInfoType {
+    createLink?: {
+        type?: ShareLinkTypes;
+        link?: string;
+        error?: any;
+    };
+    sharingLinkToRedeem?: string;
+}
+
+// @public
+export enum ShareLinkTypes {
+    // (undocumented)
+    csl = "csl"
 }
 
 // @public
@@ -190,7 +208,6 @@ export interface TokenResponse {
     fromCache?: boolean;
     token: string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

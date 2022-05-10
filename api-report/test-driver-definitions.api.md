@@ -6,6 +6,7 @@
 
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
@@ -16,12 +17,14 @@ export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
 
 // @public (undocumented)
 export interface ITestDriver {
-    createContainerUrl(testId: string): Promise<string>;
-    createCreateNewRequest(testId: string): IRequest;
+    createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
+    createCreateNewRequest(testId?: string): IRequest;
     createDocumentServiceFactory(): IDocumentServiceFactory;
     createUrlResolver(): IUrlResolver;
     readonly endpointName?: string;
+    readonly tenantName?: string;
     readonly type: TestDriverTypes;
+    readonly userIndex?: number;
     readonly version: string;
 }
 

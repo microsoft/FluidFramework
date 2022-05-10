@@ -4,7 +4,6 @@
  */
 
 import {
-    assert,
     bufferToString,
     fromBase64ToUtf8,
     IsoBuffer,
@@ -134,7 +133,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
         this.summaryStats.treeNodeCount++;
     }
 
-    private readonly summaryTree: { [path: string]: SummaryObject } = {};
+    private readonly summaryTree: { [path: string]: SummaryObject; } = {};
     private summaryStats: ISummaryStats;
 
     public addBlob(key: string, content: string | Uint8Array): void {
@@ -151,8 +150,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     public addHandle(
         key: string,
         handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
-        handle: string): void
-    {
+        handle: string): void {
         this.summaryTree[key] = {
             type: SummaryType.Handle,
             handleType,
@@ -215,9 +213,6 @@ export function convertToSummaryTreeWithStats(
                 break;
             }
 
-            case TreeEntry.Commit:
-                throw new Error("Should not have Commit TreeEntry in summary");
-
             default:
                 throw new Error("Unexpected TreeEntry type");
         }
@@ -262,9 +257,6 @@ export function convertToSummaryTree(
 export function convertSnapshotTreeToSummaryTree(
     snapshot: ISnapshotTree,
 ): ISummaryTreeWithStats {
-    assert(Object.keys(snapshot.commits).length === 0,
-        0x19e /* "There should not be commit tree entries in snapshot" */);
-
     const builder = new SummaryTreeBuilder();
     for (const [path, id] of Object.entries(snapshot.blobs)) {
         let decoded: string | undefined;
@@ -303,7 +295,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
         switch (value.type) {
             case SummaryType.Blob: {
                 let parsedContent: string;
-                let encoding: string = "utf-8";
+                let encoding: "utf-8" | "base64" = "utf-8";
                 if (typeof value.content === "string") {
                     parsedContent = value.content;
                 } else {

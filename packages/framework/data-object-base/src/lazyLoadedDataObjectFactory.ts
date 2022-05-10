@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
@@ -67,7 +67,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         return runtime;
     }
 
-    public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<IFluidObject> {
+    public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<FluidObject> {
         const { containerRuntime, packagePath } = parentContext;
 
         const router = await containerRuntime.createDataStore(packagePath.concat(this.type));
@@ -78,8 +78,8 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         // New data store instances are synchronously created.  Loading a previously created
         // store is deferred (via a LazyPromise) until requested by invoking `.then()`.
         return existing
-            ? new LazyPromise(async () => this.load(context, runtime))
-            : this.createCore(context, runtime);
+            ? new LazyPromise(async () => this.load(context, runtime, existing))
+            : this.createCore(context, runtime, existing);
     }
 
     private createCore(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, props?: any) {
@@ -90,13 +90,13 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         return instance;
     }
 
-    private async load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
+    private async load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, existing: boolean) {
         const instance = new this.ctor(
             context,
             runtime,
             await runtime.getChannel("root") as ISharedObject);
 
-        await instance.load();
+        await instance.load(context, runtime, existing);
         return instance;
     }
 }

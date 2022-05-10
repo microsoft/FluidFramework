@@ -28,15 +28,14 @@ The following example loads a `SharedMap` as part of the initial roster of objec
 
 ```javascript
 const schema = {
-    name: "example-container",
     initialObjects: {
         customMap: SharedMap,
     }
 }
 
-const { fluidContainer, containerServices } = await client.createContainer(/*service config*/, schema);
+const { container, services } = await client.createContainer(schema);
 
-const map = fluidContainer.initialObjects.customMap;
+const map = container.initialObjects.customMap;
 ```
 
 At this point, you can directly start using the `map` object within your application. Including the `SharedMap` as part of initial objects ensures that the DDS is available the moment the async call to `createContainer` finishes.
@@ -45,15 +44,14 @@ Similarly, if you are loading an existing container, the process stays largely i
 
 ```javascript
 const schema = {
-    name: "example-container",
     initialObjects: {
         customMap: SharedMap,
     }
 }
 
-const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
+const { container, services } = await client.getContainer(id, schema);
 
-const map = fluidContainer.initialObjects.customMap;
+const map = container.initialObjects.customMap;
 ```
 
 Finally, if you'd like to dynamically create `SharedMap` instances as part of the application lifecycle (i.e. if there are user interactions in the applications that require a new DDS to be created at runtime), you can add the `SharedMap` type to the `dynamicObjectTypes` field in the schema and call the container's `create` function.
@@ -64,12 +62,12 @@ const schema = {
     dynamicObjectTypes: [ SharedMap ]
 }
 
-const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
+const { container, services } = await client.getContainer(id, schema);
 
 const newMap = await container.create(SharedMap); // Create a new SharedMap
 ```
 
-Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the [Storing shared objects]({{< relref "#storing-shared-objects" >}}) section below and for general guidance on storing DDS references as handles, please see [here]({{< relref "dds.md#creating-and-storing-distributed-data-structures" >}})
+Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the [Storing shared objects]({{< relref "#storing-shared-objects" >}}) section below and for general guidance on storing DDS references as handles, please see [Using handles to store and retrieve shared objects]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-shared-objects" >}}).
 
 ## API
 
@@ -108,7 +106,7 @@ If client A and client B are both updating the same `SharedMap` and client B tri
 Consider the following example where you have a label and a button. When clicked, the button updates the label contents to be a random number.
 
 ```javascript
-const map = fluidContainer.initialObjects.customMap;
+const map = container.initialObjects.customMap;
 const dataKey = "data";
 const button = document.createElement('button');
 button.textContent = "Randomize!";
@@ -137,7 +135,7 @@ In the code above, whenever a user clicks the button, it sets a new random value
 Your event listener can be more sophisticated by using the additional information provided in the arguments listed above in the `valueChanged` event's `listener` signature.
 
 ```javascript {linenos=inline,hl_lines=["14-15"]}
-const map = fluidContainer.initialObjects.customMap;
+const map = container.initialObjects.customMap;
 const dataKey = "data";
 const button = document.createElement('button');
 button.textContent = "Randomize!";
@@ -296,7 +294,7 @@ One way to think about this is that each value stored into the `SharedMap` is th
 
 One of the powerful features of DDSes is that they are nestable. A DDS can be stored in another DDS allowing you to dynamically set up your data hierarchy as best fits your application needs.
 
-When storing a DDS within another DDS, you must store its [handle]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}), not the DDS itself. Similarly, when retrieving DDSes nested within other DDSes, you need to first get the object's handle and then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
+When storing a DDS within another DDS, you must store its [handle]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-shared-objects" >}}), not the DDS itself. Similarly, when retrieving DDSes nested within other DDSes, you need to first get the object's handle and then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles, see [Fluid handles]({{< relref "handles.md" >}}).
 
@@ -304,7 +302,6 @@ The following example demonstrates nesting DDSes using `SharedMap`. You specify 
 
 ```javascript
 const schema = {
-    name: "example-container",
     initialObjects: {
         initialMap: SharedMap,
     },
@@ -315,12 +312,12 @@ const schema = {
 Now, you can dynamically create additional `SharedMap` instances and store their handles into the initial map that is always provided in the container.
 
 ```javascript
-const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
+const { container, services } = await client.getContainer(id, schema);
 
-const initialMap = fluidContainer.initialObjects.initialMap;
+const initialMap = container.initialObjects.initialMap;
 
 // Create a SharedMap dynamically at runtime
-const newSharedMap = await fluidContainer.create(SharedMap);
+const newSharedMap = await container.create(SharedMap);
 
 // BAD: This call won't work; you must store the handle, not the SharedMap itself.
 // initialMap.set("newSharedMapKey", newSharedMap);
@@ -412,18 +409,17 @@ Whenever a new task is created, you can call `container.create` to create a new 
 
 ```javascript
 const schema = {
-    name: "example-container",
     initialObjects: {
         initialMap: SharedMap,
     },
     dynamicObjectTypes: [SharedMap]
 }
 
-const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
+const { container, services } = await client.getContainer(id, schema);
 
-const initialMap = fluidContainer.initialObjects.initialMap;
+const initialMap = container.initialObjects.initialMap;
 
-const newTask = await fluidContainer.create(SharedMap);
+const newTask = await container.create(SharedMap);
 const newTaskId = uuid();
 
 initialMap.set(newTaskId, newTask.handle);

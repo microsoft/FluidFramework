@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,
@@ -150,31 +149,22 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
             let user1ValueChangedCount: number = 0;
             let user2ValueChangedCount: number = 0;
             let user3ValueChangedCount: number = 0;
-            sharedDirectory1.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory1.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
-                        user1ValueChangedCount = user1ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
+                    user1ValueChangedCount = user1ValueChangedCount + 1;
                 }
             });
-            sharedDirectory2.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory2.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
-                        user2ValueChangedCount = user2ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
+                    user2ValueChangedCount = user2ValueChangedCount + 1;
                 }
             });
-            sharedDirectory3.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory3.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
-                        user3ValueChangedCount = user3ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
+                    user3ValueChangedCount = user3ValueChangedCount + 1;
                 }
             });
 
@@ -408,34 +398,25 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
             let user1ValueChangedCount: number = 0;
             let user2ValueChangedCount: number = 0;
             let user3ValueChangedCount: number = 0;
-            sharedDirectory1.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory1.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for key in container 1");
-                        assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 1");
-                        user1ValueChangedCount = user1ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for key in container 1");
+                    assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 1");
+                    user1ValueChangedCount = user1ValueChangedCount + 1;
                 }
             });
-            sharedDirectory2.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory2.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for key in container 2");
-                        assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 2");
-                        user2ValueChangedCount = user2ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for key in container 2");
+                    assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 2");
+                    user2ValueChangedCount = user2ValueChangedCount + 1;
                 }
             });
-            sharedDirectory3.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory3.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for key in container 3");
-                        assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 3");
-                        user3ValueChangedCount = user3ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for key in container 3");
+                    assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 3");
+                    user3ValueChangedCount = user3ValueChangedCount + 1;
                 }
             });
 

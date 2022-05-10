@@ -6,20 +6,23 @@
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
+import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/container-utils";
+import { DriverHeader } from "@fluidframework/driver-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ChildLogger, IFluidErrorBase, LoggingError, wrapErrorAndLog } from "@fluidframework/telemetry-utils";
 import {
-    IRequest,
-    IResponse,
+    FluidObject,
     IFluidHandleContext,
     IFluidHandle,
+    IRequest,
 } from "@fluidframework/core-interfaces";
-import { wrapErrorAndLog } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
 } from "@fluidframework/protocol-definitions";
-import { create404Response } from "@fluidframework/runtime-utils";
-import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
+import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
+import { summarizerClientType } from "./summarizerClientElection";
 import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
@@ -32,6 +35,8 @@ import {
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
+import { SummarizeResultBuilder } from "./summaryGenerator";
+import { IConnectableRuntime } from ".";
 
 const summarizingError = "summarizingError";
 
@@ -41,20 +46,19 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
 
     constructor(
         errorMessage: string,
-        readonly fluidErrorCode: string,
         readonly logged: boolean = false,
     ) {
         super(errorMessage);
     }
 
-    static wrap(error: any, errorCode: string, logged: boolean = false, logger: ITelemetryLogger) {
-        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, errorCode, logged);
+    static wrap(error: any, logged: boolean = false, logger: ITelemetryLogger) {
+        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
         return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
     }
 }
 
 export const createSummarizingWarning =
-    (errorCode: string, logged: boolean) => new SummarizingWarning(errorCode, errorCode, logged);
+    (errorMessage: string, logged: boolean) => new SummarizingWarning(errorMessage, logged);
 
 /**
  * Summarizer is responsible for coordinating when to generate and send summaries.
@@ -63,7 +67,6 @@ export const createSummarizingWarning =
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
     public get IFluidLoadable() { return this; }
-    public get IFluidRouter() { return this; }
     public get ISummarizer() { return this; }
 
     private readonly logger: ITelemetryLogger;
@@ -71,6 +74,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private systemOpListener?: (op: ISequencedDocumentMessage) => void;
     private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
     private _disposed: boolean = false;
+    private starting: boolean = false;
 
     private readonly innerHandle: IFluidHandle<this>;
 
@@ -90,24 +94,58 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         private readonly internalsProvider: ISummarizerInternalsProvider,
         handleContext: IFluidHandleContext,
         public readonly summaryCollection: SummaryCollection,
+        private readonly runCoordinatorCreateFn:
+            (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>,
     ) {
         super();
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.innerHandle = new SummarizerHandle(this, url, handleContext);
     }
 
+    /**
+     * Creates a Summarizer and its underlying client.
+     * Note that different implementations of ILoader will handle the URL differently.
+     * ILoader provided by a ContainerRuntime is a RelativeLoader, which will treat URL's
+     * starting with "/" as relative to the Container. The general ILoader
+     * interface will expect an absolute URL and will not handle "/".
+     * @param loader - the loader that resolves the request
+     * @param url - the URL used to resolve the container
+     */
+    public static async create(
+        loader: ILoader,
+        url: string): Promise<ISummarizer> {
+        const request: IRequest = {
+            headers: {
+                [LoaderHeader.cache]: false,
+                [LoaderHeader.clientDetails]: {
+                    capabilities: { interactive: false },
+                    type: summarizerClientType,
+                },
+                [DriverHeader.summarizingClient]: true,
+                [LoaderHeader.reconnect]: false,
+            },
+            url,
+        };
+
+        const resolvedContainer = await loader.resolve(request);
+        const fluidObject =
+            await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, { url: "_summarizer" });
+        if (fluidObject.ISummarizer === undefined) {
+            throw new UsageError("Fluid object does not implement ISummarizer");
+        }
+        return fluidObject.ISummarizer;
+    }
+
     public async run(
         onBehalfOf: string,
-        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>
-    {
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason> {
         try {
             return await this.runCore(onBehalfOf, options);
         } catch (error) {
             this.stop("summarizerException");
-            throw SummarizingWarning.wrap(error, "summarizerRun", false /* logged */, this.logger);
+            throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
         } finally {
-            this.dispose();
-            this.runtime.closeFn();
+            this.close();
         }
     }
 
@@ -116,33 +154,21 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * the run promise, and also close the container.
      * @param reason - reason code for stopping
      */
-     public stop(reason: SummarizerStopReason) {
+    public stop(reason: SummarizerStopReason) {
         this.stopDeferred.resolve(reason);
     }
 
-    public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === "/" || request.url === "") {
-            return {
-                mimeType: "fluid/object",
-                status: 200,
-                value: this,
-            };
-        }
-        return create404Response(request);
+    public close() {
+        // This will result in "summarizerClientDisconnected" stop reason recorded in telemetry,
+        // unless stop() was called earlier
+        this.dispose();
+        this.runtime.closeFn();
     }
 
     private async runCore(
         onBehalfOf: string,
-        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>
-    {
-        // Initialize values and first ack (time is not exact)
-        this.logger.sendTelemetryEvent({
-            eventName: "RunningSummarizer",
-            onBehalfOf,
-            initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
-        });
-
-        const runCoordinator = await RunWhileConnectedCoordinator.create(this.runtime);
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason> {
+        const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(this.runtime);
 
         // Wait for either external signal to cancel, or loss of connectivity.
         const stopP = Promise.race([runCoordinator.waitCancelled, this.stopDeferred.promise]);
@@ -158,48 +184,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             return runCoordinator.waitCancelled;
         }
 
-        // Summarizing container ID (with clientType === "summarizer")
-        const clientId = this.runtime.clientId;
-        if (clientId === undefined) {
-            throw Error("clientId should be defined if connected.");
-        }
-
-        const runningSummarizer = await RunningSummarizer.start(
-            this.logger,
-            this.summaryCollection.createWatcher(clientId),
-            this.configurationGetter(),
-            async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
-            new SummarizeHeuristicData(
-                this.runtime.deltaManager.lastSequenceNumber,
-                { /** summary attempt baseline for heuristics */
-                    refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
-                    summaryTime: Date.now(),
-                } as const,
-            ),
-            (errorCode: string) => {
-                if (!this._disposed) {
-                    this.emit("summarizingError", createSummarizingWarning(errorCode, true));
-                }
-            },
-            this.summaryCollection,
-            runCoordinator /* cancellationToken */,
-            (reason) => runCoordinator.stop(reason), /* stopSummarizerCallback */
-            options,
-        );
-        this.runningSummarizer = runningSummarizer;
-
-        // Handle summary acks
-        // Note: no exceptions are thrown from handleSummaryAcks handler as it handles all exceptions
-        this.handleSummaryAcks().catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
-        });
-
-        // Listen for ops
-        this.systemOpListener = (op: ISequencedDocumentMessage) => runningSummarizer.handleSystemOp(op);
-        this.runtime.deltaManager.inbound.on("op", this.systemOpListener);
-
-        this.opListener = (error: any, op: ISequencedDocumentMessage) => runningSummarizer.handleOp(error, op);
-        this.runtime.on("batchEnd", this.opListener);
+        const runningSummarizer = await this.start(onBehalfOf, runCoordinator, options);
 
         // Wait for either external signal to cancel, or loss of connectivity.
         const stopReason = await stopP;
@@ -230,6 +215,85 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
     /**
+     * Put the summarizer in a started state, including creating and initializing the RunningSummarizer.
+     * The start request can come either from the SummaryManager (in the auto-summarize case) or from the user
+     * (in the on-demand case).
+     * @param onBehalfOf - ID of the client that requested that the summarizer start
+     * @param runCoordinator - cancellation token
+     * @param options - options to forward to the RunningSummarizer
+     * @returns - Promise that is fulfilled when the RunningSummarizer is ready
+     */
+    private async start(
+        onBehalfOf: string,
+        runCoordinator: ICancellableSummarizerController,
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<RunningSummarizer> {
+        if (this.runningSummarizer) {
+            if (this.runningSummarizer.disposed) {
+                throw new UsageError("Starting a disposed summarizer");
+            }
+            return this.runningSummarizer;
+        }
+        if (this.starting) {
+            throw new UsageError("Attempting to start a summarizer that is already starting");
+        }
+        this.starting = true;
+        // Initialize values and first ack (time is not exact)
+        this.logger.sendTelemetryEvent({
+            eventName: "RunningSummarizer",
+            onBehalfOf,
+            initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
+            config: JSON.stringify(this.configurationGetter()),
+        });
+
+        // Summarizing container ID (with clientType === "summarizer")
+        const clientId = this.runtime.clientId;
+        if (clientId === undefined) {
+            throw new UsageError("clientId should be defined if connected.");
+        }
+
+        const runningSummarizer = await RunningSummarizer.start(
+            this.logger,
+            this.summaryCollection.createWatcher(clientId),
+            this.configurationGetter(),
+            async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
+            new SummarizeHeuristicData(
+                this.runtime.deltaManager.lastSequenceNumber,
+                { /** summary attempt baseline for heuristics */
+                    refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
+                    summaryTime: Date.now(),
+                } as const,
+            ),
+            (errorMessage: string) => {
+                if (!this._disposed) {
+                    this.logger.sendErrorEvent({ eventName: "summarizingError" },
+                        createSummarizingWarning(errorMessage, true));
+                }
+            },
+            this.summaryCollection,
+            runCoordinator /* cancellationToken */,
+            (reason) => runCoordinator.stop(reason), /* stopSummarizerCallback */
+            options,
+        );
+        this.runningSummarizer = runningSummarizer;
+        this.starting = false;
+
+        // Handle summary acks
+        // Note: no exceptions are thrown from handleSummaryAcks handler as it handles all exceptions
+        this.handleSummaryAcks().catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
+        });
+
+        // Listen for ops
+        this.systemOpListener = (op: ISequencedDocumentMessage) => runningSummarizer.handleSystemOp(op);
+        this.runtime.deltaManager.inbound.on("op", this.systemOpListener);
+
+        this.opListener = (error: any, op: ISequencedDocumentMessage) => runningSummarizer.handleOp(error, op);
+        this.runtime.on("batchEnd", this.opListener);
+
+        return runningSummarizer;
+    }
+
+    /**
      * Disposes of resources after running.  This cleanup will
      * clear any outstanding timers and reset some of the state
      * properties.
@@ -253,15 +317,57 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
-        if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
-            throw Error("Summarizer is not running or already disposed.");
+        try {
+            if (this._disposed || this.runningSummarizer?.disposed) {
+                throw new UsageError("Summarizer is already disposed.");
+            }
+            if (this.runtime.summarizerClientId !== undefined &&
+                this.runtime.summarizerClientId !== this.runtime.clientId) {
+                // If there is an elected summarizer, and it's not this one, don't allow on-demand summary.
+                // This is to prevent the on-demand summary and heuristic-based summary from stepping on
+                // each other.
+                throw new UsageError("On-demand summary attempted while an elected summarizer is present");
+            }
+            const builder = new SummarizeResultBuilder();
+            if (this.runningSummarizer) {
+                // Summarizer is already running. Go ahead and start.
+                return this.runningSummarizer.summarizeOnDemand(builder, ...args);
+            }
+
+            // Summarizer isn't running, so we need to start it, which is an async operation.
+            // Manage the promise related to creating the cancellation token here.
+            // The promises related to starting, summarizing,
+            // and submitting are communicated to the caller through the results builder.
+            const coordinatorCreateP = this.runCoordinatorCreateFn(this.runtime);
+
+            coordinatorCreateP.then((runCoordinator) => {
+                // Successully created the cancellation token. Start the summarizer.
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const startP = this.start(this.runtime.clientId!, runCoordinator, { disableHeuristics: true });
+                startP.then(async (runningSummarizer) => {
+                    // Successfully started the summarizer. Run it.
+                    runningSummarizer.summarizeOnDemand(builder, ...args);
+                    // Wait for a command to stop or loss of connectivity before tearing down the summarizer and client.
+                    const stopReason = await Promise.race([this.stopDeferred.promise, runCoordinator.waitCancelled]);
+                    await runningSummarizer.waitStop(false);
+                    runCoordinator.stop(stopReason);
+                    this.close();
+                }).catch((reason) => {
+                    builder.fail("Failed to start summarizer", reason);
+                });
+            }).catch((reason) => {
+                builder.fail("Failed to create cancellation token", reason);
+            });
+
+            return builder.build();
+        } catch (error) {
+            throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
         }
-        return this.runningSummarizer.summarizeOnDemand(...args);
     };
 
     public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
         if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
-            throw Error("Summarizer is not running or already disposed.");
+            throw new UsageError("Summarizer is not running or already disposed.");
         }
         return this.runningSummarizer.enqueueSummarize(...args);
     };
@@ -277,10 +383,14 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 await this.internalsProvider.refreshLatestSummaryAck(
                     ack.summaryOp.contents.handle,
                     ack.summaryAck.contents.handle,
+                    refSequenceNumber,
                     summaryLogger,
                 );
             } catch (error) {
-                summaryLogger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
+                summaryLogger.sendErrorEvent({
+                    eventName: "HandleSummaryAckError",
+                    referenceSequenceNumber: refSequenceNumber,
+                }, error);
             }
             refSequenceNumber++;
         }

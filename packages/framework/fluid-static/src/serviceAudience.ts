@@ -4,14 +4,16 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IAudience } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 
-// Base class for providing audience information for sessions interacting with FluidContainer
-// This can be extended by different service-specific client packages to additional parameters to
-// the user and client details returned in IMember
+/**
+ * Base class for providing audience information for sessions interacting with FluidContainer
+ * This can be extended by different service-specific client packages to additional parameters to
+ * the user and client details returned in IMember
+ * @typeParam M - A service-specific member type.
+ */
 export abstract class ServiceAudience<M extends IMember = IMember>
   extends TypedEventEmitter<IServiceAudienceEvents<M>>
   implements IServiceAudience<M> {
@@ -31,7 +33,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   protected lastMembers: Map<string, M> = new Map();
 
   constructor(
-      protected readonly container: Container,
+      protected readonly container: IContainer,
   ) {
     super();
     this.audience = container.audience;
@@ -54,6 +56,8 @@ export abstract class ServiceAudience<M extends IMember = IMember>
         this.emit("membersChanged");
       }
     });
+
+    this.container.on("connected", () => this.emit("membersChanged"));
   }
 
   protected abstract createServiceMember(audienceMember: IClient): M;

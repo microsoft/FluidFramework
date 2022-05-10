@@ -5,7 +5,7 @@ services:
         ports:
             - 3001:3000
         volumes:
-            - .:/usr/src/server
+            - .:/home/node/server
         restart: always
 networks:
   default:

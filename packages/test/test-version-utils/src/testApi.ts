@@ -161,6 +161,8 @@ export function getDriverApi(baseVersion: string, requested?: number | string): 
         LocalDocumentServiceFactory:
             loadPackage(modulePath, "@fluidframework/local-driver").LocalDocumentServiceFactory,
         LocalResolver: loadPackage(modulePath, "@fluidframework/local-driver").LocalResolver,
+        LocalDeltaConnectionServer:
+            loadPackage(modulePath, "@fluidframework/server-local-server").LocalDeltaConnectionServer,
         createLocalResolverCreateNewRequest:
             loadPackage(modulePath, "@fluidframework/local-driver").createLocalResolverCreateNewRequest,
     };

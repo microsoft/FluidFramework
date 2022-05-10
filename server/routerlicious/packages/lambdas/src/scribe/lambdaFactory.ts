@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
@@ -48,6 +46,7 @@ const DefaultScribe: IScribe = {
         values: [],
     },
     sequenceNumber: 0,
+    lastSummarySequenceNumber: 0,
 };
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
@@ -84,15 +83,15 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             const tenant = await this.tenantManager.getTenant(tenantId, documentId);
             gitManager = tenant.gitManager;
 
-            summaryReader = new SummaryReader(documentId, gitManager, this.enableWholeSummaryUpload);
+            summaryReader = new SummaryReader(tenantId, documentId, gitManager, this.enableWholeSummaryUpload);
             [latestSummary, document] = await Promise.all([
                 summaryReader.readLastSummary(),
                 this.documentCollection.findOne({ documentId, tenantId }),
             ]);
 
-            // If the document doesn't exist then we trivially accept every message
-            if (!document) {
-                context.log?.info(`Creating NoOpLambda due to missing`, { messageMetaData });
+            // If the document doesn't exist or is marked for deletion then we trivially accept every message
+            if (!document || document.scheduledDeletionTime) {
+                context.log?.info(`Creating NoOpLambda due to missing document`, { messageMetaData });
                 return new NoOpLambda(context);
             }
 
@@ -102,7 +101,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             opMessages = dbMessages.map((message) => message.operation);
         } catch (error) {
             context.log?.error(`Scribe lambda creation failed. Exception: ${inspect(error)}`);
-            await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
+            await this.sendLambdaStartResult(tenantId, documentId, { lambdaName: LambdaName.Scribe, success: false });
             scribeSessionMetric?.error("Scribe lambda creation failed", error);
 
             throw error;
@@ -132,6 +131,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             }
         } else {
             lastCheckpoint = JSON.parse(document.scribe);
+            context.log?.info(`Restoring checkpoint from db. Seq no: ${lastCheckpoint.sequenceNumber}`);
         }
 
         // Filter and keep ops after protocol state
@@ -145,7 +145,14 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                     + `Current message @${message.sequenceNumber}.`
                     + `Expected message @${expectedSequenceNumber}`);
                 scribeSessionMetric?.error("Invalid message sequence from checkpoint/summary", error);
-                await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
+                await this.sendLambdaStartResult(
+                    tenantId,
+                    documentId,
+                    {
+                        lambdaName: LambdaName.Scribe,
+                        success: false,
+                    },
+                );
 
                 throw error;
             }
@@ -181,10 +188,17 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             protocolHandler,
             latestSummary.term,
             latestSummary.protocolHead,
-            opMessages,
+            opsSinceLastSummary,
             scribeSessionMetric);
 
-        await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: true});
+        await this.sendLambdaStartResult(
+            tenantId,
+            documentId,
+            {
+                lambdaName: LambdaName.Scribe,
+                success: true,
+            },
+        );
         return scribeLambda;
     }
 

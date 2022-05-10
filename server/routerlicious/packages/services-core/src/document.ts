@@ -5,9 +5,9 @@
 
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
-import { IGitCache } from "@fluidframework/server-services-client";
+import { IGitCache, ISession } from "@fluidframework/server-services-client";
 import { LambdaName } from "./lambdas";
-import { INackMessagesControlMessageContents } from "./messages";
+import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
 
 export interface IDocumentDetails {
     existing: boolean;
@@ -15,7 +15,7 @@ export interface IDocumentDetails {
 }
 
 export interface IDocumentStorage {
-    getDocument(tenantId: string, documentId: string): Promise<any>;
+    getDocument(tenantId: string, documentId: string): Promise<IDocument>;
 
     getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails>;
 
@@ -25,7 +25,7 @@ export interface IDocumentStorage {
 
     getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit>;
 
-    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }>;
+    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string; }>;
 
     createDocument(
         tenantId: string,
@@ -33,7 +33,11 @@ export interface IDocumentStorage {
         summary: ISummaryTree,
         sequenceNumber: number,
         term: number,
-        values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
+        initialHash: string,
+        ordererUrl: string,
+        historianUrl: string,
+        values: [string, ICommittedProposal][],
+        enableDiscovery: boolean): Promise<IDocumentDetails>;
 }
 
 export interface IClientSequenceNumber {
@@ -61,6 +65,12 @@ export interface IDeliState {
     // Sequence number at logOffset
     sequenceNumber: number;
 
+    // Signal number for the deli client at logOffset
+    signalClientConnectionNumber: number;
+
+    // Rolling hash at sequenceNumber
+    expHash1: string;
+
     // Epoch of stream provider
     epoch: number;
 
@@ -71,7 +81,8 @@ export interface IDeliState {
     lastSentMSN: number | undefined;
 
     // Nack messages state
-    nackMessages: INackMessagesControlMessageContents | undefined;
+    nackMessages: [NackMessagesType, INackMessagesControlMessageContents][] |
+    INackMessagesControlMessageContents | undefined;
 
     // List of successfully started lambdas at session start
     successfullyStartedLambdas: LambdaName[];
@@ -94,6 +105,9 @@ export interface IScribe {
 
     // Ref of the last client generated summary
     lastClientSummaryHead: string | undefined;
+
+    // Sequence number of the last operation that was part of latest summary
+    lastSummarySequenceNumber: number | undefined;
 }
 
 export interface IDocument {
@@ -107,9 +121,15 @@ export interface IDocument {
 
     tenantId: string;
 
+    session: ISession;
+
     // Scribe state
     scribe: string;
 
     // Deli state
     deli: string;
+
+    // Timestamp of when this document and related data will be hard deleted.
+    // The document is soft deleted if a scheduled deletion timestamp is present.
+    scheduledDeletionTime?: string;
 }

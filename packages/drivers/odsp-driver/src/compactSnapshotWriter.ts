@@ -9,84 +9,116 @@ import { snapshotMinReadVersion } from "./compactSnapshotParser";
 import { ISnapshotContents } from "./odspUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { TreeBuilderSerializer } from "./WriteBufferUtils";
-import { addNumberProperty, addStringProperty, NodeCore } from "./zipItDataRepresentationUtils";
+import { addBoolProperty, addNumberProperty, addStringProperty, NodeCore } from "./zipItDataRepresentationUtils";
 
 /**
  * Writes header section of the snapshot.
- * @param node - tree node to serialize to
- * @param snapshotSeqNumber - seq number at which snapshot is created.
+ * @param node - snapshot node to serialize to
+ * @param latestSequenceNumber - latest seq number of the container.
 */
-function writeHeaderSection(node: NodeCore, snapshotSeqNumber: number, snapshotId: string) {
-    addStringProperty(node, "MinReadVersion", snapshotMinReadVersion);
-    addStringProperty(node, "CreateVersion", snapshotMinReadVersion);
-    addNumberProperty(node, "SnapshotSequenceNumber", snapshotSeqNumber);
-    addStringProperty(node, "SnapshotId", snapshotId);
+function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number) {
+    addStringProperty(node, "mrv", snapshotMinReadVersion);
+    addStringProperty(node, "cv", snapshotMinReadVersion);
+    addNumberProperty(node, "lsn", latestSequenceNumber);
 }
 
 /**
- * Build dictionary to be able to represent paths and IDs more compactly
- * Adds to a set all known names such that later on they can have integer representation
- * This substantially reduced representation, as same path name or ID can be used many times.
- * @param tree - snapshot tree.
- * @param dict - dictionary, all path and IDs are added to it.
+ * Represents blobs in the tree.
+ * @param snapshotNode - node to serialize to.
+ * @param blobs - blobs that is being serialized
 */
-function buildDictionary(snapshotTree: ISnapshotTree, dict: Set<string>) {
-    for (const [path, childTree] of Object.entries(snapshotTree.trees)) {
-        dict.add(path);
-        buildDictionary(childTree, dict);
+function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | ArrayBuffer>) {
+    snapshotNode.addString("blobs", true);
+    const blobsNode = snapshotNode.addNode("list");
+    for (const [storageBlobId, blob] of blobs) {
+        const blobNode = blobsNode.addNode();
+        addStringProperty(blobNode, "id", storageBlobId, true);
+        blobNode.addString("data", true);
+        if (blob instanceof ArrayBuffer) {
+            blobNode.addBlob(new Uint8Array(blob), false);
+        } else {
+            blobNode.addBlob(new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf-8")), false);
+        }
+    }
+}
+
+/**
+ * Represents and serializes tree part of the snapshot
+ * @param snapshotNode - tree node to serialize to
+ * @param snapshotTree - snapshot tree that is being serialized
+*/
+function writeTreeSection(snapshotNode: NodeCore, snapshotTree: ISnapshotTree) {
+    snapshotNode.addString("treeNodes", true);
+    const treesNode = snapshotNode.addNode("list");
+    writeTreeSectionCore(treesNode, snapshotTree);
+}
+
+function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) {
+    for (const [path, value] of Object.entries(snapshotTree.trees)) {
+        const treeNode = treesNode.addNode();
+        addStringProperty(treeNode, "name", path);
+        if (snapshotTree.unreferenced) {
+            addBoolProperty(treeNode, "unreferenced", snapshotTree.unreferenced);
+        }
+        treeNode.addString("children", true);
+        const childNode = treeNode.addNode("list");
+        writeTreeSectionCore(childNode, value);
     }
 
-    for (const [path, _] of Object.entries(snapshotTree.blobs)) {
-        dict.add(path);
+    if (snapshotTree.blobs) {
+        for (const [path, id] of Object.entries(snapshotTree.blobs)) {
+            const blobNode = treesNode.addNode();
+            addStringProperty(blobNode, "name", path);
+            addStringProperty(blobNode, "value", id, true);
+        }
     }
 }
 
 /**
  * Represents (serializes) snapshot tree as generalizes tree
- * @param treeNode - tree node to serialize to
- * @param tree - snapshot tree that is being serialized
- * @param mapping - name mapping, used to map path and IDs to integer representation
+ * @param rootNode - tree node to serialize to
+ * @param snapshotTree - snapshot tree that is being serialized
+ * @param blobs - blobs mapping of the snapshot
+ * @param snapshotSequenceNumber - seq number at which snapshot is taken
 */
-function writeTree(treeNode: NodeCore, tree: ISnapshotTree, mapping: Map<string, number>) {
-    for (const [path, value] of Object.entries(tree.trees)) {
-        treeNode.addNumber(mapping.get(path));
-        writeTree(treeNode.addNode(), value, mapping);
-    }
+function writeSnapshotSection(
+    rootNode: NodeCore,
+    snapshotTree: ISnapshotTree,
+    snapshotSequenceNumber: number,
+) {
+    rootNode.addString("snapshot", true);
+    const snapshotNode = rootNode.addNode();
 
-    if (tree.blobs) {
-        for (const [path, id] of Object.entries(tree.blobs)) {
-            treeNode.addNumber(mapping.get(path));
-            treeNode.addNumber(mapping.get(id));
-        }
-    }
-}
+    const snapshotId = snapshotTree.id;
+    assert(snapshotId !== undefined, 0x21b /* "Snapshot id should be provided" */);
+    addStringProperty(snapshotNode, "id", snapshotId);
+    addStringProperty(snapshotNode, "message", `Snapshot@${snapshotSequenceNumber}`);
+    addNumberProperty(snapshotNode, "sequenceNumber", snapshotSequenceNumber);
 
-/**
- * Represents blobs in the tree.
- * @param node - node to serialize to.
- * @param blobs - blobs that is being serialized
- * @param mapping - name mapping, used to map path and IDs to integer representation
-*/
-function writeBlobsSection(node: NodeCore, blobs: Map<string, IBlob | ArrayBuffer>, mapping: Map<string, number>) {
-    for (const [storageBlobId, blob] of blobs) {
-        node.addNumber(mapping.get(storageBlobId));
-        if (blob instanceof ArrayBuffer) {
-            node.addBlob(new Uint8Array(blob));
-        } else {
-            node.addBlob(new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf-8")));
-        }
-    }
+    // Add Trees
+    writeTreeSection(snapshotNode, snapshotTree);
 }
 
 /**
  * Represents ops in the tree.
- * @param node - node to serialize to.
+ * @param rootNode - node to serialize to.
  * @param ops - ops that is being serialized
 */
-function writeOpsSection(node: NodeCore, ops: ISequencedDocumentMessage[]) {
-    ops.forEach((op) => {
-        node.addString(JSON.stringify(op));
-    });
+function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]) {
+    let firstSequenceNumber: number | undefined;
+    if (ops.length > 0) {
+        firstSequenceNumber = ops[0].sequenceNumber;
+    }
+    if (firstSequenceNumber !== undefined) {
+        rootNode.addString("deltas", true);
+        const opsNode = rootNode.addNode();
+        addNumberProperty(opsNode, "firstSequenceNumber", firstSequenceNumber);
+        opsNode.addString("deltas", true);
+        const deltaNode = opsNode.addNode("list");
+        ops.forEach((op) => {
+            deltaNode.addString(JSON.stringify(op), false);
+        });
+    }
 }
 
 /**
@@ -98,37 +130,22 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): R
     const builder = new TreeBuilderSerializer();
     // Create the root node.
     const rootNode = builder.addNode();
-    // Header node containing versions and snapshot seq number.
-    const headerNode = rootNode.addNode();
-    const snapshotId = snapshotContents.snapshotTree.id;
-    assert(snapshotId !== undefined, 0x21b /* "Snapshot id should be provided" */);
     assert(snapshotContents.sequenceNumber !== undefined, 0x21c /* "Seq number should be provided" */);
-    writeHeaderSection(headerNode, snapshotContents.sequenceNumber, snapshotId);
+    const ops = snapshotContents.ops;
+    const latestSequenceNumber = ops.length > 0 ? ops[ops.length - 1].sequenceNumber : snapshotContents.sequenceNumber;
+    writeSnapshotProps(rootNode, latestSequenceNumber);
 
-    const dict: Set<string> = new Set();
-    buildDictionary(snapshotContents.snapshotTree, dict);
-    for (const id of snapshotContents.blobs.keys()) {
-        dict.add(id);
-    }
-    // Next is tree node containing tree structure.
-    const treeSectionNode = rootNode.addNode();
-    // Third is dictionary node container paths and ids.
-    const mappingNode = rootNode.addNode();
-    const mapping = new Map<string, number>();
-    let i = 0;
-    for (const id of dict) {
-        mapping.set(id, i);
-        mappingNode.addString(id);
-        i++;
-    }
+    writeSnapshotSection(
+        rootNode,
+        snapshotContents.snapshotTree,
+        snapshotContents.sequenceNumber,
+    );
 
-    writeTree(treeSectionNode, snapshotContents.snapshotTree, mapping);
-    // Next is blobs node.
-    const blobsNode = rootNode.addNode();
-    writeBlobsSection(blobsNode, snapshotContents.blobs, mapping);
+    // Add Blobs
+    writeBlobsSection(rootNode, snapshotContents.blobs);
+
     // Then write the ops node.
-    const opsNode = rootNode.addNode();
-    writeOpsSection(opsNode, snapshotContents.ops);
+    writeOpsSection(rootNode, ops);
 
     return builder.serialize();
 }

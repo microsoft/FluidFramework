@@ -15,10 +15,11 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -49,7 +50,6 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            generateSummaries: true,
             initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },
@@ -57,14 +57,16 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
             gcAllowed: true,
         },
     };
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
         [
             [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
         ],
         undefined,
-        undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        [innerRequestHandler],
+        runtimeOptions,
     );
 
     let mainContainer: IContainer;
@@ -86,8 +88,8 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 
     function getGenerateSummaryEvent(sequenceNumber: number): ITelemetryBaseEvent | undefined {
         for (const event of mockLogger.events) {
-            if (event.eventName === "fluid:telemetry:Summarizer:Running:GenerateSummary" &&
-                event.refSequenceNumber ? event.refSequenceNumber >= sequenceNumber : false) {
+            if (event.eventName === "fluid:telemetry:Summarizer:Running:Summarize_generate" &&
+                event.referenceSequenceNumber ? event.referenceSequenceNumber >= sequenceNumber : false) {
                 return event;
             }
         }

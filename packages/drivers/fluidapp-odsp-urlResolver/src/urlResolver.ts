@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
@@ -40,7 +40,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         if (!contents) {
             return undefined;
         }
-        const urlToBeResolved = createOdspUrl({...contents, dataStorePath:""});
+        const urlToBeResolved = createOdspUrl({ ...contents, dataStorePath: "" });
         const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
         return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
     }
@@ -50,7 +50,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
     ): Promise<string> {
-        throw new Error("Not implmented");
+        throw new Error("Not implemented");
     }
 }
 
@@ -58,8 +58,6 @@ async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlP
     const pathname = urlSource.pathname;
     // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
     const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes)\/([^/]*)\/([^/]*)\/([^/]*)/);
-
-    // eslint-disable-next-line no-null/no-null
     if (siteDriveItemMatch === null) {
         return undefined;
     }

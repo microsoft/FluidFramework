@@ -52,7 +52,7 @@ describe("ErrorUtils", () => {
             assert.strictEqual(error.canRetry, true);
         });
         it("creates retriable error on Network Error", () => {
-            const message = "Network Error";
+            const message = "NetworkError: failed to fetch";
             const error = createR11sNetworkError(message);
             assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
             assert.strictEqual(error.canRetry, true);
@@ -131,7 +131,7 @@ describe("ErrorUtils", () => {
             });
         });
         it("throws retriable error on Network Error", () => {
-            const message = "Network Error";
+            const message = "NetworkError: failed to fetch";
             assert.throws(() => {
                 throwR11sNetworkError(message);
             }, {
@@ -169,8 +169,8 @@ describe("ErrorUtils", () => {
         const handler = "test_handler";
         const message = "test error";
         const assertExpectedMessage = (actualMessage: string) => {
-            const expectedMessage = `socket.io: ${handler}: ${message}`;
-            assert.strictEqual(actualMessage, expectedMessage);
+            assert(actualMessage.includes(message), "R11s error should include socket error message");
+            assert(actualMessage.includes(handler), "R11s error should include handler name");
         };
         it("creates non-retriable authorization error on 401", () => {
             const error = errorObjectFromSocketError({

@@ -6,7 +6,7 @@
 import http from "http";
 import * as path from "path";
 import Axios from "axios";
-import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "./localServerTestDriver";
 import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
@@ -17,9 +17,9 @@ import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
 export interface DriverApiType {
-    LocalDriverApi: LocalDriverApiType,
-    OdspDriverApi: OdspDriverApiType,
-    RouterliciousDriverApi: RouterliciousDriverApiType,
+    LocalDriverApi: LocalDriverApiType;
+    OdspDriverApi: OdspDriverApiType;
+    RouterliciousDriverApi: RouterliciousDriverApiType;
 }
 
 export const DriverApi: DriverApiType = {
@@ -54,15 +54,15 @@ export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => an
     T extends (config: infer P, ...args: any) => any ? P : never;
 
 export interface FluidTestDriverConfig {
-    odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>,
-    r11s?: CreateFromEnvConfigParam<typeof RouterliciousTestDriver.createFromEnv>,
+    odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>;
+    r11s?: CreateFromEnvConfigParam<typeof RouterliciousTestDriver.createFromEnv>;
 }
 
 export async function createFluidTestDriver(
     fluidTestDriverType: TestDriverTypes = "local",
     config?: FluidTestDriverConfig,
     api: DriverApiType = DriverApi,
-): Promise<ITestDriver> {
+): Promise<LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver> {
     switch (fluidTestDriverType) {
         case "local":
             return new LocalServerTestDriver(api.LocalDriverApi);

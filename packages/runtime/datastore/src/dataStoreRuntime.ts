@@ -13,12 +13,11 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     BindState,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { CreateProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import {
     assert,
     Deferred,
@@ -34,11 +33,11 @@ import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
     IClientDetails,
     IDocumentMessage,
-    IQuorum,
     ISequencedDocumentMessage,
     SummaryType,
     ISummaryBlob,
     ISummaryTree,
+    IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {
     CreateSummarizerNodeSource,
@@ -47,14 +46,14 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
     IGarbageCollectionData,
-    IGarbageCollectionSummaryDetails,
+    IGarbageCollectionDetailsBase,
     IInboundSignalMessage,
     ISummaryTreeWithStats,
+    VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
     convertSummaryTreeToITree,
-    FluidSerializer,
     generateHandleContextPath,
     RequestParser,
     SummaryTreeBuilder,
@@ -69,11 +68,10 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import {
-    cloneGCData,
     GCDataBuilder,
-    getChildNodesGCData,
-    getChildNodesUsedRoutes,
     removeRouteFromAllNodes,
+    unpackChildNodesGCDetails,
+    unpackChildNodesUsedRoutes,
 } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
@@ -123,8 +121,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get clientDetails(): IClientDetails {
-        // back-compat 0.38 - clientDetails is added to IFluidDataStoreContext in 0.38.
-        return this.dataStoreContext.clientDetails ?? this.dataStoreContext.containerRuntime.clientDetails;
+        return this.dataStoreContext.clientDetails;
     }
 
     public get isAttached(): boolean {
@@ -140,12 +137,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get routeContext(): IFluidHandleContext {
-        // back-compat 0.38 - IFluidHandleContext is added to IFluidDataStoreContext in 0.38.
-        return this.dataStoreContext.IFluidHandleContext ?? this.dataStoreContext.containerRuntime.IFluidHandleContext;
+        return this.dataStoreContext.IFluidHandleContext;
     }
-
-    private readonly serializer = new FluidSerializer(this.IFluidHandleContext);
-    public get IFluidSerializer() { return this.serializer; }
 
     public get IFluidHandleContext() { return this; }
 
@@ -159,29 +152,27 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
+
     private bindState: BindState;
-    // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
-    private graphAttachState: AttachState = AttachState.Detached;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
     private readonly notBoundedChannelContextSet = new Set<string>();
-    private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
+    public visibilityState: VisibilityState;
+    // A list of handles that are bound when the data store is not visible. We have to make them visible when the data
+    // store becomes visible.
+    private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
 
     public readonly id: string;
     public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    private readonly quorum: IQuorum;
+    private readonly quorum: IQuorumClients;
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
 
-    // A map of child channel context ids to the context's used routes in the initial summary of this data store. This
-    // is used to initialize the context with data from the previous summary.
-    private readonly initialChannelUsedRoutesP: LazyPromise<Map<string, string[]>>;
-
-    // A map of child channel context ids to the channel context's GC data in the initial summary of this data store.
-    // This is used to initialize the context with data from the previous summary.
-    private readonly initialChannelGCDataP: LazyPromise<Map<string, IGarbageCollectionData>>;
+    // A map of child channel context ids to the their base GC details. This is used to initialize the GC state of the
+    // channel contexts.
+    private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
 
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -191,10 +182,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         super();
 
         this.logger = ChildLogger.create(
-            // back-compat 0.38 - logger is added to IFluidDataStoreContext in 0.38.
-            dataStoreContext.logger ?? dataStoreContext.containerRuntime.logger,
-            undefined,
-            {all:{ dataStoreId: uuid() }},
+            dataStoreContext.logger,
+            "FluidDataStoreRuntime",
+            { all: { dataStoreId: uuid() } },
         );
 
         this.id = dataStoreContext.id;
@@ -205,29 +195,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         const tree = dataStoreContext.baseSnapshot;
 
-        this.initialChannelUsedRoutesP = new LazyPromise(async () => {
-            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
-            if (gcDetailsInInitialSummary?.usedRoutes !== undefined) {
-                // Remove the route to this data store, if it exists.
-                const usedRoutes = gcDetailsInInitialSummary.usedRoutes.filter(
-                    (id: string) => { return id !== "/" && id !== ""; },
-                );
-                return getChildNodesUsedRoutes(usedRoutes);
-            }
-            return new Map();
-        });
-
-        this.initialChannelGCDataP = new LazyPromise(async () => {
-            const gcDetailsInInitialSummary = await this.dataStoreContext.getInitialGCSummaryDetails();
-            if (gcDetailsInInitialSummary?.gcData !== undefined) {
-                const gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
-                // Remove GC node for this data store, if any.
-                delete gcData.gcNodes["/"];
-                // Remove the back route to this data store that was added when generating each child's GC nodes.
-                removeRouteFromAllNodes(gcData.gcNodes, this.absolutePath);
-                return getChildNodesGCData(gcData);
-            }
-            return new Map();
+        this.channelsBaseGCDetails = new LazyPromise(async () => {
+            const baseGCDetails = await
+                (this.dataStoreContext.getBaseGCDetails?.() ?? this.dataStoreContext.getInitialGCSummaryDetails());
+            return unpackChildNodesGCDetails(baseGCDetails);
         });
 
         // Must always receive the data store type inside of the attributes
@@ -247,15 +218,18 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         this,
                         this.dataStoreContext,
                         this.dataStoreContext.storage,
+                        this.logger,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
+                        (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                            this.addedGCOutboundReference(srcHandle, outboundHandle),
                         tree.trees[path]);
                     // This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
-                    // data store, if the data store is loaded after the container is attached, then we missed marking
-                    // the channel as attached. So mark it now. Otherwise add it to local channel context queue, so
-                    // that it can be mark attached later with the data store.
+                    // data store, if the data store is loaded after the container is attached, then we missed making
+                    // the channel visible. So do it now. Otherwise, add it to local channel context queue, so
+                    // that it can be make it visible later with the data store.
                     if (dataStoreContext.attachState !== AttachState.Detached) {
-                        (channelContext as LocalChannelContextBase).markAttached();
+                        (channelContext as LocalChannelContextBase).makeVisible();
                     } else {
                         this.localChannelContextQueue.set(path, channelContext as LocalChannelContextBase);
                     }
@@ -266,6 +240,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         dataStoreContext.storage,
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
+                        (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                            this.addedGCOutboundReference(srcHandle, outboundHandle),
                         path,
                         tree.trees[path],
                         this.sharedObjectRegistry,
@@ -274,7 +250,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             path,
                             { type: CreateSummarizerNodeSource.FromSummary },
                         ),
-                        async () => this.getChannelInitialGCDetails(path));
+                        async () => this.getChannelBaseGCDetails(path));
                 }
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -285,9 +261,24 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.attachListener();
-        // If exists on storage or loaded from a snapshot, it should already be binded.
+        // If exists on storage or loaded from a snapshot, it should already be bound.
         this.bindState = existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;
+
+        /**
+         * If existing flag is false, this is a new data store and is not visible. The existing flag can be true in two
+         * conditions:
+         * 1. It's a local data store that is created when a detached container is rehydrated. In this case, the data
+         *    store is locally visible because the snapshot it is loaded from contains locally visible data stores only.
+         * 2. It's a remote data store that is created when an attached container is loaded is loaded from snapshot or
+         *    when an attach op comes in. In both these cases, the data store is already globally visible.
+         */
+        if (existing) {
+            this.visibilityState = dataStoreContext.attachState === AttachState.Detached
+                ? VisibilityState.LocallyVisible : VisibilityState.GloballyVisible;
+        } else {
+            this.visibilityState = VisibilityState.NotVisible;
+        }
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -369,8 +360,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this,
             this.dataStoreContext,
             this.dataStoreContext.storage,
+            this.logger,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address));
+            (address: string) => this.setChannelDirty(address),
+            (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                this.addedGCOutboundReference(srcHandle, outboundHandle));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -399,38 +393,50 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         if (this.isAttached) {
             this.attachChannel(channel);
             return;
-        } else {
-            this.bind(channel.handle);
+        }
 
-            // If our data store is local then add the channel to the queue
-            if (!this.localChannelContextQueue.has(channel.id)) {
-                this.localChannelContextQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContextBase);
-            }
+        /**
+         * If this channel is already waiting to be made visible, do nothing. This can happen during attachGraph() when
+         * a channel's graph is attached. It calls bindToContext on the shared object which will end up back here.
+         */
+        if (this.pendingHandlesToMakeVisible.has(channel.handle)) {
+            return;
+        }
+
+        this.bind(channel.handle);
+
+        // If our data store is local then add the channel to the queue
+        if (!this.localChannelContextQueue.has(channel.id)) {
+            this.localChannelContextQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContextBase);
         }
     }
 
-    public attachGraph() {
-        if (this.graphAttachState !== AttachState.Detached) {
+    /**
+     * This function is called when a data store becomes root. It does the following:
+     * 1. Marks the data store locally visible in the container.
+     * 2. Attaches the graph of all the handles bound to it.
+     * 3. Calls into the data store context to mark it visible in the container too. If the container is globally
+     *    visible, it will mark us globally visible. Otherwise, it will mark us globally visible when it becomes
+     *    globally visible.
+     */
+    public makeVisibleAndAttachGraph() {
+        if (this.visibilityState !== VisibilityState.NotVisible) {
             return;
         }
-        this.graphAttachState = AttachState.Attaching;
-        if (this.boundhandles !== undefined) {
-            this.boundhandles.forEach((handle) => {
-                handle.attachGraph();
-            });
-            this.boundhandles = undefined;
-        }
+        this.visibilityState = VisibilityState.LocallyVisible;
 
-        // Flush the queue to set any pre-existing channels to local
-        this.localChannelContextQueue.forEach((channel) => {
-            // When we are attaching the data store we don't need to send attach for the registered services.
-            // This is because they will be captured as part of the Attach data store snapshot
-            channel.markAttached();
+        this.pendingHandlesToMakeVisible.forEach((handle) => {
+            handle.attachGraph();
         });
-
-        this.localChannelContextQueue.clear();
+        this.pendingHandlesToMakeVisible.clear();
         this.bindToContext();
-        this.graphAttachState = AttachState.Attached;
+    }
+
+    /**
+     * This function is called when a handle to this data store is added to a visible DDS.
+     */
+    public attachGraph() {
+        this.makeVisibleAndAttachGraph();
     }
 
     /**
@@ -449,17 +455,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public bind(handle: IFluidHandle): void {
-        // If the data store is already attached or its graph is already in attaching or attached state,
-        // then attach the incoming handle too.
-        if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
+        // If visible, attach the incoming handle's graph. Else, this will be done when we become visible.
+        if (this.visibilityState !== VisibilityState.NotVisible) {
             handle.attachGraph();
             return;
         }
-        if (this.boundhandles === undefined) {
-            this.boundhandles = new Set<IFluidHandle>();
-        }
-
-        this.boundhandles.add(handle);
+        this.pendingHandlesToMakeVisible.add(handle);
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -472,7 +473,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         raiseConnectedEvent(this.logger, this, connected, clientId);
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.quorum;
     }
 
@@ -516,6 +517,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                             this.dataStoreContext.storage,
                             (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
                             (address: string) => this.setChannelDirty(address),
+                            (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+                                this.addedGCOutboundReference(srcHandle, outboundHandle),
                             id,
                             snapshotTree,
                             this.sharedObjectRegistry,
@@ -528,7 +531,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                                     snapshot: attachMessage.snapshot,
                                 },
                             ),
-                            async () => this.getChannelInitialGCDetails(id),
+                            async () => this.getChannelBaseGCDetails(id),
                             attachMessage.type);
 
                         this.contexts.set(id, remoteChannelContext);
@@ -552,8 +555,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
             this.emit("op", message);
         } catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-throw-literal
-            throw CreateProcessingError(error, "fluidDataStoreRuntimeFailedToProcessMessage", message);
+            throw DataProcessingError.wrapIfUnrecognized(error, "fluidDataStoreRuntimeFailedToProcessMessage", message);
         }
     }
 
@@ -608,8 +610,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * including any of its child channel contexts. Each node has a set of outbound routes to other GC nodes in the
      * document. It does the following:
      * 1. Calls into each child context to get its GC data.
-     * 2. Prefixs the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
-     *    idenfied as belonging to the child.
+     * 2. Prefixes the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
+     *    identified as belonging to the child.
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
      *    the GC data of this channel.
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
@@ -642,7 +644,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Get a map of channel ids to routes used in it.
-        const usedContextRoutes = getChildNodesUsedRoutes(usedRoutes);
+        const usedContextRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
         // Verify that the used routes are correct.
         for (const [id] of usedContextRoutes) {
@@ -656,27 +658,36 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
-     * Returns the GC details in initial summary for the channel with the given id. The initial summary of the data
-     * store contains the GC details of all the child channel contexts that were created before the summary was taken.
-     * We find the GC details belonging to the given channel context and return it.
-     * @param channelId - The id of the channel context that is asked for the initial GC details.
-     * @returns the requested channel's GC details in the initial summary.
+     * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+     * all references added in the system.
+     * @param srcHandle - The handle of the node that added the reference.
+     * @param outboundHandle - The handle of the outbound node that is referenced.
      */
-    private async getChannelInitialGCDetails(channelId: string): Promise<IGarbageCollectionSummaryDetails> {
-        const channelInitialUsedRoutes = await this.initialChannelUsedRoutesP;
-        const channelInitialGCData = await this.initialChannelGCDataP;
+    private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+        this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
+    }
 
-        let channelUsedRoutes = channelInitialUsedRoutes.get(channelId);
-        // Currently, channel context's are always considered used. So, it there is no used route for it, we still
-        // need to mark it as used. Add self-route (empty string) to the channel context's used routes.
-        if (channelUsedRoutes === undefined || channelUsedRoutes.length === 0) {
-            channelUsedRoutes = [""];
+    /**
+     * Returns the base GC details for the channel with the given id. This is used to initialize its GC state.
+     * @param channelId - The id of the channel context that is asked for the initial GC details.
+     * @returns the requested channel's base GC details.
+     */
+    private async getChannelBaseGCDetails(channelId: string): Promise<IGarbageCollectionDetailsBase> {
+        let channelBaseGCDetails = (await this.channelsBaseGCDetails).get(channelId);
+        if (channelBaseGCDetails === undefined) {
+            channelBaseGCDetails = {};
+        } else if (channelBaseGCDetails.gcData?.gcNodes !== undefined) {
+            // Note: if the child channel has an explicit handle route to its parent, it will be removed here and
+            // expected to be added back by the parent when getGCData is called.
+            removeRouteFromAllNodes(channelBaseGCDetails.gcData.gcNodes, this.absolutePath);
         }
 
-        return {
-            usedRoutes: channelUsedRoutes,
-            gcData: channelInitialGCData.get(channelId),
-        };
+        // Currently, channel context's are always considered used. So, it there are no used routes for it, we still
+        // need to mark it as used. Add self-route (empty string) to the channel context's used routes.
+        if (channelBaseGCDetails.usedRoutes === undefined || channelBaseGCDetails.usedRoutes.length === 0) {
+            channelBaseGCDetails.usedRoutes = [""];
+        }
+        return channelBaseGCDetails;
     }
 
     /**
@@ -711,7 +722,25 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public getAttachSummary(): ISummaryTreeWithStats {
+        /**
+         * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
+         * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
+         * before visibility state was added, this may not have been the case and getAttachSummary() could be called:
+         * 1) Before attaching the data store - When a detached container is attached.
+         * 2) After attaching the data store - When a data store is created and bound in an attached container.
+         *
+         * The basic idea is that all local object should become locally visible before they are globally visible.
+         */
         this.attachGraph();
+
+        /**
+         * This assert cannot be added now due to back-compat. To be uncommented when the following issue is fixed -
+         * https://github.com/microsoft/FluidFramework/issues/9688.
+         *
+         * assert(this.visibilityState === VisibilityState.LocallyVisible,
+         *   "The data store should be locally visible when generating attach summary",
+         * );
+         */
 
         const summaryBuilder = new SummaryTreeBuilder();
 
@@ -759,10 +788,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.deferredAttached.promise;
     }
 
-    public raiseContainerWarning(warning: ContainerWarning): void {
-        this.dataStoreContext.raiseContainerWarning(warning);
-    }
-
     /**
      * Attach channel should only be called after the data store has been attached
      */
@@ -776,24 +801,23 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         channel.handle.attachGraph();
 
         assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
-        // Get the object snapshot only if the data store is Bound and its graph is attached too,
-        // because if the graph is attaching, then it would get included in the data store snapshot.
-        if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
-            const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
-            // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
-            const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
+        assert(this.visibilityState === VisibilityState.GloballyVisible,
+            0x2d0 /* "Data store should be globally visible to attach channels." */);
 
-            const message: IAttachMessage = {
-                id: channel.id,
-                snapshot,
-                type: channel.attributes.type,
-            };
-            this.pendingAttach.set(channel.id, message);
-            this.submit(DataStoreMessageType.Attach, message);
-        }
+        const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
+        // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
+        const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
+
+        const message: IAttachMessage = {
+            id: channel.id,
+            snapshot,
+            type: channel.attributes.type,
+        };
+        this.pendingAttach.set(channel.id, message);
+        this.submit(DataStoreMessageType.Attach, message);
 
         const context = this.contexts.get(channel.id) as LocalChannelContextBase;
-        context.markAttached();
+        context.makeVisible();
     }
 
     private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
@@ -871,16 +895,36 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private attachListener() {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.dataStoreContext.once("attaching", () => {
-            assert(this.bindState !== BindState.NotBound,
-                0x186 /* "Data store attaching should not occur if it is not bound" */);
+            /**
+             * back-compat 0.59.1000 - Ideally, attachGraph() should have already been called making the data store
+             * locally visible. However, before visibility state was added, this may not have been the case and data
+             * store can move to "attaching" state in 2 scenarios:
+             * 1) Before attachGraph() is called - When a data store is created and bound in an attached container.
+             * 2) After attachGraph() is called - When a detached container is attached.
+             *
+             * The basic idea is that all local object should become locally visible before they are globally visible.
+             */
+            this.attachGraph();
+
             this._attachState = AttachState.Attaching;
+
+            assert(this.visibilityState === VisibilityState.LocallyVisible,
+                0x2d1 /* "Data store should be locally visible before it can become globally visible." */);
+
+            // Mark the data store globally visible and make its child channels visible as well.
+            this.visibilityState = VisibilityState.GloballyVisible;
+            this.localChannelContextQueue.forEach((channel) => {
+                channel.makeVisible();
+            });
+            this.localChannelContextQueue.clear();
+
             // This promise resolution will be moved to attached event once we fix the scheduler.
             this.deferredAttached.resolve();
             this.emit("attaching");
         });
         this.dataStoreContext.once("attached", () => {
-            assert(this.bindState === BindState.Bound,
-                0x187 /* "Data store should only be attached after it is bound" */);
+            assert(this.visibilityState === VisibilityState.GloballyVisible,
+                0x2d2 /* "Data store should be globally visible when its attached." */);
             this._attachState = AttachState.Attached;
             this.emit("attached");
         });
@@ -904,7 +948,7 @@ export const mixinRequestHandler = (
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithRequestHandler extends Base {
         public async request(request: IRequest) {
-            const response  = await super.request(request);
+            const response = await super.request(request);
             if (response.status === 404) {
                 return requestHandler(request, this);
             }
@@ -914,10 +958,12 @@ export const mixinRequestHandler = (
 
 /**
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
+ * @param handler - handler that returns info about blob to be added to summary.
+ * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 export const mixinSummaryHandler = (
-    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string }>,
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[]; content: string; } | undefined >,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithSummarizerHandler extends Base {
         private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
@@ -946,7 +992,9 @@ export const mixinSummaryHandler = (
         async summarize(...args: any[]) {
             const summary = await super.summarize(...args);
             const content = await handler(this);
-            this.addBlob(summary, content.path, content.content);
+            if (content !== undefined) {
+                this.addBlob(summary, content.path, content.content);
+            }
             return summary;
         }
     } as typeof FluidDataStoreRuntime;

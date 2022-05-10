@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
-import { IEvent } from "@fluidframework/common-definitions";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
@@ -122,7 +121,7 @@ export class ContactCollection extends DataObject implements IContactCollection 
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
 export const ContactCollectionInstantiationFactory =
-    new DataObjectFactory<ContactCollection, undefined, undefined, IEvent>(
+    new DataObjectFactory(
         "contact-collection",
         ContactCollection,
         [],

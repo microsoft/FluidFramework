@@ -5,32 +5,32 @@
 
 import { EventEmitter } from "events";
 
-import { IFluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidLastEditedTracker } from "@fluid-experimental/last-edited";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidLastEditedTracker, IProvideFluidLastEditedTracker } from "@fluid-experimental/last-edited";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 
 export interface IVltavaUserDetails {
-    name: string,
-    colorCode: number,
+    name: string;
+    colorCode: number;
 }
 
 export interface IVltavaLastEditedState {
-    user: IVltavaUserDetails,
-    time: string,
+    user: IVltavaUserDetails;
+    time: string;
 }
 
 export interface IVltavaDataModel extends EventEmitter {
-    getDefaultFluidObject(): Promise<IFluidObject>;
+    getDefaultFluidObject(): Promise<FluidObject>;
     getUsers(): IVltavaUserDetails[];
     getLastEditedState(): Promise<IVltavaLastEditedState | undefined>;
 }
 
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
-    private readonly quorum: IQuorum;
+    private readonly quorum: IQuorumClients;
     private users: IVltavaUserDetails[] = [];
     private lastEditedTracker: IFluidLastEditedTracker | undefined;
 
@@ -57,7 +57,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         });
     }
 
-    public async getDefaultFluidObject(): Promise<IFluidObject> {
+    public async getDefaultFluidObject(): Promise<FluidObject> {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.defaultFluidObject.get()!;
     }
@@ -114,7 +114,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     }
 
     private async setupLastEditedTracker() {
-        const handle = handleFromLegacyUri(
+        const handle = handleFromLegacyUri<IProvideFluidLastEditedTracker>(
             ContainerRuntimeFactoryWithDefaultDataStore.defaultDataStoreId,
             this.context.containerRuntime);
         this.lastEditedTracker = (await handle.get()).IFluidLastEditedTracker;

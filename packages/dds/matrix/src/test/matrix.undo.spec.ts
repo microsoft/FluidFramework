@@ -461,7 +461,7 @@ describe("Matrix", () => {
             // equivalent, and then returns the 2nd matrix.
             async function summarize<T>(matrix: SharedMatrix<T>) {
                 // Create a summay
-                const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
+                const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
                 // Create a local DataStoreRuntime since we only want to load the summary for a local client.
                 const dataStoreRuntime = new MockFluidDataStoreRuntime();

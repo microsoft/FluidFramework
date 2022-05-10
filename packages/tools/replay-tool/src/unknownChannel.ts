@@ -23,8 +23,7 @@ class UnknownChannel implements IChannel {
     constructor(
         public readonly id: string,
         public readonly attributes: IChannelAttributes,
-        services: IChannelServices)
-    {
+        services: IChannelServices) {
         services.deltaConnection.attach({
             process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
             },
@@ -42,7 +41,7 @@ class UnknownChannel implements IChannel {
         throw new Error("not implemented");
     }
 
-    public summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats {
+    public getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats {
         return {
             stats: {
                 treeNodeCount: 1,
@@ -58,6 +57,10 @@ class UnknownChannel implements IChannel {
         };
     }
 
+    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
+        return this.getAttachSummary(fullTree, trackState);
+    }
+
     public isAttached() { return true; }
 
     public connect(services: IChannelServices): void {}
@@ -67,13 +70,14 @@ class UnknownChannel implements IChannel {
     }
 }
 
-class UnknownChannelFactory implements IChannelFactory {
-    readonly type = "Unknown DDS";
+export class UnknownChannelFactory implements IChannelFactory {
     readonly attributes: IChannelAttributes = {
-        type: "Unknown DDS",
+        type: this.type,
         snapshotFormatVersion: "1.0",
         packageVersion: "1.0",
     };
+
+    constructor(public readonly type: string) {}
 
     async load(
         runtime: IFluidDataStoreRuntime,
@@ -102,14 +106,12 @@ class ObjectRegistryWithUnknownChannels implements ISharedObjectRegistry {
             ObjectRegistryWithUnknownChannels.types.add(name);
             console.error(`DDS of type ${name} can't be created`);
         }
-        return new UnknownChannelFactory();
+        return new UnknownChannelFactory(name);
     }
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function mixinDataStoreWithAnyChannel(
-    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
-{
+    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) {
     return class RuntimeWithRequestHandler extends Base {
         constructor(
             dataStoreContext: IFluidDataStoreContext,

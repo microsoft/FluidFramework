@@ -13,6 +13,7 @@ import {
     ISnapshotOptions,
     OdspResourceTokenFetchOptions,
     TokenFetcher,
+    IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
@@ -21,7 +22,7 @@ import {
     getOdspResolvedUrl,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
-import { downloadSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
+import { downloadSnapshot, fetchSnapshotWithRedeem, SnapshotFormatSupportType } from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
 
 /**
@@ -31,28 +32,39 @@ import { IVersionedValueWithEpoch } from "./contracts";
  * @param getStorageToken - function that can provide the storage token for a given site. This is
  *  is also referred to as the "VROOM" token in SPO.
  * @param persistedCache - Cache to store the fetched snapshot.
+ * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header.
  * @param logger - Logger to have telemetry events.
  * @param hostSnapshotFetchOptions - Options to fetch the snapshot if any. Otherwise default will be used.
  * @param enableRedeemFallback - True to have the sharing link redeem fallback in case the Trees Latest/Redeem
  *  1RT call fails with redeem error. During fallback it will first redeem the sharing link and then make
  *  the Trees latest call.
+ *  @deprecated - This will be replaced with snapshotFormatFetchType.
+ * @param fetchBinarySnapshotFormat - Control if we want to fetch binary format snapshot.
+ * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @returns - True if the snapshot is cached, false otherwise.
  */
 export async function prefetchLatestSnapshot(
     resolvedUrl: IResolvedUrl,
     getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
     persistedCache: IPersistedCache,
+    forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryBaseLogger,
     hostSnapshotFetchOptions: ISnapshotOptions | undefined,
     enableRedeemFallback?: boolean,
     fetchBinarySnapshotFormat?: boolean,
+    snapshotFormatFetchType?: SnapshotFormatSupportType,
 ): Promise<boolean> {
     const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
+    const resolvedUrlData: IOdspUrlParts = {
+        siteUrl: odspResolvedUrl.siteUrl,
+        driveId: odspResolvedUrl.driveId,
+        itemId: odspResolvedUrl.itemId,
+    };
     const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
         odspLogger,
-        odspResolvedUrl,
+        resolvedUrlData,
         getStorageToken,
         true /* throwOnNullToken */,
     );
@@ -64,7 +76,7 @@ export async function prefetchLatestSnapshot(
         controller?: AbortController,
     ) => {
         return downloadSnapshot(
-            finalOdspResolvedUrl, storageToken, odspLogger, snapshotOptions, fetchBinarySnapshotFormat, controller);
+            finalOdspResolvedUrl, storageToken, odspLogger, snapshotOptions, snapshotFormatFetchType, controller);
     };
     const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
     let cacheP: Promise<void> | undefined;
@@ -84,6 +96,7 @@ export async function prefetchLatestSnapshot(
                     odspResolvedUrl,
                     storageTokenFetcher,
                     hostSnapshotFetchOptions,
+                    forceAccessTokenViaAuthorizationHeader,
                     odspLogger,
                     snapshotDownloader,
                     putInCache,

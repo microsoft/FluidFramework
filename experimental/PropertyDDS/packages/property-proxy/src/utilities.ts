@@ -25,7 +25,6 @@ import { NonPrimitiveTypes, ReferenceType } from "./interfaces";
 // TODO(marcus): this function should be removed in the future and a safer
 // way to determine the corrent types is useed
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function forceType<T>(value: any | T): value is T {
     return true;
 }

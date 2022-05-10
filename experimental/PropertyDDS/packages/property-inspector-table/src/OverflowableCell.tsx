@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { makeStyles, Tooltip } from '@material-ui/core';
-import * as React from 'react';
+import { makeStyles, Tooltip } from "@material-ui/core";
+import * as React from "react";
 
 const useStyles = makeStyles({
   tooltip: {
-    overflowWrap: 'break-word',
-    wordWrap: 'break-word',
+    overflowWrap: "break-word",
+    wordWrap: "break-word",
   },
   wrappedCell: {
     flexGrow: 1,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    width: '1px', /* flexGrow overrides the width. Need this to not exceed the vailable space */
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    width: "1px", /* flexGrow overrides the width. Need this to not exceed the vailable space */
   },
-}, { name: 'OverflowableCell' });
+}, { name: "OverflowableCell" });
 
 interface IOverflowCellProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -45,14 +45,14 @@ export const OverflowableCell: React.FunctionComponent<IOverflowCellProps> = (pr
   if (allowTooltip) {
     return (
       <Tooltip title={props.cellContent} enterDelay={800} classes={{ tooltip: classes.tooltip }}>
-        <div id='overflowableDiv' ref={divRef} className={classes.wrappedCell}>
+        <div id="overflowableDiv" ref={divRef} className={classes.wrappedCell}>
           {props.cellContent}
         </div>
       </Tooltip>
     );
   }
   return (
-    <div id='overflowableDiv' ref={divRef} className={classes.wrappedCell}>
+    <div id="overflowableDiv" ref={divRef} className={classes.wrappedCell}>
       {props.cellContent}
     </div>
   );

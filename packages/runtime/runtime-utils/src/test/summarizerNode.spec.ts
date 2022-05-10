@@ -99,7 +99,7 @@ describe("Runtime", () => {
                 try {
                     fn();
                     throw Error(`${failMsg}: Expected to fail`);
-                } catch (error) {
+                } catch (error: any) {
                     assert(expectedErrors.some((e) => e === error.message), errMsg);
                 }
             }
@@ -113,31 +113,32 @@ describe("Runtime", () => {
                 try {
                     await fn();
                     throw Error(`${failMsg}: Expected to reject`);
-                } catch (error) {
+                } catch (error: any) {
                     assert(expectedErrors.some((e) => e === error.message), errMsg);
                 }
             }
 
+            const summaryRefSeq = 123;
             const blobs = {
-                protocolAttributes: { sequenceNumber: 123 },
+                protocolAttributes: { sequenceNumber: summaryRefSeq },
             } as const;
             const readAndParseBlob = async <T>(id: string) => blobs[id] as T;
             const fakeOp = (sequenceNumber: number): ISequencedDocumentMessage =>
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 ({ sequenceNumber } as ISequencedDocumentMessage);
 
-            const emptySnapshot: ISnapshotTree = { blobs: {}, commits: {}, trees: {} };
-            const protocolTree: ISnapshotTree = { blobs: { attributes: "protocolAttributes" }, commits: {}, trees: {} };
-            const coreSnapshot: ISnapshotTree = { blobs: {}, commits: {}, trees: {
-                [ids[1]]: { blobs: {}, commits: {}, trees: {
+            const emptySnapshot: ISnapshotTree = { blobs: {}, trees: {} };
+            const protocolTree: ISnapshotTree = { blobs: { attributes: "protocolAttributes" }, trees: {} };
+            const coreSnapshot: ISnapshotTree = { blobs: {}, trees: {
+                [ids[1]]: { blobs: {}, trees: {
                     [ids[2]]: emptySnapshot,
                 } },
             } };
-            const simpleSnapshot: ISnapshotTree = { blobs: {}, commits: {}, trees: {
+            const simpleSnapshot: ISnapshotTree = { blobs: {}, trees: {
                 ...coreSnapshot.trees,
                 ".protocol": protocolTree,
             } };
-            const channelsSnapshot: ISnapshotTree = { blobs: {}, commits: {}, trees: {
+            const channelsSnapshot: ISnapshotTree = { blobs: {}, trees: {
                 [channelsTreeName]: coreSnapshot,
                 ".protocol": protocolTree,
             } };
@@ -331,6 +332,7 @@ describe("Runtime", () => {
                     createRoot();
                     const result = await rootNode.refreshLatestSummary(
                         undefined,
+                        summaryRefSeq,
                         getSnapshot,
                         readAndParseBlob,
                         logger,
@@ -344,6 +346,7 @@ describe("Runtime", () => {
                     createRoot();
                     const result = await rootNode.refreshLatestSummary(
                         "test-handle",
+                        summaryRefSeq,
                         getSnapshot,
                         readAndParseBlob,
                         logger,
@@ -354,9 +357,10 @@ describe("Runtime", () => {
                 });
 
                 it("Should not refresh latest if already passed ref seq number", async () => {
-                    createRoot({ refSeq: 123 });
+                    createRoot({ refSeq: summaryRefSeq });
                     const result = await rootNode.refreshLatestSummary(
                         undefined,
+                        summaryRefSeq,
                         getSnapshot,
                         readAndParseBlob,
                         logger,
@@ -374,6 +378,7 @@ describe("Runtime", () => {
 
                     const result = await rootNode.refreshLatestSummary(
                         proposalHandle,
+                        summaryRefSeq,
                         getSnapshot,
                         readAndParseBlob,
                         logger,

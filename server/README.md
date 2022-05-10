@@ -33,7 +33,18 @@ To get started with Routerlicious and the Fluid reference implementation, you mu
   "start:docker": "docker-compose -f server/docker-compose.yml up"
   ```
 
+### Developing the Reference Server
+
 For development, you'll also need to give docker access to your drive (Shared Drives). The instructions for local development are available in [Routerlicious](./routerlicious).
+
+To locally test changes across [GitRest](./gitrest), [Historian](./historian), and [Routerlicious](./routerlicious), run `docker compose -f docker-compose.dev.yml up` from `server/` instead of `server/routerlicious`. Then, when making a change, rebuild the relevant service and restart it. For example,
+
+```shell
+cd server/gitrest
+npm run build
+cd ..
+docker compose restart gitrest
+```
 
 ### Common Issues
 * Port already allocated
@@ -51,7 +62,7 @@ By default the [docker compose](./docker-compose.yml) file pulls the latest publ
 
 To use Routerlicious with a Yo-Fluid container, you should start the Routerlicious docker containers, and then start the webpack dev server with the docker env command.
 ```
-    "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
+    "start:docker": "webpack serve --config webpack.config.js --package package.json --env mode=docker",
 ```
 
 ### Using the Gateway Host

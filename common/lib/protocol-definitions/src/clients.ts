@@ -13,6 +13,10 @@ export interface ICapabilities {
 export interface IClientDetails {
     capabilities: ICapabilities;
     type?: string;
+    /**
+     * If the environment needs to specify multiple properties which gives info about the environment, then
+     * it should be in particular format like: "prop1:val1;prop2:val2;prop3:val3"
+     */
     environment?: string;
     device?: string;
 }
@@ -42,6 +46,16 @@ export interface ISignalClient {
     clientId: string;
 
     client: IClient;
+
+    /**
+     * Counts the number of signals sent by the client
+     */
+    clientConnectionNumber?: number;
+
+    /**
+     * Sequence number that indicates when the signal was created in relation to the delta stream
+     */
+    referenceSequenceNumber?: number;
 }
 
 /**

@@ -3,18 +3,29 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { ICollection, IDeliState, IDocument, IQueuedMessage } from "@fluidframework/server-services-core";
 
+export enum DeliCheckpointReason {
+    EveryMessage,
+    IdleTime,
+    MaxTime,
+    MaxMessages,
+    ClearCache,
+}
+
 export interface IDeliCheckpointManager {
-    writeCheckpoint(checkpoint: IDeliState): Promise<void>;
+    writeCheckpoint(checkpoint: IDeliState, reason: DeliCheckpointReason): Promise<void>;
     deleteCheckpoint(checkpointParams: ICheckpointParams): Promise<void>;
 }
 
 export interface ICheckpointParams {
     /**
-     * The deli checkpoint state @ deliCheckpointMessage
+     * The reason why this checkpoint was triggered
+     */
+    reason: DeliCheckpointReason;
+
+    /**
+     * The deli checkpoint state \@ deliCheckpointMessage
      */
     deliState: IDeliState;
 

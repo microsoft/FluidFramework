@@ -14,7 +14,9 @@ import {
 import {
     IGitCache,
     SummaryTreeUploadManager,
-    WholeSummaryUploadManager } from "@fluidframework/server-services-client";
+    WholeSummaryUploadManager,
+    ISession,
+} from "@fluidframework/server-services-client";
 import {
     ICollection,
     IDeliState,
@@ -25,9 +27,11 @@ import {
     ITenantManager,
     SequencedOperationType,
     IDocument,
+    ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class DocumentStorage implements IDocumentStorage {
     constructor(
@@ -39,7 +43,7 @@ export class DocumentStorage implements IDocumentStorage {
     /**
      * Retrieves database details for the given document
      */
-    public async getDocument(tenantId: string, documentId: string): Promise<any> {
+    public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
         const collection = await this.databaseManager.getDocumentCollection();
         return collection.findOne({ documentId, tenantId });
     }
@@ -55,9 +59,8 @@ export class DocumentStorage implements IDocumentStorage {
         sequenceNumber: number,
         term: number,
         values: [string, ICommittedProposal][],
-        ): ISummaryTree {
+    ): ISummaryTree {
         const documentAttributes: IDocumentAttributes = {
-            branch: documentId,
             minimumSequenceNumber: sequenceNumber,
             sequenceNumber,
             term,
@@ -114,12 +117,20 @@ export class DocumentStorage implements IDocumentStorage {
         appTree: ISummaryTree,
         sequenceNumber: number,
         term: number,
+        initialHash: string,
+        ordererUrl: string,
+        historianUrl: string,
         values: [string, ICommittedProposal][],
+        enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
         const messageMetaData = { documentId, tenantId };
+        const lumberjackProperties = {
+            [BaseTelemetryProperties.tenantId]: tenantId,
+            [BaseTelemetryProperties.documentId]: documentId,
+        };
 
         const protocolTree = this.createInitialProtocolTree(documentId, sequenceNumber, term, values);
         const fullTree = this.createFullTree(appTree, protocolTree);
@@ -131,6 +142,7 @@ export class DocumentStorage implements IDocumentStorage {
         const handle = await uploadManager.writeSummaryTree(fullTree, "", "container", 0);
 
         winston.info(`Tree reference: ${JSON.stringify(handle)}`, { messageMetaData });
+        Lumberjack.info(`Tree reference: ${JSON.stringify(handle)}`, lumberjackProperties);
 
         if (!this.enableWholeSummaryUpload) {
             const commitParams: ICreateCommitParams = {
@@ -148,13 +160,16 @@ export class DocumentStorage implements IDocumentStorage {
             await gitManager.createRef(documentId, commit.sha);
 
             winston.info(`Commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
+            Lumberjack.info(`Commit sha: ${JSON.stringify(commit.sha)}`, lumberjackProperties);
         }
 
         const deli: IDeliState = {
             clients: undefined,
             durableSequenceNumber: sequenceNumber,
+            expHash1: initialHash,
             logOffset: -1,
             sequenceNumber,
+            signalClientConnectionNumber: 0,
             epoch: undefined,
             term: 1,
             lastSentMSN: 0,
@@ -174,7 +189,18 @@ export class DocumentStorage implements IDocumentStorage {
             },
             sequenceNumber,
             lastClientSummaryHead: undefined,
+            lastSummarySequenceNumber: 0,
         };
+
+        const session: ISession = {
+            ordererUrl,
+            historianUrl,
+            isSessionAlive: true,
+        };
+
+        const message: string = `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`;
+        winston.info(message, { messageMetaData });
+        Lumberjack.info(message, lumberjackProperties);
 
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
@@ -186,6 +212,7 @@ export class DocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
+                session,
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
@@ -226,7 +253,7 @@ export class DocumentStorage implements IDocumentStorage {
         return gitManager.getCommit(sha);
     }
 
-    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }> {
+    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string; }> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const versions = await tenant.gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {
@@ -241,7 +268,7 @@ export class DocumentStorage implements IDocumentStorage {
             for (const blob of fullTree.blobs) {
                 if (blob.sha === fullTree.quorumValues) {
                     quorumValues = JSON.parse(toUtf8(blob.content, blob.encoding)) as
-                        [string, { value: string }][];
+                        [string, { value: string; }][];
 
                     for (const quorumValue of quorumValues) {
                         if (quorumValue[0] === "code") {
@@ -271,11 +298,13 @@ export class DocumentStorage implements IDocumentStorage {
         tenantId: string,
         documentId: string,
         deli?: string,
-        scribe?: string): Promise<IDocument> {
+        scribe?: string,
+        session?: ISession): Promise<IDocument> {
         const value: IDocument = {
             createTime: Date.now(),
             deli,
             documentId,
+            session,
             scribe,
             tenantId,
             version: "0.1",
@@ -295,6 +324,11 @@ export class DocumentStorage implements IDocumentStorage {
             }, (err) => {
                 winston.error(`Error while fetching summary for ${tenantId}/${documentId}`);
                 winston.error(err);
+                const lumberjackProperties = {
+                    [BaseTelemetryProperties.tenantId]: tenantId,
+                    [BaseTelemetryProperties.documentId]: documentId,
+                };
+                Lumberjack.error(`Error while fetching summary`, lumberjackProperties);
                 return false;
             });
 
@@ -331,7 +365,7 @@ export class DocumentStorage implements IDocumentStorage {
                     Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
                 ).toString(),
             ) as ISequencedDocumentMessage[];
-            const dbOps = ops.map((op: ISequencedDocumentMessage) => {
+            const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
                 return {
                     documentId,
                     operation: op,
@@ -352,6 +386,11 @@ export class DocumentStorage implements IDocumentStorage {
                     }
                 });
             winston.info(`Inserted ${dbOps.length} ops into deltas DB`);
+            const lumberjackProperties = {
+                [BaseTelemetryProperties.tenantId]: tenantId,
+                [BaseTelemetryProperties.documentId]: documentId,
+            };
+            Lumberjack.info(`Inserted ${dbOps.length} ops into deltas DB`, lumberjackProperties);
             return true;
         } else {
             return false;

@@ -3,34 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { Dom, ICommand, KeyCode, randomId, Template, View } from "@fluid-example/flow-util-lib";
+import { Dom, ICommand, KeyCode, randomId } from "../../util";
 import { debug } from "../debug";
 import * as style from "./index.css";
+import { View } from "./view";
 
 interface ISearchMenuProps {
     commands: ICommand[];
     onComplete: (command: ICommand) => void;
 }
 
-const template = new Template(
-    {
-        tag: "div", props: { className: style.searchMenu }, children: [
-            { tag: "input", ref: "input", props: { type: "text", className: style.input, autocomplete: "off" } },
-            { tag: "datalist", ref: "datalist" },
-        ],
-    });
-
-const optionTemplate = new Template({ tag: "option" });
-
 export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
     private state?: ISearchMenuProps;
+    private readonly inputElement = document.createElement("input");
+    private readonly datalistElement = document.createElement("datalist");
 
     public show() {
         this.updateCommands();
         const root = this.root as HTMLElement;
         root.style.display = "inline-block";
-        const input = template.get(root, "input") as HTMLElement;
-        input.focus();
+        this.inputElement.focus();
     }
 
     public hide() {
@@ -40,14 +32,17 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
     }
 
     protected onAttach(props: Readonly<ISearchMenuProps>) {
-        const root = template.clone();
-        const input = template.get(root, "input") as HTMLInputElement;
-        const list = template.get(root, "datalist");
+        const root = document.createElement("div");
+        root.classList.add(style.searchMenu);
 
+        this.inputElement.type = "text";
+        this.inputElement.classList.add(style.input);
+        this.inputElement.autocomplete = "off";
         // Assign the datalist a random 'id' and <input> element to the datalist.
-        input.setAttribute("list", list.id = randomId());
+        this.inputElement.setAttribute("list", this.datalistElement.id = randomId());
+        this.onDom(this.inputElement, "keydown", this.onKeyDown);
 
-        this.onDom(input, "keydown", this.onKeyDown);
+        root.append(this.inputElement, this.datalistElement);
 
         this.state = props;
 
@@ -65,12 +60,11 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
     }
 
     private updateCommands() {
-        const list = template.get(this.root, "datalist");
-        Dom.removeAllChildren(list);
-        list.append(...this.state.commands
+        Dom.removeAllChildren(this.datalistElement);
+        this.datalistElement.append(...this.state.commands
             .filter((command) => command.enabled())
             .map((command) => {
-                const option = optionTemplate.clone() as HTMLOptionElement;
+                const option = document.createElement("option");
                 option.value = command.name;
 
                 return option;
@@ -96,10 +90,8 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
     }
 
     private complete(e: KeyboardEvent, commit: boolean) {
-        const input = template.get(this.root, "input") as HTMLInputElement;
-
         const command = commit
-            ? this.findCommand(input.value)
+            ? this.findCommand(this.inputElement.value)
             : undefined;
 
         this.dismiss(e);

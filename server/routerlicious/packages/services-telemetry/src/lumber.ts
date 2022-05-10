@@ -22,7 +22,7 @@ import {
 // or error() on Lumber to emit the data.
 export class Lumber<T extends string = LumberEventName> {
     private readonly _startTime = performance.now();
-    private  _properties = new Map<string, any>();
+    private _properties = new Map<string, any>();
     private _durationInMs?: number;
     private _successful?: boolean;
     private _message?: string;
@@ -88,7 +88,7 @@ export class Lumber<T extends string = LumberEventName> {
         } else {
             Object.entries(properties).forEach((entry) => {
                 const [key, value] = entry;
-                this.setProperty(key,value);
+                this.setProperty(key, value);
             });
         }
         return this;
@@ -148,7 +148,8 @@ export class Lumber<T extends string = LumberEventName> {
             this._exception = new Error(safeStringify(exception));
         }
 
-        this._durationInMs = performance.now() - this._startTime;
+        const durationOverwrite = parseFloat(this.properties.get("durationInMs"));
+        this._durationInMs = isNaN(durationOverwrite) ? performance.now() - this._startTime : durationOverwrite;
 
         this._engineList.forEach((engine) => engine.emit(this));
         this._completed = true;

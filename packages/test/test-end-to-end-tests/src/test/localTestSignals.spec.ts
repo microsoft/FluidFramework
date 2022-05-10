@@ -21,7 +21,7 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 const waitForSignal =
-    async (...signallers: { once(e: "signal", l: () => void): void }[]) =>
+    async (...signallers: { once(e: "signal", l: () => void): void; }[]) =>
         Promise.all(
             signallers.map(
                 async (signaller, index) =>
@@ -47,10 +47,10 @@ describeFullCompat("TestSignals", (getTestObjectProvider) => {
 
         // need to be connected to send signals
         if (!container1.connected) {
-            await new Promise((res) => container1.once("connected", res));
+            await new Promise((resolve) => container1.once("connected", resolve));
         }
         if (!container2.connected) {
-            await new Promise((res) => container2.once("connected", res));
+            await new Promise((resolve) => container2.once("connected", resolve));
         }
     });
     describe("Attach signal Handlers on Both Clients", () => {

@@ -7,11 +7,12 @@ import { strict as assert } from "assert";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
+import { LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     IntervalCollection,
+    IntervalType,
     ISerializedInterval,
     SequenceInterval,
     SharedString,
@@ -29,7 +30,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 const assertIntervalsHelper = (
     sharedString: SharedString,
     intervalView: IntervalCollection<SequenceInterval>,
-    expected: readonly { start: number; end: number }[],
+    expected: readonly { start: number; end: number; }[],
 ) => {
     const actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
     assert.strictEqual(actual.length, expected.length,
@@ -209,7 +210,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         let intervals: IntervalCollection<SequenceInterval>;
         let dataObject: ITestFluidObject & IFluidLoadable;
 
-        const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
+        const assertIntervals = (expected: readonly { start: number; end: number; }[]) => {
             // Make sure all ops have been sent before actually asserting
             (dataObject.context.containerRuntime as IContainerRuntime).flush();
             assertIntervalsHelper(sharedString, intervals, expected);
@@ -540,8 +541,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(interval, interval2, "Oddball interval found in client 2");
             }
 
-            if (typeof(intervals1.change) === "function" &&
-                typeof(intervals2.change) === "function") {
+            if (typeof (intervals1.change) === "function" &&
+                typeof (intervals2.change) === "function") {
                 // Conflicting changes
                 intervals1.change(id1, 1, 2);
                 intervals2.change(id1, 2, 1);
@@ -597,8 +598,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(interval2.end.getOffset(), 2, "Conflicting transparent change");
             }
 
-            if (typeof(intervals1.changeProperties) === "function" &&
-                typeof(intervals2.changeProperties) === "function") {
+            if (typeof (intervals1.changeProperties) === "function" &&
+                typeof (intervals2.changeProperties) === "function") {
                 const assertPropertyChangedArg = (p: any, v: any, m: string) => {
                     // Check expected values of args passed to the propertyChanged event only if IntervalCollection
                     // is a TypedEventEmitter. (This is not true of earlier versions,
@@ -616,17 +617,13 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                     deltaArgs2 = propertyDeltas;
                 });
                 intervals1.changeProperties(id1, { prop1: "prop1" });
-                // eslint-disable-next-line no-null/no-null
                 assertPropertyChangedArg(deltaArgs1.prop1, null, "Mismatch in property-changed event arg 1");
                 await provider.opProcessingController.processOutgoing();
                 intervals2.changeProperties(id1, { prop2: "prop2" });
-                // eslint-disable-next-line no-null/no-null
                 assertPropertyChangedArg(deltaArgs2.prop2, null, "Mismatch in property-changed event arg 2");
 
                 await provider.ensureSynchronized();
-                // eslint-disable-next-line no-null/no-null
                 assertPropertyChangedArg(deltaArgs1.prop2, null, "Mismatch in property-changed event arg 3");
-                // eslint-disable-next-line no-null/no-null
                 assertPropertyChangedArg(deltaArgs2.prop1, null, "Mismatch in property-changed event arg 4");
 
                 interval1 = intervals1.getIntervalById(id1);
@@ -655,7 +652,6 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 intervals1.changeProperties(id1, { prop1: "maybe" });
                 assertPropertyChangedArg(deltaArgs1.prop1, "yes", "Mismatch in property-changed event arg 9");
                 await provider.opProcessingController.processOutgoing();
-                // eslint-disable-next-line no-null/no-null
                 intervals2.changeProperties(id1, { prop1: null });
                 assertPropertyChangedArg(deltaArgs2.prop1, "yes", "Mismatch in property-changed event arg 10");
 
@@ -765,18 +761,18 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             assert.equal(serialized2.length, 3, "Incorrect interval collection size in container 2");
             assert.equal(serialized3.length, 3, "Incorrect interval collection size in container 3");
 
-            const interval1From3 = serialized3[0] as ISerializedInterval;
+            const interval1From3 = serialized3[0];
             assert(interval1From3.properties);
             const comment1From3 = await (interval1From3.properties.story as IFluidHandle<SharedString>).get();
             assert.equal(
                 comment1From3.getText(0, 12), "a comment...", "Incorrect text in interval collection's shared string");
-            const interval3From3 = serialized3[2] as ISerializedInterval;
+            const interval3From3 = serialized3[2];
             assert(interval3From3.properties);
             const mapFrom3 = await (interval3From3.properties.story as IFluidHandle<SharedMap>).get();
             assert.equal(
                 mapFrom3.get("nestedKey"), "nestedValue", "Incorrect value in interval collection's shared map");
 
-            const summaryBlob = outerString2.summarize().summary.tree.header as ISummaryBlob;
+            const summaryBlob = (await outerString2.summarize()).summary.tree.header as ISummaryBlob;
             // Since it's based on a map kernel, its contents parse as
             // an IMapDataObjectSerializable with the "comments" member we set
             const parsedContent = JSON.parse(summaryBlob.content as string);
@@ -785,7 +781,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 (parsedContent["intervalCollections/comments"].value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             assert(serializedInterval1FromSnapshot.properties);
-            const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
+            const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string; };
             assert.equal(
                 handleLocalValueFromSnapshot.type,
                 "__fluid_handle__",

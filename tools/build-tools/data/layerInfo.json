@@ -84,7 +84,8 @@
                 ],
                 "deps": [
                     "Driver-Definitions",
-                    "Driver-Utils"
+                    "Driver-Utils",
+                    "Server-Shared-Utils"
                 ]
             },
             "Tool-Utils": {
@@ -140,26 +141,10 @@
                     "Container-Utils"
                 ]
             },
-            "BaseHost": {
-                "packages": [
-                    "@fluidframework/base-host"
-                ],
-                "deps": [
-                    "Loader"
-                ]
-            },
             "HostUtils": {
                 "dev": true,
                 "packages": [
                     "@fluid-experimental/get-container"
-                ],
-                "deps": [
-                    "Framework",
-                    "Loader",
-                    "Routerlicious-Driver",
-                    "Server-Libs",
-                    "Server-Shared-Utils",
-                    "Test"
                 ]
             },
             "Runtime": {
@@ -192,7 +177,6 @@
             },
             "ServiceClients": {
                 "packages": [
-                    "@fluidframework/azure-client",
                     "@fluidframework/tinylicious-client"
                 ],
                 "deps": [
@@ -201,16 +185,7 @@
                     "Routerlicious-Driver",
                     "Server-Libs",
                     "Server-Shared-Utils",
-                    "Test"
-                ]
-            },
-            "UberPackage": {
-                "packages": [
-                    "fluid-framework"
-                ],
-                "deps": [
-                    "Framework",
-                    "Runtime"
+                    "Test-Utils"
                 ]
             },
             "Examples": {
@@ -221,12 +196,6 @@
                     "experimental/examples/",
                     "experimental/PropertyDDS/examples/",
                     "experimental/PropertyDDS/services/"
-                ],
-                "deps": [
-                    "Framework",
-                    "Driver",
-                    "Routerlicious-Driver",
-                    "Test"
                 ]
             },
             "Build": {
@@ -238,28 +207,68 @@
                 ]
             },
             "Tools": {
+                "dev": true,
                 "dot": false,
                 "dirs": [
-                    "packages/tools/",
-                    "tools/generator-fluid"
-                ],
-                "deps": [
-                    "Framework",
-                    "Routerlicious-Driver",
-                    "Other-Utils",
-                    "Tool-Utils"
+                    "packages/tools/"
                 ]
             },
-            "Test": {
+            "Tests": {
+                "dev": true,
+                "dirs": [
+                    "packages/test/"
+                ]
+            },
+            "Test-Utils": {
                 "dev": true,
                 "packages": [
                     "@fluid-internal/test-dds-utils",
                     "@fluidframework/local-driver",
                     "@fluidframework/test-runtime-utils",
+                    "@fluidframework/test-client-utils",
                     "@fluid-tools/webpack-fluid-loader"
-                ],
+                ]
+            },
+            "AzureClient": {
                 "dirs": [
-                    "packages/test/"
+                    "azure/packages/"
+                ],
+                "deps": [
+                    "Container-Definitions",
+                    "Framework",
+                    "Runtime",
+                    "Routerlicious-Driver",
+                    "Server-Shared-Utils"
+                ]
+            },
+            "UberPackage": {
+                "packages": [
+                    "fluid-framework"
+                ],
+                "deps": [
+                    "Container-Definitions",
+                    "Framework"
+                ]
+            },
+            "Azure-Service-Utils": {
+                "packages": [
+                    "@fluidframework/azure-service-utils"
+                ],
+                "deps": [
+                    "Protocol-Definitions",
+                    "Server-Shared-Utils",
+                    "Test-Utils"
+                ]
+            },
+            "Azure-Examples": {
+                "packages": [
+                    "@fluid-example/focus-tracker",
+                    "@fluid-example/app-integration-external-controller"
+                ],
+                "deps": [
+                    "UberPackage",
+                    "AzureClient",
+                    "ServiceClients"
                 ]
             }
         }
@@ -285,6 +294,7 @@
             },
             "Server-Tools": {
                 "packages": [
+                    "@fluidframework/azure-local-service",
                     "tinylicious"
                 ],
                 "deps": [

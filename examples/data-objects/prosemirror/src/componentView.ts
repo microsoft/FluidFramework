@@ -6,14 +6,14 @@
 import { Node } from "prosemirror-model";
 import { EditorView, NodeView } from "prosemirror-view";
 import { ILoader } from "@fluidframework/container-definitions";
-import { IFluidObject } from "@fluidframework/core-interfaces";
-import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { MountableView } from "@fluidframework/view-adapters";
 
 export class ComponentView implements NodeView {
     public dom: HTMLElement;
     public innerView;
 
-    private visual: HTMLViewAdapter | undefined;
+    private visual: MountableView | undefined;
 
     constructor(
         public node: Node,
@@ -64,8 +64,8 @@ export class ComponentView implements NodeView {
                     throw new Error("Can't insert a non-fluid component");
                 }
 
-                const component = result.value as IFluidObject;
-                if (!HTMLViewAdapter.canAdapt(component)) {
+                const component: FluidObject = result.value;
+                if (!MountableView.canMount(component)) {
                     throw new Error("Don't know how to render this component");
                 }
 
@@ -76,14 +76,14 @@ export class ComponentView implements NodeView {
             (component) => {
                 // Remove the previous view
                 if (this.visual) {
-                    this.visual.remove();
+                    this.visual.unmount();
                 }
 
                 // Clear any previous content
                 this.dom.innerHTML = "";
 
-                this.visual = new HTMLViewAdapter(component);
-                this.visual.render(this.dom);
+                this.visual = new MountableView(component);
+                this.visual.mount(this.dom);
             },
             (error) => {
                 // Fall back to URL if can't load

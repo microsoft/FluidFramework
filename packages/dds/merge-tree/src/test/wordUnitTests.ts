@@ -4,13 +4,18 @@
  */
 
 /* eslint-disable no-bitwise */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import path from "path";
 import random from "random-js";
 import { Trace } from "@fluidframework/common-utils";
 import { LocalReference } from "../localReference";
-import * as ops from "../ops";
-import * as Properties from "../properties";
+import { ReferenceType } from "../ops";
+import {
+    createMap,
+    extend,
+    MapLike,
+} from "../properties";
 import { TestClient } from "./testClient";
 import { loadTextFromFileWithMarkers } from "./testUtils";
 
@@ -32,9 +37,9 @@ export function propertyCopy() {
         map.set(a[i], v[i]);
     }
     let clockStart = clock();
-    let obj: Properties.MapLike<number>;
+    let obj: MapLike<number> = {};
     for (let j = 0; j < iterCount; j++) {
-        obj = Properties.createMap<number>();
+        obj = createMap<number>();
         for (let i = 0; i < propCount; i++) {
             obj[a[i]] = v[i];
         }
@@ -45,7 +50,7 @@ export function propertyCopy() {
     console.log(`arr prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
-        const bObj = Properties.createMap<number>();
+        const bObj = createMap<number>();
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const key in obj) {
             bObj[key] = obj[key];
@@ -57,7 +62,7 @@ export function propertyCopy() {
     console.log(`obj prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
-        const bObj = Properties.createMap<number>();
+        const bObj = createMap<number>();
         for (const [key, value] of map) {
             bObj[key] = value;
         }
@@ -68,7 +73,7 @@ export function propertyCopy() {
     console.log(`map prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
-        const bObj = Properties.createMap<number>();
+        const bObj = createMap<number>();
         map.forEach((value, key) => { bObj[key] = value; });
     }
     et = elapsedMicroseconds(clockStart);
@@ -97,8 +102,7 @@ export function propertyCopy() {
     const grayMap = new Map<string, number>();
     for (let j = 0; j < iterCount; j++) {
         map.forEach((value, key) => {
-            // eslint-disable-next-line eqeqeq
-            if (diffMap.get(key) != value) {
+            if (diffMap.get(key) !== value) {
                 grayMap.set(key, 1);
             }
         });
@@ -116,11 +120,11 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
     for (let i = 0; i < bookmarkCount; i++) {
         const pos = random.integer(0, len - 1)(mt);
         const segoff = client.getContainingSegment(pos);
-        let refType = ops.ReferenceType.Simple;
+        let refType = ReferenceType.Simple;
         if (i & 1) {
-            refType = ops.ReferenceType.SlideOnRemove;
+            refType = ReferenceType.SlideOnRemove;
         }
-        const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
+        const lref = new LocalReference(client, segoff.segment!, segoff.offset, refType);
         client.mergeTree.addLocalReference(lref);
         bookmarks.push(lref);
     }
@@ -129,7 +133,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
 
 function measureFetch(startFile: string, withBookmarks = false) {
     const bookmarkCount = 20000;
-    const client = new TestClient({ blockUpdateMarkers: true });
+    const client = new TestClient();
     loadTextFromFileWithMarkers(startFile, client.mergeTree);
     if (withBookmarks) {
         makeBookmarks(client, bookmarkCount);
@@ -148,13 +152,13 @@ function measureFetch(startFile: string, withBookmarks = false) {
             //     caBegin = 0;
             // }
             // curPG.pos is ca end
-            const curPG = client.findTile(pos, "pg", false);
-            const properties = curPG.tile.properties;
-            const curSegOff = client.getContainingSegment(pos);
-            const curSeg = curSegOff.segment;
+            const curPG = client.findTile(pos, "pg", false)!;
+            const properties = curPG.tile.properties!;
+            const curSegOff = client.getContainingSegment(pos)!;
+            const curSeg = curSegOff.segment!;
             // Combine paragraph and direct properties
-            Properties.extend(properties, curSeg.properties);
-            pos += (curSeg.cachedLength - curSegOff.offset);
+            extend(properties, curSeg.properties);
+            pos += (curSeg.cachedLength - curSegOff.offset!);
             count++;
         }
     }

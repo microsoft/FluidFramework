@@ -4,7 +4,6 @@
  */
 
 import { parse } from "url";
-import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -20,6 +19,7 @@ import {
     getQuorumValuesFromProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
+import { defaultHash } from "@fluidframework/server-services-client";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
 import { createLocalDocumentService } from "./localDocumentService";
 
@@ -44,9 +44,12 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        assert(!!createNewSummary, 0x202 /* "create empty file not supported" */);
+        if (createNewSummary === undefined) {
+            throw new Error("Empty file summary creation isn't supported in this driver.");
+        }
         const pathName = new URL(resolvedUrl.url).pathname;
         const pathArr = pathName.split("/");
         const tenantId = pathArr[pathArr.length - 2];
@@ -70,9 +73,13 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             appSummary,
             sequenceNumber,
             documentAttributes.term ?? 1,
+            defaultHash,
+            resolvedUrl.endpoints.ordererUrl ?? "",
+            resolvedUrl.endpoints.storageUrl ?? "",
             quorumValues,
+            false,
         );
-        return this.createDocumentService(resolvedUrl, logger);
+        return this.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
     }
 
     /**
@@ -83,6 +90,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 

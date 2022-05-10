@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import fs from "fs";
 import { ICreateTreeParams, ITree, ITreeEntry } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
@@ -20,17 +21,16 @@ export async function createTree(
             mode: tree.mode,
             oid: tree.sha,
             path: tree.path,
-            type: tree.type,
+            type: "tree",
         };
 
         return entry;
     });
 
-    const treeDescription: git.TreeDescription = { entries };
-    const sha = await git.writeObject({
+    const sha = await git.writeTree({
+        fs,
         dir: utils.getGitDir(store, tenantId),
-        type: "tree",
-        object: treeDescription,
+        tree: entries,
     });
 
     return getTree(store, tenantId, authorization, sha, false, true);
@@ -47,7 +47,8 @@ export async function getTree(
     let returnEntries;
 
     if (recursive) {
-        returnEntries = await git.walkBeta2({
+        returnEntries = await git.walk({
+            fs,
             dir: utils.getGitDir(store, tenantId),
             map: (async (path, [head]) => {
                 if (path === ".") {
@@ -66,10 +67,10 @@ export async function getTree(
             trees: [git.TREE({ ref: sha } as any)],
         });
     } else {
-        const treeObject = await git.readObject({ dir: utils.getGitDir(store, tenantId), oid: sha });
-        const description = treeObject.object as git.TreeDescription;
+        const treeObject = await git.readTree({ fs, dir: utils.getGitDir(store, tenantId), oid: sha });
+        const description = treeObject.tree;
 
-        returnEntries = description.entries.map((tree) => {
+        returnEntries = description.map((tree) => {
             const returnEntry: ITreeEntry = {
                 path: tree.path,
                 mode: tree.mode,

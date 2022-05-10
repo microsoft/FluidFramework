@@ -24,8 +24,8 @@ const resolutionCache = new Map<string, string>();
 const revision = 1;
 
 interface InstalledJson {
-    revision: number,
-    installed: string[],
+    revision: number;
+    installed: string[];
 }
 
 async function ensureInstalledJson() {
@@ -167,23 +167,23 @@ export async function ensureInstalled(requested: string, packageList: string[], 
         // Check installed status again under lock the modulePath lock
         if (force || !await isInstalled(version)) {
             // Install the packages
-            await new Promise<void>((res, rej) =>
+            await new Promise<void>((resolve, reject) =>
                 exec(`npm init --yes`, { cwd: modulePath }, (error, stdout, stderr) => {
                     if (error) {
-                        rej(new Error(`Failed to initialize install directory ${modulePath}`));
+                        reject(new Error(`Failed to initialize install directory ${modulePath}`));
                     }
-                    res();
+                    resolve();
                 }),
             );
-            await new Promise<void>((res, rej) =>
+            await new Promise<void>((resolve, reject) =>
                 exec(
                     `npm i --no-package-lock ${packageList.map((pkg) => `${pkg}@${version}`).join(" ")}`,
                     { cwd: modulePath },
                     (error, stdout, stderr) => {
                         if (error) {
-                            rej(new Error(`Failed to install in ${modulePath}\n${stderr}`));
+                            reject(new Error(`Failed to install in ${modulePath}\n${stderr}`));
                         }
-                        res();
+                        resolve();
                     },
                 ),
             );
@@ -213,7 +213,7 @@ export function checkInstalled(requested: string) {
 }
 
 export const loadPackage = (modulePath: string, pkg: string) =>
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-return
     require(path.join(modulePath, "node_modules", pkg));
 
 export function getRequestedRange(baseVersion: string, requested?: number | string): string {

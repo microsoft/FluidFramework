@@ -60,8 +60,8 @@ export class FileDocumentService implements api_2.IDocumentService {
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(storage: IDocumentStorageService, deltaStorage: FileDeltaStorageService, deltaConnection: IDocumentDeltaConnection);
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
-    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "fluid-file:";
     }
@@ -70,26 +70,22 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(Base: TBase) => {
     new (...args: any[]): {
         blobsWriter: Map<string, ArrayBufferLike>;
-        commitsWriter: {
-            [key: string]: api.ITree;
-        };
         latestWriterTree?: api.ISnapshotTree | undefined;
         docId?: string | undefined;
         reset(): void;
-        onCommitHandler(dataStoreName: string, tree: api.ITree): void;
         onSnapshotHandler(snapshot: IFileSnapshot): void;
         readBlob(sha: string): Promise<ArrayBufferLike>;
-        getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
+        getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
         getSnapshotTree(version?: api.IVersion | undefined): Promise<api.ISnapshotTree | null>;
-        write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion>;
-        writeOutFullSnapshot(tree: api.ITree): Promise<void>;
-        sortTree(tree: api.ITree): void;
+        uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
         repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
+        write(root: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion>;
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
-        uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
+        readonly disposed?: boolean | undefined;
+        dispose?: ((error?: Error | undefined) => void) | undefined;
     };
 } & TBase;
 
@@ -102,7 +98,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
     // (undocumented)
     protected docTree: api.ISnapshotTree | null;
     getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
-    getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
     // (undocumented)
     readBlob(sha: string): Promise<ArrayBufferLike>;
     }
@@ -111,33 +107,27 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
 export const FluidFetchReaderFileSnapshotWriter: {
     new (...args: any[]): {
         blobsWriter: Map<string, ArrayBufferLike>;
-        commitsWriter: {
-            [key: string]: api.ITree;
-        };
         latestWriterTree?: api.ISnapshotTree | undefined;
         docId?: string | undefined;
         reset(): void;
-        onCommitHandler(dataStoreName: string, tree: api.ITree): void;
         onSnapshotHandler(snapshot: IFileSnapshot): void;
         readBlob(sha: string): Promise<ArrayBufferLike>;
-        getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
+        getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
         getSnapshotTree(version?: api.IVersion | undefined): Promise<api.ISnapshotTree | null>;
-        write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion>;
-        writeOutFullSnapshot(tree: api.ITree): Promise<void>;
-        sortTree(tree: api.ITree): void;
+        uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
         repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
+        write(root: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion>;
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
-        uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
+        readonly disposed?: boolean | undefined;
+        dispose?: ((error?: Error | undefined) => void) | undefined;
     };
 } & typeof FluidFetchReader;
 
 // @public (undocumented)
 export interface ISnapshotWriterStorage extends IDocumentStorageService {
-    // (undocumented)
-    onCommitHandler(dataStoreName: string, tree: api.ITree): void;
     // (undocumented)
     onSnapshotHandler(snapshot: IFileSnapshot): void;
     // (undocumented)
@@ -165,8 +155,6 @@ export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaC
     get claims(): ITokenClaims;
     // (undocumented)
     get clientId(): string;
-    // (undocumented)
-    close(): void;
     static create(documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection>;
     // (undocumented)
     details: IConnected;

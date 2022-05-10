@@ -21,7 +21,7 @@ export interface IFluidRepoPackage {
     ignoredDirs?: string[]
 }
 
-type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
+export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
     public readonly clientMonoRepo: MonoRepo;

@@ -4,8 +4,6 @@
         "strict": false,
         "allowJs": true,
         "checkJs": false,
-
-        "module": "commonjs",
         "rootDir": "./",
         "outDir": "../../dist/test",
         "types": [

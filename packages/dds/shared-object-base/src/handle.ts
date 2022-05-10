@@ -5,11 +5,8 @@
 
 import {
     IFluidHandleContext,
-    IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import { create404Response } from "@fluidframework/runtime-utils";
 import { ISharedObject } from "./types";
 
 /**
@@ -17,7 +14,7 @@ import { ISharedObject } from "./types";
  * This object is used for already loaded (in-memory) shared object
  * and is used only for serialization purposes.
  * De-serialization process goes through FluidObjectHandle and request flow:
- * FluidDataStoreRuntime.request() recognizes requests in the form of '/<shared object id>'
+ * FluidDataStoreRuntime.request() recognizes requests in the form of '/\<shared object id\>'
  * and loads shared object.
  */
 export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
@@ -49,14 +46,5 @@ export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
     public attachGraph(): void {
         this.value.bindToContext();
         super.attachGraph();
-    }
-
-    /**
-     * Returns 404.
-     * @param request - The request to make
-     * @returns A 404 error
-     */
-    public async request(request: IRequest): Promise<IResponse> {
-        return create404Response(request);
     }
 }

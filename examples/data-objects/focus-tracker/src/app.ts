@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { SignalManager } from "@fluid-experimental/data-objects";
 import {
-    FluidContainer,
+    IFluidContainer,
     ContainerSchema,
-    SignalManager,
 } from "fluid-framework";
 import {
     TinyliciousClient,
@@ -50,7 +50,7 @@ function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
     const client = new TinyliciousClient();
-    let container: FluidContainer;
+    let container: IFluidContainer;
     let services: TinyliciousContainerServices;
     let containerId: string;
 
@@ -58,14 +58,14 @@ async function start(): Promise<void> {
     const createNew = !location.hash;
     if (createNew) {
         // The client will create a new container using the schema
-        ({container, services} = await client.createContainer(containerSchema));
+        ({ container, services } = await client.createContainer(containerSchema));
         containerId = await container.attach();
         // The new container has its own unique ID that can be used to access it in another session
         location.hash = containerId;
     } else {
         containerId = location.hash.substring(1);
         // Use the unique container ID to fetch the container created earlier
-        ({container, services} = await client.getContainer(containerId, containerSchema));
+        ({ container, services } = await client.getContainer(containerId, containerSchema));
     }
     // create/get container API returns a combination of the container and associated container services
     document.title = containerId;

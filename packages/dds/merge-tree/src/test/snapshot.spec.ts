@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
@@ -12,9 +14,9 @@ import { SnapshotV1 } from "../snapshotV1";
 import { TestSerializer } from "./testSerializer";
 import { TestClient } from ".";
 
-// Reconstitutes a MergeTree client from a snapshot
-async function loadSnapshot(tree: ITree) {
-    const services = new MockStorage(tree);
+// Reconstitutes a MergeTree client from a summary
+async function loadSnapshot(summary: ISummaryTree) {
+    const services = MockStorage.createFromSummary(summary);
     const client2 = new TestClient(undefined);
     const runtime: Partial<IFluidDataStoreRuntime> = {
         logger: client2.logger,
@@ -38,7 +40,7 @@ class TestString {
     }
 
     public insert(pos: number, text: string, increaseMsn: boolean) {
-        this.queue(this.client.insertTextLocal(pos, text, { segment: this.pending.length }), increaseMsn);
+        this.queue(this.client.insertTextLocal(pos, text, { segment: this.pending.length })!, increaseMsn);
     }
 
     public append(text: string, increaseMsn: boolean) {
@@ -46,7 +48,7 @@ class TestString {
     }
 
     public removeRange(start: number, end: number, increaseMsn: boolean) {
-        this.queue(this.client.removeRangeLocal(start, end), increaseMsn);
+        this.queue(this.client.removeRangeLocal(start, end)!, increaseMsn);
     }
 
     // Ensures the client's text matches the `expected` string and round-trips through a snapshot
@@ -62,7 +64,7 @@ class TestString {
     // Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
     public async checkSnapshot() {
         this.applyPending();
-        const tree = this.getSnapshot();
+        const tree = this.getSummary();
         const client2 = await loadSnapshot(tree);
 
         assert.equal(this.client.getText(), client2.getText(),
@@ -76,11 +78,14 @@ class TestString {
         this.client = client2;
     }
 
-    public getSnapshot() {
-        const snapshot = new SnapshotV1(this.client.mergeTree, this.client.logger);
+    public getSummary() {
+        const snapshot = new SnapshotV1(
+            this.client.mergeTree,
+            this.client.logger,
+            (id) => this.client.getLongClientId(id));
+
         snapshot.extractSync();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return snapshot.emit(TestClient.serializer, undefined!);
+        return snapshot.emit(TestClient.serializer, undefined!).summary;
     }
 
     public getText() { return this.client.getText(); }
@@ -126,7 +131,7 @@ describe("snapshot", () => {
 
         // Invoke `load/getSnapshot()` directly instead of `str.expect()` to avoid ACKing the
         // pending insert op.
-        const client2 = await loadSnapshot(str.getSnapshot());
+        const client2 = await loadSnapshot(str.getSummary());
 
         // Original client has inserted text, but the one loaded from the snapshot should be empty.
         // This is because un-ACKed ops are not included in snapshots.  Instead, these ops are

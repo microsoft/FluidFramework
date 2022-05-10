@@ -15,12 +15,12 @@ module.exports = {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: 'ts-loader',
+                use: require.resolve('ts-loader'),
                 exclude: /node_modules/
             },
             {
                 test: /\.js$/,
-                use: ["source-map-loader"],
+                use: [require.resolve("source-map-loader")],
                 enforce: "pre"
             }
         ]
@@ -36,7 +36,7 @@ module.exports = {
     },
     devServer: {
         historyApiFallback: true,
-        publicPath: '/dist',
+        devMiddleware: { publicPath: '/dist' },
         watchOptions: {
             ignored: "**/node_modules/**",
         }

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export type ZookeeperClientConstructor = new (url: string) => IZookeeperClient;
+
 /**
  * Interface for a Zookeeper Client
  */

@@ -22,7 +22,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Lite
+  default: Small
 
 - name: publishFlags
   type: string
@@ -53,9 +53,9 @@ jobs:
           - download: current
             artifact: pack
           - task: UseNode@1
-            displayName: Use Node 12.x
+            displayName: Use Node 14.x
             inputs:
-              version: 12.x
+              version: 14.x
           - template: include-publish-npm-package-steps.yml
             parameters:
               namespace: ${{ parameters.namespace }}
@@ -64,8 +64,7 @@ jobs:
               customEndPoint: ${{ parameters.customEndPoint }}
               official: ${{ parameters.official }}
               publishFlags: ${{ parameters.publishFlags }}
-              tagName: ${{ parameters.tagName }}
-          - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
+          - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
             - template: include-publish-npm-package-steps.yml
               parameters:
                 namespace: false
@@ -74,4 +73,6 @@ jobs:
                 official: ${{ parameters.official }}
                 customEndPoint: ${{ parameters.customEndPoint }}
                 publishFlags: ${{ parameters.publishFlags }}
-                tagName: ${{ parameters.tagName }}
+          - template: include-git-tag-steps.yml
+            parameters:
+              tagName: ${{ parameters.tagName }}

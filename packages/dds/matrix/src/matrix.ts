@@ -4,13 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
@@ -18,13 +12,14 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
+    IFluidSerializer,
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
     IMatrixProducer,
     IMatrixConsumer,
@@ -37,7 +32,7 @@ import { PermutationVector, PermutationSegment } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle, isHandleValid } from "./handletable";
-import { deserializeBlob, serializeBlob } from "./serialization";
+import { deserializeBlob } from "./serialization";
 import { ensureRange } from "./range";
 import { IUndoConsumer } from "./types";
 import { MatrixUndoProvider } from "./undoprovider";
@@ -49,16 +44,16 @@ const enum SnapshotPath {
 }
 
 interface ISetOp<T> {
-    type: MatrixOp.set,
-    row: number,
-    col: number,
-    value: MatrixItem<T>,
+    type: MatrixOp.set;
+    row: number;
+    col: number;
+    value: MatrixItem<T>;
 }
 
 interface ISetOpMetadata {
-    rowHandle: Handle,
-    colHandle: Handle,
-    localSeq: number,
+    rowHandle: Handle;
+    colHandle: Handle;
+    localSeq: number;
 }
 
 /**
@@ -83,8 +78,7 @@ export class SharedMatrix<T = any>
     extends SharedObject
     implements IMatrixProducer<MatrixItem<T>>,
     IMatrixReader<MatrixItem<T>>,
-    IMatrixWriter<MatrixItem<T>>
-{
+    IMatrixWriter<MatrixItem<T>> {
     private readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
 
     public static getFactory() { return new SharedMatrixFactory(); }
@@ -237,8 +231,6 @@ export class SharedMatrix<T = any>
     ) {
         if (this.undo !== undefined) {
             let oldValue = this.cells.getCell(rowHandle, colHandle);
-
-            // eslint-disable-next-line no-null/no-null
             if (oldValue === null) {
                 oldValue = undefined;
             }
@@ -367,7 +359,6 @@ export class SharedMatrix<T = any>
             for (let col = 0; col < this.colCount; col++) {
                 const colHandle = this.colHandles.getHandle(col);
                 const value = this.cells.getCell(rowHandle, colHandle);
-                // eslint-disable-next-line no-null/no-null
                 if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
                         row,
@@ -411,7 +402,6 @@ export class SharedMatrix<T = any>
             for (let row = 0; row < this.rowCount; row++) {
                 const rowHandle = this.rowHandles.getHandle(row);
                 const value = this.cells.getCell(rowHandle, colHandle);
-                // eslint-disable-next-line no-null/no-null
                 if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
                         row,
@@ -429,55 +419,28 @@ export class SharedMatrix<T = any>
         }
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.Directory,
-                    path: SnapshotPath.rows,
-                    type: TreeEntry.Tree,
-                    value: this.rows.snapshot(this.runtime, this.handle, serializer),
-                },
-                {
-                    mode: FileMode.Directory,
-                    path: SnapshotPath.cols,
-                    type: TreeEntry.Tree,
-                    value: this.cols.snapshot(this.runtime, this.handle, serializer),
-                },
-                serializeBlob(
-                    this.handle,
-                    SnapshotPath.cells,
-                    [
-                        this.cells.snapshot(),
-                        this.pending.snapshot(),
-                    ],
-                    serializer),
-            ],
-        };
-
-        return tree;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
+        builder.addWithStats(SnapshotPath.rows, this.rows.summarize(this.runtime, this.handle, serializer));
+        builder.addWithStats(SnapshotPath.cols, this.cols.summarize(this.runtime, this.handle, serializer));
+        builder.addBlob(SnapshotPath.cells,
+            serializer.stringify([
+                this.cells.snapshot(),
+                this.pending.snapshot(),
+            ], this.handle));
+        return builder.getSummaryTree();
     }
 
     /**
-     * Returns the GC data for this SharedMatrix. All the IFluidHandle's stored in the cells represent routes to other
-     * objects.
+     * Runs serializer on the GC data for this SharedMatrix.
+     * All the IFluidHandle's stored in the cells represent routes to other objects.
      */
-    protected getGCDataCore(): IGarbageCollectionData {
-        // Create a SummarySerializer and use it to serialize all the cells. It keeps track of all IFluidHandles that it
-        // serializes.
-        const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
-
+    protected processGCDataCore(serializer: SummarySerializer) {
         for (let row = 0; row < this.rowCount; row++) {
             for (let col = 0; col < this.colCount; col++) {
                 serializer.stringify(this.getCell(row, col), this.handle);
             }
         }
-
-        return {
-            gcNodes:{
-                ["/"]: serializer.getSerializedRoutes(),
-            },
-        };
     }
 
     /**
@@ -543,7 +506,7 @@ export class SharedMatrix<T = any>
             default: {
                 assert(content.type === MatrixOp.set, 0x020 /* "Unknown SharedMatrix 'op' type." */);
 
-                const setOp = content as ISetOp<Serializable<T>>;
+                const setOp = content as ISetOp<T>;
                 const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
 
                 // If there are more pending local writes to the same row/col handle, it is important
@@ -600,10 +563,10 @@ export class SharedMatrix<T = any>
 
         switch (contents.target) {
             case SnapshotPath.cols:
-                this.cols.applyMsg(msg);
+                this.cols.applyMsg(msg, local);
                 break;
             case SnapshotPath.rows:
-                this.rows.applyMsg(msg);
+                this.rows.applyMsg(msg, local);
                 break;
             default: {
                 assert(contents.type === MatrixOp.set,
@@ -651,11 +614,6 @@ export class SharedMatrix<T = any>
                 }
             }
         }
-    }
-
-    protected registerCore() {
-        this.rows.startOrUpdateCollaboration(this.runtime.clientId, 0);
-        this.cols.startOrUpdateCollaboration(this.runtime.clientId, 0);
     }
 
     // Invoked by PermutationVector to notify IMatrixConsumers of row insertion/deletions.
@@ -728,7 +686,52 @@ export class SharedMatrix<T = any>
         return `${s}\n`;
     }
 
-    protected applyStashedOp() {
-        throw new Error("not implemented");
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+     */
+    protected applyStashedOp(content: any): unknown {
+        if (content.target === SnapshotPath.cols || content.target === SnapshotPath.rows) {
+            const op = content as IMergeTreeOp;
+            const currentVector = content.target === SnapshotPath.cols ? this.cols : this.rows;
+            const oppositeVector = content.target === SnapshotPath.cols ? this.rows : this.cols;
+            const metadata = currentVector.applyStashedOp(op);
+            const localSeq = currentVector.getCollabWindow().localSeq;
+            const oppositeWindow = oppositeVector.getCollabWindow();
+
+            assert(localSeq > oppositeWindow.localSeq,
+                "The 'localSeq' of the vector applying stashed op must > the 'localSeq' of the other vector.");
+
+            oppositeWindow.localSeq = localSeq;
+
+            return metadata;
+        } else {
+            assert(content.type === MatrixOp.set, "Unknown SharedMatrix 'op' type.");
+
+            const setOp = content as ISetOp<T>;
+            const rowHandle = this.rows.getAllocatedHandle(setOp.row);
+            const colHandle = this.cols.getAllocatedHandle(setOp.col);
+            if (this.undo !== undefined) {
+                let oldValue = this.cells.getCell(rowHandle, colHandle);
+                if (oldValue === null) {
+                    oldValue = undefined;
+                }
+
+                this.undo.cellSet(
+                    rowHandle,
+                    colHandle,
+                    oldValue);
+            }
+
+            this.cells.setCell(rowHandle, colHandle, setOp.value);
+            const localSeq = this.nextLocalSeq();
+            const metadata: ISetOpMetadata = {
+                rowHandle,
+                colHandle,
+                localSeq,
+            };
+
+            this.pending.setCell(rowHandle, colHandle, localSeq);
+            return metadata;
+        }
     }
 }

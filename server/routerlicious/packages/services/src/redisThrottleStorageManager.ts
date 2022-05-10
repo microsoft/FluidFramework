@@ -10,6 +10,7 @@ import {
 import { executeRedisMultiWithHmsetExpire, IRedisParameters } from "@fluidframework/server-services-utils";
 import { Redis } from "ioredis";
 import * as winston from "winston";
+import { CommonProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Manages storage of throttling metrics in redis hashes with an expiry of 'expireAfterSeconds'.
@@ -31,6 +32,10 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
 
         client.on("error", (error) => {
             winston.error("Throttle Manager Redis Error:", error);
+            Lumberjack.error(
+                "Throttle Manager Redis Error",
+                { [CommonProperties.telemetryGroupName]: "throttling" },
+                error);
         });
     }
 
@@ -43,7 +48,7 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
         return executeRedisMultiWithHmsetExpire(
             this.client,
             key,
-            throttlingMetric as { [key: string]: any },
+            throttlingMetric as { [key: string]: any; },
             this.expireAfterSeconds);
     }
 

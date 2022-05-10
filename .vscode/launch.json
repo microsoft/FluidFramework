@@ -5,6 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "layer-check",
+            "program": "${workspaceFolder}/tools/build-tools/dist/layerCheck/layerCheck.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "args": [
+                "--verbose"
+            ],
+            "type": "node"
+        },
+        {
             "type": "node",
             "request": "attach",
             "name": "Attach by Process ID",
@@ -240,11 +252,11 @@
             "windows": {
                 "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd"
             },
-            "program": "${file}",
+            "sourceMaps": true,
             "stopOnEntry": false,
+            "pauseForSourceMap": false,
+            "program": "${file}",
             "args": [
-                "--require",
-                "source-map-support/register",
                 // "--fgrep",               // Uncomment to filter by test case name
                 // "<test case name>",
                 "--no-timeouts",
@@ -252,7 +264,16 @@
             ],
             "cwd": "${fileDirname}",
             "skipFiles": [
-                "<node_internals>/**/*.js"
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ],
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**/dist/**",
+                "!**/node_modules/**"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/dist/**/*.js",
+                "!**/node_modules/**"
             ],
             "preLaunchTask": "Build Current Tests",
             "internalConsoleOptions": "openOnSessionStart",
@@ -269,10 +290,12 @@
                 "--no-timeouts",
                 "--exit",
                 "../../dist/test/${fileBasenameNoExtension}.js",
+                "../../../dist/test/**/${fileBasenameNoExtension}.js",
             ],
             "cwd": "${fileDirname}",
             "outFiles": [
-                "${fileDirname}/../../dist/**/*.js"
+                "${fileDirname}/../../dist/**/*.js",
+                "${fileDirname}/../../../dist/**/*.js"
             ],
         },
         {
@@ -287,7 +310,9 @@
                 "--no-cache",
                 "${file}"
             ],
-            "runtimeArgs": ["--unhandled-rejections=strict"],
+            "runtimeArgs": [
+                "--unhandled-rejections=strict"
+            ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
         }

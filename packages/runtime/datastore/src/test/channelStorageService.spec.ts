@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ChannelStorageService } from "../channelStorageService";
@@ -13,7 +14,6 @@ describe("ChannelStorageService", () => {
     it("Empty Tree", async () => {
         const tree: ISnapshotTree = {
             blobs: {},
-            commits: {},
             trees: {},
         };
         const storage: Pick<IDocumentStorageService, "readBlob"> = {
@@ -21,7 +21,7 @@ describe("ChannelStorageService", () => {
                 throw new Error("not implemented");
             },
         };
-        const ss = new ChannelStorageService(tree, storage);
+        const ss = new ChannelStorageService(tree, storage, new TelemetryUTLogger());
 
         assert.strictEqual(await ss.contains("/"), false);
         assert.deepStrictEqual(await ss.list(""), []);
@@ -32,7 +32,6 @@ describe("ChannelStorageService", () => {
             blobs: {
                 foo: "bar",
             },
-            commits: {},
             trees: {},
         };
         const storage: Pick<IDocumentStorageService, "readBlob"> = {
@@ -40,7 +39,7 @@ describe("ChannelStorageService", () => {
                 return stringToBuffer(id, "utf8");
             },
         };
-        const ss = new ChannelStorageService(tree, storage);
+        const ss = new ChannelStorageService(tree, storage, new TelemetryUTLogger());
 
         assert.strictEqual(await ss.contains("foo"), true);
         assert.deepStrictEqual(await ss.list(""), ["foo"]);
@@ -50,13 +49,11 @@ describe("ChannelStorageService", () => {
     it("Nested Blob", async () => {
         const tree: ISnapshotTree = {
             blobs: {},
-            commits: {},
             trees: {
                 nested: {
                     blobs: {
                         foo: "bar",
                     },
-                    commits: {},
                     trees: {},
                 },
             },
@@ -66,7 +63,7 @@ describe("ChannelStorageService", () => {
                 return stringToBuffer(id, "utf8");
             },
         };
-        const ss = new ChannelStorageService(tree, storage);
+        const ss = new ChannelStorageService(tree, storage, new TelemetryUTLogger());
 
         assert.strictEqual(await ss.contains("nested/foo"), true);
         assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);

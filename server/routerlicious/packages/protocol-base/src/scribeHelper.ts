@@ -15,7 +15,6 @@ export function getQuorumTreeEntries(
     quorumSnapshot: IQuorumSnapshot,
 ): ITreeEntry[] {
     const documentAttributes: IDocumentAttributes = {
-        branch: documentId,
         minimumSequenceNumber,
         sequenceNumber,
         term,

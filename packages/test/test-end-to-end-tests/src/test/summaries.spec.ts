@@ -6,17 +6,24 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+    ContainerRuntime,
+    Summarizer,
+    ISummarizer,
+    ISummarizeResults,
+    ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { channelsTreeName, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { createLoader, ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 const defaultDataStoreId = "default";
+let summarizer: ISummarizer;
 
 class TestDataObject extends DataObject {
     public static readonly dataObjectName = "TestDataObject";
@@ -25,9 +32,20 @@ class TestDataObject extends DataObject {
     public readonly getContext = () => this.context;
 }
 
+const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+const maxOps = 10;
+const testContainerConfig: ITestContainerConfig = {
+    runtimeOptions: {
+        summaryOptions: {
+            initialSummarizerDelayMs: 0,
+            summaryConfigOverrides: { maxOps },
+        },
+    },
+};
+
 async function createContainer(
     provider: ITestObjectProvider,
-    summaryOpt: Omit<ISummaryRuntimeOptions, "generateSummaries">,
+    summaryOpt: ISummaryRuntimeOptions,
 ): Promise<IContainer> {
     const factory = new DataObjectFactory(TestDataObject.dataObjectName, TestDataObject, [
         SharedMap.getFactory(),
@@ -37,8 +55,10 @@ async function createContainer(
     ], []);
 
     // Force generateSummaries to false.
-    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt };
-    summaryOptions.generateSummaries = false;
+    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt, disableSummaries: true };
+
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
 
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
@@ -47,11 +67,27 @@ async function createContainer(
             [TestDataObject.dataObjectName, Promise.resolve(factory)],
         ],
         undefined,
-        undefined,
+        [innerRequestHandler],
         { summaryOptions },
     );
 
     return provider.createContainer(runtimeFactory);
+}
+
+async function createSummarizer(provider: ITestObjectProvider): Promise<ISummarizer> {
+    const loader = createLoader(
+        [[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
+        provider.documentServiceFactory,
+        provider.urlResolver,
+    );
+
+    const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+    await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+    const absoluteUrl = await container.getAbsoluteUrl("");
+    if (absoluteUrl === undefined) {
+        throw new Error("URL could not be resolved");
+    }
+    return Summarizer.create(loader, absoluteUrl);
 }
 
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
@@ -64,6 +100,52 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
+    });
+
+    it("On demand summaries", async () => {
+        summarizer = await createSummarizer(provider);
+
+        let result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
+        let negResult: ISummarizeResults | undefined = summarizer.summarizeOnDemand({ reason: "negative test" });
+
+        let submitResult = await result.summarySubmitted;
+        assert(submitResult.success, "on-demand summary should submit");
+        assert(submitResult.data.stage === "submit",
+            "on-demand summary submitted data stage should be submit");
+        assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+        let broadcastResult = await result.summaryOpBroadcasted;
+        assert(broadcastResult.success, "summary op should be broadcast");
+
+        let ackNackResult = await result.receivedSummaryAckOrNack;
+        assert(ackNackResult.success, "summary op should be acked");
+
+        await flushPromises();
+
+        assert((await negResult.summarySubmitted).success === false, "Should fail to submit summary");
+
+        const seq: number = (summarizer as any).runtime.deltaManager.lastSequenceNumber;
+        result = summarizer.summarizeOnDemand({ reason: "test" });
+        try {
+            negResult = undefined;
+            negResult = summarizer.summarizeOnDemand({ reason: "negative test" });
+        } catch (reason) {}
+        assert(negResult === undefined, "Should not have attempted to summarize while summarizing");
+
+        submitResult = await result.summarySubmitted;
+        assert(submitResult.success, "Result should be complete on success");
+        assert(submitResult.data.referenceSequenceNumber === seq, "ref seq num");
+        assert(submitResult.data.stage === "submit", "Should have been submitted");
+        assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+        broadcastResult = await result.summaryOpBroadcasted;
+        assert(broadcastResult.success, "summary op should be broadcast");
+
+        assert(broadcastResult.data.summarizeOp.referenceSequenceNumber === seq,
+            "summarize op ref seq num should be same as summary seq");
+
+        ackNackResult = await result.receivedSummaryAckOrNack;
+        assert(ackNackResult.success, "summary op should be acked");
     });
 
     it("Should generate summary tree", async () => {
@@ -125,12 +207,38 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
 
+        let result: ISummarizeResults | undefined = summarizer.summarizeOnDemand({ reason: "test" });
+
+        const submitResult = await result.summarySubmitted;
+        assert(submitResult.success, "on-demand summary should submit");
+        assert(submitResult.data.stage === "submit",
+            "on-demand summary submitted data stage should be submit");
+
+        assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+        const broadcastResult = await result.summaryOpBroadcasted;
+        assert(broadcastResult.success, "summary op should be broadcast");
+
+        const ackNackResult = await result.receivedSummaryAckOrNack;
+        assert(ackNackResult.success, "summary should be acked");
+
         const { stats, summary } = await containerRuntime.summarize({
             runGC: false,
             fullTree: false,
             trackState: false,
             summaryLogger: new TelemetryNullLogger(),
         });
+
+        summarizer.stop("summarizerClientDisconnected");
+        await flushPromises();
+
+        try {
+            result = undefined;
+            result = summarizer.summarizeOnDemand({ reason: "test" });
+        } catch (error: any) {
+            assert(error.errorType === "summarizingError", "Should throw a summarizer error");
+        }
+        assert(result === undefined, "Should not have attempted summary with disposed summarizer");
 
         // Validate stats
         assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
@@ -141,9 +249,6 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         // Validate summary
         assert(!summary.unreferenced, "Root summary should be referenced.");
-
-        assert(summary.tree[".metadata"] === undefined, "Unexpected .metadata blob in summary root.");
-
         assert(summary.tree[channelsTreeName] === undefined, "Unexpected .channels tree in summary root.");
 
         const defaultDataStoreNode = summary.tree[defaultDataStoreId];

@@ -4,8 +4,9 @@
  */
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 const pkg = require("./package.json");
+const webpack = require("webpack");
 // var Visualizer = require('webpack-visualizer-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 // const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
@@ -17,6 +18,13 @@ module.exports = env => {
             entry: './src/index.ts',
             resolve: {
                 extensions: [".mjs", ".ts", ".tsx", ".js"],
+                fallback: {
+                    dgram: false,
+                    fs: false,
+                    net: false,
+                    tls: false,
+                    child_process: false,
+                }
             },
             devtool: 'source-map',
             mode: "production",
@@ -25,7 +33,7 @@ module.exports = env => {
                     {
                         test: /\.tsx?$/,
                         use: [{
-                            loader: 'ts-loader',
+                            loader: require.resolve("ts-loader"),
                             options: {
                                 compilerOptions: {
                                     module: "esnext"
@@ -36,7 +44,7 @@ module.exports = env => {
                     },
                     {
                         test: /\.js$/,
-                        use: ["source-map-loader"],
+                        use: [require.resolve("source-map-loader")],
                         enforce: "pre"
                     },
                     {
@@ -56,39 +64,18 @@ module.exports = env => {
                     },
                     {
                         test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                        loader: 'url-loader',
+                        loader: require.resolve('url-loader'),
                         options: {
                             limit: 10000
                         }
                     },
                     {
                         test: /\.html$/,
-                        loader: 'html-loader'
+                        loader: require.resolve('html-loader')
                     }
                 ]
             },
-            node: {
-                dgram: 'empty',
-                fs: 'empty',
-                net: 'empty',
-                tls: 'empty',
-                child_process: 'empty',
-            },
-            devServer: {
-                publicPath: '/dist',
-                stats: "minimal",
-                before: (app, server) => fluidRoute.before(app, server, env),
-                after: (app, server) => fluidRoute.after(app, server, __dirname, env),
-                watchOptions: {
-                    ignored: "**/node_modules/**",
-                }
-            },
-            resolveLoader: {
-                alias: {
-                    'blob-url-loader': require.resolve('./loaders/blobUrl'),
-                    'compile-loader': require.resolve('./loaders/compile'),
-                },
-            },
+            devServer: { devMiddleware: { stats: "minimal" }},
             output: {
                 filename: '[name].bundle.js',
                 chunkFilename: '[name].async.js',
@@ -102,9 +89,13 @@ module.exports = env => {
                 globalObject: 'self',
             },
             plugins: [
+                new webpack.ProvidePlugin({
+                    process: 'process/browser'
+                }),
                 // new MonacoWebpackPlugin()
                 // new BundleAnalyzerPlugin()
             ]
         },
-        isProduction ? require("./webpack.prod") : require("./webpack.dev"));
+        isProduction ? require("./webpack.prod") : require("./webpack.dev"),
+        fluidRoute.devServerConfig(__dirname, env));
 };

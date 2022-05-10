@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage, SummaryCollection } from "../summaryCollection";
 
 const summaryOp: ISummaryOpMessage = {
@@ -37,7 +38,7 @@ const summaryAck: ISummaryAckMessage = {
     type: MessageType.SummaryAck,
     contents: {
         handle: "AckHandle",
-        summaryProposal:{summarySequenceNumber: summaryOp.sequenceNumber},
+        summaryProposal: { summarySequenceNumber: summaryOp.sequenceNumber },
     },
 };
 
@@ -51,14 +52,14 @@ const summaryNack: ISummaryNackMessage = {
     timestamp: summaryOp.timestamp + 1,
     type: MessageType.SummaryNack,
     contents: {
-        errorMessage: "Nack",
-        summaryProposal:{summarySequenceNumber: summaryOp.sequenceNumber},
+        message: "Nack",
+        summaryProposal: { summarySequenceNumber: summaryOp.sequenceNumber },
     },
 };
 
 describe("Summary Collection", () => {
-    describe("latestAck",()=>{
-        it("Ack with op",()=>{
+    describe("latestAck", () => {
+        it("Ack with op", () => {
             const dm = new MockDeltaManager();
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.latestAck, undefined, "last ack undefined");
@@ -75,7 +76,7 @@ describe("Summary Collection", () => {
                 sc.latestAck);
         });
 
-        it("Ack without op",()=>{
+        it("Ack without op", () => {
             const dm = new MockDeltaManager();
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.latestAck, undefined, "last ack undefined");
@@ -83,7 +84,7 @@ describe("Summary Collection", () => {
             assert.strictEqual(sc.latestAck, undefined, "last ack undefined");
         });
 
-        it("Nack with op",()=>{
+        it("Nack with op", () => {
             const dm = new MockDeltaManager();
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.latestAck, undefined, "last ack undefined");
@@ -92,10 +93,10 @@ describe("Summary Collection", () => {
             assert.strictEqual(sc.latestAck, undefined, "last ack undefined");
         });
     });
-    describe("opsSinceLastAck",()=>{
-        it("Ack with op",()=>{
+    describe("opsSinceLastAck", () => {
+        it("Ack with op", () => {
             const dm = new MockDeltaManager();
-            dm.on("op", (op)=>{dm.lastSequenceNumber = op.sequenceNumber;});
+            dm.on("op", (op) => { dm.lastSequenceNumber = op.sequenceNumber; });
 
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.opsSinceLastAck, 0);
@@ -104,9 +105,9 @@ describe("Summary Collection", () => {
             dm.emit("op", summaryAck);
             assert.strictEqual(sc.opsSinceLastAck, 0);
         });
-        it("Nack with op",()=>{
+        it("Nack with op", () => {
             const dm = new MockDeltaManager();
-            dm.on("op", (op)=>{dm.lastSequenceNumber = op.sequenceNumber;});
+            dm.on("op", (op) => { dm.lastSequenceNumber = op.sequenceNumber; });
 
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.opsSinceLastAck, 0);
@@ -115,9 +116,9 @@ describe("Summary Collection", () => {
             dm.emit("op", summaryNack);
             assert.strictEqual(sc.opsSinceLastAck, summaryNack.sequenceNumber);
         });
-        it("Ack after Nack with op",()=>{
+        it("Ack after Nack with op", () => {
             const dm = new MockDeltaManager();
-            dm.on("op", (op)=>{dm.lastSequenceNumber = op.sequenceNumber;});
+            dm.on("op", (op) => { dm.lastSequenceNumber = op.sequenceNumber; });
 
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.opsSinceLastAck, 0);
@@ -128,7 +129,7 @@ describe("Summary Collection", () => {
         });
     });
 
-    describe("opActions",()=>{
+    describe("opActions", () => {
         interface ISummaryCollectionWithCounters {
             summaryCollection: SummaryCollection;
             callCounts: {
@@ -154,21 +155,21 @@ describe("Summary Collection", () => {
             summaryCollection.on(MessageType.SummaryNack, () => callCounts.summaryNack++);
             return { summaryCollection, callCounts };
         }
-        it("Summary op",()=>{
+        it("Summary op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryOp);
             assert.strictEqual(callCounts.summarize, 1);
         });
 
-        it("Summary Ack without op",()=>{
+        it("Summary Ack without op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryAck);
             assert.strictEqual(callCounts.summaryAck, 0);
         });
 
-        it("Summary Ack with op",()=>{
+        it("Summary Ack with op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryOp);
@@ -177,7 +178,7 @@ describe("Summary Collection", () => {
             assert.strictEqual(callCounts.summaryAck, 1);
         });
 
-        it("Double Summary Ack with op",()=>{
+        it("Double Summary Ack with op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryOp);
@@ -187,14 +188,14 @@ describe("Summary Collection", () => {
             assert.strictEqual(callCounts.summaryAck, 1);
         });
 
-        it("Summary Nack without op",()=>{
+        it("Summary Nack without op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryNack);
             assert.strictEqual(callCounts.summaryNack, 0);
         });
 
-        it("Summary Nack with op",()=>{
+        it("Summary Nack with op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryOp);
@@ -203,7 +204,7 @@ describe("Summary Collection", () => {
             assert.strictEqual(callCounts.summaryNack, 1);
         });
 
-        it("Double Summary Nack with op",()=>{
+        it("Double Summary Nack with op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryOp);
@@ -213,7 +214,7 @@ describe("Summary Collection", () => {
             assert.strictEqual(callCounts.summaryNack, 1);
         });
 
-        it("default",()=>{
+        it("default", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", {});
@@ -223,19 +224,19 @@ describe("Summary Collection", () => {
 });
 
 function deepMatchesExpected<T>(expected: T, actual: T, throwError = true): boolean {
-    if(typeof expected !== "object") {
-        if(expected === actual) {
+    if (typeof expected !== "object") {
+        if (expected === actual) {
             return true;
-        }else{
-            if(throwError) {
+        } else {
+            if (throwError) {
                 throw new Error(`Do not Match\n+ ${JSON.stringify(expected)}\n- ${JSON.stringify(actual)}`);
             }
             return false;
         }
     }
-    for(const key of Object.keys(expected)) {
-        if(!deepMatchesExpected(expected?.[key], actual?.[key], false)) {
-            if(throwError) {
+    for (const key of Object.keys(expected)) {
+        if (!deepMatchesExpected(expected?.[key], actual?.[key], false)) {
+            if (throwError) {
                 throw new Error(
                     `Do not Match: ${key}\n+ ${JSON.stringify(expected?.[key])}\n- ${JSON.stringify(actual?.[key])}`);
             }

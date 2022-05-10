@@ -323,5 +323,3 @@ And that's all that's needed to create or load Fluid documents. It's intended to
 set up as a host. And once done, you gain full access to the power of the Fluid platform.
 
 For an example demonstrating configuration and usage of the Fluid loader inside the Node.js environment, refer to the [node-host](../node-host/README.md) example.
-
-To explore further loader integration options into your code, refer to the [base-host](../../../packages/hosts/base-host/README.md) package.

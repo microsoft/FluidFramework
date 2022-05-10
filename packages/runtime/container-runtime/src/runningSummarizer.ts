@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
@@ -18,7 +19,6 @@ import {
     ISummarizeHeuristicData,
     ISummarizeHeuristicRunner,
     ISummarizerOptions,
-    OnDemandSummarizeResult,
     IOnDemandSummarizeOptions,
     EnqueueSummarizeResult,
     SummarizerStopReason,
@@ -26,6 +26,8 @@ import {
     SubmitSummaryResult,
     ISummaryCancellationToken,
     ISummarizeResults,
+    ISummarizeTelemetryProperties,
+    ISummarizeRunnerTelemetry,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -51,7 +53,7 @@ export class RunningSummarizer implements IDisposable {
         configuration: ISummaryConfiguration,
         submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
         heuristicData: ISummarizeHeuristicData,
-        raiseSummarizingError: (errorCode: string) => void,
+        raiseSummarizingError: (errorMessage: string) => void,
         summaryCollection: SummaryCollection,
         cancellationToken: ISummaryCancellationToken,
         stopSummarizerCallback: (reason: SummarizerStopReason) => void,
@@ -93,6 +95,7 @@ export class RunningSummarizer implements IDisposable {
         readonly resultsBuilder: SummarizeResultBuilder;
     } | undefined;
     private summarizeCount = 0;
+    private totalSuccessfulAttempts = 0;
 
     private constructor(
         baseLogger: ITelemetryLogger,
@@ -100,14 +103,23 @@ export class RunningSummarizer implements IDisposable {
         private readonly configuration: ISummaryConfiguration,
         private readonly submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
         private readonly heuristicData: ISummarizeHeuristicData,
-        private readonly raiseSummarizingError: (errorCode: string) => void,
+        private readonly raiseSummarizingError: (errorMessage: string) => void,
         private readonly summaryCollection: SummaryCollection,
         private readonly cancellationToken: ISummaryCancellationToken,
         private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
+        const telemetryProps: ISummarizeRunnerTelemetry = {
+            summarizeCount: () => this.summarizeCount,
+            summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
+        };
+
         this.logger = ChildLogger.create(
-            baseLogger, "Running", { all: { summaryGenTag: () => this.summarizeCount } });
+            baseLogger, "Running",
+            {
+                all: telemetryProps,
+            },
+        );
 
         if (!disableHeuristics) {
             this.heuristicRunner = new SummarizeHeuristicRunner(
@@ -123,14 +135,15 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer = new PromiseTimer(
             maxAckWaitTime,
             () => {
-                this.raiseSummarizingError("summaryAckWaitTimeout");
-                // Note: summaryGenTag (from ChildLogger definition) may be 0,
+                // pre-0.58 error message: summaryAckWaitTimeout
+                this.raiseSummarizingError("Pending summary ack not received in time");
+                // Note: summarizeCount (from ChildLogger definition) may be 0,
                 // since this code path is hit when RunningSummarizer first starts up,
                 // before this instance has kicked off a new summarize run.
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime,
-                    refSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
+                    referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
                     summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
                     timePending: Date.now() - this.heuristicData.lastAttempt.summaryTime,
                 });
@@ -140,7 +153,7 @@ export class RunningSummarizer implements IDisposable {
             if (this.pendingAckTimer.hasTimer) {
                 this.logger.sendTelemetryEvent({
                     eventName: "MissingSummaryAckFoundByOps",
-                    refSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
+                    referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
                     summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
                 });
                 this.pendingAckTimer.clear();
@@ -152,6 +165,7 @@ export class RunningSummarizer implements IDisposable {
             this.heuristicData,
             this.submitSummaryCallback,
             this.raiseSummarizingError,
+            () => { this.totalSuccessfulAttempts++; },
             this.summaryWatcher,
             this.logger,
         );
@@ -183,8 +197,7 @@ export class RunningSummarizer implements IDisposable {
         switch (op.type) {
             case MessageType.ClientLeave:
             case MessageType.ClientJoin:
-            case MessageType.Propose:
-            case MessageType.Reject: {
+            case MessageType.Propose: {
                 // Synchronously handle quorum ops like regular ops
                 this.handleOp(undefined, op);
                 return;
@@ -201,13 +214,8 @@ export class RunningSummarizer implements IDisposable {
         }
         this.heuristicData.lastOpSequenceNumber = sequenceNumber;
 
-        if (this.tryRunEnqueuedSummary()) {
-            // Intentionally do nothing; check for enqueued on-demand summaries
-        } else if (type === MessageType.Save) {
-            // Check for ops requesting summary
-            // Note: as const is only required until TypeScript version 4.3
-            this.trySummarize(`save;${clientId}: ${contents}` as const);
-        } else {
+        // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
+        if (!this.tryRunEnqueuedSummary()) {
             this.heuristicRunner?.run();
         }
     }
@@ -226,7 +234,7 @@ export class RunningSummarizer implements IDisposable {
             if (this.summarizingLock === undefined) {
                 this.trySummarizeOnce(
                     // summarizeProps
-                    { summarizeReason: "lastSummary" },
+                    { reason: "lastSummary" },
                     // ISummarizeOptions, using defaults: { refreshLatestAck: false, fullTree: false }
                     {});
             }
@@ -253,9 +261,10 @@ export class RunningSummarizer implements IDisposable {
         this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
         if (waitStartResult.result === "done" && waitStartResult.value !== undefined) {
-            this.heuristicData.initialize({
+            this.heuristicData.updateWithLastSummaryAckInfo({
                 refSequenceNumber: waitStartResult.value.summaryOp.referenceSequenceNumber,
-                summaryTime: waitStartResult.value.summaryOp.timestamp,
+                // This will be the Summarizer starting point so only use timestamps from client's machine.
+                summaryTime: Date.now(),
                 summarySequenceNumber: waitStartResult.value.summaryOp.sequenceNumber,
             });
         }
@@ -269,7 +278,7 @@ export class RunningSummarizer implements IDisposable {
      * @returns - result of action.
      */
     private async lockedSummaryAction<T>(action: () => Promise<T>) {
-        assert (this.summarizingLock === undefined, 0x25b /* "Caller is responsible for checking lock" */);
+        assert(this.summarizingLock === undefined, 0x25b /* "Caller is responsible for checking lock" */);
 
         const summarizingLock = new Deferred<void>();
         this.summarizingLock = summarizingLock.promise;
@@ -300,11 +309,10 @@ export class RunningSummarizer implements IDisposable {
      * @returns ISummarizeResult - result of running a summary.
      */
     private trySummarizeOnce(
-        summarizeProps: ITelemetryProperties,
+        summarizeProps: ISummarizeTelemetryProperties,
         options: ISummarizeOptions,
         cancellationToken = this.cancellationToken,
-        resultsBuilder = new SummarizeResultBuilder()): ISummarizeResults
-    {
+        resultsBuilder = new SummarizeResultBuilder()): ISummarizeResults {
         this.lockedSummaryAction(async () => {
             const summarizeResult = this.generator.summarize(
                 summarizeProps,
@@ -325,9 +333,8 @@ export class RunningSummarizer implements IDisposable {
 
     /** Heuristics summarize attempt. */
     private trySummarize(
-        summarizeReason: SummarizeReason,
-        cancellationToken = this.cancellationToken): void
-    {
+        reason: SummarizeReason,
+        cancellationToken = this.cancellationToken): void {
         if (this.summarizingLock !== undefined) {
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed
@@ -336,38 +343,42 @@ export class RunningSummarizer implements IDisposable {
         }
 
         this.lockedSummaryAction(async () => {
-            const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
+            const attempts: (ISummarizeOptions & { delaySeconds?: number; })[] = [
                 { refreshLatestAck: false, fullTree: false },
                 { refreshLatestAck: true, fullTree: false },
                 { refreshLatestAck: true, fullTree: false, delaySeconds: 2 * 60 },
                 { refreshLatestAck: true, fullTree: true, delaySeconds: 10 * 60 },
             ];
             let overrideDelaySeconds: number | undefined;
-            let totalAttempts = 0;
-            let attemptPerPhase = 0;
+            let summaryAttempts = 0;
+            let summaryAttemptsPerPhase = 0;
 
-            for (let attemptPhase = 0; attemptPhase < attempts.length;) {
+            let lastResult: { message: string; error: any; } | undefined;
+
+            for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length;) {
                 if (this.cancellationToken.cancelled) {
                     return;
                 }
 
-                totalAttempts++;
-                attemptPerPhase++;
+                summaryAttempts++;
+                summaryAttemptsPerPhase++;
 
-                const summarizeProps: ITelemetryProperties = {
-                    summarizeReason,
-                    summarizeTotalAttempts: totalAttempts,
-                    summarizeAttemptsPerPhase: attemptPerPhase,
-                    summarizeAttemptPhase: attemptPhase + 1, // make everything 1-based
+                const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[summaryAttemptPhase];
+                const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
+
+                const summarizeProps: ISummarizeTelemetryProperties = {
+                    reason,
+                    summaryAttempts,
+                    summaryAttemptsPerPhase,
+                    summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
+                    ...options,
                 };
 
-                const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
-                const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
                 if (delaySeconds > 0) {
                     this.logger.sendPerformanceEvent({
                         eventName: "SummarizeAttemptDelay",
                         duration: delaySeconds,
-                        reason: overrideDelaySeconds !== undefined ? "nack with retryAfter" : undefined,
+                        summaryNackDelay: overrideDelaySeconds !== undefined,
                         ...summarizeProps,
                     });
                     await delay(delaySeconds * 1000);
@@ -378,19 +389,25 @@ export class RunningSummarizer implements IDisposable {
                 const result = await resultSummarize.receivedSummaryAckOrNack;
 
                 if (result.success) {
-                    assert(result.data.summaryAckNackOp.type === MessageType.SummaryAck, 0x25c /* "not nack" */);
                     return;
                 }
                 // Check for retryDelay that can come from summaryNack or upload summary flow.
                 // Retry the same step only once per retryAfter response.
                 overrideDelaySeconds = result.retryAfterSeconds;
-                if (overrideDelaySeconds === undefined || attemptPerPhase > 1) {
-                    attemptPhase++;
-                    attemptPerPhase = 0;
+                if (overrideDelaySeconds === undefined || summaryAttemptsPerPhase > 1) {
+                    summaryAttemptPhase++;
+                    summaryAttemptsPerPhase = 0;
                 }
+                lastResult = result;
             }
-            // If all attempts failed, close the summarizer container
-            this.logger.sendErrorEvent({ eventName: "FailToSummarize", summarizeReason });
+
+            // If all attempts failed, log error (with last attempt info) and close the summarizer container
+            this.logger.sendErrorEvent({
+                eventName: "FailToSummarize",
+                reason,
+                message: lastResult?.message,
+            }, lastResult?.error);
+
             this.stopSummarizerCallback("failToSummarize");
         }).catch((error) => {
             this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
@@ -398,25 +415,27 @@ export class RunningSummarizer implements IDisposable {
     }
 
     /** {@inheritdoc (ISummarizer:interface).summarizeOnDemand} */
-    public summarizeOnDemand({
-        reason,
-        ...options
-    }: IOnDemandSummarizeOptions): OnDemandSummarizeResult {
+    public summarizeOnDemand(
+        resultsBuilder: SummarizeResultBuilder = new SummarizeResultBuilder(),
+        {
+            reason,
+            ...options
+        }: IOnDemandSummarizeOptions): ISummarizeResults {
         if (this.stopping) {
-            const failBuilder = new SummarizeResultBuilder();
-            failBuilder.fail("RunningSummarizer stopped or disposed", undefined);
-            return failBuilder.build();
+            resultsBuilder.fail("RunningSummarizer stopped or disposed", undefined);
+            return resultsBuilder.build();
         }
         // Check for concurrent summary attempts. If one is found,
         // return a promise that caller can await before trying again.
         if (this.summarizingLock !== undefined) {
             // The heuristics are blocking concurrent summarize attempts.
-            return { alreadyRunning: this.summarizingLock };
+            throw new UsageError("Attempted to run an already-running summarizer on demand");
         }
         const result = this.trySummarizeOnce(
-            { summarizeReason: `onDemand/${reason}` },
+            { reason: `onDemand/${reason}` },
             options,
-            this.cancellationToken);
+            this.cancellationToken,
+            resultsBuilder);
         return result;
     }
 
@@ -473,7 +492,7 @@ export class RunningSummarizer implements IDisposable {
         // Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
         this.enqueuedSummary = undefined;
         this.trySummarizeOnce(
-            { summarizeReason: `enqueuedSummary/${reason}` },
+            { reason: `enqueuedSummary/${reason}` },
             options,
             this.cancellationToken,
             resultsBuilder);

@@ -4,8 +4,8 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import type { OutgoingHttpHeaders } from "http";
 import * as querystring from "querystring";
+import type { AxiosRequestHeaders } from "axios";
 import * as git from "@fluidframework/gitresources";
 import {
     IGetRefParamsExternal,
@@ -16,11 +16,13 @@ import {
     BasicRestWrapper,
     RestWrapper,
     IWholeFlatSummary,
+    IWholeSummaryPayloadType,
 } from "@fluidframework/server-services-client";
-import { ITenantStorage } from "@fluidframework/server-services-core";
+import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
 
@@ -47,6 +49,7 @@ function endsWith(value: string, endings: string[]): boolean {
 
 export class RestGitService {
     private readonly restWrapper: RestWrapper;
+    private readonly lumberProperties: Record<BaseTelemetryProperties, any>;
 
     constructor(
         private readonly storage: ITenantStorage,
@@ -54,20 +57,52 @@ export class RestGitService {
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly cache?: ICache,
-        private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
-        const defaultHeaders: OutgoingHttpHeaders = {
-            "User-Agent": userAgent,
-            "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
-        };
+        private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
+        private readonly storageName?: string,
+        private readonly storageUrl?: string) {
+        let defaultHeaders: AxiosRequestHeaders;
+        if (storageName !== undefined) {
+            defaultHeaders = {
+                "User-Agent": userAgent,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+                "Storage-Name": this.storageName,
+            };
+        } else {
+            defaultHeaders = {
+                "User-Agent": userAgent,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+            };
+        }
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
         }
+        this.lumberProperties = {
+            [BaseTelemetryProperties.tenantId]: this.tenantId,
+            [BaseTelemetryProperties.documentId]: this.documentId,
+        };
 
-        winston.info(`base url: ${storage.url}, Storage-Routing-Id: ${this.getStorageRoutingHeaderValue()}`);
+        const baseUrl = this.storageUrl || storage.url;
+
+        winston.info(
+            `Created RestGitService: ${JSON.stringify({
+                "BaseUrl": baseUrl,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+                "Storage-Name": this.storageName,
+            })}`,
+        );
+
+        Lumberjack.info(
+            `Created RestGitService: ${JSON.stringify({
+                "BaseUrl": baseUrl,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+                "Storage-Name": this.storageName,
+            })}`,
+            this.lumberProperties,
+        );
 
         this.restWrapper = new BasicRestWrapper(
-            storage.url,
+            baseUrl,
             undefined,
             undefined,
             undefined,
@@ -94,6 +129,7 @@ export class RestGitService {
         // Fetch the full blob so we can have it in cache
         this.getBlob(createResults.sha, true).catch((error) => {
             winston.error(`Error fetching blob ${createResults.sha}`);
+            Lumberjack.error(`Error fetching blob: ${createResults.sha}`, this.lumberProperties);
         });
 
         return createResults;
@@ -138,10 +174,12 @@ export class RestGitService {
         // Also fetch the tree for the commit to have it in cache
         this.getTree(commit.tree.sha, true, true).catch((error) => {
             winston.error(`Error fetching commit tree ${commit.tree.sha}`);
+            Lumberjack.error(`Error fetching commit tree: ${commit.tree.sha}`, this.lumberProperties);
         });
         // ... as well as pull in the header for it
         this.getHeader(commit.sha, true).catch((error) => {
             winston.error(`Error fetching header ${commit.sha}`);
+            Lumberjack.error(`Error fetching header: ${commit.sha}`, this.lumberProperties);
         });
 
         return commit;
@@ -171,19 +209,45 @@ export class RestGitService {
     }
 
     public async createSummary(summaryParams: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
-        const summaryResponse = await this.post<IWriteSummaryResponse>(
+        const summaryResponse = await this.post<IWholeFlatSummary | IWriteSummaryResponse>(
             `/repos/${this.getRepoPath()}/git/summaries`,
              summaryParams);
+        if (summaryParams.type === "container" && (summaryResponse as IWholeFlatSummary).trees !== undefined) {
+            // Cache the written summary for future retrieval. If this fails, next summary retrieval
+            // will receive an older version, but that is OK. Client will catch up with ops.
+            this.setCache<IWholeFlatSummary>(
+                this.getSummaryCacheKey(summaryParams.type),
+                (summaryResponse as IWholeFlatSummary));
+        } else {
+            // Delete previous summary from cache so next summary retrieval is forced to go to the service.
+            this.deleteFromCache(this.getSummaryCacheKey(summaryParams.type));
+        }
+        return { id: summaryResponse.id };
+    }
 
-        return summaryResponse;
+    public async deleteSummary(softDelete: boolean): Promise<boolean> {
+        const headers = { "Soft-Delete": softDelete };
+
+        // First, delete any cached summary (including both types, "channel" and "container")
+        // from the Redis cache
+        this.deleteFromCache(this.getSummaryCacheKey("channel"));
+        this.deleteFromCache(this.getSummaryCacheKey("container"));
+
+        // Finally, delete from storage.
+        return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
     }
 
     public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
         return this.resolve(
-            `${sha}:summary`,
+            // Currently, only "container" type summaries are retrieved from storage.
+            // In the future, we might want to also retrieve "channels". When that happens,
+            // our APIs will change so we specify what type we want to retrieve during
+            // the request.
+            this.getSummaryCacheKey("container"),
             async () => this.get<IWholeFlatSummary>(
                 `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`),
-            useCache);
+            useCache,
+            true);
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
@@ -302,8 +366,7 @@ export class RestGitService {
             useCache);
     }
 
-    private getStorageRoutingHeaderValue()
-    {
+    private getStorageRoutingHeaderValue() {
         return `${this.tenantId}:${this.documentId}`;
     }
 
@@ -332,59 +395,105 @@ export class RestGitService {
 
     private async get<T>(url: string): Promise<T> {
         return this.restWrapper.get<T>(url)
-            .catch(getRequestErrorTranslator(url, "GET"));
+            .catch(getRequestErrorTranslator(url, "GET", this.lumberProperties));
     }
 
     private async post<T>(url: string, requestBody: any): Promise<T> {
         return this.restWrapper.post<T>(url, requestBody, undefined, {
             "Content-Type": "application/json",
-        }).catch(getRequestErrorTranslator(url, "POST"));
+        }).catch(getRequestErrorTranslator(url, "POST", this.lumberProperties));
     }
 
-    private async delete<T>(url: string): Promise<T> {
-        return this.restWrapper.delete<T>(url)
-            .catch(getRequestErrorTranslator(url, "DELETE"));
+    private async delete<T>(url: string, headers?: any): Promise<T> {
+        return this.restWrapper.delete<T>(url, undefined, headers)
+            .catch(getRequestErrorTranslator(url, "DELETE", this.lumberProperties));
     }
 
     private async patch<T>(url: string, requestBody: any): Promise<T> {
         return this.restWrapper.patch<T>(url, requestBody, undefined, {
             "Content-Type": "application/json",
-        }).catch(getRequestErrorTranslator(url, "PATCH"));
+        }).catch(getRequestErrorTranslator(url, "PATCH", this.lumberProperties));
     }
 
     /**
      * Caches the given key/value pair. Will log any errors with the cache.
      */
-    private setCache<T>(key: string, value: T) {
+    private setCache<T>(key: string, value: T): void {
         if (this.cache) {
             // Attempt to cache to Redis - log any errors but don't fail
-            this.cache.set(key, value).catch((error) => {
+            runWithRetry(
+                async () => this.cache.set(key, value),
+                "RestGitService.setCache",
+                3,
+                1000,
+                winston,
+            ).catch((error) => {
                 winston.error(`Error caching ${key} to redis`, error);
+                Lumberjack.error(`Error caching ${key} to redis`, this.lumberProperties, error);
             });
         }
     }
 
-    private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
+    /**
+     * Caches by the given key.
+     */
+    private async fetchAndCache<T>(key: string, fetch: () => Promise<T>): Promise<T> {
+        winston.info(`Fetching ${key}`);
+        Lumberjack.info(`Fetching ${key}`, this.lumberProperties);
+        const value = await fetch();
+        if (this.cache) {
+            this.setCache(key, value);
+        }
+        return value;
+    }
+
+    /**
+     * Deletes the given key from the cache. Will log any errors with the cache.
+     */
+    private deleteFromCache(key: string): void {
+        if (this.cache) {
+            // Attempt to delete the key from Redis - log any errors but don't fail
+            this.cache.delete(key).catch((error) => {
+                winston.error(`Error deleting key ${key} from Redis cache`, error);
+                Lumberjack.error(`Error deleting key ${key} from Redis cache`, this.lumberProperties, error);
+            });
+        }
+    }
+
+    private async resolve<T>(key: string,
+                             fetch: () => Promise<T>,
+                             useCache: boolean,
+                             resolvingSummary: boolean = false): Promise<T> {
         if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
                 winston.error(`Error fetching ${key} from cache`, error);
+                Lumberjack.error(`Error fetching ${key} from cache`, this.lumberProperties, error);
                 return undefined;
             });
 
             if (cachedValue) {
                 winston.info(`Resolving ${key} from cache`);
+                Lumberjack.info(`Resolving ${key} from cache`, this.lumberProperties);
                 return cachedValue;
             }
 
             // Value is not cached - fetch it with the provided function and then cache the value
-            winston.info(`Fetching ${key}`);
-            const value = await fetch();
-            this.setCache(key, value);
-
-            return value;
-        } else {
-            return fetch();
+            return this.fetchAndCache(key, fetch);
         }
+
+        if (resolvingSummary) {
+            /**
+             * We set the useCache flag as false when we fetch the summary at the first time. We need to
+             * get the summary from the storage, and update the cache. If not, the following calls with
+             * useCache enabled might read the outdated summary from cache in case of the cluster change.
+             */
+             return this.fetchAndCache(key, fetch);
+        }
+        return fetch();
+    }
+
+    private getSummaryCacheKey(type: IWholeSummaryPayloadType): string {
+        return `${this.tenantId}:${this.documentId}:summary:${type}`;
     }
 }

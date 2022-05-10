@@ -6,8 +6,14 @@
 import type * as kafkaTypes from "node-rdkafka";
 
 import { Deferred } from "@fluidframework/common-utils";
-import { IConsumer, IPartition, IPartitionWithEpoch, IQueuedMessage } from "@fluidframework/server-services-core";
-import { ZookeeperClient } from "@fluidframework/server-services-ordering-zookeeper";
+import {
+	IConsumer,
+	IPartition,
+	IPartitionWithEpoch,
+	IQueuedMessage,
+	IZookeeperClient,
+	ZookeeperClientConstructor,
+} from "@fluidframework/server-services-core";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
@@ -18,6 +24,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	automaticConsume: boolean;
 	maxConsumerCommitRetries: number;
 	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
+	zooKeeperClientConstructor?: ZookeeperClientConstructor;
 }
 
 /**
@@ -26,7 +33,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly consumerOptions: IKafkaConsumerOptions;
 	private consumer?: kafkaTypes.KafkaConsumer;
-	private zooKeeperClient?: ZookeeperClient;
+	private zooKeeperClient?: IZookeeperClient;
 	private closed = false;
 	private isRebalancing = true;
 	private assignedPartitions: Set<number> = new Set();
@@ -41,6 +48,15 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		public readonly groupId: string,
 		options?: Partial<IKafkaConsumerOptions>) {
 		super(endpoints, clientId, topic, options);
+
+		this.defaultRestartOnKafkaErrorCodes = [
+			this.kafka.CODES.ERRORS.ERR__TRANSPORT,
+			this.kafka.CODES.ERRORS.ERR__MSG_TIMED_OUT,
+			this.kafka.CODES.ERRORS.ERR__ALL_BROKERS_DOWN,
+			this.kafka.CODES.ERRORS.ERR__TIMED_OUT,
+			this.kafka.CODES.ERRORS.ERR__SSL,
+			this.kafka.CODES.ERRORS.ERR_COORDINATOR_LOAD_IN_PROGRESS,
+		];
 
 		this.consumerOptions = {
 			...options,
@@ -60,15 +76,22 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		return this.consumer?.isConnected() ? true : false;
 	}
 
+	/**
+	 * Returns the offset of the latest consumsed message
+	 */
+	public getLatestMessageOffset(partitionId: number): number | undefined {
+		return this.latestOffsets.get(partitionId);
+	}
+
 	protected connect() {
 		if (this.closed) {
 			return;
 		}
 
 		const zookeeperEndpoints = this.endpoints.zooKeeper;
-		if (zookeeperEndpoints && zookeeperEndpoints.length > 0) {
+		if (zookeeperEndpoints && zookeeperEndpoints.length > 0 && this.consumerOptions.zooKeeperClientConstructor) {
 			const zooKeeperEndpoint = zookeeperEndpoints[Math.floor(Math.random() % zookeeperEndpoints.length)];
-			this.zooKeeperClient = new ZookeeperClient(zooKeeperEndpoint);
+			this.zooKeeperClient = new this.consumerOptions.zooKeeperClientConstructor(zooKeeperEndpoint);
 		}
 
 		const options: kafkaTypes.ConsumerGlobalConfig = {
@@ -107,6 +130,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.emit("disconnected");
 		});
 
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		consumer.on("connection.failure", async (error) => {
 			await this.close(true);
 
@@ -161,6 +185,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			}
 		});
 
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		consumer.on("rebalance", async (err, topicPartitions) => {
 			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
 				err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
@@ -338,12 +363,29 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	 * Saves the latest offset for the partition and emits the data event with the message.
 	 * If we are in the middle of rebalancing and the message was sent for a partition we will own,
 	 * the message will be saved and processed after rebalancing is completed.
-	 * @param message The message
+	 * @param message - The message
 	 */
 	private processMessage(message: kafkaTypes.Message) {
 		const partition = message.partition;
 
-		if (this.isRebalancing && this.assignedPartitions.has(partition)) {
+		if (!this.assignedPartitions.has(partition)) {
+			/*
+				It is possible for node-rdkafka to send us messages for old partitions after a rebalance is processed.
+				I assume it's due to some librdkafka logic related incoming message queueing.
+				If we try to process this message:
+				1. The emit "data" event will cause "Received message for untracked partition" to be thrown.
+				2. A "latestOffset" will be set for this untracked partition.
+				#1 is fine.. but #2 is a huge problem.
+				If the consumer has a latestOffset for an unassigned partition and at some point later, is then
+				assigned that partition, the consumer will start processing messages from that offset.
+				This would result in a gap of missed messages!
+				It needs to start from the latest committed kafka offset in this case.
+			*/
+
+			return;
+		}
+
+		if (this.isRebalancing) {
 			/*
 				It is possible to receive messages while we have not yet finished rebalancing
 				due to how we wait for the fetchPartitionEpochs call to finish before emitting the rebalanced event.

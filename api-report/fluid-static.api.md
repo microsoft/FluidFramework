@@ -6,24 +6,20 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
-import { Container } from '@fluidframework/container-loader';
+import { ConnectionState } from '@fluidframework/container-definitions';
 import { DataObject } from '@fluidframework/aqueduct';
-import { DataObjectFactory } from '@fluidframework/aqueduct';
-import { EventEmitter } from 'events';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
-import { Jsonable } from '@fluidframework/datastore-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public (undocumented)
+// @public
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
@@ -39,71 +35,56 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
     constructor(schema: ContainerSchema);
     // (undocumented)
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
-    }
+}
 
-// @public (undocumented)
+// @public
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(container: Container, rootDataObject: RootDataObject, attachCallback: () => Promise<string>);
-    // (undocumented)
+    constructor(container: IContainer, rootDataObject: RootDataObject);
     attach(): Promise<string>;
-    // (undocumented)
     get attachState(): AttachState;
-    // (undocumented)
+    connect(): Promise<void>;
     get connected(): boolean;
-    // (undocumented)
+    get connectionState(): ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-    // (undocumented)
+    disconnect(): Promise<void>;
     dispose(): void;
-    // (undocumented)
     get disposed(): boolean;
-    // (undocumented)
-    get initialObjects(): Record<string, IFluidLoadable>;
-    }
+    get initialObjects(): LoadableObjectRecord;
+    get isDirty(): boolean;
+}
 
 // @public
 export interface IConnection {
-    // (undocumented)
     id: string;
-    // (undocumented)
     mode: "write" | "read";
 }
 
-// @public (undocumented)
+// @public
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
-    // (undocumented)
+    attach(): Promise<string>;
+    readonly attachState: AttachState;
+    connect?(): void;
+    // @deprecated
     readonly connected: boolean;
-    // (undocumented)
+    readonly connectionState: ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-    // (undocumented)
+    disconnect?(): void;
     dispose(): void;
-    // (undocumented)
     readonly disposed: boolean;
-    // (undocumented)
     readonly initialObjects: LoadableObjectRecord;
+    readonly isDirty: boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface IFluidContainerEvents extends IEvent {
     // (undocumented)
-    (event: "connected" | "dispose" | "disconnected", listener: () => void): void;
+    (event: "connected" | "dispose" | "disconnected" | "saved" | "dirty", listener: () => void): void;
 }
 
 // @public
 export interface IMember {
-    // (undocumented)
     connections: IConnection[];
-    // (undocumented)
     userId: string;
-}
-
-// @public
-export interface IRuntimeSignaler {
-    // (undocumented)
-    connected: boolean;
-    // (undocumented)
-    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
-    // (undocumented)
-    submitSignal(type: string, content: any): void;
 }
 
 // @public
@@ -121,29 +102,21 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 }
 
 // @public
-export interface ISignaler {
-    offBroadcastRequested(signalName: string, listener: SignalListener): ISignaler;
-    offSignal(signalName: string, listener: SignalListener | ((message: any) => void)): ISignaler;
-    onBroadcastRequested(signalName: string, listener: SignalListener): ISignaler;
-    onSignal(signalName: string, listener: SignalListener): ISignaler;
-    requestBroadcast(signalName: string, payload?: Jsonable): any;
-    submitSignal(signalName: string, payload?: Jsonable): any;
-}
-
-// @public
 export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
 
-// @public (undocumented)
+// @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
 // @public
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
-// @public (undocumented)
+// @public
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 // @public (undocumented)
-export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
+export class RootDataObject extends DataObject<{
+    InitialState: RootDataObjectProps;
+}> {
     // (undocumented)
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     // (undocumented)
@@ -152,7 +125,7 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
     protected initializingFirstTime(props: RootDataObjectProps): Promise<void>;
     // (undocumented)
     get initialObjects(): LoadableObjectRecord;
-    }
+}
 
 // @public (undocumented)
 export interface RootDataObjectProps {
@@ -160,13 +133,13 @@ export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
 
-// @public (undocumented)
+// @public
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
-    constructor(container: Container);
+    constructor(container: IContainer);
     // (undocumented)
     protected readonly audience: IAudience;
     // (undocumented)
-    protected readonly container: Container;
+    protected readonly container: IContainer;
     // (undocumented)
     protected abstract createServiceMember(audienceMember: IClient): M;
     getMembers(): Map<string, M>;
@@ -180,51 +153,6 @@ export abstract class ServiceAudience<M extends IMember = IMember> extends Typed
 export type SharedObjectClass<T extends IFluidLoadable> = {
     readonly getFactory: () => IChannelFactory;
 } & LoadableObjectCtor<T>;
-
-// @public
-export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignaler {
-    constructor(
-    signaler: IRuntimeSignaler,
-    managerId?: string);
-    // (undocumented)
-    offBroadcastRequested(signalName: string, listener: SignalListener): ISignaler;
-    // (undocumented)
-    offSignal(signalName: string, listener: SignalListener): ISignaler;
-    // (undocumented)
-    onBroadcastRequested(signalName: string, listener: SignalListener): ISignaler;
-    // (undocumented)
-    onSignal(signalName: string, listener: SignalListener): ISignaler;
-    // (undocumented)
-    requestBroadcast(signalName: string, payload?: Jsonable): void;
-    // (undocumented)
-    submitSignal(signalName: string, payload?: Jsonable): void;
-}
-
-// @public (undocumented)
-export type SignalListener = (clientId: string, local: boolean, payload: Jsonable) => void;
-
-// @public
-export class SignalManager extends DataObject<{}, undefined, IErrorEvent> implements EventEmitter, ISignaler {
-    // (undocumented)
-    static readonly factory: DataObjectFactory<SignalManager, undefined, undefined, IErrorEvent>;
-    // (undocumented)
-    protected hasInitialized(): Promise<void>;
-    // (undocumented)
-    static get Name(): string;
-    // (undocumented)
-    offBroadcastRequested(signalName: string, listener: SignalListener): ISignaler;
-    // (undocumented)
-    offSignal(signalName: string, listener: SignalListener): ISignaler;
-    // (undocumented)
-    onBroadcastRequested(signalName: string, listener: SignalListener): ISignaler;
-    // (undocumented)
-    onSignal(signalName: string, listener: SignalListener): ISignaler;
-    // (undocumented)
-    requestBroadcast(signalName: string, payload?: Jsonable): void;
-    // (undocumented)
-    submitSignal(signalName: string, payload?: Jsonable): void;
-}
-
 
 // (No @packageDocumentation comment for this package)
 

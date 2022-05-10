@@ -5,8 +5,7 @@
 
 import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
-    IFluidObject,
-    IFluidConfiguration,
+    FluidObject,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -14,24 +13,40 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientConfiguration,
     IClientDetails,
-    IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITree,
     MessageType,
     ISummaryTree,
     IVersion,
     IDocumentMessage,
+    IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
-import { ICriticalContainerError, ContainerWarning } from "./error";
+import { ICriticalContainerError } from "./error";
 import { ILoader, ILoaderOptions } from "./loader";
+import { IFluidCodeDetails } from "./fluidPackage";
 
-// Represents the attachment state of the entity.
+/**
+ * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
+ * service.  The transition from detached to attached state is a one-way transition.
+ */
 export enum AttachState {
+    /**
+     * In detached state, the data is only present on the local client's machine.  It has not yet been uploaded
+     * to the service.
+     */
     Detached = "Detached",
+
+    /**
+     * In attaching state, the data has started the upload to the service, but has not yet completed.
+     */
     Attaching = "Attaching",
+
+    /**
+     * In attached state, the data has completed upload to the service.  It can be accessed by other clients after
+     * reaching attached state.
+     */
     Attached = "Attached",
 }
 
@@ -52,11 +67,6 @@ export interface IRuntime extends IDisposable {
      * Executes a request against the runtime
      */
     request(request: IRequest): Promise<IResponse>;
-
-    /**
-     * Snapshots the runtime
-     */
-    snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
 
     /**
      * Notifies the runtime of a change in the connection state
@@ -103,10 +113,8 @@ export interface IRuntime extends IDisposable {
  * and the Container has created a new ContainerContext.
  */
 export interface IContainerContext extends IDisposable {
-    readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
-    readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly storage: IDocumentStorageService;
@@ -116,27 +124,26 @@ export interface IContainerContext extends IDisposable {
     readonly submitSignalFn: (contents: any) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly quorum: IQuorum;
+    readonly quorum: IQuorumClients;
+    /**
+     * @deprecated This method is provided as a migration tool for customers currently reading the code details
+     * from within the Container by directly accessing the Quorum proposals.  The code details should not be accessed
+     * from within the Container as this requires coupling between the container contents and the code loader.
+     * Direct access to Quorum proposals will be removed in an upcoming release, and in a further future release this
+     * migration tool will be removed.
+     */
+    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
-    /** @deprecated - Use `taggedLogger` if present. Otherwise, be sure to handle tagged data
-     * before sending events to this logger. In time we will assume the presence of `taggedLogger`,
-     * but in the meantime, current and older loader versions buttress loggers that do not support tags.
-     * IContainerContext will retain both options, but hosts must now support tags as the loader
-     * will soon plumb taggedLogger's events (potentially tagged) to the host's logger.
-     */
-    readonly logger: ITelemetryBaseLogger;
     // The logger implementation, which would support tagged events, should be provided by the loader.
-    readonly taggedLogger?: ITelemetryBaseLogger;
+    readonly taggedLogger: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     pendingLocalState?: unknown;
 
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject;
-
-    raiseContainerWarning(warning: ContainerWarning): void;
+    readonly scope: FluidObject;
 
     /**
      * Get an absolute url for a provided container-relative request.

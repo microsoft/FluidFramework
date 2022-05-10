@@ -2,16 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { assert } from "@fluidframework/common-utils";
-import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
-import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
+import { IRequest } from "@fluidframework/core-interfaces";
+import {
+    DriverErrorType,
+    DriverHeader,
+    IContainerPackageInfo,
+    IResolvedUrl,
+    IUrlResolver,
+} from "@fluidframework/driver-definitions";
+import { IOdspResolvedUrl, ShareLinkTypes, ShareLinkInfoType } from "@fluidframework/odsp-driver-definitions";
+import { NonRetryableError } from "@fluidframework/driver-utils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { getOdspResolvedUrl } from "./odspUtils";
 import { getHashedDocumentId } from "./odspPublicUtils";
+import { ClpCompliantAppHeader } from "./contractsPublic";
+import { pkgVersion } from "./packageVersion";
 
 function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
     const siteOrigin = new URL(siteUrl).origin;
@@ -67,8 +74,20 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             const driveID = searchParams.get("driveId");
             const filePath = searchParams.get("path");
             const packageName = searchParams.get("containerPackageName");
+            const createLinkType = searchParams.get("createLinkType");
             if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
-                throw new Error("Proper new file params should be there!!");
+                throw new NonRetryableError(
+                    "Proper new file params should be there!!",
+                    DriverErrorType.genericError,
+                    { driverVersion: pkgVersion });
+            }
+            let shareLinkInfo: ShareLinkInfoType | undefined;
+            if (createLinkType && createLinkType in ShareLinkTypes) {
+                shareLinkInfo = {
+                    createLink: {
+                        type: ShareLinkTypes[createLinkType],
+                    },
+                };
             }
             return {
                 endpoints: {
@@ -92,6 +111,8 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     containerPackageName: packageName ? packageName : undefined,
                 },
                 fileVersion: undefined,
+                shareLinkInfo,
+                isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
             };
         }
         const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
@@ -133,40 +154,41 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 containerPackageName,
             },
             fileVersion,
+            isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
         };
     }
 
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        codeDetails?: IFluidCodeDetails,
+        packageInfoSource?: IContainerPackageInfo,
     ): Promise<string> {
         let dataStorePath = relativeUrl;
         if (dataStorePath.startsWith("/")) {
             dataStorePath = dataStorePath.substr(1);
         }
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-        const containerPackageName =
-            isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
-            odspResolvedUrl.codeHint?.containerPackageName;
+        // back-compat: GitHub #9653
+        const isFluidPackage = (pkg: any) =>
+            typeof pkg === "object"
+            && typeof pkg?.name === "string"
+            && typeof pkg?.fluid === "object";
+        let containerPackageName;
+        if (packageInfoSource && "name" in packageInfoSource) {
+            containerPackageName = packageInfoSource.name;
+            // packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
+        } else if (isFluidPackage((packageInfoSource as any)?.package)) {
+            containerPackageName = (packageInfoSource as any)?.package.name;
+        } else {
+            containerPackageName = (packageInfoSource as any)?.package;
+        }
+        containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
         return createOdspUrl({
             ... odspResolvedUrl,
             containerPackageName,
             dataStorePath,
         });
-    }
-
-    /**
-     * @deprecated - use createOdspCreateContainerRequest
-     */
-    public createCreateNewRequest(
-        siteUrl: string,
-        driveId: string,
-        filePath: string,
-        fileName: string,
-    ): IRequest {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 }
 

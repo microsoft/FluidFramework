@@ -4,11 +4,11 @@
 
 ```ts
 
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { RequestParser } from '@fluidframework/runtime-utils';
@@ -17,20 +17,17 @@ import { RequestParser } from '@fluidframework/runtime-utils';
 export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]): (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public (undocumented)
-export const createFluidObjectResponse: (fluidObject: IFluidObject) => {
-    status: number;
-    mimeType: string;
-    value: IFluidObject;
+export const createFluidObjectResponse: (fluidObject: FluidObject) => {
+    status: 200;
+    mimeType: "fluid/object";
+    value: FluidObject;
 };
 
 // @public (undocumented)
-export function handleFromLegacyUri<T = IFluidObject & IFluidLoadable>(uri: string, runtime: IContainerRuntimeBase): IFluidHandle<T>;
-
-// @public @deprecated (undocumented)
-export const innerRequestHandler: (request: IRequest, runtime: IContainerRuntimeBase) => Promise<IResponse>;
+export function handleFromLegacyUri<T = FluidObject & IFluidLoadable>(uri: string, runtime: IContainerRuntimeBase): IFluidHandle<T>;
 
 // @public
-export const rootDataStoreRequestHandler: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+export const rootDataStoreRequestHandler: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
 // @public
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse | undefined>;

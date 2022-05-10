@@ -4,14 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import {
-    IFluidObject,
-    IFluidConfiguration,
-    IRequest,
-    IResponse,
-    IFluidCodeDetails,
-    IFluidCodeDetailsComparer,
-} from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import {
     IAudience,
     IContainerContext,
@@ -19,44 +12,52 @@ import {
     ILoader,
     IRuntime,
     ICriticalContainerError,
-    ContainerWarning,
     AttachState,
     ILoaderOptions,
     IRuntimeFactory,
-    ICodeLoader,
+    IProvideRuntimeFactory,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
+    IProvideFluidCodeDetailsComparer,
+    ICodeDetailsLoader,
+    IFluidModuleWithDetails,
+    IFluidModule,
 } from "@fluidframework/container-definitions";
+import {
+    IRequest,
+    IResponse,
+    FluidObject,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { isFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
     IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
-    ITree,
-    MessageType,
     ISummaryTree,
     IVersion,
+    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
-import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
-        scope: IFluidObject,
-        codeLoader: ICodeDetailsLoader | ICodeLoader,
+        scope: FluidObject,
+        codeLoader: ICodeDetailsLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        raiseContainerWarning: (warning: ContainerWarning) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         closeFn: (error?: ICriticalContainerError) => void,
@@ -74,7 +75,6 @@ export class ContainerContext implements IContainerContext {
             deltaManager,
             quorum,
             loader,
-            raiseContainerWarning,
             submitFn,
             submitSignalFn,
             closeFn,
@@ -88,21 +88,17 @@ export class ContainerContext implements IContainerContext {
 
     public readonly taggedLogger: ITelemetryLogger;
 
-    /**
-     * Subtlety: returns this.taggedLogger since vanilla this.logger is now deprecated. See IContainerContext for more
-     * details.
-    */
-    /** @deprecated See IContainerContext for more details. */
-    public get logger(): ITelemetryLogger {
-        return this.taggedLogger;
-    }
-
-    public get id(): string {
-        return this.container.id;
-    }
-
     public get clientId(): string | undefined {
         return this.container.clientId;
+    }
+
+    /** @deprecated Added back to unblock 0.56 integration */
+    public get id(): string {
+        const resolvedUrl = this.container.resolvedUrl;
+        if (isFluidResolvedUrl(resolvedUrl)) {
+            return resolvedUrl.id;
+        }
+        return "";
     }
 
     public get clientDetails(): IClientDetails {
@@ -129,13 +125,6 @@ export class ContainerContext implements IContainerContext {
         return this.container.options;
     }
 
-    public get configuration(): IFluidConfiguration {
-        const config: Partial<IFluidConfiguration> = {
-            scopes: this.container.scopes,
-        };
-        return config as IFluidConfiguration;
-    }
-
     public get baseSnapshot() {
         return this._baseSnapshot;
     }
@@ -160,18 +149,20 @@ export class ContainerContext implements IContainerContext {
 
     public get codeDetails() { return this._codeDetails; }
 
+    private readonly _quorum: IQuorum;
+    public get quorum(): IQuorumClients { return this._quorum; }
+
     private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IFluidObject,
-        private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
+        public readonly scope: FluidObject,
+        private readonly codeLoader: ICodeDetailsLoader,
         private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        public readonly quorum: IQuorum,
+        quorum: IQuorum,
         public readonly loader: ILoader,
-        public readonly raiseContainerWarning: (warning: ContainerWarning) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
@@ -181,11 +172,21 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
+        this._quorum = quorum;
         this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
             async () => this.loadCodeModule(_codeDetails),
         );
         this.attachListener();
+    }
+
+    /**
+     * @deprecated - Temporary migratory API, to be removed when customers no longer need it.  When removed,
+     * ContainerContext should only take an IQuorumClients rather than an IQuorum.  See IContainerContext for more
+     * details.
+     */
+    public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
+        return (this._quorum.get("code") ?? this._quorum.get("code2")) as IFluidCodeDetails | undefined;
     }
 
     public dispose(error?: Error): void {
@@ -195,12 +196,8 @@ export class ContainerContext implements IContainerContext {
         this._disposed = true;
 
         this.runtime.dispose(error);
-        this.quorum.dispose();
+        this._quorum.dispose();
         this.deltaManager.dispose();
-    }
-
-    public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
-        return this.runtime.snapshot(tagMessage, fullTree);
     }
 
     public getLoadedFromVersion(): IVersion | undefined {
@@ -263,7 +260,8 @@ export class ContainerContext implements IContainerContext {
         }
 
         const moduleWithDetails = await this._fluidModuleP;
-        const maybeCompareExport = moduleWithDetails.module?.fluidExport;
+        const maybeCompareExport: Partial<IProvideFluidCodeDetailsComparer> | undefined =
+            moduleWithDetails.module?.fluidExport;
         if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
         }
@@ -296,7 +294,9 @@ export class ContainerContext implements IContainerContext {
     // #region private
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
-        const runtimeFactory = (await this._fluidModuleP).module?.fluidExport?.IRuntimeFactory;
+        const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
+            (await this._fluidModuleP).module?.fluidExport;
+        const runtimeFactory = fluidExport?.IRuntimeFactory;
         if (runtimeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
         }
@@ -315,8 +315,12 @@ export class ContainerContext implements IContainerContext {
         });
     }
 
-    private async loadCodeModule(codeDetails: IFluidCodeDetails) {
-        const loadCodeResult = await PerformanceEvent.timedExecAsync(
+    private async loadCodeModule(codeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
+        // load may actually produce a IFluidModule if using a legacy ICodeLoader.
+        // Because the type system currently does not capture this in load,
+        // explicitly declare the type here to support both cases.
+        // See also comment about this below.
+        const loadCodeResult: IFluidModuleWithDetails | IFluidModule = await PerformanceEvent.timedExecAsync(
             this.taggedLogger,
             { eventName: "CodeLoad" },
             async () => this.codeLoader.load(codeDetails),
@@ -329,6 +333,9 @@ export class ContainerContext implements IContainerContext {
                 details: details ?? codeDetails,
             };
         } else {
+            // If "module" is not in the result, we are using a legacy ICodeLoader.  Fix the result up with details.
+            // Once usage drops to 0 we can remove this compat path.
+            this.taggedLogger.sendTelemetryEvent({ eventName: "LegacyCodeLoader" });
             return { module: loadCodeResult, details: codeDetails };
         }
     }

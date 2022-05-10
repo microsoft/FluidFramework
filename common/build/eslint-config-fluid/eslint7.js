@@ -3,38 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/**
- * This ESLint config is intended for use with ESLint v7 and compatible plugins. It's here so we can easily test the v7
- * config against our packages without upgrading the dependencies here in the common package.
- *
- * Once we have a PR with all the needed updates, we can switch the default export of this package to be this v7 config
- * and remove the old configs.
- *
- * Packages using the v7 config must use these dependency versions:
- *
-
-  "dependencies": {
-    "@typescript-eslint/eslint-plugin": "~4.8.1",
-    "@typescript-eslint/parser": "~4.8.1",
-    "eslint-plugin-eslint-comments": "~3.2.0",
-    "eslint-plugin-import": "~2.22.1",
-    "eslint-plugin-no-null": "~1.0.2",
-    "eslint-plugin-optimize-regex": "~1.2.0",
-    "eslint-plugin-prefer-arrow": "~1.2.2",
-    "eslint-plugin-react": "~7.21.5",
-    "eslint-plugin-unicorn": "~23.0.0"
-  },
-  "devDependencies": {
-    "eslint": "~7.9.0"
-  },
-  "peerDependencies": {
-    "eslint": ">=7.0.0"
-  }
-*/
-
-// This is a workaround for https://github.com/eslint/eslint/issues/3458
-require("@rushstack/eslint-patch/modern-module-resolution");
-
 module.exports = {
     "env": {
         "browser": true,
@@ -44,7 +12,6 @@ module.exports = {
     "extends": [
         "eslint:recommended",
         "plugin:eslint-comments/recommended",
-        "plugin:react/recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
@@ -66,11 +33,6 @@ module.exports = {
         "project": "./tsconfig.json"
     },
     "plugins": [
-        "@typescript-eslint",
-        "no-null",
-        // "optimize-regex",
-        "prefer-arrow",
-        "react",
         "unicorn",
     ],
     "reportUnusedDisableDirectives": true,
@@ -83,51 +45,9 @@ module.exports = {
         "@typescript-eslint/await-thenable": "error",
         "@typescript-eslint/ban-types": "error",
         "@typescript-eslint/brace-style": "off",
-        // [
-        //     "error",
-        //     "1tbs",
-        //     {
-        //         "allowSingleLine": true
-        //     }
-        // ],
-        // TODO - investigate turning this on once we have correct settings
-        // "@typescript-eslint/naming-convention": [
-        //     "error",
-        //     {
-        //         "selector": "default",
-        //         "format": ["camelCase"]
-        //     },
-        //     {
-        //         "selector": "variable",
-        //         "format": ["camelCase"]
-        //     },
-        //     {
-        //         "selector": "parameter",
-        //         "format": ["camelCase"],
-        //         "leadingUnderscore": "allow"
-        //     },
-        //     {
-        //         "selector": "memberLike",
-        //         "modifiers": ["private"],
-        //         "format": ["camelCase"]
-        //     },
-        //     {
-        //         "selector": "typeLike",
-        //         "format": ["PascalCase"]
-        //     }
-        // ],
         "@typescript-eslint/comma-dangle": [
             "error",
-            {
-                "arrays": "always-multiline",
-                "enums": "always-multiline",
-                "exports": "always-multiline",
-                "functions": "always-multiline",
-                "generics": "never",
-                "imports": "always-multiline",
-                "objects": "always-multiline",
-                "tuples": "always-multiline",
-            }
+            "always-multiline",
         ],
         "@typescript-eslint/comma-spacing": "off",
         "@typescript-eslint/consistent-type-assertions": [
@@ -232,7 +152,7 @@ module.exports = {
         "import/no-extraneous-dependencies": [
             "error",
             {
-                "devDependencies": ["**/*.spec.ts", "src/test/**.ts"]
+                "devDependencies": ["**/*.spec.ts", "src/test/**"]
             }
         ],
         "import/no-internal-modules": "error",
@@ -245,19 +165,6 @@ module.exports = {
         ],
         "import/no-unused-modules": "error",
         "import/order": "error",
-
-        // eslint-plugin-no-null
-        "no-null/no-null": "error",
-
-        // eslint-plugin-prefer-arrow
-        "prefer-arrow/prefer-arrow-functions": [
-            "error",
-            {
-                "disallowPrototype": false,
-                "singleReturnOnly": true,
-                "classPropertiesAllowed": false
-            }
-        ],
 
         // eslint-plugin-unicorn
         "unicorn/better-regex": "error",
@@ -383,6 +290,7 @@ module.exports = {
                 "next": "return"
             }
         ],
+        "prefer-arrow-callback": "error",
         "prefer-const": "error",
         "prefer-object-spread": "error",
         "prefer-promise-reject-errors": "error",
@@ -427,6 +335,7 @@ module.exports = {
 
                 // TODO: Enable these ASAP
                 "@typescript-eslint/explicit-module-boundary-types": "off",
+                "@typescript-eslint/no-unsafe-argument": "off",
                 "@typescript-eslint/no-unsafe-assignment": "off",
                 "@typescript-eslint/no-unsafe-call": "off",
                 "@typescript-eslint/no-unsafe-member-access": "off",

@@ -23,14 +23,14 @@ export class AppInsightsTestLogger implements ITelemetryBufferedLogger {
 
         // Get username from provided in env var.
         if (process.env.login__odsp__test__accounts !== undefined) {
-            const passwords: { [user: string]: string } = JSON.parse(process.env.login__odsp__test__accounts);
+            const passwords: { [user: string]: string; } = JSON.parse(process.env.login__odsp__test__accounts);
             const users = Object.keys(passwords);
             const username = users[0];
             this.telemetryClient.commonProperties.envUserName = username;
         }
     }
 
-    async flush(runInfo?: { url: string, runId?: number }): Promise<void> {
+    async flush(runInfo?: { url: string; runId?: number; }): Promise<void> {
         // await until data is posted to the server.
         await new Promise<void>((resolve) => {
             this.telemetryClient.flush({
@@ -41,13 +41,24 @@ export class AppInsightsTestLogger implements ITelemetryBufferedLogger {
 
     send(event: ITelemetryBaseEvent): void {
         event.Event_Time = Date.now();
-        this.telemetryClient.trackEvent({
-            name: event.eventName,
-            tagOverrides: {
-                category: event.category,
-            },
-            properties: event,
-        });
+        if (event.category === "metric") {
+            this.telemetryClient.trackMetric({
+                name: event.eventName,
+                value: event.value as number,
+                tagOverrides: {
+                    category: event.category,
+                },
+                properties: event,
+            });
+        } else {
+            this.telemetryClient.trackEvent({
+                name: event.eventName,
+                tagOverrides: {
+                    category: event.category,
+                },
+                properties: event,
+            });
+        }
     }
 }
 

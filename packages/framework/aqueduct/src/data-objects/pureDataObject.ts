@@ -3,48 +3,37 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent } from "@fluidframework/common-definitions";
+import { assert, EventForwarder } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
     IFluidHandle,
     IFluidLoadable,
     IFluidRouter,
     IProvideFluidHandle,
     IRequest,
     IResponse,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
-import { AsyncFluidObjectProvider, FluidObjectKey } from "@fluidframework/synthesize";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDirectory } from "@fluidframework/map";
-import { assert, EventForwarder } from "@fluidframework/common-utils";
-import { IEvent } from "@fluidframework/common-definitions";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { serviceRoutePathRoot } from "../container-services";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-export interface IDataObjectProps<O = object, S = undefined> {
-    readonly runtime: IFluidDataStoreRuntime;
-    readonly context: IFluidDataStoreContext;
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
-    readonly initProps?: S;
-}
+import { DataObjectTypes, IDataObjectProps } from "./types";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this data store directly unless
  * you are creating another base data store class
  *
- * @typeParam O - represents a type that will define optional providers that will be injected
- * @typeParam S - the initial state type that the produced data object may take during creation
- * @typeParam E - represents events that will be available in the EventForwarder
+ * @typeParam I - The optional input types used to strongly type the data object
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export abstract class PureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
-    extends EventForwarder<E>
-    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IFluidObject {
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
+    extends EventForwarder<I["Events"] & IEvent>
+    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
     private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
 
@@ -59,16 +48,15 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     protected readonly context: IFluidDataStoreContext;
 
     /**
-     * Providers are IFluidObject keyed objects that provide back
-     * a promise to the corresponding IFluidObject or undefined.
+     * Providers are FluidObject keyed objects that provide back
+     * a promise to the corresponding FluidObject or undefined.
      * Providers injected/provided by the Container and/or HostingApplication
      *
-     * To define providers set IFluidObject interfaces in the generic O type for your data store
+     * To define providers set FluidObject interfaces in the OptionalProviders generic type for your data store
      */
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<object>>;
+    protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
 
-    protected initProps?: S;
+    protected initProps?: I["InitialState"];
 
     protected initializeP: Promise<void> | undefined;
 
@@ -91,7 +79,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
         return obj;
     }
 
-    public constructor(props: IDataObjectProps<O, S>) {
+    public constructor(props: IDataObjectProps<I>) {
         super();
         this.runtime = props.runtime;
         this.context = props.context;
@@ -160,53 +148,38 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
                 0x0be /* "Trying to initialize from existing while initProps is set!" */);
             await this.initializingFromExisting();
         } else {
-            await this.initializingFirstTime(this.context.createProps as S ?? this.initProps);
+            await this.initializingFirstTime(
+                this.context.createProps as I["InitialState"] ?? this.initProps);
         }
         await this.hasInitialized();
     }
 
     /**
-     * Retreive Fluid object using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
+     * Retrieve Fluid object using the handle get
      *
      * @param key - key that object (handle/id) is stored with in the directory
      * @param directory - directory containing the object
      * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
      * define custom types/getters for object retrieval
      */
-    public async getFluidObjectFromDirectory<T extends IFluidObject & IFluidLoadable>(
+    public async getFluidObjectFromDirectory<T extends IFluidLoadable>(
         key: string,
         directory: IDirectory,
-        getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined):
+        getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined):
         Promise<T | undefined> {
-        const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
-        if (typeof handleOrId === "string") {
-            // For backwards compatibility with older stored IDs
-            // We update the storage with the handle so that this code path is less and less trafficked
-            const fluidObject = await this.requestFluidObject_UNSAFE<T>(handleOrId);
-            if (fluidObject.IFluidLoadable && fluidObject.handle) {
-                directory.set(key, fluidObject.handle);
-            }
-            return fluidObject;
-        } else {
-            const handle = handleOrId?.IFluidHandle;
-            return await (handle ? handle.get() : this.requestFluidObject_UNSAFE(key)) as T;
+        const handleMaybe = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
+        const handle = handleMaybe?.IFluidHandle;
+        if (handle) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return handle.get();
         }
-    }
-
-    /**
-     * @deprecated
-     * Gets the data store of a given id. Will follow the pattern of the container for waiting.
-     * @param id - data store id
-     */
-    protected async requestFluidObject_UNSAFE<T extends IFluidObject>(id: string): Promise<T> {
-        return handleFromLegacyUri<T>(`/${id}`, this.context.containerRuntime).get();
     }
 
     /**
      * Gets the service at a given id.
      * @param id - service id
      */
-    protected async getService<T extends IFluidObject>(id: string): Promise<T> {
+    protected async getService<T extends FluidObject>(id: string): Promise<T> {
         return handleFromLegacyUri<T>(`/${serviceRoutePathRoot}/${id}`, this.context.containerRuntime).get();
     }
 
@@ -222,7 +195,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
      *
      * @param props - Optional props to be passed in on create
      */
-    protected async initializingFirstTime(props?: S): Promise<void> { }
+    protected async initializingFirstTime(props?: I["InitialState"]): Promise<void> { }
 
     /**
      * Called every time but the first time the data store is initialized (creations

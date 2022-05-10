@@ -4,11 +4,13 @@
  */
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { PerformanceEvent} from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
 import { waitForConnectedState, logNetworkFailure } from "./networkUtils";
+// For now, this package is versioned and released in unison with the specific drivers
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 const MaxFetchDelayInMs = 10000;
 const MissingFetchDelayInMs = 100;
@@ -50,9 +52,8 @@ export class ParallelRequests<T> {
             from: number,
             to: number,
             strongTo: boolean,
-            props: ITelemetryProperties) => Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
-        private readonly responseCallback: (payload: T[]) => void)
-    {
+            props: ITelemetryProperties) => Promise<{ partial: boolean; cancel: boolean; payload: T[]; }>,
+        private readonly responseCallback: (payload: T[]) => void) {
         this.latestRequested = from;
         this.nextToDeliver = from;
         this.knewTo = (to !== undefined);
@@ -146,7 +147,7 @@ export class ParallelRequests<T> {
 
         assert(from < this.latestRequested, 0x109 /* "unexpected next chunk position" */);
 
-        return { from, to: this.latestRequested};
+        return { from, to: this.latestRequested };
     }
 
     private addRequest() {
@@ -360,14 +361,14 @@ async function getSingleOpBatch(
     props: ITelemetryProperties,
     strongTo: boolean,
     logger: ITelemetryLogger,
-    signal?: AbortSignal):
-        Promise<{ partial: boolean, cancel: boolean, payload: ISequencedDocumentMessage[] }>
-{
+    signal?: AbortSignal,
+    fetchReason?: string):
+        Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[]; }> {
     let lastSuccessTime: number | undefined;
 
     let retry: number = 0;
     const deltas: ISequencedDocumentMessage[] = [];
-    const nothing = { partial: false, cancel: true, payload: []};
+    const nothing = { partial: false, cancel: true, payload: [] };
 
     while (signal?.aborted !== true) {
         retry++;
@@ -384,7 +385,7 @@ async function getSingleOpBatch(
             const deltasRetrievedLast = messages.length;
 
             if (deltasRetrievedLast !== 0 || !strongTo) {
-                return { payload: deltas, cancel: false, partial: partialResult};
+                return { payload: deltas, cancel: false, partial: partialResult };
             }
 
             // Storage does not have ops we need.
@@ -399,11 +400,12 @@ async function getSingleOpBatch(
                 // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
                 // current as it can't get ops.
                 throw createGenericNetworkError(
-                    "Failed to retrieve ops from storage: too many retries",
-                    false /* canRetry */,
-                    undefined /* retryAfterSeconds */,
+                    // pre-0.58 error message: failedToRetrieveOpsFromStorage:TooManyRetries
+                    "Failed to retrieve ops from storage (Too Many Retries)",
+                    { canRetry: false },
                     {
                         retry,
+                        driverVersion,
                         ...props,
                     },
                 );
@@ -415,6 +417,7 @@ async function getSingleOpBatch(
 
             const retryAfter = getRetryDelayFromError(error);
 
+            // This will log to error table only if the error is non-retryable
             logNetworkFailure(
                 logger,
                 {
@@ -423,6 +426,7 @@ async function getSingleOpBatch(
                     retry,
                     duration: performance.now() - startTime,
                     retryAfter,
+                    fetchReason,
                 },
                 error);
 
@@ -450,6 +454,7 @@ export function requestOps(
     payloadSize: number,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
+    fetchReason?: string,
 ): IStream<ISequencedDocumentMessage[]> {
     let requests = 0;
     let lastFetch: number | undefined;
@@ -464,6 +469,7 @@ export function requestOps(
     const telemetryEvent = PerformanceEvent.start(logger, {
         eventName: "GetDeltas",
         ...propsTotal,
+        fetchReason,
     });
 
     const manager = new ParallelRequests<ISequencedDocumentMessage>(
@@ -479,10 +485,19 @@ export function requestOps(
                 strongTo,
                 logger,
                 signal,
+                fetchReason,
             );
         },
         (deltas: ISequencedDocumentMessage[]) => {
+            // Assert continuing and right start.
+            if (lastFetch === undefined) {
+                assert(deltas[0].sequenceNumber === fromTotal, 0x26d /* "wrong start" */);
+            } else {
+                assert(deltas[0].sequenceNumber === lastFetch + 1, 0x26e /* "wrong start" */);
+            }
             lastFetch = deltas[deltas.length - 1].sequenceNumber;
+            assert(lastFetch - deltas[0].sequenceNumber + 1 === deltas.length,
+                0x26f /* "continuous and no duplicates" */);
             length += deltas.length;
             queue.pushValue(deltas);
         });
@@ -510,6 +525,8 @@ export function requestOps(
             if (manager.canceled) {
                 telemetryEvent.cancel({ ...props, error: "ops request cancelled by client" });
             } else {
+                assert(toTotal === undefined || lastFetch !== undefined && lastFetch >= toTotal - 1,
+                    0x270 /* "All requested ops fetched" */);
                 telemetryEvent.end(props);
             }
             queue.pushDone();
@@ -527,12 +544,11 @@ export function requestOps(
 }
 
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
-    read: async () => { return { done: true };},
+    read: async () => { return { done: true }; },
 };
 
 export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>):
-    IStream<ISequencedDocumentMessage[]>
-{
+    IStream<ISequencedDocumentMessage[]> {
     let messages: Promise<ISequencedDocumentMessage[]> | undefined = messagesArg;
     return {
         read: async () => {
@@ -546,7 +562,6 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
     };
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T> {
     return {
         read: async () => {

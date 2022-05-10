@@ -4,3 +4,4 @@
  */
 
 export * from "./fluid-object";
+export * from "./view";

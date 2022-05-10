@@ -7,6 +7,8 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
     ICache,
     IClientManager,
+    ICollection,
+    IDocument,
     IDocumentStorage,
     IOrdererManager,
     IProducer,
@@ -21,6 +23,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
 
@@ -41,9 +44,10 @@ export class AlfredRunner implements IRunner {
         private readonly storage: IDocumentStorage,
         private readonly clientManager: IClientManager,
         private readonly appTenants: IAlfredTenant[],
-        private readonly mongoManager: MongoManager,
+        private readonly operationsDbMongoManager: MongoManager,
         private readonly producer: IProducer,
-        private readonly metricClientConfig: any) {
+        private readonly metricClientConfig: any,
+        private readonly documentsCollection: ICollection<IDocument>) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -58,8 +62,9 @@ export class AlfredRunner implements IRunner {
             this.singleUseTokenCache,
             this.storage,
             this.appTenants,
-            this.mongoManager,
-            this.producer);
+            this.operationsDbMongoManager,
+            this.producer,
+            this.documentsCollection);
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);
@@ -140,5 +145,6 @@ export class AlfredRunner implements IRunner {
             ? `pipe ${addr}`
             : `port ${addr.port}`;
         winston.info(`Listening on ${bind}`);
+        Lumberjack.info(`Listening on ${bind}`);
     }
 }

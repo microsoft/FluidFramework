@@ -5,10 +5,8 @@
 
  /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import {
-    IFluidSerializer,
-    IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
@@ -22,7 +20,7 @@ export type JsonSegmentSpecs = IJSONSegment | IJSONSegmentWithMergeInfo;
 
 export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     version: undefined;
-    chunkStartSegmentIndex: number,
+    chunkStartSegmentIndex: number;
     chunkSegmentCount: number;
     chunkLengthChars: number;
     totalLengthChars?: number;
@@ -34,19 +32,19 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
 }
 
 export interface MergeTreeHeaderChunkMetadata {
-    id: string,
+    id: string;
 }
 
 export interface MergeTreeHeaderMetadata {
-    totalLength: number,
-    totalSegmentCount: number,
-    orderedChunkMetadata: MergeTreeHeaderChunkMetadata[],
-    sequenceNumber: number,
-    minSequenceNumber: number,
+    totalLength: number;
+    totalSegmentCount: number;
+    orderedChunkMetadata: MergeTreeHeaderChunkMetadata[];
+    sequenceNumber: number;
+    minSequenceNumber: number;
 }
 
 export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk {
-    version: "1",
+    version: "1";
     startIndex: number;
     segmentCount: number;
     length: number;
@@ -64,7 +62,11 @@ export interface IJSONSegmentWithMergeInfo {
     json: IJSONSegment;
     client?: string;
     seq?: number;
+    /**
+     * @deprecated - use removedClientIds instead. this only exists for back-compat
+     */
     removedClient?: string;
+    removedClientIds?: string[];
     removedSeq?: number;
 }
 
@@ -96,7 +98,7 @@ export function serializeAsMinSupportedVersion(
     switch (chunk.version) {
         case undefined:
             targetChuck = chunk as MergeTreeChunkLegacy;
-            targetChuck.headerMetadata = buildHeaderMetadataForLegecyChunk(path, targetChuck, options);
+            targetChuck.headerMetadata = buildHeaderMetadataForLegacyChunk(path, targetChuck, options);
             break;
 
         case "1":
@@ -145,7 +147,7 @@ export function toLatestVersion(
                 version: "1",
                 length: chunkLegacy.chunkLengthChars,
                 segmentCount: chunkLegacy.chunkSegmentCount,
-                headerMetadata: buildHeaderMetadataForLegecyChunk(path, chunkLegacy, options),
+                headerMetadata: buildHeaderMetadataForLegacyChunk(path, chunkLegacy, options),
                 segments: chunkLegacy.segmentTexts,
                 startIndex: chunkLegacy.chunkStartSegmentIndex,
             };
@@ -158,7 +160,7 @@ export function toLatestVersion(
     }
 }
 
-function buildHeaderMetadataForLegecyChunk(
+function buildHeaderMetadataForLegacyChunk(
     path: string, chunk: MergeTreeChunkLegacy, options: PropertySet | undefined): MergeTreeHeaderMetadata | undefined {
     if (path === SnapshotLegacy.header) {
         if (chunk.headerMetadata !== undefined) {

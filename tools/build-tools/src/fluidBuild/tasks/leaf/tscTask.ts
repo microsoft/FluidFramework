@@ -15,7 +15,8 @@ const isEqual = require("lodash.isequal");
 
 interface ITsBuildInfo {
     program: {
-        fileInfos: { [key: string]: { version: string, signature: string } },
+        fileNames: string[],
+        fileInfos: (string | { version: string, affectsGlobalScope: true })[],
         semanticDiagnosticsPerFile?: any[],
         options: any
     }
@@ -31,7 +32,7 @@ export class TscTask extends LeafTask {
     private _tsConfig: ts.ParsedCommandLine | undefined;
     private _tsConfigFullPath: string | undefined;
     private _projectReference: TscTask | undefined;
-    private _sourceStats: fs.Stats[] | undefined;
+    private _sourceStats: (fs.Stats | fs.BigIntStats)[] | undefined;
 
     public matchTask(command: string, options?: TscTaskMatchOptions): LeafTask | undefined {
         if (!options?.tsConfig) { return super.matchTask(command); }
@@ -42,6 +43,10 @@ export class TscTask extends LeafTask {
     }
 
     protected addDependentTasks(dependentTasks: LeafTask[]) {
+        if (this.addChildTask(dependentTasks, this.node, "npm run build:gen")) {
+            this.logVerboseDependency(this.node, "build:gen");
+        }
+
         if (this.addChildTask(dependentTasks, this.node, "npm run build:genver")) {
             this.logVerboseDependency(this.node, "build:genver");
         }
@@ -100,23 +105,27 @@ export class TscTask extends LeafTask {
             return false;
         }
         // Check dependencies file hashes
+        const fileNames = tsBuildInfo.program.fileNames;
         const fileInfos = tsBuildInfo.program.fileInfos;
-        for (const key of Object.keys(fileInfos)) {
+        for (let i = 0; i < fileNames.length; i++) {
+            const fileName = fileNames[i];
             try {
                 // Resolve relative path based on the directory of the tsBuildInfo file
-                let fullPath = path.resolve(tsBuildInfoFileDirectory, key);
+                let fullPath = path.resolve(tsBuildInfoFileDirectory, fileName);
 
                 // If we have project reference, see if this is in reference to one of the file, and map it to the d.ts file instead
                 if (this._projectReference) {
                     fullPath = this._projectReference.remapSrcDeclFile(fullPath);
                 }
                 const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
-                if (hash !== fileInfos[key].version) {
-                    this.logVerboseTrigger(`version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`);
+                const fileInfo = fileInfos[i];
+                const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
+                if (hash !== version) {
+                    this.logVerboseTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
                     return false;
                 }
-            } catch (e) {
-                this.logVerboseTrigger(`exception generating hash for ${key}`);
+            } catch (e: any) {
+                this.logVerboseTrigger(`exception generating hash for ${fileName}`);
                 logVerbose(e.stack);
                 return false;
             }
@@ -129,7 +138,7 @@ export class TscTask extends LeafTask {
     private remapSrcDeclFile(fullPath: string) {
         if (!this._sourceStats) {
             const config = this.readTsConfig();
-            this._sourceStats = config ? config.fileNames.map(fs.lstatSync) : [];
+            this._sourceStats = config ? config.fileNames.map(v => fs.lstatSync(v)) : [];
         }
 
         const parsed = path.parse(fullPath);
@@ -151,8 +160,8 @@ export class TscTask extends LeafTask {
         if (!configFileFullPath) { assert.fail(); };
 
         // Patch relative path based on the file directory where the config comes from
-        const configOptions =
-            TscUtils.convertToOptionsWithAbsolutePath(options.options, path.dirname(configFileFullPath));
+        const configOptions = TscUtils.filterIncrementalOptions(
+            TscUtils.convertToOptionsWithAbsolutePath(options.options, path.dirname(configFileFullPath)));
         const tsBuildInfoOptions =
             TscUtils.convertToOptionsWithAbsolutePath(tsBuildInfo.program.options, tsBuildInfoFileDirectory);
 
@@ -297,10 +306,10 @@ export class TscTask extends LeafTask {
             if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
                 try {
                     const tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
-                    if (tsBuildInfo.program) {
+                    if (tsBuildInfo.program && tsBuildInfo.program.fileNames) {
                         this._tsBuildInfo = tsBuildInfo;
                     } else {
-                        logVerbose(`${this.node.pkg.nameColored}: Missing program property ${tsBuildInfoFileFullPath}`);
+                        logVerbose(`${this.node.pkg.nameColored}: Missing program or fileNames property ${tsBuildInfoFileFullPath}`);
                     }
                 } catch {
                     logVerbose(`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`);

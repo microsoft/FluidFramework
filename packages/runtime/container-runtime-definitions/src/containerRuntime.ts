@@ -6,55 +6,63 @@
 import { IEventProvider } from "@fluidframework/common-definitions";
 import {
     AttachState,
-    ContainerWarning,
     IDeltaManager,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     IRequest,
     IResponse,
-    IFluidObject,
     IFluidRouter,
-    IFluidCodeDetails,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
-    IPendingProposal,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IDataStore,
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
- } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntime>> { }
+/**
+ * @deprecated - This will be removed once https://github.com/microsoft/FluidFramework/issues/9127 is fixed.
+ */
+export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
+    fluidDataStoreChannel?: { bindToContext?(): void; };
 }
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
 
+/**
+ * @deprecated - This will be removed in a later release.
+ */
 export interface IProvideContainerRuntime {
+    /**
+     * @deprecated - This will be removed in a later release.
+     */
     IContainerRuntime: IContainerRuntime;
 }
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
-        event: "dirtyDocument" | "dirty" | "disconnected" | "dispose" | "savedDocument" | "saved" | "attached",
+        event: "dirty" | "disconnected" | "dispose" | "saved" | "attached",
         listener: () => void);
     (event: "connected", listener: (clientId: string) => void);
     (event: "localHelp", listener: (message: IHelpMessage) => void);
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents =
-    IContainerRuntimeBase &  IEventProvider<IContainerRuntimeEvents>;
+    IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
 /*
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -63,7 +71,7 @@ export interface IContainerRuntime extends
     IProvideContainerRuntime,
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
-    readonly id: string;
+
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
@@ -71,7 +79,7 @@ export interface IContainerRuntime extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly flushMode: FlushMode;
-    readonly scope: IFluidObject;
+    readonly scope: FluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */
@@ -103,16 +111,6 @@ export interface IContainerRuntime extends
      * @param rootDataStoreId - data store ID (unique name)
      */
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
-
-    /**
-     * Used to raise an unrecoverable error on the runtime.
-     */
-    raiseContainerWarning(warning: ContainerWarning): void;
-
-    /**
-     * @deprecated - Please use isDirty()
-     */
-    isDocumentDirty(): boolean;
 
     /**
      * Returns true of document is dirty, i.e. there are some pending local changes that

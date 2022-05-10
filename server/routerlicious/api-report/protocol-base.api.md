@@ -11,7 +11,11 @@ import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateTreeEntry } from '@fluidframework/gitresources';
 import { IProcessMessageResult } from '@fluidframework/protocol-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
+import { IQuorumClientsEvents } from '@fluidframework/protocol-definitions';
 import { IQuorumEvents } from '@fluidframework/protocol-definitions';
+import { IQuorumProposals } from '@fluidframework/protocol-definitions';
+import { IQuorumProposalsEvents } from '@fluidframework/protocol-definitions';
 import { ISequencedClient } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
@@ -42,7 +46,7 @@ export class AttachmentTreeEntry {
 
 // @public
 export class BlobTreeEntry {
-    constructor(path: string, contents: string, encoding?: string);
+    constructor(path: string, contents: string, encoding?: "utf-8" | "base64");
     // (undocumented)
     readonly mode = FileMode.File;
     // (undocumented)
@@ -56,19 +60,6 @@ export class BlobTreeEntry {
 // @public
 export function buildHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
 
-// @public
-export class CommitTreeEntry {
-    constructor(path: string, value: string);
-    // (undocumented)
-    readonly mode = FileMode.Commit;
-    // (undocumented)
-    readonly path: string;
-    // (undocumented)
-    readonly type = TreeEntry.Commit;
-    // (undocumented)
-    readonly value: string;
-}
-
 // @public (undocumented)
 export function generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[];
 
@@ -81,14 +72,14 @@ export function getGitType(value: SummaryObject): "blob" | "tree";
 // @public (undocumented)
 export function getQuorumTreeEntries(documentId: string, minimumSequenceNumber: number, sequenceNumber: number, term: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
 
-// @public (undocumented)
+// @public
 export interface IQuorumSnapshot {
     // (undocumented)
-    members: [string, ISequencedClient][];
+    members: QuorumClientsSnapshot;
     // (undocumented)
-    proposals: [number, ISequencedProposal, string[]][];
+    proposals: QuorumProposalsSnapshot["proposals"];
     // (undocumented)
-    values: [string, ICommittedProposal][];
+    values: QuorumProposalsSnapshot["values"];
 }
 
 // @public (undocumented)
@@ -116,7 +107,7 @@ export function mergeAppAndProtocolTree(appSummaryTree: ITree_2, protocolTree: I
 
 // @public
 export class ProtocolOpHandler {
-    constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number, sendReject: (sequenceNumber: number) => void);
+    constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
     // (undocumented)
     close(): void;
     getProtocolState(): IScribeProtocolState;
@@ -134,7 +125,7 @@ export class ProtocolOpHandler {
 
 // @public
 export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
-    constructor(members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number, sendReject: (sequenceNumber: number) => void);
+    constructor(members: QuorumClientsSnapshot, proposals: QuorumProposalsSnapshot["proposals"], values: QuorumProposalsSnapshot["values"], sendProposal: (key: string, value: any) => number);
     addMember(clientId: string, details: ISequencedClient): void;
     addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
     // (undocumented)
@@ -144,21 +135,60 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     // (undocumented)
     get disposed(): boolean;
     get(key: string): any;
+    // @deprecated
     getApprovalData(key: string): ICommittedProposal | undefined;
     getMember(clientId: string): ISequencedClient | undefined;
     getMembers(): Map<string, ISequencedClient>;
     has(key: string): boolean;
     propose(key: string, value: any): Promise<void>;
-    rejectProposal(clientId: string, sequenceNumber: number): void;
     removeMember(clientId: string): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     snapshot(): IQuorumSnapshot;
-    snapshotMembers(): IQuorumSnapshot["members"];
-    snapshotProposals(): IQuorumSnapshot["proposals"];
-    snapshotValues(): IQuorumSnapshot["values"];
-    updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
-    }
+    updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void;
+}
+
+// @public
+export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> implements IQuorumClients {
+    constructor(snapshot: QuorumClientsSnapshot);
+    addMember(clientId: string, details: ISequencedClient): void;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
+    getMember(clientId: string): ISequencedClient | undefined;
+    getMembers(): Map<string, ISequencedClient>;
+    removeMember(clientId: string): void;
+    snapshot(): QuorumClientsSnapshot;
+}
+
+// @public
+export type QuorumClientsSnapshot = [string, ISequencedClient][];
+
+// @public
+export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> implements IQuorumProposals {
+    constructor(snapshot: QuorumProposalsSnapshot, sendProposal: (key: string, value: any) => number);
+    addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
+    get(key: string): any;
+    // @deprecated
+    getApprovalData(key: string): ICommittedProposal | undefined;
+    has(key: string): boolean;
+    propose(key: string, value: any): Promise<void>;
+    // (undocumented)
+    setConnectionState(connected: boolean): void;
+    snapshot(): QuorumProposalsSnapshot;
+    updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void;
+}
+
+// @public
+export type QuorumProposalsSnapshot = {
+    proposals: [number, ISequencedProposal, string[]][];
+    values: [string, ICommittedProposal][];
+};
 
 // @public
 export class TreeTreeEntry {
@@ -172,7 +202,6 @@ export class TreeTreeEntry {
     // (undocumented)
     readonly value: ITree;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

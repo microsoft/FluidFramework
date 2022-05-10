@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import Button, { ButtonProps } from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { makeStyles } from '@material-ui/core/styles';
-import React, { useEffect, useState } from 'react';
+import Button, { ButtonProps } from "@material-ui/core/Button";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import { makeStyles } from "@material-ui/core/styles";
+import React, { useEffect, useState } from "react";
 
 const useStyles = makeStyles({
   buttonProgress: {
-    position: 'absolute',
+    position: "absolute",
   },
   wrapper: {
-    alignItems: 'center',
-    display: 'inline-flex',
-    justifyContent: 'center',
-    position: 'relative',
+    alignItems: "center",
+    display: "inline-flex",
+    justifyContent: "center",
+    position: "relative",
   },
-}, { name: 'LoadingButton' });
+}, { name: "LoadingButton" });
 
 interface ILoadingButtonProps extends ButtonProps {
   onClick: () => Promise<any>;
@@ -30,7 +30,7 @@ interface ILoadingButtonState {
 }
 
 const LoadingButton: React.FunctionComponent<ILoadingButtonProps> =
-  ({children, disabled, forwardedRef, onClick, ...restProps}) => {
+  ({ children, disabled, forwardedRef, onClick, ...restProps }) => {
   let isMounted: boolean;
   const classes = useStyles();
 

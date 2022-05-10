@@ -69,7 +69,7 @@ export const IDocumentServiceFactoryProxyKey = "IDocumentServiceFactoryProxy";
  */
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
     private _clients: {
-        [clientId: string]: ICombinedDriver,
+        [clientId: string]: ICombinedDriver;
     } = {};
 
     public get clients() { return Comlink.proxy(this._clients); }
@@ -85,7 +85,11 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const resolvedUrl = await resolvedUrlFn();
         const outerProxyLogger = ChildLogger.create(undefined, "OuterProxyIFrameDriver");
         const connectedDocumentService: IDocumentService =
-            await this.documentServiceFactory.createDocumentService(resolvedUrl, outerProxyLogger);
+            await this.documentServiceFactory.createDocumentService(
+                resolvedUrl,
+                outerProxyLogger,
+                false, // clientIsSummarizer
+            );
 
         return this.getDocumentServiceProxy(connectedDocumentService, resolvedUrl, outerProxyLogger);
     }
@@ -197,7 +201,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
 
     private getOuterDocumentDeltaConnection(deltaStream: IDocumentDeltaConnection) {
         // We'll buffer the events that we observe on the IDocumentDeltaConnection until the handshake completes
-        const bufferedEvents: { type: string, args: any[] }[] = [];
+        const bufferedEvents: { type: string; args: any[]; }[] = [];
         // we downcast here to remove typing, which make generically
         // forwarding all events easier
         const deltaStreamEventProvider = deltaStream as IEventProvider<IEvent>;
@@ -223,7 +227,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             get initialClients() { return deltaStream.initialClients; },
             get initialMessages() { return deltaStream.initialMessages; },
             get initialSignals() { return deltaStream.initialSignals; },
-            maxMessageSize: deltaStream.maxMessageSize,
+            maxMessageSize: deltaStream.serviceConfiguration.maxMessageSize,
             mode: deltaStream.mode,
             serviceConfiguration: deltaStream.serviceConfiguration,
             version: deltaStream.version,
@@ -243,7 +247,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const handshake = new Deferred<any>();
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         handshake.promise
-            .then((innerProxy: { forwardEvent(event: string, args: any[]): Promise<void> }) => {
+            .then((innerProxy: { forwardEvent(event: string, args: any[]): Promise<void>; }) => {
                 for (const op of bufferedEvents) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     innerProxy.forwardEvent(op.type, op.args);

@@ -11,11 +11,11 @@ import { IGCResult } from "./interfaces";
  * @param referenceGraph - The reference graph to run GC on. It's a list of nodes where each node has an id and set of
  * routes to other nodes in the graph.
  * @param rootIds - The ids of root nodes that are considered referenced.
- * @param logger - Used to log telelmetry.
+ * @param logger - Used to log telemetry.
  * @returns the ids of referenced nodes and the ids of deleted nodes in the referenced graph.
  */
 export function runGarbageCollection(
-    referenceGraph: { [ id: string]: string[] },
+    referenceGraph: { [id: string]: string[]; },
     rootIds: string[],
     logger: ITelemetryLogger,
 ): IGCResult {
@@ -24,7 +24,7 @@ export function runGarbageCollection(
 
     // This tracks the ids of referenced nodes. The nodes corresponding to rootIds are always considered
     // referenced so we start with those.
-    const referencedIds: string[] = [ ...rootIds ];
+    const referencedIds: string[] = [...rootIds];
     for (const id of referencedIds) {
         // If we have already seen this node, ignore and continue. Else, add it to visited list.
         if (visited.has(id)) {
@@ -41,7 +41,7 @@ export function runGarbageCollection(
             // Log a telemetry event if there is a node missing for a referenced id. This should not happen but for now
             // we don't assert. We can monitor telemetry for a while to figure out next steps.
 
-            /**
+            /*
              * This telemetry is currently too noisy. Start sending it GC is enabled end-to-end. See here for details -
              * https://github.com/microsoft/FluidFramework/issues/4939
              *

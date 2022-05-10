@@ -17,7 +17,6 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         // RATIONALE: 'undefined' is not preserved by JSON.stringify().
-        // eslint-disable-next-line no-null/no-null
         super(id, runtime, attributes, /* initialValue: */ null);
     }
 

@@ -10,17 +10,17 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IMatrixConsumer } from '@tiny-calc/nano';
 import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
 import { IMatrixWriter } from '@tiny-calc/nano';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+import { SummarySerializer } from '@fluidframework/shared-object-base';
 
 // @public (undocumented)
 export interface IRevertible {
@@ -43,7 +43,7 @@ export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 export class SharedMatrix<T = any> extends SharedObject implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(): void;
+    protected applyStashedOp(content: any): unknown;
     // (undocumented)
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void;
     // (undocumented)
@@ -56,7 +56,6 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     getCell(row: number, col: number): MatrixItem<T>;
     // (undocumented)
     static getFactory(): SharedMatrixFactory;
-    protected getGCDataCore(): IGarbageCollectionData;
     // (undocumented)
     id: string;
     // (undocumented)
@@ -76,8 +75,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     openUndo(consumer: IUndoConsumer): void;
     // (undocumented)
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
-    protected registerCore(): void;
+    protected processGCDataCore(serializer: SummarySerializer): void;
     // (undocumented)
     removeCols(colStart: number, count: number): void;
     // (undocumented)
@@ -91,9 +89,9 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     // (undocumented)
     setCells(rowStart: number, colStart: number, colCount: number, values: readonly (MatrixItem<T>)[]): void;
     // (undocumented)
-    protected snapshotCore(serializer: IFluidSerializer): ITree;
-    // (undocumented)
     protected submitLocalMessage(message: any, localOpMetadata?: any): void;
+    // (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     // (undocumented)
     toString(): string;
     // @internal (undocumented)
@@ -117,7 +115,6 @@ export class SharedMatrixFactory implements IChannelFactory {
     // (undocumented)
     get type(): string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

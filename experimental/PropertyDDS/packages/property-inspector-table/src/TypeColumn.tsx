@@ -3,49 +3,49 @@
  * Licensed under the MIT License.
  */
 
-import { CustomChip } from './CustomChip';
-import { makeStyles } from '@material-ui/core/styles';
-import Tooltip from '@material-ui/core/Tooltip';
-import * as React from 'react';
-import { IInspectorRow } from './InspectorTableTypes';
+import { makeStyles } from "@material-ui/core/styles";
+import Tooltip from "@material-ui/core/Tooltip";
+import * as React from "react";
+import { CustomChip } from "./CustomChip";
+import { IInspectorRow } from "./InspectorTableTypes";
 
 const useStyles = makeStyles({
   boolColor: {
-    color: '#9FC966',
+    color: "#9FC966",
   },
   constAndContextColor: {
-    color: '#6784A6',
-    flex: 'none',
+    color: "#6784A6",
+    flex: "none",
   },
   defaultColor: {
-    color: '#808080',
+    color: "#808080",
   },
   enumColor: {
-    color: '#EC4A41',
-    flex: 'none',
+    color: "#EC4A41",
+    flex: "none",
   },
   numberColor: {
-    color: '#32BCAD',
+    color: "#32BCAD",
   },
   referenceColor: {
-    color: '#6784A6',
+    color: "#6784A6",
   },
   stringColor: {
-    color: '#0696D7',
+    color: "#0696D7",
   },
   tooltip: {
-    backgroundColor: 'black',
-    maxWidth: '100vw',
-    overflow: 'hidden',
-    padding: '4px 8px',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
+    backgroundColor: "black",
+    maxWidth: "100vw",
+    overflow: "hidden",
+    padding: "4px 8px",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   typesBox: {
-    display: 'flex',
-    width: '100%',
+    display: "flex",
+    width: "100%",
   },
-}, { name: 'TypeColumn' });
+}, { name: "TypeColumn" });
 
 interface ITypeColumn {
   rowData: IInspectorRow;
@@ -72,25 +72,25 @@ export const TypeColumn: React.FunctionComponent<ITypeColumn> = ({ rowData }) =>
   let context = rowData.context;
   let typeid = rowData.typeid;
   let additionalType;
-  if (context !== 'single') {
-    [context, typeid, additionalType] = rowData.typeid.split('<');
+  if (context !== "single") {
+    [context, typeid, additionalType] = rowData.typeid.split("<");
   } else {
-    [typeid, additionalType] = rowData.typeid.split('<');
+    [typeid, additionalType] = rowData.typeid.split("<");
   }
-  typeid = typeid.replace(/\>/g, '');
-  additionalType = additionalType && additionalType.replace(/\>/g, '') !== 'Enum' ?
-    additionalType.replace(/\>/g, '') : undefined;
+  typeid = typeid.replace(/>/g, "");
+  additionalType = additionalType && additionalType.replace(/>/g, "") !== "Enum" ?
+    additionalType.replace(/>/g, "") : undefined;
   return (
     <Tooltip
       enterDelay={500}
-      placement='top'
+      placement="top"
       classes={{ tooltip: classes.tooltip }}
       title={rowData.typeid}
     >
       <div className={classes.typesBox}>
-        {rowData.isConstant ? <CustomChip label={'const'} className={classes.constAndContextColor} /> : null}
+        {rowData.isConstant ? <CustomChip label={"const"} className={classes.constAndContextColor} /> : null}
         {
-          (context && context !== 'single')
+          (context && context !== "single")
           ? <CustomChip label={context} className={classes.constAndContextColor} />
           : null
         }
@@ -99,8 +99,8 @@ export const TypeColumn: React.FunctionComponent<ITypeColumn> = ({ rowData }) =>
           className={typeid in mapTypeToColor ? mapTypeToColor[typeid] : classes.defaultColor}
         />
         {additionalType ? <CustomChip label={additionalType} className={classes.defaultColor} /> : null}
-        {rowData.isReference && typeid !== 'Reference' ?
-          <CustomChip label={'Reference'} className={classes.defaultColor} /> : null}
+        {rowData.isReference && typeid !== "Reference" ?
+          <CustomChip label={"Reference"} className={classes.defaultColor} /> : null}
       </div>
     </Tooltip>
   );

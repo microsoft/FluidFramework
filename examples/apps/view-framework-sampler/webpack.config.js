@@ -4,8 +4,9 @@
  */
 
 const path = require("path");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 // const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = env => {
@@ -21,7 +22,7 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: require.resolve("ts-loader")
             }]
         },
         output: {
@@ -34,6 +35,9 @@ module.exports = env => {
             libraryTarget: "umd"
         },
         plugins: [
+            new webpack.ProvidePlugin({
+                process: 'process/browser'
+            }),
             new HtmlWebpackPlugin({
                 template: "./src/index.html",
             }),

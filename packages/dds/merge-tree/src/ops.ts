@@ -14,13 +14,6 @@ export enum ReferenceType {
     Transient = 0x100,
 }
 
-export enum IntervalType {
-    Simple = 0x0,
-    Nest = 0x1,
-    SlideOnRemove = 0x2,
-    Transient = 0x4,
-}
-
 export interface IMarkerDef {
     refType?: ReferenceType;
 }
@@ -54,7 +47,7 @@ export interface IRelativePosition {
      */
     before?: boolean;
     /**
-     * A positive number >= 1.  If before is false, offset is added to the position.
+     * A positive number \>= 1.  If before is false, offset is added to the position.
      * If before is true, offset is subtracted from the position.
      */
     offset?: number;
@@ -67,7 +60,6 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     pos2?: number;
     relativePos2?: IRelativePosition;
     seg?: any;
-    register?: string;
 }
 
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
@@ -76,7 +68,6 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     relativePos1?: IRelativePosition;
     pos2?: number;
     relativePos2?: IRelativePosition;
-    register?: string;
 }
 
 export interface ICombiningOp {

@@ -46,8 +46,8 @@ export interface IContext {
 
     /**
      * Closes the context with an error.
-     * @param error The error object or string
-     * @param errorData Additional information about the error
+     * @param error - The error object or string
+     * @param errorData - Additional information about the error
      */
     error(error: any, errorData: IContextErrorData): void;
 
@@ -114,9 +114,7 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
     if (!parsedMessage) {
         return {
             contents: [],
-            // eslint-disable-next-line no-null/no-null
             documentId: null,
-            // eslint-disable-next-line no-null/no-null
             tenantId: null,
             type: BoxcarType,
         };

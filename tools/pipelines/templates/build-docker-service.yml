@@ -60,7 +60,7 @@ parameters:
 
 - name: pool
   type: string
-  default: Lite
+  default: Small
 
 trigger: none
 
@@ -93,6 +93,11 @@ variables:
   - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
     - name: latestContainerTagSuffix
       value: latest
+    - name: latestContainerTag
+      value: $(containerRegistryUrl)/$(buildContainerName):$(latestContainerTagSuffix)
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/next') }}:
+    - name: latestContainerTagSuffix
+      value: next
     - name: latestContainerTag
       value: $(containerRegistryUrl)/$(buildContainerName):$(latestContainerTagSuffix)
 # tag the git repo when we published the docker image if the releaseKind is docker,
@@ -160,9 +165,9 @@ stages:
             fi
 
             if [ -f "lerna.json" ]; then
-              grep -e fluid.*-0 `find packages -name 'package.json'`
+              grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
             else
-              grep -e fluid.*-0 `find . -name 'package.json'`
+              grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
             fi
 
             if [[ $? == 0 ]]; then
@@ -192,9 +197,9 @@ stages:
 
     # for npm ci in component detection and set version
     - task: UseNode@1
-      displayName: Use Node 12.x
+      displayName: Use Node 14.x
       inputs:
-        version: 12.x
+        version: 14.x
 
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:

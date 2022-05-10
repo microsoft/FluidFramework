@@ -16,6 +16,8 @@ import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interf
 import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { RuntimeHeaders } from "@fluidframework/container-runtime";
 
 class TestSharedDataObject1 extends DataObject {
     public get _root() {
@@ -116,6 +118,9 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
     let loader: IHostLoader;
     let container: IContainer;
 
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
+
     const runtimeFactory =
         new ContainerRuntimeFactoryWithDefaultDataStore(
             testSharedDataObjectFactory1,
@@ -124,6 +129,8 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
                 [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
                 [testFactoryWithRequestHeaders.type, Promise.resolve(testFactoryWithRequestHeaders)],
             ],
+            undefined,
+            [innerRequestHandler],
         );
 
     beforeEach(async () => {
@@ -173,8 +180,10 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         dataStore1._root.set("color", "purple");
         dataStore2._root.set("color", "pink");
 
+        await provider.ensureSynchronized();
+
         assert.equal(dataStore1._root.get("color"), "purple", "datastore1 value incorrect");
-        assert.equal(await testDataStore._root.wait("color"), dataStore2._root.get("color"),
+        assert.equal(testDataStore._root.get("color"), dataStore2._root.get("color"),
             "two instances of same dataStore have different values");
     });
 
@@ -268,7 +277,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         const url = await container.getAbsoluteUrl(dataStoreWithRequestHeaders.id);
         assert(url, "Container should return absolute url");
 
-        const headers = { wait: false, externalRequest: true };
+        const headers = { wait: false, [RuntimeHeaders.externalRequest]: true };
         // Request to the newly created data store with headers.
         const response = await loader.request({ url, headers });
 

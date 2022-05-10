@@ -6,5 +6,4 @@
 export * from "./fluidContainer";
 export * from "./rootDataObject";
 export * from "./serviceAudience";
-export * from "./signalManager";
 export * from "./types";

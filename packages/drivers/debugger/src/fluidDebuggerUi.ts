@@ -223,7 +223,7 @@ export class DebuggerUI {
         element.addEventListener("click", () => {
             this.controller.onDownloadOpsButtonClick(anonymize.checked).then((opJson) => {
                 this.download("opStream.json", opJson);
-            }).catch((error) => {console.log(`Error downloading ops: ${error}`);});
+            }).catch((error) => { console.log(`Error downloading ops: ${error}`); });
         });
     }
 
@@ -328,7 +328,7 @@ export class DebuggerUI {
 
     private download(filename: string, data: string): void {
         const element = document.createElement("a");
-        element.setAttribute("href", `data:text/plain;charset=utf-8,${  encodeURIComponent(data)}`);
+        element.setAttribute("href", `data:text/plain;charset=utf-8,${ encodeURIComponent(data) }`);
         element.setAttribute("download", filename);
 
         element.style.display = "none";

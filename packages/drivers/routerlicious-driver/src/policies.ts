@@ -32,4 +32,14 @@ export interface IRouterliciousDriverPolicies {
      * Default: false
      */
     enableWholeSummaryUpload: boolean;
+    /**
+     * Enable service endpoint discovery when creating or joining a session.
+     * Default: false
+     */
+    enableDiscovery?: boolean;
+    /**
+     * Enable using RestLess which avoids CORS preflight requests.
+     * Default: true
+     */
+    enableRestLess: boolean;
 }

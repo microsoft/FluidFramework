@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    ContainerWarning,
     ILoader,
     AttachState,
     ILoaderOptions,
@@ -27,6 +26,7 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     ICommittedProposal,
     IQuorum,
+    IQuorumClients,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISummaryTree,
@@ -42,7 +42,7 @@ import {
     IChannelStorageService,
     IChannelServices,
 } from "@fluidframework/datastore-definitions";
-import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import {
     IFluidDataStoreChannel,
     IGarbageCollectionData,
@@ -96,9 +96,9 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
 export interface IMockContainerRuntimePendingMessage {
-    content: any,
-    clientSequenceNumber: number,
-    localOpMetadata: unknown,
+    content: any;
+    clientSequenceNumber: number;
+    localOpMetadata: unknown;
 }
 
 /**
@@ -262,7 +262,6 @@ export class MockQuorum implements IQuorum, EventEmitter {
         }
         this.map.set(key, value);
         this.eventEmitter.emit("approveProposal", 0, key, value);
-        this.eventEmitter.emit("commitProposal", 0, key, value);
     }
 
     has(key: string): boolean {
@@ -314,7 +313,6 @@ export class MockQuorum implements IQuorum, EventEmitter {
             case "removeMember":
             case "addProposal":
             case "approveProposal":
-            case "commitProposal":
                 this.eventEmitter.on(event, listener);
                 this.eventEmitter.emit("afterOn", event);
                 return this;
@@ -378,8 +376,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public get objectsRoutingContext(): IFluidHandleContext { return this; }
 
     public get IFluidRouter() { return this; }
-
-    public readonly IFluidSerializer = new FluidSerializer(this.IFluidHandleContext);
 
     public readonly documentId: string;
     public readonly id: string = uuid();
@@ -446,7 +442,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    public getQuorum(): IQuorum {
+    public getQuorum(): IQuorumClients {
         return this.quorum;
     }
 
@@ -502,6 +498,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
+    public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
+
     public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
         const stats = mergeStats();
         stats.treeNodeCount++;
@@ -550,8 +548,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return null;
     }
 
-    public raiseContainerWarning(warning: ContainerWarning): void { }
-
     public reSubmit(content: any, localOpMetadata: unknown) {
         return;
     }
@@ -582,7 +578,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
  * Mock implementation of IChannelStorageService
  */
 export class MockObjectStorageService implements IChannelStorageService {
-    public constructor(private readonly contents: { [key: string]: string }) {
+    public constructor(private readonly contents: { [key: string]: string; }) {
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {
@@ -606,7 +602,7 @@ export class MockObjectStorageService implements IChannelStorageService {
  */
 export class MockSharedObjectServices implements IChannelServices {
     public static createFromSummary(summaryTree: ISummaryTree) {
-        const contents: { [key: string]: string } = {};
+        const contents: { [key: string]: string; } = {};
         for (const [key, value] of Object.entries(summaryTree.tree)) {
             assert(value.type === SummaryType.Blob, "Unexpected summary type on mock createFromSummary");
             contents[key] = value.content as string;
@@ -617,7 +613,7 @@ export class MockSharedObjectServices implements IChannelServices {
     public deltaConnection: IDeltaConnection = new MockEmptyDeltaConnection();
     public objectStorage: MockObjectStorageService;
 
-    public constructor(contents: { [key: string]: string }) {
+    public constructor(contents: { [key: string]: string; }) {
         this.objectStorage = new MockObjectStorageService(contents);
     }
 }

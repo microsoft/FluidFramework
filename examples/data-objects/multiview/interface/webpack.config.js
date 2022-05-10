@@ -4,7 +4,7 @@
  */
 
 const path = require("path");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 
 module.exports = env => {
     const isProduction = env && env.production;
@@ -19,7 +19,7 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: require.resolve("ts-loader")
             }]
         },
         output: {

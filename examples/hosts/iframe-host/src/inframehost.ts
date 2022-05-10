@@ -6,14 +6,15 @@
 import * as Comlink from "comlink";
 import {
     AttachState,
-    ICodeLoader,
     IContainerContext,
     IRuntime,
-    IProxyLoaderFactory,
     ILoaderOptions,
+    IContainer,
+    ICodeDetailsLoader,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { Loader, Container } from "@fluidframework/container-loader";
-import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
+import { Loader } from "@fluidframework/container-loader";
+import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     MultiDocumentServiceFactory,
@@ -26,7 +27,7 @@ import {
     OuterUrlResolver,
 } from "@fluidframework/iframe-driver";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 export interface IFrameInnerApi {
@@ -60,9 +61,7 @@ export interface IFrameOuterHostConfig {
 
     // A Fluid object that gives host provided capabilities/configurations
     // to the Fluid object in the container(such as auth).
-    scope?: IFluidObject;
-
-    proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
+    scope?: FluidObject;
 }
 
 class ProxyRuntime implements IRuntime {
@@ -76,17 +75,7 @@ class ProxyRuntime implements IRuntime {
     async request(request: IRequest): Promise<IResponse> {
         throw new Error("Method not implemented.");
     }
-    async snapshot(tagMessage: string, fullTree?: boolean | undefined): Promise<ITree | null> {
-        throw new Error("Method not implemented.");
-    }
     async setConnectionState(connected: boolean, clientId?: string) {
-    }
-    /**
-     * @deprecated in 0.14, use dispose() to stop the runtime.
-     * Remove after IRuntime definition no longer includes it.
-     */
-    async stop(): Promise<{snapshot?: never, state?: never}> {
-        throw new Error("Method not implemented.");
     }
     async process(message: ISequencedDocumentMessage, local: boolean, context: any) {
     }
@@ -113,9 +102,14 @@ class ProxyChaincode extends RuntimeFactoryHelper {
     }
 }
 
-class ProxyCodeLoader implements ICodeLoader {
-    async load() {
-        return Promise.resolve({ fluidExport: new ProxyChaincode() });
+class ProxyCodeLoader implements ICodeDetailsLoader {
+    async load(source: IFluidCodeDetails) {
+        return {
+            module: {
+                fluidExport: new ProxyChaincode(),
+            },
+            details: source,
+        };
     }
 }
 
@@ -143,7 +137,7 @@ export class IFrameOuterHost {
         // them all in one (otherwise there are mysterious runtime errors)
         const combinedProxy = {};
 
-        const outerDocumentServiceProxy =  new DocumentServiceFactoryProxy(
+        const outerDocumentServiceProxy = new DocumentServiceFactoryProxy(
             MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
             this.hostConfig.options,
         );
@@ -166,7 +160,7 @@ export class IFrameOuterHost {
      * provides only limited functionality.
      * @param request - The request to resolve on the internal loader
      */
-    public async loadContainer(request: IRequest): Promise<Container> {
+    public async loadContainer(request: IRequest): Promise<IContainer> {
         return this.loader.resolve(request);
     }
 }

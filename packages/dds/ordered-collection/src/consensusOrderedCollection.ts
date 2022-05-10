@@ -3,21 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert , bufferToString, unreachableCase } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import {
     ConsensusCallback,
@@ -83,7 +78,7 @@ type PendingResolve<T> = (value: IConsensusOrderedCollectionValue<T> | undefined
  * Key is the acquireId from when it was acquired
  * Value is the acquired value, and the id of the client who acquired it, or undefined for unattached client
  */
-type JobTrackingInfo<T> = Map<string, { value: T, clientId: string | undefined }>;
+type JobTrackingInfo<T> = Map<string, { value: T; clientId: string | undefined; }>;
 const idForLocalUnattachedClient = undefined;
 
 /**
@@ -184,36 +179,17 @@ export class ConsensusOrderedCollection<T = any>
         } while (!(await this.acquire(callback)));
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // If we are transitioning from unattached to attached mode,
         // then we are losing all checked out work!
         this.removeClient(idForLocalUnattachedClient);
 
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileNameData,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: this.serializeValue(this.data.asArray(), serializer),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        tree.entries.push({
-            mode: FileMode.File,
-            path: snapshotFileNameTracking,
-            type: TreeEntry.Blob,
-            value: {
-                contents: this.serializeValue(Array.from(this.jobTracking.entries()), serializer),
-                encoding: "utf-8",
-            },
-        });
-
-        return tree;
+        const builder = new SummaryTreeBuilder();
+        let blobContent = this.serializeValue(this.data.asArray(), serializer);
+        builder.addBlob(snapshotFileNameData, blobContent);
+        blobContent = this.serializeValue(Array.from(this.jobTracking.entries()), serializer);
+        builder.addBlob(snapshotFileNameTracking, blobContent);
+        return builder.getSummaryTree();
     }
 
     protected isActive() {
@@ -286,10 +262,6 @@ export class ConsensusOrderedCollection<T = any>
         const rawContentData = bufferToString(blob2, "utf8");
         const content2 = this.deserializeValue(rawContentData, this.serializer) as T[];
         this.data.loadFrom(content2);
-    }
-
-    protected registerCore() {
-        return;
     }
 
     protected onDisconnect() {

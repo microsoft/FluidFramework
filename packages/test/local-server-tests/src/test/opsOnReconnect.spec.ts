@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
 import {
     ContainerMessageType,
@@ -13,11 +13,11 @@ import {
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidCodeDetails, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";
+import { IEnvelope, FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SharedString } from "@fluidframework/sequence";
@@ -72,6 +72,8 @@ describe("Ops on Reconnect", () => {
 
         const defaultFactory = createDataStoreFactory("default", factory);
         const dataObject2Factory = createDataStoreFactory("dataObject2", factory);
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 defaultFactory,
@@ -79,6 +81,8 @@ describe("Ops on Reconnect", () => {
                     [defaultFactory.type, Promise.resolve(defaultFactory)],
                     [dataObject2Factory.type, Promise.resolve(dataObject2Factory)],
                 ],
+                undefined,
+                [innerRequestHandler],
             );
 
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
@@ -114,7 +118,7 @@ describe("Ops on Reconnect", () => {
                 const batch = message.metadata?.batch;
                 let value1: string | number;
                 let value2: string;
-                // Add special handling for SharedString. SharedMap and SharedDirecory content structure is same.
+                // Add special handling for SharedString. SharedMap and SharedDirectory content structure is same.
                 if (address === stringId) {
                     value1 = content.pos1;
                     value2 = content.seg;
@@ -191,11 +195,11 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", true /* batch */],
-                ["key2", "value2", undefined /* batch */],
-                ["key3", "value3", undefined /* batch */],
-                ["key4", "value4", undefined /* batch */],
-                [0, "value5", false /* batch */], // This is for the SharedString
+                ["key1", "value1", true],
+                ["key2", "value2", undefined],
+                ["key3", "value3", undefined],
+                ["key4", "value4", undefined],
+                [0, "value5", false], // This is for the SharedString
             ];
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
@@ -228,10 +232,10 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", true /* batch */],
-                ["key2", "value2", undefined /* batch */],
-                ["key3", "value3", undefined /* batch */],
-                ["key4", "value4", false /* batch */],
+                ["key1", "value1", true],
+                ["key2", "value2", undefined],
+                ["key3", "value3", undefined],
+                ["key4", "value4", false],
             ];
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were sent in Nack'd state");
@@ -268,12 +272,12 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", true /* batch */],
-                ["key2", "value2", undefined /* batch */],
-                ["key3", "value3", undefined /* batch */],
-                ["key4", "value4", undefined /* batch */],
-                ["key5", "value5", undefined /* batch */],
-                ["key6", "value6", false /* batch */],
+                ["key1", "value1", true],
+                ["key2", "value2", undefined],
+                ["key3", "value3", undefined],
+                ["key4", "value4", undefined],
+                ["key5", "value5", undefined],
+                ["key6", "value6", false],
             ];
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
@@ -337,14 +341,14 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", true /* batch */],
-                ["key2", "value2", undefined /* batch */],
-                ["key3", "value3", undefined /* batch */],
-                ["key4", "value4", undefined /* batch */],
-                ["key5", "value5", undefined /* batch */],
-                ["key6", "value6", undefined /* batch */],
-                ["key7", "value7", undefined /* batch */],
-                ["key8", "value8", false /* batch */],
+                ["key1", "value1", true],
+                ["key2", "value2", undefined],
+                ["key3", "value3", undefined],
+                ["key4", "value4", undefined],
+                ["key5", "value5", undefined],
+                ["key6", "value6", undefined],
+                ["key7", "value7", undefined],
+                ["key8", "value8", false],
             ];
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
@@ -378,12 +382,12 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", undefined /* batch */],
-                ["key2", "value2", undefined /* batch */],
-                ["key3", "value3", undefined /* batch */],
-                ["key4", "value4", undefined /* batch */],
-                ["key5", "value5", undefined /* batch */],
-                ["key6", "value6", undefined /* batch */],
+                ["key1", "value1", undefined],
+                ["key2", "value2", undefined],
+                ["key3", "value3", undefined],
+                ["key4", "value4", undefined],
+                ["key5", "value5", undefined],
+                ["key6", "value6", undefined],
             ];
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
@@ -446,14 +450,14 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", true /* batch */],
-                ["key2", "value2", undefined /* batch */],
-                ["key3", "value3", undefined /* batch */],
-                ["key4", "value4", undefined /* batch */],
-                ["key5", "value5", undefined /* batch */],
-                ["key6", "value6", undefined /* batch */],
-                ["key7", "value7", undefined /* batch */],
-                ["key8", "value8", false /* batch */],
+                ["key1", "value1", true],
+                ["key2", "value2", undefined],
+                ["key3", "value3", undefined],
+                ["key4", "value4", undefined],
+                ["key5", "value5", undefined],
+                ["key6", "value6", undefined],
+                ["key7", "value7", undefined],
+                ["key8", "value8", false],
             ];
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
@@ -499,12 +503,12 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues: [string, string, boolean | undefined][] = [
-                ["key1", "value1", true /* batch */],
-                ["key2", "value2", undefined /* batch */],
-                ["key3", "value3", false /* batch */],
-                ["key4", "value4", true /* batch */],
-                ["key5", "value5", undefined /* batch */],
-                ["key6", "value6", false /* batch */],
+                ["key1", "value1", true],
+                ["key2", "value2", undefined],
+                ["key3", "value3", false],
+                ["key4", "value4", true],
+                ["key5", "value5", undefined],
+                ["key6", "value6", false],
             ];
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
@@ -545,12 +549,12 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues: [string, string, boolean | undefined][] = [
-                ["key1", "value1", true /* batch */],
-                ["key2", "value2", undefined /* batch */],
-                ["key3", "value3", false /* batch */],
-                ["key4", "value4", true /* batch */],
-                ["key5", "value5", undefined /* batch */],
-                ["key6", "value6", false /* batch */],
+                ["key1", "value1", true],
+                ["key2", "value2", undefined],
+                ["key3", "value3", false],
+                ["key4", "value4", true],
+                ["key5", "value5", undefined],
+                ["key6", "value6", false],
             ];
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
@@ -583,12 +587,47 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues: [string, string, boolean | undefined][] = [
-                ["key1", "value1", true /* batch */],
-                ["key2", "value2", undefined /* batch */],
-                ["key3", "value3", false /* batch */],
+                ["key1", "value1", true],
+                ["key2", "value2", undefined],
+                ["key3", "value3", false],
             ];
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
+        });
+
+        it("can resend batch ops after reconnect if disconnect happened during the batch", async () => {
+            // Create a second container and set up a listener to store the received map / directory values.
+            await setupSecondContainersDataObject();
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+
+            // Set values in the DDSes so that they are batched together.
+            container1Object1Map1.set("key1", "value1");
+            container1Object1Map2.set("key2", "value2");
+            container1Object1Directory.set("key3", "value3");
+
+            // Disconnect the client.
+            assert(container1.clientId);
+            documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
+
+            // At this point, the delta manager should have the messages
+            // in its buffer but not in its outbound queue,
+            // as ops have not been flushed yet
+            assert.strictEqual(container1.deltaManager.outbound.length, 0);
+            assert.deepStrictEqual(receivedValues, [], "Values have been sent unexpectedly");
+
+            // Wait for the Container to get reconnected.
+            await waitForContainerReconnection(container1);
+
+            // Wait for the ops to get processed by both the containers.
+            await loaderContainerTracker.ensureSynchronized();
+
+            const expectedValues: [string, string, boolean | undefined][] = [
+                ["key1", "value1", true],
+                ["key2", "value2", undefined],
+                ["key3", "value3", false],
+            ];
+            assert.deepStrictEqual(
+                receivedValues, expectedValues, "Did not receive the ops that were re-sent");
         });
     });
 

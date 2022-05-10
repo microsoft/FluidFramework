@@ -29,7 +29,7 @@
                 aria-label="Current Page: Documentation for FluidFramework" {{ end }}>Overview</a>
         </li>
 
-        {{- range .Site.Menus.section }}
+        {{- range (index .Site.Menus .Section) }}
             {{ $menuArea := .Identifier}}
             {{ $isCurrentArea := (eq $menuArea $area) }}
 
@@ -53,9 +53,6 @@
                     {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
                     {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
 
-                    <!-- {{ printf "%#v" .URL }}
-                    {{ printf "%#v" $current.RelPermalink }} -->
-
                     <li {{ if $isCurrentPage }}class="active" {{ end }}>
                         <a href="{{ .RelPermalink }}"
                             {{ if $isCurrentPage }}aria-label="Current Page: {{ (default .Name .Title) | safeHTML }} " {{ end }}>
@@ -66,9 +63,9 @@
             </li>
             {{- end -}}
         {{- end }}
-
-        <hr/>
-
+    </ul>
+    <hr/>
+    <ul class="nav">
         <li {{ if $in_api_section }} class="active" {{ end }}>
             <a class="docs-home" href="/docs/apis/" {{ if $in_api_section }}
                 aria-label="Current Page: API Overview" {{ end }}>API Overview</a>
@@ -132,7 +129,7 @@
     <h4>Topics</h4>
     <select id="small-nav-dropdown">
         <option value="/docs" {{if .IsHome}}selected{{end}}>Overview</option>
-        {{- range .Site.Menus.section }}
+        {{- range (index .Site.Menus .Section) }}
             {{ $menuArea := .Identifier}}
 
             {{- if ne .URL "" -}}

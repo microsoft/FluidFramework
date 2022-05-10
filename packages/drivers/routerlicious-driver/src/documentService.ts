@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
-import { IClient} from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -17,6 +17,8 @@ import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
+import { ICache } from "./cache";
+import { ISnapshotTreeVersion } from "./definitions";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -33,6 +35,8 @@ export class DocumentService implements api.IDocumentService {
         protected tenantId: string,
         protected documentId: string,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
+        private readonly blobCache: ICache<ArrayBufferLike>,
+        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
     ) {
     }
 
@@ -46,6 +50,10 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document storage service for routerlicious driver.
      */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
+        if (this.documentStorageService !== undefined) {
+            return this.documentStorageService;
+        }
+
         if (this.gitUrl === undefined) {
             return new NullBlobStorageService();
         }
@@ -57,6 +65,7 @@ export class DocumentService implements api.IDocumentService {
             this.tokenProvider,
             this.logger,
             rateLimiter,
+            this.driverPolicies.enableRestLess,
             this.gitUrl,
         );
         const historian = new Historian(
@@ -65,6 +74,12 @@ export class DocumentService implements api.IDocumentService {
             false,
             storageRestWrapper);
         const gitManager = new GitManager(historian);
+        const noCacheHistorian = new Historian(
+            this.gitUrl,
+            true,
+            true,
+            storageRestWrapper);
+        const noCacheGitManager = new GitManager(noCacheHistorian);
         const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
             caching: this.driverPolicies.enablePrefetch
                 ? api.LoaderCachingPolicy.Prefetch
@@ -77,7 +92,10 @@ export class DocumentService implements api.IDocumentService {
             gitManager,
             this.logger,
             documentStorageServicePolicies,
-            this.driverPolicies);
+            this.driverPolicies,
+            this.blobCache,
+            this.snapshotTreeCache,
+            noCacheGitManager);
         return this.documentStorageService;
     }
 
@@ -87,11 +105,18 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+        await this.connectToStorage();
         assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-            this.tenantId, this.documentId, this.tokenProvider, this.logger, rateLimiter);
+            this.tenantId,
+            this.documentId,
+            this.tokenProvider,
+            this.logger,
+            rateLimiter,
+            this.driverPolicies.enableRestLess,
+        );
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, ordererRestWrapper, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
             deltaStorage, this.documentStorageService);
@@ -124,7 +149,7 @@ export class DocumentService implements api.IDocumentService {
         try {
             const connection = await connect();
             return connection;
-        } catch (error) {
+        } catch (error: any) {
             if (error?.statusCode === 401) {
                 // Fetch new token and retry once,
                 // otherwise 401 will be bubbled up as non-retriable AuthorizationError.

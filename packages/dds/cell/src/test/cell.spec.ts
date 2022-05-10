@@ -79,11 +79,19 @@ describe("Cell", () => {
                 cell.set("testValue");
                 assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
 
-                const services = MockSharedObjectServices.createFromSummary(cell.summarize().summary);
+                const services = MockSharedObjectServices.createFromSummary(cell.getAttachSummary().summary);
                 const cell2 = new SharedCell("cell2", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
                 await cell2.load(services);
 
                 assert.equal(cell2.get(), "testValue", "Could not load SharedCell from snapshot");
+            });
+
+            it("can load a SharedCell with undefined value from snapshot", async () => {
+                const services = MockSharedObjectServices.createFromSummary(cell.getAttachSummary().summary);
+                const cell2 = new SharedCell("cell2", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
+                await cell2.load(services);
+
+                assert.equal(cell2.get(), undefined, "Could not load SharedCell from snapshot");
             });
         });
 
@@ -99,7 +107,7 @@ describe("Cell", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(cell1.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(cell1.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);
@@ -289,7 +297,7 @@ describe("Cell", () => {
             public async addOutboundRoutes() {
                 const newSubCell = createLocalCell(`subCell-${++this.subCellCount}`);
                 this.cell1.set(newSubCell.handle);
-                this._expectedRoutes = [ newSubCell.handle.absolutePath ];
+                this._expectedRoutes = [newSubCell.handle.absolutePath];
                 this.containerRuntimeFactory.processAllMessages();
             }
 
@@ -309,7 +317,7 @@ describe("Cell", () => {
                     },
                 };
                 this.cell1.set(containingObject);
-                this._expectedRoutes = [ newSubCell.handle.absolutePath, newSubCell2.handle.absolutePath ];
+                this._expectedRoutes = [newSubCell.handle.absolutePath, newSubCell2.handle.absolutePath];
                 this.containerRuntimeFactory.processAllMessages();
             }
         }

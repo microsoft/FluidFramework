@@ -6,7 +6,7 @@
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
-import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { ITinyliciousRouteOptions, RouteOptions } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
@@ -39,6 +39,14 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                 options.bearerSecret);
 
         case "r11s":
+            if (options.discoveryEndpoint !== undefined) {
+                return new InsecureUrlResolver(
+                    "",
+                    options.discoveryEndpoint,
+                    "https://dummy-historian",
+                    options.tenantId,
+                    options.bearerSecret);
+            }
             return new InsecureUrlResolver(
                 options.fluidHost,
                 options.fluidHost.replace("www", "alfred"),

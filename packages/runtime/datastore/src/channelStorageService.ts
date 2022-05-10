@@ -7,9 +7,10 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 export class ChannelStorageService implements IChannelStorageService {
-    private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
+    private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string; }) {
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const path in tree.trees) {
             ChannelStorageService.flattenTree(`${base}${path}/`, tree.trees[path], results);
@@ -21,11 +22,12 @@ export class ChannelStorageService implements IChannelStorageService {
         }
     }
 
-    private readonly flattenedTree: { [path: string]: string };
+    private readonly flattenedTree: { [path: string]: string; };
 
     constructor(
         private readonly tree: ISnapshotTree | undefined,
         private readonly storage: Pick<IDocumentStorageService, "readBlob">,
+        private readonly logger: ITelemetryLogger,
         private readonly extraBlobs?: Map<string, ArrayBufferLike>,
     ) {
         this.flattenedTree = {};
@@ -48,7 +50,10 @@ export class ChannelStorageService implements IChannelStorageService {
         if (blob !== undefined) {
             return blob;
         }
-        return this.storage.readBlob(id);
+        const blobP = this.storage.readBlob(id);
+        blobP.catch((error) => this.logger.sendErrorEvent({ eventName: "ChannelStorageBlobError" }, error));
+
+        return blobP;
     }
 
     public async list(path: string): Promise<string[]> {

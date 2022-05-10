@@ -33,24 +33,24 @@ export async function renderCheckoutView(div: HTMLDivElement): Promise<string[] 
         input.value = "";
     };
 
-    wrapperDiv.append(input,add, submit);
+    wrapperDiv.append(input, add, submit);
 
     const promise = new Promise<string[] | undefined>((resolve, reject) => {
         submit.onclick = function() {
             div.removeChild(wrapperDiv);
             const paths = getPaths(list);
             params.set("paths", paths.toString());
-            window.history.replaceState({}, "", `?${ params.toString()  }${window.location.hash}`);
+            window.history.replaceState({}, "", `?${ params.toString() }${window.location.hash}`);
             resolve(paths.length > 0 ? paths : undefined);
         };
     });
 
-    if(params.has("paths")) {
+    if (params.has("paths")) {
         const pathString = params.get("paths") || "";
-        if(pathString !== "") {
+        if (pathString !== "") {
             const paths = pathString.split(",");
             paths.forEach((p) => {
-                appendListItem(list,p);
+                appendListItem(list, p);
             });
         }
     }
@@ -61,8 +61,7 @@ function getPaths(list: HTMLUListElement): string[] {
     const paths: string[] = [];
     for (const item of list.children) {
         const path = item.getAttribute("path");
-        if (path)
-            {paths.push(path);}
+        if (path) { paths.push(path); }
     }
     return paths;
 }

@@ -3,64 +3,83 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { Client } from "./client";
 import {
     ISegment,
+} from "./mergeTree";
+import { ICombiningOp, ReferenceType } from "./ops";
+import { addProperties, PropertySet } from "./properties";
+import { minReferencePosition,
+    maxReferencePosition,
+    compareReferencePositions,
+    refHasTileLabels,
+    refHasRangeLabels,
     ReferencePosition,
     refGetRangeLabels,
     refGetTileLabels,
     refHasRangeLabel,
     refHasTileLabel,
-} from "./mergeTree";
-import { ICombiningOp, ReferenceType } from "./ops";
-import { addProperties, PropertySet } from "./properties";
+} from "./referencePositions";
 
-export class LocalReference implements ReferencePosition {
+/**
+ * @deprecated - Use ReferencePosition
+ */
+ export class LocalReference implements ReferencePosition {
+    /**
+     * @deprecated - use DetachedReferencePosition
+     */
     public static readonly DetachedPosition: number = -1;
 
     public properties: PropertySet | undefined;
+    /**
+     * @deprecated - use properties to store pair
+     */
     public pairedRef?: LocalReference;
+    /**
+     * @deprecated - use getSegment
+     */
     public segment: ISegment | undefined;
 
+    /**
+     * @deprecated - use createReferencePosition
+     */
     constructor(
         private readonly client: Client,
         initSegment: ISegment,
+        /**
+         * @deprecated - use getOffset
+         */
         public offset = 0,
         public refType = ReferenceType.Simple,
+        properties?: PropertySet,
     ) {
         this.segment = initSegment;
+        this.properties = properties;
     }
 
+    /**
+     * @deprecated - use minReferencePosition
+     */
     public min(b: LocalReference) {
-        if (this.compare(b) < 0) {
-            return this;
-        } else {
-            return b;
-        }
+        return minReferencePosition(this, b);
     }
-
+    /**
+     * @deprecated - use maxReferencePosition
+     */
     public max(b: LocalReference) {
-        if (this.compare(b) > 0) {
-            return this;
-        } else {
-            return b;
-        }
+        return maxReferencePosition(this, b);
     }
-
+    /**
+     * @deprecated - use compareReferencePositions
+     */
     public compare(b: LocalReference) {
-        if (this.segment === b.segment) {
-            return this.offset - b.offset;
-        } else {
-            if (this.segment === undefined
-                || (b.segment !== undefined &&
-                    this.segment.ordinal < b.segment.ordinal)) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
+        return compareReferencePositions(this, b);
     }
 
+    /**
+     * @deprecated - use getLocalReferencePosition
+     */
     public toPosition() {
         if (this.segment && this.segment.parent) {
             return this.getOffset() + this.client.getPosition(this.segment);
@@ -69,27 +88,40 @@ export class LocalReference implements ReferencePosition {
         }
     }
 
+    /**
+     * @deprecated - use refHasTileLabels
+     */
     public hasTileLabels() {
-        return !!this.getTileLabels();
+        return refHasTileLabels(this);
     }
-
+    /**
+     * @deprecated - use refHasRangeLabels
+     */
     public hasRangeLabels() {
-        return !!this.getRangeLabels();
+        return refHasRangeLabels(this);
     }
-
-    public hasTileLabel(label: string) {
+    /**
+     * @deprecated - use refHasTileLabel
+     */
+    public hasTileLabel(label: string): boolean {
         return refHasTileLabel(this, label);
     }
-
-    public hasRangeLabel(label: string) {
+    /**
+     * @deprecated - use refHasRangeLabel
+     */
+    public hasRangeLabel(label: string): boolean {
         return refHasRangeLabel(this, label);
     }
-
-    public getTileLabels() {
+    /**
+     * @deprecated - use refGetTileLabels
+     */
+    public getTileLabels(): string[] | undefined {
         return refGetTileLabels(this);
     }
-
-    public getRangeLabels() {
+    /**
+     * @deprecated - use refGetRangeLabels
+     */
+    public getRangeLabels(): string[] | undefined {
         return refGetRangeLabels(this);
     }
 
@@ -101,6 +133,9 @@ export class LocalReference implements ReferencePosition {
         this.properties = addProperties(this.properties, newProps, op);
     }
 
+    /**
+     * @deprecated - no longer supported
+     */
     public getClient() {
         return this.client;
     }
@@ -110,7 +145,6 @@ export class LocalReference implements ReferencePosition {
     }
 
     public getOffset() {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if (this.segment?.removedSeq) {
             return 0;
         }
@@ -122,31 +156,41 @@ export class LocalReference implements ReferencePosition {
     }
 }
 
-interface IRefsAtOffest {
+interface IRefsAtOffset {
     before?: LocalReference[];
     at?: LocalReference[];
     after?: LocalReference[];
 }
 
+/**
+ * Represents a collection of {@link LocalReference}s associated with one segment in a merge-tree.
+ */
 export class LocalReferenceCollection {
     public static append(seg1: ISegment, seg2: ISegment) {
         if (seg2.localRefs && !seg2.localRefs.empty) {
             if (!seg1.localRefs) {
                 seg1.localRefs = new LocalReferenceCollection(seg1);
             }
+            assert(seg1.localRefs.refsByOffset.length === seg1.cachedLength,
+                0x2be /* "LocalReferences array contains a gap" */);
             seg1.localRefs.append(seg2.localRefs);
+        } else if (seg1.localRefs) {
+            // Since creating the LocalReferenceCollection, we may have appended
+            // segments that had no local references. Account for them now by padding the array.
+            seg1.localRefs.refsByOffset.length += seg2.cachedLength;
         }
     }
 
     public hierRefCount: number = 0;
-    private readonly refsByOffset: (IRefsAtOffest | undefined)[];
+    private readonly refsByOffset: (IRefsAtOffset | undefined)[];
     private refCount: number = 0;
 
     constructor(
+        /** Segment this `LocalReferenceCollection` is associated to. */
         private readonly segment: ISegment,
-        initialRefsByfOffset = new Array<IRefsAtOffest | undefined>(segment.cachedLength)) {
+        initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength)) {
         // Since javascript arrays are sparse the above won't populate any of the
-        // indicies, but it will ensure the length property of the array matches
+        // indices, but it will ensure the length property of the array matches
         // the length of the segment.
         this.refsByOffset = initialRefsByfOffset;
     }
@@ -220,9 +264,11 @@ export class LocalReferenceCollection {
             this.refsByOffset[lref.offset] = {
                 at: [lref],
             };
-        } else {
+        } else if (refsAtOffset.at === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            refsAtOffset.at!.push(lref);
+            this.refsByOffset[lref.offset]!.at = [lref];
+        } else {
+            refsAtOffset.at.push(lref);
         }
 
         if (lref.hasRangeLabels() || lref.hasTileLabels()) {
@@ -287,6 +333,15 @@ export class LocalReferenceCollection {
         this.refsByOffset.push(...other.refsByOffset);
     }
 
+    /**
+     * Splits this `LocalReferenceCollection` into the intervals [0, offset) and [offset, originalLength).
+     * Local references in the former half of this split will remain associated with the segment used on construction.
+     * Local references in the latter half of this split will be transferred to `splitSeg`,
+     * and its `localRefs` field will be set.
+     * @param offset - Offset into the original segment at which the collection should be split
+     * @param splitSeg - Split segment which originally corresponded to the indices [offset, originalLength)
+     * before splitting.
+     */
     public split(offset: number, splitSeg: ISegment) {
         if (!this.empty) {
             const localRefs =
@@ -305,6 +360,9 @@ export class LocalReferenceCollection {
                 this.refCount--;
                 localRefs.refCount++;
             }
+        } else {
+            // shrink the offset array when empty and splitting
+            this.refsByOffset.length = offset;
         }
     }
 

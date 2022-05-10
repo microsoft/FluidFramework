@@ -10,7 +10,11 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
+import {
+    IGarbageCollectionData,
+    IGarbageCollectionDetailsBase,
+    IGarbageCollectionSummaryDetails,
+} from "./garbageCollection";
 
 export interface ISummaryStats {
     treeNodeCount: number;
@@ -36,6 +40,22 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
     pathPartsForChildren?: string[];
 }
 
+/** The garbage collection data of each node in the reference graph. */
+export interface IGarbageCollectionNodeData {
+    /** The set of routes to other nodes in the graph. */
+    outboundRoutes: string[];
+    /** If the node is unreferenced, the timestamp of when it was marked unreferenced. */
+    unreferencedTimestampMs?: number;
+}
+
+/**
+ * The garbage collection state of the reference graph. It contains a list of all the nodes in the graph and their
+ * GC data.
+ */
+export interface IGarbageCollectionState {
+    gcNodes: { [ id: string ]: IGarbageCollectionNodeData; };
+}
+
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {
@@ -43,7 +63,7 @@ export interface ISummarizerNodeConfig {
      * True to reuse previous handle when unchanged since last acked summary.
      * Defaults to true.
      */
-    readonly canReuseHandle?: boolean,
+    readonly canReuseHandle?: boolean;
     /**
      * True to always stop execution on error during summarize, or false to
      * attempt creating a summary that is a pointer ot the last acked summary
@@ -53,7 +73,7 @@ export interface ISummarizerNodeConfig {
      * BUG BUG: Default to true while we investigate problem
      * with differential summaries
      */
-    readonly throwOnFailure?: true,
+    readonly throwOnFailure?: true;
 }
 
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
@@ -116,7 +136,7 @@ export interface ISummarizerNode {
     loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: <T>(id: string) => Promise<T>,
-    ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }>;
+    ): Promise<{ baseSummary: ISnapshotTree; outstandingOps: ISequencedDocumentMessage[]; }>;
     /**
      * Records an op representing a change to this node/subtree.
      * @param op - op of change to record
@@ -139,7 +159,7 @@ export interface ISummarizerNode {
         config?: ISummarizerNodeConfig,
     ): ISummarizerNode;
 
-    getChild(id: string): ISummarizerNode | undefined
+    getChild(id: string): ISummarizerNode | undefined;
 }
 
 /**
@@ -203,8 +223,14 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      */
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 
-    /** Returns the GC details that may be added to this node's summary. */
+    /**
+     * @deprecated - Renamed to getBaseGCDetails.
+     * Returns the GC details that may be added to this node's summary.
+     */
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
+
+    /** Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state. */
+    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
 }
 
 export const channelsTreeName = ".channels";

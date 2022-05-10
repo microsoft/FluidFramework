@@ -5,6 +5,7 @@
 
 import { ChildProcess, fork } from "child_process";
 import { EventEmitter } from "events";
+import { Readable } from "stream";
 import { Worker } from "worker_threads";
 import { WorkerMessage, WorkerExecResult } from "./worker";
 
@@ -44,15 +45,21 @@ export class WorkerPool {
     public async runOnWorker(workerName: string, command: string, cwd: string): Promise<WorkerExecResultWithOutput> {
         const workerMessage: WorkerMessage = { workerName, command, cwd };
         const cleanup: (() => void)[] = [];
-        const installTemporaryListener = (object: EventEmitter, event: string, handler: any) => {
+        const installTemporaryListener = (object: EventEmitter | Readable, event: string, handler: any) => {
             object.on(event, handler);
             cleanup.push(() => object.off(event, handler));
         }
         const setupWorker = (worker: Worker | ChildProcess, res: (value: WorkerExecResultWithOutput) => void) => {
             let stdout = "";
             let stderr = "";
-            installTemporaryListener(worker.stdout, "data", (chunk: any) => { stdout += chunk; });
-            installTemporaryListener(worker.stderr, "data", (chunk: any) => { stderr += chunk; });
+
+            if (worker.stdout) {
+                installTemporaryListener(worker.stdout, "data", (chunk: any) => { stdout += chunk; });
+            }
+            if (worker.stderr) {
+                installTemporaryListener(worker.stderr, "data", (chunk: any) => { stderr += chunk; });
+            }
+
             worker.once("message", (result: WorkerExecResult) => {
                 res({ ...result, stdout, stderr });
             });

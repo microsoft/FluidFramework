@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -12,7 +11,6 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
-import { TableDocumentType } from "../componentTypes";
 import { createTableWithInterception } from "../interception";
 
 describeLoaderCompat("Table Document with Interception", (getTestObjectProvider) => {
@@ -23,9 +21,9 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider)
 
         // Sample interface used for storing the details of a cell.
         interface ICellType {
-            row: number,
-            col: number,
-            value: string,
+            row: number;
+            col: number;
+            value: string;
         }
 
         function orderSequentially(callback: () => void): void {
@@ -61,14 +59,7 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider)
         let provider: ITestObjectProvider;
         beforeEach(async () => {
             provider = getTestObjectProvider();
-            const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
-                TableDocument.getFactory(),
-                new Map([
-                    [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
-                ]),
-            );
-
-            const container = await provider.createContainer(factory);
+            const container = await provider.createContainer(TableDocument.getFactory());
             tableDocument = await requestFluidObject<TableDocument>(container, "default");
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -206,7 +197,7 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider)
             let asserted: boolean = false;
             try {
                 tableDocumentWithInterception.setCellValue(cell.row, cell.col, cell.value);
-            } catch (error) {
+            } catch (error: any) {
                 assert.strictEqual(error.message,
                     "Interception wrapper method called recursively from the interception callback",
                     "We should have caught an assert in setCellValue because it detects an infinite recursion");

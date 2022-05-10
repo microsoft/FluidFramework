@@ -75,7 +75,7 @@ describe("SharedSummaryBlock", () => {
             const value3 = { value: "testValue3" };
             sharedSummaryBlock.set(key3, value3);
 
-            const summaryTree = sharedSummaryBlock.summarize().summary;
+            const summaryTree = sharedSummaryBlock.getAttachSummary().summary;
             const contents = JSON.stringify({
                 testKey1: value1,
                 testKey2: value2,

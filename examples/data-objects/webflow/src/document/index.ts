@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -31,9 +30,8 @@ import {
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IFluidHTMLOptions } from "@fluidframework/view-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
-import { clamp, emptyArray } from "../util";
+import { clamp, emptyArray, randomId, TagName, TokenList } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { documentType } from "../package";
 import { debug } from "./debug";
@@ -44,14 +42,13 @@ export const enum DocSegmentKind {
     paragraph = "<p>",
     lineBreak = "<br>",
     beginTags = "<t>",
-    inclusion = "<?>",
     endTags = "</>",
 
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
     endOfText = "eot",
 }
 
-const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion]);
+const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags]);
 
 const enum Workaround { checkpoint = "*" }
 
@@ -94,10 +91,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
 const empty = Object.freeze({});
 
-export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const getComponentOptions = (segment: ISegment): IFluidHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
+export const getCss = (segment: ISegment): Readonly<{ style?: string; classList?: string; }> => segment.properties || empty;
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
 
@@ -133,6 +127,8 @@ export interface IFlowDocumentEvents extends IEvent {
     (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString) => void);
 }
 
+const textId = "text";
+
 export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
     private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
         documentType,
@@ -146,42 +142,38 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         return FlowDocument.factory.create(parentContext, props);
     }
 
-    private get sharedString() { return this.maybeSharedString; }
-
     public get length() {
         return this.sharedString.getLength();
     }
 
     private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: TagName.p });
     private static readonly lineBreakProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint] });
-    private static readonly inclusionProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint] });
     private static readonly tagsProperties = Object.freeze({
-        [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint],
+        [reservedTileLabelsKey]: [DocTile.checkpoint],
         [reservedRangeLabelsKey]: [DocSegmentKind.beginTags],
     });
 
-    private maybeSharedString?: SharedString;
+    private sharedString: SharedString;
 
     public create() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
-        this.maybeSharedString = SharedString.create(this.runtime, "text");
-        this.root.set("text", this.maybeSharedString.handle);
-        if (this.maybeSharedString !== undefined) {
-            this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
-        }
+        this.sharedString = SharedString.create(this.runtime);
+        this.root.set(textId, this.sharedString.handle);
+        this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
     }
 
     public async load() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
-        const handle = await this.root.wait<IFluidHandle<SharedString>>("text");
-        this.maybeSharedString = await handle.get();
-        if (this.maybeSharedString !== undefined) {
-            this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
+        const handle = this.root.get<IFluidHandle<SharedString>>(textId);
+        if (handle === undefined) {
+            throw new Error("String not initialized properly");
         }
+        this.sharedString = await handle.get();
+        this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
     }
 
     public async getComponentFromMarker(marker: Marker) {
@@ -320,14 +312,6 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public insertComponent(position: number, handle: IFluidHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
-        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
-            ...FlowDocument.inclusionProperties,
-            componentOptions, handle, style, classList: classList && classList.join(" "), view,
-        }));
-    }
-
     public setFormat(position: number, tag: TagName) {
         const { start } = this.findParagraph(position);
 
@@ -421,7 +405,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.annotateRange(start, end, { attr });
     }
 
-    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition, pos: number } {
+    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition; pos: number; } {
         return this.sharedString.findTile(position, tileType as unknown as string, preceding);
     }
 
@@ -488,7 +472,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {
-        const updates: { span: SegmentSpan, classList: string }[] = [];
+        const updates: { span: SegmentSpan; classList: string; }[] = [];
 
         this.visitRange((position, segment, startOffset, endOffset) => {
             const oldList = getCss(segment).classList;

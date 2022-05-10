@@ -5,6 +5,7 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -19,12 +20,14 @@ import {
     ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { CreateProcessingError } from "@fluidframework/container-utils";
-import { assert, Lazy, stringToBuffer } from "@fluidframework/common-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
+import { assert, Lazy } from "@fluidframework/common-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     createServiceEndpoints,
     IChannelContext,
     summarizeChannel,
+    summarizeChannelAsync,
 } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
@@ -35,7 +38,7 @@ import { ChannelStorageService } from "./channelStorageService";
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
     public channel: IChannel | undefined;
-    private attached = false;
+    private globallyVisible = false;
     protected readonly pending: ISequencedDocumentMessage[] = [];
     protected factory: IChannelFactory | undefined;
     constructor(
@@ -43,8 +46,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         protected readonly registry: ISharedObjectRegistry,
         protected readonly runtime: IFluidDataStoreRuntime,
         private readonly servicesGetter: () => Lazy<{
-                readonly deltaConnection: ChannelDeltaConnection,
-                readonly objectStorage: ChannelStorageService,
+                readonly deltaConnection: ChannelDeltaConnection;
+                readonly objectStorage: ChannelStorageService;
             }>,
     ) {
     }
@@ -59,14 +62,14 @@ export abstract class LocalChannelContextBase implements IChannelContext {
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        // Connection events are ignored if the data store is not yet attached or loaded
-        if (this.attached && this.isLoaded) {
+        // Connection events are ignored if the data store is not yet globallyVisible or loaded
+        if (this.globallyVisible && this.isLoaded) {
             this.servicesGetter().value.deltaConnection.setConnectionState(connected);
         }
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        assert(this.attached, 0x188 /* "Local channel must be attached when processing op" */);
+        assert(this.globallyVisible, 0x2d3 /* "Local channel must be globally visible when processing op" */);
 
         // A local channel may not be loaded in case where we rehydrate the container from a snapshot because of
         // delay loading. So after the container is attached and some other client joins which start generating
@@ -82,7 +85,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
     public reSubmit(content: any, localOpMetadata: unknown) {
         assert(this.isLoaded, 0x18a /* "Channel should be loaded to resubmit ops" */);
-        assert(this.attached, 0x18b /* "Local channel must be attached when resubmitting op" */);
+        assert(this.globallyVisible, 0x2d4 /* "Local channel must be globally visible when resubmitting op" */);
         this.servicesGetter().value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
@@ -97,7 +100,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, 0x18c /* "Channel should be loaded to summarize" */);
-        return summarizeChannel(this.channel, fullTree, trackState);
+        return summarizeChannelAsync(this.channel, fullTree, trackState);
     }
 
     public getAttachSummary(): ISummarizeResult {
@@ -105,16 +108,16 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
     }
 
-    public markAttached(): void {
-        if (this.attached) {
-            throw new Error("Channel is already attached");
+    public makeVisible(): void {
+        if (this.globallyVisible) {
+            throw new Error("Channel is already globally visible");
         }
 
         if (this.isLoaded) {
             assert(!!this.channel, 0x192 /* "Channel should be there if loaded!!" */);
             this.channel.connect(this.servicesGetter().value);
         }
-        this.attached = true;
+        this.globallyVisible = true;
     }
 
     /**
@@ -139,8 +142,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
 export class RehydratedLocalChannelContext extends LocalChannelContextBase {
     private readonly services: Lazy<{
-        readonly deltaConnection: ChannelDeltaConnection,
-        readonly objectStorage: ChannelStorageService,
+        readonly deltaConnection: ChannelDeltaConnection;
+        readonly objectStorage: ChannelStorageService;
     }>;
 
     private readonly dirtyFn: () => void;
@@ -151,24 +154,31 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         runtime: IFluidDataStoreRuntime,
         dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
+        logger: ITelemetryLogger,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
         private readonly snapshotTree: ISnapshotTree,
     ) {
         super(id, registry, runtime, () => this.services);
-        let blobMap: Map<string, ArrayBufferLike> | undefined;
+        const blobMap: Map<string, ArrayBufferLike> = new Map<string, ArrayBufferLike>();
         const clonedSnapshotTree = cloneDeep(this.snapshotTree);
-        if (clonedSnapshotTree !== undefined) {
-            blobMap = new Map<string, ArrayBufferLike>();
-            this.collectExtraBlobsAndSanitizeSnapshot(clonedSnapshotTree, blobMap);
+        // 0.47 back-compat Need to sanitize if snapshotTree.blobs still contains blob contents too.
+        // This is for older snapshot which is generated by loader <=0.47 version which still contains
+        // the contents within blobs. After a couple of revisions we can remove it.
+        if (this.isSnapshotInOldFormatAndCollectBlobs(clonedSnapshotTree, blobMap)) {
+            this.sanitizeSnapshot(clonedSnapshotTree);
         }
+
         this.services = new Lazy(() => {
             return createServiceEndpoints(
                 this.id,
                 dataStoreContext.connected,
                 submitFn,
                 this.dirtyFn,
+                addedGCOutboundReferenceFn,
                 storageService,
+                logger,
                 clonedSnapshotTree,
                 blobMap,
             );
@@ -180,8 +190,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         if (this.channel === undefined) {
             this.channel = await this.loadChannel()
                 .catch((err) => {
-                    // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                    throw CreateProcessingError(err, "rehydratedLocalChannelContextFailedToLoadChannel", undefined);
+                    throw DataProcessingError.wrapIfUnrecognized(
+                        err, "rehydratedLocalChannelContextFailedToLoadChannel", undefined);
                 });
         }
         return this.channel;
@@ -217,27 +227,43 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         return this.channel;
     }
 
-    private collectExtraBlobsAndSanitizeSnapshot(snapshotTree: ISnapshotTree, blobMap: Map<string, ArrayBufferLike>) {
+    private isSnapshotInOldFormatAndCollectBlobs(
+        snapshotTree: ISnapshotTree,
+        blobMap: Map<string, ArrayBufferLike>,
+    ): boolean {
+        let sanitize = false;
+        const blobsContents: { [path: string]: ArrayBufferLike; } = (snapshotTree as any).blobsContents;
+        Object.entries(blobsContents).forEach(([key, value]) => {
+            blobMap.set(key, value);
+            if (snapshotTree.blobs[key] !== undefined) {
+                sanitize = true;
+            }
+        });
+        for (const value of Object.values(snapshotTree.trees)) {
+            sanitize = sanitize || this.isSnapshotInOldFormatAndCollectBlobs(value, blobMap);
+        }
+        return sanitize;
+    }
+
+    private sanitizeSnapshot(snapshotTree: ISnapshotTree) {
         const blobMapInitial = new Map(Object.entries(snapshotTree.blobs));
         for (const [blobName, blobId] of blobMapInitial.entries()) {
             const blobValue = blobMapInitial.get(blobId);
-            if (blobValue !== undefined) {
-                blobMap.set(blobId, stringToBuffer(blobValue, "base64"));
-            } else {
+            if (blobValue === undefined) {
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete snapshotTree.blobs[blobName];
             }
         }
         for (const value of Object.values(snapshotTree.trees)) {
-            this.collectExtraBlobsAndSanitizeSnapshot(value, blobMap);
+            this.sanitizeSnapshot(value);
         }
     }
 }
 
 export class LocalChannelContext extends LocalChannelContextBase {
     private readonly services: Lazy<{
-        readonly deltaConnection: ChannelDeltaConnection,
-        readonly objectStorage: ChannelStorageService,
+        readonly deltaConnection: ChannelDeltaConnection;
+        readonly objectStorage: ChannelStorageService;
     }>;
     private readonly dirtyFn: () => void;
     constructor(
@@ -247,8 +273,10 @@ export class LocalChannelContext extends LocalChannelContextBase {
         runtime: IFluidDataStoreRuntime,
         dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
+        logger: ITelemetryLogger,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
+        addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
     ) {
         super(id, registry, runtime, () => this.services);
         assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
@@ -263,7 +291,9 @@ export class LocalChannelContext extends LocalChannelContextBase {
                 dataStoreContext.connected,
                 submitFn,
                 this.dirtyFn,
+                addedGCOutboundReferenceFn,
                 storageService,
+                logger,
             );
         });
         this.dirtyFn = () => { dirtyFn(id); };

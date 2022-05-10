@@ -15,6 +15,7 @@ import {
 
 import { MapFactory } from "../map";
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../directory";
+import { IDirectory } from "../interfaces";
 
 function createConnectedDirectory(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -42,13 +43,13 @@ async function populate(directory: SharedDirectory, content: object) {
 }
 
 function serialize(directory1: SharedDirectory): string {
-    const summaryTree = directory1.summarize().summary;
+    const summaryTree = directory1.getAttachSummary().summary;
     const summaryObjectKeys = Object.keys(summaryTree.tree);
     assert.strictEqual(summaryObjectKeys.length, 1, "summary tree should only have one blob");
     assert.strictEqual(summaryObjectKeys[0], "header", "summary should have a header blob");
     assert.strictEqual(summaryTree.tree.header.type, SummaryType.Blob, "header is not of SummaryType.Blob");
 
-    const content = (summaryTree.tree.header as ISummaryBlob).content as string;
+    const content = summaryTree.tree.header.content as string;
     return JSON.stringify((JSON.parse(content) as IDirectoryNewStorageFormat).content);
 }
 
@@ -88,7 +89,7 @@ describe("Directory", () => {
                 directory.on("op", (arg1, arg2, arg3) => {
                     assert.fail("shouldn't receive an op event");
                 });
-                directory.on("valueChanged", (changed, local, op, target) => {
+                directory.on("valueChanged", (changed, local, target) => {
                     assert.equal(valueChangedExpected, true, "valueChange event not expected");
                     valueChangedExpected = false;
 
@@ -97,7 +98,6 @@ describe("Directory", () => {
                     assert.equal(changed.path, directory.absolutePath);
 
                     assert.equal(local, true, "local should be true for local action for valueChanged event");
-                    assert.equal(op, null, "op should be null for local actions for valueChanged event");
                     assert.equal(target, directory, "target should be the directory for valueChanged event");
                 });
                 directory.on("containedValueChanged", (changed, local, target) => {
@@ -111,12 +111,11 @@ describe("Directory", () => {
                     assert.equal(local, true, "local should be true for local action for containedValueChanged event");
                     assert.equal(target, directory, "target should be the directory for containedValueChanged event");
                 });
-                directory.on("clear", (local, op, target) => {
+                directory.on("clear", (local, target) => {
                     assert.equal(clearExpected, true, "clear event not expected");
                     clearExpected = false;
 
                     assert.equal(local, true, "local should be true for local action for clear event");
-                    assert.equal(op, null, "op should be null for local actions for clear event");
                     assert.equal(target, directory, "target should be the directory for clear event");
                 });
                 directory.on("error", (error) => {
@@ -142,6 +141,74 @@ describe("Directory", () => {
                 clearExpected = true;
                 directory.clear();
                 assert.equal(clearExpected, false, "missing clearExpected event");
+            });
+
+            it("Should fire dispose event correctly", () => {
+                let valueChangedExpected: boolean = true;
+
+                directory.on("valueChanged", (changed, local, target) => {
+                    assert.equal(valueChangedExpected, true, "valueChange event not expected");
+                    valueChangedExpected = false;
+
+                    assert.equal(changed.key, "dwayne", "key should match");
+                    assert.equal(changed.previousValue, undefined, "previous value should match");
+                    assert.equal(changed.path, "/rock", "absolute path should match");
+
+                    assert.equal(local, true, "local should be true for local action for valueChanged event");
+                    assert.equal(target, directory, "target should be the directory for valueChanged event");
+                });
+
+                // Test dispose on subdirectory delete
+                let subDirectoryDisposed = false;
+                const subDirectory = directory.createSubDirectory("rock");
+                subDirectory.on("disposed", (value: IDirectory) => {
+                    subDirectoryDisposed = true;
+                    assert.equal(value.disposed, true, "sub directory not deleted");
+                });
+                // Should fire dispose event.
+                directory.deleteSubDirectory("rock");
+                assert.equal(subDirectoryDisposed, true, "sub directory not disposed!!");
+
+                // Should be able to work on new directory with same name.
+                valueChangedExpected = true;
+                const newSubDirectory = directory.createSubDirectory("rock");
+                newSubDirectory.set("dwayne", "johnson");
+                assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
+
+                // Usage Error on accessing disposed directory.
+                try {
+                    subDirectory.set("throw", "error");
+                    assert.fail("Should throw usage error");
+                } catch (error: any) {
+                    assert.strictEqual(error.errorType, "usageError", "Should throw usage error");
+                }
+
+                // Check recursive dispose event firing
+                const subSubDirectory = newSubDirectory.createSubDirectory("rockChild");
+                let rockSubDirectoryDisposed = false;
+                let subSubDirectoryDisposed = false;
+                newSubDirectory.on("disposed", (value: IDirectory) => {
+                    rockSubDirectoryDisposed = true;
+                    assert.equal(value.disposed, true, "rock sub directory not deleted");
+                });
+                subSubDirectory.on("disposed", (value: IDirectory) => {
+                    subSubDirectoryDisposed = true;
+                    assert.equal(value.disposed, true, "sub sub directory not deleted");
+                });
+                directory.deleteSubDirectory("rock");
+                assert(rockSubDirectoryDisposed, "Rock sub directory should be disposed");
+                assert(subSubDirectoryDisposed, "sub sub directory should be disposed");
+            });
+
+            it("Check number of sub directories", () => {
+                const subDirectory = directory.createSubDirectory("rock1");
+                directory.createSubDirectory("rock2");
+                const childSubDirectory = subDirectory.createSubDirectory("rock1Child");
+                assert.strictEqual(directory.countSubDirectory(), 2, "Should have 2 sub directories");
+                assert(subDirectory.countSubDirectory !== undefined && subDirectory.countSubDirectory() === 1,
+                    "Should have 1 sub directory");
+                assert(childSubDirectory.countSubDirectory !== undefined && subDirectory.countSubDirectory() === 1,
+                    "Should have 0 sub directory");
             });
 
             it("Rejects a undefined and null key set", () => {
@@ -354,7 +421,7 @@ describe("Directory", () => {
                 nestedDirectory.set("deepKey1", "deepValue1");
                 nestedDirectory.set("long2", logWord2);
 
-                const summarizeResult = directory.summarize();
+                const summarizeResult = directory.getAttachSummary();
                 const summaryTree = summarizeResult.summary;
                 assert.strictEqual(summaryTree.type, SummaryType.Tree, "summary should be a tree");
 
@@ -411,7 +478,7 @@ describe("Directory", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(directory.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(directory.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
@@ -454,7 +521,7 @@ describe("Directory", () => {
                 const containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-                const services2 = MockSharedObjectServices.createFromSummary(directory.summarize().summary);
+                const services2 = MockSharedObjectServices.createFromSummary(directory.getAttachSummary().summary);
                 services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
                 const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
@@ -586,37 +653,6 @@ describe("Directory", () => {
                 assert.equal(directory2.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
                 assert.equal(directory2.get("testKey"), "testValue4");
                 assert.equal(directory2.get("testKey2"), undefined);
-            });
-
-            it("Should resolve returned promise for existing keys", async () => {
-                directory1.set("test", "resolved");
-
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the local SharedDirectory
-                assert.ok(directory1.has("test"));
-                await directory1.wait("test");
-
-                // Verify the remote SharedDirectory
-                assert.ok(directory2.has("test"));
-                await directory2.wait("test");
-            });
-
-            it("Should resolve returned promise once unavailable key is available", async () => {
-                assert.ok(!directory1.has("test"));
-
-                const waitP = directory1.wait("test");
-                const waitP2 = directory2.wait("test");
-
-                directory1.set("test", "resolved");
-
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the local SharedDirectory
-                await waitP;
-
-                // Verify the remote SharedDirectory
-                await waitP2;
             });
         });
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from 'react';
+import * as React from "react";
 
 type showModalSignature = <T>(component: React.ComponentType<T>, props: T, closeHandler?: () => void) => void;
 interface IModalContext<P = any> {
@@ -27,9 +27,10 @@ export const ModalContext = React.createContext<IModalContext>({
   component: null,
   hideModal: () => { return; },
   props: {},
-  showModal : () => { return; },
+  showModal: () => { return; },
 });
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export class ModalManager extends React.Component<{}, IModalContext> {
   constructor(props) {
     super(props);
@@ -50,15 +51,15 @@ export class ModalManager extends React.Component<{}, IModalContext> {
     );
   }
 
-  private showModal = (component, props, closeHandler?) => {
+  private readonly showModal = (component, props, closeHandler?) => {
     this.setState({
       closeHandler,
       component,
       props,
     });
-  }
+  };
 
-  private hideModal = () => {
+  private readonly hideModal = () => {
     if (this.state.closeHandler) {
       this.state.closeHandler();
     }
@@ -67,7 +68,7 @@ export class ModalManager extends React.Component<{}, IModalContext> {
       component: null,
       props: {},
     });
-  }
+  };
 }
 
 export const ModalConsumer = ModalContext.Consumer;

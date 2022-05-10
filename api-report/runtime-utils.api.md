@@ -4,25 +4,22 @@
 
 ```ts
 
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
-import { ISerializedHandle } from '@fluidframework/core-interfaces';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummarizeInternalResult } from '@fluidframework/runtime-definitions';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions';
@@ -72,31 +69,13 @@ export function createResponseError(status: number, value: string, request: IReq
 export const createRootSummarizerNode: (logger: ITelemetryLogger, summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfig) => IRootSummarizerNode;
 
 // @public
-export const createRootSummarizerNodeWithGC: (logger: ITelemetryLogger, summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfigWithGC, getGCDataFn?: ((fullGC?: boolean | undefined) => Promise<IGarbageCollectionData>) | undefined, getInitialGCSummaryDetailsFn?: (() => Promise<IGarbageCollectionSummaryDetails>) | undefined) => IRootSummarizerNodeWithGC;
+export const createRootSummarizerNodeWithGC: (logger: ITelemetryLogger, summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfigWithGC, getGCDataFn?: ((fullGC?: boolean | undefined) => Promise<IGarbageCollectionData>) | undefined, getBaseGCDetailsFn?: (() => Promise<IGarbageCollectionDetailsBase>) | undefined) => IRootSummarizerNodeWithGC;
 
 // @public (undocumented)
 export function exceptionToResponse(err: any): IResponse;
 
 // @public (undocumented)
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
-
-// @public
-export class FluidSerializer implements IFluidSerializer {
-    constructor(context: IFluidHandleContext);
-    decode(input: any): any;
-    // (undocumented)
-    get IFluidSerializer(): this;
-    // (undocumented)
-    parse(input: string): any;
-    replaceHandles(input: any, bind: IFluidHandle): any;
-    // (undocumented)
-    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): {
-        type: string;
-        url: string;
-    };
-    // (undocumented)
-    stringify(input: any, bind: IFluidHandle): string;
-}
 
 // @public
 export function generateHandleContextPath(path: string, routeContext?: IFluidHandleContext): string;
@@ -108,9 +87,6 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
 // @public (undocumented)
-export function getStack(): string | undefined;
-
-// @public (undocumented)
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
 }
 
@@ -119,16 +95,13 @@ export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISumma
 }
 
 // @public (undocumented)
-export const isSerializedHandle: (value: any) => value is ISerializedHandle;
-
-// @public (undocumented)
 export interface ISummarizerNodeRootContract {
     // (undocumented)
     clearSummary(): void;
     // (undocumented)
     completeSummary(proposalHandle: string): void;
     // (undocumented)
-    refreshLatestSummary(proposalHandle: string | undefined, getSnapshot: () => Promise<ISnapshotTree>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
+    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number, getSnapshot: () => Promise<ISnapshotTree>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
     // (undocumented)
     startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
 }
@@ -166,7 +139,7 @@ export type RefreshSummaryResult = {
 };
 
 // @public (undocumented)
-export function requestFluidObject<T = IFluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
+export function requestFluidObject<T = FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
 
 // @public
 export class RequestParser implements IRequest {

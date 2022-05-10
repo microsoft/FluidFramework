@@ -7,14 +7,18 @@
 /**
  * @fileoverview Tests for the array changeset operations
  */
-import _ from "lodash"
-import { ChangeSet, SerializedChangeSet } from "../changeset";
+import isEmpty from "lodash/isEmpty";
+import isNumber from "lodash/isNumber";
+import { copy as cloneDeep } from "fastest-json-copy";
+import range from "lodash/range";
+
 import { expect, assert } from "chai";
+import { ChangeSet, SerializedChangeSet } from "../changeset";
 
 describe("Array Operations", function() {
     let guidCounter = 1;
 
-    const generateNamedEntities = (count, offsets?, type?) => _.range(count).map((i) => {
+    const generateNamedEntities = (count, offsets?, type?) => range(count).map((i) => {
         const offsetShift = offsets !== undefined ? offsets.shift() : undefined;
         const id = offsetShift !== undefined ? guidCounter - offsetShift : guidCounter++;
         if (type === undefined) {
@@ -45,7 +49,7 @@ describe("Array Operations", function() {
         if (CS instanceof ChangeSet) {
             CS = CS.getSerializedChangeSet();
         }
-        if (_.isEmpty(CS)) {
+        if (isEmpty(CS)) {
             return {};
         }
         const first = (x) => Object.values(x)[0];
@@ -130,7 +134,7 @@ describe("Array Operations", function() {
                 ],
             });
 
-            const originalRebaseCS = _.cloneDeep(rebaseCS);
+            const originalRebaseCS = cloneDeep(rebaseCS);
             const conflicts = [];
             const applyAfterMetaInformation = new Map();
             const CS = new ChangeSet(base);
@@ -181,18 +185,18 @@ describe("Array Operations", function() {
     function testRebasedApplies(localBranchChangeSet, baseChangeSet, baseState) {
         const conflicts = [];
         const rebaseMetaInformation = new Map();
-        const originalRebaseChangeSet = _.cloneDeep(localBranchChangeSet);
-        const deltaChangeSet = new ChangeSet(_.cloneDeep(localBranchChangeSet));
+        const originalRebaseChangeSet = cloneDeep(localBranchChangeSet);
+        const deltaChangeSet = new ChangeSet(cloneDeep(localBranchChangeSet));
         deltaChangeSet.toInverseChangeSet();
 
-        const rebaseChangeSet = _.cloneDeep(localBranchChangeSet);
+        const rebaseChangeSet = cloneDeep(localBranchChangeSet);
         new ChangeSet(baseChangeSet)._rebaseChangeSet(rebaseChangeSet, conflicts, {
             applyAfterMetaInformation: rebaseMetaInformation,
         });
 
         deltaChangeSet.applyChangeSet(baseChangeSet);
         validateChangeSet(deltaChangeSet);
-        const copiedRebaseChangeSet = _.cloneDeep(rebaseChangeSet);
+        const copiedRebaseChangeSet = cloneDeep(rebaseChangeSet);
         deltaChangeSet.applyChangeSet(rebaseChangeSet, {
             applyAfterMetaInformation: rebaseMetaInformation,
         });
@@ -200,12 +204,12 @@ describe("Array Operations", function() {
 
         // This path first walks onto the local branch (applying the original changeset from the local branch)
         // and then the delta to the new tip (going back one step, and then forward again)
-        const deltaPath = new ChangeSet(_.cloneDeep(baseState));
+        const deltaPath = new ChangeSet(cloneDeep(baseState));
         deltaPath.applyChangeSet(originalRebaseChangeSet);
         deltaPath.applyChangeSet(deltaChangeSet);
 
         // This computes the same state, but not starting from the local branch, but from the base commit itself
-        const directPath = new ChangeSet(_.cloneDeep(baseState));
+        const directPath = new ChangeSet(cloneDeep(baseState));
         directPath.applyChangeSet(baseChangeSet);
         directPath.applyChangeSet(rebaseChangeSet);
         expect(deltaPath.getSerializedChangeSet()).to.deep.equal(directPath.getSerializedChangeSet());
@@ -219,8 +223,8 @@ describe("Array Operations", function() {
     function runTestApplyingReverseAndRebasedChangesetForIndependentModifications(baseInsertPositions,
         rebasedInsertPositions,
         baseOperation = "insert",
-        baseCount = 1) {
-
+        baseCount = 1,
+    ) {
         const createInserts = (positions, count) => positions.map((x) => [
             x,
             generateNamedEntities(count),
@@ -280,7 +284,7 @@ describe("Array Operations", function() {
 
     function testRebaseDistributivity(baseChangesets, rebaseChangeSet, base) {
         // First rebase with each CS independently
-        const rebasedCS1 = _.cloneDeep(rebaseChangeSet);
+        const rebasedCS1 = cloneDeep(rebaseChangeSet);
         for (const baseChangeSet of baseChangesets) {
             const conflicts = [];
             (new ChangeSet(baseChangeSet))._rebaseChangeSet(rebasedCS1, conflicts);
@@ -294,24 +298,24 @@ describe("Array Operations", function() {
         }
 
         // Test whether squashed base changes are consistent
-        const directApplication = new ChangeSet(_.cloneDeep(base));
+        const directApplication = new ChangeSet(cloneDeep(base));
         for (const baseChangeSet of baseChangesets) {
             directApplication.applyChangeSet(baseChangeSet);
         }
-        const squashApplication = new ChangeSet(_.cloneDeep(base));
+        const squashApplication = new ChangeSet(cloneDeep(base));
         squashApplication.applyChangeSet(squashedBaseChangeSets);
         expect(directApplication.getSerializedChangeSet()).to.deep.equal(
             squashApplication.getSerializedChangeSet(),
         );
 
         const conflicts2 = [];
-        const rebasedCS2 = _.cloneDeep(rebaseChangeSet);
+        const rebasedCS2 = cloneDeep(rebaseChangeSet);
         (new ChangeSet(squashedBaseChangeSets))._rebaseChangeSet(rebasedCS2, conflicts2);
         validateChangeSet(rebasedCS2);
 
         expect(rebasedCS1).to.deep.equal(rebasedCS2);
 
-        return testRebasedApplies(_.cloneDeep(rebaseChangeSet), squashedBaseChangeSets, base);
+        return testRebasedApplies(cloneDeep(rebaseChangeSet), squashedBaseChangeSets, base);
     }
 
     describe("Rebase Distributivity", () => {
@@ -322,17 +326,17 @@ describe("Array Operations", function() {
                         createArrayCS({
                             insert: [
                                 [1, generateNamedEntities(1)],
-                            ]
+                            ],
                         }),
                         createArrayCS({
                             insert: [
                                 [6, generateNamedEntities(1)],
-                            ]
+                            ],
                         }),
                         createArrayCS({
                             insert: [
                                 [9, generateNamedEntities(1)],
-                            ]
+                            ],
                         }),
                         createArrayCS({
                             remove: [
@@ -345,12 +349,12 @@ describe("Array Operations", function() {
                         createArrayCS({
                             insert: [
                                 [insertPosition, generateNamedEntities(1)],
-                            ]
+                            ],
                         }),
                         createArrayCS({
                             insert: [
                                 [0, generateNamedEntities(10)],
-                            ]
+                            ],
                         }),
                     );
                 });
@@ -361,46 +365,46 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
             testRebaseDistributivity([
                 createArrayCS({
                     remove: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [3, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -409,23 +413,23 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [3, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -434,23 +438,23 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     remove: [
                         [1, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
             const arrayCS = getArrayCS(deltacS);
@@ -462,33 +466,33 @@ describe("Array Operations", function() {
                 createArrayCS({
                     insert: [
                         [2, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [0, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [1, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [1, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -497,33 +501,33 @@ describe("Array Operations", function() {
                 createArrayCS({
                     insert: [
                         [4, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [2, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [3, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [2, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [3, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -532,43 +536,43 @@ describe("Array Operations", function() {
                 createArrayCS({
                     insert: [
                         [4, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [6, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [2, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [3, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [4, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [2, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [3, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -577,23 +581,23 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [1, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [1, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     remove: [
                         [1, generateNamedEntities(1, [3])],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -602,23 +606,23 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [8, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [8, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     remove: [
                         [8, generateNamedEntities(1, [3])],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(14)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -627,7 +631,7 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [8, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
@@ -640,12 +644,12 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [8, generateNamedEntities(1, [3])],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(14)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -654,18 +658,18 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [4, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     remove: [
                         [3, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(14)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -697,7 +701,7 @@ describe("Array Operations", function() {
                     }
                     assert(entry[0] >= lastIndex + indexOffset, "Changeset operations are not sorted or not merged");
                     lastIndex = entry[0];
-                    lastLength = !_.isNumber(entry[1]) ? entry[1].length : entry[1];
+                    lastLength = !isNumber(entry[1]) ? entry[1].length : entry[1];
 
                     // Inserts must not lie within modify or remove ranges
                     if (type === "remove" || type === "modify") {
@@ -716,12 +720,12 @@ describe("Array Operations", function() {
         validateChangeSet(combinedCS);
 
         // Individually apply the operations
-        const separateApplysResult = new ChangeSet(_.cloneDeep(base));
+        const separateApplysResult = new ChangeSet(cloneDeep(base));
         operations.forEach(separateApplysResult.applyChangeSet.bind(separateApplysResult));
         validateChangeSet(separateApplysResult);
 
         // And apply the combined CS
-        const combinedApplyResult = new ChangeSet(_.cloneDeep(base));
+        const combinedApplyResult = new ChangeSet(cloneDeep(base));
         combinedApplyResult.applyChangeSet(combinedCS);
 
         if (customValidator !== undefined) {
@@ -764,7 +768,7 @@ describe("Array Operations", function() {
         describe("Inserting into a remove range with deletes on both sides", () => {
             for (const additionalInserts of ["", " with insert at the beginning", " with insert at the end"]) {
                 const offset = additionalInserts === " with insert at the beginning" ? 2 : 0;
-                for (const i of _.range(1, 9)) {
+                for (const i of range(1, 9)) {
                     it(`at postion ${i + offset}${additionalInserts}`, () => {
                         const initial = createArrayCS({
                             insert: [

@@ -36,6 +36,9 @@ export class TinyliciousRunner implements IRunner {
     ) { }
 
     public async start(): Promise<void> {
+        const version = process.env.npm_package_version;
+        winston.info(`Starting tinylicious@${version}`);
+
         this.runningDeferred = new Deferred<void>();
 
         // Make sure provided port is unoccupied
@@ -43,7 +46,7 @@ export class TinyliciousRunner implements IRunner {
             await this.ensurePortIsFree();
         } catch (e) {
             if (this.config.get("exitOnPortConflict")) {
-                winston.info(e.message);
+                winston.info(e);
                 return;
             }
             throw e;

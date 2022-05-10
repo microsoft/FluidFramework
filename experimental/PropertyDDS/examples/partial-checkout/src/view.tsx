@@ -6,14 +6,14 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import _ from "lodash";
-import { IDataCreationOptions, IInspectorRow, fetchRegisteredTemplates ,
+import { IDataCreationOptions, IInspectorRow, fetchRegisteredTemplates,
     InspectorTable, IInspectorTableProps, handlePropertyDataCreation, ModalManager, ModalRoot,
 } from "@fluid-experimental/property-inspector-table";
 
 import { SharedPropertyTree } from "@fluid-experimental/property-dds";
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
-import { FluidBinder } from "@fluid-experimental/property-binder";
-import { SquaresApp , randomSquaresBoardGenerator, moveSquares } from "./demo/squaresApp";
+import { DataBinder } from "@fluid-experimental/property-binder";
+import { SquaresApp, randomSquaresBoardGenerator, moveSquares } from "./demo/squaresApp";
 
 import { IPropertyTree } from "./dataObject";
 
@@ -46,7 +46,7 @@ export function renderButtons(propertyTree: IPropertyTree, div: HTMLDivElement) 
     buttons.append(randomButton);
 
     const commitButton = document.createElement("button");
-    commitButton.id  = "commit";
+    commitButton.id = "commit";
     commitButton.style.fontSize = "15px";
     commitButton.textContent = "Commit";
     commitButton.addEventListener("click", () => {
@@ -94,29 +94,29 @@ const tableProps: Partial<IInspectorTableProps> = {
     height: 600,
 };
 
-export function renderApp(propertyTree: IPropertyTree, content: HTMLDivElement): FluidBinder {
-    // Creating a FluidBinder instance.
-    const fluidBinder = new FluidBinder();
+export function renderApp(propertyTree: IPropertyTree, content: HTMLDivElement): DataBinder {
+    // Creating a DataBinder instance.
+    const dataBinder = new DataBinder();
 
     const div = content.children[1] as HTMLDivElement; // Board div
 
     // We create the squares demo app.
-    const squaresApp = new SquaresApp(fluidBinder, div, propertyTree);
+    const squaresApp = new SquaresApp(dataBinder, div, propertyTree);
     squaresApp.init();
 
-    // Attaching FluidBinder to a PropertyTree instance in order to start listening to changes.
-    fluidBinder.attachTo(propertyTree.tree);
+    // Attaching DataBinder to a PropertyTree instance in order to start listening to changes.
+    dataBinder.attachTo(propertyTree.tree);
 
     // Rendering buttons
     renderButtons(propertyTree, content);
 
-    return fluidBinder;
+    return dataBinder;
 }
 
-export function renderInspector(fluidBinder: FluidBinder, propertyTree: IPropertyTree) {
+export function renderInspector(dataBinder: DataBinder, propertyTree: IPropertyTree) {
     // Listening to any change the root path of the PropertyDDS, and rendering the latest state of the
     // inspector tree-table.
-    fluidBinder.registerOnPath("/", ["insert", "remove", "modify"], _.debounce(() => {
+    dataBinder.registerOnPath("/", ["insert", "remove", "modify"], _.debounce(() => {
         // Create an ES6 proxy for the DDS, this enables JS object interface for interacting with the DDS.
         // Note: This is what currently inspector table expect for "data" prop.
         const proxifiedDDS = PropertyProxy.proxify(propertyTree.pset);

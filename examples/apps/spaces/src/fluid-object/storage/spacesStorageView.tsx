@@ -14,7 +14,7 @@ import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
     clickCallback(): void;
-    title: string,
+    title: string;
 }
 
 const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
@@ -90,7 +90,7 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
 
 // Stronger typing here maybe?
 interface ISpacesStorageViewProps<T = any> {
-    getViewForItem: (item: Serializable<T>) => Promise<JSX.Element | undefined>,
+    getViewForItem: (item: Serializable<T>) => Promise<JSX.Element | undefined>;
     getUrlForItem: (itemId: string) => string;
     storage: ISpacesStorage<T>;
     editable: boolean;
@@ -158,7 +158,6 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
                 rowHeight={50}
                 width={1800}
                 height={10000}
-                // eslint-disable-next-line no-null/no-null
                 compactType={null} // null is required for the GridLayout
                 isDroppable={props.editable}
                 isDraggable={props.editable}

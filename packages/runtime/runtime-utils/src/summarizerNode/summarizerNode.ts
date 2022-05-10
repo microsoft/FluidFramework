@@ -21,7 +21,7 @@ import {
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
-import { ReadAndParseBlob, seqFromTree } from "../utils";
+import { ReadAndParseBlob } from "../utils";
 import {
     decodeSummary,
     encodeSummary,
@@ -64,7 +64,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     protected readonly pendingSummaries = new Map<string, SummaryNode>();
     private readonly outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
-    private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
+    private wipLocalPaths: { localPath: EscapedPath; additionalPath?: EscapedPath; } | undefined;
     private wipSkipRecursion = false;
 
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
@@ -240,7 +240,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 
     /**
      * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
-     * it becomes the latest summary. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
+     * it becomes the latest summary. If the current summary is already ahead (e.g., loaded from a service summary),
+     * we skip the update. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
      * summary based off of that.
      * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
      *          1. The latest summary was not udpated.
@@ -250,6 +251,7 @@ export class SummarizerNode implements IRootSummarizerNode {
      */
     public async refreshLatestSummary(
         proposalHandle: string | undefined,
+        summaryRefSeq: number,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
@@ -263,16 +265,14 @@ export class SummarizerNode implements IRootSummarizerNode {
             }
         }
 
-        const snapshotTree = await getSnapshot();
-        const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
-
-        // If we have seen a summary same or later as the downloaded one, ignore it.
-        if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+        // If we have seen a summary same or later as the current one, ignore it.
+        if (this.referenceSequenceNumber >= summaryRefSeq) {
             return { latestSummaryUpdated: false };
         }
 
+        const snapshotTree = await getSnapshot();
         await this.refreshLatestSummaryFromSnapshot(
-            referenceSequenceNumber,
+            summaryRefSeq,
             snapshotTree,
             undefined,
             EscapedPath.create(""),
@@ -394,7 +394,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     public async loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: ReadAndParseBlob,
-    ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }> {
+    ): Promise<{ baseSummary: ISnapshotTree; outstandingOps: ISequencedDocumentMessage[]; }> {
         const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 

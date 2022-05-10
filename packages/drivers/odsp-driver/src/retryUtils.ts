@@ -38,7 +38,7 @@ export async function runWithRetry<T>(
                     lastError);
             }
             return result;
-        } catch (error) {
+        } catch (error: any) {
             const canRetry = canRetryOnError(error);
 
             const coherencyError = error?.[Odsp409Error] === true;
@@ -68,7 +68,7 @@ export async function runWithRetry<T>(
 
             assert(canRetry, 0x24d /* "can retry" */);
             await delay(Math.floor(retryAfter));
-            retryAfter += retryAfter / 4  * (1 + Math.random());
+            retryAfter += retryAfter / 4 * (1 + Math.random());
             lastError = error;
         }
     }

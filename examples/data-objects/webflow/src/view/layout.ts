@@ -5,13 +5,10 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { Dom, hasTagName, isTextNode, Scheduler, TagName } from "@fluid-example/flow-util-lib";
-import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
 import { SequenceEvent } from "@fluidframework/sequence";
 import { FlowDocument } from "../document";
-import { IFluidHTMLViewFactory } from "../editor";
-import { clamp, done, emptyObject, getSegmentRange } from "../util";
+import { clamp, Dom, done, emptyObject, getSegmentRange, hasTagName, isTextNode, TagName } from "../util";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
 import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter";
@@ -93,10 +90,23 @@ export class Layout extends EventEmitter {
     private renderPromise = done;
     private renderResolver: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, scheduler = new Scheduler(), public readonly viewFactoryRegistry: Map<string, IFluidHTMLViewFactory> = new Map(), public readonly scope?: IFluidObject) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>) {
         super();
 
-        this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
+        let scheduled = false;
+        this.scheduleRender = () => {
+            if (scheduled) {
+                return;
+            }
+
+            Promise.resolve().then(() => {
+                scheduled = false;
+                this.render();
+            }).catch(console.error);
+
+            scheduled = true;
+        };
+
         this.initialCheckpoint = new LayoutCheckpoint([], { parent: this.slot, previous: null });
         this.rootFormatInfo = Object.freeze({ formatter: new BootstrapFormatter(formatter), state: emptyObject });
 
@@ -557,7 +567,7 @@ export class Layout extends EventEmitter {
         this.endInvalid = updateRef(doc, this.endInvalid, _end);
         this.scheduleRender();
 
-        this.renderPromise = new Promise((accept) => { this.renderResolver = accept; });
+        this.renderPromise = new Promise((resolve) => { this.renderResolver = resolve; });
     }
 
     private render() {

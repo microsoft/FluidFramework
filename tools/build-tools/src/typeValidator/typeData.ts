@@ -3,27 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { Node, Project } from "ts-morph";
+import { Node, Project, ts } from "ts-morph";
 import * as fs from "fs";
 import { getPackageDetails, PackageDetails } from "./packageJson";
 
 export interface PackageAndTypeData{
     packageDetails: PackageDetails;
     typeData: TypeData[];
+    project: Project;
 }
 
-export interface TypeData{
+export interface TypeData {
     readonly name: string;
-    readonly typeParams: string | undefined;
-    readonly deprecated: boolean;
-    readonly internal: boolean;
-    readonly needsTypeof: boolean;
     readonly kind: string;
+    readonly node: Node;
 }
 
-function hasDocTag(node: Node, tagName: "deprecated" | "internal"){
-    if(Node.isJSDocableNode(node)) {
-        for(const doc of node.getJsDocs()){
+export function getFullTypeName(typeData: TypeData){
+    return `${typeData.kind}_${typeData.name}`
+}
+
+export function hasDocTag(data: TypeData, tagName: "deprecated" | "internal"){
+    if(Node.isJSDocableNode(data.node)) {
+        for(const doc of data.node.getJsDocs()){
             for(const tag of doc.getTags()){
                 if(tag.getTagName() === tagName){
                     return true;
@@ -48,7 +50,10 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
     if (Node.isNamespaceDeclaration(node)){
         const typeData: TypeData[]=[];
         for(const s of node.getStatements()){
-            typeData.push(...getNodeTypeData(s, node.getName()));
+            // only get type data for nodes that are exported from the namespace
+            if(Node.isExportableNode(s) && s.isExported()){
+                typeData.push(...getNodeTypeData(s, node.getName()));
+            }
         }
         return typeData;
     }
@@ -66,78 +71,124 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
         return typeData
     }
 
-    if(Node.isClassDeclaration(node)
+    if(Node.isIdentifier(node)){
+        const typeData: TypeData[]=[];
+        node.getDefinitionNodes().forEach(
+            (d)=>typeData.push(...getNodeTypeData(d, namespacePrefix)));
+        return typeData;
+    }
+
+    if (Node.isClassDeclaration(node)
         || Node.isEnumDeclaration(node)
         || Node.isInterfaceDeclaration(node)
         || Node.isTypeAliasDeclaration(node)
-        || Node.isVariableDeclaration(node)){
-
+        || Node.isVariableDeclaration(node)
+        || Node.isFunctionDeclaration(node)
+    ) {
         const name = namespacePrefix !== undefined
             ? `${namespacePrefix}.${node.getName()}`
             : node.getName()!;
 
-        let typeParams: string | undefined;
-        if(Node.isInterfaceDeclaration(node) || Node.isTypeAliasDeclaration(node)){
-            // it's really hard to build the right type for a generic,
-            // so for now we'll just pass any, as it will always work
-            if(node.getTypeParameters().length > 0){
-                typeParams = `<${node.getTypeParameters().map(()=>"any").join(",")}>`;
-            }
-        }
-
-        const needsTypeof = Node.isVariableDeclaration(node) || Node.isFunctionDeclaration(node);
-
-        const deprecated = hasDocTag(node, "deprecated");
-        const internal = hasDocTag(node, "internal");
-
-        return [{
+        const typeData: TypeData[] = [{
             name,
-            deprecated,
-            internal,
-            typeParams,
-            needsTypeof,
             kind: node.getKindName(),
+            node,
         }];
+        return typeData;
     }
-
 
     throw new Error(`Unknown Export Kind: ${node.getKindName()}`)
 }
 
+export function toTypeString(prefix: string, typeData: TypeData){
+    const node = typeData.node;
+    let typeParams: string | undefined;
+    if(Node.isInterfaceDeclaration(node)
+        || Node.isTypeAliasDeclaration(node)
+        || Node.isClassDeclaration(node)
+    ){
+        // does the type take generics that don't have defaults?
+        if(node.getTypeParameters().length > 0
+            && node.getTypeParameters().some((tp)=>tp.getDefault() === undefined)
+        ){
+            // it's really hard to build the right type for a generic,
+            // so for now we'll just pass any, as it will always work
+            typeParams = `<${node.getTypeParameters().map(()=>"any").join(",")}>`;
+        }
+    }
 
-export function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): PackageAndTypeData {
+    const typeStringBase =`${prefix}.${typeData.name}${typeParams ?? ""}`;
+    switch(node.getKind()){
+        case ts.SyntaxKind.VariableDeclaration:
+        case ts.SyntaxKind.FunctionDeclaration:
+        case ts.SyntaxKind.Identifier:
+            // turn variables and functions into types
+            return `TypeOnly<typeof ${typeStringBase}>`;
 
-    const basePath = dependencyName === undefined
+        default:
+            return `TypeOnly<${typeStringBase}>`;
+    }
+}
+
+function tryFindDependencyPath(packageDir: string, dependencyName: string) {
+    // for lerna mono-repos we may need to look for the hoisted packages
+    //
+    let testPath = packageDir;
+    while(!fs.existsSync(`${testPath}/node_modules/${dependencyName}/package.json`)
+        && !fs.existsSync(`${testPath}/lerna.json`
+    )){
+        testPath += "/.."
+    }
+    return `${testPath}/node_modules/${dependencyName}`
+}
+
+function getIndexSourceFile(basePath: string){
+
+    const tsConfigPath: string =`${basePath}/tsconfig.json`;
+
+    if (fs.existsSync(tsConfigPath)) {
+        const project = new Project({
+            skipFileDependencyResolution: true,
+            tsConfigFilePath: tsConfigPath,
+        });
+
+        return {project, file: project.getSourceFileOrThrow("index.ts")};
+
+    }else{
+        const project = new Project({
+            skipFileDependencyResolution: true,
+        });
+        project.addSourceFilesAtPaths(`${basePath}/dist/**/*.d.ts`)
+        return {project, file: project.getSourceFileOrThrow("index.d.ts")};
+    }
+
+}
+
+export async function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): Promise<PackageAndTypeData> {
+
+    let basePath = dependencyName === undefined
         ? packageDir
-        : `${packageDir}/node_modules/${dependencyName}`;
+        : tryFindDependencyPath(packageDir, dependencyName);
 
-    const tsConfigPath =`${basePath}/tsconfig.json`
-
-    if(!fs.existsSync(tsConfigPath)){
-        throw new Error(`Tsconfig json does not exist: ${tsConfigPath}.\nYou may need to install the package via npm install in the package dir.`)
+    if (!fs.existsSync(`${basePath}/package.json`)) {
+        throw new Error(`package.json does not exist at ${basePath}.\nYou may need to install the package via npm install.`)
     }
-
-    const packageDetails = getPackageDetails(basePath);
-
-    const project = new Project({
-        skipFileDependencyResolution: true,
-        tsConfigFilePath: tsConfigPath,
-    });
-
-    const file = project.getSourceFile("index.ts")
-    if(file == undefined){
-        throw new Error("index.ts does not exist in package source.\nYou may need to install the package via npm install in the package dir.");
-    }
-    const typeData: TypeData[]=[];
-
+    const {project, file} = getIndexSourceFile(basePath);
+    const typeData = new Map<string, TypeData>();
     const exportedDeclarations = file.getExportedDeclarations();
     for(const declarations of exportedDeclarations.values()){
         for(const dec of declarations){
-            typeData.push(...getNodeTypeData(dec));
+           getNodeTypeData(dec).forEach((td)=> {
+               const fullName = getFullTypeName(td);
+               typeData.set(fullName, td);
+           })
         }
     }
+
+    const packageDetails = await getPackageDetails(basePath);
     return {
         packageDetails,
-        typeData: typeData.sort((a,b)=>a.name.localeCompare(b.name)),
+        typeData: Array.from(typeData.values()).sort((a,b)=>a.name.localeCompare(b.name)),
+        project,
     };
 }

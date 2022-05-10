@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import Fade from "@material-ui/core/Fade";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import TextField from "@material-ui/core/TextField";
+import { makeStyles } from "@material-ui/styles";
+import classNames from "classnames";
+import * as React from "react";
 import {
   backGroundDarkColor,
   backGroundLightColor,
   iconBaseColor,
+  iconHeight,
   iconHoverColor,
-  Omit
-} from './constants';
+  iconWidth,
+  Omit,
+} from "./constants";
+import { SvgIcon } from "./SVGIcon";
 
-import { SvgIcon } from './SVGIcon';
-import Fade from '@material-ui/core/Fade';
-import LinearProgress from '@material-ui/core/LinearProgress';
-import TextField from '@material-ui/core/TextField';
-import { makeStyles } from '@material-ui/styles';
-import classNames from 'classnames';
-import * as React from 'react';
-import { iconHeight, iconWidth } from './constants';
-
-export interface ISearchBoxProps extends Omit<React.HTMLProps<HTMLInputElement>, 'value'> {
+export interface ISearchBoxProps extends Omit<React.HTMLProps<HTMLInputElement>, "value"> {
   searchExpression: string;
   onClear?: () => void;
   onClose?: () => void;
@@ -33,64 +33,64 @@ export interface ISearchBoxProps extends Omit<React.HTMLProps<HTMLInputElement>,
 
 const useStyles = makeStyles({
   alignedItem: {
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   backGroundToggle: {
-    '&:hover': {
+    "&:hover": {
       background: backGroundDarkColor,
       fill: iconHoverColor,
     },
-    'background': backGroundLightColor,
-    'fill': iconBaseColor,
+    "background": backGroundLightColor,
+    "fill": iconBaseColor,
   },
   hoverableItem: {
-    cursor: 'pointer',
+    cursor: "pointer",
   },
   input: {
-    fontSize: '12px',
-    marginLeft: '5px',
-    marginRight: '5px',
-    outline: 'none',
+    fontSize: "12px",
+    marginLeft: "5px",
+    marginRight: "5px",
+    outline: "none",
   },
   navigationGroup: {
-    borderRadius: '2px',
-    display: 'flex',
-    height: '12px',
+    borderRadius: "2px",
+    display: "flex",
+    height: "12px",
   },
   navigationIcon: {
-    fill: 'inherit',
+    fill: "inherit",
   },
   progressBarColorPrimary: {
-    backgroundImage: 'linear-gradient(to right, white,#0696d7, white);',
+    backgroundImage: "linear-gradient(to right, white,#0696d7, white);",
   },
   progressBarRoot: {
-    borderRadius: '0px 0px 9px 9px' ,
-    bottom: '0px',
-    marginLeft: '2px',
-    marginRight: '2px',
-    position: 'relative',
+    borderRadius: "0px 0px 9px 9px",
+    bottom: "0px",
+    marginLeft: "2px",
+    marginRight: "2px",
+    position: "relative",
   },
   progressColorPrimary: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   resultsCount: {
-    color: '#999999',
-    fontSize: '9px',
-    marginLeft: '5px',
-    marginRight: '5px',
-    whiteSpace: 'nowrap',
+    color: "#999999",
+    fontSize: "9px",
+    marginLeft: "5px",
+    marginRight: "5px",
+    whiteSpace: "nowrap",
   },
   root: {
-    '& .MuiOutlinedInput-root': {
-      '& input': {
-        fontWeight: 'normal',
-        padding: 'inherit',
-        paddingLeft: '5px',
-        paddingRight: '5px',
+    "& .MuiOutlinedInput-root": {
+      "& input": {
+        fontWeight: "normal",
+        padding: "inherit",
+        paddingLeft: "5px",
+        paddingRight: "5px",
       },
     },
   },
-}, { name: 'SearchBox' });
+}, { name: "SearchBox" });
 
 export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
   ({
@@ -121,13 +121,13 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
     const handleOnClear = () => (onClear && onClear());
     const handleOnClose = () => (onClose && onClose());
     const handleKeyDown = (event) => {
-      if (event.key === 'Enter') {
+      if (event.key === "Enter") {
         if (event.shiftKey) {
           handlePrevious();
         } else {
           handleNext();
         }
-      } else if (event.key === 'Escape') {
+      } else if (event.key === "Escape") {
         handleOnClose();
       }
     };
@@ -137,13 +137,13 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
         {
           expanded &&
           <>
-            <div style={{ display: 'flex', visibility: searchExpression ? 'visible' : 'hidden' }}>
+            <div style={{ display: "flex", visibility: searchExpression ? "visible" : "hidden" }}>
               <div className={classNames(classes.alignedItem, classes.resultsCount)}>
                 {currentResult == null ? 0 : currentResult + 1} of {totalResults || 0}
               </div>
               <div className={classNames(classes.alignedItem, classes.navigationGroup)}>
                 <div
-                  key='previous'
+                  key="previous"
                   className={classNames(classes.alignedItem,
                     { [classes.backGroundToggle]: totalResults && !searchInProgress },
                     { [classes.hoverableItem]: totalResults && !searchInProgress })}
@@ -151,12 +151,12 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
                 >
                   <SvgIcon
                     className={classNames({ [classes.navigationIcon]: totalResults })}
-                    height='9px'
-                    svgId={'up'}
+                    height="9px"
+                    svgId={"up"}
                   />
                 </div>
                 <div
-                  key='next'
+                  key="next"
                   className={classNames(classes.alignedItem,
                     { [classes.backGroundToggle]: totalResults && !searchInProgress },
                     { [classes.hoverableItem]: totalResults && !searchInProgress })}
@@ -164,14 +164,14 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
                 >
                   <SvgIcon
                     className={classNames({ [classes.navigationIcon]: totalResults })}
-                    height='9px'
-                    svgId={'down'}
+                    height="9px"
+                    svgId={"down"}
                   />
                 </div>
               </div>
             </div>
             <div
-              key='close'
+              key="close"
               className={classNames(classes.alignedItem, classes.hoverableItem)}
               onClick={() => {
                 handleOnClear();
@@ -180,22 +180,22 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
               }
               }
             >
-              <SvgIcon svgId={'clear-24'} hoverable />
+              <SvgIcon svgId={"clear-24"} hoverable />
             </div>
           </>
         }
       </>);
 
     return (
-      <div style={{ transition: 'width 0.25s', width: expanded ? '100%' : '50%', minWidth: '120px' }}>
+      <div style={{ transition: "width 0.25s", width: expanded ? "100%" : "50%", minWidth: "120px" }}>
         <TextField
           onChange={onChange as any}
           onKeyDown={handleKeyDown}
           value={searchExpression}
-          placeholder='Search'
-          margin='none'
+          placeholder="Search"
+          margin="none"
           classes={{ root: classes.root }}
-          variant='outlined'
+          variant="outlined"
           inputRef={inputReference}
           InputProps={{
             className: classes.input,
@@ -204,13 +204,13 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
             onFocus: () => { setExpanded(true); },
             startAdornment: <><SvgIcon
               onClick={() => { inputReference.current!.focus(); }}
-              svgId={'search-16'}
+              svgId={"search-16"}
               hoverable
               width={iconWidth}
               height={iconHeight}
             />
-            <div style={{ position: 'absolute', left: '0px', bottom: '1px', width: '100%'}}>
-              <Fade in={searchInProgress} style={{ transitionDelay: '800ms'}}>
+            <div style={{ position: "absolute", left: "0px", bottom: "1px", width: "100%" }}>
+              <Fade in={searchInProgress} style={{ transitionDelay: "800ms" }}>
                 <LinearProgress
                   classes={{
                     barColorPrimary: classes.progressBarColorPrimary,

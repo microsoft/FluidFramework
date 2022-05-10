@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid/eslint7"
+        "@fluidframework/eslint-config-fluid"
     ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
@@ -16,7 +16,8 @@ module.exports = {
         "@typescript-eslint/no-unsafe-return": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "@typescript-eslint/restrict-plus-operands": "off",
-        "prefer-rest-params": "off"
-
+        "prefer-arrow-callback": "off",
+        "prefer-rest-params": "off",
+        "tsdoc/syntax": "off",
     }
 }

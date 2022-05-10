@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TagName } from "@fluid-example/flow-util-lib";
 import { DocSegmentKind } from "../document";
+import { TagName } from "./tagName";
 
 const segmentKindToIdPrefix = {
     [DocSegmentKind.beginTags]: "b:",

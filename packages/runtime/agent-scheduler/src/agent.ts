@@ -25,7 +25,7 @@ export interface IAgentSchedulerEvents extends IEvent {
      *      unless release() is called)
      * @param listener - callback notified when change happened for particular key
      */
-    (event: "picked" | "released" | "lost", listener: (taskId: string) => void)
+    (event: "picked" | "released" | "lost", listener: (taskId: string) => void);
 }
 
 /**
@@ -63,10 +63,4 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IEventProvider<
      * Returns a list of all tasks running on this client
      */
     pickedTasks(): string[];
-}
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends
-        Readonly<Partial<IProvideAgentScheduler>> { }
 }

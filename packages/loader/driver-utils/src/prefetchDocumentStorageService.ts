@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-null/no-null */
 import { LoaderCachingPolicy } from "@fluidframework/driver-definitions";
 import {
     ISnapshotTree,
@@ -84,12 +83,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
                     secondary.push(blob);
                 }
             }
-        }
-
-        for (const commit of Object.keys(tree.commits)) {
-            // We don't care if the prefetch succeeds
-            void this.getVersions(tree.commits[commit], 1)
-                .then(async (moduleCommit) => this.getSnapshotTree(moduleCommit[0]));
         }
 
         for (const subTree of Object.keys(tree.trees)) {

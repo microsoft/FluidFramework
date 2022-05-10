@@ -16,6 +16,7 @@ import {
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IAnyDriverError } from "@fluidframework/driver-utils";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {
@@ -82,9 +83,6 @@ export class MockDocumentDeltaConnection
         this.emit("disconnect", error?.message ?? "mock close() called");
     }
 
-    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
-    public close(error?: Error): void { this.dispose(error); }
-
     // Mock methods for raising events
     public emitOp(documentId: string, messages: Partial<ISequencedDocumentMessage>[]) {
         this.emit("op", documentId, messages);
@@ -98,7 +96,10 @@ export class MockDocumentDeltaConnection
     public emitPong(latency: number) {
         this.emit("pong", latency);
     }
-    public emitError(error: any) {
+    public emitDisconnect(disconnectReason: IAnyDriverError) {
+        this.emit("error", disconnectReason);
+    }
+    public emitError(error: IAnyDriverError) {
         this.emit("error", error);
     }
 }

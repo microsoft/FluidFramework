@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
     IFluidLoadable,
     IFluidRouter,
     IRequest,
@@ -28,7 +27,6 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import SimpleMDE from "simplemde";
-import { Viewer } from "./marked";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";
@@ -37,8 +35,8 @@ export class Smde extends EventEmitter implements
     IFluidLoadable,
     IFluidRouter,
     IFluidHTMLView {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
-        const collection = new Smde(runtime, context);
+    public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
+        const collection = new Smde(runtime);
         await collection.initialize(existing);
 
         return collection;
@@ -62,7 +60,7 @@ export class Smde extends EventEmitter implements
         assert(!!this._text, "SharedString property missing!");
         return this._text;
     }
-    constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime) {
         super();
 
         this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
@@ -92,24 +90,19 @@ export class Smde extends EventEmitter implements
     }
 
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
-        if (this.isReadonly()) {
-            const viewer = new Viewer(elm, this.text);
-            viewer.render();
-        } else {
-            // Create base textarea
-            if (!this.textArea) {
-                this.textArea = document.createElement("textarea");
-            }
+        // Create base textarea
+        if (!this.textArea) {
+            this.textArea = document.createElement("textarea");
+        }
 
-            // Reparent if needed
-            if (this.textArea.parentElement !== elm) {
-                this.textArea.remove();
-                elm.appendChild(this.textArea);
-            }
+        // Reparent if needed
+        if (this.textArea.parentElement !== elm) {
+            this.textArea.remove();
+            elm.appendChild(this.textArea);
+        }
 
-            if (!this.smde) {
-                this.setupEditor();
-            }
+        if (!this.smde) {
+            this.setupEditor();
         }
     }
 
@@ -197,13 +190,6 @@ export class Smde extends EventEmitter implements
                 });
             });
     }
-
-    // TODO: this should be an utility.
-    private isReadonly() {
-        const runtimeAsComponent = this.context.containerRuntime as IFluidObject;
-        const scopes = runtimeAsComponent.IFluidConfiguration?.scopes;
-        return scopes !== undefined && !scopes.includes("doc:write");
-    }
 }
 
 class SmdeFactory implements IFluidDataStoreFactory {
@@ -227,7 +213,7 @@ class SmdeFactory implements IFluidDataStoreFactory {
             ].map((factory) => [factory.type, factory])),
             existing,
         );
-        const routerP = Smde.load(runtime, context, existing);
+        const routerP = Smde.load(runtime, existing);
 
         return runtime;
     }

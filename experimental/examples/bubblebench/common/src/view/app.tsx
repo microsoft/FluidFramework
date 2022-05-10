@@ -102,10 +102,11 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
             }
         }
 
-        // Scale the number of local bubbles to target 30 fps.
-        if (!(stats.smoothFps > 30)) {
+        // Scale the number of local bubbles to target 22-23 fps.  We choose 22-23 fps because it
+        // is below 23.98, the lowest display refresh rate typically encountered on modern displays.
+        if (!(stats.smoothFps > 22)) {
             app.decreaseBubbles();
-        } else if (stats.smoothFps > 31) {
+        } else if (stats.smoothFps > 23) {
             app.increaseBubbles();
         }
 
@@ -121,7 +122,7 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
 
     // Observe changes to the visible size and update physics accordingly.
     const { ref } = useResizeObserver<HTMLDivElement>({
-        onResize: ({width, height}) => {
+        onResize: ({ width, height }) => {
             app.setSize(width, height);
         },
     });

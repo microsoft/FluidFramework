@@ -13,7 +13,6 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 export class ContainerFluidHandleContext implements IFluidHandleContext {
-    public get IFluidRouter() { return this; }
     public get IFluidHandleContext() { return this; }
     public readonly absolutePath: string;
 

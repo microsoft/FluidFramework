@@ -16,7 +16,7 @@ export class LocalServerTestDriver implements ITestDriver {
     public get server(): ILocalDeltaConnectionServer { return this._server; }
 
     constructor(private readonly api: LocalDriverApiType = LocalDriverApi) {
-
+        this._server = api.LocalDeltaConnectionServer.create();
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {

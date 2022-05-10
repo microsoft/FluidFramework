@@ -5,7 +5,6 @@
 ```ts
 
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import { FluidSerializer } from '@fluidframework/runtime-utils';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -15,20 +14,53 @@ import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
+
+// @public
+export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
+
+// @public
+export class FluidSerializer implements IFluidSerializer {
+    constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
+    decode(input: any): any;
+    encode(input: any, bind: IFluidHandle): any;
+    // (undocumented)
+    get IFluidSerializer(): this;
+    // (undocumented)
+    parse(input: string): any;
+    // (undocumented)
+    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): {
+        type: string;
+        url: string;
+    };
+    // (undocumented)
+    stringify(input: any, bind: IFluidHandle): string;
+}
+
+// @public (undocumented)
+export interface IFluidSerializer {
+    decode(input: any): any;
+    encode(value: any, bind: IFluidHandle): any;
+    parse(value: string): any;
+    stringify(value: any, bind: IFluidHandle): string;
+}
+
+// @public
+export interface ISerializedHandle {
+    // (undocumented)
+    type: "__fluid_handle__";
+    // (undocumented)
+    url: string;
+}
 
 // @public
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
-    connect(services: IChannelServices): void;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
-    isAttached(): boolean;
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 }
 
 // @public (undocumented)
@@ -36,6 +68,9 @@ export interface ISharedObjectEvents extends IErrorEvent {
     // (undocumented)
     (event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
+
+// @public (undocumented)
+export const isSerializedHandle: (value: any) => value is ISerializedHandle;
 
 // @public
 export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
@@ -47,22 +82,36 @@ export function parseHandles(value: any, serializer: IFluidSerializer): any;
 export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): string | undefined;
 
 // @public
-export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
+export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
+    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    protected processGCDataCore(serializer: SummarySerializer): void;
+    // (undocumented)
+    protected get serializer(): IFluidSerializer;
+    // (undocumented)
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    protected abstract summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+}
+
+// @public
+export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     protected abstract applyStashedOp(content: any): unknown;
     // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
+    // (undocumented)
     connect(services: IChannelServices): void;
     get connected(): boolean;
     protected didAttach(): void;
     protected dirty(): void;
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
-    protected getGCDataCore(): IGarbageCollectionData;
-    readonly handle: IFluidHandle;
     // (undocumented)
-    get IChannel(): this;
+    abstract getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
+    readonly handle: IFluidHandle;
+    protected handleDecoded(decodedHandle: IFluidHandle): void;
     // (undocumented)
     id: string;
     // (undocumented)
@@ -70,10 +119,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     initializeLocal(): void;
     protected initializeLocalCore(): void;
     // (undocumented)
-    static is(obj: any): obj is SharedObject;
     isAttached(): boolean;
-    // (undocumented)
-    get ISharedObject(): this;
     load(services: IChannelServices): Promise<void>;
     protected abstract loadCore(services: IChannelStorageService): Promise<void>;
     protected readonly logger: ITelemetryLogger;
@@ -81,15 +127,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected onConnect(): void;
     protected abstract onDisconnect(): any;
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
-    protected abstract registerCore(): any;
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
-    // (undocumented)
-    protected get serializer(): IFluidSerializer;
-    protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
-    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    // (undocumented)
+    abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 }
 
 // @public
@@ -109,7 +152,6 @@ export enum ValueType {
     // @deprecated
     Shared = 0
 }
-
 
 // (No @packageDocumentation comment for this package)
 

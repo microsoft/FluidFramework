@@ -64,6 +64,12 @@ describe("Timers", () => {
             testExactTimeout(defaultTimeout);
         });
 
+        it("Should timeout at extremely long time", () => {
+            const overrideTimeout = 365 * 24 * 60 * 60 * 1000; // 1 year
+            timer.start(overrideTimeout);
+            testExactTimeout(overrideTimeout);
+        });
+
         it("Should timeout at longer explicit time", () => {
             const overrideTimeout = defaultTimeout * 2;
             timer.start(overrideTimeout);
@@ -228,7 +234,7 @@ describe("Timers", () => {
 
         function startWithThen(ms?: number, handler?: () => void) {
             timer.start(ms, handler).then(
-                (result) => resolveResult = result.timerResult,
+                (result) => { resolveResult = result.timerResult; },
                 (error) => assert.fail(error),
             );
         }
@@ -278,7 +284,7 @@ describe("Timers", () => {
 
             timer.clear();
             await flushPromises();
-            assert(resolveResult === "timerCancelled", "Run promise should be resolved as cancel");
+            assert(resolveResult === "cancel", "Run promise should be resolved as cancel");
 
             await tickAndFlush(1);
             assert.strictEqual(runCount, 0, "Should not run after cleared");

@@ -13,6 +13,10 @@ export interface ITenantConfig {
     orderer: ITenantOrderer;
 
     customData: ITenantCustomData;
+
+    // Timestamp of when this tenant will be hard deleted.
+    // The tenant is soft deleted if a deletion timestamp is present.
+    scheduledDeletionTime?: string;
 }
 
 export interface ITenantStorage {
@@ -53,6 +57,16 @@ export interface ITenantCustomData {
     [key: string]: any;
 }
 
+export interface ITenantKeys {
+    key1: string;
+    key2: string;
+}
+
+export enum KeyName {
+    key1 = "key1",
+    key2 = "key2",
+}
+
 export interface ITenant {
     gitManager: IGitManager;
 
@@ -65,7 +79,7 @@ export interface ITenantManager {
     /**
      * Creates a new tenant with the given id, or a randomly generated id when none is provided.
      */
-    createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }>;
+    createTenant(tenantId?: string): Promise<ITenantConfig & { key: string; }>;
 
     /**
      * Retrieves details for the given tenant

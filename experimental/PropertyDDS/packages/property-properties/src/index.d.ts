@@ -2244,7 +2244,7 @@ declare module "@fluid-experimental/property-properties" {
             /**
              * Returns the full property type identifier for the ChangeSet including the enum type id
              * @param  in_hideCollection  if true the collection type (if applicable) will be omitted
-             *                since that is not aplicable here, this param is ignored. Default to false
+             *                since that is not applicable here, this param is ignored. Default to false
              * @return The typeid
              */
             getFullTypeid(in_hideCollection?: boolean): string;
@@ -2267,7 +2267,7 @@ declare module "@fluid-experimental/property-properties" {
              */
             getParent(): BaseProperty | undefined;
             /**
-             * checks whether the property is dynamic (only properties inherting from NodeProperty are)
+             * checks whether the property is dynamic (only properties inheriting from NodeProperty are)
              */
             isDynamic(): boolean;
             /**
@@ -2547,7 +2547,7 @@ declare module "@fluid-experimental/property-properties" {
             /**
              * Returns the full property type identifier for the ChangeSet including the enum type id
              * @param  in_hideCollection - if true the collection type (if applicable) will be omitted
-             *                since that is not aplicable here, this param is ignored. Default to false
+             *                since that is not applicable here, this param is ignored. Default to false
              * @return The typeid
              */
             getFullTypeid(in_hideCollection: boolean): string;
@@ -2676,6 +2676,13 @@ declare module "@fluid-experimental/property-properties" {
 
         }
 
+        /**
+         * Switch off validation to increase performance (but you risk modifying read only properties, creating cycles in
+         * the tree, etc...)
+         *
+         * @param enabled - Are the validations enabled?
+         */
+        function enableValidations(enabled : boolean);
     }
     export = PROPERTY_TREE_NS;
 }

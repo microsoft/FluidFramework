@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -21,10 +20,20 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     /**
      * The id of the container this resolved url is for.
      */
-    id: string,
+    id: string;
     url: string;
-    tokens: { [name: string]: string };
-    endpoints: { [name: string]: string };
+    tokens: { [name: string]: string; };
+    endpoints: { [name: string]: string; };
+}
+
+/**
+ * Container package info handed off to resolver.
+ */
+export interface IContainerPackageInfo {
+    /**
+     * Container package name.
+     */
+    name: string;
 }
 
 export interface IUrlResolver {
@@ -38,7 +47,7 @@ export interface IUrlResolver {
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        codeDetails?: IFluidCodeDetails,
+        packageInfoSource?: IContainerPackageInfo,
     ): Promise<string>;
 }
 
@@ -47,12 +56,6 @@ export interface IUrlResolver {
 * for driver compatibility and preload information.
 */
 export interface DriverPreCheckInfo {
-    /**
-     * @deprecated - only needed as long as long as Loader.request() does not work as intended. When
-     * Loader.request() caches and resolves pathing properly, this can be removed. #4489, #4491
-     */
-    containerPath: string;
-
     /**
      * A code details hint that can potentially be used to prefetch container code prior to having a snapshot.
      */

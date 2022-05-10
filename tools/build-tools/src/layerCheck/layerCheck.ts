@@ -11,6 +11,9 @@ import { writeFileAsync } from "../common/utils";
 import { FluidRepo } from "../common/fluidRepo";
 import path from "path";
 
+
+// This string is duplicated in the readme: update readme if changing this.
+
 function printUsage() {
     console.log(
         `
@@ -18,7 +21,7 @@ Usage: fluid-layer-check <options>
 Options:
      --dot <path>     Generate *.dot for GraphViz
      --info <path>    Path to the layer graph json file
-     --md             Generate PACKAGES.md file for human consumption
+     --md [<path>]    Generate PACKAGES.md file for human consumption at path relative to repo root (default: repo root)
 ${commonOptionString}
 `);
 }
@@ -26,7 +29,7 @@ ${commonOptionString}
 const packagesMdFileName: string = "PACKAGES.md";
 
 let dotGraphFilePath: string | undefined;
-let writePackagesMd: boolean = false;
+let mdFilePath: string | undefined;
 let layerInfoPath: string | undefined;
 
 function parseOptions(argv: string[]) {
@@ -60,8 +63,12 @@ function parseOptions(argv: string[]) {
         }
 
         if (arg === "--md") {
-            writePackagesMd = true;
-            continue;
+            if (i !== process.argv.length - 1) {
+                mdFilePath = process.argv[++i];
+                continue;
+            }
+            mdFilePath = "."; // path relative to repo root
+            break;
         }
 
         if (arg === "--info") {
@@ -100,8 +107,8 @@ async function main() {
         const layerGraph = LayerGraph.load(resolvedRoot, packages, layerInfoPath);
 
         // Write human-readable package list organized by layer
-        if (writePackagesMd) {
-            const packagesMdFilePath: string = path.join(resolvedRoot, "docs", packagesMdFileName);
+        if (mdFilePath) {
+            const packagesMdFilePath: string = path.join(resolvedRoot, mdFilePath, packagesMdFileName);
             await writeFileAsync(packagesMdFilePath, layerGraph.generatePackageLayersMarkdown(resolvedRoot));
         }
 
@@ -116,7 +123,7 @@ async function main() {
         }
 
         console.log(`Layer check passed (${packages.packages.length} packages)`)
-    } catch (e) {
+    } catch (e: any) {
         console.error(e.message);
         process.exit(-2);
     }

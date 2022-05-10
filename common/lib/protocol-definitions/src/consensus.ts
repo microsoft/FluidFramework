@@ -24,37 +24,17 @@ export interface IProposal {
 /**
  * Similar to IProposal except includes the sequence number when it was made in addition to the fields on IProposal
  */
-export type ISequencedProposal = { sequenceNumber: number } & IProposal;
+export type ISequencedProposal = { sequenceNumber: number; } & IProposal;
 
 /**
  * Adds the sequence number at which the message was approved to an ISequencedProposal
  */
-export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
+export type IApprovedProposal = { approvalSequenceNumber: number; } & ISequencedProposal;
 
 /**
  * Adds the sequence number at which the message was committed to an IApprovedProposal
  */
-export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
-
-/**
- * A proposal that has been propposed, but not yet accepted or committed
- */
-export interface IPendingProposal extends ISequencedProposal {
-    /**
-     * Sends a rejection for the proposal
-     */
-    reject();
-
-    /**
-     * Disables the sending of rejections for this proposal
-     */
-    disableRejection();
-
-    /**
-     * Returns true if rejections has been disable, otherwise false
-     */
-    readonly rejectionDisabled: boolean;
-}
+export type ICommittedProposal = { commitSequenceNumber: number; } & IApprovedProposal;
 
 /**
  * Events fired by a Quorum in response to client tracking.
@@ -68,21 +48,10 @@ export interface IQuorumClientsEvents extends IErrorEvent {
  * Events fired by a Quorum in response to proposal tracking.
  */
 export interface IQuorumProposalsEvents extends IErrorEvent {
-    (event: "addProposal", listener: (proposal: IPendingProposal) => void);
+    (event: "addProposal", listener: (proposal: ISequencedProposal) => void);
     (
         event: "approveProposal",
         listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void);
-    (
-        event: "commitProposal",
-        listener: (
-            sequenceNumber: number,
-            key: string,
-            value: any,
-            approvalSequenceNumber: number,
-            commitSequenceNumber: number) => void);
-    (
-        event: "rejectProposal",
-        listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void);
 }
 
 /**
@@ -108,8 +77,6 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
     has(key: string): boolean;
 
     get(key: string): any;
-
-    getApprovalData(key: string): ICommittedProposal | undefined;
 }
 
 /**

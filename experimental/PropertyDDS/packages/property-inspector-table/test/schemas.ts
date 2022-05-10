@@ -260,7 +260,7 @@ export const uint64CasesSchema = {
   typeid: 'autodesk.uint64:uint64-1.0.0',
 };
 
-export const inheritNodeProp  =  {
+export const inheritNodeProp = {
   inherits: 'NodeProperty',
   properties: [
     { id: 'something', typeid: 'String' },

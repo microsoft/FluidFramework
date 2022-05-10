@@ -11,6 +11,10 @@ export class TestCollection implements ICollection<any> {
     constructor(public collection: any[]) {
     }
 
+    public async aggregate(pipeline: any, options?: any) {
+        throw new Error("Method not implemented.");
+    }
+
     public async find(query: any, sort: any): Promise<any[]> {
         return this.findInternal(query, sort);
     }
@@ -32,6 +36,20 @@ export class TestCollection implements ICollection<any> {
         _.extend(value, set);
     }
 
+    public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
+        const values = this.findInternal(filter);
+        try {
+            values.forEach((value) => {
+                if (!value) {
+                    throw new Error("Not found");
+                }
+                _.extend(value, set);
+            });
+        } catch (e) {
+            return Promise.reject(e);
+        }
+    }
+
     public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
         const value = this.findOneInternal(filter);
         if (!value) {
@@ -49,7 +67,7 @@ export class TestCollection implements ICollection<any> {
         return this.insertOneInternal(value);
     }
 
-    public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
+    public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean; }> {
         const existing = this.findOneInternal(query);
         if (existing) {
             return { value: existing, existing: true };
@@ -76,6 +94,10 @@ export class TestCollection implements ICollection<any> {
             this.removeOneInternal(value);
         });
         return values;
+    }
+
+    public async distinct(key: any, filter: any): Promise<any> {
+        throw new Error("Method not implemented.");
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -163,7 +185,7 @@ export class TestCollection implements ICollection<any> {
 export class TestDb implements IDb {
     private readonly emitter = new EventEmitter();
 
-    constructor(private collections: { [key: string]: any[] }) {
+    constructor(private collections: { [key: string]: any[]; }) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -191,7 +213,7 @@ export interface ITestDbFactory extends IDbFactory {
 
 export class TestDbFactory implements ITestDbFactory {
     public readonly testDatabase: IDb;
-    constructor(collections: { [key: string]: any[] }) {
+    constructor(collections: { [key: string]: any[]; }) {
         this.testDatabase = new TestDb(collections);
     }
 

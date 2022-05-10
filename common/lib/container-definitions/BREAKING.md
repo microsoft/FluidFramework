@@ -1,3 +1,15 @@
+## 0.48 Upcoming changes
+- [IProxyLoader interface to be removed](#IProxyLoader-interface-to-be-removed)
+
+### IProxyLoader interface to be removed
+The `IProxyLoader` interface has been deprecated in 0.48 and will be removed in an upcoming release.
+
+## 0.45 Breaking changes
+- [ContainerErrorType.clientSessionExpiredError added](#ContainerErrorType.clientSessionExpiredError-added)
+
+### ContainerErrorType.clientSessionExpiredError added
+We have session expiry for GC purposes. Once the session has expired, we want to throw this new clientSessionExpiredError to clear out any stale in-memory data that may still be on the container.
+
 ## 0.40 Breaking changes
 
 - [IErrorBase.sequenceNumber removed](#IErrorBase.sequenceNumber-removed)

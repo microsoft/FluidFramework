@@ -90,7 +90,7 @@ describe("SharedString Snapshot Version", () => {
             const data = fs.readFileSync(filename, "utf8").trim();
             const dataObject = JSON.parse(data);
 
-            const summaryTree = testString.summarize().summary;
+            const summaryTree = testString.getAttachSummary().summary;
             const snapshotTree = convertSummaryTreeToITree(summaryTree);
             const testData = JSON.stringify(snapshotTree, undefined, 1).trim();
             const testDataObject = JSON.parse(testData);

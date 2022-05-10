@@ -47,7 +47,7 @@ export class OpsCache {
         if (remainingSlots !== 0) {
             this.batches.set(this.getBatchNumber(startingSequenceNumber), {
                 remainingSlots,
-                batchData : this.initializeNewBatchDataArray(),
+                batchData: this.initializeNewBatchDataArray(),
                 dirty: false,
             });
         }
@@ -109,7 +109,7 @@ export class OpsCache {
 
             this.totalOpsToCache--;
             if (this.totalOpsToCache === 0) {
-                this.logger.sendPerformanceEvent({ eventName: "CacheOpsLimitHit"});
+                this.logger.sendPerformanceEvent({ eventName: "CacheOpsLimitHit" });
                 this.cache.remove();
                 this.dispose();
                 break;
@@ -117,38 +117,55 @@ export class OpsCache {
         }
     }
 
-    public async get(from: number, to?: number): Promise<IMessage[]> {
+    /**
+     * Retrieves ops from cache
+     * @param from - inclusive
+     * @param to - exclusive
+     * @returns ops retrieved
+     */
+     private async getCore(from: number, to?: number): Promise<IMessage[]> {
         const messages: IMessage[] = [];
-        let batchNumber = this.getBatchNumber(from + 1);
-        const start = performance.now();
+        let batchNumber = this.getBatchNumber(from);
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const res = await this.cache.read(`${this.batchSize}_${batchNumber}`);
             if (res === undefined) {
-                break;
+                return messages;
             }
             const result: CacheEntry = JSON.parse(res);
             for (const op of result) {
                 // Note that we write out undefined, but due to JSON.stringify, it turns into null!
                 if (op) {
                     if (to !== undefined && op.sequenceNumber >= to) {
-                        break;
+                        return messages;
                     }
                     if (messages.length === 0) {
-                        if (op.sequenceNumber > from + 1) {
-                            break;
-                        } else if (op.sequenceNumber <= from) {
+                        if (op.sequenceNumber > from) {
+                            return messages;
+                        } else if (op.sequenceNumber < from) {
                             continue;
                         }
                     }
                     messages.push(op);
                 } else if (messages.length !== 0) {
-                    break;
+                    return messages;
                 }
             }
 
             batchNumber++;
         }
+    }
+
+    /**
+     * Retrieves ops from cache
+     * @param from - inclusive
+     * @param to - exclusive
+     * @returns ops retrieved
+     */
+    public async get(from: number, to?: number): Promise<IMessage[]> {
+        const start = performance.now();
+
+        const messages = await this.getCore(from, to);
 
         const duration = performance.now() - start;
         if (messages.length > 0 || duration > 1000) {

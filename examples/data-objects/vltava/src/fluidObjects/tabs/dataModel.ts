@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 
 import {
-    IFluidObject,
+    FluidObject,
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
@@ -29,14 +29,15 @@ export interface ITabsTypes {
 
 export interface ITabsModel {
     type: string;
-    handleOrId?: IFluidHandle | string;
+    handle: IFluidHandle;
 }
 
 export interface ITabsDataModel extends EventEmitter {
-    getFluidObjectTab(id: string): Promise<IFluidObject | undefined>;
+    getFluidObjectTab(id: string): Promise<FluidObject | undefined>;
     getTabIds(): string[];
     createTab(factory: IFluidDataStoreFactory): Promise<string>;
     getNewTabTypes(): ITabsTypes[];
+    getFluidObjectTabView(id: string): Promise<JSX.Element>;
 }
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {
@@ -46,10 +47,10 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         public root: ISharedDirectory,
         private readonly internalRegistry: IFluidObjectInternalRegistry,
         private readonly createSubObject: (factory: IFluidDataStoreFactory) => Promise<IFluidLoadable>,
-        private readonly getFluidObjectFromDirectory: <T extends IFluidObject & IFluidLoadable>(
+        private readonly getFluidObjectFromDirectory: <T extends FluidObject & IFluidLoadable>(
             id: string,
             directory: IDirectory,
-            getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined) =>
+            getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined) =>
             Promise<T | undefined>,
     ) {
         super();
@@ -80,24 +81,38 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         const fluidObject = await this.createSubObject(factory);
         this.tabs.set(newKey, {
             type: factory.type,
-            handleOrId: fluidObject.handle,
+            handle: fluidObject.handle,
         });
 
         return newKey;
     }
 
-    private getObjectFromDirectory(id: string, directory: IDirectory): string | IFluidHandle | undefined {
+    private getObjectFromDirectory(id: string, directory: IDirectory): IFluidHandle | undefined {
         const data = directory.get<ITabsModel>(id);
-        return data?.handleOrId;
+        return data?.handle;
     }
 
-    public async getFluidObjectTab(id: string): Promise<IFluidObject | undefined> {
+    public async getFluidObjectTab(id: string): Promise<FluidObject | undefined> {
         return this.getFluidObjectFromDirectory(id, this.tabs, this.getObjectFromDirectory);
+    }
+
+    public async getFluidObjectTabView(id: string): Promise<JSX.Element> {
+        const objectWithMetadata = this.tabs.get<ITabsModel>(id);
+        if (objectWithMetadata === undefined) {
+            throw new Error("Tab not found");
+        }
+        const registryEntry = this.internalRegistry.getByFactory(objectWithMetadata.type);
+        if (registryEntry === undefined) {
+            throw new Error("Tab of unknown type");
+        }
+
+        // Could be typed stronger, but getView just expects the passed object to have a .handle
+        return registryEntry.getView(objectWithMetadata);
     }
 
     public getNewTabTypes(): ITabsTypes[] {
         const response: ITabsTypes[] = [];
-        this.internalRegistry.getFromCapability("IFluidHTMLView").forEach((e) => {
+        this.internalRegistry.getAll().forEach((e) => {
             response.push({
                 friendlyName: e.friendlyName,
                 fabricIconName: e.fabricIconName,

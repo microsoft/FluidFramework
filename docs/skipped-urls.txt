@@ -1,0 +1,7 @@
+http://localhost:8080
+https://aka.ms/azurefluidrelay
+https://aka.ms/azurefluidrelaydocs
+https://aka.ms/fluentui/
+https://github.com/microsoft/FluidFramework/edit/*
+https://twitter.com/intent/follow*
+https://twitter.com/intent/tweet*

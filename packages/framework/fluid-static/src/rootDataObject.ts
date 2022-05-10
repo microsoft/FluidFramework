@@ -25,8 +25,7 @@ export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
+export class RootDataObject extends DataObject<{ InitialState: RootDataObjectProps; }> {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
@@ -103,11 +102,10 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
 }
 
 const rootDataStoreId = "rootDOId";
+
 /**
- * The DOProviderContainerRuntimeFactory is the container code for our scenario.
- *
- * By including the createRequestHandler, we can create any droplet types we include in the registry on-demand.
- * These can then be retrieved via container.request("/dataObjectId").
+ * The DOProviderContainerRuntimeFactory is container code that provides a single RootDataObject.  This data object is
+ * dynamically customized (registry and initial objects) based on the schema provided to the container runtime factory.
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     private readonly rootDataObjectFactory; // type is DataObjectFactory
@@ -115,15 +113,14 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
     constructor(schema: ContainerSchema) {
         const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
         const rootDataObjectFactory =
-            // eslint-disable-next-line @typescript-eslint/ban-types
-            new DataObjectFactory<RootDataObject, {}, RootDataObjectProps>(
+            new DataObjectFactory(
                 "rootDO",
                 RootDataObject,
                 sharedObjects,
                 {},
                 registryEntries,
             );
-        super([rootDataObjectFactory.registryEntry], [], [defaultRouteRequestHandler(rootDataStoreId)]);
+        super([rootDataObjectFactory.registryEntry], undefined, [defaultRouteRequestHandler(rootDataStoreId)]);
         this.rootDataObjectFactory = rootDataObjectFactory;
         this.initialObjects = schema.initialObjects;
     }

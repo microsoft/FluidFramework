@@ -5,6 +5,7 @@
 
 import * as api from "@fluidframework/protocol-definitions";
 import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
+import { ISnapshotContents } from "./odspUtils";
 
 /**
  * Socket storage discovery api response
@@ -33,6 +34,11 @@ export interface ISocketStorageDiscovery {
      * passed as a parameter to `OdspDocumentService.create()` factory.
      */
     socketToken?: string;
+
+    /**
+     * This is the time within which client has to refresh the session on (ODSP) relay service.
+     */
+    refreshSessionDurationSeconds?: number;
 }
 
 /**
@@ -76,7 +82,6 @@ export interface IDocumentStorageGetVersionsResponse {
 }
 
 export interface IDocumentStorageVersion {
-    message: string;
     id: string;
 }
 
@@ -197,13 +202,15 @@ export interface ICreateFileResponse {
     itemId: string;
     itemUrl: string;
     sequenceNumber: number;
+    sharingLink?: string;
+    sharingLinkErrorReason?: string;
 }
 
 export interface IVersionedValueWithEpoch {
     value: any;
-    fluidEpoch: string,
+    fluidEpoch: string;
     // This is same as "persistedCacheValueVersion" below. This represents the version of data stored in cache.
-    version: 3,
+    version: 3;
 }
 
 export const persistedCacheValueVersion = 3;
@@ -222,4 +229,11 @@ export interface IFlushOpsResponse {
     /** Time in seconds */
     retryAfter?: number;
     lastPersistedSequenceNumber?: number;
+}
+
+/**
+ * Represents the cached snapshot value.
+ */
+export interface ISnapshotCachedEntry extends ISnapshotContents {
+    cacheEntryTime: number;
 }

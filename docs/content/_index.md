@@ -1,5 +1,7 @@
 ---
 title: "Fluid Framework"
+aliases:
+  - /playground/
 ---
 
 {{< jumbotron
@@ -10,7 +12,7 @@ title: "Fluid Framework"
 {{< cta_container  >}}
   {{< cta
     linkClasses="get-started"
-    linkURL="/start/quick-start/"
+    linkURL="/docs/start/quick-start/"
     iconClasses="get-started"
     linkText="Get Started"
   >}}
@@ -24,9 +26,9 @@ title: "Fluid Framework"
 
   {{< cta
     linkClasses="play"
-    linkURL="/playground/"
+    linkURL="/docs/start/examples/"
     iconClasses="play"
-    linkText="Play with Fluid"
+    linkText="Examples"
   >}}
 {{< /cta_container  >}}
 

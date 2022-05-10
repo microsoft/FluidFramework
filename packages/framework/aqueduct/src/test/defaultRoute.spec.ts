@@ -11,7 +11,6 @@ import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import {
     IRequest,
     IResponse,
-    IFluidObject,
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { createFluidObjectResponse } from "@fluidframework/request-handler";
@@ -25,7 +24,7 @@ class MockRuntime {
             return {
                 request: async (r) => {
                     if (r.url === "/" || r.url === "/route") {
-                        return createFluidObjectResponse({ route: r.url } as IFluidObject);
+                        return createFluidObjectResponse({ route: r.url });
                     }
                     return create404Response(r);
                 },

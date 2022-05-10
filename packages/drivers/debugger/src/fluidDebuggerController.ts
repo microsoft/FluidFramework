@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert , Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -155,7 +155,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
         let messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
 
-        if(anonymize) {
+        if (anonymize) {
             const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
             messages = sanitizer.sanitize();
         }
@@ -258,7 +258,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async getVersions(
-        versionId: string,
+        versionId: string | null,
         count: number): Promise<IVersion[]> {
         if (this.storage !== undefined) {
             return this.storage.getVersions(versionId, count);
@@ -344,7 +344,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 }
 
-async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService)  {
+async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService) {
     const stream = deltaStorage.fetchMessages(1, undefined);
     while (true) {
         const result = await stream.read();

@@ -3,13 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { assert, Deferred, IPromiseTimer, IPromiseTimerResult, Timer } from "@fluidframework/common-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+    assert,
+    Deferred,
+    IPromiseTimer,
+    IPromiseTimerResult,
+    Timer,
+} from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
-    IAckNackSummaryResult,
+    IAckSummaryResult,
+    INackSummaryResult,
     ISummarizeOptions,
     IBroadcastSummaryResult,
     ISummarizeResults,
@@ -18,13 +26,15 @@ import {
     SubmitSummaryResult,
     SummarizeResultPart,
     ISummaryCancellationToken,
+    ISummarizeTelemetryProperties,
+    SummaryGeneratorTelemetry,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
 export type raceTimerResult<T> =
-    { result: "done"; value: T } |
-    { result: IPromiseTimerResult["timerResult"] } |
-    { result: "cancelled" };
+    { result: "done"; value: T; } |
+    { result: IPromiseTimerResult["timerResult"]; } |
+    { result: "cancelled"; };
 
 /** Helper function to wait for a promise or PromiseTimer to elapse. */
 export async function raceTimer<T>(
@@ -69,11 +79,6 @@ export type SummarizeReason =
      */
     | "maxOps"
     /**
-     * Special case to generate a summary in response to a Save op.
-     * @deprecated - do not use save ops
-     */
-    | `save;${string}: ${string}`
-    /**
      * Special case to attempt to summarize one last time before the
      * summarizer client closes itself. This is to prevent cases where
      * the summarizer client never gets a chance to summarize, because
@@ -81,8 +86,6 @@ export type SummarizeReason =
      * stay connected long enough for summarizer client to catch up.
      */
     | "lastSummary"
-    /** Previous summary attempt failed, and we are retrying. */
-    | `retry${number}`
     /** On-demand summary requested with specified reason. */
     | `onDemand;${string}`
     /** Enqueue summarize attempt with specified reason. */
@@ -118,9 +121,10 @@ const summarizeErrors = {
 export class SummarizeResultBuilder {
     public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
     public readonly summaryOpBroadcasted = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
-    public readonly receivedSummaryAckOrNack = new Deferred<SummarizeResultPart<IAckNackSummaryResult>>();
+    public readonly receivedSummaryAckOrNack =
+        new Deferred<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>();
 
-    public fail(message: string, error: any, nackSummaryResult?: IAckNackSummaryResult, retryAfterSeconds?: number) {
+    public fail(message: string, error: any, nackSummaryResult?: INackSummaryResult, retryAfterSeconds?: number) {
         assert(!this.receivedSummaryAckOrNack.isCompleted,
             0x25e /* "no reason to call fail if all promises have been completed" */);
 
@@ -148,7 +152,8 @@ export class SummaryGenerator {
         private readonly pendingAckTimer: IPromiseTimer,
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
-        private readonly raiseSummarizingError: (errorCode: string) => void,
+        private readonly raiseSummarizingError: (errorMessage: string) => void,
+        private readonly successfulSummaryCallback: () => void,
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
         private readonly logger: ITelemetryLogger,
     ) {
@@ -166,7 +171,7 @@ export class SummaryGenerator {
      * fullTree to generate tree without any summary handles even if unchanged
      */
     public summarize(
-        summarizeProps: ITelemetryProperties,
+        summarizeProps: ISummarizeTelemetryProperties,
         options: ISummarizeOptions,
         cancellationToken: ISummaryCancellationToken,
         resultsBuilder = new SummarizeResultBuilder(),
@@ -182,28 +187,38 @@ export class SummaryGenerator {
     }
 
     private async summarizeCore(
-        summarizeProps: ITelemetryProperties,
+        summarizeProps: ISummarizeTelemetryProperties,
         options: ISummarizeOptions,
         resultsBuilder: SummarizeResultBuilder,
         cancellationToken: ISummaryCancellationToken,
     ): Promise<void> {
         const { refreshLatestAck, fullTree } = options;
         const logger = ChildLogger.create(this.logger, undefined, { all: summarizeProps });
+
+        // Note: timeSinceLastAttempt and timeSinceLastSummary for the
+        // first summary are basically the time since the summarizer was loaded.
+        const timeSinceLastAttempt = Date.now() - this.heuristicData.lastAttempt.summaryTime;
+        const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
+        let summarizeTelemetryProps: SummaryGeneratorTelemetry = {
+            fullTree,
+            timeSinceLastAttempt,
+            timeSinceLastSummary,
+        };
+
         const summarizeEvent = PerformanceEvent.start(logger, {
             eventName: "Summarize",
             refreshLatestAck,
-            fullTree,
-            timeSinceLastAttempt: Date.now() - this.heuristicData.lastAttempt.summaryTime,
-            timeSinceLastSummary: Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime,
+            ...summarizeTelemetryProps,
         });
+
         // Helper functions to report failures and return.
         const getFailMessage =
             (errorCode: keyof typeof summarizeErrors) => `${errorCode}: ${summarizeErrors[errorCode]}`;
         const fail = (
             errorCode: keyof typeof summarizeErrors,
             error?: any,
-            properties?: ITelemetryProperties,
-            nackSummaryResult?: IAckNackSummaryResult,
+            properties?: SummaryGeneratorTelemetry,
+            nackSummaryResult?: INackSummaryResult,
         ) => {
             this.raiseSummarizingError(summarizeErrors[errorCode]);
             // UploadSummary may fail with 429 and retryAfter - respect that
@@ -211,10 +226,15 @@ export class SummaryGenerator {
             const retryAfterSeconds = getRetryDelaySecondsFromError(error);
 
             // Report any failure as an error unless it was due to cancellation (like "disconnected" error)
+            // If failure happened on upload, we may not yet realized that socket disconnected, so check
+            // offlineError too.
+            const category = cancellationToken.cancelled || error?.errorType === DriverErrorType.offlineError ?
+                "generic" : "error";
+
             summarizeEvent.cancel({
                  ...properties,
                  reason: errorCode,
-                 category: cancellationToken.cancelled ? "generic" : "error",
+                 category,
                  retryAfterSeconds,
             }, error);
             resultsBuilder.fail(getFailMessage(errorCode), error, nackSummaryResult, retryAfterSeconds);
@@ -222,9 +242,9 @@ export class SummaryGenerator {
 
         // Wait to generate and send summary
         this.summarizeTimer.start();
+
         // Use record type to prevent unexpected value types
         let summaryData: SubmitSummaryResult | undefined;
-        let generateTelemetryProps: Record<string, string | number | boolean | undefined> = {};
         try {
             summaryData = await this.submitSummaryCallback({
                 fullTree,
@@ -234,29 +254,33 @@ export class SummaryGenerator {
             });
 
             // Cumulatively add telemetry properties based on how far generateSummary went.
-            const { referenceSequenceNumber: refSequenceNumber } = summaryData;
-            generateTelemetryProps = {
-                refSequenceNumber,
-                opsSinceLastAttempt: refSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
-                opsSinceLastSummary: refSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+            const referenceSequenceNumber = summaryData.referenceSequenceNumber;
+            const opsSinceLastSummary =
+                referenceSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
+            summarizeTelemetryProps = {
+                ...summarizeTelemetryProps,
+                referenceSequenceNumber,
+                minimumSequenceNumber: summaryData.minimumSequenceNumber,
+                opsSinceLastAttempt: referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
+                opsSinceLastSummary,
             };
             if (summaryData.stage !== "base") {
-                generateTelemetryProps = {
-                    ...generateTelemetryProps,
+                summarizeTelemetryProps = {
+                    ...summarizeTelemetryProps,
                     ...summaryData.summaryStats,
                     generateDuration: summaryData.generateDuration,
                 };
 
                 if (summaryData.stage !== "generate") {
-                    generateTelemetryProps = {
-                        ...generateTelemetryProps,
+                    summarizeTelemetryProps = {
+                        ...summarizeTelemetryProps,
                         handle: summaryData.handle,
                         uploadDuration: summaryData.uploadDuration,
                     };
 
                     if (summaryData.stage !== "upload") {
-                        generateTelemetryProps = {
-                            ...generateTelemetryProps,
+                        summarizeTelemetryProps = {
+                            ...summarizeTelemetryProps,
                             clientSequenceNumber: summaryData.clientSequenceNumber,
                         };
                     }
@@ -264,11 +288,33 @@ export class SummaryGenerator {
             }
 
             if (summaryData.stage !== "submit") {
-                return fail("submitSummaryFailure", summaryData.error, generateTelemetryProps);
+                return fail("submitSummaryFailure", summaryData.error, summarizeTelemetryProps);
+            }
+
+            /**
+             * With incremental summaries, if the full tree was not summarized, only data stores that changed should
+             * be summarized. A data store is considered changed if either or both of the following is true:
+             * - It has received an op.
+             * - Its reference state changed, i.e., it went from referenced to unreferenced or vice-versa.
+             *
+             * In the extreme case, every op can be for a different data store and each op can result in the reference
+             * state change of multiple data stores. So, the total number of data stores that are summarized should not
+             * exceed the number of ops since last summary + number of data store whose reference state changed.
+             */
+            if (!fullTree && !summaryData.forcedFullTree) {
+                const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } = summaryData.summaryStats;
+                if (summarizedDataStoreCount > gcStateUpdatedDataStoreCount + opsSinceLastSummary) {
+                    logger.sendErrorEvent({
+                        eventName: "IncrementalSummaryViolation",
+                        summarizedDataStoreCount,
+                        gcStateUpdatedDataStoreCount,
+                        opsSinceLastSummary,
+                    });
+                }
             }
 
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
-            logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
+            summarizeEvent.reportEvent("generate", { ...summarizeTelemetryProps });
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
             return fail("submitSummaryFailure", error);
@@ -296,11 +342,12 @@ export class SummaryGenerator {
                 success: true,
                 data: { summarizeOp, broadcastDuration },
             });
+
             this.heuristicData.lastAttempt.summarySequenceNumber = summarizeOp.sequenceNumber;
             logger.sendTelemetryEvent({
-                eventName: "SummaryOp",
+                eventName: "Summarize_Op",
                 duration: broadcastDuration,
-                refSequenceNumber: summarizeOp.referenceSequenceNumber,
+                referenceSequenceNumber: summarizeOp.referenceSequenceNumber,
                 summarySequenceNumber: summarizeOp.sequenceNumber,
                 handle: summarizeOp.contents.handle,
             });
@@ -318,37 +365,44 @@ export class SummaryGenerator {
 
             // Update for success/failure
             const ackNackDuration = Date.now() - this.heuristicData.lastAttempt.summaryTime;
-            const telemetryProps: Record<string, number> = {
+
+            // adding new properties
+            summarizeTelemetryProps = {
                 ackWaitDuration: ackNackDuration,
-                sequenceNumber: ackNackOp.sequenceNumber,
+                ackNackSequenceNumber: ackNackOp.sequenceNumber,
                 summarySequenceNumber: ackNackOp.contents.summaryProposal.summarySequenceNumber,
+                ...summarizeTelemetryProps,
             };
             if (ackNackOp.type === MessageType.SummaryAck) {
                 this.heuristicData.markLastAttemptAsSuccessful();
-                summarizeEvent.end({ ...telemetryProps, handle: ackNackOp.contents.handle, message: "summaryAck" });
+                this.successfulSummaryCallback();
+                summarizeEvent.end({
+                    ...summarizeTelemetryProps,
+                    handle: ackNackOp.contents.handle,
+                });
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
-                    summaryAckNackOp: ackNackOp,
+                    summaryAckOp: ackNackOp,
                     ackNackDuration,
-                }});
+                } });
             } else {
                 // Check for retryDelay in summaryNack response.
-                // back-compat: cast needed until dep on protocol-definitions version bump
-                const summaryNack = ackNackOp.type === MessageType.SummaryNack
-                    ? ackNackOp.contents as { message?: string; retryAfter?: number; }
-                    : undefined;
-                const message = (ackNackOp.contents as { message?: string }).message ?? ackNackOp.contents.errorMessage;
+                assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
+                const summaryNack = ackNackOp.contents;
+                const message = summaryNack?.message;
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
-                const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });
+                // pre-0.58 error message prefix: summaryNack
+                const error = new LoggingError(`Received summaryNack: ${message}`, { retryAfterSeconds });
                 logger.sendErrorEvent(
-                    { eventName: "SummaryNack", ...generateTelemetryProps, retryAfterSeconds }, error);
+                    { eventName: "SummaryNack", ...summarizeTelemetryProps, retryAfterSeconds }, error);
+
                 assert(getRetryDelaySecondsFromError(error) === retryAfterSeconds, 0x25f /* "retryAfterSeconds" */);
                 // This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
                 return fail(
                     "summaryNack",
                     error,
-                    { ...telemetryProps, nackRetryAfter: retryAfterSeconds },
-                    { summaryAckNackOp: ackNackOp, ackNackDuration },
+                    { ...summarizeTelemetryProps, nackRetryAfter: retryAfterSeconds },
+                    { summaryNackOp: ackNackOp, ackNackDuration },
                 );
             }
         } finally {

@@ -260,7 +260,7 @@ export class FluidPackageCheck {
 
             let concurrentBuildCompile = true;
 
-            const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
+            const buildPrefix = pkg.getScript("build:gen") ? "npm run build:gen && " : (pkg.getScript("build:genver") ? "npm run build:genver && " : "");
 
             // if build:docs script exist, we require it in to be called in the build script for @fluidframework packages
             // otherwise, it is optional
@@ -276,12 +276,27 @@ export class FluidPackageCheck {
                 }
             }
 
+            if(pkg.getScript("typetests:gen")){
+                // typetests:gen should be in build:commonjs if it exists, otherwise, it should be in build:compile
+                const buildTargetScripts =
+                    pkg.getScript("build:commonjs") ? buildCommonJs : buildCompile;
+                if(pkg.getScript("build:test")){
+                    // if there is a test target put test type gen after tsc
+                    // as the type test will build with the tests
+                    buildTargetScripts.push("typetests:gen");
+                }else{
+                    // if there is no test target put it before tsc
+                    // so type test build with tsc
+                    buildTargetScripts.unshift("typetests:gen");
+                }
+            }
+
             const splitTestBuild = this.splitTestBuild(pkg, true);
             // build:test should be in build:commonjs if it exists, otherwise, it should be in build:compile
             if (pkg.getScript("build:test") || splitTestBuild) {
                 if (pkg.getScript("build:commonjs")) {
                     buildCommonJs.push("build:test");
-                    // build common js si not concurrent by default
+                    // build common js is not concurrent by default
                 } else {
                     buildCompile.push("build:test");
                     // test is depended on tsc, so we can't do it concurrently for build:compile
@@ -359,15 +374,21 @@ export class FluidPackageCheck {
                 check("prepack", prepack);
             }
 
-            if (splitTestBuild) {
-                if (!existsSync(path.join(this.getTestDir(pkg), "mocha"))) {
-                    const expectedBuildTest = "tsc --project ./src/test/tsconfig.json";
-                    if (this.checkScript(pkg, "build:test", expectedBuildTest, fix)) {
+            const testDirs = this.getTestDirs(pkg);
+            if (testDirs.length === 1) {
+                const expectedBuildTest = `tsc --project ./src/test/${testDirs[0] ? testDirs[0] + "/" : ""}tsconfig.json`;
+                if (this.checkScript(pkg, "build:test", expectedBuildTest, fix)) {
+                    fixed = true;
+                }
+            } else if (testDirs.length !== 0) {
+                check("build:test", testDirs.map((dir) => {
+                    const script = `build:test:${dir}`;
+                    const expectedBuildTest = `tsc --project ./src/test/${dir}/tsconfig.json`;
+                    if (this.checkScript(pkg, script, expectedBuildTest, fix)) {
                         fixed = true;
                     }
-                } else {
-                    check("build:test", ["build:test:mocha", "build:test:jest"]);
-                }
+                    return script;
+                }));
             }
         }
         return fixed;
@@ -418,7 +439,10 @@ export class FluidPackageCheck {
             if (this.checkScript(pkg, "eslint", expectedEslintScript, fix)) {
                 fixed = true;
             }
-            if (this.checkScript(pkg, "eslint:fix", `${expectedEslintScript} --fix`, fix)) {
+
+            const eslintFixScript = pkg.getScript("eslint:fix");
+            const hasFixType = eslintFixScript && eslintFixScript.search("--fix-type problem,suggestion,layout") >= 0;
+            if (this.checkScript(pkg, "eslint:fix", `${expectedEslintScript} --fix${hasFixType ? " --fix-type problem,suggestion,layout" : ""}`, fix)) {
                 fixed = true;
             }
         }
@@ -481,10 +505,10 @@ export class FluidPackageCheck {
 
     private static readonly commonConfig = "@fluidframework/build-common/ts-common-config.json";
 
-    private static async checkTsConfigExtend(pkg: Package, fix: boolean, configJson: any) {
+    private static async checkTsConfigExtend(pkg: Package, fix: boolean, configJson: any, configFile: string) {
         let changed = false;
         if (configJson.extends !== this.commonConfig) {
-            this.logWarn(pkg, `tsc config not extending ts-common-config.json`, fix);
+            this.logWarn(pkg, `${configFile}: tsc config not extending ts-common-config.json`, fix);
             if (fix) {
                 configJson.extends = this.commonConfig;
                 changed = true;
@@ -500,7 +524,7 @@ export class FluidPackageCheck {
                     loaded = true;
                     for (const option in configJson.compilerOptions) {
                         if (configJson.compilerOptions[option] === commonConfigJson.compilerOptions[option]) {
-                            this.logWarn(pkg, `duplicate compilerOptions ${option}: ${configJson.compilerOptions[option]}`, fix);
+                            this.logWarn(pkg, `${configFile}: duplicate compilerOptions - ${option}: ${configJson.compilerOptions[option]}`, fix);
                             if (fix) {
                                 delete configJson.compilerOptions[option];
                                 changed = true;
@@ -511,7 +535,7 @@ export class FluidPackageCheck {
             }
 
             if (!loaded) {
-                this.logWarn(pkg, `can't find ${this.commonConfig}`, false);
+                this.logWarn(pkg, `${configFile}: can't find ${this.commonConfig}`, false);
             }
         }
         return changed;
@@ -532,7 +556,7 @@ export class FluidPackageCheck {
             }
 
             let changed = false;
-            if (await this.checkTsConfigExtend(pkg, fix, configJson)) {
+            if (await this.checkTsConfigExtend(pkg, fix, configJson, configFile)) {
                 changed = true;
             }
 
@@ -580,74 +604,107 @@ export class FluidPackageCheck {
         }
         return false;
     }
-    private static async checkOneTestDir(pkg: Package, fix: boolean, testSrcDir: string, subDir?: string) {
-        const configFile = path.join(testSrcDir, subDir ?? "", "tsconfig.json");
-        const outDir = subDir ? `../../../dist/test/${subDir}` : `../../dist/test`;
+    private static async checkOneTestDir(pkg: Package, fix: boolean, subDir: string) {
+        const configFile = path.join(this.getTestBaseDir(pkg), subDir, "tsconfig.json");
+        let configJson;
+        configJson = TscUtils.readConfigFile(configFile);
+        if (!configJson) {
+            this.logWarn(pkg, `Unable to read ${configFile}`, false);
+            return;
+        }
+
+        const baseDir = !subDir && configJson.compilerOptions?.rootDir === "../";
+        const rootDir = baseDir ? "../" : "./";
+        const outDir = subDir ? `../../../dist/test/${subDir}` :
+            baseDir ? "../../dist" : "../../dist/test";
+
         const referencePath = subDir ? "../../.." : "../..";
         const compilerOptions = {
-            rootDir: "./",
+            rootDir,
             outDir,
             types: ["node", ...(subDir === "jest" ?
                 ["jest", "jest-environment-puppeteer", "puppeteer"] : ["mocha"])]
         };
-        const references = [{ path: referencePath }];
-        let configJson;
+
         let changed = false;
-        configJson = TscUtils.readConfigFile(configFile);
-        if (await this.checkTsConfigExtend(pkg, fix, configJson)) {
+
+        if (await this.checkTsConfigExtend(pkg, fix, configJson, configFile)) {
             changed = true;
         }
         if (!configJson.compilerOptions) {
-            this.logWarn(pkg, `Missing compilerOptions in test tsconfig.json`, fix);
+            this.logWarn(pkg, `Missing compilerOptions in ${configFile}`, fix);
             if (fix) {
                 configJson.compilerOptions = compilerOptions;
                 changed = true;
             }
         } else {
+            if (this.checkProperty(configFile, pkg, configJson.compilerOptions, "rootDir", rootDir, fix)) {
+                changed = true;
+            }
             if (this.checkProperty(configFile, pkg, configJson.compilerOptions, "outDir", outDir, fix)) {
                 changed = true;
             }
         }
 
-        if (!isEqual(configJson.references, references)) {
-            this.logWarn(pkg, `Unexpected references in test tsconfig.json`, fix);
-            if (fix) {
-                configJson.references = references;
-                changed = true;
+        if (this.hasMainBuild(pkg)) {
+            // We should only have references if we have a main build.
+            const references = [{ path: referencePath }];
+            if (!isEqual(configJson.references, references)) {
+                this.logWarn(pkg, `Unexpected references in ${configFile}`, fix);
+                if (fix) {
+                    configJson.references = references;
+                    changed = true;
+                }
             }
         }
+
         if (changed) {
             await writeFileAsync(configFile, JSON.stringify(configJson, undefined, 4));
         }
     }
 
     public static async checkTestDir(pkg: Package, fix: boolean) {
-        if (!this.splitTestBuild(pkg)) { return; }
-        const testSrcDir = this.getTestDir(pkg);
-        const mochaTestDir = path.join(testSrcDir, "mocha");
-        if (existsSync(mochaTestDir)) {
-            await this.checkOneTestDir(pkg, fix, testSrcDir, "mocha");
-            return this.checkOneTestDir(pkg, fix, testSrcDir, "jest");
-        }
-        return this.checkOneTestDir(pkg, fix, testSrcDir);
-    }
-
-    public static getTestDir(pkg: Package) {
-        return path.join(pkg.directory, "src", "test");
+        const testSrcDirs = this.getTestDirs(pkg);
+        await Promise.all(testSrcDirs.map((dir) => this.checkOneTestDir(pkg, fix, dir)))
     }
 
     public static splitTestBuild(pkg: Package, warnNoSource = false) {
-        if (!existsSync(path.join(pkg.directory, "tsconfig.json"))) {
+        if (!this.hasMainBuild(pkg)) {
             // don't split test build if there is no main build
             return false;
         }
-        if (!existsSync(path.join(this.getTestDir(pkg), "tsconfig.json"))) {
-            // don't split test build if there is no test build
+        const testDirs = this.getTestDirs(pkg, warnNoSource);
+        return testDirs.length !== 0;
+    }
+
+    private static hasMainBuild(pkg: Package) {
+        return existsSync(path.join(pkg.directory, "tsconfig.json"));
+    }
+
+    private static getTestBaseDir(pkg: Package) {
+        return path.join(pkg.directory, "src", "test");
+    }
+
+    private static getTestDirs(pkg: Package, warnNoSource = false) {
+        const testSrcBaseDir = this.getTestBaseDir(pkg);
+        if (this.isTestDir(pkg, testSrcBaseDir, warnNoSource)) {
+            return [""];
+        }
+
+        const testSrcDirNames = ["mocha", "jest", "types"];
+        return testSrcDirNames.filter((maybeTestDirName) => {
+            const maybeTestDir = path.join(testSrcBaseDir, maybeTestDirName);
+            return this.isTestDir(pkg, maybeTestDir, warnNoSource);
+        });
+    }
+
+    private static isTestDir(pkg: Package, maybeTestDir: string, warnNoSource: boolean) {
+        if (!existsSync(path.join(maybeTestDir, "tsconfig.json"))) {
             return false;
         }
 
         // Only split test build if there is some ts files in the test directory
-        const dirs = [this.getTestDir(pkg)];
+        const dirs = [maybeTestDir];
         while (true) {
             const dir = dirs.pop();
             if (!dir) {
@@ -656,8 +713,12 @@ export class FluidPackageCheck {
                 }
                 return false;
             }
+            if (dir !== maybeTestDir && existsSync(path.join(dir, "tsconfig.json"))) {
+                // skip test dir already covered.
+                continue;
+            }
             const files = fs.readdirSync(dir, { withFileTypes: true });
-            if (files.some((dirent) => !dirent.isDirectory() && dirent.name.endsWith(".ts"))) {
+            if (files.some((dirent) => !dirent.isDirectory() && (dirent.name.endsWith(".ts") || dirent.name.endsWith(".spec.js")))) {
                 return true;
             }
             dirs.push(...files.filter((dirent) => dirent.isDirectory()).map((dirent) => path.join(dir, dirent.name)));

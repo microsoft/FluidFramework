@@ -7,7 +7,8 @@ import {
     IDocumentStorage,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import * as bodyParser from "body-parser";
+import { RestLessServer } from "@fluidframework/server-services-shared";
+import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -39,6 +40,18 @@ export function create(
     // Express app configuration
     const app = express();
 
+    // initialize RestLess server translation
+    const restLessMiddleware: () => express.RequestHandler = () => {
+        const restLessServer = new RestLessServer();
+        return (req, res, next) => {
+            restLessServer
+                .translate(req)
+                .then(() => next())
+                .catch(next);
+        };
+    };
+    app.use(restLessMiddleware());
+
     // Running behind iisnode
     app.set("trust proxy", 1);
 
@@ -46,8 +59,8 @@ export function create(
     app.use(morgan(config.get("logger:morganFormat"), { stream }));
 
     app.use(cookieParser());
-    app.use(bodyParser.json({ limit: requestSize }));
-    app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+    app.use(json({ limit: requestSize }));
+    app.use(urlencoded({ limit: requestSize, extended: false }));
 
     // Bind routes
     const routes = createRoutes(

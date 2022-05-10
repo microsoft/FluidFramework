@@ -7,18 +7,30 @@
  * @description The TemplateValidator can examine consecutive versions of a given template to detect semantic
  * versioning (semver) errors and warn about incorrect versioning practices.
  */
-/* eslint-disable no-unused-lets */
 /* eslint-disable no-use-before-define */
 
 import Ajv from "ajv";
-import ajvKeywords from "ajv-keywords"
+import ajvKeywords from "ajv-keywords";
 
-import _ from "lodash"
+import each from "lodash/each";
+import isEqual from "lodash/isEqual";
+import every from "lodash/every";
+import isString from "lodash/isString";
+import isObject from "lodash/isObject";
+import difference from "lodash/difference";
+import has from "lodash/has";
+import mapValues from "lodash/mapValues";
+import includes from "lodash/includes";
+import map from "lodash/map";
+import find from "lodash/find";
+import isEmpty from "lodash/isEmpty";
+import { copy as cloneDeep } from "fastest-json-copy";
+
 import { gt, diff, major, valid, compare } from "semver";
 import traverse from "traverse";
 import { queue } from "async";
 
-//@ts-ignore
+// @ts-ignore
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 import { TemplateSchema } from "./templateSchema";
 import { TypeIdHelper } from "./helpers/typeidHelper";
@@ -28,7 +40,7 @@ const { MSG } = constants;
 
 const ajvFactory = new Ajv({
     allErrors: true,
-    verbose: true
+    verbose: true,
 });
 
 ajvKeywords(ajvFactory, "prohibited");
@@ -36,14 +48,14 @@ ajvKeywords(ajvFactory, "typeof");
 
 const _syntaxValidator = ajvFactory.compile(TemplateSchema);
 
-type ValuesType = { [key: string]: ValuesType }
+type ValuesType = { [key: string]: ValuesType; };
 
 type PropertyType = {
     id: string;
     context: string;
     typeid: string;
-    values: ValuesType
-}
+    values: ValuesType;
+};
 
 type PropertiesType = PropertyType[];
 
@@ -51,14 +63,13 @@ export interface PropertySchema {
     constants?: any[];
     context: string;
     inherits?: string[];
-    annotation?: { [key: string]: string };
+    annotation?: { [key: string]: string; };
     properties: PropertiesType;
     typeid: string;
-    values: ValuesType
+    values: ValuesType;
 }
 
 type SchemaEntityType = PropertySchema | string[] | PropertiesType;
-
 
 /**
  * A weighted enumeration of semver change types. Higher values are more important.
@@ -82,7 +93,7 @@ const VALID_CONTEXTS = ["single", "array", "map", "set", "enum"];
 
 const _extractTypeid = function(typeidOrReference: string) {
     // Take Reference<strong-type-id> and return strong-type-id
-    if (!_.isString(typeidOrReference)) {
+    if (!isString(typeidOrReference)) {
         throw new Error(MSG.TYPEID_MUST_BE_STRING + typeidOrReference);
     }
     const reference = "Reference<";
@@ -119,13 +130,12 @@ type PathEqualityInfo = {
 };
 
 function isPropertyArray(source: SchemaEntityType): source is PropertiesType {
-    return _.every(source, (entry: PropertyType) => _.isObject(entry) && !_.isUndefined(entry.id));
+    return every(source, (entry: PropertyType) => isObject(entry) && entry.id !== undefined);
 }
 
 // function isSchemaTemplate(source: SchemaEntityType): source is PropertySchema {
-//     return _.isObject(source) && !_.isArray(source);
+//     return isObject(source) && !Array.isArray(source);
 // }
-
 
 /**
  * An object deep compare with special handling for pset property arrays.
@@ -140,7 +150,7 @@ function isPropertyArray(source: SchemaEntityType): source is PropertiesType {
  */
 const _psetDeepEquals = function(in_source: SchemaEntityType, in_target: SchemaEntityType): PathEqualityInfo {
     const idPath = [];
-    if (!_.isArray(in_source) && in_source.typeid) {
+    if (!Array.isArray(in_source) && in_source.typeid) {
         idPath.push(`<${in_source.typeid}>`);
     }
 
@@ -175,8 +185,8 @@ const _psetDeepEquals = function(in_source: SchemaEntityType, in_target: SchemaE
             }
         }
 
-        if (_.isArray(source)) {
-            if (!_.isArray(target)) {
+        if (Array.isArray(source)) {
+            if (!Array.isArray(target)) {
                 return _getPSetDeepEqualsResult(false);
             }
 
@@ -192,7 +202,7 @@ const _psetDeepEquals = function(in_source: SchemaEntityType, in_target: SchemaE
             // like inheritance lists.
             if (isPropertyArray(source)) {
                 const targetMap = {};
-                _.each(target, function(element: PropertyType) {
+                each(target, function(element: PropertyType) {
                     targetMap[element.id] = element;
                 });
 
@@ -208,20 +218,20 @@ const _psetDeepEquals = function(in_source: SchemaEntityType, in_target: SchemaE
                     idPath.pop();
                 }
             }
-        } else if (_.isObject(source)) {
-            if (!_.isObject(target)) {
+        } else if (isObject(source)) {
+            if (!isObject(target)) {
                 return _getPSetDeepEqualsResult(false);
             }
 
-            const keysSource = _.keys(source);
-            const keysTarget = _.keys(target);
+            const keysSource = Object.keys(source);
+            const keysTarget = Object.keys(target);
             if (keysSource.length !== keysTarget.length) {
                 // A template with abstract properties must equal one with an empty properties array
                 // We check the difference in keys between the source and target and if the only difference is the
                 // properties array we check if it's empty. Then we reverse the condition so it work both ways.
                 if (
-                    (_.isEqual(_.difference(keysTarget, keysSource), ["properties"]) && !(target as any).properties.length) ||
-                    (_.isEqual(_.difference(keysSource, keysTarget), ["properties"]) && !source.properties.length)
+                    (isEqual(difference(keysTarget, keysSource), ["properties"]) && !(target as any).properties.length) ||
+                    (isEqual(difference(keysSource, keysTarget), ["properties"]) && !source.properties.length)
                 ) {
                     return _getPSetDeepEqualsResult(true);
                 }
@@ -268,7 +278,7 @@ const _unresolvedTypes = function(in_template: PropertySchema) {
             acc = {};
             first = false;
         }
-        if (_.isObject(x) && _.has(x, "typeid")) {
+        if (isObject(x) && has(x, "typeid")) {
             const extractedTypeid = _extractTypeid.call(that, x.typeid);
 
             if (!TypeIdHelper.isPrimitiveType(extractedTypeid)) {
@@ -278,7 +288,7 @@ const _unresolvedTypes = function(in_template: PropertySchema) {
         return acc;
     });
 
-    return _.keys(accSet);
+    return Object.keys(accSet);
 };
 
 /**
@@ -336,11 +346,11 @@ const _validatePositiveIncrement = function(in_template: PropertySchema, in_temp
             idPath.push(id);
         }
 
-        if (_.isUndefined(sourceObj) !== _.isUndefined(targetObj)) {
+        if ((sourceObj === undefined) !== (targetObj === undefined)) {
             let minimumLevel: string;
             let mutation: string;
 
-            if (_.isUndefined(targetObj)) {
+            if (targetObj === undefined) {
                 // An element has been deleted.
                 minimumLevel = "major";
                 mutation = "delete";
@@ -391,9 +401,9 @@ const _validatePositiveIncrement = function(in_template: PropertySchema, in_temp
                 );
             }
 
-            if (_.isArray(sourceObj)) {
+            if (Array.isArray(sourceObj)) {
                 let targetMap = {};
-                _.each(targetObj, function(element: any) {
+                each(targetObj, function(element: any) {
                     targetMap[element.id] = element;
                 });
 
@@ -403,12 +413,12 @@ const _validatePositiveIncrement = function(in_template: PropertySchema, in_temp
                     delete targetMap[element.id];
                 }
 
-                if (!_.isEmpty(targetMap)) {
+                if (!isEmpty(targetMap)) {
                     // Added array element.
                     let minimumLevel = "minor";
                     if (CHANGE_LEVEL[versionDiff] < CHANGE_LEVEL[minimumLevel]) {
                         // Violates rule 5 (warning)
-                        idPath.push(_.keys(targetMap)[0]);
+                        idPath.push(Object.keys(targetMap)[0]);
                         this._resultBuilder.addWarning(
                             MSG.CHANGE_LEVEL_TOO_LOW_1 + JSON.stringify({
                                 mutation: "add",
@@ -426,10 +436,10 @@ const _validatePositiveIncrement = function(in_template: PropertySchema, in_temp
                         idPath.pop();
                     }
                 }
-            } else if (_.isObject(sourceObj)) {
-                const keysSource = _.keys(sourceObj);
+            } else if (isObject(sourceObj)) {
+                const keysSource = Object.keys(sourceObj);
                 let targetMap = {};
-                _.mapValues(targetObj, function(val, key) {
+                mapValues(targetObj, function(val, key) {
                     targetMap[key] = val;
                 });
 
@@ -446,7 +456,7 @@ const _validatePositiveIncrement = function(in_template: PropertySchema, in_temp
                 }
 
                 const remainingKeys = Object.keys(targetMap);
-                if (!_.isEmpty(remainingKeys)) {
+                if (!isEmpty(remainingKeys)) {
                     // Added new keys to the target. This is a MINOR change, unless they new key is a
                     // comment, in which case this is a PATCH level change.
                     let minimumLevel = remainingKeys.length === 1 && remainingKeys[0] === "annotation" ? "patch" : "minor";
@@ -507,7 +517,7 @@ const _validatePositiveIncrement = function(in_template: PropertySchema, in_temp
             idPath.pop();
         }
     };
-    // console.assert(_.has(in_templatePrevious, 'id')); // TODO: Revisit this line after running the tests.
+    // console.assert(has(in_templatePrevious, 'id')); // TODO: Revisit this line after running the tests.
     _depthFirstCompare.call(this, (in_templatePrevious as any).id, in_templatePrevious, in_template);
 };
 
@@ -559,7 +569,7 @@ const _validateSemanticAndSyntax = function(in_template: PropertySchema) {
  * @return {Promise} a promise that resolved to nothing
  * @ignore
  */
-const _validateSemanticAndSyntaxAsync = function(in_template: PropertySchema): Promise<any> {
+const _validateSemanticAndSyntaxAsync = async function(in_template: PropertySchema): Promise<any> {
     return _validateSyntaxAsync.call(this, in_template);
 };
 
@@ -608,7 +618,7 @@ const _validateSkipSemver = function(in_template, in_templatePrevious) {
  * @this TemplateValidator
  */
 const getInvalidContextError = function(in_context) {
-    if (in_context && !_.includes(VALID_CONTEXTS, in_context)) {
+    if (in_context && !includes(VALID_CONTEXTS, in_context)) {
         return new Error(`${MSG.NOT_A_VALID_CONTEXT} ${in_context}`);
     }
 
@@ -644,7 +654,7 @@ const _validateContext = function(in_template) {
  * @return {Promise} promise that returns without any value and rejects in case of validation error
  * @ignore
  */
-const _validateContextAsync = function(in_template) {
+const _validateContextAsync = async function(in_template) {
     const that = this;
     const context = in_template.context;
 
@@ -662,7 +672,7 @@ const _validateContextAsync = function(in_template) {
 
     let typedValuePromises = [Promise.resolve()];
     if (in_template.typedValue) {
-        typedValuePromises = _.map(in_template.typedValue, (tv) => that.inheritsFrom(tv.typeid, "NamedProperty"));
+        typedValuePromises = map(in_template.typedValue, (tv) => that.inheritsFrom(tv.typeid, "NamedProperty"));
     } else {
         // Since context is 'set' the template must eventually inherit from NamedProperty
         if (in_template.inherits === undefined) {
@@ -670,7 +680,7 @@ const _validateContextAsync = function(in_template) {
         }
 
         // Since context is 'set' the template must eventually inherit from NamedProperty (same as above)
-        if (_.includes(in_template.inherits, "NamedProperty") || in_template.inherits === "NamedProperty") {
+        if (includes(in_template.inherits, "NamedProperty") || in_template.inherits === "NamedProperty") {
             return Promise.resolve();
         }
     }
@@ -678,14 +688,14 @@ const _validateContextAsync = function(in_template) {
 
     let parents = [];
     if (in_template.inherits) {
-        parents = _.isArray(in_template.inherits) ? in_template.inherits : [in_template.inherits];
+        parents = Array.isArray(in_template.inherits) ? in_template.inherits : [in_template.inherits];
     }
     const inheritsPromises = parents.map((typeid) => this._inheritsFromAsync(typeid, "NamedProperty"));
 
     // Combine results from inheritsPromises and typedValuePromise
     inheritsPromises.push(typedValuePromise);
     return Promise.all(inheritsPromises).then(function(results) {
-        const foundNamedPropertyDescendant = _.find(results, (res) => res);
+        const foundNamedPropertyDescendant = find(results, (res) => res);
         if (!foundNamedPropertyDescendant) {
             return Promise.reject(Error(MSG.SET_ONLY_NAMED_PROPS));
         }
@@ -697,7 +707,7 @@ const _validateContextAsync = function(in_template) {
         }
 
         return that._inheritsFromAsync(in_template.typeid, "NamedProperty");
-    }).then(function(res) {
+    }).then(async function(res) {
         if (res) {
             return undefined;
         }
@@ -715,13 +725,13 @@ const _validateContextAsync = function(in_template) {
  */
 let _validateConstants = function(in_template) {
     const that = this;
-    if (in_template.constants && _.isArray(in_template.constants)) {
+    if (in_template.constants && Array.isArray(in_template.constants)) {
         for (let i = 0; i < in_template.constants.length; i++) {
             const constant = in_template.constants[i];
             const context = constant.context;
 
             if (context === "map" && constant.contextKeyType === "typeid") {
-                _.each(constant.value, function(value, key) {
+                each(constant.value, function(value, key) {
                     if (!TypeIdHelper.isTemplateTypeid(key)) {
                         that._resultBuilder.addError(new Error(MSG.KEY_MUST_BE_TYPEID + key));
                     }
@@ -742,11 +752,11 @@ const _processValidationResults = function(in_template: PropertySchema) {
 
     result.isValid = _syntaxValidator(in_template);
     if (!result.isValid) {
-        ConsoleUtils.assert(!_.isEmpty(_syntaxValidator.errors), "template validation failed but produced no error");
+        ConsoleUtils.assert(!isEmpty(_syntaxValidator.errors), "template validation failed but produced no error");
     }
 
     if (_syntaxValidator.errors) {
-        _.each(_syntaxValidator.errors, function(error) {
+        each(_syntaxValidator.errors, function(error) {
             const regexTypeId = /typeid/;
             switch (error.keyword) {
                 case "pattern":
@@ -804,7 +814,7 @@ const _processValidationResults = function(in_template: PropertySchema) {
                     break;
             }
             // Deep-copy for thread-safety.
-            that._resultBuilder.addError(_.cloneDeep(error));
+            that._resultBuilder.addError(cloneDeep(error));
         });
     }
 
@@ -861,7 +871,7 @@ const createContextCheckAsyncQueue = function() {
  * @returns Promise that resolves without any result
  * @ignore
  */
-let _validateSyntaxAsync = function(in_template: PropertySchema): Promise<SchemaValidationResult> {
+let _validateSyntaxAsync = async function(in_template: PropertySchema): Promise<SchemaValidationResult> {
     const that = this;
 
     return new Promise(function(resolve, reject) {
@@ -909,36 +919,35 @@ export interface TemplateValidatorOptions {
      * When set to true, {@link #validate} only checks the supplied templates' content
      * and fails the validation if they're not identical. Defaults to false.
      */
-    skipSemver?: boolean,
+    skipSemver?: boolean;
     /**
      * When set to true, the typeid of any schema can have '-draft' as a version. Defaults to false.
      */
-    allowDraft?: boolean,
+    allowDraft?: boolean;
     /**
      * Function that checks if a template inherits from another.
      */
-    inheritsFrom?: (source: PropertySchema, target: PropertySchema) => boolean,
+    inheritsFrom?: (source: PropertySchema, target: PropertySchema) => boolean;
     /**
      * Function that checks if we have a template matching a typeid.
      */
-    hasSchema?: (schema: PropertySchema, typeid: string) => boolean,
+    hasSchema?: (schema: PropertySchema, typeid: string) => boolean;
     /**
      * Function that checks if a template inherits from another asynchronously.
      */
-    inheritsFromAsync?: (source: PropertySchema, target: PropertySchema) => Promise<boolean>,
+    inheritsFromAsync?: (source: PropertySchema, target: PropertySchema) => Promise<boolean>;
     /**
      * Function that checks if we have a template matching a typeid asynchronously.
      */
-    hasSchemaAsync?: (schema: PropertySchema, typeid: string) => Promise<boolean>,
+    hasSchemaAsync?: (schema: PropertySchema, typeid: string) => Promise<boolean>;
 
 }
 
 const Utils = {
-    psetDeepEquals: function(in_source: PropertySchema, in_target: PropertySchema) {
+    psetDeepEquals(in_source: PropertySchema, in_target: PropertySchema) {
         return _psetDeepEquals.call(this, in_source, in_target).isEqual;
-    }
-}
-
+    },
+};
 
 /**
  *  @description Instantiates a new TemplateValidator. Must be provided with a set of inheritsFrom and hasSchema
@@ -951,10 +960,9 @@ export class TemplateValidator {
     public _hasSchema: (schema: PropertySchema, typeid: string) => boolean;
     public _inheritsFromAsync: (source: PropertySchema, target: PropertySchema) => Promise<boolean>;
     public _hasSchemaAsync: (schema: PropertySchema, typeid: string) => Promise<boolean>;
-    private _allowDraft: boolean;
-    private _skipSemver: boolean;
-    constructor(in_params: TemplateValidatorOptions = { skipSemver: false, allowDraft: false}) {
-
+    private readonly _allowDraft: boolean;
+    private readonly _skipSemver: boolean;
+    constructor(in_params: TemplateValidatorOptions = { skipSemver: false, allowDraft: false }) {
         this._skipSemver = in_params ? !!in_params.skipSemver : false;
         this._allowDraft = in_params ? !!in_params.allowDraft : false;
         // Used by validate()
@@ -1070,7 +1078,7 @@ export class TemplateValidator {
         }
 
         return this._resultBuilder.result;
-    };
+    }
 
     /**
      * Validates that all templates conform to the following mandatory rules:
@@ -1094,7 +1102,7 @@ export class TemplateValidator {
      * }
      * It's possible for 'isValid' to be true while 'warnings' contains one or more messages.
      */
-    validateAsync(in_template: PropertySchema, in_templatePrevious?: PropertySchema): Promise<SchemaValidationResult> {
+    async validateAsync(in_template: PropertySchema, in_templatePrevious?: PropertySchema): Promise<SchemaValidationResult> {
         this._resultBuilder = new ValidationResultBuilder(in_template ? in_template.typeid : "");
         _validateBasic.call(this, in_template);
         if (in_templatePrevious) {
@@ -1106,7 +1114,7 @@ export class TemplateValidator {
         return (in_templatePrevious) ?
             this._validateAsyncWithPreviousSchema(in_template, in_templatePrevious) :
             _validateSemanticAndSyntaxAsync.call(this, in_template);
-    };
+    }
 
     /**
      * Called by validateAsync if a previous schema is passed in argument
@@ -1117,7 +1125,7 @@ export class TemplateValidator {
      * @returns promise that resolves to the validation results as an objet. See validateAsync
      * @ignore
      */
-    private _validateAsyncWithPreviousSchema(in_template: PropertySchema, in_templatePrevious: PropertySchema): Promise<SchemaValidationResult> {
+    private async _validateAsyncWithPreviousSchema(in_template: PropertySchema, in_templatePrevious: PropertySchema): Promise<SchemaValidationResult> {
         const that = this;
         return _validateSemanticAndSyntaxAsync.call(that, in_template).then(() => _validateSemanticAndSyntaxAsync.call(that, in_templatePrevious)).then(function() {
             if (!that._resultBuilder.isValid()) {

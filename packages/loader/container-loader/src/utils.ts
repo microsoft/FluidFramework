@@ -7,7 +7,6 @@ import { parse } from "url";
 import { v4 as uuid } from "uuid";
 import {
     assert,
-    bufferToString,
     stringToBuffer,
     Uint8ArrayToArrayBuffer,
     unreachableCase,
@@ -17,8 +16,8 @@ import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protoc
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
-    blobsContents: {[path: string]: ArrayBufferLike},
-    trees: {[path: string]: ISnapshotTreeWithBlobContents},
+    blobsContents: { [path: string]: ArrayBufferLike; };
+    trees: { [path: string]: ISnapshotTreeWithBlobContents; };
 }
 
 export interface IParsedUrl {
@@ -63,7 +62,6 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
         blobs: {},
         blobsContents: {},
         trees: {},
-        commits: {},
         id: uuid(),
         unreferenced: summary.unreferenced,
     };
@@ -85,9 +83,6 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
                 const contentBuffer = typeof summaryObject.content === "string" ?
                     stringToBuffer(summaryObject.content, "utf8") : Uint8ArrayToArrayBuffer(summaryObject.content);
                 treeNode.blobsContents[blobId] = contentBuffer;
-                // 0.43 back-compat old runtime will still expect content in the blobs only.
-                // So need to put in blobs for now.
-                treeNode.blobs[blobId] = bufferToString(contentBuffer, "base64");
                 break;
             }
             case SummaryType.Handle:
@@ -135,3 +130,7 @@ export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot
     );
     return snapshotTreeWithBlobContents;
 };
+
+export function getProtocolSnapshotTree(snapshot: ISnapshotTree): ISnapshotTree {
+    return ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
+}

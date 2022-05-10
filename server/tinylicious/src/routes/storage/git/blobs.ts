@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import fs from "fs";
 import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
+import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import nconf from "nconf";
@@ -15,12 +17,12 @@ export async function createBlob(
     authorization: string,
     body: ICreateBlobParams,
 ): Promise<ICreateBlobResponse> {
-    const buffer = Buffer.from(body.content, body.encoding as BufferEncoding);
+    const buffer = Buffer.from(body.content, body.encoding);
 
-    const sha = await git.writeObject({
+    const sha = await git.writeBlob({
+        fs,
         dir: utils.getGitDir(store, tenantId),
-        type: "blob",
-        object: buffer,
+        blob: buffer,
     });
 
     return {
@@ -36,14 +38,14 @@ export async function getBlob(
     sha: string,
     useCache: boolean,
 ): Promise<IBlob> {
-    const gitObj = await git.readObject({ dir: utils.getGitDir(store, tenantId), oid: sha });
-    const buffer = gitObj.object as Buffer;
+    const gitObj = await git.readBlob({ fs, dir: utils.getGitDir(store, tenantId), oid: sha });
+    const buffer = gitObj.blob as Buffer;
 
     const result: IBlob = {
         url: "",
         sha,
         size: buffer.length,
-        content: buffer.toString("base64"),
+        content: Uint8ArrayToString(buffer, "base64"),
         encoding: "base64",
     };
 

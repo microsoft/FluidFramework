@@ -4,24 +4,22 @@
  */
 
 import { DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
-import { SharedObjectSequence, SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { TodoItem } from "../TodoItem";
 
 import { TodoName } from "./Todo";
 import { Todo } from "./index";
 
 export const TodoInstantiationFactory =
-    new DataObjectFactory<Todo, undefined, undefined, IEvent>(
+    new DataObjectFactory(
         TodoName,
         Todo,
         [
             SharedMap.getFactory(),
             SharedString.getFactory(),
             SharedCell.getFactory(),
-            SharedObjectSequence.getFactory(),
         ],
         {},
         new Map([
