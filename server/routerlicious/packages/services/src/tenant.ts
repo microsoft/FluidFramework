@@ -42,9 +42,9 @@ export class TenantManager implements core.ITenantManager {
     constructor(private readonly endpoint: string, private readonly internalHistorianUrl: string) {
     }
 
-    public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
+    public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string; }> {
         const restWrapper = new BasicRestWrapper();
-        const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
+        const result = await restWrapper.post<core.ITenantConfig & { key: string; }>(
             `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId || "")}`,
             undefined,
         );
