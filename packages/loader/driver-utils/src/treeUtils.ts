@@ -29,7 +29,7 @@ export interface ISummaryTreeAssemblerProps {
  */
 export class SummaryTreeAssembler {
     private attachmentCounter: number = 0;
-    private readonly summaryTree: { [path: string]: SummaryObject } = {};
+    private readonly summaryTree: { [path: string]: SummaryObject; } = {};
 
     constructor(
         private readonly props?: ISummaryTreeAssemblerProps,
