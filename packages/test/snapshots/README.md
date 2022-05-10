@@ -20,8 +20,8 @@ For submitting changes to the snapshot test content, follow these steps:
 - Submitting the changes to the test content:
   - Sync the content for the snapshot tests as mentioned [here](#Syncing-snapshot-tests-content).
   - Go to the `content` subdirectory, create a new branch and update the snapshot content. Ideally, you should not update the content manually but follow one of these:
-    - [Adding new snapshots](#Adding-new-snapshots) - If you are adding new snapshots.
-    - [Updating existing snapshots](#Updating-existing-snapshots) - If you updating existing snapshots.
+    - [Adding new snapshots](#Adding-new-snapshots-to-the-repo) - If you are adding new snapshots.
+    - [Updating existing snapshots](#Updating-existing-snapshots-in-the-repo) - If you updating existing snapshots.
   - Create a commit and push the new branch.
   - Create a PR against `main` branch in the [FluidFrameworkTestData](https://github.com/microsoft/FluidFrameworkTestData) repo. Get the changes approved and merge the PR.
   - Checkout `main` branch and run `git pull` to ensure it has your new changes.
@@ -29,8 +29,8 @@ For submitting changes to the snapshot test content, follow these steps:
   - Go to the FluidFramework repo root. `git status` should show changes under `packages/test/snapshots/content`. For example:
   ```
   D:\FluidFramework>git status
-  On branch updateTestSnasphots
-  Your branch is up to date with 'origin/updateTestSnasphots'.
+  On branch updateTestSnapshots
+  Your branch is up to date with 'origin/updateTestSnapshots'.
 
   Changes not staged for commit:
     (use "git add <file>..." to update what will be committed)
@@ -84,6 +84,10 @@ To add new reference snapshots to the repo for a document, follow tests steps:
                 3 Dir(s)  243,653,701,632 bytes free
     ```
     Copy everything in this folder except `tree-original.json` and `decode` to the `base_snapshot` directory created above.
+- Scrub the newly added files of PII manually by replacing your id, your name, your email, and any other PII.
+  - A shortcut you can use is right-click and `Find in Folder...`.
+  - Feel free to use any replaced names, emails, and ids already in the files.
+  - There is a tool in `packages\drivers\debugger\src\sanitize.ts` that can be applied to one file at a time.
 - Run the following from the `packages\test\snapshots` directory:
   ```
   npm run test:new
@@ -100,4 +104,5 @@ Whenever the snapshot format changes in the runtime, the existing snapshots in t
   ```
   This will save the current snapshots in the `src_snapshots\<current_snapshots_version>` directory. It will then update the current snapshots under the `current_snapshots` directory to the new format.
 - Run the tests to validate that all the tests pass with the new snapshots.
+  - Don't forget to always stay updated with main and reinstall and build if necessary.
 - Submit the changes by following the steps [here](#Submit-changes-to-test-content).

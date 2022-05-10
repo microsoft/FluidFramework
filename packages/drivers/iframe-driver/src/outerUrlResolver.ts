@@ -8,15 +8,15 @@ import { IContainerPackageInfo, IUrlResolver, IResolvedUrl } from "@fluidframewo
 import { MakeThinProxy } from "./proxyUtils";
 
 export interface IUrlResolverProxy {
-    connected(): Promise<void>,
+    connected(): Promise<void>;
     resolve(
         request: IRequest,
-    ): Promise<() => Promise<IResolvedUrl | undefined>>,
+    ): Promise<() => Promise<IResolvedUrl | undefined>>;
     getAbsoluteUrl(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
         relativeUrl: string,
         packageInfoFn: () => Promise<IContainerPackageInfo | undefined>,
-    ): Promise<string>,
+    ): Promise<string>;
 }
 
 export const IUrlResolverProxyKey = "IUrlResolverProxy";

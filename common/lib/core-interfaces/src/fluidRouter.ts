@@ -16,7 +16,7 @@ export interface IResponse {
     mimeType: string;
     status: number;
     value: any;
-    headers?: { [key: string]: any };
+    headers?: { [key: string]: any; };
     stack?: string;
 }
 

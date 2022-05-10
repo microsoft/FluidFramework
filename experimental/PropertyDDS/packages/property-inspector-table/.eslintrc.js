@@ -19,6 +19,7 @@
     "import/no-internal-modules": "off",
     "no-bitwise": "off",
     "no-param-reassign": "off",
+    "tsdoc/syntax": "off",
     "unicorn/filename-case": "off",
   }
 }

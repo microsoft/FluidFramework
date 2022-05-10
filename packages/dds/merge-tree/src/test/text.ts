@@ -7,9 +7,9 @@ import {
     ISegment,
     Marker,
     MergeTree,
-    reservedTileLabelsKey,
 } from "../mergeTree";
 import { ReferenceType } from "../ops";
+import { reservedTileLabelsKey } from "../referencePositions";
 import { TextSegment } from "../textSegment";
 
 export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {

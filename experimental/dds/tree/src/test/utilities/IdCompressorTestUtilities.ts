@@ -6,6 +6,17 @@
 /* eslint-disable no-bitwise */
 
 import { expect } from 'chai';
+import {
+	Generator,
+	createWeightedGenerator,
+	interleave,
+	makeRandom,
+	performFuzzActions as performFuzzActionsBase,
+	repeat,
+	SaveInfo,
+	take,
+	BaseFuzzTestState,
+} from '@fluid-internal/stochastic-test-utils';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, IdRangeDescriptor, isLocalId } from '../../id-compressor/IdCompressor';
 import {
@@ -22,17 +33,6 @@ import type {
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
 } from '../../id-compressor';
-import {
-	Generator,
-	createWeightedGenerator,
-	interleave,
-	makeRandom,
-	performFuzzActions as performFuzzActionsBase,
-	repeat,
-	SaveInfo,
-	take,
-	BaseFuzzTestState,
-} from '../stochastic-test-utilities';
 import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities';
 import { expectDefined } from './TestCommon';
 
@@ -696,19 +696,19 @@ export function makeOpGenerator(options: OperationGenerationConfig): Generator<O
 			[generateUnifyingIdsGenerator, 1],
 			[reconnectGenerator, 1],
 		]),
-		take(1, repeat({ type: 'validate' })),
+		take(1, repeat<Operation, FuzzTestState>({ type: 'validate' })),
 		validateInterval
 	);
 }
 
 /**
  * Performs random actions on a test network.
- * @param generator the generator used to provide operations
- * @param network the test network to test
- * @param seed the seed for the random generation of the fuzz actions
- * @param observerClient if provided, this client will never generate local ids
- * @param synchronizeAtEnd if provided, all client will have all operations delivered from the server at the end of the test
- * @param validator if provided, this callback will be invoked periodically during the fuzz test.
+ * @param generator - the generator used to provide operations
+ * @param network - the test network to test
+ * @param seed - the seed for the random generation of the fuzz actions
+ * @param observerClient - if provided, this client will never generate local ids
+ * @param synchronizeAtEnd - if provided, all client will have all operations delivered from the server at the end of the test
+ * @param validator - if provided, this callback will be invoked periodically during the fuzz test.
  */
 export function performFuzzActions(
 	generator: Generator<Operation, FuzzTestState>,

@@ -21,9 +21,9 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider)
 
         // Sample interface used for storing the details of a cell.
         interface ICellType {
-            row: number,
-            col: number,
-            value: string,
+            row: number;
+            col: number;
+            value: string;
         }
 
         function orderSequentially(callback: () => void): void {

@@ -6,17 +6,17 @@
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { expect } from 'chai';
-import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
-import { WriteFormat } from '../../persisted-types';
-import { fail } from '../../Common';
-import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import {
 	AsyncGenerator,
 	chainAsync as chain,
 	makeRandom,
 	takeAsync as take,
 	performFuzzActionsAsync as performFuzzActionsBase,
-} from '../stochastic-test-utilities';
+} from '@fluid-internal/stochastic-test-utils';
+import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
+import { WriteFormat } from '../../persisted-types';
+import { fail } from '../../Common';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import { FuzzTestState, EditGenerationConfig, Operation } from './Types';
 import { makeOpGenerator } from './Generators';
 
@@ -28,11 +28,13 @@ const adjustSeed = 0;
 
 /**
  * Performs random actions on a set of clients.
- * @param generator finite generator for a sequence of Operations to test. The test will run until this generator is exhausted.
- * @param seed the seed for the random generation of the fuzz actions
- * @param synchronizeAtEnd if provided, all client will have all operations delivered from the server at the end of the test
- * @param saveInfo optionally provide an operation number at which a history of all operations will be saved to disk at a given filepath.
- * This can be useful for debugging why a fuzz test may have failed.
+ * @param generator - finite generator for a sequence of Operations to test. The test will run until this generator is
+ * exhausted.
+ * @param seed - the seed for the random generation of the fuzz actions
+ * @param synchronizeAtEnd - if provided, all client will have all operations delivered from the server at the end of
+ * the test
+ * @param saveInfo - optionally provide an operation number at which a history of all operations will be saved to disk
+ * at a given filepath. This can be useful for debugging why a fuzz test may have failed.
  */
 export async function performFuzzActions(
 	generator: AsyncGenerator<Operation, FuzzTestState>,

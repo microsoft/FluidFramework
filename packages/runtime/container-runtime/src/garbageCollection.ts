@@ -65,7 +65,9 @@ const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
-const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
+const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
+// Feature gate key to disable expiring session after a set period of time, even if expiry value is present
+const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to log error messages if GC reference validation fails.
 const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 
@@ -152,7 +154,7 @@ export interface IGarbageCollector {
     readonly writeDataAtRoot: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
-        options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
+        options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean; },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(): ISummaryTreeWithStats | undefined;
@@ -231,15 +233,15 @@ class UnreferencedStateTracker {
  * its state across summaries.
  *
  * Node - represented as nodeId, it's a node on the GC graph
- * Outbound Route - a path from one node to another node, think `nodeA` -> `nodeB`
+ * Outbound Route - a path from one node to another node, think `nodeA` -\> `nodeB`
  * Graph - all nodes with their respective routes
  *             GC Graph
  *
  *               Node
  *        NodeId = "datastore1"
- *           /             \
+ *           /             \\
  *    OutboundRoute   OutboundRoute
- *         /                 \
+ *         /                 \\
  *       Node               Node
  *  NodeId = "dds1"     NodeId = "dds2"
  */
@@ -390,13 +392,21 @@ export class GarbageCollector implements IGarbageCollector {
             // For new documents, GC has to be explicitly enabled via the gcAllowed flag in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
             // Set the Session Expiry only if the flag is enabled or the test option is set.
-            if (this.mc.config.getBoolean(runSessionExpiry) && this.gcEnabled) {
+            if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = defaultSessionExpiryDurationMs;
             }
         }
 
         // If session expiry is enabled, we need to close the container when the timeout expires
-        if (this.sessionExpiryTimeoutMs !== undefined) {
+        if (this.sessionExpiryTimeoutMs !== undefined
+            && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
+            // If Test Override config is set, override Session Expiry timeout
+            const overrideSessionExpiryTimeoutMs =
+                this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
+            if (overrideSessionExpiryTimeoutMs !== undefined) {
+                this.sessionExpiryTimeoutMs = overrideSessionExpiryTimeoutMs;
+            }
+
             const timeoutMs = this.sessionExpiryTimeoutMs;
             setLongTimeout(timeoutMs,
                 () => {
@@ -514,7 +524,7 @@ export class GarbageCollector implements IGarbageCollector {
                 return;
             }
 
-            const gcNodes: { [ id: string ]: string[] } = {};
+            const gcNodes: { [ id: string ]: string[]; } = {};
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 if (nodeData.unreferencedTimestampMs !== undefined) {
                     this.unreferencedNodesState.set(
@@ -539,7 +549,7 @@ export class GarbageCollector implements IGarbageCollector {
                 return new Map();
             }
 
-            const gcNodes: { [ id: string ]: string[] } = {};
+            const gcNodes: { [ id: string ]: string[]; } = {};
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
             }
@@ -593,11 +603,11 @@ export class GarbageCollector implements IGarbageCollector {
     public async collectGarbage(
         options: {
             /** Logger to use for logging GC events */
-            logger?: ITelemetryLogger,
+            logger?: ITelemetryLogger;
             /** True to run GC sweep phase after the mark phase */
-            runSweep?: boolean,
+            runSweep?: boolean;
             /** True to generate full GC data */
-            fullGC?: boolean,
+            fullGC?: boolean;
         },
     ): Promise<IGCStats> {
         const {
@@ -619,11 +629,11 @@ export class GarbageCollector implements IGarbageCollector {
                 ["/"],
                 logger,
             );
-            const gcStats = this.generateStatsAndLogEvents(gcResult);
+            const gcStats = this.generateStatsAndLogEvents(gcResult, logger);
 
             // Update the state since the last GC run. There can be nodes that were referenced between the last and
             // the current run. We need to identify than and update their unreferenced state if needed.
-            this.updateStateSinceLastRun(gcData);
+            this.updateStateSinceLastRun(gcData, logger);
 
             // Update the current state of the system based on the GC run.
             const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
@@ -840,7 +850,7 @@ export class GarbageCollector implements IGarbageCollector {
      * This function identifies nodes that were referenced since last run and removes their unreferenced state, if any.
      * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
      */
-    private updateStateSinceLastRun(currentGCData: IGarbageCollectionData) {
+    private updateStateSinceLastRun(currentGCData: IGarbageCollectionData, logger: ITelemetryLogger) {
         // If we haven't run GC before there is nothing to do.
         if (this.previousGCDataFromLastRun === undefined) {
             return;
@@ -863,7 +873,7 @@ export class GarbageCollector implements IGarbageCollector {
                     gcNodeId: missingExplicitReference[0],
                     gcRoutes: JSON.stringify(missingExplicitReference[1]),
                 };
-                this.mc.logger.sendPerformanceEvent(event);
+                logger.sendPerformanceEvent(event);
             });
         }
 
@@ -902,7 +912,7 @@ export class GarbageCollector implements IGarbageCollector {
          * unreferenced, stop tracking them and remove from unreferenced list.
          * Some of these nodes may be unreferenced now and if so, the current run will add unreferenced state for them.
          */
-        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"], this.mc.logger);
+        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"], logger);
         for (const nodeId of gcResult.referencedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
@@ -973,13 +983,13 @@ export class GarbageCollector implements IGarbageCollector {
      * @param gcResult - The result of a GC run.
      * @returns the GC stats of the GC run.
      */
-    private generateStatsAndLogEvents(gcResult: IGCResult): IGCStats {
+    private generateStatsAndLogEvents(gcResult: IGCResult, logger: ITelemetryLogger): IGCStats {
         // Log pending events for unreferenced nodes after GC has run. We should have the package data available for
         // them now since the GC run should have loaded these nodes.
         let event = this.pendingEventsQueue.shift();
         while (event !== undefined) {
             const pkg = this.getNodePackagePath(event.id);
-            this.mc.logger.sendErrorEvent({
+            logger.sendErrorEvent({
                 ...event,
                 pkg: pkg ? { value: `/${pkg.join("/")}`, tag: TelemetryDataTag.PackageData } : undefined,
             });

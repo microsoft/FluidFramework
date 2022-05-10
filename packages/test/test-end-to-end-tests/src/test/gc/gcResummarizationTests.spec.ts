@@ -97,7 +97,7 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
      * other data stores are not resummarized and a handle is sent for them in the summary.
      */
     async function validateResummaryState(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+        summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
         changedDataStoreIds: string[] = [],
     ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger, false /* fullTree */);
