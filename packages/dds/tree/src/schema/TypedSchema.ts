@@ -23,15 +23,15 @@ import {
  * Type implemented by schema to allow compile time schema access via type checking.
  */
 interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
-    readonly local: { [key: string]: LabeledFieldSchema<any> };
-    readonly global: { [key: string]: unknown };
+    readonly local: { [key: string]: LabeledFieldSchema<any>; };
+    readonly global: { [key: string]: unknown; };
     readonly extraLocalFields: LabeledFieldSchema<any>;
     readonly extraGlobalFields: boolean;
     readonly value: ValueSchema;
 }
 
 interface FieldSchemaTypeInfo {
-    types: { [key: string]: unknown };
+    types: { [key: string]: unknown; };
     kind: FieldKind;
 }
 

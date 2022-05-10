@@ -8,7 +8,6 @@
 
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-extraneous-class */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
 	MakeNominal,
