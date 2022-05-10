@@ -254,9 +254,14 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             // 1. We reconnect and see the proposal was sequenced in the meantime.  The promise resolves.
             // 2. We reconnect and see the proposal was not sequenced in the meantime.  The promise rejects.
             const disconnectedHandler = () => {
+                // If we haven't seen the ack by the time we disconnect, we hope to see it by the time we reconnect.
                 if (targetSequenceNumber === undefined) {
                     this.stateEvents.once("connected", () => {
-                        reject(new Error("Client disconnected without successfully sending proposal"));
+                        // If we don't see the ack by the time reconnection finishes, it failed to send.
+                        if (targetSequenceNumber === undefined) {
+                            reject(new Error("Client disconnected without successfully sending proposal"));
+                            removeListeners();
+                        }
                     });
                 }
             };
