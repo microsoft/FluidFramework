@@ -355,6 +355,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _lifecycleState: "created" | "loading" | "loaded" | "closing" | "closed" = "created";
 
+    private _connectAbortController: AbortController | undefined;
+
     private get loaded(): boolean {
         return (this._lifecycleState !== "created" && this._lifecycleState !== "loading");
     }
@@ -449,10 +451,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public get closeSignal(): AbortSignal {
         return this._deltaManager.closeAbortController.signal;
-    }
-
-    public get connectAbortController(): AbortController {
-        return this._deltaManager.connectAbortController;
     }
 
     /**
@@ -980,11 +978,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
             // If there is gap, we will learn about it once connected, but the gap should be small (if any),
             // assuming that connect() is called quickly after initial container boot.
-            this._deltaManager.connectAbortController = new AbortController(); // Reset the signal
+            this._connectAbortController = new AbortController();  // Create a new signal for each connect() call
             this.connectInternal({
                 reason: "DocumentConnect",
                 fetchOpsFromStorage: false,
-                progress: { cancel: this.connectAbortController.signal },
+                progress: { cancel: this._connectAbortController.signal },
             });
         }
     }
@@ -1014,7 +1012,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(!this.closed, 0x2c7 /* "Attempting to disconnect() a closed Container" */);
 
         // Send abort signal to cancel any in-progress connect attempts
-        this.connectAbortController.abort();
+        this._connectAbortController?.abort();
 
         // Set Auto Reconnect Mode
         const mode = ReconnectMode.Disabled;

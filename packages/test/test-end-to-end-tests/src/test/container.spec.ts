@@ -402,4 +402,92 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         value2 = await directory2.get("key");
         assert.strictEqual(value1, value2, "container2 not processing ops after connect()");
     });
+
+    it("can cancel connect() with disconnect()", async () => {
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
+        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
+            TestDataObjectType,
+            getDataStoreFactory(),
+            {},
+            [innerRequestHandler]);
+        const localTestObjectProvider = new TestObjectProvider(
+            Loader,
+            provider.driver,
+            runtimeFactory);
+
+        const container = await localTestObjectProvider.makeTestContainer() as Container;
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "container initial connection timeout" },
+        );
+        assert.strictEqual(
+            container.connectionState, ConnectionState.Connected,
+            "container is not connected when loaded",
+        );
+
+        let disconnectedEventFired = false;
+        container.once("disconnected", () => { disconnectedEventFired = true; });
+        container.disconnect();
+        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
+        assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
+
+        container.connect();
+        container.disconnect();
+        const connectPromise = timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "valueChanged timeout (expected error)" },
+        );
+        await assert.rejects(
+            connectPromise,
+            "connected event fired after canceeling",
+        );
+        assert.strictEqual(
+            container.connectionState,
+            ConnectionState.Disconnected,
+            "container connected after disconecct()",
+        );
+    });
+
+    it("can rapidly call connect() and disconnect()", async () => {
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
+        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
+            TestDataObjectType,
+            getDataStoreFactory(),
+            {},
+            [innerRequestHandler]);
+        const localTestObjectProvider = new TestObjectProvider(
+            Loader,
+            provider.driver,
+            runtimeFactory);
+
+        const container = await localTestObjectProvider.makeTestContainer() as Container;
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "container initial connection timeout" },
+        );
+        assert.strictEqual(
+            container.connectionState, ConnectionState.Connected,
+            "container is not connected when loaded",
+        );
+
+        let disconnectedEventFired = false;
+        container.once("disconnected", () => { disconnectedEventFired = true; });
+        container.disconnect();
+        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
+        assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
+
+        container.connect();
+        container.disconnect();
+        container.connect();
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "connected event not fired after rapid disconnect() + connect()" },
+        );
+        assert.strictEqual(
+            container.connectionState, ConnectionState.Connected,
+            "container is not connected after rapid disconnect() + connect()",
+        );
+    });
 });

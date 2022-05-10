@@ -126,8 +126,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     public readonly closeAbortController = new AbortController();
 
-    public connectAbortController = new AbortController();
-
     private readonly deltaStorageDelayId = uuid();
     private readonly deltaStreamDelayId = uuid();
 

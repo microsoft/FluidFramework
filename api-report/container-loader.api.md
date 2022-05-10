@@ -5,7 +5,6 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { default as default_2 } from 'abort-controller';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
@@ -69,8 +68,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get closeSignal(): AbortSignal;
     // (undocumented)
     connect(): void;
-    // (undocumented)
-    get connectAbortController(): default_2;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)

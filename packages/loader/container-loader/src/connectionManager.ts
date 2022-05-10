@@ -131,6 +131,7 @@ export class ConnectionManager implements IConnectionManager {
     private readonly defaultReconnectionMode: ConnectionMode;
 
     private pendingConnection = false;
+    private _cancelConnectSignal: AbortSignal | undefined;
     private connection: IDocumentDeltaConnection | undefined;
 
     /** file ACL - whether user has only read-only access to a file */
@@ -414,6 +415,8 @@ export class ConnectionManager implements IConnectionManager {
     private async connectCore(connectionMode?: ConnectionMode, progress?: IProgress): Promise<void> {
         assert(!this.closed, 0x26a /* "not closed" */);
 
+        this._cancelConnectSignal = progress?.cancel;
+
         if (this.connection !== undefined || this.pendingConnection) {
             return;
         }
@@ -456,7 +459,8 @@ export class ConnectionManager implements IConnectionManager {
             if (this.closed) {
                 throw new Error("Attempting to connect a closed DeltaManager");
             }
-            if (progress?.cancel?.aborted === true) {
+            if (this._cancelConnectSignal?.aborted === true) {
+                this.pendingConnection = false;
                 return;
             }
             connectRepeatCount++;
@@ -522,7 +526,7 @@ export class ConnectionManager implements IConnectionManager {
             );
         }
 
-        this.setupNewSuccessfulConnection(connection, requestedMode, progress);
+        this.setupNewSuccessfulConnection(connection, requestedMode);
     }
 
     /**
@@ -580,11 +584,7 @@ export class ConnectionManager implements IConnectionManager {
      * initial messages.
      * @param connection - The newly established connection
      */
-     private setupNewSuccessfulConnection(
-         connection: IDocumentDeltaConnection,
-         requestedMode: ConnectionMode,
-         progress?: IProgress,
-    ) {
+     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
@@ -614,7 +614,7 @@ export class ConnectionManager implements IConnectionManager {
             this.disconnectFromDeltaStream("ConnectionManager already closed");
             return;
         }
-        if (progress?.cancel?.aborted === true) {
+        if (this._cancelConnectSignal?.aborted === true) {
             // Raise proper events, Log telemetry event and close connection.
             this.disconnectFromDeltaStream("Connection attempt cancelled");
             return;
