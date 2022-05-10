@@ -13,6 +13,7 @@ import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-util
 import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
 /**
  * This class represents blob (long string)
@@ -110,18 +111,29 @@ export class BlobManager {
      * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
      */
     public async onConnected() {
-        const uploadPs: Promise<void>[] = [];
-        for (const entry of this.pendingBlobs.values()) {
-            assert(entry.status !== PendingBlobStatus.OnlinePendingUpload,
-                "Must submit BlobAttach op before uploading offline blob");
-            if (entry.status === PendingBlobStatus.OfflinePendingUpload) {
-                uploadPs.push(this.getStorage().createBlob(entry.blob).then((response) => {
-                    entry.status = PendingBlobStatus.OfflinePendingOp;
-                    entry.storageId = response.id;
-                }));
-            }
-        }
-        return Promise.all(uploadPs);
+        await PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "BlobUploadOnConnected",
+                count: Array.from(this.pendingBlobs.values())
+                    .filter((entry) => entry.status === PendingBlobStatus.OfflinePendingUpload).length,
+            },
+            async () => {
+                const uploadPs: Promise<void>[] = [];
+                for (const entry of this.pendingBlobs.values()) {
+                    assert(entry.status !== PendingBlobStatus.OnlinePendingUpload,
+                        "Must submit BlobAttach op before uploading offline blob");
+                    if (entry.status === PendingBlobStatus.OfflinePendingUpload) {
+                        uploadPs.push(this.getStorage().createBlob(entry.blob).then((response) => {
+                            entry.status = PendingBlobStatus.OfflinePendingOp;
+                            entry.storageId = response.id;
+                        }));
+                    }
+                }
+                return Promise.all(uploadPs);
+            },
+            { start: true, end: true },
+        );
     }
 
     private onDisconnected() {
@@ -267,8 +279,6 @@ export class BlobManager {
             this.pendingBlobs.delete(localId);
             return this.getBlobHandle(storageId);
         }
-        // set id. entry
-        // this.redirectTable.set(storageId, storageId);
         pendingEntry.storageId = storageId;
         pendingEntry.status = PendingBlobStatus.OnlinePendingOp;
 
@@ -435,7 +445,7 @@ export class BlobManager {
     public setRedirectTable(table: Map<string, string>) {
         assert(this.runtime.attachState === AttachState.Detached,
             0x252 /* "redirect table can only be set in detached container" */);
-        assert(this.redirectTable.size === table.size, "");
+        assert(this.redirectTable.size === table.size, "Redirect table size must match BlobManager's local ID count");
         for (const [localId, storageId] of table) {
             assert(this.redirectTable.has(localId), 0x254 /* "unrecognized id in redirect table" */);
             this.redirectTable.set(localId, storageId);

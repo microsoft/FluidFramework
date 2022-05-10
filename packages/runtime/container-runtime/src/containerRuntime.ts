@@ -1770,6 +1770,9 @@ public setConnectionState(connected: boolean, clientId?: string) {
         if (this.delayConnectedP !== undefined) {
             this.delayConnectedP.canceled = true;
             this.delayConnectedP = undefined;
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "UnsuccessfulConnectedTransition",
+            });
         }
         this.setConnectionStateCore(connected, clientId);
     }
@@ -1777,6 +1780,7 @@ public setConnectionState(connected: boolean, clientId?: string) {
     if (connected && changeOfState && !this.deltaManager.readOnlyInfo.readonly && this.blobManager.hasPendingUploads) {
         const canceled = false;
         const P = this.blobManager.onConnected().then(() => {
+            this.delayConnectedP = undefined;
             if (!canceled && !this._disposed) {
                 this.setConnectionStateCore(connected, clientId);
             }

@@ -127,8 +127,10 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
             this.detachedStorage.blobs.clear();
             this.blobManager.setRedirectTable(table);
         }
+        const summary = validateSummary(this);
         this.attachState = AttachState.Attached;
         this.emit("attached");
+        return summary;
     }
 
     public async connect() {
@@ -439,5 +441,22 @@ describe("BlobManager", () => {
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
         assert.strictEqual(summaryData.redirectTable.size, 2);
+    });
+
+    it("includes blob IDs in summary while attaching", async () => {
+        const runtime = new MockRuntime();
+
+        const handleP = runtime.createBlob(IsoBuffer.from("blob1", "utf8"));
+        const handleP2 = runtime.createBlob(IsoBuffer.from("blob2", "utf8"));
+        const handleP3 = runtime.createBlob(IsoBuffer.from("blob3", "utf8"));
+        await runtime.processAll();
+        await Promise.all([handleP, handleP2, handleP3]);
+
+        // While attaching with blobs, Container takes a summary while still in "Detached"
+        // state. BlobManager should know to include the list of attached blob
+        // IDs since this summary will be used to create the document
+        const summaryData = await runtime.attach();
+        assert.strictEqual(summaryData?.ids.length, 3);
+        assert.strictEqual(summaryData?.redirectTable.size, 3);
     });
 });
