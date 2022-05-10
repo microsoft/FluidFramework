@@ -1,7 +1,15 @@
 # Modules
 
 There are a wide variety of use-cases for a Fluid tree, and there are several trade-offs in the design space that should be made differently for the different use-cases.
-To enable flexibility both for how our users configure the system, as well as when we modify the implementation, we will provide a collection of modules which can be composed in a few different ways to address a wide variety of use cases.
+To enable flexibility both for how our users configure the system, as well as when we modify the implementation,
+the implementation consist of collection of modules which can be composed in a few different ways to address a wide variety of use cases.
+
+This breakdown is intended as an architectural approach to ensure we can deliver functionality in an incremental way (minimizing the work needed for the early milestones),
+as well as quickly respond to specific feature requests, and perform targeted unit testing.
+
+These module boundaries could additionally be exposes as public packages,
+allowing our consumers to also extend and configure the functionality in these ways (increasing our internal API stability obligations),
+however that is a separate decision which is considered out of scope here.
 
 ## Core Libraries
 
