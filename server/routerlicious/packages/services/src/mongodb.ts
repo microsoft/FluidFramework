@@ -14,9 +14,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
     constructor(private readonly collection: Collection<T>) {
     }
 
-    public aggregate(group: any, options?: any): AggregationCursor<T> {
-        const pipeline: any = [];
-        pipeline.$group = group;
+    public aggregate(pipeline: any, options?: any): AggregationCursor<T> {
         return this.collection.aggregate(pipeline, options);
     }
 
