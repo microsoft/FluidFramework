@@ -22,7 +22,7 @@ import {
 /**
  * A local value to be stored in a container type DDS.
  */
-export interface ILocalValue {
+export interface ILocalValue<T = any> {
     /**
      * Type indicator of the value stored within.
      */
@@ -31,7 +31,7 @@ export interface ILocalValue {
     /**
      * The in-memory value stored within.
      */
-    readonly value: any;
+    readonly value: T;
 
     /**
      * Retrieve the serialized form of the value stored within.
@@ -59,12 +59,12 @@ export function makeSerializable(
 /**
  * Manages a contained plain value.  May also contain shared object handles.
  */
-export class PlainLocalValue implements ILocalValue {
+export class PlainLocalValue<T> implements ILocalValue<T> {
     /**
      * Create a new PlainLocalValue.
      * @param value - The value to store, which may contain shared object handles
      */
-    constructor(public readonly value: any) {
+    constructor(public readonly value: T) {
     }
 
     /**
@@ -95,18 +95,15 @@ export class PlainLocalValue implements ILocalValue {
 /**
  * Manages a contained value type.
  *
- * @privateRemarks
- * TODO: Should maybe be a generic
- *
  * @alpha
  */
-export class ValueTypeLocalValue implements ILocalValue {
+export class ValueTypeLocalValue<T> implements ILocalValue<T> {
     /**
      * Create a new ValueTypeLocalValue.
      * @param value - The instance of the value type stored within
      * @param valueType - The type object of the value type stored within
      */
-    constructor(public readonly value: any, private readonly valueType: IValueType<any>) {
+    constructor(public readonly value: T, private readonly valueType: IValueType<any>) {
     }
 
     /**
@@ -137,7 +134,7 @@ export class ValueTypeLocalValue implements ILocalValue {
      * @param opName - The name of the operation that needs processing
      * @returns The object which can process the given op
      */
-    public getOpHandler(opName: string): IValueOperation<any> {
+    public getOpHandler(opName: string): IValueOperation<T> {
         const handler = this.valueType.ops.get(opName);
         if (!handler) {
             throw new Error("Unknown type message");

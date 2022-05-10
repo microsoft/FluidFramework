@@ -72,9 +72,10 @@ export interface IValueOperation<T> {
      * @param params - The params on the incoming operation
      * @param local - Whether the operation originated from this client
      * @param message - The operation itself
+     * @param localOpMetadata - any metadata submitted with this operation, if it was submitted locally.
      * @alpha
      */
-    process(value: T, params: any, local: boolean, message: ISequencedDocumentMessage | undefined);
+    process(value: T, params: any, local: boolean, message: ISequencedDocumentMessage | undefined, localOpMetadata: unknown | undefined);
 }
 
 /**
@@ -100,30 +101,14 @@ export interface IValueType<T> {
     ops: Map<string, IValueOperation<T>>;
 }
 
-/**
- * Container types that are able to create value types as contained values.
- */
-export interface IValueTypeCreator {
-    /**
-     * Create a new value type at the given key.
-     * @param key - Key to create the value type at
-     * @param type - Type of the value type to create
-     * @param params - Initialization params for the value type
-     * @alpha
-     */
-    createValueType(key: string, type: string, params: any): this;
-}
-
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged" | "create", listener: (
         changed: IValueChanged,
         local: boolean,
         target: IEventThisPlaceHolder) => void);
-    (event: "clear", listener: (
-        local: boolean,
-        target: IEventThisPlaceHolder
-    ) => void);
 }
+
+// TODO: Clean up these types
 
 /**
  * Shared map interface

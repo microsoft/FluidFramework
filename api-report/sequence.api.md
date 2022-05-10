@@ -432,7 +432,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    // (undocumented)
+    // @deprecated (undocumented)
     waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
 }
 
@@ -590,7 +590,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     submitSequenceMessage(message: IMergeTreeOp): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    // (undocumented)
+    // @deprecated (undocumented)
     waitIntervalCollection(label: string): Promise<IntervalCollection<SequenceInterval>>;
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
 }

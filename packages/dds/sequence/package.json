@@ -132,7 +132,8 @@
       "ClassDeclaration_SequenceMaintenanceEvent": {
         "forwardCompat": false,
         "backCompat": false
-      }
+      },
+      "ClassDeclaration_IntervalCollection": {"forwardCompat": false}
     }
   }
 }

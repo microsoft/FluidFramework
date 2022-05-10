@@ -55,7 +55,7 @@ import {
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
-import { MapKernel } from "./mapKernel";
+import { IMapMessageLocalMetadata, MapKernel } from "./mapKernel";
 import { IValueChanged } from "./mapKernelInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
@@ -166,7 +166,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-    private readonly intervalMapKernel: MapKernel;
+    private readonly intervalMapKernel: MapKernel<IntervalCollection<SequenceInterval>>;
     constructor(
         private readonly dataStoreRuntime: IFluidDataStoreRuntime,
         public id: string,
@@ -224,8 +224,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isAttached(),
-            [new SequenceIntervalCollectionValueType()]);
+            new SequenceIntervalCollectionValueType()
+        );
     }
 
     /**
@@ -407,25 +407,19 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
+    /**
+     * @deprecated - IntervalCollections are created on a first-write wins basis, and concurrent creates
+     * are supported. Use `getIntervalCollection` instead.
+     */
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalMapKernel.wait<IntervalCollection<SequenceInterval>>(
-            this.getIntervalCollectionPath(label));
+        return this.intervalMapKernel.get(this.getIntervalCollectionPath(label));
     }
 
-    // TODO: fix race condition on creation by putting type on every operation
     public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
         const labelPath = this.getIntervalCollectionPath(label);
-        if (!this.intervalMapKernel.has(labelPath)) {
-            this.intervalMapKernel.createValueType(
-                labelPath,
-                SequenceIntervalCollectionValueType.Name,
-                undefined);
-        }
-
-        const sharedCollection =
-            this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(labelPath);
+        const sharedCollection = this.intervalMapKernel.get(labelPath);
         return sharedCollection;
     }
 
@@ -500,7 +494,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     protected onDisconnect() {}
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {
+        if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
                     content as IMergeTreeOp,
@@ -700,18 +694,18 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
     private initializeIntervalCollections() {
         // Listen and initialize new SharedIntervalCollections
-        this.intervalMapKernel.eventEmitter.on("create", (ev: IValueChanged, local: boolean) => {
-            const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(ev.key);
+        this.intervalMapKernel.eventEmitter.on("create", ({ key, previousValue }: IValueChanged, local: boolean) => {
+            const intervalCollection = this.intervalMapKernel.get(key);
             if (!intervalCollection.attached) {
-                intervalCollection.attachGraph(this.client, ev.key);
+                intervalCollection.attachGraph(this.client, key);
             }
-            assert(ev.previousValue === undefined, 0x2c1 /* "Creating an interval that already exists?" */);
-            this.emit("createIntervalCollection", ev.key, local, this);
+            assert(previousValue === undefined, 0x2c1 /* "Creating an interval collection that already exists?" */);
+            this.emit("createIntervalCollection", key, local, this);
         });
 
         // Initialize existing SharedIntervalCollections
         for (const key of this.intervalMapKernel.keys()) {
-            const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(key);
+            const intervalCollection = this.intervalMapKernel.get(key);
             intervalCollection.attachGraph(this.client, key);
         }
     }

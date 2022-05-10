@@ -24,7 +24,7 @@ import {
     IntervalCollectionValueType,
     ISerializableInterval,
 } from "./intervalCollection";
-import { MapKernel } from "./mapKernel";
+import { IMapMessageLocalMetadata, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
@@ -79,8 +79,8 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
     getIntervalCollection(label: string): IntervalCollection<TInterval>;
 }
 
-export class SharedIntervalCollection<TInterval extends ISerializableInterval = Interval>
-    extends SharedObject implements ISharedIntervalCollection<TInterval> {
+export class SharedIntervalCollection
+    extends SharedObject implements ISharedIntervalCollection<Interval> {
     /**
      * Create a SharedIntervalCollection
      *
@@ -102,7 +102,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     public readonly [Symbol.toStringTag]: string = "SharedIntervalCollection";
-    private readonly intervalMapKernel: MapKernel;
+    private readonly intervalMapKernel: MapKernel<IntervalCollection<Interval>>;
 
     /**
      * Constructs a new shared SharedIntervalCollection. If the object is non-local an id and service interfaces will
@@ -118,30 +118,23 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isAttached(),
-            [new IntervalCollectionValueType()],
+            new IntervalCollectionValueType(),
         );
     }
 
+    /**
+     * @deprecated - IntervalCollections are created on a first-write wins basis, and concurrent creates
+     * are supported. Use `getIntervalCollection` instead.
+     */
     public async waitIntervalCollection(
         label: string,
-    ): Promise<IntervalCollection<TInterval>> {
-        return this.intervalMapKernel.wait<IntervalCollection<TInterval>>(
-            this.getIntervalCollectionPath(label));
+    ): Promise<IntervalCollection<Interval>> {
+        return this.intervalMapKernel.get(this.getIntervalCollectionPath(label));
     }
 
-    // TODO: fix race condition on creation by putting type on every operation
-    public getIntervalCollection(label: string): IntervalCollection<TInterval> {
+    public getIntervalCollection(label: string): IntervalCollection<Interval> {
         const realLabel = this.getIntervalCollectionPath(label);
-        if (!this.intervalMapKernel.has(realLabel)) {
-            this.intervalMapKernel.createValueType(
-                label,
-                IntervalCollectionValueType.Name,
-                undefined);
-        }
-
-        const sharedCollection =
-            this.intervalMapKernel.get<IntervalCollection<TInterval>>(realLabel);
+        const sharedCollection = this.intervalMapKernel.get(realLabel);
         return sharedCollection;
     }
 
@@ -150,7 +143,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
+        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata);
     }
 
     protected onDisconnect() { }

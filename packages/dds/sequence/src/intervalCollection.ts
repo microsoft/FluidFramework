@@ -684,12 +684,7 @@ export class SequenceIntervalCollectionValueType
                 "add",
                 {
                     process: (value, params, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.addInternal(params, local, op);
+                        value.ackAdd(params, local, op);
                     },
                 },
             ],
@@ -697,10 +692,7 @@ export class SequenceIntervalCollectionValueType
                 "delete",
                 {
                     process: (value, params, local, op) => {
-                        if (local) {
-                            return;
-                        }
-                        value.deleteInterval(params, local, op);
+                        value.ackDelete(params, local, op);
                     },
                 },
             ],
@@ -708,7 +700,7 @@ export class SequenceIntervalCollectionValueType
                 "change",
                 {
                     process: (value, params, local, op) => {
-                        value.changeInterval(params, local, op);
+                        value.ackChange(params, local, op);
                     },
                 },
             ]]);
@@ -767,12 +759,7 @@ export class IntervalCollectionValueType
                 "add",
                 {
                     process: (value, params, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.addInternal(params, local, op);
+                        value.ackAdd(params, local, op);
                     },
                 },
             ],
@@ -780,10 +767,7 @@ export class IntervalCollectionValueType
                 "delete",
                 {
                     process: (value, params, local, op) => {
-                        if (local) {
-                            return;
-                        }
-                        value.deleteInterval(params, local, op);
+                        value.ackDelete(params, local, op);
                     },
                 },
             ],
@@ -791,7 +775,7 @@ export class IntervalCollectionValueType
                 "change",
                 {
                     process: (value, params, local, op) => {
-                        value.changeInterval(params, local, op);
+                        value.ackChange(params, local, op);
                     },
                 },
             ]]);
@@ -835,6 +819,10 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
         listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void);
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void);
 }
+
+// interface IntervalCollectionLocalOpMetadata {
+//     pendingMessageId: number;
+// }
 
 export class IntervalCollection<TInterval extends ISerializableInterval>
     extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
@@ -1063,7 +1051,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return entries && entries.length !== 0;
     }
 
+    /** @deprecated - use ackChange */
     public changeInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
+        return this.ackChange(serializedInterval, local, op);
+    }
+
+    public ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
         }
@@ -1140,10 +1133,24 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         });
     }
 
+    /** @deprecated - use ackAdd */
     public addInternal(
         serializedInterval: ISerializedInterval,
         local: boolean,
         op: ISequencedDocumentMessage) {
+        return this.ackAdd(serializedInterval, local, op);
+    }
+
+    public ackAdd(
+        serializedInterval: ISerializedInterval,
+        local: boolean,
+        op: ISequencedDocumentMessage) {
+        if (local) {
+            // Local ops were applied when the message was created and there's no "pending add"
+            // state to bookkeep
+            return;
+        }
+
         if (!this.attached) {
             throw new Error("attachSequence must be called");
         }
@@ -1158,14 +1165,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             op);
 
         if (interval) {
-            // Local ops get submitted to the server. Remote ops have the deserializer run.
-            if (local) {
-                // Review: Is this case possible?
-                this.emitter.emit("add", undefined, serializedInterval);
-            } else {
-                if (this.onDeserialize) {
-                    this.onDeserialize(interval);
-                }
+            if (this.onDeserialize) {
+                this.onDeserialize(interval);
             }
         }
 
@@ -1174,10 +1175,25 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return interval;
     }
 
+    /** @deprecated - use ackDelete */
     public deleteInterval(
         serializedInterval: ISerializedInterval,
         local: boolean,
         op: ISequencedDocumentMessage): void {
+        return this.ackDelete(serializedInterval, local, op);
+    }
+
+    public ackDelete(
+        serializedInterval: ISerializedInterval,
+        local: boolean,
+        op: ISequencedDocumentMessage): void {
+        if (local) {
+            // Local ops were applied when the message was created and there's no "pending delete"
+            // state to bookkeep: remote operation application takes into account possibility of
+            // locally deleted interval whenever a lookup happens.
+            return;
+        }
+
         if (!this.attached) {
             throw new Error("attach must be called prior to deleting intervals");
         }
