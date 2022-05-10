@@ -11,7 +11,7 @@ export class TestCollection implements ICollection<any> {
     constructor(public collection: any[]) {
     }
 
-    public async aggregate(group: any, options?: any) {
+    public async aggregate(pipeline: any, options?: any) {
         throw new Error("Method not implemented.");
     }
 

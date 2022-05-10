@@ -17,7 +17,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         this.collectionName = `${namespace}-${name}`;
     }
 
-    public aggregate(group: any, options?: any): any {
+    public aggregate(pipeline: any, options?: any): any {
         throw new Error("Method Not Implemented");
     }
 

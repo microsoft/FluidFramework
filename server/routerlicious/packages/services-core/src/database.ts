@@ -45,7 +45,7 @@ export interface ICollection<T> {
      * @param options - optional settings
      * @returns - cursor you can use to iterate over aggregated results
      */
-    aggregate(group: any, options?: any): any;
+    aggregate(pipeline: any, options?: any): any;
     /**
      * Finds queries in the database
      *
