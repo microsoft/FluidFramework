@@ -10,6 +10,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { UnassignedSequenceNumber } from "../constants";
 import { SegmentGroup } from "../mergeTree";
 import { MergeTreeDeltaType } from "../ops";
+import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -24,7 +25,7 @@ describe("client.applyMsg", () => {
     });
 
     it("Interleaved inserts, annotates, and deletes", () => {
-        const changes = new Map<number, { msg: ISequencedDocumentMessage, segmentGroup: SegmentGroup }>();
+        const changes = new Map<number, { msg: ISequencedDocumentMessage; segmentGroup: SegmentGroup; }>();
         assert.equal(client.mergeTree.pendingSegments?.count(), 0);
         for (let i = 0; i < 100; i++) {
             const len = client.getLength();
@@ -425,5 +426,33 @@ describe("client.applyMsg", () => {
         const regeneratedOp = clientA.regeneratePendingOp(annotateOp, seg);
         assert(regeneratedOp.type === MergeTreeDeltaType.GROUP);
         assert.strictEqual(regeneratedOp.ops.length, 0);
+    });
+
+    it("getContainingSegment with op", () => {
+        const clientA = new TestClient();
+        clientA.startOrUpdateCollaboration("A");
+        const clientB = new TestClient();
+        clientB.startOrUpdateCollaboration("B");
+
+        let seq = 0;
+        const insertOp1 = clientA.makeOpMessage(clientA.insertTextLocal(0, "ABC"), ++seq);
+        [clientA, clientB].map((c) => c.applyMsg(insertOp1));
+
+        const removeOp = clientA.removeRangeLocal(0, 2);
+        const removeSequence = ++seq;
+        clientA.applyMsg(clientA.makeOpMessage(removeOp, removeSequence));
+
+        const insertOp2 = clientB.insertTextLocal(2, "X");
+
+        // op with no reference sequence should count removed segment
+        const insertMessage2 = clientB.makeOpMessage(insertOp2, ++seq);
+        let seg = clientA.getContainingSegment(2, insertMessage2);
+        assert.notStrictEqual(seg.segment, undefined);
+        assert.strictEqual((seg.segment as TextSegment).text, "C");
+
+        // op with reference sequence >= remove op sequence should not count removed segment
+        const insertMessage3 = clientB.makeOpMessage(insertOp2, seq, removeSequence);
+        seg = clientA.getContainingSegment(2, insertMessage3);
+        assert.strictEqual(seg.segment, undefined);
     });
 });

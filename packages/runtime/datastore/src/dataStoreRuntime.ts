@@ -963,7 +963,7 @@ export const mixinRequestHandler = (
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 export const mixinSummaryHandler = (
-    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string } | undefined >,
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[]; content: string; } | undefined >,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithSummarizerHandler extends Base {
         private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {

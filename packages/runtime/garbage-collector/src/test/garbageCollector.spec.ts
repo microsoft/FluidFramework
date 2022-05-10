@@ -9,8 +9,8 @@ import { runGarbageCollection } from "../garbageCollector";
 import { IGCResult } from "../interfaces";
 
 interface IGCNode {
-    id: string,
-    outboundRoutes: string[],
+    id: string;
+    outboundRoutes: string[];
 }
 
 describe("Garbage Collector", () => {
@@ -28,7 +28,7 @@ describe("Garbage Collector", () => {
     });
 
     function runGCAndValidateResults(gcNodes: IGCNode[], startingIds: string[], deletedNodes: IGCNode[]) {
-        const referenceGraph: { [ id: string ]: string[] } = {};
+        const referenceGraph: { [ id: string ]: string[]; } = {};
         for (const node of gcNodes) {
             referenceGraph[node.id] = node.outboundRoutes;
         }

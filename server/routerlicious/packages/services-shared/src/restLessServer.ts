@@ -10,12 +10,12 @@ import formidable from "formidable";
 
 export const decodeHeader = (
     header: string,
-): { name: string; value: string } => {
+): { name: string; value: string; } => {
     const [name, value] = header.split(/: (.+)/);
     return { name, value };
 };
 
-type IncomingMessageEx = IncomingMessage & { body?: any };
+type IncomingMessageEx = IncomingMessage & { body?: any; };
 
 /**
  * Server for communicating with a "RestLess" client.

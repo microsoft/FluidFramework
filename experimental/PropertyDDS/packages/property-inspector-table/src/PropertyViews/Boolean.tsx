@@ -11,9 +11,9 @@ import { IInspectorRow } from "../InspectorTableTypes";
 import { getPropertyValue } from "../utils";
 
 type BooleanProps = (IEditableValueCellProps & {
-  onSubmit: (val: boolean, props: IEditableValueCellProps) => void,
-  SwitchProps: SwitchProps,
-  rowData: IInspectorRow & { value: boolean },
+  onSubmit: (val: boolean, props: IEditableValueCellProps) => void;
+  SwitchProps: SwitchProps;
+  rowData: IInspectorRow & { value: boolean; };
 });
 
 export const BooleanView: React.FunctionComponent<BooleanProps> = (props) => {

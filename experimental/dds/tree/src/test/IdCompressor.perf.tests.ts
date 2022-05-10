@@ -5,6 +5,7 @@
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
+import { take } from '@fluid-internal/stochastic-test-utils';
 import { fail, Mutable } from '../Common';
 import {
 	defaultClusterCapacity,
@@ -31,7 +32,6 @@ import {
 	sessionIds,
 	TestIdData,
 } from './utilities/IdCompressorTestUtilities';
-import { take } from './stochastic-test-utilities';
 
 describe('IdCompressor Perf', () => {
 	const type = BenchmarkType.Measurement;

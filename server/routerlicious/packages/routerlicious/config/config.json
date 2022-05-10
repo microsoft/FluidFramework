@@ -110,7 +110,13 @@
         "kafkaClientId": "deli",
         "groupId": "deli",
         "checkpointBatchSize": 10,
-        "checkpointTimeIntervalMsec": 1000
+        "checkpointTimeIntervalMsec": 1000,
+        "checkpointHeuristics": {
+            "enable": false,
+            "idleTime": 10000,
+            "maxTime": 60000,
+            "maxMessages": 500
+        }
     },
     "scribe": {
         "kafkaClientId": "scribe"

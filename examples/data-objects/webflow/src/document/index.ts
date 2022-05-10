@@ -91,7 +91,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
 const empty = Object.freeze({});
 
-export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
+export const getCss = (segment: ISegment): Readonly<{ style?: string; classList?: string; }> => segment.properties || empty;
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
 
@@ -405,7 +405,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.annotateRange(start, end, { attr });
     }
 
-    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition, pos: number } {
+    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition; pos: number; } {
         return this.sharedString.findTile(position, tileType as unknown as string, preceding);
     }
 
@@ -472,7 +472,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {
-        const updates: { span: SegmentSpan, classList: string }[] = [];
+        const updates: { span: SegmentSpan; classList: string; }[] = [];
 
         this.visitRange((position, segment, startOffset, endOffset) => {
             const oldList = getCss(segment).classList;
