@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/vltava",
   "version": "0.60.1000",
+  "private": true,
   "description": "Vltava is a Application Experience",
   "homepage": "https://fluidframework.com",
   "repository": {

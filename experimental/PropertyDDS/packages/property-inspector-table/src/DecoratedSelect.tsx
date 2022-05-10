@@ -13,7 +13,7 @@ import SingleValue, { SingleValueProps } from "react-select/lib/components/Singl
 import { Props as SelectProps } from "react-select/lib/Select";
 import { StylesConfig } from "react-select/lib/styles";
 import { GroupedOptionsType, OptionsType, ValueType } from "react-select/lib/types";
-import {SvgIcon} from "./SVGIcon";
+import { SvgIcon } from "./SVGIcon";
 import {
   backGroundDarkGrayColor,
   backGroundGrayColor,

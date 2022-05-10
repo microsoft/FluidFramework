@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/primitives",
   "version": "0.60.1000",
+  "private": true,
   "description": "Minimal Fluid container sample to showcase some of the distributed data structures.",
   "homepage": "https://fluidframework.com",
   "repository": {

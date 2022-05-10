@@ -314,7 +314,7 @@ export class SummaryGenerator {
             }
 
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
-            summarizeEvent.reportEvent("generate", {...summarizeTelemetryProps});
+            summarizeEvent.reportEvent("generate", { ...summarizeTelemetryProps });
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
             return fail("submitSummaryFailure", error);
@@ -383,7 +383,7 @@ export class SummaryGenerator {
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
                     summaryAckOp: ackNackOp,
                     ackNackDuration,
-                }});
+                } });
             } else {
                 // Check for retryDelay in summaryNack response.
                 assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);

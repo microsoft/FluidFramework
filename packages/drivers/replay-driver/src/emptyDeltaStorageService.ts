@@ -18,8 +18,7 @@ export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
         from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
-        cachedOnly?: boolean): IStream<ISequencedDocumentMessage[]>
-    {
+        cachedOnly?: boolean): IStream<ISequencedDocumentMessage[]> {
         return emptyMessageStream;
     }
 }
