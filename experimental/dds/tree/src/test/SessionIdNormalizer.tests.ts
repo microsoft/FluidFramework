@@ -146,7 +146,7 @@ describe('SessionIdNormalizer Perf', () => {
 	const before = () => {
 		normalizer = new SessionIdNormalizer();
 		rand = fuzzNormalizer(normalizer, 10000, 3.14);
-		ids = [...normalizer.getAllIds()];
+		ids = [...normalizer];
 		locals = ids.filter<LocalCompressedId>((id): id is LocalCompressedId => isLocalId(id));
 		finals = ids.filter((id) => isFinalId(id)) as FinalCompressedId[];
 		localChoices = [];
@@ -185,7 +185,7 @@ function itWithNormalizer(title: string, itFn: (normalizer: SessionIdNormalizer<
 		const normalizer: SessionIdNormalizer<DummyRange> = makeNormalizerProxy(makeTestNormalizer(), locals, finals);
 
 		itFn(normalizer);
-		const allIds = [...normalizer.getAllIds()];
+		const allIds = [...normalizer];
 		let prevLocal: LocalCompressedId | undefined;
 		let prevFinal: FinalCompressedId | undefined;
 		for (let i = 0; i < locals.length && i < finals.length; i++) {

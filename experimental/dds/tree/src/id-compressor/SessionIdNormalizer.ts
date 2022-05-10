@@ -280,6 +280,9 @@ export class SessionIdNormalizer<TRangeObject> {
 				rangeMap.append(alignedLocal, [firstFinal, lastFinal, rangeObject]);
 				assert(alignedLocal >= lastLocal, 'Gaps in final space must align to a local.');
 			}
+            if (this.expensiveAsserts) {
+                this.idRanges.assertValid();
+            }
 		}
 
         this.nextLocalId = nextLocal;
@@ -288,7 +291,7 @@ export class SessionIdNormalizer<TRangeObject> {
 	/**
 	 * Returns an enumerable of all session-space IDs known to this normalizer, in creation order.
 	 */
-	public *getAllIds(): IterableIterator<SessionSpaceCompressedId> {
+    public *[Symbol.iterator](): IterableIterator<SessionSpaceCompressedId> {
 		for (const [firstLocal, [lastLocal, finalRanges]] of this.idRanges.entries()) {
 			for (let i = firstLocal; i >= lastLocal; i--) {
 				yield i;
@@ -357,7 +360,7 @@ export class SessionIdNormalizer<TRangeObject> {
 
 	public equals(
 		other: SessionIdNormalizer<TRangeObject>,
-		compareRangeObjects: (a: TRangeObject, b: TRangeObject) => boolean = () => true
+		compareRangeObjects: (a: TRangeObject, b: TRangeObject) => boolean = (a, b) => a === b
 	): boolean {
 		return this.idRanges.equals(other.idRanges, (localRangeA, localRangeB) => {
 			const [lastLocalA, finalRangesA] = localRangeA;
