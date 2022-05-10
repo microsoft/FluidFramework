@@ -551,10 +551,10 @@ describe("SharedString", () => {
             assert.strictEqual(sharedString.getText(), "AXE");
 
             assertIntervals(sharedString2, collection2, [
-                { start: 2, end: 2 },
+                { start: 1, end: 1 },
             ]);
             assertIntervals(sharedString, collection1, [
-                { start: 2, end: 2 },
+                { start: 1, end: 1 },
             ]);
         });
 

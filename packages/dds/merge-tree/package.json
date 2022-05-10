@@ -131,6 +131,7 @@
       "ClassDeclaration_MergeTree": {"forwardCompat": false},
       "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false},
       "ClassDeclaration_LocalReference": {"forwardCompat": false},
+      "comment": {
       "ClassDeclaration_BaseSegment": {"forwardCompat": false},
       "InterfaceDeclaration_IConsensusInfo": {"forwardCompat": false},
       "InterfaceDeclaration_IHierBlock": {"forwardCompat": false},
@@ -152,6 +153,7 @@
       "ClassDeclaration_SortedSegmentSet": {"forwardCompat": false},
       "ClassDeclaration_TextSegment": {"forwardCompat": false},
       "ClassDeclaration_TrackingGroup": {"forwardCompat": false}
+      }
     }
   }
 }

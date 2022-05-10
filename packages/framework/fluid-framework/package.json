@@ -74,11 +74,13 @@
       "ClassDeclaration_SequenceEvent": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceInterval": {"forwardCompat": false},
+      "comment": {
       "TypeAliasDeclaration_MatrixSegment": {"forwardCompat": false},
       "ClassDeclaration_PaddingSegment": {"forwardCompat": false},
       "ClassDeclaration_RunSegment": {"forwardCompat": false},
       "TypeAliasDeclaration_SharedStringSegment": {"forwardCompat": false},
       "ClassDeclaration_SubSequence": {"forwardCompat": false}
+      }
     }
   }
 }

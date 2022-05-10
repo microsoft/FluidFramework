@@ -558,6 +558,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 this.localRemovedSeq = undefined;
                 if (removalInfo.removedSeq === UnassignedSequenceNumber) {
                     removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
+                    mergeTree.updateSegmentRefsAfterMarkRemoved(this, false);
                     return true;
                 }
 
@@ -1467,12 +1468,28 @@ export class MergeTree {
         }
     }
 
-    private updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean) {
-        assert(!!segment.localRefs, "No refs to update");
+    // @internal - this method should only be called by BaseSegment
+    public updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean) {
+        if (!segment.localRefs || segment.localRefs.empty) {
+            return;
+        }
         const refsToSlide: LocalReference[] = [];
-        segment.localRefs.updateAfterMarkRemoved(pending, refsToSlide);
+        const refsToKeep: LocalReference[] = [];
+        for (const lref of segment.localRefs) {
+            if (lref.refType & ReferenceType.SlideOnRemove) {
+                if (pending) {
+                    refsToKeep.push(lref);
+                } else {
+                    refsToSlide.push(lref);
+                }
+            }
+        }
         for (const ref of refsToSlide) {
             this.slideReference(ref);
+        }
+        segment.localRefs.clear();
+        for (const lref of refsToKeep) {
+            segment.localRefs.addLocalRef(lref);
         }
     }
 
