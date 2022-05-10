@@ -6,7 +6,6 @@
 import {
     ISummarizerNode,
     ISummarizerNodeConfig,
-    ISummarizeInternalResult,
     ISummarizeResult,
     ISummaryTreeWithStats,
     CreateChildSummarizerNodeParam,
