@@ -395,6 +395,39 @@ describe("SharedString", () => {
             ]);
         });
 
+        it("can slide intervals on remove ack", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+            containerRuntimeFactory.processAllMessages();
+
+            sharedString.insertText(2, "X");
+            assert.strictEqual(sharedString.getText(), "ABXCD");
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 4 },
+            ]);
+
+            sharedString2.removeRange(1, 2);
+            assert.strictEqual(sharedString2.getText(), "ACD");
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 2 },
+            ]);
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "AXCD");
+            assert.strictEqual(sharedString2.getText(), "AXCD");
+
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 3 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 3 },
+            ]);
+        });
+
         // TODO:ransomr enable test once sliding in markRangeRemoved is fixed
         it.skip("can slide intervals to segment not referenced by remove", () => {
             const collection1 = sharedString.getIntervalCollection("test");

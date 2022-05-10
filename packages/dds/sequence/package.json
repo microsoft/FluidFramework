@@ -135,7 +135,12 @@
       },
       "ClassDeclaration_SequenceInterval": {
         "forwardCompat": false
-      }
+      },
+      "TypeAliasDeclaration_MatrixSegment": {"forwardCompat": false},
+      "ClassDeclaration_PaddingSegment": {"forwardCompat": false},
+      "ClassDeclaration_RunSegment": {"forwardCompat": false},
+      "TypeAliasDeclaration_SharedStringSegment": {"forwardCompat": false},
+      "ClassDeclaration_SubSequence": {"forwardCompat": false}
     }
   }
 }

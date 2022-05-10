@@ -822,7 +822,7 @@ export class LocalReference implements ReferencePosition {
     // @deprecated (undocumented)
     hasTileLabel(label: string): boolean;
     // @deprecated (undocumented)
-    hasTileLabels(): boolean;
+    hasTileLabels(): any;
     // (undocumented)
     isLeaf(): boolean;
     // @deprecated (undocumented)
@@ -873,6 +873,8 @@ export class LocalReferenceCollection {
     // (undocumented)
     removeLocalRef(lref: LocalReference): LocalReference | undefined;
     split(offset: number, splitSeg: ISegment): void;
+    // (undocumented)
+    updateAfterMarkRemoved(pending: boolean, refsToSlide: LocalReference[]): void;
 }
 
 // @public (undocumented)

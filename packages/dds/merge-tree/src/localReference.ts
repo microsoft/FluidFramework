@@ -428,4 +428,22 @@ export class LocalReferenceCollection {
             }
         }
     }
+
+    public updateAfterMarkRemoved(pending: boolean, refsToSlide: LocalReference[]) {
+        // TODO:ransomr this method could be much more efficient
+        const refsToRemove: LocalReference[] = [];
+        for (const lref of this) {
+            // eslint-disable-next-line no-bitwise
+            if (lref.refType & ReferenceType.SlideOnRemove) {
+                if (pending) {
+                    continue;
+                }
+                refsToSlide.push(lref);
+            }
+            refsToRemove.push(lref);
+        }
+        for (const lref of refsToRemove) {
+            this.removeLocalRef(lref);
+        }
+    }
 }

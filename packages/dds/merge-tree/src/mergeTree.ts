@@ -1443,7 +1443,6 @@ export class MergeTree {
         return segoff;
     }
 
-    // TODO:ransomr modify markRangeRemoved to use this method for sliding
     // @internal - this method should only be called by client
     public slideReference(ref: LocalReference) {
         const segment = ref.getSegment();
@@ -1462,6 +1461,18 @@ export class MergeTree {
                 newSegment.localRefs = new LocalReferenceCollection(newSegment);
             }
             newSegment.localRefs.addBeforeTombstones([ref]);
+            // TODO is it required to update the path lengths?
+            this.blockUpdatePathLengths(newSegment.parent, TreeMaintenanceSequenceNumber,
+                LocalClientId);
+        }
+    }
+
+    private updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean) {
+        assert(!!segment.localRefs, "No refs to update");
+        const refsToSlide: LocalReference[] = [];
+        segment.localRefs.updateAfterMarkRemoved(pending, refsToSlide);
+        for (const ref of refsToSlide) {
+            this.slideReference(ref);
         }
     }
 
@@ -2388,7 +2399,7 @@ export class MergeTree {
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: SegmentGroup;
         const removedSegments: IMergeTreeSegmentDelta[] = [];
-        const savedLocalRefs: LocalReferenceCollection[] = [];
+        const segmentsWithRefs: ISegment[] = [];
         const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
         const markRemoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
             const existingRemovalInfo = toRemovalInfo(segment);
@@ -2412,10 +2423,9 @@ export class MergeTree {
                 segment.localRemovedSeq = localSeq;
 
                 removedSegments.push({ segment });
-                if (segment.localRefs && !segment.localRefs.empty) {
-                    savedLocalRefs.push(segment.localRefs);
-                }
-                segment.localRefs = undefined;
+            }
+            if (segment.localRefs && !segment.localRefs.empty) {
+                segmentsWithRefs.push(segment);
             }
 
             // Save segment so can assign removed sequence number when acked by server
@@ -2439,37 +2449,9 @@ export class MergeTree {
             return true;
         };
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
-        if (savedLocalRefs.length > 0) {
-            const length = this.getLength(refSeq, clientId);
-            let refSegment: ISegment | undefined;
-            if (start < length) {
-                const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
-                refSegment = afterSegOff.segment;
-                assert(!!refSegment, 0x052 /* "Missing reference segment!" */);
-                if (!refSegment.localRefs) {
-                    refSegment.localRefs = new LocalReferenceCollection(refSegment);
-                }
-                refSegment.localRefs.addBeforeTombstones(...savedLocalRefs);
-            } else if (length > 0) {
-                const beforeSegOff = this.getContainingSegment(length - 1, refSeq, clientId);
-                refSegment = beforeSegOff.segment;
-                assert(!!refSegment, 0x053 /* "Missing reference segment!" */);
-                if (!refSegment.localRefs) {
-                    refSegment.localRefs = new LocalReferenceCollection(refSegment);
-                }
-                refSegment.localRefs.addAfterTombstones(...savedLocalRefs);
-            } else {
-                // TODO: The tree is empty, so there isn't anywhere to put these
-                // they should be preserved somehow
-                for (const refsCollection of savedLocalRefs) {
-                    refsCollection.clear();
-                }
-            }
-
-            if (refSegment) {
-                this.blockUpdatePathLengths(refSegment.parent, TreeMaintenanceSequenceNumber,
-                    LocalClientId);
-            }
+        const pending = this.collabWindow.collaborating && clientId === this.collabWindow.clientId;
+        for (const segment of segmentsWithRefs) {
+            this.updateSegmentRefsAfterMarkRemoved(segment, pending);
         }
 
         // opArgs == undefined => test code
