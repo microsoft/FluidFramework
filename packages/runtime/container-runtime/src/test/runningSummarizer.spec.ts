@@ -182,6 +182,7 @@ describe("Runtime", () => {
                                 unreferencedBlobSize: 0,
                                 opsSizesSinceLastSummary: 0,
                                 nonSystemOpsSinceLastSummary: 0,
+                                summaryNumber: 0,
                             },
                             handle: "test-handle",
                             clientSequenceNumber: lastClientSeq,
