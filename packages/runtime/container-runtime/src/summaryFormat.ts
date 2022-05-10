@@ -77,16 +77,21 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 export type GCVersion = number;
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
     readonly summaryFormatVersion: 1;
-    /** The last message processed at the time of summary. Only primitive propertiy types are added to the summary. */
+    /** The last message processed at the time of summary. Only primitive property types are added to the summary. */
     readonly message: ISummaryMetadataMessage | undefined;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, \> 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
-    /** Counter of the last summary happened, increments every time we summarize */
-    readonly summaryCount?: number;
+    /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
+    readonly summaryNumber?: number;
     /** If this is present, the session for this container will expire after this time and the container will close */
     readonly sessionExpiryTimeoutMs?: number;
+    /**
+     * @deprecated - User summaryNumber instead.
+     * Counter of the last summary happened, increments every time we summarize
+     * */
+    readonly summaryCount?: number;
 }
 
 export interface ICreateContainerMetadata {
