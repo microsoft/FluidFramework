@@ -395,7 +395,7 @@ export class Loader implements IHostLoader {
     private async resolveCore(
         request: IRequest,
         pendingLocalState?: IPendingLocalState,
-    ): Promise<{ container: Container; parsed: IParsedUrl }> {
+    ): Promise<{ container: Container; parsed: IParsedUrl; }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 

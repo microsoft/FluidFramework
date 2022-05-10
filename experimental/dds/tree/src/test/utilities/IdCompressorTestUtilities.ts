@@ -703,12 +703,12 @@ export function makeOpGenerator(options: OperationGenerationConfig): Generator<O
 
 /**
  * Performs random actions on a test network.
- * @param generator the generator used to provide operations
- * @param network the test network to test
- * @param seed the seed for the random generation of the fuzz actions
- * @param observerClient if provided, this client will never generate local ids
- * @param synchronizeAtEnd if provided, all client will have all operations delivered from the server at the end of the test
- * @param validator if provided, this callback will be invoked periodically during the fuzz test.
+ * @param generator - the generator used to provide operations
+ * @param network - the test network to test
+ * @param seed - the seed for the random generation of the fuzz actions
+ * @param observerClient - if provided, this client will never generate local ids
+ * @param synchronizeAtEnd - if provided, all client will have all operations delivered from the server at the end of the test
+ * @param validator - if provided, this callback will be invoked periodically during the fuzz test.
  */
 export function performFuzzActions(
 	generator: Generator<Operation, FuzzTestState>,

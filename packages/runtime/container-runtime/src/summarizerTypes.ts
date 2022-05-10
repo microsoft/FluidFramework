@@ -152,6 +152,8 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly opsSizesSinceLastSummary: number;
     /** Number of non-system ops since the last summary @see isSystemMessage */
     readonly nonSystemOpsSinceLastSummary: number;
+    /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
+    readonly summaryNumber: number;
 }
 
 /** Base results for all submitSummary attempts. */

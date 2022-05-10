@@ -4,9 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
+    MockContainerRuntimeFactoryForReconnection,
+    MockContainerRuntimeForReconnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
@@ -16,7 +19,7 @@ import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalC
 const assertIntervals = (
     sharedString: SharedString,
     intervalCollection: IntervalCollection<SequenceInterval>,
-    expected: readonly { start: number; end: number }[],
+    expected: readonly { start: number; end: number; }[],
 ) => {
     const actual = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
     assert.strictEqual(actual.length, expected.length,
@@ -125,6 +128,26 @@ describe("SharedString interval collections", () => {
             ]);
             assertIntervals(sharedString2, collection2, [
                 { start: sharedString2.getLength() - 1, end: sharedString2.getLength() - 1 },
+            ]);
+        });
+
+        it("can slide intervals on create conflict with remove range", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.removeRange(1, 3);
+
+            collection2.add(1, 3, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 1 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 1 },
             ]);
         });
 
@@ -262,6 +285,146 @@ describe("SharedString interval collections", () => {
             containerRuntimeFactory.processAllMessages();
             assert.equal(Array.from(collection1).length, 0);
             assert.equal(Array.from(collection2).length, 0);
+        });
+    });
+
+    // TODO: Enable this test suite once correctness issues with reconnect are addressed.
+    // See https://github.com/microsoft/FluidFramework/issues/8739 for more context.
+    describe.skip("reconnect", () => {
+        let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+        let containerRuntime1: MockContainerRuntimeForReconnection;
+        let containerRuntime2: MockContainerRuntimeForReconnection;
+        let sharedString2: SharedString;
+
+        let collection1: IntervalCollection<SequenceInterval>;
+        let collection2: IntervalCollection<SequenceInterval>;
+        let interval: SequenceInterval;
+
+        beforeEach(async () => {
+            containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+
+            // Connect the first SharedString.
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+            const services1: IChannelServices = {
+                deltaConnection: containerRuntime1.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            sharedString.initializeLocal();
+            sharedString.connect(services1);
+
+            // Create and connect a second SharedString.
+            const runtime2 = new MockFluidDataStoreRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+            sharedString2 = new SharedString(runtime2, "shared-string-2", SharedStringFactory.Attributes);
+            const services2: IChannelServices = {
+                deltaConnection: containerRuntime2.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            sharedString2.initializeLocal();
+            sharedString2.connect(services2);
+
+            sharedString.insertText(0, "hello friend");
+            collection1 = sharedString.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+
+            collection2 = sharedString2.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+
+            // Note: at the start of each test, this interval is only visible to client 1.
+            interval = collection1.add(6, 8, IntervalType.SlideOnRemove); // the "fr" in "friend"
+        });
+
+        it("addInterval resubmitted with concurrent insert", async () => {
+            containerRuntime1.connected = false;
+
+            sharedString2.insertText(7, "amily its my f");
+            containerRuntimeFactory.processAllMessages();
+
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+
+            assert.equal(sharedString2.getText(), "hello family its my friend");
+            assertIntervals(sharedString2, collection2, [
+                { start: 6, end: 22 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 6, end: 22 },
+            ]);
+        });
+
+        it("addInterval resubmitted with concurrent delete", async () => {
+            containerRuntime1.connected = false;
+
+            sharedString2.removeText(5, 9);
+            containerRuntimeFactory.processAllMessages();
+
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+
+            assert.equal(sharedString2.getText(), "helloend");
+            assertIntervals(sharedString2, collection2, [
+                { start: 5, end: 5 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 5, end: 5 },
+            ]);
+        });
+
+        it("delete resubmitted with concurrent insert", async () => {
+            containerRuntimeFactory.processAllMessages();
+            containerRuntime1.connected = false;
+
+            collection1.removeIntervalById(interval.getIntervalId());
+            sharedString2.insertText(7, "amily its my f");
+            containerRuntimeFactory.processAllMessages();
+
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+
+            // Verify that the changes were correctly received by the second SharedString
+            assert.equal(sharedString2.getText(), "hello family its my friend");
+            assertIntervals(sharedString2, collection2, []);
+            assertIntervals(sharedString, collection1, []);
+        });
+
+        it("change resubmitted with concurrent insert", async () => {
+            containerRuntimeFactory.processAllMessages();
+            containerRuntime1.connected = false;
+
+            collection1.change(interval.getIntervalId(), 5, 9); // " fri"
+            sharedString2.insertText(7, "amily its my f");
+            containerRuntimeFactory.processAllMessages();
+
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+
+            assert.equal(sharedString2.getText(), "hello family its my friend");
+            assertIntervals(sharedString2, collection2, [
+                { start: 5, end: 23 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 5, end: 23 },
+            ]);
+        });
+
+        it("change resubmitted with concurrent delete", async () => {
+            containerRuntimeFactory.processAllMessages();
+            containerRuntime1.connected = false;
+
+            collection1.change(interval.getIntervalId(), 5, 9); // " fri"
+            sharedString2.removeText(8, 10);
+            containerRuntimeFactory.processAllMessages();
+
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+
+            assert.equal(sharedString2.getText(), "hello frnd");
+            assertIntervals(sharedString2, collection2, [
+                { start: 5, end: 8 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 5, end: 8 },
+            ]);
         });
     });
 });
