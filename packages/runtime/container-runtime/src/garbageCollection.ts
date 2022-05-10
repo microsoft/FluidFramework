@@ -388,8 +388,8 @@ export class GarbageCollector implements IGarbageCollector {
             // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
             // other existing documents, GC is enabled.
             this.gcEnabled = prevSummaryGCVersion > 0;
-            this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
             this.sweepEnabled = metadata?.sweepEnabled ?? false;
+            this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
@@ -397,16 +397,14 @@ export class GarbageCollector implements IGarbageCollector {
                 throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
             }
 
-            // For new documents, GC has to be explicitly enabled via the gcAllowed flag in GC options.
+            // For new documents, GC has to be explicitly enabled via the flags in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
+            this.sweepEnabled = gcOptions.sweepAllowed === true;
 
             // Set the Session Expiry only if the flag is enabled or the test option is set.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = defaultSessionExpiryDurationMs;
             }
-
-            // For new documents, sweep has to be explicitly enabled via sweepAllowed flag in GC options.
-            this.sweepEnabled = gcOptions.sweepAllowed === true;
         }
 
         // If session expiry is enabled, we need to close the container when the timeout expires
@@ -433,8 +431,6 @@ export class GarbageCollector implements IGarbageCollector {
         // latest tracked GC version. For new documents, we will be writing the first summary with the current version.
         this.latestSummaryGCVersion = prevSummaryGCVersion ?? this.currentGCVersion;
 
-        // Whether GC should run or not. Even if GC is enabled for this container, whether it should run or not can
-        // be overridden via feature flags or the disableGC option.
         /**
          * Whether GC should run or not. The following conditions have to be met to run sweep:
          * 1. GC should be enabled for this container.
