@@ -15,6 +15,9 @@ import {
     IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
 import {
+    convertSnapshotAndBlobsToSummaryTree,
+ } from "@fluidframework/driver-utils";
+import {
     ICreateBlobResponse,
     ISnapshotTree,
     ISummaryHandle,
@@ -147,7 +150,23 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     }
 
     public async downloadSummary(summaryHandle: ISummaryHandle): Promise<ISummaryTree> {
-        throw new Error("NOT IMPLEMENTED!");
+        const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "getWholeFlatSummary",
+                treeId: summaryHandle.handle,
+            },
+            async (event) => {
+                const response = await this.manager.getSummary(summaryHandle.handle);
+                event.end({
+                    size: response.trees[0]?.entries.length,
+                });
+                return response;
+            },
+        );
+
+        const { blobs, snapshotTree } = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary, "");
+        return convertSnapshotAndBlobsToSummaryTree(snapshotTree, blobs);
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
