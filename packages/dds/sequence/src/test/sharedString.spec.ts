@@ -428,8 +428,7 @@ describe("SharedString", () => {
             ]);
         });
 
-        // TODO:ransomr enable test once sliding in markRangeRemoved is fixed
-        it.skip("can slide intervals to segment not referenced by remove", () => {
+        it("can slide intervals to segment not referenced by remove", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");
             containerRuntimeFactory.processAllMessages();
@@ -454,8 +453,7 @@ describe("SharedString", () => {
             ]);
         });
 
-        // TODO:ransomr test breaks until we fix remove to not slide un-acked positions
-        it.skip("can slide intervals on create ack", () => {
+        it("can slide intervals on create ack", () => {
             // Create and connect a third SharedString.
             const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
             const containerRuntime3 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);

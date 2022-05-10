@@ -1477,18 +1477,21 @@ export class MergeTree {
         const refsToKeep: LocalReference[] = [];
         for (const lref of segment.localRefs) {
             if (lref.refType & ReferenceType.SlideOnRemove) {
-                if (pending) {
+                if (pending || lref.pending) {
                     refsToKeep.push(lref);
                 } else {
                     refsToSlide.push(lref);
                 }
             }
         }
+        // TODO:ransomr rethink implementation of keeping and sliding refs
+        // This works but is fragile and possibly slow
         for (const ref of refsToSlide) {
             this.slideReference(ref);
         }
         segment.localRefs.clear();
         for (const lref of refsToKeep) {
+            lref.segment = segment;
             segment.localRefs.addLocalRef(lref);
         }
     }
