@@ -54,8 +54,8 @@ describe("SummarizerNodeWithGC Tests", () => {
         // Initialize the values to be returned by getInternalGCData.
         internalGCData = {
             gcNodes: {
-                "/": [ node1Id, node2Id ],
-                "/gcNode1": [ subNode1Id ],
+                "/": [node1Id, node2Id],
+                "/gcNode1": [subNode1Id],
             },
         };
 
@@ -108,9 +108,9 @@ describe("SummarizerNodeWithGC Tests", () => {
                 usedRoutes: [""],
                 gcData: {
                     gcNodes: {
-                        "/": [ node1Id ],
-                        "gcNode1": [ "/" ],
-                        "gcNode2": [ subNode1Id, subNode2Id ],
+                        "/": [node1Id],
+                        "gcNode1": ["/"],
+                        "gcNode2": [subNode1Id, subNode2Id],
                     },
                 },
             };
@@ -149,7 +149,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
             // Add a new node to the GC data returned by getInternalGCData to make it different from cachedGCData above.
             // This will validate that the data returned by getGCData is not internalGCData.
-            internalGCData.gcNodes[subNode1Id] = [ "/", subNode2Id ];
+            internalGCData.gcNodes[subNode1Id] = ["/", subNode2Id];
 
             // Since nothing changed since last summary, summarizer node should return the data from the previous run.
             gcData = await summarizerNode.getGCData();
@@ -169,7 +169,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
             // Add a new node to the GC data returned by getInternalGCData to make it different from before.
             // This will validate that the data returned by getGCData is the new internalGCData.
-            internalGCData.gcNodes[subNode1Id] = [ "/", subNode2Id ];
+            internalGCData.gcNodes[subNode1Id] = ["/", subNode2Id];
 
             // Call getGCData() with fullGC = true. Even though nothing changed since last summary, this will force the
             // summarizer node to generate GC data by calling getInternalGCData.

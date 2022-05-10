@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/multiview-triangle-view",
   "version": "0.60.1000",
+  "private": true,
   "description": "View for multiview sample",
   "homepage": "https://fluidframework.com",
   "repository": {

@@ -64,7 +64,7 @@ const useStyles = makeStyles({
     backgroundImage: "linear-gradient(to right, white,#0696d7, white);",
   },
   progressBarRoot: {
-    borderRadius: "0px 0px 9px 9px" ,
+    borderRadius: "0px 0px 9px 9px",
     bottom: "0px",
     marginLeft: "2px",
     marginRight: "2px",
@@ -209,8 +209,8 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
               width={iconWidth}
               height={iconHeight}
             />
-            <div style={{ position: "absolute", left: "0px", bottom: "1px", width: "100%"}}>
-              <Fade in={searchInProgress} style={{ transitionDelay: "800ms"}}>
+            <div style={{ position: "absolute", left: "0px", bottom: "1px", width: "100%" }}>
+              <Fade in={searchInProgress} style={{ transitionDelay: "800ms" }}>
                 <LinearProgress
                   classes={{
                     barColorPrimary: classes.progressBarColorPrimary,

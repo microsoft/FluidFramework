@@ -186,7 +186,7 @@ export function decodeSummary(
                             const newEarliestSeq = newOutstandingOps[0].sequenceNumber;
                             if (newEarliestSeq <= latestSeq) {
                                 logger.sendTelemetryEvent({
-                                    eventName:"DuplicateOutstandingOps",
+                                    eventName: "DuplicateOutstandingOps",
                                     // eslint-disable-next-line max-len
                                     message: `newEarliestSeq <= latestSeq in decodeSummary: ${newEarliestSeq} <= ${latestSeq}`,
                                 });

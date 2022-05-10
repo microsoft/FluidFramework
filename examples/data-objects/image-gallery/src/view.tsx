@@ -49,7 +49,7 @@ export const ImageGalleryView: React.FC<IImageGalleryViewProps> = (props: IImage
         return () => {
             imageGalleryModel.off("slideChanged", slideToCurrentSlide);
         };
-    }, [ imageGalleryModel ]);
+    }, [imageGalleryModel]);
 
     return (
         <ImageGallery

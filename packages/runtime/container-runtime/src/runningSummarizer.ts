@@ -281,7 +281,7 @@ export class RunningSummarizer implements IDisposable {
      * @returns - result of action.
      */
     private async lockedSummaryAction<T>(action: () => Promise<T>) {
-        assert (this.summarizingLock === undefined, 0x25b /* "Caller is responsible for checking lock" */);
+        assert(this.summarizingLock === undefined, 0x25b /* "Caller is responsible for checking lock" */);
 
         const summarizingLock = new Deferred<void>();
         this.summarizingLock = summarizingLock.promise;
@@ -315,8 +315,7 @@ export class RunningSummarizer implements IDisposable {
         summarizeProps: ISummarizeTelemetryProperties,
         options: ISummarizeOptions,
         cancellationToken = this.cancellationToken,
-        resultsBuilder = new SummarizeResultBuilder()): ISummarizeResults
-    {
+        resultsBuilder = new SummarizeResultBuilder()): ISummarizeResults {
         this.lockedSummaryAction(async () => {
             const summarizeResult = this.generator.summarize(
                 summarizeProps,
@@ -338,8 +337,7 @@ export class RunningSummarizer implements IDisposable {
     /** Heuristics summarize attempt. */
     private trySummarize(
         reason: SummarizeReason,
-        cancellationToken = this.cancellationToken): void
-    {
+        cancellationToken = this.cancellationToken): void {
         if (this.summarizingLock !== undefined) {
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed

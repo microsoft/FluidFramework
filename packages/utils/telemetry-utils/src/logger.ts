@@ -91,7 +91,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
-        const { message, errorType, stack} = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
+        const { message, errorType, stack } = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
         // First, copy over error message, stack, and errorType directly (overwrite if present on event)
         event.stack = stack;
         event.error = message; // Note that the error message goes on the 'error' field
@@ -145,8 +145,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
      protected sendTelemetryEventCore(
         event: ITelemetryGenericEvent & { category: TelemetryEventCategory },
-        error?: any)
-    {
+        error?: any) {
         const newEvent = { ...event };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
@@ -193,14 +192,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
-        if(this.properties) {
+        if (this.properties) {
             const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
             properties.push(this.properties.all);
-            if(includeErrorProps) {
+            if (includeErrorProps) {
                 properties.push(this.properties.error);
             }
-            for(const props of properties) {
-                if(props !== undefined) {
+            for (const props of properties) {
+                if (props !== undefined) {
                     for (const key of Object.keys(props)) {
                         if (event[key] !== undefined) {
                             continue;
@@ -287,15 +286,15 @@ export class ChildLogger extends TelemetryLogger {
         // the callstack overhead, just generate a new logger that includes everything from the previous
         if (baseLogger instanceof ChildLogger) {
             const combinedProperties: ITelemetryLoggerPropertyBags = {};
-            for(const extendedProps of [baseLogger.properties, properties]) {
-                if(extendedProps !== undefined) {
-                    if(extendedProps.all !== undefined) {
+            for (const extendedProps of [baseLogger.properties, properties]) {
+                if (extendedProps !== undefined) {
+                    if (extendedProps.all !== undefined) {
                         combinedProperties.all = {
                             ... combinedProperties.all,
                             ... extendedProps.all,
                         };
                     }
-                    if(extendedProps.error !== undefined) {
+                    if (extendedProps.error !== undefined) {
                         combinedProperties.error = {
                             ... combinedProperties.error,
                             ... extendedProps.error,
@@ -331,7 +330,7 @@ export class ChildLogger extends TelemetryLogger {
         super(namespace, properties);
 
         // propagate the monitoring context
-        if(loggerIsMonitoringContext(baseLogger)) {
+        if (loggerIsMonitoringContext(baseLogger)) {
             mixinMonitoringContext(
                 this,
                 new CachedConfigProvider(baseLogger.config));
@@ -454,7 +453,7 @@ export class PerformanceEvent {
     protected constructor(
         private readonly logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        private readonly markers: IPerformanceEventMarkers = {end: true, cancel: "generic"},
+        private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
     ) {
         this.event = { ...event };
         if (this.markers.start) {
@@ -497,7 +496,7 @@ export class PerformanceEvent {
 
     public cancel(props?: ITelemetryProperties, error?: any): void {
         if (this.markers.cancel !== undefined) {
-            this.reportEvent("cancel", {category: this.markers.cancel, ...props}, error);
+            this.reportEvent("cancel", { category: this.markers.cancel, ...props }, error);
         }
         this.event = undefined;
     }

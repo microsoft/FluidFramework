@@ -555,8 +555,8 @@ describe("Data Store Context Tests", () => {
                     usedRoutes: [],
                     gcData: {
                         gcNodes: {
-                            "/": [ "dds1", "dds2"],
-                            "dds1": [ "dds2", "/"],
+                            "/": ["dds1", "dds2"],
+                            "dds1": ["dds2", "/"],
                         },
                     },
                 };

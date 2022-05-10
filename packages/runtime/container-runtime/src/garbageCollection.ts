@@ -548,7 +548,7 @@ export class GarbageCollector implements IGarbageCollector {
             // each node in the summary.
             const usedRoutes = runGarbageCollection(
                 gcNodes,
-                [ "/" ],
+                ["/"],
                 this.mc.logger,
             ).referencedNodeIds;
 
@@ -616,7 +616,7 @@ export class GarbageCollector implements IGarbageCollector {
             const gcData = await this.runtime.getGCData(fullGC);
             const gcResult = runGarbageCollection(
                 gcData.gcNodes,
-                [ "/" ],
+                ["/"],
                 logger,
             );
             const gcStats = this.generateStatsAndLogEvents(gcResult);
@@ -855,7 +855,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // The following log will be enabled once this issue is resolved:
         // https://github.com/microsoft/FluidFramework/issues/8878.
-        if(this.mc.config.getBoolean(logUnknownOutboundReferencesKey) === true
+        if (this.mc.config.getBoolean(logUnknownOutboundReferencesKey) === true
             && missingExplicitReferences.length > 0) {
             missingExplicitReferences.forEach((missingExplicitReference) => {
                 const event: ITelemetryPerformanceEvent = {

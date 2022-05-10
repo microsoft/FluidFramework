@@ -1040,7 +1040,7 @@ class PropertyFactory {
         const creationStack = [{
             id: undefined,
             entry: propertyDef,
-            parent:undefined,
+            parent: undefined,
         }];
 
         while (creationStack.length > 0) {
@@ -1140,7 +1140,7 @@ class PropertyFactory {
         const creationStack = [{
             id: null,
             def: propertyDef,
-            parent:undefined,
+            parent: undefined,
         }];
 
         let creationFunctionSource = "";
