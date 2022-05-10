@@ -56,7 +56,7 @@ export interface IGarbageCollectionState {
     gcNodes: { [ id: string ]: IGarbageCollectionNodeData };
 }
 
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, summaryTelemetryData?: ISummaryTelemetryData) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {
     /**
@@ -113,8 +113,14 @@ export interface ISummarizerNode {
      * If an error is encountered and throwOnFailure is false, it will try to make
      * a summary with a pointer to the previous summary + a blob of outstanding ops.
      * @param fullTree - true to skip optimizations and always generate the full tree
+     * @param trackState - indicates whether the summarizer node should track the state of the summary or not
+     * @param summaryTelemetryData - summary data passed through the layers for telemetry purposes
      */
-    summarize(fullTree: boolean): Promise<ISummarizeResult>;
+    summarize(
+        fullTree: boolean,
+        trackState?: boolean,
+        summaryTelemetryData?: ISummaryTelemetryData,
+    ): Promise<ISummarizeResult>;
     /**
      * Checks if there are any additional path parts for children that need to
      * be loaded from the base summary. Additional path parts represent parts
@@ -145,7 +151,7 @@ export interface ISummarizerNode {
 
     createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: SummarizeInternalFn,
         /** Initial id or path part of this node */
         id: string,
         /**
@@ -176,10 +182,9 @@ export interface ISummarizerNode {
  * - updateUsedRoutes - Used to notify this node of routes that are currently in use in it.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
-    summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
     createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: SummarizeInternalFn,
         /** Initial id or path part of this node */
         id: string,
         /**
@@ -234,3 +239,22 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
 }
 
 export const channelsTreeName = ".channels";
+
+/**
+ * Contains telemetry data relevant to summarization workflows.
+ * This object is expected to be modified directly by various summarize methods.
+ */
+export interface ISummaryTelemetryData {
+    /**
+     * Add an object to the telemetry data.
+     * @param prefix - prefix to tag this data with (ex: "fluid:DirectoryCount:")
+     * @param value - value to attribute to this summary telemetry data
+     */
+    add(prefix: string, value: string): void;
+
+    /**
+     * Returns a serialized version of the telemetry data.
+     * Should be used when logging in telemetry events.
+     */
+    serialize(): string;
+}

@@ -37,6 +37,7 @@ import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
     ISummarizerNodeWithGC,
+    ISummaryTelemetryData,
     ISummaryTreeWithStats,
     SummarizeInternalFn,
 } from "./summary";
@@ -229,8 +230,9 @@ export interface IFluidDataStoreChannel extends
 
     /**
      * Retrieves the summary used as part of the initial summary message
+     * @param summaryTelemetryData - summary data passed through the layers for telemetry purposes
      */
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(summaryTelemetryData?: ISummaryTelemetryData): ISummaryTreeWithStats;
 
     /**
      * Processes the op.
@@ -247,8 +249,9 @@ export interface IFluidDataStoreChannel extends
      * Introduced with summarizerNode - will be required in a future release.
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
+     * @param summaryTelemetryData - summary data passed through the layers for telemetry purposes
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: ISummaryTelemetryData): Promise<ISummaryTreeWithStats>;
 
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
