@@ -121,6 +121,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
+        await provider.ensureSynchronized();
         const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         defaultDataStore._root.set("blob1", blob1Handle);
@@ -158,6 +159,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
+        await provider.ensureSynchronized();
         const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         defaultDataStore._root.set("blob1", blob1Handle);
@@ -238,6 +240,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
+        await provider.ensureSynchronized();
         const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         defaultDataStore._root.set("blob1", blob1Handle);
