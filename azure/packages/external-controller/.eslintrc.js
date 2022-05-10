@@ -7,7 +7,5 @@ module.exports = {
     "extends": [
         "@fluidframework/eslint-config-fluid"
     ],
-    "rules": {
-        "import/no-extraneous-dependencies": "warn",
-    }
+    "rules": {}
 }
