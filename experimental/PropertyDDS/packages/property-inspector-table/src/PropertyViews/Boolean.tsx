@@ -30,7 +30,7 @@ export const BooleanView: React.FunctionComponent<BooleanProps> = (props) => {
 
   return (
     <Switch
-      color='primary'
+      color="primary"
       checked={value as boolean}
       onChange={(event) => onSubmit(event.target.checked, props)}
       value={rowData.name}

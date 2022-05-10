@@ -30,7 +30,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private logs: ITelemetryBaseEvent[] = [];
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-        super(undefined /* namespace */, {all:{testVersion: pkgVersion}});
+        super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
     }
 
     async flush(runInfo?: { url: string, runId?: number }): Promise<void> {
@@ -60,8 +60,9 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     send(event: ITelemetryBaseEvent): void {
         if (typeof event.testCategoryOverride === "string") {
             event.category = event.testCategoryOverride;
+        } else if (typeof event.message === "string" && event.message.indexOf("FaultInjectionNack") > -1) {
+            event.category = "generic";
         }
-
         this.baseLogger?.send({ ...event, hostName: pkgName });
 
         event.Event_Time = Date.now();

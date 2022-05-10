@@ -80,8 +80,8 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/datastore-previous": "npm:@fluidframework/datastore@0.59.1000",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/datastore-previous": "npm:@fluidframework/datastore@0.59.2000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/test-runtime-utils": "^0.59.3000",
     "@microsoft/api-extractor": "^7.22.2",
@@ -111,7 +111,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.2000",
+    "version": "0.59.3000",
     "broken": {}
   }
 }

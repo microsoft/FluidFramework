@@ -20,13 +20,13 @@ export function logIfFalse(
     logger: ITelemetryBaseLogger,
     event: string | ITelemetryGenericEvent,
 ): condition is true {
-    if(condition) {
+    if (condition) {
         return true;
     }
     const newEvent: ITelemetryBaseEvent =
         typeof event === "string"
-        ? {eventName: event, category: "error"}
-        : {category: "error", ...event };
+        ? { eventName: event, category: "error" }
+        : { category: "error", ...event };
     logger.send(newEvent);
     return false;
 }

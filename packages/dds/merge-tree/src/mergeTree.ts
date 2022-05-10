@@ -1134,7 +1134,7 @@ export class MergeTree {
                 // and update the block's info.
                 for (let childIndex = 0;
                     childIndex < maxChildren && nodeIndex < nodes.length;   // While we still have children & nodes left
-                    childIndex++ , nodeIndex++                               // Advance to next child & node
+                    childIndex++, nodeIndex++                               // Advance to next child & node
                 ) {
                     // Insert the next node into the current block
                     this.addNode(block, nodes[nodeIndex]);
@@ -1202,11 +1202,13 @@ export class MergeTree {
                         } else {
                             // Notify maintenance event observers that the segment is being unlinked from the MergeTree
                             if (this.mergeTreeMaintenanceCallback) {
-                                this.mergeTreeMaintenanceCallback({
-                                    operation: MergeTreeMaintenanceType.UNLINK,
-                                    deltaSegments: [{ segment }],
-                                },
-                                undefined);
+                                this.mergeTreeMaintenanceCallback(
+                                    {
+                                        operation: MergeTreeMaintenanceType.UNLINK,
+                                        deltaSegments: [{ segment }],
+                                    },
+                                    undefined,
+                                );
                             }
 
                             segment.parent = undefined;
@@ -1223,11 +1225,13 @@ export class MergeTree {
                             if (canAppend) {
                                 prevSegment!.append(segment);
                                 if (this.mergeTreeMaintenanceCallback) {
-                                    this.mergeTreeMaintenanceCallback({
-                                        operation: MergeTreeMaintenanceType.APPEND,
-                                        deltaSegments: [{ segment: prevSegment! }, { segment }],
-                                    },
-                                    undefined);
+                                    this.mergeTreeMaintenanceCallback(
+                                        {
+                                            operation: MergeTreeMaintenanceType.APPEND,
+                                            deltaSegments: [{ segment: prevSegment! }, { segment }],
+                                        },
+                                        undefined,
+                                    );
                                 }
                                 segment.parent = undefined;
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
@@ -1461,7 +1465,7 @@ export class MergeTree {
                 const segment = node;
                 const removalInfo = toRemovalInfo(segment);
 
-                if(removalInfo !== undefined
+                if (removalInfo !== undefined
                     && removalInfo.removedSeq !== UnassignedSequenceNumber
                     && removalInfo.removedSeq <= refSeq) {
                     // this segment is a tombstone eligible for zamboni
@@ -1485,7 +1489,7 @@ export class MergeTree {
                     // the segment was inserted and removed before the
                     // this context, so it will never exist for this
                     // context
-                    if(removalInfo !== undefined
+                    if (removalInfo !== undefined
                         && removalInfo.removedSeq !== UnassignedSequenceNumber) {
                         return undefined;
                     }
@@ -1707,10 +1711,10 @@ export class MergeTree {
                     nodesToUpdate.push(pendingSegment.parent!);
                 }
                 deltaSegments.push({
-                    segment:pendingSegment,
+                    segment: pendingSegment,
                 });
             });
-            if(this.mergeTreeMaintenanceCallback) {
+            if (this.mergeTreeMaintenanceCallback) {
                 this.mergeTreeMaintenanceCallback(
                     {
                         deltaSegments,
@@ -1874,7 +1878,7 @@ export class MergeTree {
             }
             const backLen = this.nodeLength(backSeg, this.collabWindow.currentSeq, clientId);
             // ignore removed segments
-            if(backLen === undefined) {
+            if (backLen === undefined) {
                 return true;
             }
             // Find the nearest 0 length seg we can insert over, as all other inserts
@@ -1940,7 +1944,7 @@ export class MergeTree {
         remoteClientPosition: number,
         remoteClientRefSeq: number,
         remoteClientId: number): number | undefined {
-        if(remoteClientRefSeq < this.collabWindow.minSeq) {
+        if (remoteClientRefSeq < this.collabWindow.minSeq) {
             return undefined;
         }
 
@@ -2001,9 +2005,9 @@ export class MergeTree {
         const saveIfLocal = (locSegment: ISegment) => {
             // Save segment so can assign sequence number when acked by server
             if (this.collabWindow.collaborating) {
-                if ((locSegment.seq === UnassignedSequenceNumber) &&
-                    (clientId === this.collabWindow.clientId)) {
+                if ((locSegment.seq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {
                     segmentGroup = this.addToPendingList(locSegment, segmentGroup, localSeq);
+                    // eslint-disable-next-line @typescript-eslint/brace-style
                 }
                 // LocSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
                 // In all other cases this has to be true (checked by addToLRUSet):
@@ -2070,7 +2074,7 @@ export class MergeTree {
                 operation: MergeTreeMaintenanceType.SPLIT,
                 deltaSegments: [{ segment }, { segment: next }],
             },
-            undefined);
+                undefined);
         }
 
         return { next };
@@ -2178,7 +2182,7 @@ export class MergeTree {
         for (childIndex = 0; childIndex < block.childCount; childIndex++) {
             child = children[childIndex];
             const len = this.nodeLength(child, refSeq, clientId);
-            if(len === undefined) {
+            if (len === undefined) {
                 // if the seg len in undefined, the segment
                 // will be removed, so should just be skipped for now
                 continue;

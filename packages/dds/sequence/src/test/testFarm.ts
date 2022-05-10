@@ -322,8 +322,7 @@ export function TestPack(verbose = true) {
                         let annotes = "";
                         if (diffPart.added) {
                             annotes += "added ";
-                        }
-                        else if (diffPart.removed) {
+                        } else if (diffPart.removed) {
                             annotes += "removed ";
                         }
                         if (diffPart.count) {
@@ -346,8 +345,7 @@ export function TestPack(verbose = true) {
             let countToApply: number;
             if (all) {
                 countToApply = cliMsgCount;
-            }
-            else {
+            } else {
                 countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
             }
             client.applyMessages(countToApply);
@@ -358,8 +356,7 @@ export function TestPack(verbose = true) {
             let countToApply: number;
             if (all) {
                 countToApply = svrMsgCount;
-            }
-            else {
+            } else {
                 countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
             }
             return server.applyMessages(countToApply);
@@ -731,8 +728,7 @@ export function TestPack(verbose = true) {
                 for (let j = 0; j < insertSegmentCount; j++) {
                     if (startFile) {
                         randomWordMove(client);
-                    }
-                    else {
+                    } else {
                         randomSpateOfInserts(client, j);
                     }
                 }
@@ -748,8 +744,7 @@ export function TestPack(verbose = true) {
                 for (let j = 0; j < removeSegmentCount; j++) {
                     if (startFile) {
                         randomWordMove(client);
-                    }
-                    else {
+                    } else {
                         randomSpateOfRemoves(client);
                         if (includeMarkers) {
                             if (client.getLength() > 200) {
@@ -814,8 +809,7 @@ export function TestPack(verbose = true) {
         if (asyncExec) {
             ohSnap("snap-initial");
             setImmediate(asyncStep);
-        }
-        else {
+        } else {
             for (let i = 0; i < rounds; i++) {
                 round(i);
                 if (errorCount > 0) {
@@ -1169,8 +1163,7 @@ export function mergeTreeCheckedTest() {
                 errorCount++;
                 break;
             }
-        }
-        else {
+        } else {
             if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
                 console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
                 console.log(mergeTree.toString());
@@ -1223,8 +1216,7 @@ export function mergeTreeCheckedTest() {
                 errorCount++;
                 break;
             }
-        }
-        else {
+        } else {
             if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
                 console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
                 console.log(mergeTree.toString());
