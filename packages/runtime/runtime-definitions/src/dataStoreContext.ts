@@ -251,7 +251,11 @@ export interface IFluidDataStoreChannel extends
      * @param trackState - This tells whether we should track state from this summary.
      * @param summaryTelemetryData - summary data passed through the layers for telemetry purposes
      */
-    summarize(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: ISummaryTelemetryData): Promise<ISummaryTreeWithStats>;
+    summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        summaryTelemetryData?: ISummaryTelemetryData,
+    ): Promise<ISummaryTreeWithStats>;
 
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context

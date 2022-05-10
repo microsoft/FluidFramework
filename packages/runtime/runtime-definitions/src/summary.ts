@@ -56,7 +56,11 @@ export interface IGarbageCollectionState {
     gcNodes: { [ id: string ]: IGarbageCollectionNodeData };
 }
 
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, summaryTelemetryData?: ISummaryTelemetryData) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (
+    fullTree: boolean,
+    trackState: boolean,
+    summaryTelemetryData?: ISummaryTelemetryData,
+) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {
     /**
