@@ -217,7 +217,9 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     }
 
     /**
-     * Proposes a new value. Returns a promise that will resolve when the proposal is either accepted or rejected.
+     * Proposes a new value. Returns a promise that will either:
+     * - Resolve when the proposal is accepted
+     * - Reject if the proposal fails to send or if the QuorumProposals is disposed
      */
     public async propose(key: string, value: any): Promise<void> {
         const clientSequenceNumber = this.sendProposal(key, value);
