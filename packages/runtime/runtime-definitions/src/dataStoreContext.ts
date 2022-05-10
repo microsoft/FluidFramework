@@ -230,7 +230,7 @@ export interface IFluidDataStoreChannel extends
     /**
      * Retrieves the summary used as part of the initial summary message
      */
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats;
 
     /**
      * Processes the op.
@@ -248,7 +248,7 @@ export interface IFluidDataStoreChannel extends
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummaryTreeWithStats>;
 
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context

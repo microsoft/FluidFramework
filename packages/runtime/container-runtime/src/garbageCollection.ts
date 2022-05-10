@@ -155,7 +155,7 @@ export interface IGarbageCollector {
         options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
-    summarize(): ISummaryTreeWithStats | undefined;
+    summarize(summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats | undefined;
     /** Returns a map of each node id to its base GC details in the base summary. */
     getBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
     /** Called when the latest summary of the system has been refreshed. */
@@ -651,7 +651,7 @@ export class GarbageCollector implements IGarbageCollector {
      * We current write the entire GC state in a single blob. This can be modified later to write multiple
      * blobs. All the blob keys should start with `gcBlobPrefix`.
      */
-    public summarize(): ISummaryTreeWithStats | undefined {
+    public summarize(summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats | undefined {
         if (!this.shouldRunGC || this.previousGCDataFromLastRun === undefined) {
             return;
         }

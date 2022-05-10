@@ -98,14 +98,14 @@ export abstract class LocalChannelContextBase implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = false, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, 0x18c /* "Channel should be loaded to summarize" */);
-        return summarizeChannelAsync(this.channel, fullTree, trackState);
+        return summarizeChannelAsync(this.channel, fullTree, trackState, summaryTelemetryData);
     }
 
-    public getAttachSummary(): ISummarizeResult {
+    public getAttachSummary(summaryTelemetryData?: Map<string, string>): ISummarizeResult {
         assert(this.isLoaded && this.channel !== undefined, 0x18d /* "Channel should be loaded to take snapshot" */);
-        return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
+        return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */, summaryTelemetryData);
     }
 
     public makeVisible(): void {

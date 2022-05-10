@@ -56,7 +56,7 @@ export interface IGarbageCollectionState {
     gcNodes: { [ id: string ]: IGarbageCollectionNodeData };
 }
 
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, summaryTelemetryData?: Map<string, string>) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {
     /**
@@ -114,7 +114,7 @@ export interface ISummarizerNode {
      * a summary with a pointer to the previous summary + a blob of outstanding ops.
      * @param fullTree - true to skip optimizations and always generate the full tree
      */
-    summarize(fullTree: boolean): Promise<ISummarizeResult>;
+    summarize(fullTree: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult>;
     /**
      * Checks if there are any additional path parts for children that need to
      * be loaded from the base summary. Additional path parts represent parts
@@ -145,7 +145,7 @@ export interface ISummarizerNode {
 
     createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: SummarizeInternalFn,
         /** Initial id or path part of this node */
         id: string,
         /**
@@ -176,10 +176,10 @@ export interface ISummarizerNode {
  * - updateUsedRoutes - Used to notify this node of routes that are currently in use in it.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
-    summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
+    summarize(fullTree: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult>;
     createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: SummarizeInternalFn,
         /** Initial id or path part of this node */
         id: string,
         /**

@@ -17,6 +17,7 @@ import {
     ISummarizeResult,
     ISummarizerNodeConfigWithGC,
     ISummarizerNodeWithGC,
+    SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
@@ -86,7 +87,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      */
     public constructor(
         logger: ITelemetryLogger,
-        private readonly summarizeFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        private readonly summarizeFn: (fullTree: boolean, trackState: boolean, summaryTelemetryData?: Map<string, string>) => Promise<ISummarizeInternalResult>,
         config: ISummarizerNodeConfigWithGC,
         changeSequenceNumber: number,
         /** Undefined means created without summary */
@@ -155,7 +156,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         this.unreferencedTimestampMs = baseGCDetails.unrefTimestamp;
     }
 
-    public async summarize(fullTree: boolean, trackState: boolean = true): Promise<ISummarizeResult> {
+    public async summarize(fullTree: boolean, trackState: boolean = true, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult> {
         // If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
         // summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
@@ -165,7 +166,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
         // If trackState is true, get summary from base summarizer node which tracks summary state.
         // If trackState is false, get summary from summarizeInternal.
-        return trackState ? super.summarize(fullTree) : this.summarizeFn(fullTree, trackState);
+        return trackState ? super.summarize(fullTree) : this.summarizeFn(fullTree, trackState, summaryTelemetryData);
     }
 
     /**
@@ -304,7 +305,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      */
     public createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: SummarizeInternalFn,
         /** Initial id or path part of this node */
         id: string,
         /**
@@ -427,7 +428,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  */
 export const createRootSummarizerNodeWithGC = (
     logger: ITelemetryLogger,
-    summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+    summarizeInternalFn: SummarizeInternalFn,
     changeSequenceNumber: number,
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfigWithGC = {},

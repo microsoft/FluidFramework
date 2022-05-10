@@ -42,7 +42,7 @@ class UnknownChannel implements IChannel {
         throw new Error("not implemented");
     }
 
-    public getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats {
+    public getAttachSummary(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats {
         return {
             stats: {
                 treeNodeCount: 1,
@@ -58,8 +58,8 @@ class UnknownChannel implements IChannel {
         };
     }
 
-    public async summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats> {
-        return this.getAttachSummary(fullTree, trackState);
+    public async summarize(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummaryTreeWithStats> {
+        return this.getAttachSummary(fullTree, trackState, summaryTelemetryData);
     }
 
     public isAttached() { return true; }

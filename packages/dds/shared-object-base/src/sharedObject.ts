@@ -202,12 +202,12 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     /**
      * {@inheritDoc (ISharedObject:interface).getAttachSummary}
      */
-    public abstract getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    public abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats;
 
     /**
      * {@inheritDoc (ISharedObject:interface).summarize}
      */
-    public abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    public abstract summarize(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummaryTreeWithStats>;
 
     /**
      * {@inheritDoc (ISharedObject:interface).getGCData}
@@ -474,15 +474,15 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).getAttachSummary}
      */
-    public getAttachSummary(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
-        return this.summarizeCore(this.serializer);
+    public getAttachSummary(fullTree: boolean = false, trackState: boolean = false, summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats {
+        return this.summarizeCore(this.serializer, summaryTelemetryData);
     }
 
     /**
      * {@inheritDoc (ISharedObject:interface).summarize}
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummaryTreeWithStats> {
-        return this.summarizeCore(this.serializer);
+    public async summarize(fullTree: boolean = false, trackState: boolean = false, summaryTelemetryData?: Map<string, string>): Promise<ISummaryTreeWithStats> {
+        return this.summarizeCore(this.serializer, summaryTelemetryData);
     }
 
     /**
@@ -527,5 +527,5 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object.
      */
-    protected abstract summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected abstract summarizeCore(serializer: IFluidSerializer, summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats;
 }

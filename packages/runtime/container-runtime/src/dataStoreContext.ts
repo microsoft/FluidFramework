@@ -289,7 +289,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         };
 
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+            async (fullTree: boolean, trackState: boolean, summaryTelemetryData?: Map<string, string>) => this.summarizeInternal(fullTree, trackState, summaryTelemetryData);
 
         this.summarizerNode = props.createSummarizerNodeFn(
             thisSummarizeInternal,
@@ -448,15 +448,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree, trackState);
+    public async summarize(fullTree: boolean = false, trackState: boolean = true, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree, trackState, summaryTelemetryData);
     }
 
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(fullTree: boolean, trackState: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeInternalResult> {
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const summarizeResult = await this.channel!.summarize(fullTree, trackState);
+        const summarizeResult = await this.channel!.summarize(fullTree, trackState, summaryTelemetryData);
         let pathPartsForChildren: string[] | undefined;
 
         if (!this.disableIsolatedChannels) {

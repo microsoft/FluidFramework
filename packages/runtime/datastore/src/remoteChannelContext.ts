@@ -82,7 +82,7 @@ export class RemoteChannelContext implements IChannelContext {
             extraBlobs);
 
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+            async (fullTree: boolean, trackState: boolean, summaryTelemetryData?: Map<string, string>) => this.summarizeInternal(fullTree, trackState, summaryTelemetryData);
 
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
@@ -143,13 +143,13 @@ export class RemoteChannelContext implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree, trackState);
+    public async summarize(fullTree: boolean = false, trackState: boolean = true, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree, trackState, summaryTelemetryData);
     }
 
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(fullTree: boolean, trackState: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
-        const summarizeResult = await summarizeChannelAsync(channel, fullTree, trackState);
+        const summarizeResult = await summarizeChannelAsync(channel, fullTree, trackState, summaryTelemetryData);
         return { ...summarizeResult, id: this.id };
     }
 

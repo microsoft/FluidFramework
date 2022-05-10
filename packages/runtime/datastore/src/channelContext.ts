@@ -26,7 +26,7 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummarizeResult>;
+    summarize(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 
@@ -78,8 +78,9 @@ export function summarizeChannel(
     channel: IChannel,
     fullTree: boolean = false,
     trackState: boolean = false,
+    summaryTelemetryData?: Map<string, string>,
 ): ISummaryTreeWithStats {
-    const summarizeResult = channel.getAttachSummary(fullTree, trackState);
+    const summarizeResult = channel.getAttachSummary(fullTree, trackState, summaryTelemetryData);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
@@ -90,8 +91,9 @@ export async function summarizeChannelAsync(
     channel: IChannel,
     fullTree: boolean = false,
     trackState: boolean = false,
+    summaryTelemetryData?: Map<string, string>,
 ): Promise<ISummaryTreeWithStats> {
-    const summarizeResult = await channel.summarize(fullTree, trackState);
+    const summarizeResult = await channel.summarize(fullTree, trackState, summaryTelemetryData);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
