@@ -96,6 +96,7 @@
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",
     "jsdom": "^16.7.0",
+    "process": "^0.11.10",
     "puppeteer": "^1.20.0",
     "rimraf": "^2.6.2",
     "source-map-loader": "^2.0.0",

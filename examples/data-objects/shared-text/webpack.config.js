@@ -6,6 +6,7 @@ const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
 const pkg = require("./package.json");
+const webpack = require("webpack");
 // var Visualizer = require('webpack-visualizer-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 // const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
@@ -88,6 +89,9 @@ module.exports = env => {
                 globalObject: 'self',
             },
             plugins: [
+                new webpack.ProvidePlugin({
+                    process: 'process/browser'
+                }),
                 // new MonacoWebpackPlugin()
                 // new BundleAnalyzerPlugin()
             ]
