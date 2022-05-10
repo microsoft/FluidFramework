@@ -226,4 +226,16 @@ describe('AppendOnlyDoublySortedMap', () => {
 			expect(map.getPairOrNextHigherByValue(maxValue + 1)).to.be.undefined;
 		});
 	});
+
+	it('validity assertion detects out-of-order keys', () => {
+		const map = new AppendOnlyDoublySortedMap<[number], [number], number>(
+			(a, b) => compareFiniteNumbers(a[0], b[0]),
+			(value) => value[0],
+			compareFiniteNumbers
+		);
+		map.append([0], [0]);
+		map.append([1], [1]);
+		assertNotUndefined(map.get([1]))[0] = -1; // mutate value
+		expect(() => map.assertValid()).to.throw('Values in map must be sorted.');
+	});
 });
