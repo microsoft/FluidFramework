@@ -20,17 +20,17 @@ import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap';
  *   /     /    +- Finals
  *  /     /    /
  * ---+-----+----
- * 0  | -1  | 0   <-\___ Two IDs are allocated as locals since no cluster exists. A new cluster is created when acked.
- * 1  | -2  | 1   <-/
- * 2  |     | 2   <-\
- * 3  |     | 3   <--|-- Three more IDs are allocated as finals eagerly since a cluster exists with available capacity.
- * 4  |     | 4   <-/
- * 5  | -6  | 10  <----- One ID is allocated as a local (it overflows the existing cluster) and a new cluster is created after ack.
- * 6  |     | 11  <----- One ID is allocated as a final eagerly into the existing cluster.
- * 7  | -8  | 12  <----- A local ID with an override is allocated. The override forces it to be a local ID.
+ * 0  | -1  | 0   -|___ Two IDs are allocated as locals since no cluster exists. A new cluster is created when acked.
+ * 1  | -2  | 1   -|
+ * 2  |     | 2   -|
+ * 3  |     | 3   --|-- Three more IDs are allocated as finals eagerly since a cluster exists with available capacity.
+ * 4  |     | 4   -|
+ * 5  | -6  | 10  ----- One ID is allocated as a local (it overflows the existing cluster) and a new cluster is created after ack.
+ * 6  |     | 11  ----- One ID is allocated as a final eagerly into the existing cluster.
+ * 7  | -8  | 12  ----- A local ID with an override is allocated. The override forces it to be a local ID.
  * 8  |     | 13
  * 9  |     | 14
- * 10 | -11 |     <----- A local ID is allocated. It has no corresponding final ID since it has not been acked.
+ * 10 | -11 |     ----- A local ID is allocated. It has no corresponding final ID since it has not been acked.
  *
  * Note that in this example, some IDs (those at indices 2, 3, 4, 6, 8, and 9) have no local form. The ID at index 10 has no final form.
  * These kinds of "gaps" occur due to the timing of allocation calls on the client and how they relate to finalization/cluster creation,
