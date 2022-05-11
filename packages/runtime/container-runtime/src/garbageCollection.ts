@@ -152,6 +152,8 @@ export interface IGarbageCollector {
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats | undefined;
+    /** Returns the garbage collector specific metadata to be written into the summary. */
+    getMetadata(): IGCMetadata;
     /** Returns a map of each node id to its base GC details in the base summary. */
     getBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
     /** Called when the latest summary of the system has been refreshed. */
