@@ -273,8 +273,8 @@ export function runSharedTreeFuzzTests(title: string): void {
 			});
 		}
 
-		const testCount = 10;
-		const testLength = 500;
+		const testCount = 1;
+		const testLength = 200;
 		describe('with no-history summarization', () => {
 			runMixedVersionTests(false, testCount, testLength);
 		});
