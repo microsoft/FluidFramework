@@ -96,6 +96,5 @@ extends:
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --azure
-          cp repo-package.json azure/packages/package.json
-          cp repo-package-lock.json azure/packages/package-lock.json
-
+          cp azure/repo-package.json azure/packages/package.json
+          cp azure/repo-package-lock.json azure/packages/package-lock.json
