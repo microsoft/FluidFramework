@@ -77,24 +77,9 @@ export interface IMapValueTypeOperation {
 }
 
 /**
- * Map key operations are one of several types.
- */
-export type IMapKeyOperation = IMapValueTypeOperation;
-
-/**
- * Operation indicating the map should be cleared.
- */
-export interface IMapClearOperation {
-    /**
-     * String identifier of the operation type.
-     */
-    type: "clear";
-}
-
-/**
  * Description of a map delta operation
  */
-export type IMapOperation = IMapKeyOperation | IMapClearOperation;
+export type IMapOperation = IMapValueTypeOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
@@ -109,7 +94,11 @@ export interface IMapDataObjectSerialized {
 }
 
 /**
- * A SharedMap is a map-like distributed data structure.
+ * A DefaultMap is a map-like distributed data structure, supporting operations on values stored by
+ * string key locations.
+ *
+ * Creation of values is implicit on access (either via `get` or a remote op application referring to
+ * a collection that wasn't previously known)
  */
 export class DefaultMap<T> {
     /**
@@ -137,11 +126,10 @@ export class DefaultMap<T> {
     private lastProcessedSeq: number = -1;
 
     /**
-     * Create a new shared map kernel.
+     * Create a new default map.
      * @param serializer - The serializer to serialize / parse handles
      * @param handle - The handle of the shared object using the kernel
      * @param submitMessage - A callback to submit a message through the shared object
-     * @param isAttached - To query whether the shared object should generate ops
      * @param type - The value type to create at values of this map
      * @param eventEmitter - The object that will emit map events
      */
@@ -238,16 +226,6 @@ export class DefaultMap<T> {
             localValue = this.createCore(key, true);
         }
         return localValue.value;
-    }
-
-    private createCore(key: string, local: boolean): ILocalValue<T> {
-        const localValue: ILocalValue<T> = this.localValueMaker.makeValueType(
-            this.type.name,
-            this.makeMapValueOpEmitter(key),
-            undefined,
-        );
-        this.setCore(key, localValue, local);
-        return localValue;
     }
 
     /**
@@ -362,16 +340,22 @@ export class DefaultMap<T> {
     }
 
     /**
-     * Set implementation used when a map operation incurs creation.
-     * @param key - The key being set
-     * @param value - The value being set
+     * Initializes a default ValueType at the provided key.
+     * Should be used when a map operation incurs creation.
+     * @param key - The key being initialized
      * @param local - Whether the message originated from the local client
      */
-    private setCore(key: string, value: ILocalValue, local: boolean): void {
+    private createCore(key: string, local: boolean): ILocalValue<T> {
+        const localValue: ILocalValue<T> = this.localValueMaker.makeValueType(
+            this.type.name,
+            this.makeMapValueOpEmitter(key),
+            undefined,
+        );
         const previousValue = this.data.get(key);
-        this.data.set(key, value);
+        this.data.set(key, localValue);
         const event: IValueChanged = { key, previousValue };
         this.eventEmitter.emit("create", event, local, this.eventEmitter);
+        return localValue;
     }
 
     /**

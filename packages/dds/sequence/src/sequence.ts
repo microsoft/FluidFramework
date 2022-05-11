@@ -166,7 +166,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-    private readonly intervalMapKernel: DefaultMap<IntervalCollection<SequenceInterval>>;
+    private readonly intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>;
     constructor(
         private readonly dataStoreRuntime: IFluidDataStoreRuntime,
         public id: string,
@@ -220,7 +220,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             }
         });
 
-        this.intervalMapKernel = new DefaultMap(
+        this.intervalCollections = new DefaultMap(
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
@@ -414,12 +414,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalMapKernel.get(this.getIntervalCollectionPath(label));
+        return this.intervalCollections.get(this.getIntervalCollectionPath(label));
     }
 
     public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
         const labelPath = this.getIntervalCollectionPath(label);
-        const sharedCollection = this.intervalMapKernel.get(labelPath);
+        const sharedCollection = this.intervalCollections.get(labelPath);
         return sharedCollection;
     }
 
@@ -432,7 +432,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      *     ...
     */
     public getIntervalCollectionLabels(): IterableIterator<string> {
-        return this.intervalMapKernel.keys();
+        return this.intervalCollections.keys();
     }
 
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
@@ -440,8 +440,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
         // conditionally write the interval collection blob
         // only if it has entries
-        if (this.intervalMapKernel.size > 0) {
-            builder.addBlob(snapshotFileName, this.intervalMapKernel.serialize(serializer));
+        if (this.intervalCollections.size > 0) {
+            builder.addBlob(snapshotFileName, this.intervalCollections.serialize(serializer));
         }
 
         builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
@@ -454,8 +454,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      * All the IFluidHandle's represent routes to other objects.
      */
     protected processGCDataCore(serializer: SummarySerializer) {
-        if (this.intervalMapKernel.size > 0) {
-            this.intervalMapKernel.serialize(serializer);
+        if (this.intervalCollections.size > 0) {
+            this.intervalCollections.serialize(serializer);
         }
 
         this.client.serializeGCData(this.handle, serializer);
@@ -494,7 +494,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     protected onDisconnect() {}
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
+        if (!this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
                     content as IMergeTreeOp,
@@ -509,7 +509,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         if (await storage.contains(snapshotFileName)) {
             const blob = await storage.readBlob(snapshotFileName);
             const header = bufferToString(blob, "utf8");
-            this.intervalMapKernel.populate(header);
+            this.intervalCollections.populate(header);
         }
 
         try {
@@ -570,7 +570,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         } else {
             assert(message.type === MessageType.Operation, 0x073 /* "Sequence message not operation" */);
 
-            const handled = this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
+            const handled = this.intervalCollections.tryProcessMessage(
+                message.contents,
+                local,
+                message,
+                localOpMetadata,
+            );
 
             if (!handled) {
                 this.processMergeTreeMsg(message, local);
@@ -694,8 +699,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
     private initializeIntervalCollections() {
         // Listen and initialize new SharedIntervalCollections
-        this.intervalMapKernel.eventEmitter.on("create", ({ key, previousValue }: IValueChanged, local: boolean) => {
-            const intervalCollection = this.intervalMapKernel.get(key);
+        this.intervalCollections.eventEmitter.on("create", ({ key, previousValue }: IValueChanged, local: boolean) => {
+            const intervalCollection = this.intervalCollections.get(key);
             if (!intervalCollection.attached) {
                 intervalCollection.attachGraph(this.client, key);
             }
@@ -704,8 +709,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         });
 
         // Initialize existing SharedIntervalCollections
-        for (const key of this.intervalMapKernel.keys()) {
-            const intervalCollection = this.intervalMapKernel.get(key);
+        for (const key of this.intervalCollections.keys()) {
+            const intervalCollection = this.intervalCollections.get(key);
             intervalCollection.attachGraph(this.client, key);
         }
     }

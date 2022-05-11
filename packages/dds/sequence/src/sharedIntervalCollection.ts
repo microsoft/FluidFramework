@@ -102,7 +102,7 @@ export class SharedIntervalCollection
     }
 
     public readonly [Symbol.toStringTag]: string = "SharedIntervalCollection";
-    private readonly intervalMapKernel: DefaultMap<IntervalCollection<Interval>>;
+    private readonly intervalCollections: DefaultMap<IntervalCollection<Interval>>;
 
     /**
      * Constructs a new shared SharedIntervalCollection. If the object is non-local an id and service interfaces will
@@ -114,7 +114,7 @@ export class SharedIntervalCollection
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
-        this.intervalMapKernel = new DefaultMap(
+        this.intervalCollections = new DefaultMap(
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
@@ -129,21 +129,21 @@ export class SharedIntervalCollection
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<Interval>> {
-        return this.intervalMapKernel.get(this.getIntervalCollectionPath(label));
+        return this.intervalCollections.get(this.getIntervalCollectionPath(label));
     }
 
     public getIntervalCollection(label: string): IntervalCollection<Interval> {
         const realLabel = this.getIntervalCollectionPath(label);
-        const sharedCollection = this.intervalMapKernel.get(realLabel);
+        const sharedCollection = this.intervalCollections.get(realLabel);
         return sharedCollection;
     }
 
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-        return createSingleBlobSummary(snapshotFileName, this.intervalMapKernel.serialize(serializer));
+        return createSingleBlobSummary(snapshotFileName, this.intervalCollections.serialize(serializer));
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata);
+        this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata);
     }
 
     protected onDisconnect() { }
@@ -154,12 +154,12 @@ export class SharedIntervalCollection
     protected async loadCore(storage: IChannelStorageService) {
         const blob = await storage.readBlob(snapshotFileName);
         const header = bufferToString(blob, "utf8");
-        this.intervalMapKernel.populate(header);
+        this.intervalCollections.populate(header);
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
+            this.intervalCollections.tryProcessMessage(message.contents, local, message, localOpMetadata);
         }
     }
 
