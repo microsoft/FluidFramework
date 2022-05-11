@@ -129,9 +129,10 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             // Add trace
             messages.forEach((message) => {
                 const operation = message.operation;
-                if (operation && operation.traces === undefined) {
-                    operation.traces = [];
-                } else if (operation && operation.traces && operation.traces.length > 1) {
+                if (operation) {
+                    if (operation.traces === undefined) {
+                        operation.traces = [];
+                    }
                     operation.traces.push(
                         {
                             action: "end",

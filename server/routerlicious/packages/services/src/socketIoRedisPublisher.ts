@@ -43,6 +43,15 @@ export class SocketIoRedisPublisher implements core.IPublisher {
     }
 
     public async emit(topic: string, event: string, ...args: any[]): Promise<void> {
+        const timeNow = Date.now();
+        if (args[1][0].traces) {
+            args[1][0].traces.push(
+                {
+                    action: "start",
+                    service: "redisPublisher",
+                    timestamp: timeNow,
+                });
+        }
         this.io.to(topic).emit(event, ...args);
     }
 

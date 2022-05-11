@@ -38,7 +38,6 @@ import {
     createRoomJoinMessage,
     createNackMessage,
     createRoomLeaveMessage,
-    getRandomInt,
     generateClientId,
 } from "../utils";
 
@@ -82,8 +81,11 @@ const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientI
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     // Trace sampling.
-    if (message.operation && message.operation.traces && getRandomInt(100) === 0) {
-        message.operation.traces.push(
+    if (message && core.DefaultServiceConfiguration.enableTraces) {
+        if (message.traces === undefined) {
+            message.traces = [];
+        }
+        message.traces.push(
             {
                 action: "start",
                 service: "alfred",

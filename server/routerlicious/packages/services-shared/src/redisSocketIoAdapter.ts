@@ -240,15 +240,32 @@ export class RedisSocketIoAdapter extends Adapter {
      * Broadcast packets
      */
     public broadcast(packet: any, opts: BroadcastOptions): void {
+        // console.log(`ksmessage-redis-${JSON.stringify(packet)}`);
         if (this.isDefaultNamespaceAndDisable) {
             return;
         }
-
         if (opts.rooms.size !== 1) {
             // block full broadcasts and multi room broadcasts
             return;
         }
 
+        const time = Date.now();
+         if (packet.data && packet.data.length > 1) {
+             if (packet.data[2] && packet.data[2].length > 0) {
+                 packet.data[2].forEach((element) => {
+                     if (!element.traces) {
+                        element.traces = [];
+                     }
+                     element.traces.push(
+                         {
+                             action: "start",
+                             service: "redisAdapter",
+                             timestamp: time,
+                         });
+                 });
+             }
+         }
+        // console.log(`packet-last-${JSON.stringify(packet.data)}`);
         super.broadcast(packet, opts);
 
         this.publish(packet, opts);
