@@ -1,3 +1,3 @@
-# @fluid-experimental/bubblebench-common
+# @fluid-example/bubblebench-common
 
 Fluid/DDS-agnostic code shared by Bubblebench benchmarks.

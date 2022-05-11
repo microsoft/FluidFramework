@@ -319,8 +319,7 @@ export class DataStores implements IDisposable {
     public createDetachedDataStoreCore(
         pkg: Readonly<string[]>,
         isRoot: boolean,
-        id = uuid()): IFluidDataStoreContextDetached
-    {
+        id = uuid()): IFluidDataStoreContextDetached {
         const context = new LocalDetachedFluidDataStoreContext({
             id,
             pkg,
@@ -363,7 +362,7 @@ export class DataStores implements IDisposable {
         return context;
     }
 
-    public get disposed() {return this.disposeOnce.evaluated;}
+    public get disposed() { return this.disposeOnce.evaluated; }
     public readonly dispose = () => this.disposeOnce.value;
 
     public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {

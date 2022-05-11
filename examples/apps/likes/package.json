@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/likes",
   "version": "0.60.1000",
+  "private": true,
   "description": "A Fluid object for storing like counts using pre-build DDS hooks",
   "homepage": "https://fluidframework.com",
   "repository": {

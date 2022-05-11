@@ -87,13 +87,13 @@ export async function createNewFluidFile(
         sharingLinkErrorReason = content.sharingLinkErrorReason;
     }
 
-    const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
+    const odspUrl = createOdspUrl({ ... newFileInfo, itemId, dataStorePath: "/" });
     const resolver = new OdspDriverUrlResolver();
     const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
     fileEntry.docId = odspResolvedUrl.hashedDocumentId;
     fileEntry.resolvedUrl = odspResolvedUrl;
 
-    if(sharingLink || sharingLinkErrorReason) {
+    if (sharingLink || sharingLinkErrorReason) {
         odspResolvedUrl.shareLinkInfo = {
             createLink: {
                 type: newFileInfo.createLinkType,

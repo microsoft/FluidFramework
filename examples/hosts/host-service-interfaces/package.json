@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/host-service-interfaces",
   "version": "0.60.1000",
+  "private": true,
   "description": "Example host service interfaces",
   "homepage": "https://fluidframework.com",
   "repository": {

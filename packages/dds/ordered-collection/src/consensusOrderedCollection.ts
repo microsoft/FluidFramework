@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert , bufferToString, unreachableCase } from "@fluidframework/common-utils";
+import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,

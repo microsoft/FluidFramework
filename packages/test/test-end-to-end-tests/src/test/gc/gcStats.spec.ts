@@ -72,7 +72,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         };
 
         const channelsTree = (summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
-        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
+        for (const [id, summaryObject] of Object.entries(channelsTree)) {
             if (dataStoreIds.includes(id)) {
                 assert(
                     summaryObject.type === SummaryType.Tree,
@@ -192,7 +192,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         let summarizeResult = await containerRuntime.summarize({ trackState: false });
-        let unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [ dataStore1.id ]);
+        let unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [dataStore1.id]);
         assert.strictEqual(
             summarizeResult.stats.unreferencedBlobSize,
             unrefDataStoreStats.totalBlobSize,
@@ -217,7 +217,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         summarizeResult = await containerRuntime.summarize({ trackState: false });
-        unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [ dataStore1.id, dataStore2.id ]);
+        unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [dataStore1.id, dataStore2.id]);
         assert.strictEqual(
             summarizeResult.stats.unreferencedBlobSize,
             unrefDataStoreStats.totalBlobSize,

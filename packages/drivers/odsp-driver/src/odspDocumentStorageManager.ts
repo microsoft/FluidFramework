@@ -721,7 +721,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "ReadCommit");
-                const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
+                const snapshotDownloader = async (url: string, fetchOptions: { [index: string]: any }) => {
                     return this.epochTracker.fetchAndParseAsJSON(
                         url,
                         fetchOptions,
