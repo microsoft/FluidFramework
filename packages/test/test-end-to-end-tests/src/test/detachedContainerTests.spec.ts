@@ -160,6 +160,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
     });
 
     it("can create DDS in detached container and attach / update it", async function() {
+        // GitHub issue: #9534
+        if (provider.driver.type === "tinylicious") {
+            this.skip();
+        }
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         const dsClient1 = await requestFluidObject<ITestFluidObject>(container, "/");
 
