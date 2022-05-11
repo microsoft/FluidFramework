@@ -256,8 +256,10 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
 
             // There are two error flows we consider:  disconnect and disposal.
             // If we get disconnected before the proposal is sequenced, it has one of two possible futures:
-            // 1. We reconnect and see the proposal was sequenced in the meantime.  The promise resolves.
-            // 2. We reconnect and see the proposal was not sequenced in the meantime.  The promise rejects.
+            // 1. We reconnect and see the proposal was sequenced in the meantime.
+            //    -> The promise can still resolve, once it is approved.
+            // 2. We reconnect and see the proposal was not sequenced in the meantime, so it will never sequence.
+            //    -> The promise rejects.
             const disconnectedHandler = () => {
                 // If we haven't seen the ack by the time we disconnect, we hope to see it by the time we reconnect.
                 if (thisProposalSequenceNumber === undefined) {
