@@ -1056,26 +1056,12 @@ use_old_InterfaceDeclaration_ISummarizerInternalsProvider(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_ISummarizerOptions": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISummarizerOptions():
-    TypeOnly<old.ISummarizerOptions>;
-declare function use_current_RemovedInterfaceDeclaration_ISummarizerOptions(
-    // @ts-expect-error compatibility expected to be broken
-    use: TypeOnly<current.ISummarizerOptions>);
-use_current_RemovedInterfaceDeclaration_ISummarizerOptions(
-    get_old_InterfaceDeclaration_ISummarizerOptions());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_ISummarizerOptions": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ISummarizerOptions():
-    // @ts-expect-error compatibility expected to be broken
-    TypeOnly<current.ISummarizerOptions>;
-declare function use_old_InterfaceDeclaration_ISummarizerOptions(
-    use: TypeOnly<old.ISummarizerOptions>);
-use_old_InterfaceDeclaration_ISummarizerOptions(
-    get_current_RemovedInterfaceDeclaration_ISummarizerOptions());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -67,7 +67,7 @@ interface IEditReferencePathProps {
 }
 
 export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
-  & React.HTMLAttributes<HTMLDivElement>> = ({onCancel, onEdit, name, path, className, ...restProps}) => {
+  & React.HTMLAttributes<HTMLDivElement>> = ({ onCancel, onEdit, name, path, className, ...restProps }) => {
   const classes = useStyles();
   const [newPath, setNewPath] = React.useState(path);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -101,7 +101,7 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
       <div className={classes.horizontal}>
         <TextField
           inputRef={inputRef}
-          classes={{root: classes.root}}
+          classes={{ root: classes.root }}
           className={classes.textField}
           id='outlined-bare'
           onChange={handleInputChange}

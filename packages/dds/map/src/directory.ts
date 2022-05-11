@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {

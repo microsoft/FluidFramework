@@ -49,8 +49,7 @@ async function validate(
     mockCache: MockCache,
     expected: { [key: number]: (MyDataInput | undefined)[]; },
     cache: OpsCache,
-    initialSeq: number)
-{
+    initialSeq: number) {
     assert.deepEqual(mockCache.data, JSON.parse(JSON.stringify(expected)));
 
     const expectedArr: MyDataInput[] = [];
@@ -100,9 +99,8 @@ async function runTestNoTimer(
     batchSize: number,
     initialSeq: number,
     mockData: MyDataInput[],
-    expected: { [key: number]: (MyDataInput | undefined)[]},
-    initialWritesExpected: number)
-{
+    expected: { [key: number]: (MyDataInput | undefined)[] },
+    initialWritesExpected: number) {
     const mockCache = new MockCache();
 
     const cache = new OpsCache(
@@ -141,8 +139,7 @@ export async function runTestWithTimer(
     mockData: MyDataInput[],
     expected: { [key: number]: (MyDataInput | undefined)[] },
     initialWritesExpected: number,
-    totalWritesExpected: number)
-{
+    totalWritesExpected: number) {
     const mockCache = new MockCache();
 
     const cache = new OpsCache(
@@ -171,8 +168,7 @@ export async function runTest(
     mockData: MyDataInput[],
     expected: { [key: string]: (MyDataInput | undefined)[] },
     initialWritesExpected: number,
-    totalWritesExpected: number)
-{
+    totalWritesExpected: number) {
     await runTestNoTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected);
     await runTestWithTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected, totalWritesExpected);
 }
@@ -388,7 +384,7 @@ describe("OdspDeltaStorageWithCache", () => {
             concurrency,
             // getFromStorage
             async (from: number, to: number) => {
-                return {messages: filterOps(storageOps, from, to), partialResult: false};
+                return { messages: filterOps(storageOps, from, to), partialResult: false };
             },
             // getCached
             async (from: number, to: number) => filterOps(cachedOps, from, to),

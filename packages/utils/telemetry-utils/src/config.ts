@@ -95,7 +95,7 @@ interface StronglyTypedValue extends Partial<ConfigTypeStringToType> {
  */
 function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined {
     let output: ConfigTypes = input;
-    let defaultReturn: Pick<StronglyTypedValue,"raw" | "string"> | undefined;
+    let defaultReturn: Pick<StronglyTypedValue, "raw" | "string"> | undefined;
     // we do special handling for strings to try and coerce
     // them into a config type if we can. This makes it easy
     // for config sources like sessionStorage which only
@@ -234,7 +234,7 @@ export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITele
 
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
     logger: L): MonitoringContext<L> {
-    if(loggerIsMonitoringContext<L>(logger)) {
+    if (loggerIsMonitoringContext<L>(logger)) {
         return logger;
     }
     return mixinMonitoringContext<L>(logger, sessionStorageConfigProvider.value);

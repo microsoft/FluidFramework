@@ -118,7 +118,7 @@ async function start(): Promise<void> {
     if (createNew) {
         // The client will create a new detached container using the schema
         // A detached container will enable the app to modify the container before attaching it to the client
-        ({container, services} = await client.createContainer(containerSchema));
+        ({ container, services } = await client.createContainer(containerSchema));
         // Initialize our models so they are ready for use with our controllers
         [diceRollerController1Props, diceRollerController2Props] = await initializeNewContainer(container);
 

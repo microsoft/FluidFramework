@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/app-integration-schema-upgrade",
   "version": "0.60.1000",
+  "private": true,
   "description": "Using external data to initialize the container state and serialize out afterwards.",
   "homepage": "https://fluidframework.com",
   "repository": {
