@@ -46,7 +46,7 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
     GenericError,
@@ -964,7 +964,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadExisting,
             blobManagerSnapshot,
             requestHandler,
-            storage,
         );
 
         if (pendingRuntimeState) {
@@ -995,25 +994,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get storage(): IDocumentStorageService {
-        // This code is plain wrong. It lies that it never returns undefined!!!
-        // All callers should be fixed, as this API is called in detached state of container when we have
-        // no storage and it's passed down the stack without right typing.
-        // back-compat 0.40 NoStorageInDetachedMode. Also, IContainerContext storage api return type still
-        // has undefined in 0.39 package version.
-        // So once we release 0.40 container-defn package we can remove this check.
-        if (!this._storage && this.context.storage) {
-            // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
-            // If isolated channels are disabled, then there are no .channel layers, we pack at level 1,
-            // otherwise we pack at level 2
-            this._storage = BlobAggregationStorage.wrap(
-                this.context.storage,
-                this.logger,
-                undefined /* allowPacking */,
-                this.disableIsolatedChannels ? 1 : 2,
-            );
-        }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._storage!;
+        return this.context.storage;
     }
 
     public get reSubmitFn(): (
@@ -1212,7 +1193,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        private _storage?: IDocumentStorageService,
         private readonly summaryConfiguration: ISummaryConfiguration = {
             // the defaults
             ... DefaultSummaryConfiguration,
