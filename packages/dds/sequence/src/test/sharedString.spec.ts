@@ -30,7 +30,12 @@ const assertIntervals = (
     intervalCollection: IntervalCollection<SequenceInterval>,
     expected: readonly { start: number; end: number; }[],
 ) => {
-    const actual = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    let actual: SequenceInterval[];
+    if (sharedString.getLength() === 0) {
+        actual = Array.from(intervalCollection);
+    } else {
+        actual = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    }
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
 
@@ -436,6 +441,69 @@ describe("SharedString", () => {
             ]);
             assertIntervals(sharedString2, collection2, [
                 { start: 3, end: 3 },
+            ]);
+        });
+
+        it("can slide intervals nearer", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            // Conflicting remove/add interval at end of string
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+            sharedString2.removeRange(3, 4);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 2 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 2 },
+            ]);
+
+            // Remove location of end of interval
+            sharedString.removeRange(2, 3);
+            assert.equal(sharedString.getText(), "AB");
+            assertIntervals(sharedString, collection1, [
+                // TODO:ransomr odd behavior - end of interval doesn't slide
+                // until ack, so position beyond end of string
+                { start: 1, end: 2 },
+            ]);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 1 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 1 },
+            ]);
+
+            // Remove location of start and end of interval
+            sharedString.removeRange(1, 2);
+            assertIntervals(sharedString, collection1, [
+                // TODO:ransomr odd behavior - start of interval doesn't slide
+                // until ack, so not found by overlapping search
+            ]);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 0, end: 0 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 0, end: 0 },
+            ]);
+
+            // Interval on empty string
+            sharedString.removeRange(0, 1);
+            assertIntervals(sharedString, collection1, [
+                // TODO:ransomr Search finds interval at end of string
+                { start: 0, end: 0 },
+            ]);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                // TODO:ransomr remove interval when string is acked empty
+                { start: -1, end: -1 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: -1, end: -1 },
             ]);
         });
 

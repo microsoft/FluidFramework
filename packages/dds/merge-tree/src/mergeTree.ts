@@ -107,6 +107,11 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
         0x2bf /* "both removedClientIds and removedSeq should be set or not set" */);
 }
 
+function isRemovedAndAcked(segment: ISegment): boolean {
+    const removalInfo = toRemovalInfo(segment);
+    return removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber;
+}
+
 /**
  * A segment representing a portion of the merge tree.
  */
@@ -1413,35 +1418,38 @@ export class MergeTree {
         return { segment, offset };
     }
 
-    private getSlideToSegment(currentSegment: ISegment): ISegment | undefined {
+    private getSlideToSegment(currentSegment: ISegment) {
+        // Slide to the next farthest valid segment in the tree. If no such segment is found
+        // slide to the last valid segment.
         // TODO this walks the whole tree to find the segment - could write a more efficient
         // walk that starts at the segment
         let foundStart = false;
+        let foundSegmentPastStart = false;
         let slideToSegment: ISegment | undefined;
         this.walkAllSegments(this.root, (seg) => {
-            if (!foundStart) {
-                if (seg === currentSegment) {
-                    foundStart = true;
-                }
-                return true;
-            }
-            if (seg.seq !== UnassignedSequenceNumber && seg.removedSeq === undefined) {
+            if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
                 slideToSegment = seg;
-                return false;
+                if (foundStart) {
+                    foundSegmentPastStart = true;
+                    return false;
+                }
+            }
+            if (!foundStart && seg === currentSegment) {
+                foundStart = true;
             }
             return true;
         });
-        return slideToSegment;
+        const offset = slideToSegment ? (foundSegmentPastStart ? 0 : slideToSegment.cachedLength - 1) : 0;
+        return { segment: slideToSegment, offset };
     }
 
     /**
      * @internal - this method should only be called by client
      */
     public getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number) {
-        const segoff = this.getContainingSegment(pos, refSeq, clientId);
-        if (segoff.segment && segoff.segment.removedSeq !== undefined) {
-            segoff.segment = this.getSlideToSegment(segoff.segment);
-            segoff.offset = 0;
+        let segoff = this.getContainingSegment(pos, refSeq, clientId);
+        if (segoff.segment && isRemovedAndAcked(segoff.segment)) {
+            segoff = this.getSlideToSegment(segoff.segment);
         }
         return segoff;
     }
@@ -1452,21 +1460,25 @@ export class MergeTree {
     public slideReference(ref: LocalReference) {
         const segment = ref.getSegment();
         assert(!!segment, "slideReference requires a segment");
-        // We only slide the reference if the segment remove has been sequenced by the server
-        if (segment.removedSeq !== undefined) {
-            const newSegment = this.getSlideToSegment(segment);
-            if (!newSegment) {
-                // TODO:ransomr handle no valid location to slide references
-                return;
-            }
-            if (!newSegment.localRefs) {
-                newSegment.localRefs = new LocalReferenceCollection(newSegment);
-            }
-            newSegment.localRefs.addBeforeTombstones([ref]);
-            // TODO is it required to update the path lengths?
-            this.blockUpdatePathLengths(newSegment.parent, TreeMaintenanceSequenceNumber,
-                LocalClientId);
+        if (!isRemovedAndAcked(segment)) {
+            // We only slide the reference if the segment remove has been sequenced by the server
+            return;
         }
+        const newSegoff = this.getSlideToSegment(segment);
+        const newSegment = newSegoff.segment;
+        if (!newSegment) {
+            // TODO:ransomr handle no valid location to slide references
+            return;
+        }
+        if (!newSegment.localRefs) {
+            newSegment.localRefs = new LocalReferenceCollection(newSegment);
+        }
+        ref.segment = newSegment;
+        ref.offset = newSegoff.offset;
+        newSegment.localRefs.addLocalRef(ref);
+        // TODO is it required to update the path lengths?
+        this.blockUpdatePathLengths(newSegment.parent, TreeMaintenanceSequenceNumber,
+            LocalClientId);
     }
 
     /**
