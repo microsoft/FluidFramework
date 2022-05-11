@@ -819,7 +819,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadExisting,
             blobManagerSnapshot,
             requestHandler,
-            storage,
         );
 
         return runtime;
@@ -842,8 +841,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get storage(): IDocumentStorageService {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._storage!;
+        return this.context.storage;
     }
 
     public get reSubmitFn(): (
@@ -987,7 +985,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        private readonly _storage?: IDocumentStorageService,
     ) {
         super();
 
