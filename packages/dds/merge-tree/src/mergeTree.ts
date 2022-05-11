@@ -1434,7 +1434,9 @@ export class MergeTree {
         return slideToSegment;
     }
 
-    // @internal - this method should only be called by client
+    /**
+     * @internal - this method should only be called by client
+     */
     public getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number) {
         const segoff = this.getContainingSegment(pos, refSeq, clientId);
         if (segoff.segment && segoff.segment.removedSeq !== undefined) {
@@ -1444,15 +1446,14 @@ export class MergeTree {
         return segoff;
     }
 
-    // @internal - this method should only be called by client
+    /**
+     * @internal - this method should only be called by client
+     */
     public slideReference(ref: LocalReference) {
         const segment = ref.getSegment();
         assert(!!segment, "slideReference requires a segment");
         // We only slide the reference if the segment remove has been sequenced by the server
         if (segment.removedSeq !== undefined) {
-            // TODO:ransomr this code is currently unreachable, as we slide reference on
-            // markRangeRemoved even if the create hasn't been acked. That will be changed
-            // in a subsequent check-in.
             const newSegment = this.getSlideToSegment(segment);
             if (!newSegment) {
                 // TODO:ransomr handle no valid location to slide references
@@ -1468,7 +1469,9 @@ export class MergeTree {
         }
     }
 
-    // @internal - this method should only be called by BaseSegment
+    /**
+     * @internal - this method should only be called by BaseSegment
+     */
     public updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean) {
         if (!segment.localRefs || segment.localRefs.empty) {
             return;

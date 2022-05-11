@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { UsageError } from "@fluidframework/container-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -1013,24 +1014,24 @@ export class Client {
 
     createSlideOnRemoveReference(refType: ReferenceType, pos: number, pending: boolean, op?: ISequencedDocumentMessage):
         ReferencePosition {
-        // TODO:ransomr should this assert, throw, or something else if refType is invalid?
         // eslint-disable-next-line no-bitwise
-        assert((refType & ReferenceType.SlideOnRemove) > 0, "Reference type must be SlideOnRemove");
+        if ((refType & ReferenceType.SlideOnRemove) === 0) {
+            throw new UsageError("createSlideOnRemoveReference requires SlideOnRemove refType");
+        }
         const { refSeq, clientId } = this.getRefSeqAndClientId(op);
         const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(pos, refSeq, clientId);
-        if (segoff.segment) {
-            const lref = new LocalReference(this, segoff.segment, segoff.offset, refType);
-            lref.pending = pending;
-            // eslint-disable-next-line no-bitwise
-            if ((refType & ReferenceType.Transient) === 0) {
-                this.addLocalReference(lref);
-            } else {
-                assert(!pending, "Transient reference can not be pending");
-            }
-            return lref;
+        if (!segoff.segment || segoff.offset === undefined || segoff.offset < 0) {
+            throw new Error("Invalid reference location");
         }
-        // TODO:ransomr what is the correct behavior if there isn't a segment for the reference?
-        assert(false, "No segment for SlideOnRemove reference");
+        const lref = new LocalReference(this, segoff.segment, segoff.offset, refType);
+        lref.pending = pending;
+        // eslint-disable-next-line no-bitwise
+        if ((refType & ReferenceType.Transient) === 0) {
+            this.addLocalReference(lref);
+        } else if (pending) {
+            throw new UsageError("Transient reference can not be pending");
+        }
+        return lref;
     }
 
     ackCreateSlideOnRemoveReference(reference: ReferencePosition): void {

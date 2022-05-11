@@ -1016,7 +1016,7 @@ export class MergeTree {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
-    // (undocumented)
+    // @internal
     getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number): {
         segment: ISegment | undefined;
         offset: number | undefined;
@@ -1068,11 +1068,11 @@ export class MergeTree {
     root: IMergeBlock;
     // (undocumented)
     setMinSeq(minSeq: number): void;
-    // (undocumented)
+    // @internal
     slideReference(ref: LocalReference): void;
     // (undocumented)
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
-    // (undocumented)
+    // @internal
     updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean): void;
     // (undocumented)
     walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;

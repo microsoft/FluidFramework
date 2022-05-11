@@ -395,6 +395,50 @@ describe("SharedString", () => {
             ]);
         });
 
+        it("errors creating invalid intervals", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+
+            assert.throws(() => collection1.add(0, 0, IntervalType.SlideOnRemove),
+                "Should throw creating interval on empty string");
+            assert.throws(() => collection1.add(1, 3, IntervalType.SlideOnRemove),
+                "Should throw creating interval on empty string");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            assert.throws(() => collection1.add(2, 5, IntervalType.SlideOnRemove),
+                "Should throw creating interval past end of string");
+            assert.throws(() => collection1.add(-1, 2, IntervalType.SlideOnRemove),
+                "Should throw creating interval at negative position");
+        });
+
+        it("can create and slide interval to a marker", () => {
+            sharedString.insertText(0, "ABCD");
+            sharedString.insertMarker(4, ReferenceType.Tile, { nodeType: "Paragraph" });
+            const collection1 = sharedString.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            collection1.add(3, 4, IntervalType.SlideOnRemove);
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString, collection1, [
+                { start: 3, end: 4 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 3, end: 4 },
+            ]);
+
+            sharedString.removeRange(3, 4);
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString, collection1, [
+                { start: 3, end: 3 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 3, end: 3 },
+            ]);
+        });
+
         it("can slide intervals on remove ack", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");

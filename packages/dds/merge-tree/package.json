@@ -62,6 +62,7 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.48.1000",
+    "@fluidframework/container-utils": "^0.59.3000",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.59.3000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
