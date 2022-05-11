@@ -858,28 +858,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
         let storage = context.storage;
-        if (context.baseSnapshot && !pendingRuntimeState) {
-            // This will patch snapshot in place!
-            // If storage is provided, it will wrap storage with BlobAggregationStorage that can
-            // pack & unpack aggregated blobs.
-            // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
-            // BlobAggregationStorage is smart enough for double-wrapping to be no-op
-            if (context.attachState === AttachState.Attached) {
-                // IContainerContext storage api return type still has undefined in 0.39 package version.
-                // So once we release 0.40 container-defn package we can remove this check.
-                assert(context.storage !== undefined, 0x1f4 /* "Attached state should have storage" */);
-                const aggrStorage = BlobAggregationStorage.wrap(
-                    context.storage,
-                    logger,
-                    undefined /* allowPacking */,
-                    packingLevel,
-                );
-                await aggrStorage.unpackSnapshot(context.baseSnapshot);
-                storage = aggrStorage;
-            } else {
-                await BlobAggregationStorage.unpackSnapshot(context.baseSnapshot);
-            }
-        }
 
         if (pendingRuntimeState) {
             storage = new SerializedSnapshotStorage(() => {
@@ -966,7 +944,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadExisting,
             blobManagerSnapshot,
             requestHandler,
-            storage,
         );
 
         if (pendingRuntimeState) {
@@ -997,25 +974,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get storage(): IDocumentStorageService {
-        // This code is plain wrong. It lies that it never returns undefined!!!
-        // All callers should be fixed, as this API is called in detached state of container when we have
-        // no storage and it's passed down the stack without right typing.
-        // back-compat 0.40 NoStorageInDetachedMode. Also, IContainerContext storage api return type still
-        // has undefined in 0.39 package version.
-        // So once we release 0.40 container-defn package we can remove this check.
-        if (!this._storage && this.context.storage) {
-            // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
-            // If isolated channels are disabled, then there are no .channel layers, we pack at level 1,
-            // otherwise we pack at level 2
-            this._storage = BlobAggregationStorage.wrap(
-                this.context.storage,
-                this.logger,
-                undefined /* allowPacking */,
-                this.disableIsolatedChannels ? 1 : 2,
-            );
-        }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._storage!;
+        return this.context.storage;
     }
 
     public get reSubmitFn(): (
@@ -1214,7 +1173,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        private _storage?: IDocumentStorageService,
         private readonly summaryConfiguration: ISummaryConfiguration = {
             // the defaults
             ... DefaultSummaryConfiguration,
