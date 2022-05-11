@@ -87,7 +87,7 @@ describe("Quorum", () => {
             assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 3");
 
             // Wait to see if the proposal promise resolved.
-            await Promise.resolve().then(() => {});
+            await Promise.resolve().then(() => { });
 
             assert.strictEqual(evented, false, "Should not have evented yet 2");
             assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 4");
@@ -100,9 +100,9 @@ describe("Quorum", () => {
             assert.strictEqual(quorum.get(proposalKey), proposalValue, "Should have the proposal value");
 
             // Wait to see if the proposal promise resolved.
-            await Promise.resolve().then(() => {});
+            await Promise.resolve().then(() => { });
             // Due to the composition of Quorum -> QuorumProposals, we require one more microtask deferral to resolve.
-            await Promise.resolve().then(() => {});
+            await Promise.resolve().then(() => { });
 
             // Acceptance should have happened before the above await resolves.
             acceptanceState = "too late";
@@ -167,7 +167,7 @@ describe("Quorum", () => {
             assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 2");
 
             // Wait to see if any async stuff is waiting (shouldn't be).
-            await Promise.resolve().then(() => {});
+            await Promise.resolve().then(() => { });
 
             assert.strictEqual(evented, false, "Should not have evented yet 2");
             assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 3");
@@ -178,7 +178,150 @@ describe("Quorum", () => {
             assert.strictEqual(quorum.get(proposalKey), proposalValue, "Should have the proposal value");
 
             // Wait to see if any async stuff is waiting (shouldn't be).
-            await Promise.resolve().then(() => {});
+            await Promise.resolve().then(() => { });
+        });
+
+        describe("Disconnected handling", () => {
+            it("Settling propose() promise after disconnect/reconnect", async () => {
+                const proposal1 = {
+                    key: "one",
+                    value: "uno",
+                    sequenceNumber: 53,
+                    resolved: false,
+                    rejected: false,
+                };
+                const proposal2 = {
+                    key: "two",
+                    value: "dos",
+                    sequenceNumber: 68,
+                    resolved: false,
+                    rejected: false,
+                };
+                const proposal3 = {
+                    key: "three",
+                    value: "tres",
+                    sequenceNumber: 92,
+                    resolved: false,
+                    rejected: false,
+                };
+
+                const messageApproving1 = {
+                    minimumSequenceNumber: 61,
+                    sequenceNumber: 64,
+                } as ISequencedDocumentMessage;
+                const messageApproving2 = {
+                    minimumSequenceNumber: 77,
+                    sequenceNumber: 82,
+                } as ISequencedDocumentMessage;
+                // Proposal 3 shouldn't actually get approved, but we will test that.
+                const messageApproving3 = {
+                    minimumSequenceNumber: 98,
+                    sequenceNumber: 107,
+                } as ISequencedDocumentMessage;
+
+                // Testing three scenarios:
+                // - Proposal 1 will be ack'd and approved before reconnection
+                // - Proposal 2 will be ack'd before reconnection, and then approved after reconnection
+                // - Proposal 3 will not be ack'd before reconnection, and so should reject.
+                const proposal1P = assert.doesNotReject(
+                    quorum.propose(proposal1.key, proposal1.value)
+                        .then(() => { proposal1.resolved = true; })
+                        .catch(() => { proposal1.rejected = true; }),
+                );
+                const proposal2P = assert.doesNotReject(
+                    quorum.propose(proposal2.key, proposal2.value)
+                        .then(() => { proposal2.resolved = true; })
+                        .catch(() => { proposal2.rejected = true; }),
+                );
+                const proposal3P = assert.rejects(
+                    quorum.propose(proposal3.key, proposal3.value)
+                        .then(() => { proposal3.resolved = true; })
+                        .catch(() => { proposal3.rejected = true; }),
+                );
+
+                quorum.setConnectionState(false);
+
+                // Wait to make sure the proposal promises have not settled from the disconnect.
+                await Promise.resolve().then(() => { });
+                // Due to the composition of Quorum -> QuorumProposals,
+                // we require one more microtask deferral to resolve.
+                await Promise.resolve().then(() => { });
+                assert.strictEqual(proposal1.resolved, false, "Stage 1, Prop 1, Resolved");
+                assert.strictEqual(proposal1.rejected, false, "Stage 1, Prop 1, Rejected");
+                assert.strictEqual(proposal2.resolved, false, "Stage 1, Prop 2, Resolved");
+                assert.strictEqual(proposal2.rejected, false, "Stage 1, Prop 2, Rejected");
+                assert.strictEqual(proposal3.resolved, false, "Stage 1, Prop 3, Resolved");
+                assert.strictEqual(proposal3.rejected, false, "Stage 1, Prop 3, Rejected");
+
+                // Now we're simulating "connecting" state, where we will see the ack's for proposals 1 and 2
+                // And also we'll advance the MSN past proposal 1
+                quorum.addProposal(proposal1.key, proposal1.value, proposal1.sequenceNumber, true, 1);
+                quorum.updateMinimumSequenceNumber(messageApproving1);
+                quorum.addProposal(proposal2.key, proposal2.value, proposal2.sequenceNumber, true, 2);
+
+                // Now we'll simulate the transition to connected state
+                quorum.setConnectionState(true);
+
+                // Wait to make sure the proposal promises have settled in the manner we expect.
+                await Promise.resolve().then(() => { });
+                // Due to the composition of Quorum -> QuorumProposals,
+                // we require one more microtask deferral to resolve.
+                await Promise.resolve().then(() => { });
+                assert.strictEqual(proposal1.resolved, true, "Stage 2, Prop 1, Resolved");
+                assert.strictEqual(proposal1.rejected, false, "Stage 2, Prop 1, Rejected");
+                assert.strictEqual(proposal2.resolved, false, "Stage 2, Prop 2, Resolved");
+                assert.strictEqual(proposal2.rejected, false, "Stage 2, Prop 2, Rejected");
+                assert.strictEqual(proposal3.resolved, false, "Stage 2, Prop 3, Resolved");
+                assert.strictEqual(proposal3.rejected, true, "Stage 2, Prop 3, Rejected");
+
+                // Verify the quorum holds the data we expect.
+                assert.strictEqual(quorum.get(proposal1.key), proposal1.value, "Value 1 missing");
+                assert.strictEqual(quorum.get(proposal2.key), undefined, "Unexpected value 2");
+                assert.strictEqual(quorum.get(proposal3.key), undefined, "Unexpected value 3");
+
+                // Now advance the MSN past proposal 2
+                quorum.updateMinimumSequenceNumber(messageApproving2);
+
+                // Wait to make sure the proposal promises have settled in the manner we expect.
+                await Promise.resolve().then(() => { });
+                // Due to the composition of Quorum -> QuorumProposals,
+                // we require one more microtask deferral to resolve.
+                await Promise.resolve().then(() => { });
+                assert.strictEqual(proposal1.resolved, true, "Stage 3, Prop 1, Resolved");
+                assert.strictEqual(proposal1.rejected, false, "Stage 3, Prop 1, Rejected");
+                assert.strictEqual(proposal2.resolved, true, "Stage 3, Prop 2, Resolved");
+                assert.strictEqual(proposal2.rejected, false, "Stage 3, Prop 2, Rejected");
+                assert.strictEqual(proposal3.resolved, false, "Stage 3, Prop 3, Resolved");
+                assert.strictEqual(proposal3.rejected, true, "Stage 3, Prop 3, Rejected");
+
+                // Verify the quorum holds the data we expect.
+                assert.strictEqual(quorum.get(proposal1.key), proposal1.value, "Value 1 missing");
+                assert.strictEqual(quorum.get(proposal2.key), proposal2.value, "Value 2 missing");
+                assert.strictEqual(quorum.get(proposal3.key), undefined, "Unexpected value 3");
+
+                // Now advance the MSN past proposal 3 (this should have no real effect)
+                quorum.updateMinimumSequenceNumber(messageApproving3);
+
+                // Wait to make sure the proposal promises have settled in the manner we expect.
+                await Promise.resolve().then(() => { });
+                // Due to the composition of Quorum -> QuorumProposals,
+                // we require one more microtask deferral to resolve.
+                await Promise.resolve().then(() => { });
+                assert.strictEqual(proposal1.resolved, true, "Stage 4, Prop 1, Resolved");
+                assert.strictEqual(proposal1.rejected, false, "Stage 4, Prop 1, Rejected");
+                assert.strictEqual(proposal2.resolved, true, "Stage 4, Prop 2, Resolved");
+                assert.strictEqual(proposal2.rejected, false, "Stage 4, Prop 2, Rejected");
+                assert.strictEqual(proposal3.resolved, false, "Stage 4, Prop 3, Resolved");
+                assert.strictEqual(proposal3.rejected, true, "Stage 4, Prop 3, Rejected");
+
+                // Verify the quorum holds the data we expect.
+                assert.strictEqual(quorum.get(proposal1.key), proposal1.value, "Value 1 missing");
+                assert.strictEqual(quorum.get(proposal2.key), proposal2.value, "Value 2 missing");
+                assert.strictEqual(quorum.get(proposal3.key), undefined, "Unexpected value 3");
+
+                // Backstop to ensure the doesNotReject/rejects promises are complete.
+                await Promise.all([proposal1P, proposal2P, proposal3P]).catch(() => { });
+            });
         });
     });
 
