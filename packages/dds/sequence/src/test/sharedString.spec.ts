@@ -29,12 +29,12 @@ const assertIntervals = (
     sharedString: SharedString,
     intervalCollection: IntervalCollection<SequenceInterval>,
     expected: readonly { start: number; end: number; }[],
+    validateOverlapping: boolean = true,
 ) => {
-    let actual: SequenceInterval[];
-    if (sharedString.getLength() === 0) {
-        actual = Array.from(intervalCollection);
-    } else {
-        actual = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    const actual = Array.from(intervalCollection);
+    if (validateOverlapping && sharedString.getLength() > 0) {
+        const overlapping = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
+        assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
     }
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
@@ -482,7 +482,8 @@ describe("SharedString", () => {
             assertIntervals(sharedString, collection1, [
                 // TODO:ransomr odd behavior - start of interval doesn't slide
                 // until ack, so not found by overlapping search
-            ]);
+                { start: 1, end: 1 },
+            ], false);
             containerRuntimeFactory.processAllMessages();
             assertIntervals(sharedString, collection1, [
                 { start: 0, end: 0 },
@@ -501,13 +502,13 @@ describe("SharedString", () => {
             assertIntervals(sharedString, collection1, [
                 // TODO:ransomr remove interval when string is acked empty
                 { start: -1, end: -1 },
-            ]);
+            ], false);
             assertIntervals(sharedString2, collection2, [
                 { start: -1, end: -1 },
-            ]);
+            ], false);
         });
 
-        it.only("consistent after remove all/insert text conflict", () => {
+        it("consistent after remove all/insert text conflict", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");
             collection1.add(1, 3, IntervalType.SlideOnRemove);
@@ -528,18 +529,20 @@ describe("SharedString", () => {
             sharedString.insertText(0, "PQ");
             containerRuntimeFactory.processAllMessages();
             assertIntervals(sharedString, collection1, [
-            ]);
+                { start: -1, end: -1 },
+            ], false);
             assertIntervals(sharedString2, collection2, [
-            ]);
+                { start: -1, end: -1 },
+            ], false);
 
             sharedString2.removeRange(0, 2);
             containerRuntimeFactory.processAllMessages();
             assertIntervals(sharedString, collection1, [
                 { start: -1, end: -1 },
-            ]);
+            ], false);
             assertIntervals(sharedString2, collection2, [
                 { start: -1, end: -1 },
-            ]);
+            ], false);
         });
 
         it("can slide intervals on remove ack", () => {
