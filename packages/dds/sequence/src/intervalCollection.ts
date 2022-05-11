@@ -28,7 +28,7 @@ import {
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
-import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./mapKernelInterfaces";
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./defaultMapInterfaces";
 
 const reservedIntervalIdKey = "intervalId";
 

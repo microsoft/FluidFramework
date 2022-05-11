@@ -24,7 +24,7 @@ import {
     IntervalCollectionValueType,
     ISerializableInterval,
 } from "./intervalCollection";
-import { IMapMessageLocalMetadata, MapKernel } from "./mapKernel";
+import { IMapMessageLocalMetadata, DefaultMap } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
@@ -102,7 +102,7 @@ export class SharedIntervalCollection
     }
 
     public readonly [Symbol.toStringTag]: string = "SharedIntervalCollection";
-    private readonly intervalMapKernel: MapKernel<IntervalCollection<Interval>>;
+    private readonly intervalMapKernel: DefaultMap<IntervalCollection<Interval>>;
 
     /**
      * Constructs a new shared SharedIntervalCollection. If the object is non-local an id and service interfaces will
@@ -114,7 +114,7 @@ export class SharedIntervalCollection
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
-        this.intervalMapKernel = new MapKernel(
+        this.intervalMapKernel = new DefaultMap(
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),

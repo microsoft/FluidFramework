@@ -43,7 +43,11 @@ const assertIntervals = (
     }
 };
 
-function assertIntervalEquals(string: SharedString, interval: SequenceInterval, endpoints: { start: number; end: number }): void {
+function assertIntervalEquals(
+    string: SharedString,
+    interval: SequenceInterval,
+    endpoints: { start: number; end: number; },
+): void {
     assert.equal(string.localRefToPos(interval.start), endpoints.start, "mismatched start");
     assert.equal(string.localRefToPos(interval.end), endpoints.end, "mismatched end");
 }
@@ -240,7 +244,7 @@ describe("SharedString interval collections", () => {
             const endpointsForCollection1: { start: number; end: number; }[] = [];
             const sequenceIntervalToEndpoints = (interval: SequenceInterval): { start: number; end: number; } => ({
                 start: sharedString.localRefToPos(interval.start),
-                end: sharedString.localRefToPos(interval.end)
+                end: sharedString.localRefToPos(interval.end),
             });
 
             collection1.on("addInterval", (interval) => {
@@ -272,7 +276,7 @@ describe("SharedString interval collections", () => {
             assert.deepEqual(endpointsForCollection1, [
                 { start: 0, end: 0 },
                 { start: 2, end: 2 },
-                { start: 4, end: 4 }
+                { start: 4, end: 4 },
             ]);
         });
 

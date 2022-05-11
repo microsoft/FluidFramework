@@ -55,8 +55,8 @@ import {
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
-import { IMapMessageLocalMetadata, MapKernel } from "./mapKernel";
-import { IValueChanged } from "./mapKernelInterfaces";
+import { IMapMessageLocalMetadata, DefaultMap } from "./defaultMap";
+import { IValueChanged } from "./defaultMapInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
@@ -166,7 +166,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-    private readonly intervalMapKernel: MapKernel<IntervalCollection<SequenceInterval>>;
+    private readonly intervalMapKernel: DefaultMap<IntervalCollection<SequenceInterval>>;
     constructor(
         private readonly dataStoreRuntime: IFluidDataStoreRuntime,
         public id: string,
@@ -220,7 +220,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             }
         });
 
-        this.intervalMapKernel = new MapKernel(
+        this.intervalMapKernel = new DefaultMap(
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),

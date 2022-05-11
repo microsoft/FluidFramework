@@ -20,8 +20,8 @@ import {
     IValueOpEmitter,
     IValueType,
     IValueTypeOperationValue,
-    ISharedMapEvents,
-} from "./mapKernelInterfaces";
+    ISharedDefaultMapEvents,
+} from "./defaultMapInterfaces";
 
 /**
  * Defines the means to process and submit a given op on a map.
@@ -45,15 +45,13 @@ interface IMapMessageHandler {
     /**
      * Communicate the operation to remote clients.
      * @param op - The map operation to submit
-     * @param localOpMetadata - Any metadata that should be submitted with the message.
      */
-    submit(op: IMapOperation, localOpMetadata: unknown): void;
+    submit(op: IMapOperation): void;
 
     getStashedOpLocalMetadata(op: IMapOperation): unknown;
 }
 
-export interface IMapMessageLocalMetadata{
-    actLocalMetadata: unknown;
+export interface IMapMessageLocalMetadata {
     lastProcessedSeq: number;
 }
 
@@ -113,7 +111,7 @@ export interface IMapDataObjectSerialized {
 /**
  * A SharedMap is a map-like distributed data structure.
  */
-export class MapKernel<T> {
+export class DefaultMap<T> {
     /**
      * The number of key/value pairs stored in the map.
      */
@@ -152,7 +150,7 @@ export class MapKernel<T> {
         private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: any, localOpMetadata: IMapMessageLocalMetadata) => void,
         private readonly type: IValueType<T>,
-        public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
+        public readonly eventEmitter = new TypedEventEmitter<ISharedDefaultMapEvents>(),
     ) {
         this.localValueMaker = new LocalValueMaker(serializer);
         this.messageHandlers = this.getMessageHandlers();
@@ -323,7 +321,7 @@ export class MapKernel<T> {
             if (this.lastProcessedSeq !== mapLocalMetadata?.lastProcessedSeq) {
                 throw new Error("SharedInterval does not support reconnect in presence of external changes");
             }
-            handler.submit(op as IMapOperation, localOpMetadata.actLocalMetadata);
+            handler.submit(op as IMapOperation);
             return true;
         }
         return false;
@@ -418,14 +416,14 @@ export class MapKernel<T> {
                     const translatedValue = parseHandles(
                         op.value.value,
                         this.serializer);
-                    handler.process(previousValue, translatedValue, local, message, localOpMetadata?.actLocalMetadata);
+                    handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
                 },
-                submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
+                submit: (op: IMapValueTypeOperation) => {
                     this.submitMessage(
                         op,
-                        { actLocalMetadata: localOpMetadata, lastProcessedSeq: this.lastProcessedSeq },
+                        { lastProcessedSeq: this.lastProcessedSeq },
                     );
                 },
                 getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
@@ -458,7 +456,7 @@ export class MapKernel<T> {
                 },
             };
             // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.submitMessage(op, { lastProcessedSeq: this.lastProcessedSeq, actLocalMetadata: undefined /* TODO */ });
+            this.submitMessage(op, { lastProcessedSeq: this.lastProcessedSeq });
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);

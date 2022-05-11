@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 /**
@@ -72,15 +72,13 @@ export interface IValueOperation<T> {
      * @param params - The params on the incoming operation
      * @param local - Whether the operation originated from this client
      * @param message - The operation itself
-     * @param localOpMetadata - any metadata submitted with this operation, if it was submitted locally.
      * @alpha
      */
     process(
         value: T,
         params: any,
         local: boolean,
-        message: ISequencedDocumentMessage | undefined,
-        localOpMetadata: unknown | undefined
+        message: ISequencedDocumentMessage | undefined
     );
 }
 
@@ -107,41 +105,11 @@ export interface IValueType<T> {
     ops: Map<string, IValueOperation<T>>;
 }
 
-export interface ISharedMapEvents extends ISharedObjectEvents {
+export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
     (event: "valueChanged" | "create", listener: (
         changed: IValueChanged,
         local: boolean,
         target: IEventThisPlaceHolder) => void);
-}
-
-// TODO: Clean up these types
-
-/**
- * Shared map interface
- */
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
-    /**
-     * Retrieves the given key from the map.
-     * @param key - Key to retrieve from
-     * @returns The stored value, or undefined if the key is not set
-     */
-    get<T = any>(key: string): T | undefined;
-
-    /**
-     * A form of get except it will only resolve the promise once the key exists in the map.
-     * @param key - Key to retrieve from
-     * @returns The stored value once available
-     */
-    wait<T = any>(key: string): Promise<T>;
-
-    /**
-     * Sets the value stored at key to the provided value.
-     * @param key - Key to set at
-     * @param value - Value to set
-     * @returns The ISharedMap itself
-     */
-    set<T = any>(key: string, value: T): this;
-
 }
 
 /**
