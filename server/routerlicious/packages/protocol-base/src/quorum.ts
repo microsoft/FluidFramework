@@ -28,9 +28,10 @@ import {
  */
 class PendingProposal implements ISequencedProposal {
     constructor(
-        public sequenceNumber: number,
-        public key: string,
-        public value: any,
+        public readonly sequenceNumber: number,
+        public readonly key: string,
+        public readonly value: any,
+        public readonly local: boolean,
     ) { }
 }
 
@@ -165,6 +166,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
                         proposal.sequenceNumber,
                         proposal.key,
                         proposal.value,
+                        false, // local
                     ),
                 ] as [number, PendingProposal];
             }));
@@ -229,23 +231,24 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
         }
 
         return new Promise<void>((resolve, reject) => {
-            // The sequence number that our proposal went pending, which the msn must advance past.
+            // The sequence number that our proposal was assigned and went pending.
             // If undefined, then it's not sequenced yet.
-            let targetSequenceNumber: number | undefined;
+            let thisProposalSequenceNumber: number | undefined;
 
-            // To resolve, a proposal goes through two phases:
-            // 1. Sequencing - waiting for the proposal to be ack'd, to learn the target msn value for approval.
-            // 2. Approval - waiting for the msn to advance past the target value.
+            // A proposal goes through two phases before this promise resolves:
+            // 1. Sequencing - waiting for the proposal to be ack'd by the server.
+            // 2. Approval - waiting for the proposal to be approved by connected clients.
             const localProposalSequencedHandler = (sequencedCSN: number, sequenceNumber: number) => {
                 if (sequencedCSN === clientSequenceNumber) {
-                    targetSequenceNumber = sequenceNumber;
+                    thisProposalSequenceNumber = sequenceNumber;
                     this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
                     this.stateEvents.off("disconnected", disconnectedHandler);
-                    this.stateEvents.on("msnChanged", msnChangedHandler);
+                    this.stateEvents.on("localProposalApproved", localProposalApprovedHandler);
                 }
             };
-            const msnChangedHandler = (msn: number) => {
-                if (targetSequenceNumber !== undefined && msn >= targetSequenceNumber) {
+            const localProposalApprovedHandler = (sequenceNumber: number) => {
+                // Proposals can be uniquely identified by the sequenceNumber they were assigned.
+                if (sequenceNumber === thisProposalSequenceNumber) {
                     resolve();
                     removeListeners();
                 }
@@ -257,10 +260,10 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             // 2. We reconnect and see the proposal was not sequenced in the meantime.  The promise rejects.
             const disconnectedHandler = () => {
                 // If we haven't seen the ack by the time we disconnect, we hope to see it by the time we reconnect.
-                if (targetSequenceNumber === undefined) {
+                if (thisProposalSequenceNumber === undefined) {
                     this.stateEvents.once("connected", () => {
                         // If we don't see the ack by the time reconnection finishes, it failed to send.
-                        if (targetSequenceNumber === undefined) {
+                        if (thisProposalSequenceNumber === undefined) {
                             reject(new Error("Client disconnected without successfully sending proposal"));
                             removeListeners();
                         }
@@ -276,7 +279,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             // Convenience function to clean up our listeners.
             const removeListeners = () => {
                 this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
-                this.stateEvents.off("msnChanged", msnChangedHandler);
+                this.stateEvents.off("localProposalApproved", localProposalApprovedHandler);
                 this.stateEvents.off("disconnected", disconnectedHandler);
                 this.stateEvents.off("disposed", disposedHandler);
             };
@@ -301,6 +304,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             sequenceNumber,
             key,
             value,
+            local,
         );
         this.proposals.set(sequenceNumber, proposal);
 
@@ -362,9 +366,10 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
 
             // clear the proposals cache
             this.proposalsSnapshotCache = undefined;
+            if (proposal.local) {
+                this.stateEvents.emit("localProposalApproved", proposal.sequenceNumber);
+            }
         }
-
-        this.stateEvents.emit("msnChanged", msn);
     }
 
     public setConnectionState(connected: boolean) {
