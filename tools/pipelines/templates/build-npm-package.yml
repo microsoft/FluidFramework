@@ -70,7 +70,7 @@ parameters:
 
 - name: nonScopedPackages
   type: object
-  default: []
+  default:
 
 - name: publishOverride
   type: string
