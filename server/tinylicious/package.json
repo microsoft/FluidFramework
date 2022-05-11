@@ -59,8 +59,8 @@
     "level-sublevel": "6.6.4",
     "lodash": "^4.17.21",
     "morgan": "^1.8.1",
-    "nconf": "^0.11.4",
-    "socket.io": "^4.1.2",
+    "nconf": "^0.12.0",
+    "socket.io": "^4.5.0",
     "split": "^1.0.0",
     "uuid": "^8.3.2",
     "winston": "^3.6.0"
