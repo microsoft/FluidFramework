@@ -65,8 +65,8 @@ const containerSchema = {
 
 function createDiceRollerControllerProps(map: SharedMap): DiceRollerControllerProps {
     return {
-        get: (key: string) => map.get(key) as number,
-        set: (key: string, value: any) => () => {map.set(key, value);},
+        get: (key: string) => {return map.get(key) as number;},
+        set: (key: string, value: any) => {map.set(key, value);},
         on(event: "valueChanged", listener: (args: IValueChanged) => void) {
             map.on(event, listener);
             return this;
@@ -81,9 +81,9 @@ function createDiceRollerControllerProps(map: SharedMap): DiceRollerControllerPr
 function createDiceRollerControllerPropsFromContainer(container: IFluidContainer):
 [DiceRollerControllerProps, DiceRollerControllerProps] {
     const diceRollerController1Props: DiceRollerControllerProps = createDiceRollerControllerProps(
-        container.initialObjects.map1);
+        container.initialObjects.map1 as SharedMap);
     const diceRollerController2Props: DiceRollerControllerProps = createDiceRollerControllerProps(
-        container.initialObjects.map2);
+        container.initialObjects.map2 as SharedMap);
     return [diceRollerController1Props, diceRollerController2Props];
 }
 
@@ -119,6 +119,11 @@ async function start(): Promise<void> {
         // The client will create a new detached container using the schema
         // A detached container will enable the app to modify the container before attaching it to the client
         ({ container, services } = await client.createContainer(containerSchema));
+        // const map1 = container.initialObjects.map1 as SharedMap;
+        // map1.set("diceValue", 1);
+        // const map2 = container.initialObjects.map1 as SharedMap;
+        // map2.set("diceValue", 1);
+        // console.log(map1.get("diceValue"));
         // Initialize our models so they are ready for use with our controllers
         [diceRollerController1Props, diceRollerController2Props] = await initializeNewContainer(container);
 
