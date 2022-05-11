@@ -248,12 +248,13 @@ stages:
             # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
             # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
             - task: Bash@3
-              targetType: 'inline'
               displayName: 'Check for nyc/report directory'
-              workingDirectory: ${{ parameters.buildDirectory }}
-              script: |
-                test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No
-                nyc/report directory'
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ parameters.buildDirectory }}
+                script: |
+                  test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No
+                  nyc/report directory'
               condition: succeededOrFailed()
             - task: Bash@3
               displayName: Patch Coverage Results
