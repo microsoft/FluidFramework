@@ -1077,6 +1077,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private consecutiveReconnects = 0;
 
+    /**
+     * Used to delay transition to "connected" state while we upload
+     * attachment blobs that were added while disconnected
+     */
+    private delayConnectedP?: { canceled: boolean, promise: Promise<void> };
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -1335,7 +1341,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 undefined, undefined,
                 localId ? { blobId, localId } : { blobId }),
             this,
-            this.logger,
         );
 
         this.scheduleManager = new ScheduleManager(
@@ -1763,37 +1768,36 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-private delayConnectedP?: { canceled: boolean, promise: Promise<void> };
-
-public setConnectionState(connected: boolean, clientId?: string) {
-    if (connected === false) {
-        if (this.delayConnectedP !== undefined) {
-            this.delayConnectedP.canceled = true;
-            this.delayConnectedP = undefined;
-            this.mc.logger.sendTelemetryEvent({
-                eventName: "UnsuccessfulConnectedTransition",
-            });
-        }
-        this.setConnectionStateCore(connected, clientId);
-    }
-    const changeOfState = this._connected !== connected;
-    if (connected && changeOfState && !this.deltaManager.readOnlyInfo.readonly && this.blobManager.hasPendingUploads) {
-        const canceled = false;
-        const P = this.blobManager.onConnected().then(() => {
-            this.delayConnectedP = undefined;
-            if (!canceled && !this._disposed) {
-                this.setConnectionStateCore(connected, clientId);
+    public setConnectionState(connected: boolean, clientId?: string) {
+        if (connected === false) {
+            if (this.delayConnectedP !== undefined) {
+                this.delayConnectedP.canceled = true;
+                this.delayConnectedP = undefined;
+                this.mc.logger.sendTelemetryEvent({
+                    eventName: "UnsuccessfulConnectedTransition",
+                });
             }
-        }, (reason) => {
-            this.closeFn(reason);
-        });
-        this.delayConnectedP = { canceled, promise: P };
-    } else {
-        this.setConnectionStateCore(connected, clientId);
-    }
-}
+            return this.setConnectionStateCore(connected, clientId);
+        }
 
-private setConnectionStateCore(connected: boolean, clientId?: string) {
+        const connecting = connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
+        if (connecting && this.blobManager.hasPendingUploads) {
+            const canceled = false;
+            const promise = this.blobManager.onConnected().then(() => {
+                this.delayConnectedP = undefined;
+                if (!canceled && !this.disposed) {
+                    this.setConnectionStateCore(connected, clientId);
+                }
+            }, (reason) => {
+                this.closeFn(reason);
+            });
+            this.delayConnectedP = { canceled, promise };
+        } else {
+            this.setConnectionStateCore(connected, clientId);
+        }
+    }
+
+    private setConnectionStateCore(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -2156,7 +2160,7 @@ private setConnectionStateCore(connected: boolean, clientId?: string) {
     }
 
     private canSendOps() {
-        return this.connected && !this.deltaManager.readOnlyInfo.readonly;
+        return this.connected && !this.deltaManager.readOnlyInfo.readonly && !this.delayConnectedP;
     }
 
     public getQuorum(): IQuorumClients {

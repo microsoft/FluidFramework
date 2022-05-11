@@ -49,7 +49,6 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
             () => this.getStorage(),
             (blobId, localId) => this.sendBlobAttachOp(blobId, localId),
             this,
-            new TelemetryNullLogger(),
         );
     }
 
@@ -84,6 +83,7 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
     public attachState: AttachState;
     public attachedStorage = new DedupeStorage();
     public detachedStorage = new NonDedupeStorage();
+    public logger = new TelemetryNullLogger();
 
     private ops: any[] = [];
     private processBlobsP = new Deferred<void>();
