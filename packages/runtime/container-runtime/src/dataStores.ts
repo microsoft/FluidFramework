@@ -651,6 +651,9 @@ export class DataStores implements IDisposable {
         if (!this.contexts.has(pathParts[1])) {
             return undefined;
         }
+
+        // Data stores paths are of the format "/dataStoreId".
+        // Sub data store paths are of the format "/dataStoreId/subPath/...".
         if (pathParts.length === 2) {
             return GCNodeType.DataStore;
         }

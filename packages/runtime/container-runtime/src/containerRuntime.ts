@@ -2188,8 +2188,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Returns the type of the GC node. Currently, there are nodes that belong to data stores and nodes that belong
-     * to the blob manager.
+     * Returns the type of the GC node. Currently, there are nodes that belong to the root ("/"), data stores or
+     * blob manager.
      */
     public getNodeType(nodePath: string): GCNodeType {
         if (this.isBlobPath(nodePath)) {
