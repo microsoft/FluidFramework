@@ -1464,10 +1464,15 @@ export class MergeTree {
             // We only slide the reference if the segment remove has been sequenced by the server
             return;
         }
+        assert(!!segment.localRefs, "Ref not in the segment localRefs");
+        const removedRef = segment.localRefs.removeLocalRef(ref);
+        assert(ref === removedRef, "Ref not in the segment localRefs");
         const newSegoff = this.getSlideToSegment(segment);
         const newSegment = newSegoff.segment;
         if (!newSegment) {
-            // TODO:ransomr handle no valid location to slide references
+            // No valid segments (all nodes removed or not yet created)
+            ref.segment = undefined;
+            ref.offset = 0;
             return;
         }
         if (!newSegment.localRefs) {
