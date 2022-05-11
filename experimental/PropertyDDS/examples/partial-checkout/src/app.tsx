@@ -5,17 +5,13 @@
 import _ from "lodash";
 
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
-import {
-    getFluidRelayContainer,
-    getTinyliciousContainer,
-    hasFluidRelayEndpoints,
-} from "@fluid-experimental/get-container";
+import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 
 import { PropertyTreeContainerRuntimeFactory as ContainerFactory } from "./containerCode";
-import { IPropertyTree } from "./dataObject";
 
 // import { renderCheckoutView } from "./checkout_view";
 import { renderApp, renderInspector } from "./view";
+import { IPropertyTree } from "./dataObject";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are loading from.
@@ -37,9 +33,7 @@ async function start(): Promise<void> {
     // production service, but ultimately we'll still be getting a reference to a Container object.  The helper
     // function takes the ID of the document we're creating or loading, the container code to load into it, and a
     // flag to specify whether we're creating a new document or loading an existing one.
-    const [container, containerId] = hasFluidRelayEndpoints()
-        ? await getFluidRelayContainer(documentId, ContainerFactory, shouldCreateNew)
-        : await getTinyliciousContainer(documentId, ContainerFactory, shouldCreateNew);
+    const [container, containerId] = await getTinyliciousContainer(documentId, ContainerFactory, shouldCreateNew);
 
     // update the browser URL and the window title with the actual container ID
     location.hash = containerId;

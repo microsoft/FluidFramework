@@ -13,7 +13,7 @@ export interface IRedisParameters {
 export const executeRedisMultiWithHmsetExpire = async (
     client: Redis,
     key: string,
-    data: { [key: string]: any },
+    data: { [key: string]: any; },
     expireAfterSeconds: number): Promise<void> => new Promise<void>((resolve, reject) => {
         client.multi()
         .hmset(key, data)

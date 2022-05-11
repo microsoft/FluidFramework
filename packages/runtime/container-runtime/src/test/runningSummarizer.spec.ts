@@ -92,7 +92,7 @@ describe("Runtime", () => {
                 const summaryProposal: ISummaryProposal = {
                     summarySequenceNumber: lastSummarySeq,
                 };
-                const contents: ISummaryNack & { retryAfter?: number } = {
+                const contents: ISummaryNack & { retryAfter?: number; } = {
                     summaryProposal,
                     retryAfter: retryAfterSeconds,
                     message: "test-nack",
@@ -170,6 +170,7 @@ describe("Runtime", () => {
                                 unreferencedBlobSize: 0,
                                 opsSizesSinceLastSummary: 0,
                                 nonSystemOpsSinceLastSummary: 0,
+                                summaryNumber: 0,
                             },
                             handle: "test-handle",
                             clientSequenceNumber: lastClientSeq,

@@ -343,7 +343,7 @@ export class RunningSummarizer implements IDisposable {
         }
 
         this.lockedSummaryAction(async () => {
-            const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
+            const attempts: (ISummarizeOptions & { delaySeconds?: number; })[] = [
                 { refreshLatestAck: false, fullTree: false },
                 { refreshLatestAck: true, fullTree: false },
                 { refreshLatestAck: true, fullTree: false, delaySeconds: 2 * 60 },
@@ -353,7 +353,7 @@ export class RunningSummarizer implements IDisposable {
             let summaryAttempts = 0;
             let summaryAttemptsPerPhase = 0;
 
-            let lastResult: { message: string; error: any } | undefined;
+            let lastResult: { message: string; error: any; } | undefined;
 
             for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length;) {
                 if (this.cancellationToken.cancelled) {
