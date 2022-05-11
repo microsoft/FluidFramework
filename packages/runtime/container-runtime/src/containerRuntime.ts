@@ -208,29 +208,34 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
 };
 
 export interface IGCRuntimeOptions {
-    /* Flag that will disable garbage collection if set to true. */
-    disableGC?: boolean;
-
     /**
-     * Flag representing the summary's preference for allowing garbage collection.
-     * This is stored in the summary and unchangeable (for now). So this runtime option
-     * only takes affect on new containers.
-     * Currently if this is set to false, it will take priority and any container will
-     * never run GC.
+     * Flag that if true, will enable running garbage collection (GC) in a container. GC has mark phase and sweep phase.
+     * In mark phase, unreferenced objects are identified and marked as such in the summary. This option enables the
+     * mark phase.
+     * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
+     * Sweep phase can be enabled via the "sweepAllowed" option.
+     * Note: This setting becomes part of the container's summary and cannot be changed.
      */
     gcAllowed?: boolean;
 
     /**
-     * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether the node
+     * Flag that if true, enables GC's sweep phase which will eventually delete unreferenced objects from the container.
+     * This flag should only be set to true if "gcAllowed" is true.
+     * Note: This setting becomes part of the container's summary and cannot be changed.
+     */
+    sweepAllowed?: boolean;
+
+    /**
+     * Flag that will disable garbage collection if set to true. Can be used to disable running GC on container where
+     * is allowed via the gcAllowed option.
+     */
+    disableGC?: boolean;
+
+    /**
+     * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
      * changed or not.
      */
     runFullGC?: boolean;
-
-    /**
-     * Flag that if true, will run sweep which may delete unused objects that meet certain criteria. Only takes
-     * effect if GC is enabled.
-     */
-    runSweep?: boolean;
 
     /**
      * Allows additional GC options to be passed.
@@ -1461,11 +1466,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
-            gcFeature: this.garbageCollector.gcSummaryFeatureVersion,
+            ...this.garbageCollector.getMetadata(),
             // The last message processed at the time of summary. If there are no new messages, use the message from the
             // last summary.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.messageAtLastSummary,
-            sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
