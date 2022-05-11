@@ -507,6 +507,41 @@ describe("SharedString", () => {
             ]);
         });
 
+        it.only("consistent after remove all/insert text conflict", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.insertText(0, "XYZ");
+            sharedString2.removeRange(0, 4);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 2, end: 2 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 2, end: 2 },
+            ]);
+
+            sharedString2.removeRange(0, 3);
+            sharedString.insertText(0, "PQ");
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+            ]);
+            assertIntervals(sharedString2, collection2, [
+            ]);
+
+            sharedString2.removeRange(0, 2);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: -1, end: -1 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: -1, end: -1 },
+            ]);
+        });
+
         it("can slide intervals on remove ack", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");
