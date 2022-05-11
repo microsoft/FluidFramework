@@ -181,6 +181,70 @@ describe("Quorum", () => {
             await Promise.resolve().then(() => { });
         });
 
+        it("Remote client overwrite", async () => {
+            let resolved = false;
+            let rejected = false;
+
+            const proposalKey = "hello";
+            const localProposalValue = "world";
+            const remoteProposalValue = "mars";
+            const localProposalSequenceNumber = 53;
+            const remoteProposalSequenceNumber = 68;
+            const approveLocalProposalMessage = {
+                minimumSequenceNumber: 64,
+                sequenceNumber: 79,
+            } as ISequencedDocumentMessage;
+            const approveRemoteProposalMessage = {
+                minimumSequenceNumber: 72,
+                sequenceNumber: 84,
+            } as ISequencedDocumentMessage;
+
+            // This test is going to have a remote proposal overwrite the local proposal before the local proposal
+            // is approved.  The promise will still resolve and the value will reflect the local proposal in the
+            // window between the approval of the local proposal and the remote proposal.
+            const proposalP = quorum.propose(proposalKey, localProposalValue)
+                .then(() => { resolved = true; })
+                .catch(() => { rejected = true; });
+
+            quorum.addProposal(proposalKey, localProposalValue, localProposalSequenceNumber, true, 1);
+            // Client sequence number shouldn't matter for remote proposals.
+            quorum.addProposal(proposalKey, remoteProposalValue, remoteProposalSequenceNumber, false, -5);
+
+            // Wait to see if the proposal promise settled.
+            await Promise.resolve().then(() => { });
+            // Due to the composition of Quorum -> QuorumProposals, we require one more microtask deferral to resolve.
+            await Promise.resolve().then(() => { });
+
+            assert.strictEqual(resolved, false, "Stage 1, Resolved");
+            assert.strictEqual(rejected, false, "Stage 1, Rejected");
+            assert.strictEqual(quorum.get(proposalKey), undefined, "Stage 1, Value");
+
+            quorum.updateMinimumSequenceNumber(approveLocalProposalMessage);
+
+            // Wait to see if the proposal promise settled.
+            await Promise.resolve().then(() => { });
+            // Due to the composition of Quorum -> QuorumProposals, we require one more microtask deferral to resolve.
+            await Promise.resolve().then(() => { });
+
+            assert.strictEqual(resolved, true, "Stage 2, Resolved");
+            assert.strictEqual(rejected, false, "Stage 2, Rejected");
+            assert.strictEqual(quorum.get(proposalKey), localProposalValue, "Stage 2, Value");
+
+            quorum.updateMinimumSequenceNumber(approveRemoteProposalMessage);
+
+            // Wait to see if the proposal promise settled.
+            await Promise.resolve().then(() => { });
+            // Due to the composition of Quorum -> QuorumProposals, we require one more microtask deferral to resolve.
+            await Promise.resolve().then(() => { });
+
+            assert.strictEqual(resolved, true, "Stage 3, Resolved");
+            assert.strictEqual(rejected, false, "Stage 3, Rejected");
+            assert.strictEqual(quorum.get(proposalKey), remoteProposalValue, "Stage 3, Value");
+
+            // Backstop to ensure the promise is settled.
+            await proposalP;
+        });
+
         describe("Disconnected handling", () => {
             it("Settling propose() promise after disconnect/reconnect", async () => {
                 const proposal1 = {
@@ -223,21 +287,15 @@ describe("Quorum", () => {
                 // - Proposal 1 will be ack'd and approved before reconnection
                 // - Proposal 2 will be ack'd before reconnection, and then approved after reconnection
                 // - Proposal 3 will not be ack'd before reconnection, and so should reject.
-                const proposal1P = assert.doesNotReject(
-                    quorum.propose(proposal1.key, proposal1.value)
-                        .then(() => { proposal1.resolved = true; })
-                        .catch(() => { proposal1.rejected = true; }),
-                );
-                const proposal2P = assert.doesNotReject(
-                    quorum.propose(proposal2.key, proposal2.value)
-                        .then(() => { proposal2.resolved = true; })
-                        .catch(() => { proposal2.rejected = true; }),
-                );
-                const proposal3P = assert.rejects(
-                    quorum.propose(proposal3.key, proposal3.value)
-                        .then(() => { proposal3.resolved = true; })
-                        .catch(() => { proposal3.rejected = true; }),
-                );
+                const proposal1P = quorum.propose(proposal1.key, proposal1.value)
+                    .then(() => { proposal1.resolved = true; })
+                    .catch(() => { proposal1.rejected = true; });
+                const proposal2P = quorum.propose(proposal2.key, proposal2.value)
+                    .then(() => { proposal2.resolved = true; })
+                    .catch(() => { proposal2.rejected = true; });
+                const proposal3P = quorum.propose(proposal3.key, proposal3.value)
+                    .then(() => { proposal3.resolved = true; })
+                    .catch(() => { proposal3.rejected = true; });
 
                 quorum.setConnectionState(false);
 
@@ -319,8 +377,8 @@ describe("Quorum", () => {
                 assert.strictEqual(quorum.get(proposal2.key), proposal2.value, "Value 2 missing");
                 assert.strictEqual(quorum.get(proposal3.key), undefined, "Unexpected value 3");
 
-                // Backstop to ensure the doesNotReject/rejects promises are complete.
-                await Promise.all([proposal1P, proposal2P, proposal3P]).catch(() => { });
+                // Backstop to ensure the promises are settled.
+                await Promise.all([proposal1P, proposal2P, proposal3P]);
             });
         });
     });

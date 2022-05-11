@@ -304,9 +304,8 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
         );
         this.proposals.set(sequenceNumber, proposal);
 
-        // Emit the event - which will also provide clients an opportunity to reject the proposal. We require
-        // clients to make a rejection decision at the time of receiving the proposal and so disable rejecting it
-        // after we have emitted the event.
+        // Legacy event, from rejection support.  May still have some use for clients to learn that a proposal is
+        // likely to be approved soon.
         this.emit("addProposal", proposal);
 
         if (local) {
