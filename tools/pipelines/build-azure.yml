@@ -74,7 +74,7 @@ extends:
     buildDirectory: azure
     tagName: azure
     poolBuild: Large
-    cgSubDirectory: azure/packages
+    cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true
 
