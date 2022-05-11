@@ -240,7 +240,6 @@ export class RedisSocketIoAdapter extends Adapter {
      * Broadcast packets
      */
     public broadcast(packet: any, opts: BroadcastOptions): void {
-        // console.log(`ksmessage-redis-${JSON.stringify(packet)}`);
         if (this.isDefaultNamespaceAndDisable) {
             return;
         }
@@ -265,7 +264,7 @@ export class RedisSocketIoAdapter extends Adapter {
                  });
              }
          }
-        // console.log(`packet-last-${JSON.stringify(packet.data)}`);
+
         super.broadcast(packet, opts);
 
         this.publish(packet, opts);
@@ -288,6 +287,7 @@ export class RedisSocketIoAdapter extends Adapter {
      * Handles messages from the Redis subscription
      */
     private onRoomMessage(channel: string, messageBuffer: Buffer) {
+        const time = Date.now();
         if (!channel.startsWith(this.channel)) {
             // sent to different channel
             return;
@@ -352,6 +352,21 @@ export class RedisSocketIoAdapter extends Adapter {
                 rooms: new Set([room]),
             };
 
+            if (packet.data && packet.data.length > 1) {
+                if (packet.data[2] && packet.data[2].length > 0) {
+                    packet.data[2].forEach((element) => {
+                        if (!element.traces) {
+                            element.traces = [];
+                        }
+                        element.traces.push(
+                            {
+                                action: "start",
+                                service: "redisAdapter",
+                                timestamp: time,
+                            });
+                    });
+                }
+            }
             // only allow room broadcasts
             super.broadcast(packet, opts);
 

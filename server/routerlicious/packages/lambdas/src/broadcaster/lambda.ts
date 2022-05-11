@@ -131,14 +131,15 @@ export class BroadcasterLambda implements IPartitionLambda {
 
             if (value.type === SequencedOperationType) {
                 const timeNow = Date.now();
-                 if (value.operation.traces) {
-                     value.operation.traces.push(
-                         {
-                             action: "start",
-                             service: "broadcaster",
-                             timestamp: timeNow,
-                         });
+                 if (!value.operation.traces) {
+                     value.operation.traces = [];
                  }
+                 value.operation.traces.push(
+                     {
+                         action: "start",
+                         service: "broadcaster",
+                         timestamp: timeNow,
+                    });
             }
 
             if (this.serviceConfiguration.broadcaster.includeEventInMessageBatchName) {
