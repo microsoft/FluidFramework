@@ -348,11 +348,10 @@ export interface IGarbageCollectionRuntime {
 // @public (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;
-    // (undocumented)
     disableGC?: boolean;
     gcAllowed?: boolean;
     runFullGC?: boolean;
-    runSweep?: boolean;
+    sweepAllowed?: boolean;
 }
 
 // @public
