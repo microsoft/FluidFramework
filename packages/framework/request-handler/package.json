@@ -68,6 +68,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-tools": "^0.2.66048",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@0.59.2000",
@@ -97,7 +98,7 @@
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
-    "typescript": "~4.1.3",
+    "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {

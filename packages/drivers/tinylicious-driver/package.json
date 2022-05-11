@@ -37,12 +37,13 @@
     "@fluidframework/driver-utils": "^0.59.3000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/routerlicious-driver": "^0.59.3000",
-    "@fluidframework/server-services-client": "^0.1036.2000-0",
+    "@fluidframework/server-services-client": "^0.1036.3000-0",
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-tools": "^0.2.66048",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@0.59.2000",
@@ -65,7 +66,7 @@
     "eslint-plugin-unicorn": "~40.0.0",
     "mocha": "^8.4.0",
     "rimraf": "^2.6.2",
-    "typescript": "~4.1.3",
+    "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {

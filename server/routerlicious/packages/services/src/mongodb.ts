@@ -14,10 +14,8 @@ export class MongoCollection<T> implements core.ICollection<T> {
     constructor(private readonly collection: Collection<T>) {
     }
 
-    public aggregate(group: any, options?: any): AggregationCursor<T> {
-        Lumberjack.info(`mongodb-aggregate on ${this.collection} set ${JSON.stringify(group)}`);
-        const pipeline: any = [];
-        pipeline.$group = group;
+    public aggregate(pipeline: any, options?: any): AggregationCursor<T> {
+        Lumberjack.info(`mongodb-aggregate on ${this.collection} set ${JSON.stringify(options)}`);
         return this.collection.aggregate(pipeline, options);
     }
 
@@ -101,8 +99,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
         await this.collection.createIndex(index, { expireAfterSeconds });
     }
 
-    public async findOrCreate(query: any, value: T): Promise<{ value: T, existing: boolean }> {
-        Lumberjack.info(`mongodb-findOrCreate on ${this.collection} set ${JSON.stringify(value)}`);
+    public async findOrCreate(query: any, value: T): Promise<{ value: T; existing: boolean; }> {
         const result = await this.collection.findOneAndUpdate(
             query,
             {

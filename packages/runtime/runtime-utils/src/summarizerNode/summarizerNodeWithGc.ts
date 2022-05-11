@@ -35,10 +35,10 @@ class SummaryNodeWithGC extends SummaryNode {
     constructor(
         public readonly serializedUsedRoutes: string,
         summary: {
-            readonly referenceSequenceNumber: number,
-            readonly basePath: EscapedPath | undefined,
-            readonly localPath: EscapedPath,
-            additionalPath?: EscapedPath,
+            readonly referenceSequenceNumber: number;
+            readonly basePath: EscapedPath | undefined;
+            readonly localPath: EscapedPath;
+            additionalPath?: EscapedPath;
         },
     ) {
         super(summary);

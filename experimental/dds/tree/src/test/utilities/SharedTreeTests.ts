@@ -49,6 +49,7 @@ import { InterningTreeCompressor } from '../../TreeCompressor';
 import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder';
 import { sequencedIdNormalizer } from '../../NodeIdUtilities';
 import { convertNodeDataIds } from '../../IdConversion';
+import { generateStableId, nilUuid } from '../../UuidUtilities';
 import { buildLeaf, SimpleTestTree, TestTree } from './TestNode';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
 import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
@@ -362,6 +363,19 @@ export function runSharedTreeOperationsTests(
 				assertNoDelta(sharedTree, () => {
 					sharedTree.applyEdit(Change.build([], 0));
 				});
+			});
+
+			it('correctly reports attribution ID', () => {
+				const attributionId = generateStableId();
+				const { tree } = setUpTestSharedTree({ attributionId });
+				expect(tree.attributionId).to.equal(writeFormat === WriteFormat.v0_0_2 ? nilUuid : attributionId);
+			});
+
+			it('correctly attributes node IDs', () => {
+				const attributionId = generateStableId();
+				const { tree } = setUpTestSharedTree({ attributionId });
+				const id = tree.generateNodeId();
+				expect(tree.attributeNodeId(id)).to.equal(writeFormat === WriteFormat.v0_0_2 ? nilUuid : attributionId);
 			});
 
 			runSharedTreeUndoRedoTestSuite({ localMode: true, ...undoRedoOptions });
@@ -757,6 +771,48 @@ export function runSharedTreeOperationsTests(
 					const blobContents = await blobHandle.get();
 					expect(IsoBuffer.from(blobContents, 'utf8').toString()).to.equal(blobbedPayload);
 				});
+
+				it('can exchange attribution IDs', () => {
+					const attributionId1 = generateStableId();
+					const { tree: sharedTree1, containerRuntimeFactory } = setUpTestSharedTree({
+						...tree1Options,
+						attributionId: attributionId1,
+					});
+					const attributionId2 = generateStableId();
+					const { tree: sharedTree2 } = setUpTestSharedTree({
+						...createSecondTreeOptions(containerRuntimeFactory),
+						attributionId: attributionId2,
+					});
+					containerRuntimeFactory.processAllMessages();
+
+					const nodeId1 = sharedTree1.generateNodeId();
+					const stableNodeId1 = sharedTree1.convertToStableNodeId(nodeId1);
+					sharedTree1.applyEdit(
+						...Change.insertTree(
+							[buildLeaf(nodeId1)],
+							StablePlace.atEndOf(testTrait(sharedTree1.currentView))
+						)
+					);
+
+					containerRuntimeFactory.processAllMessages();
+					expect(sharedTree2.attributeNodeId(sharedTree2.convertToNodeId(stableNodeId1))).to.equal(
+						attributionId1
+					);
+
+					const nodeId2 = sharedTree2.generateNodeId();
+					const stableNodeId2 = sharedTree2.convertToStableNodeId(nodeId1);
+					sharedTree2.applyEdit(
+						...Change.insertTree(
+							[buildLeaf(nodeId2)],
+							StablePlace.atEndOf(testTrait(sharedTree2.currentView))
+						)
+					);
+
+					containerRuntimeFactory.processAllMessages();
+					expect(sharedTree1.attributeNodeId(sharedTree1.convertToNodeId(stableNodeId2))).to.equal(
+						attributionId2
+					);
+				});
 			}
 		});
 
@@ -804,7 +860,10 @@ export function runSharedTreeOperationsTests(
 					const treeContent: SharedTreeSummaryBase = JSON.parse(serialized);
 					let parsedTree: SummaryContents;
 					if (writeFormat === WriteFormat.v0_1_1) {
-						parsedTree = new SharedTreeEncoder_0_1_1(true).decodeSummary(treeContent as SharedTreeSummary);
+						parsedTree = new SharedTreeEncoder_0_1_1(true).decodeSummary(
+							treeContent as SharedTreeSummary,
+							sharedTree.attributionId
+						);
 					} else {
 						parsedTree = new SharedTreeEncoder_0_0_2(true).decodeSummary(
 							treeContent as SharedTreeSummary_0_0_2

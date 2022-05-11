@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@fluidframework/aqueduct": "^0.59.3000",
+    "@fluidframework/build-tools": "^0.2.66048",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@0.59.2000",
     "@microsoft/api-extractor": "^7.22.2",
@@ -67,7 +68,7 @@
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
     "tinylicious": "^0.4.57763",
-    "typescript": "~4.1.3"
+    "typescript": "~4.5.5"
   },
   "peerDependencies": {
     "fluid-framework": "^0.50.0"

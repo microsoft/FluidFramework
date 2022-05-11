@@ -4,25 +4,29 @@
  */
 
 import Random from 'random-js';
-import { v5 } from 'uuid';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import {
+	AcceptanceCondition,
+	AsyncGenerator,
+	AsyncWeights,
+	createWeightedAsyncGenerator,
+	done,
+	makeRandom,
+} from '@fluid-internal/stochastic-test-utils';
 import { Side, TraitMap, WriteFormat } from '../../persisted-types';
 import { BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes';
 import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers';
 import { fail } from '../../Common';
 import { rangeFromStableRange } from '../../TreeViewUtilities';
-import { makeRandom } from '../utilities/TestUtilities';
 import {
-	done,
 	EditGenerationConfig,
 	FuzzChange,
 	FuzzDelete,
 	FuzzInsert,
 	FuzzMove,
 	FuzzTestState,
-	AsyncGenerator,
 	InsertGenerationConfig,
 	JoinGenerationConfig,
 	Operation,
@@ -30,10 +34,6 @@ import {
 	TreeContext,
 	TreeLeave,
 } from './Types';
-
-function uuid(rand: Random): string {
-	return v5(rand.string(16), '33f960ec-f1e4-4fca-8dcd-223c6647fcc7');
-}
 
 const defaultJoinConfig: Required<JoinGenerationConfig> = {
 	maximumActiveCollaborators: 10,
@@ -44,12 +44,12 @@ const defaultJoinConfig: Required<JoinGenerationConfig> = {
 
 function makeJoinGenerator(passedConfig: JoinGenerationConfig): AsyncGenerator<Operation, FuzzTestState> {
 	const config = { ...defaultJoinConfig, ...passedConfig };
-	return async ({ rand, activeCollaborators, passiveCollaborators }) => {
+	return async ({ random, activeCollaborators, passiveCollaborators }) => {
 		const activeAllowed = activeCollaborators.length < config.maximumActiveCollaborators;
 		const passiveAllowed = passiveCollaborators.length < config.maximumPassiveCollaborators;
 		const isObserver =
 			activeAllowed && passiveAllowed
-				? rand.bool()
+				? random.bool()
 				: activeAllowed
 				? false
 				: passiveAllowed
@@ -59,25 +59,29 @@ function makeJoinGenerator(passedConfig: JoinGenerationConfig): AsyncGenerator<O
 				  );
 		return {
 			type: 'join',
-			summarizeHistory: rand.pick(config.summarizeHistory),
-			writeFormat: rand.pick(config.writeFormat),
+			summarizeHistory: random.pick(config.summarizeHistory),
+			writeFormat: random.pick(config.writeFormat),
 			isObserver,
 		};
 	};
 }
 
-async function leaveGenerator({ rand, activeCollaborators, passiveCollaborators }: FuzzTestState): Promise<TreeLeave> {
+async function leaveGenerator({
+	random,
+	activeCollaborators,
+	passiveCollaborators,
+}: FuzzTestState): Promise<TreeLeave> {
 	const canUsePassive = passiveCollaborators.length > 0;
 	const canUseActive = activeCollaborators.length > 0;
 	const isObserver =
 		canUsePassive && canUseActive
-			? rand.bool()
+			? random.bool()
 			: canUsePassive
 			? true
 			: canUseActive
 			? false
 			: fail('Cannot generate a leave op when there are no clients.');
-	const index = rand.integer(0, (isObserver ? passiveCollaborators : activeCollaborators).length - 1);
+	const index = random.integer(0, (isObserver ? passiveCollaborators : activeCollaborators).length - 1);
 	return { type: 'leave', isObserver, index };
 }
 
@@ -100,24 +104,27 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	const config = { ...defaultEditConfig, ...passedConfig };
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
 	const poolRand = makeRandom(0);
-	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => uuid(poolRand) as TraitLabel);
-	const traitLabelGenerator = ({ rand }: FuzzTestState) => rand.pick(traitLabelPool);
+	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => poolRand.uuid4() as TraitLabel);
+	const traitLabelGenerator = ({ random }: FuzzTestState) => random.pick(traitLabelPool);
 
-	const definitionPool = Array.from({ length: insertConfig.definitionPoolSize }, () => uuid(poolRand) as Definition);
-	const definitionGenerator = ({ rand }: FuzzTestState) => rand.pick(definitionPool);
+	const definitionPool = Array.from(
+		{ length: insertConfig.definitionPoolSize },
+		() => poolRand.uuid4() as Definition
+	);
+	const definitionGenerator = ({ random }: FuzzTestState) => random.pick(definitionPool);
 	type EditState = FuzzTestState & TreeContext;
 
 	function traitGenerator(state: EditState): TraitLocation {
-		const { idList, rand, view } = state;
-		const id = rand.pick(idList);
+		const { idList, random, view } = state;
+		const id = random.pick(idList);
 		return view.tryGetTraitLocation(id) ?? { parent: id, label: traitLabelGenerator(state) };
 	}
 
 	function placeGenerator(state: EditState): StablePlace {
-		const { idList, rand, view } = state;
+		const { idList, random, view } = state;
 		// Note: this gives a 50% chance of adding to a new trait; we may want to tune this at some point
-		if (rand.bool()) {
-			const parent = rand.pick(idList);
+		if (random.bool()) {
+			const parent = random.pick(idList);
 			return StablePlace.atStartOf({ parent, label: traitLabelGenerator(state) });
 		}
 		const traitLocation = traitGenerator(state);
@@ -129,8 +136,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		// For a trait of length N, there are 2N + 2valid places: start, before index 1, after index 1, etc.
 		// index === trait.length is treated as either the start or end of the trait.
 		const makeDescriptor = (): Descriptor => ({
-			index: rand.integer(0, trait.length),
-			side: rand.bool() ? Side.Before : Side.After,
+			index: random.integer(0, trait.length),
+			side: random.bool() ? Side.Before : Side.After,
 		});
 		const descriptor = makeDescriptor();
 
@@ -140,7 +147,7 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	}
 
 	function rangeGenerator(state: EditState): StableRange {
-		const { rand, view } = state;
+		const { random, view } = state;
 		const traitLocation = traitGenerator(state);
 		const trait = view.getTrait(traitLocation);
 		interface Descriptor {
@@ -150,8 +157,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		// For a trait of length N, there are 2N + 2valid places: start, before index 1, after index 1, etc.
 		// index === trait.length is treated as either the start or end of the trait.
 		const makeDescriptor = (): Descriptor => ({
-			index: rand.integer(0, trait.length),
-			side: rand.bool() ? Side.Before : Side.After,
+			index: random.integer(0, trait.length),
+			side: random.bool() ? Side.Before : Side.After,
 		});
 		const descriptor1 = makeDescriptor();
 		let descriptor2: Descriptor;
@@ -190,8 +197,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	}
 
 	function treeGenerator(state: EditState): BuildNode {
-		const { rand, idGenerator } = state;
-		const treeType = rand.pick(['leaf', 'stick', 'balanced']);
+		const { random, idGenerator } = state;
+		const treeType = random.pick(['leaf', 'stick', 'balanced']);
 		const makeNode = (traits?: TraitMap<BuildNode>): BuildNode => ({
 			identifier: idGenerator.generateNodeId(),
 			definition: definitionGenerator(state),
@@ -237,7 +244,9 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 			build: {
 				type: ChangeType.Build,
 				destination: id,
-				source: Array.from({ length: state.rand.integer(1, maxTreeSequenceSize) }, () => treeGenerator(state)),
+				source: Array.from({ length: state.random.integer(1, maxTreeSequenceSize) }, () =>
+					treeGenerator(state)
+				),
 			},
 			insert: {
 				type: ChangeType.Insert,
@@ -319,28 +328,30 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		};
 	}
 
-	async function setPayloadGenerator({ dataStoreRuntime, idList, rand, view }: EditState): Promise<FuzzChange> {
-		const nodeToModify = rand.pick(idList);
-		const getPayloadContents = async (rand: Random): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
-			if (rand.bool()) {
-				return rand.string(4);
+	async function setPayloadGenerator({ dataStoreRuntime, idList, random, view }: EditState): Promise<FuzzChange> {
+		const nodeToModify = random.pick(idList);
+		const getPayloadContents = async (
+			random: Random
+		): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
+			if (random.bool()) {
+				return random.string(4);
 			}
-			const handle = await dataStoreRuntime.uploadBlob(IsoBuffer.from(rand.string(10)));
+			const handle = await dataStoreRuntime.uploadBlob(IsoBuffer.from(random.string(10)));
 			return { blob: handle };
 		};
 
 		const viewNode = view.getViewNode(nodeToModify);
 		const payload =
-			viewNode.payload !== undefined ? (rand.bool() ? await getPayloadContents(rand) : undefined) : undefined;
+			viewNode.payload !== undefined ? (random.bool() ? await getPayloadContents(random) : undefined) : undefined;
 		return {
 			fuzzType: 'setPayload',
 			type: ChangeType.SetValue,
-			nodeToModify: rand.pick(idList),
+			nodeToModify: random.pick(idList),
 			payload,
 		};
 	}
 
-	const baseEditGenerator = createWeightedGenerator<FuzzChange, EditState>([
+	const baseEditGenerator = createWeightedAsyncGenerator<FuzzChange, EditState>([
 		[insertGenerator, config.insertWeight, ({ idList }) => idList.length < config.maxTreeSize],
 		[deleteGenerator, config.deleteWeight, ({ idList }) => idList.length > 1],
 		[moveGenerator, config.moveWeight, ({ idList }) => idList.length > 1],
@@ -348,8 +359,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	]);
 
 	return async (state: FuzzTestState): Promise<Operation | typeof done> => {
-		const { rand, activeCollaborators } = state;
-		const index = rand.integer(0, activeCollaborators.length - 1);
+		const { random, activeCollaborators } = state;
+		const index = random.integer(0, activeCollaborators.length - 1);
 		const { tree } = activeCollaborators[index];
 		const view = tree.currentView;
 		const idList = getIdList(view);
@@ -392,7 +403,7 @@ export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncG
 	const atLeastOneClient = collaboratorsMatches((count) => count > 0);
 	const atLeastOneActiveClient: AcceptanceCondition<FuzzTestState> = ({ activeCollaborators }) =>
 		activeCollaborators.length > 0;
-	const opWeights: Weights<Operation, FuzzTestState> = [
+	const opWeights: AsyncWeights<Operation, FuzzTestState> = [
 		[makeEditGenerator(config.editConfig), config.editWeight, atLeastOneActiveClient],
 		[
 			makeJoinGenerator(config.joinConfig),
@@ -402,56 +413,7 @@ export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncG
 		[leaveGenerator, config.leaveWeight, atLeastOneClient],
 		[{ type: 'synchronize' }, config.synchronizeWeight, atLeastOneClient],
 	];
-	return createWeightedGenerator(opWeights);
-}
-
-type AcceptanceCondition<TState> = (state: TState) => boolean;
-
-/**
- * Array of weighted generators to select from.
- *
- * A generator should only be invoked if the corresponding `AcceptanceCondition` evaluates to true.
- * This is useful in practice to avoid invoking generators for known-to-be invalid actions based on the current state:
- * for example, a "leave" op cannot be generated if there are no currently connected clients.
- */
-type Weights<T, TState> = [T | AsyncGenerator<T, TState>, number, AcceptanceCondition<TState>?][];
-
-function createWeightedGenerator<T, TState extends { rand: Random }>(
-	weights: Weights<T, TState>
-): AsyncGenerator<T, TState> {
-	const cumulativeSums: [T | AsyncGenerator<T, TState>, number, AcceptanceCondition<TState>?][] = [];
-	let totalWeight = 0;
-	for (const [tOrGenerator, weight, shouldAccept] of weights) {
-		const cumulativeWeight = totalWeight + weight;
-		cumulativeSums.push([tOrGenerator, cumulativeWeight, shouldAccept]);
-		totalWeight = cumulativeWeight;
-	}
-
-	return async (state) => {
-		const { rand } = state;
-		const sample = () => {
-			const weightSelected = rand.integer(1, totalWeight);
-
-			let opIndex = 0;
-			while (cumulativeSums[opIndex][1] < weightSelected) {
-				opIndex++;
-			}
-
-			return opIndex;
-		};
-
-		let index;
-		let shouldAccept: AcceptanceCondition<TState> | undefined;
-		do {
-			index = sample();
-			shouldAccept = cumulativeSums[index][2];
-		} while (!(shouldAccept?.(state) ?? true));
-
-		const [tOrGenerator] = cumulativeSums[index];
-		return typeof tOrGenerator === 'function'
-			? (tOrGenerator as AsyncGenerator<T, TState>)(state)
-			: (tOrGenerator as unknown as T);
-	};
+	return createWeightedAsyncGenerator(opWeights);
 }
 
 function getIdList(tree: TreeView): NodeId[] {
@@ -466,51 +428,4 @@ function getIdList(tree: TreeView): NodeId[] {
 		}
 	}
 	return allIds;
-}
-
-/**
- * Higher-order generator operator which creates a new generator producing the first `n` elements of `generator`.
- */
-export function take<T, TState>(n: number, generator: AsyncGenerator<T, TState>): AsyncGenerator<T, TState> {
-	let count = 0;
-	return async (state) => {
-		if (count < n) {
-			count++;
-			return generator(state);
-		}
-		return done;
-	};
-}
-
-/**
- * @returns a deterministic generator that always returns the items of `contents` in order.
- */
-export function generatorFromArray<T, TAdditionalState>(contents: T[]): AsyncGenerator<T, TAdditionalState> {
-	let index = -1;
-	return async () => {
-		if (index < contents.length) {
-			index++;
-			return contents[index] ?? done;
-		}
-		return done;
-	};
-}
-
-/**
- * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
- */
-export function chain<T, TState>(...generators: AsyncGenerator<T, TState>[]): AsyncGenerator<T, TState> {
-	let currentIndex = 0;
-	return async (state) => {
-		while (currentIndex < generators.length) {
-			const generator = generators[currentIndex];
-			const result = await generator(state);
-			if (result !== done) {
-				return result;
-			} else {
-				currentIndex++;
-			}
-		}
-		return done;
-	};
 }
