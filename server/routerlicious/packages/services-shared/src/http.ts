@@ -38,12 +38,12 @@ export function containsPathTraversal(path: string): boolean {
 
 /**
  * Helper function to handle a promise that should be returned to the user.
- * @param resultP Promise whose resolved value or rejected error will send with appropriate status codes.
- * @param response Express Response used for writing response body, headers, and status.
- * @param allowClientCache sends Cache-Control header with maximum age set to 1 yr if true or no store if false.
- * @param errorStatus Overrides any error status code; leave undefined for pass-through error codes or 400 default.
- * @param successStatus Status to send when result is successful. Default: 200
- * @param onSuccess Additional callback fired when response is successful before sending response.
+ * @param resultP - Promise whose resolved value or rejected error will send with appropriate status codes.
+ * @param response - Express Response used for writing response body, headers, and status.
+ * @param allowClientCache - sends Cache-Control header with maximum age set to 1 yr if true or no store if false.
+ * @param errorStatus - Overrides any error status code; leave undefined for pass-through error codes or 400 default.
+ * @param successStatus - Status to send when result is successful. Default: 200
+ * @param onSuccess - Additional callback fired when response is successful before sending response.
  */
  export function handleResponse<T>(
     resultP: Promise<T>,

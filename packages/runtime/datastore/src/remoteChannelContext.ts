@@ -45,8 +45,8 @@ export class RemoteChannelContext implements IChannelContext {
     private channelP: Promise<IChannel> | undefined;
     private channel: IChannel | undefined;
     private readonly services: {
-        readonly deltaConnection: ChannelDeltaConnection,
-        readonly objectStorage: ChannelStorageService,
+        readonly deltaConnection: ChannelDeltaConnection;
+        readonly objectStorage: ChannelStorageService;
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;
@@ -179,7 +179,10 @@ export class RemoteChannelContext implements IChannelContext {
             if (this.attachMessageType === undefined) {
                 // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("channelTypeNotAvailable", {
-                    channelId: this.id,
+                    channelId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
                         tag: TelemetryDataTag.PackageData,
@@ -191,7 +194,10 @@ export class RemoteChannelContext implements IChannelContext {
             if (factory === undefined) {
                 // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("channelFactoryNotRegisteredForAttachMessageType", {
-                    channelId: this.id,
+                    channelId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
                         tag: TelemetryDataTag.PackageData,
@@ -206,7 +212,10 @@ export class RemoteChannelContext implements IChannelContext {
             if (factory === undefined) {
                 // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
-                    channelId: this.id,
+                    channelId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
                         tag: TelemetryDataTag.PackageData,

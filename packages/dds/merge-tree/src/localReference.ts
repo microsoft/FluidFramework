@@ -7,61 +7,79 @@ import { assert } from "@fluidframework/common-utils";
 import { Client } from "./client";
 import {
     ISegment,
+} from "./mergeTree";
+import { ICombiningOp, ReferenceType } from "./ops";
+import { addProperties, PropertySet } from "./properties";
+import { minReferencePosition,
+    maxReferencePosition,
+    compareReferencePositions,
+    refHasTileLabels,
+    refHasRangeLabels,
     ReferencePosition,
     refGetRangeLabels,
     refGetTileLabels,
     refHasRangeLabel,
     refHasTileLabel,
-} from "./mergeTree";
-import { ICombiningOp, ReferenceType } from "./ops";
-import { addProperties, PropertySet } from "./properties";
+} from "./referencePositions";
 
-export class LocalReference implements ReferencePosition {
+/**
+ * @deprecated - Use ReferencePosition
+ */
+ export class LocalReference implements ReferencePosition {
+    /**
+     * @deprecated - use DetachedReferencePosition
+     */
     public static readonly DetachedPosition: number = -1;
 
     public properties: PropertySet | undefined;
+    /**
+     * @deprecated - use properties to store pair
+     */
     public pairedRef?: LocalReference;
+    /**
+     * @deprecated - use getSegment
+     */
     public segment: ISegment | undefined;
 
+    /**
+     * @deprecated - use createReferencePosition
+     */
     constructor(
         private readonly client: Client,
         initSegment: ISegment,
+        /**
+         * @deprecated - use getOffset
+         */
         public offset = 0,
         public refType = ReferenceType.Simple,
+        properties?: PropertySet,
     ) {
         this.segment = initSegment;
+        this.properties = properties;
     }
 
+    /**
+     * @deprecated - use minReferencePosition
+     */
     public min(b: LocalReference) {
-        if (this.compare(b) < 0) {
-            return this;
-        } else {
-            return b;
-        }
+        return minReferencePosition(this, b);
     }
-
+    /**
+     * @deprecated - use maxReferencePosition
+     */
     public max(b: LocalReference) {
-        if (this.compare(b) > 0) {
-            return this;
-        } else {
-            return b;
-        }
+        return maxReferencePosition(this, b);
     }
-
+    /**
+     * @deprecated - use compareReferencePositions
+     */
     public compare(b: LocalReference) {
-        if (this.segment === b.segment) {
-            return this.offset - b.offset;
-        } else {
-            if (this.segment === undefined
-                || (b.segment !== undefined &&
-                    this.segment.ordinal < b.segment.ordinal)) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
+        return compareReferencePositions(this, b);
     }
 
+    /**
+     * @deprecated - use getLocalReferencePosition
+     */
     public toPosition() {
         if (this.segment && this.segment.parent) {
             return this.getOffset() + this.client.getPosition(this.segment);
@@ -70,26 +88,39 @@ export class LocalReference implements ReferencePosition {
         }
     }
 
+    /**
+     * @deprecated - use refHasTileLabels
+     */
     public hasTileLabels() {
-        return !!this.getTileLabels();
+        return refHasTileLabels(this);
     }
-
+    /**
+     * @deprecated - use refHasRangeLabels
+     */
     public hasRangeLabels() {
-        return !!this.getRangeLabels();
+        return refHasRangeLabels(this);
     }
-
+    /**
+     * @deprecated - use refHasTileLabel
+     */
     public hasTileLabel(label: string): boolean {
         return refHasTileLabel(this, label);
     }
-
+    /**
+     * @deprecated - use refHasRangeLabel
+     */
     public hasRangeLabel(label: string): boolean {
         return refHasRangeLabel(this, label);
     }
-
+    /**
+     * @deprecated - use refGetTileLabels
+     */
     public getTileLabels(): string[] | undefined {
         return refGetTileLabels(this);
     }
-
+    /**
+     * @deprecated - use refGetRangeLabels
+     */
     public getRangeLabels(): string[] | undefined {
         return refGetRangeLabels(this);
     }
@@ -102,6 +133,9 @@ export class LocalReference implements ReferencePosition {
         this.properties = addProperties(this.properties, newProps, op);
     }
 
+    /**
+     * @deprecated - no longer supported
+     */
     public getClient() {
         return this.client;
     }

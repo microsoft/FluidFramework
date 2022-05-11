@@ -36,7 +36,7 @@ interface IOdspTestLoginInfo {
     siteUrl: string;
     username: string;
     password: string;
-    supportsBrowserAuth?: boolean
+    supportsBrowserAuth?: boolean;
 }
 
 type TokenConfig = IOdspTestLoginInfo & IClientConfig;
@@ -44,31 +44,31 @@ type TokenConfig = IOdspTestLoginInfo & IClientConfig;
 interface IOdspTestDriverConfig extends TokenConfig {
     directory: string;
     driveId: string;
-    options: HostStoragePolicy | undefined
+    options: HostStoragePolicy | undefined;
 }
 
 // specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
 interface LoginTenantRange {
-    prefix: string,
-    start: number,
-    count: number,
-    password: string,
+    prefix: string;
+    start: number;
+    count: number;
+    password: string;
 }
 
 interface LoginTenants {
     [tenant: string]: {
-        range: LoginTenantRange,
+        range: LoginTenantRange;
         // add different format here
-    }
+    };
 }
 
 /**
  * Get from the env a set of credential to use from a single tenant
- * @param tenantIndex interger to choose the tenant from an array
- * @param requestedUserName specific user name to filter to
+ * @param tenantIndex - interger to choose the tenant from an array
+ * @param requestedUserName - specific user name to filter to
  */
 function getCredentials(tenantIndex: number, requestedUserName?: string) {
-    const creds: { [user: string]: string } = {};
+    const creds: { [user: string]: string; } = {};
     const loginTenants = process.env.login__odsp__test__tenants;
     if (loginTenants !== undefined) {
         const tenants: LoginTenants = JSON.parse(loginTenants);
@@ -89,7 +89,7 @@ function getCredentials(tenantIndex: number, requestedUserName?: string) {
         const loginAccounts = process.env.login__odsp__test__accounts;
         assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
         // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
-        const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
+        const passwords: { [user: string]: string; } = JSON.parse(loginAccounts);
 
         // Need to choose one out of the set as these account might be from different tenant
         const username = requestedUserName ?? Object.keys(passwords)[0];
@@ -129,11 +129,11 @@ export class OdspTestDriver implements ITestDriver {
 
     public static async createFromEnv(
         config?: {
-            directory?: string,
-            username?: string,
-            options?: HostStoragePolicy,
-            supportsBrowserAuth?: boolean,
-            tenantIndex?: number,
+            directory?: string;
+            username?: string;
+            options?: HostStoragePolicy;
+            supportsBrowserAuth?: boolean;
+            tenantIndex?: number;
         },
         api: OdspDriverApiType = OdspDriverApi,
     ) {
@@ -234,7 +234,7 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     private static async getStorageToken(
-        options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
+        options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean; },
         config: IOdspTestLoginInfo & IClientConfig,
     ) {
         const host = new URL(options.siteUrl).host;
