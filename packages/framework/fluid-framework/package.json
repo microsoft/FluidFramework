@@ -70,6 +70,7 @@
     "version": "0.59.3000",
     "broken": {
       "InterfaceDeclaration_ISequenceDeltaRange": {"forwardCompat": false, "backCompat": false},
+      "ClassDeclaration_IntervalCollection": {"forwardCompat": false},
       "ClassDeclaration_SequenceDeltaEvent": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceEvent": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false, "backCompat": false}
