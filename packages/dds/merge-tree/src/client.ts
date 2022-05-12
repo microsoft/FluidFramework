@@ -580,7 +580,7 @@ export class Client {
      * Gets the client args from the op if remote, otherwise uses the local clients info
      * @param opArgs - The op arg to get the client sequence args for
      */
-     private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
+    private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
         return this.getClientSequenceArgsForMessage(opArgs.sequencedMessage);
     }
 
