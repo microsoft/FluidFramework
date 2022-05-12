@@ -4,7 +4,6 @@
  */
 
 import { DataObject, DataObjectFactory, waitForAttach } from "@fluidframework/aqueduct";
-import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
@@ -36,7 +35,7 @@ const innerComponentKey = "innerId";
  */
 export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; }> implements IFluidHTMLView {
     private text: SharedString;
-    private innerIdCell: ISharedCell<IFluidHandle>;
+    private innerComponent: TextBox | undefined;
     private _absoluteUrl: string | undefined;
 
     public get IFluidHTMLView() { return this; }
@@ -59,31 +58,23 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
 
         // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
         // user choose the component they want to embed. We store it in a cell for easier event handling.
-        const innerIdCell = SharedCell.create(this.runtime);
         const textBox = await TextBoxInstantiationFactory.createChildInstance(this.context);
-        innerIdCell.set(textBox.handle);
-        this.root.set(innerComponentKey, innerIdCell.handle);
+        this.root.set(innerComponentKey, textBox.handle);
     }
 
     protected async hasInitialized() {
         const text = this.root.get<IFluidHandle<SharedString>>(textKey).get();
-        const innerIdCell = this.root.get<IFluidHandle<ISharedCell>>(innerComponentKey).get();
+        const innerComponent = this.root.get<IFluidHandle<TextBox>>(innerComponentKey).get();
 
         this.setCheckedState = this.setCheckedState.bind(this);
 
         [
             this.text,
-            this.innerIdCell,
+            this.innerComponent,
         ] = await Promise.all([
             text,
-            innerIdCell,
+            innerComponent,
         ]);
-
-        this.innerIdCell.on("op", (op, local) => {
-            if (!local) {
-                this.emit("innerComponentChanged");
-            }
-        });
 
         this.root.on("valueChanged", (changed: IValueChanged, local: boolean) => {
             if (!local) {
@@ -111,7 +102,6 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
             TodoItem,
             [
                 SharedString.getFactory(),
-                SharedCell.getFactory(),
             ],
             {},
             new Map([
@@ -147,12 +137,7 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
     }
 
     public async getInnerComponent(): Promise<TextBox> {
-        const innerComponentInfo = this.innerIdCell.get();
-        if (innerComponentInfo === undefined) {
-            return undefined;
-        }
-
-        return innerComponentInfo.get() as Promise<TextBox>;
+        return this.innerComponent;
     }
 
     // end public API surface for the TodoItem model, used by the view
