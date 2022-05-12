@@ -136,7 +136,7 @@ async function start(): Promise<void> {
         id = location.hash.substring(1);
         // Use the unique container ID to fetch the container created earlier.  It will already be connected to the
         // collaboration session.
-        ({container, services} = await client.getContainer(id, containerSchema));
+        ({ container, services } = await client.getContainer(id, containerSchema));
         [diceRollerController1Props, diceRollerController2Props] = createDiceRollerControllerPropsFromContainer(
             container);
     }
