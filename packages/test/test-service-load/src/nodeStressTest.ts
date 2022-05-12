@@ -7,7 +7,7 @@ import child_process from "child_process";
 import fs from "fs";
 import ps from "ps-node";
 import commander from "commander";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { TestDriverTypes, RouterliciousEndpoint } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
@@ -43,8 +43,9 @@ async function main() {
         .version("0.0.1")
         .requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
+        .option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
         .option("-id, --testId <testId>", "Load an existing data store rather than creating new")
-        .option("-c, --credFile <filePath>", "Filename containing user credentialss for test")
+        .option("-c, --credFile <filePath>", "Filename containing user credentials for test")
         .option("-s, --seed <number>", "Seed for this run")
         .option("-dbg, --debug", "Debug child processes via --inspect-brk")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
@@ -54,6 +55,7 @@ async function main() {
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
+    const endpoint: RouterliciousEndpoint | undefined = commander.driverEndpoint;
     const profileArg: string = commander.profile;
     const testId: string | undefined = commander.testId;
     const debug: true | undefined = commander.debug;
@@ -74,6 +76,7 @@ async function main() {
 
     await orchestratorProcess(
         driver,
+        endpoint,
         { ...profile, name: profileArg, testUsers },
         { testId, debug, verbose, seed, browserAuth, enableMetrics });
 }
@@ -83,6 +86,7 @@ async function main() {
  */
 async function orchestratorProcess(
     driver: TestDriverTypes,
+    endpoint: RouterliciousEndpoint | undefined,
     profile: ILoadTestConfig & { name: string; testUsers?: ITestUserConfig; },
     args: { testId?: string; debug?: true; verbose?: true; seed?: number; browserAuth?: true;
         enableMetrics?: boolean; },
@@ -93,6 +97,7 @@ async function orchestratorProcess(
 
     const testDriver = await createTestDriver(
         driver,
+        endpoint,
         seed,
         undefined,
         args.browserAuth);

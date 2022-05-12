@@ -4,7 +4,7 @@
  */
 
 import commander from "commander";
-import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, TestDriverTypes, RouterliciousEndpoint } from "@fluidframework/test-driver-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import random from "random-js";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -40,12 +40,14 @@ async function main() {
         .requiredOption("-r, --runId <runId>",
             "run a child process with the given id. Requires --url option.", parseIntArg)
         .requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
+        .option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
         .option("-m, --enableOpsMetrics", "Enable capturing ops metrics")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
+    const endpoint: RouterliciousEndpoint | undefined = commander.driverEndpoint;
     const profileArg: string = commander.profile;
     const url: string = commander.url;
     const runId: number = commander.runId;
@@ -73,6 +75,7 @@ async function main() {
 
     const result = await runnerProcess(
         driver,
+        endpoint,
         {
             runId,
             testConfig: profile,
@@ -124,6 +127,7 @@ function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T
  */
 async function runnerProcess(
     driver: TestDriverTypes,
+    endpoint: RouterliciousEndpoint | undefined,
     runConfig: IRunConfig,
     url: string,
     seed: number,
@@ -141,7 +145,7 @@ async function runnerProcess(
 
         const configurations = generateConfigurations(
             seed, runConfig.testConfig?.optionOverrides?.[driver]?.configurations);
-        const testDriver: ITestDriver = await createTestDriver(driver, seed, runConfig.runId);
+        const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,
             {
