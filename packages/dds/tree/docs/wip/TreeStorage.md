@@ -30,13 +30,13 @@ This would perform very poorly when used with fluid's blobs being pulled over th
 
 This does have some nice properties:
 - Accessing a child from its parent is always exactly 1 handle dereference.
-- When walking a sequence, siblings can be perfected.
+- When walking a sequence, siblings can be prefetched.
 - It's very simple and easy to implement correctly.
 
 Some useful performance trad-offs that could be made to improve this:
 - Inline some nodes instead of storing them in separate blobs.
     Choice of which nodes to do this with impacts performance a lot and depends on usage.
-    Could income choice with schema and/or usage information (both hard coded heuristics and dynamically).
+    Could include choice with schema and/or usage information (both hard coded heuristics and dynamically).
 - Could indirect some (or all) blob references through an indirection table (PageTable by page Id) to reduce propagation of updates ancestors.
     - Choice of when to do this could be heuristic tuned to balance read costs, page table memory use, and write costs.
     - Can be used where depth (by number of blobs) since last indirection is high, and/or right above blobs that keep getting updated (ex: add an indirection when updating multiple parent blobs for the sole purpose of updating a specific child tht keeps changing).
@@ -114,7 +114,7 @@ This makes the path to the leaves, and thus the size of the key in the Path B-Tr
 TODO: what would this means for the Path B-Tree? In practice this has to account for how it optimizes storage of paths.
 
 In the logical tree case, its O(N) space, and assuming use of some indirection, O(N) log (N) time to visit the whole tree.
-Inlining can be used to get good seizes for the blobs, and indirection can be used occasionally to lower its costs by a constant factor.
+Inlining can be used to get good sizes for the blobs, and indirection can be used occasionally to lower its costs by a constant factor.
 
 ### Walking a long sequence high up in a large tree
 
@@ -127,7 +127,7 @@ The Logical Tree approach could theoretically chunk the data to handle this case
 The question is how close to that would be expect it to get in practice since it needs to optimize for many usage patterns, not just this one.
 Simple heuristics, like always inlining the type, and tending to inline small subtrees that always have the same shape (like the position) could work well here, though there is a balance between inlining small subtrees causing the size of nodes in the chunk to be larger, resulting in the top level sequence having more chunks.
 There are thus two extremes where this could go badly:
-1. Too much inlining, causing each node in the sequence to be in its own chunk. At least these chunks could be perfected for the upcoming children.
+1. Too much inlining, causing each node in the sequence to be in its own chunk. At least these chunks could be prefetched for the upcoming children.
 2. Too little inlining: the information we need from the node is not available in the chunks that make up the sequence, thus for each node we have to fetch its chunk. When reading the content of that chunk, we could even have to fetch another chunk for the position if it also wasn't inlined (ex: lots of other data got inlined filling up the chunk)
 
 
@@ -153,7 +153,7 @@ While both approaches could permit optimized formats for the leaf subtrees, this
 
 In both cases, you use a path to a node to find it so its parents are found on the way.
 
-However if we add an index that allows finding nodes by some other query path (ex: an idex by node identifiers for nodes which have an identifier), there are a few ways that can work.
+However if we add an index that allows finding nodes by some other query path (ex: an index by node identifiers for nodes which have an identifier), there are a few ways that can work.
 If the index maps identifier to path, then the index is expensive to update for large subtree moves.
 If for logical trees, if the index maps identifier to blob (or page id indirectly pointing to blob), this can avoids large update costs for moves, but needs another index (page to parent) to be able to discover parentage of nodes looked up this way.
 
