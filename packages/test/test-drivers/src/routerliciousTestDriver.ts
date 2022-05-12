@@ -85,7 +85,7 @@ function getConfigFromEnv(r11sEndpointName?: RouterliciousEndpoint) {
 }
 
 export class RouterliciousTestDriver implements ITestDriver {
-    public static createFromEnv(config?: { r11sEndpointName?: RouterliciousEndpoint },
+    public static createFromEnv(config?: { r11sEndpointName?: RouterliciousEndpoint; },
         api: RouterliciousDriverApiType = RouterliciousDriverApi,
     ) {
         const { serviceEndpoint, tenantId, tenantSecret, driverPolicies } = getConfigFromEnv(config?.r11sEndpointName);
