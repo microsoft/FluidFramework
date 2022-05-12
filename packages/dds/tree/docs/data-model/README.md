@@ -67,7 +67,7 @@ In the SharedTree data model, each addressable piece of data is represented as a
 There is a single node at the root of the SharedTree that can not be removed or replaced.
 
 <figure align="center">
-  <img src="./root.drawio.svg" alt=""/>
+  <img src="./assets/root.drawio.svg" alt=""/>
   <figcaption>Figure: Implicit root node</figcaption>
 </figure>
 
@@ -77,7 +77,7 @@ Each tree node has an optional ***value***.
 Values are used to store scalar data, such as numbers and booleans.
 
 <figure align="center">
-  <img src="./scalar-nodes.drawio.svg" alt=""/>
+  <img src="./assets/scalar-nodes.drawio.svg" alt=""/>
   <figcaption>Figure: Nodes with values</figcaption>
 </figure>
 
@@ -93,7 +93,7 @@ Each tree node has a set of zero or more fields.
 Fields are used to model map-like composite type, where each  ***field*** represents one relationship between a parent node and an ordered ***sequence*** of one or more children.
 
 <figure align="center">
-  <img src="./children.drawio.svg" alt=""/>
+  <img src="./assets/children.drawio.svg" alt=""/>
   <figcaption>Figure: A parent node with two fields</figcaption>
 </figure>
 
@@ -147,7 +147,10 @@ The below diagram highlights the differences between the JSON data model and the
 }
 ```
 
-![Figure 1](./data-model.drawio.svg)
+<figure align="center">
+  <img src="./assets/data-model.drawio.svg" alt=""/>
+  <figcaption>Figure: JSON and SharedTree</figcaption>
+</figure>
 
 Of note:
 
