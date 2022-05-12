@@ -56,13 +56,14 @@ These failures can be addressed by introducing new features:
 These additions, while effective, have the following drawbacks:
 
 * They increase the complexity of the core editing model
-- They lead to a set of operations that is not orthogonalized:
-  
+
+* They lead to a set of operations that is not orthogonalized:
+
   - Insert, revive, and return seem to share some common traits, with revive and return being closer to each other.
-  
+
   - It seems like it should be possible to support a "replace" operation that is similar to revive but with new elements instead of resurrecting removed ones, but that too needs to be added as separate operation)
 
-- They do not alleviate the complexity of modeling an optional field.
+- They do not alleviate the complexity of modeling an optional field (clearing the field requires a slice-delete operation over the field, overwriting the field requires that same slice-delete and an insert whose exact position is meaningless).
 
 The cell model can be thought of as a refactoring of both the traditional editing primitives and the above additions such that the listed drawbacks are avoided.
 
@@ -165,6 +166,20 @@ The low-level edits that such fields might support can be decomposed as follows:
 
 - Clear: clear a cell
 
+- Move content from A to B:
+  
+  - A: clear a (filled) cell
+  
+  - B: fill a cell with the content being moved
+
+- Return content to A from B:
+  
+  - A: fill a cell with the content being moved
+  
+  - B: clear the (filled) cell
+
+The Move/Return operations described here assume both the source and the destination of the move are in the same kind of trait. This is not a requirement, though some combinations may be questionable.
+
 Note that no further cell allocations are made after the field is created.
 
 ## Implications For SharedTree
@@ -189,7 +204,7 @@ The merge resolution logic can now exclude the possibility of having to merge op
 
 Since the merge resolution logic is specialized to each field kind, merge resolution logic becomes extensible: we can introduce new kind of fields with associated merge logic.
 This allows us to support new kinds of fields in the future, but more importantly it means that we can migrate from a less desirable set of merge semantics to a more desirable one.
-This dramatically reduces the negative impact of starting out is suboptimal the merge semantics.
+This dramatically reduces the negative impact of starting out with suboptimal the merge semantics in early SharedTree releases because we can implement better ones later on and offer them as new kinds of fields.
 
 ### Changeset Format
 
