@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/client-ui-lib",
+  "name": "@fluid-internal/stochastic-test-utils",
   "version": "0.60.1000",
   "private": true,
   "description": "Fluid client UI",

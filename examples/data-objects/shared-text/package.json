@@ -42,7 +42,6 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/client-ui-lib": "^0.60.1000",
     "@fluid-example/example-utils": "^0.60.1000",
     "@fluidframework/aqueduct": "^0.60.1000",
     "@fluidframework/common-utils": "^0.32.1",
