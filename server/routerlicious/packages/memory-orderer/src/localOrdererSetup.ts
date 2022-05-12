@@ -13,7 +13,7 @@ import {
     IDocumentStorage,
     ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import/no-unresolved
 import { IGitManager } from "../../services-client/dist";
 import { ILocalOrdererSetup } from "./interfaces";
 
