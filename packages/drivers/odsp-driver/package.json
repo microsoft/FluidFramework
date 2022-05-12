@@ -69,7 +69,7 @@
     "@fluidframework/gitresources": "^0.1036.3000-0",
     "@fluidframework/odsp-doclib-utils": "^0.59.3000",
     "@fluidframework/odsp-driver-definitions": "^0.59.3000",
-    "@fluidframework/protocol-base": "^0.1036.3000-0",
+    "@fluidframework/protocol-base": "^0.1036.3000-66438",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/telemetry-utils": "^0.59.3000",
     "abort-controller": "^3.0.0",
