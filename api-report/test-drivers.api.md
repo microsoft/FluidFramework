@@ -22,6 +22,7 @@ import { LocalResolver } from '@fluidframework/local-driver';
 import { OdspDocumentServiceFactory } from '@fluidframework/odsp-driver';
 import { OdspDriverUrlResolver } from '@fluidframework/odsp-driver';
 import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicious-driver';
+import { RouterliciousEndpoint } from '@fluidframework/test-driver-definitions';
 import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
 
 // @public (undocumented)
@@ -146,7 +147,7 @@ export class RouterliciousTestDriver implements ITestDriver {
     createDocumentServiceFactory(): IDocumentServiceFactory;
     // (undocumented)
     static createFromEnv(config?: {
-        r11sEndpointName?: string;
+        r11sEndpointName?: RouterliciousEndpoint;
     }, api?: RouterliciousDriverApiType): RouterliciousTestDriver;
     // (undocumented)
     createUrlResolver(): InsecureUrlResolver;
@@ -174,7 +175,6 @@ export class TinyliciousTestDriver implements ITestDriver {
     // (undocumented)
     get version(): string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

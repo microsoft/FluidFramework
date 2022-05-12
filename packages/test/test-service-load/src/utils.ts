@@ -14,8 +14,17 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBufferedLogger, ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { createFluidTestDriver, generateOdspHostStoragePolicy, OdspTestDriver } from "@fluidframework/test-drivers";
+import {
+    ITelemetryBufferedLogger,
+    ITestDriver,
+    TestDriverTypes,
+    RouterliciousEndpoint,
+} from "@fluidframework/test-driver-definitions";
+import {
+    createFluidTestDriver,
+    generateOdspHostStoragePolicy,
+    OdspTestDriver,
+} from "@fluidframework/test-drivers";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import { generateConfigurations, generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
@@ -173,8 +182,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     const resolvedUrl = container.resolvedUrl;
     container.close();
 
-    if ((testConfig.detachedBlobCount ?? 0) > 0) {
-        // TODO: #7684 this should be driver-agnostic
+    if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
         const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);
         return url;
     }
@@ -182,7 +190,12 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
 }
 
 export async function createTestDriver(
-    driver: TestDriverTypes, seed: number, runId: number | undefined, supportsBrowserAuth?: true) {
+    driver: TestDriverTypes,
+    r11sEndpointName: RouterliciousEndpoint | undefined,
+    seed: number,
+    runId: number | undefined,
+    supportsBrowserAuth?: true,
+    ) {
     const options = generateOdspHostStoragePolicy(seed);
     return createFluidTestDriver(
         driver,
@@ -191,6 +204,9 @@ export async function createTestDriver(
                 directory: "stress",
                 options: options[(runId ?? seed) % options.length],
                 supportsBrowserAuth,
+            },
+            r11s: {
+                r11sEndpointName,
             },
         });
 }
