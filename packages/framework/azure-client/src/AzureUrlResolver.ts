@@ -16,7 +16,7 @@ import {
 // InsecureTokenProvider for basic scenarios or more robust, secure providers that fulfill the
 // ITokenProvider interface
 export class AzureUrlResolver implements IUrlResolver {
-    constructor() {}
+    constructor() { }
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
         const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(
@@ -30,9 +30,13 @@ export class AzureUrlResolver implements IUrlResolver {
         ) {
             return {
                 endpoints: {
-                    deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/new`,
+                    // TODO: why do we remove the `/` from the url here?
+                    // deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/new`,
+                    deltaStorageUrl: `${ordererUrl}deltas/${tenantId}/new`,
                     ordererUrl,
-                    storageUrl: `${storageUrl}/repos/${tenantId}`,
+                    // TODO: why do we remove the `/` from the url here?
+                    // storageUrl: `${storageUrl}/repos/${tenantId}`,
+                    storageUrl: `${storageUrl}repos/${tenantId}`,
                 },
                 // id is a mandatory attribute, but it's ignored by the driver for new container requests.
                 id: "",
@@ -48,9 +52,13 @@ export class AzureUrlResolver implements IUrlResolver {
         const documentUrl = `${ordererUrl}/${tenantId}/${containerId}`;
         return Promise.resolve({
             endpoints: {
-                deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/${containerId}`,
+                // TODO: why do we remove the `/` from the url here?
+                // deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/${containerId}`,
+                deltaStorageUrl: `${ordererUrl}deltas/${tenantId}/${containerId}`,
                 ordererUrl,
-                storageUrl: `${storageUrl}/repos/${tenantId}`,
+                // TODO: why do we remove the `/` from the url here?
+                // storageUrl: `${storageUrl}/repos/${tenantId}`,
+                storageUrl: `${storageUrl}repos/${tenantId}`,
             },
             id: containerId,
             tokens: {},
