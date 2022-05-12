@@ -76,7 +76,7 @@ export class IsoBuffer extends Uint8Array {
      * Convert the buffer to a string.
      * Only supports encoding the whole string (unlike the Node Buffer equivalent)
      * and only utf8 and base64 encodings
-     * @param encoding
+     * @param encoding - encoding to use
      */
     public toString(encoding?: string): string {
         return Uint8ArrayToString(this, encoding);

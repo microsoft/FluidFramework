@@ -4,7 +4,7 @@
  */
 
 import nconf from "nconf";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { RouterliciousEndpoint, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { resolveVersion } from "./versionUtils";
 import { pkgVersion } from "./packageVersion";
 
@@ -81,7 +81,7 @@ const options = {
 
 nconf.argv({
     ...options,
-    transform: (obj: { key: string, value: string }) => {
+    transform: (obj: { key: string; value: string; }) => {
         if (options[obj.key] !== undefined) {
             obj.key = `fluid:test:${obj.key}`;
         }
@@ -96,7 +96,7 @@ nconf.argv({
         "fluid__test__r11sEndpointName",
         "fluid__test__baseVersion",
     ],
-    transform: (obj: { key: string, value: string }) => {
+    transform: (obj: { key: string; value: string; }) => {
         if (!obj.key.startsWith("fluid__test__")) {
             return obj;
         }
@@ -126,7 +126,7 @@ nconf.argv({
 export const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[] | undefined;
 export const compatVersions = nconf.get("fluid:test:compatVersion") as string[] | undefined;
 export const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
-export const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as string;
+export const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as RouterliciousEndpoint;
 export const baseVersion = resolveVersion(nconf.get("fluid:test:baseVersion") as string, false);
 export const reinstall = nconf.get("fluid:test:reinstall");
 export const tenantIndex = nconf.get("fluid:test:tenantIndex") as number;

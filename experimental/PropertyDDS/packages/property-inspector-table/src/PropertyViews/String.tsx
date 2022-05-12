@@ -10,9 +10,9 @@ import { IEditableValueCellProps } from "../EditableValueCell";
 import { getPropertyValue } from "../utils";
 
 type StringProps = (IEditableValueCellProps & {
-  onSubmit: (val: string, props: IEditableValueCellProps) => void,
-  TextFieldProps: TextFieldProps,
-  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>,
+  onSubmit: (val: string, props: IEditableValueCellProps) => void;
+  TextFieldProps: TextFieldProps;
+  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>;
 });
 
 type HandleKeyDownType = (

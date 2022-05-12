@@ -52,7 +52,7 @@ export interface IProvideFluidHandle {
  */
 export interface IFluidHandle<
     // REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
-    T = FluidObject & IFluidLoadable
+    T = FluidObject & IFluidLoadable,
     > extends IProvideFluidHandle {
 
     /**

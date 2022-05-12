@@ -6,7 +6,9 @@
     ],
     "compilerOptions": {
         "strictNullChecks": false,
-        "outDir": "dist"
+        "outDir": "dist",
+        "jsx": "react",
+        "types": ["react"]
     },
     "include": [
         "src/**/*"

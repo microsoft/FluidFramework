@@ -77,7 +77,7 @@ describe("Errors", () => {
         });
 
         it("Should preserve telemetry props and existing errorType, and return same object", () => {
-            const loggingError = new LoggingError("hello", { foo: "bar" }) as LoggingError & { errorType: string };
+            const loggingError = new LoggingError("hello", { foo: "bar" }) as LoggingError & { errorType: string; };
             loggingError.errorType = "someErrorType";
             const testError = CreateContainerErrorViaNormalize(loggingError);
 
@@ -187,7 +187,7 @@ describe("Errors", () => {
                 Symbol("Unique"),
                 () => {},
                 [],
-                [1,2,3],
+                [1, 2, 3],
             ];
             const coercedErrors = originalMalformations.map((value) =>
                 DataProcessingError.wrapIfUnrecognized(value, "someCodepath", undefined),

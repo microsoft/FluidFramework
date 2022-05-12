@@ -115,8 +115,8 @@ function selectProtocolVersion(connectVersions: string[]): string | undefined {
 }
 
 /**
- * Converts a relayUserAgent string into a <key,value> map.
- * @param relayUserAgent user agent string in the format "prop1:val1;prop2:val2;prop3:val3"
+ * Converts a relayUserAgent string into a \<key,value\> map.
+ * @param relayUserAgent - user agent string in the format "prop1:val1;prop2:val2;prop3:val3"
  */
 function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string, string> {
     if (!relayUserAgent) {

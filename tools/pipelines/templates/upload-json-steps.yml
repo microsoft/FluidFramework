@@ -31,6 +31,8 @@ steps:
   artifact: _api-extractor-temp
 - download: protocol_definitions
   artifact: _api-extractor-temp
+- download: azure
+  artifact: _api-extractor-temp
 - download: client
   artifact: _api-extractor-temp
 - download: server

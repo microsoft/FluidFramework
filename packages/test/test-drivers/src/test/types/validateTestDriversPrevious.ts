@@ -120,6 +120,7 @@ declare function get_old_InterfaceDeclaration_FluidTestDriverConfig():
 declare function use_current_InterfaceDeclaration_FluidTestDriverConfig(
     use: TypeOnly<current.FluidTestDriverConfig>);
 use_current_InterfaceDeclaration_FluidTestDriverConfig(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_FluidTestDriverConfig());
 
 /*

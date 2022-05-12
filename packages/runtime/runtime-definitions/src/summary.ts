@@ -53,7 +53,7 @@ export interface IGarbageCollectionNodeData {
  * GC data.
  */
 export interface IGarbageCollectionState {
-    gcNodes: { [ id: string ]: IGarbageCollectionNodeData };
+    gcNodes: { [ id: string ]: IGarbageCollectionNodeData; };
 }
 
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
@@ -63,7 +63,7 @@ export interface ISummarizerNodeConfig {
      * True to reuse previous handle when unchanged since last acked summary.
      * Defaults to true.
      */
-    readonly canReuseHandle?: boolean,
+    readonly canReuseHandle?: boolean;
     /**
      * True to always stop execution on error during summarize, or false to
      * attempt creating a summary that is a pointer ot the last acked summary
@@ -73,7 +73,7 @@ export interface ISummarizerNodeConfig {
      * BUG BUG: Default to true while we investigate problem
      * with differential summaries
      */
-    readonly throwOnFailure?: true,
+    readonly throwOnFailure?: true;
 }
 
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
@@ -136,7 +136,7 @@ export interface ISummarizerNode {
     loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: <T>(id: string) => Promise<T>,
-    ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }>;
+    ): Promise<{ baseSummary: ISnapshotTree; outstandingOps: ISequencedDocumentMessage[]; }>;
     /**
      * Records an op representing a change to this node/subtree.
      * @param op - op of change to record
@@ -159,7 +159,7 @@ export interface ISummarizerNode {
         config?: ISummarizerNodeConfig,
     ): ISummarizerNode;
 
-    getChild(id: string): ISummarizerNode | undefined
+    getChild(id: string): ISummarizerNode | undefined;
 }
 
 /**

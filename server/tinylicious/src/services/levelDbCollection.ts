@@ -40,7 +40,7 @@ export class Collection<T> implements ICollection<T> {
                 private readonly property: ICollectionProperty) {
     }
 
-    public aggregate(group: any, options?: any): any {
+    public aggregate(pipeline: any, options?: any): any {
         throw new Error("Method Not Implemented");
     }
 

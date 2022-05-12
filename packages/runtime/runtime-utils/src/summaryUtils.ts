@@ -133,7 +133,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
         this.summaryStats.treeNodeCount++;
     }
 
-    private readonly summaryTree: { [path: string]: SummaryObject } = {};
+    private readonly summaryTree: { [path: string]: SummaryObject; } = {};
     private summaryStats: ISummaryStats;
 
     public addBlob(key: string, content: string | Uint8Array): void {
@@ -150,8 +150,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     public addHandle(
         key: string,
         handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
-        handle: string): void
-    {
+        handle: string): void {
         this.summaryTree[key] = {
             type: SummaryType.Handle,
             handleType,

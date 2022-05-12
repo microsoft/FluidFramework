@@ -298,7 +298,7 @@ function compareSubspace<T>(
 }
 
 const tryUnionSubspaces = (() => {
-    const cache: { left?: unknown; right?: unknown; res?: unknown } = {};
+    const cache: { left?: unknown; right?: unknown; res?: unknown; } = {};
     return <T>(
         productOperations: ProductOperations<T>,
         left: Subspace<T>,

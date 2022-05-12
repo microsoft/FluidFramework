@@ -89,5 +89,5 @@ const EditableValueCell: React.FunctionComponent<WithStyles<typeof styles> & IEd
   );
 };
 
-const StyledEditableValueCell = withStyles(styles, {name: "EditableValueCell"})(EditableValueCell);
+const StyledEditableValueCell = withStyles(styles, { name: "EditableValueCell" })(EditableValueCell);
 export { StyledEditableValueCell as EditableValueCell };
