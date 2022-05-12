@@ -63,7 +63,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.59.3000",
-    "@fluidframework/protocol-base": "^0.1036.3000-0",
+    "@fluidframework/protocol-base": "^0.1036.3000-66438",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/runtime-definitions": "^0.59.3000",
     "@fluidframework/shared-object-base": "^0.59.3000"
