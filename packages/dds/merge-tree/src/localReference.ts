@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import {
     ISegment,
@@ -21,6 +22,29 @@ import { minReferencePosition,
     refHasRangeLabel,
     refHasTileLabel,
 } from "./referencePositions";
+
+/**
+ * @internal
+ */
+export function _validateReferenceType(refType: ReferenceType) {
+    let exclusiveCount = 0;
+    // eslint-disable-next-line no-bitwise
+    if ((refType & ReferenceType.Transient) > 0) {
+        ++exclusiveCount;
+    }
+    // eslint-disable-next-line no-bitwise
+    if ((refType & ReferenceType.SlideOnRemove) > 0) {
+        ++exclusiveCount;
+    }
+    // eslint-disable-next-line no-bitwise
+    if ((refType & ReferenceType.StayOnRemove) > 0) {
+        ++exclusiveCount;
+    }
+    if (exclusiveCount > 1) {
+        throw new UsageError(
+            "Reference types can only be one of Transient, SlideOnRemove, and StayOnRemove");
+    }
+}
 
 /**
  * @deprecated - Use ReferencePosition
@@ -41,8 +65,6 @@ import { minReferencePosition,
      */
     public segment: ISegment | undefined;
 
-    public pending: boolean = false;
-
     /**
      * @deprecated - use createReferencePosition
      */
@@ -56,6 +78,7 @@ import { minReferencePosition,
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
     ) {
+        _validateReferenceType(refType);
         this.segment = initSegment;
         this.properties = properties;
     }

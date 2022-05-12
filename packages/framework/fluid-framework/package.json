@@ -73,12 +73,12 @@
       "ClassDeclaration_SequenceDeltaEvent": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceEvent": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_SequenceInterval": {"forwardCompat": false},
+      "ClassDeclaration_SequenceInterval": {"backCompat": false},
+      "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false},
       "comment": {
       "TypeAliasDeclaration_MatrixSegment": {"forwardCompat": false},
       "ClassDeclaration_PaddingSegment": {"forwardCompat": false},
       "ClassDeclaration_RunSegment": {"forwardCompat": false},
-      "TypeAliasDeclaration_SharedStringSegment": {"forwardCompat": false},
       "ClassDeclaration_SubSequence": {"forwardCompat": false}
       }
     }

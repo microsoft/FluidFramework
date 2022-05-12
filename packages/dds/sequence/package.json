@@ -134,8 +134,9 @@
         "backCompat": false
       },
       "ClassDeclaration_SequenceInterval": {
-        "forwardCompat": false
+        "backCompat": false
       },
+      "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false},
       "comment": {
         "TypeAliasDeclaration_MatrixSegment": {"forwardCompat": false},
         "ClassDeclaration_PaddingSegment": {"forwardCompat": false},

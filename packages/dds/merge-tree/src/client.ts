@@ -17,7 +17,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReference } from "./localReference";
+import { LocalReference, _validateReferenceType } from "./localReference";
 import {
     CollaborationWindow,
     compareStrings,
@@ -1012,32 +1012,25 @@ export class Client {
         return this.mergeTree.getContainingSegment<T>(pos, refSeq, clientId);
     }
 
-    createSlideOnRemoveReference(refType: ReferenceType, pos: number, pending: boolean, op?: ISequencedDocumentMessage):
-        ReferencePosition {
-        // eslint-disable-next-line no-bitwise
-        if ((refType & ReferenceType.SlideOnRemove) === 0) {
-            throw new UsageError("createSlideOnRemoveReference requires SlideOnRemove refType");
-        }
+    getSlideOnRemoveReferencePosition(pos: number, op: ISequencedDocumentMessage) {
         const { refSeq, clientId } = this.getRefSeqAndClientId(op);
         const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(pos, refSeq, clientId);
         if (!segoff.segment || segoff.offset === undefined || segoff.offset < 0) {
             throw new Error("Invalid reference location");
         }
-        const lref = new LocalReference(this, segoff.segment, segoff.offset, refType);
-        lref.pending = pending;
-        // eslint-disable-next-line no-bitwise
-        if ((refType & ReferenceType.Transient) === 0) {
-            this.addLocalReference(lref);
-        } else if (pending) {
-            throw new UsageError("Transient reference can not be pending");
-        }
-        return lref;
+        return segoff;
     }
 
-    ackCreateSlideOnRemoveReference(reference: ReferencePosition): void {
-        assert(reference instanceof LocalReference, "ackCreateSlideOnRemoveReference must be called on LocalReference");
-        this.mergeTree.slideReference(reference);
-        reference.pending = false;
+    changeReferenceType(reference: ReferencePosition, refType: ReferenceType): void {
+        if (!(reference instanceof LocalReference)) {
+            throw new UsageError("changeReferenceType requires LocalReference");
+        }
+        _validateReferenceType(refType);
+        reference.refType = refType;
+        // eslint-disable-next-line no-bitwise
+        if ((refType & ReferenceType.SlideOnRemove) !== 0) {
+            this.mergeTree.slideReference(reference);
+        }
     }
 
     getPropertiesAtPosition(pos: number) {

@@ -1494,11 +1494,13 @@ export class MergeTree {
             return;
         }
         const refsToSlide: LocalReference[] = [];
-        const refsToKeep: LocalReference[] = [];
+        const refsToStay: LocalReference[] = [];
         for (const lref of segment.localRefs) {
-            if (lref.refType & ReferenceType.SlideOnRemove) {
-                if (pending || lref.pending) {
-                    refsToKeep.push(lref);
+            if (lref.refType & ReferenceType.StayOnRemove) {
+                refsToStay.push(lref);
+            } else if (lref.refType & ReferenceType.SlideOnRemove) {
+                if (pending) {
+                    refsToStay.push(lref);
                 } else {
                     refsToSlide.push(lref);
                 }
@@ -1510,7 +1512,7 @@ export class MergeTree {
             this.slideReference(ref);
         }
         segment.localRefs.clear();
-        for (const lref of refsToKeep) {
+        for (const lref of refsToStay) {
             lref.segment = segment;
             segment.localRefs.addLocalRef(lref);
         }

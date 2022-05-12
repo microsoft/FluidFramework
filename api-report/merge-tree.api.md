@@ -97,8 +97,6 @@ export class Client {
     // (undocumented)
     accumWindowTime: number;
     // (undocumented)
-    ackCreateSlideOnRemoveReference(reference: ReferencePosition): void;
-    // (undocumented)
     addLocalReference(lref: LocalReference): void;
     // (undocumented)
     addLongClientId(longClientId: string): void;
@@ -114,9 +112,9 @@ export class Client {
     // (undocumented)
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
-    cloneFromSegments(): Client;
+    changeReferenceType(reference: ReferencePosition, refType: ReferenceType): void;
     // (undocumented)
-    createSlideOnRemoveReference(refType: ReferenceType, pos: number, pending: boolean, op?: ISequencedDocumentMessage): ReferencePosition;
+    cloneFromSegments(): Client;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
     protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -154,6 +152,11 @@ export class Client {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
+    // (undocumented)
+    getSlideOnRemoveReferencePosition(pos: number, op: ISequencedDocumentMessage): {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    };
     // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
@@ -818,7 +821,7 @@ export class LocalReference implements ReferencePosition {
     // @deprecated (undocumented)
     hasRangeLabel(label: string): boolean;
     // @deprecated (undocumented)
-    hasRangeLabels(): boolean;
+    hasRangeLabels(): any;
     // @deprecated (undocumented)
     hasTileLabel(label: string): boolean;
     // @deprecated (undocumented)
@@ -833,8 +836,6 @@ export class LocalReference implements ReferencePosition {
     offset: number;
     // @deprecated (undocumented)
     pairedRef?: LocalReference;
-    // (undocumented)
-    pending: boolean;
     // (undocumented)
     properties: PropertySet | undefined;
     // (undocumented)
@@ -1341,6 +1342,8 @@ export enum ReferenceType {
     // (undocumented)
     SlideOnRemove = 64,
     // (undocumented)
+    StayOnRemove = 128,
+    // (undocumented)
     Tile = 1,
     // (undocumented)
     Transient = 256
@@ -1606,6 +1609,9 @@ export const UnassignedSequenceNumber = -1;
 
 // @public
 export const UniversalSequenceNumber = 0;
+
+// @internal (undocumented)
+export function _validateReferenceType(refType: ReferenceType): void;
 
 // (No @packageDocumentation comment for this package)
 

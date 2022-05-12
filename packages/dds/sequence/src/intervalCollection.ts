@@ -316,10 +316,20 @@ function createPositionReference(
     pos: number,
     refType: ReferenceType,
     op?: ISequencedDocumentMessage): LocalReference {
-    assert((refType & ReferenceType.SlideOnRemove) > 0, "IntervalCollection references must be SlideOnRemove");
-    const pending = (refType & ReferenceType.Transient) === 0 && op === undefined;
-    // TODO: interval collections should use ReferencePosition not LocalReference
-    return client.createSlideOnRemoveReference(refType, pos, pending, op) as LocalReference;
+    let segoff;
+    if (op) {
+        assert((refType & ReferenceType.SlideOnRemove) !== 0, "op create references must be SlideOnRemove");
+        segoff = client.getSlideOnRemoveReferencePosition(pos, op);
+    } else {
+        assert((refType & ReferenceType.SlideOnRemove) === 0, "SlideOnRemove references must be op created");
+        segoff = client.getContainingSegment(pos);
+    }
+    assert(segoff.segment, "createPositionReference should find segment");
+    const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
+    if (refType !== ReferenceType.Transient) {
+        client.addLocalReference(lref);
+    }
+    return lref;
 }
 
 function createSequenceInterval(
@@ -331,16 +341,25 @@ function createSequenceInterval(
     op?: ISequencedDocumentMessage): SequenceInterval {
     let beginRefType = ReferenceType.RangeBegin;
     let endRefType = ReferenceType.RangeEnd;
-    if (intervalType === IntervalType.Nest) {
-        beginRefType = ReferenceType.NestBegin;
-        endRefType = ReferenceType.NestEnd;
-    } else if (intervalType === IntervalType.Transient) {
+    if (intervalType === IntervalType.Transient) {
         beginRefType = ReferenceType.Transient;
         endRefType = ReferenceType.Transient;
+    } else {
+        if (intervalType === IntervalType.Nest) {
+            beginRefType = ReferenceType.NestBegin;
+            endRefType = ReferenceType.NestEnd;
+        }
+        // All non-transient interval references must eventually be SlideOnRemove
+        // To ensure eventual consistency, they must start as StayOnRemove when
+        // pending (created locally and creation op is not acked)
+        if (op) {
+            beginRefType |= ReferenceType.SlideOnRemove;
+            endRefType |= ReferenceType.SlideOnRemove;
+        } else {
+            beginRefType |= ReferenceType.StayOnRemove;
+            endRefType |= ReferenceType.StayOnRemove;
+        }
     }
-
-    beginRefType |= ReferenceType.SlideOnRemove;
-    endRefType |= ReferenceType.SlideOnRemove;
 
     const startLref = createPositionReference(client, start, beginRefType, op);
     const endLref = createPositionReference(client, end, endRefType, op);
@@ -1134,6 +1153,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         });
     }
 
+    private ackReference(lref: LocalReference) {
+        let refType = lref.refType;
+        refType = refType & ~ReferenceType.StayOnRemove;
+        refType = refType | ReferenceType.SlideOnRemove;
+        this.client.changeReferenceType(lref, refType);
+    }
+
     public addInternal(
         serializedInterval: ISerializedInterval,
         local: boolean,
@@ -1144,8 +1170,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
         if (local) {
             assert(this.pendingReferences.length >= 2, "Pending reference not saved");
-            this.client.ackCreateSlideOnRemoveReference(this.pendingReferences[0]);
-            this.client.ackCreateSlideOnRemoveReference(this.pendingReferences[1]);
+            this.ackReference(this.pendingReferences[0]);
+            this.ackReference(this.pendingReferences[1]);
             this.pendingReferences.splice(0, 2);
             return;
         }
