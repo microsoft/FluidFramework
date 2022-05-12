@@ -136,7 +136,7 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
         return this.root.get(checkedKey);
     }
 
-    public async getInnerComponent(): Promise<TextBox> {
+    public getInnerComponent(): TextBox {
         return this.innerComponent;
     }
 

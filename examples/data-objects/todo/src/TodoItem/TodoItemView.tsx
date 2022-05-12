@@ -5,9 +5,9 @@
 
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 import { SharedString } from "@fluidframework/sequence";
+import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import React from "react";
 import { TodoItem } from "./TodoItem";
-import { TodoItemDetailsView } from "./TodoItemDetailsView";
 
 interface TodoItemViewProps {
     todoItemModel: TodoItem;
@@ -97,9 +97,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                 {
                     // If the content is visible we will show a button or a component
                     this.state.innerComponentVisible &&
-                    <TodoItemDetailsView
-                        todoItemModel={this.props.todoItemModel}
-                    />
+                    <ReactViewAdapter view={this.props.todoItemModel.getInnerComponent()} />
                 }
             </div>
         );
