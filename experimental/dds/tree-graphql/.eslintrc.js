@@ -43,7 +43,7 @@ module.exports = {
 		// unicorn/no-null
 		// GraphQL uses null rather than undefined. See https://github.com/graphql/graphql-js/issues/1298
 		// TODO: Determine if we want to use a helper library to convert null to undefined automatically
-        'unicorn/no-null': 'off',
+		'unicorn/no-null': 'off',
 	},
 	overrides: [
 		{
