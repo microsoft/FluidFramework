@@ -23,8 +23,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 /**
- * Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
- * attach a Deferred which we will resolve once the proposal is either accepted or rejected.
+ * Structure for tracking proposals that have been sequenced but not approved yet.
  */
 class PendingProposal implements ISequencedProposal {
     constructor(
@@ -329,7 +328,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void {
         const msn = message.minimumSequenceNumber;
 
-        // Accept proposals and reject proposals whose sequenceNumber is <= the minimumSequenceNumber
+        // Accept proposals proposals whose sequenceNumber is <= the minimumSequenceNumber
 
         // Return a sorted list of approved proposals. We sort so that we apply them in their sequence number order
         // TODO this can be optimized if necessary to avoid the linear search+sort
@@ -495,7 +494,8 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     }
 
     /**
-     * Proposes a new value. Returns a promise that will resolve when the proposal is either accepted or rejected.
+     * Proposes a new value. Returns a promise that will resolve when the proposal is either accepted, or reject if
+     * the proposal fails to send.
      */
     public async propose(key: string, value: any): Promise<void> {
         return this.quorumProposals.propose(key, value);
