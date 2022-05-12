@@ -54,6 +54,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
      * it requires to produce that default view.  We'll create a single data store of the specified type.
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await runtime.createRootDataStore(this.dataStoreFactory.type, dataStoreId);
+        const dataStore = await runtime.createDataStore(this.dataStoreFactory.type);
+        await dataStore.trySetAlias(dataStoreId);
     }
 }

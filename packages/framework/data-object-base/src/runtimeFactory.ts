@@ -38,7 +38,8 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
     }
 
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-        await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
+        const dataStore = await runtime.createDataStore(this.defaultStoreFactory.type);
+        await dataStore.trySetAlias(defaultStoreId);
     }
 
     public async preInitialize(

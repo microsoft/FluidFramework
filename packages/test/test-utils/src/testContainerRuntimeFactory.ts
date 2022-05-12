@@ -30,7 +30,8 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
         }
 
         public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-            await runtime.createRootDataStore(this.type, "default");
+            const dataStore = await runtime.createDataStore(this.type);
+            await dataStore.trySetAlias("default");
 
             // Test detached creation
             const root2Context = runtime.createDetachedRootDataStore([this.type], "default2");

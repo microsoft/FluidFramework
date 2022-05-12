@@ -47,7 +47,8 @@ async function createRootDataObject(
     containerRuntime: IContainerRuntime,
     rootDataStoreId: string,
 ): Promise<ITestDataObject> {
-    const dataStore = await containerRuntime.createRootDataStore(TestDataObjectType, rootDataStoreId);
+    const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
+    await dataStore.trySetAlias(rootDataStoreId);
     const dataObject = await requestTestObjectWithoutWait(dataStore, "");
     // Non-root data stores are visible (reachable) from the root as soon as they are created.
     await assert.doesNotReject(requestTestObjectWithoutWait(container, dataObject._context.id),
