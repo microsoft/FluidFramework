@@ -7,21 +7,10 @@
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { take } from '@fluid-internal/stochastic-test-utils';
 import { fail, Mutable } from '../Common';
-import {
-	defaultClusterCapacity,
-	IdCompressor,
-	isFinalId,
-	isLocalId,
-} from '../id-compressor/IdCompressor';
+import { defaultClusterCapacity, IdCompressor, isFinalId, isLocalId } from '../id-compressor/IdCompressor';
 import { IdCreationRange, UnackedLocalId, SerializedIdCompressorWithNoSession } from '../id-compressor';
 import { createSessionId, numericUuidFromStableId, stableIdFromNumericUuid } from '../id-compressor/NumericUuid';
-import {
-	CompressedId,
-	FinalCompressedId,
-	LocalCompressedId,
-	OpSpaceCompressedId,
-	SessionId,
-} from '../Identifiers';
+import { CompressedId, FinalCompressedId, LocalCompressedId, OpSpaceCompressedId, SessionId } from '../Identifiers';
 import {
 	Client,
 	IdCompressorTestNetwork,
@@ -35,7 +24,7 @@ describe('IdCompressor Perf', () => {
 	const type = BenchmarkType.Measurement;
 	const localClient = Client.Client1;
 	const remoteClient = Client.Client2;
-    let perfCompressor: IdCompressor | undefined;
+	let perfCompressor: IdCompressor | undefined;
 	let network: IdCompressorTestNetwork;
 	let compressor: IdCompressor;
 
@@ -224,7 +213,7 @@ describe('IdCompressor Perf', () => {
 						} in owning cluster)`,
 						before: () => {
 							idToDecompress = setupCompressorWithId(local, override, clusterHasOverride);
-                            perfCompressor = network.getCompressorUnsafeNoProxy(localClient);
+							perfCompressor = network.getCompressorUnsafeNoProxy(localClient);
 						},
 						benchmarkFn,
 					});
@@ -267,7 +256,7 @@ describe('IdCompressor Perf', () => {
 		},
 	});
 
-    function getLastLocalId(client: Client, network: IdCompressorTestNetwork): LocalCompressedId {
+	function getLastLocalId(client: Client, network: IdCompressorTestNetwork): LocalCompressedId {
 		const log = network.getIdLog(client);
 		let id: LocalCompressedId | undefined;
 		for (let i = log.length - 1; i > 0; i--) {

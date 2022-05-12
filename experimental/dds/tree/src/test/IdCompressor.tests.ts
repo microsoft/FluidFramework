@@ -43,8 +43,8 @@ import {
 	sessionNumericUuids,
 	makeOpGenerator,
 	attributionIds,
-    generateCompressedIds,
-    expectAssert,
+	generateCompressedIds,
+	expectAssert,
 } from './utilities/IdCompressorTestUtilities';
 import { expectDefined } from './utilities/TestCommon';
 
@@ -232,7 +232,7 @@ describe('IdCompressor', () => {
 			expect(returnedIds).to.deep.equal(ids);
 		});
 
-        it('created with expanded finalization', () => {
+		it('created with expanded finalization', () => {
 			const compressor = createCompressor(Client.Client1, idCount);
 			const ids: SessionSpaceCompressedId[] = [];
 			for (let i = 0; i < idCount * 4; i++) {
@@ -418,7 +418,7 @@ describe('IdCompressor', () => {
 
 		it('prevents attempts to finalize ranges twice', () => {
 			const rangeCompressor = createCompressor(Client.Client1);
-            generateCompressedIds(rangeCompressor, 3);
+			generateCompressedIds(rangeCompressor, 3);
 			const batchRange = rangeCompressor.takeNextCreationRange();
 			rangeCompressor.finalizeCreationRange(batchRange);
 			expect(() => rangeCompressor.finalizeCreationRange(batchRange)).to.throw('Ranges finalized out of order.');
@@ -516,7 +516,7 @@ describe('IdCompressor', () => {
 				.undefined;
 		});
 
-        it('can re-compress an eagerly generated final ID that is not finalized', () => {
+		it('can re-compress an eagerly generated final ID that is not finalized', () => {
 			const compressor = createCompressor(Client.Client1, 5);
 			compressor.generateCompressedId();
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
@@ -608,7 +608,7 @@ describe('IdCompressor', () => {
 			expect(compressor.decompress(id)).to.equal(override);
 		});
 
-        it('can decompress an eagerly generated final ID that is not finalized', () => {
+		it('can decompress an eagerly generated final ID that is not finalized', () => {
 			const compressor = createCompressor(Client.Client1, 5);
 			compressor.generateCompressedId();
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
@@ -638,7 +638,7 @@ describe('IdCompressor', () => {
 			expect(id).to.not.equal(normalized);
 		});
 
-        it('can normalize an eagerly generated final ID', () => {
+		it('can normalize an eagerly generated final ID', () => {
 			const compressor = createCompressor(Client.Client1, 5);
 			compressor.generateCompressedId();
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
@@ -678,7 +678,7 @@ describe('IdCompressor', () => {
 			);
 		});
 
-        it('can normalize a final ID created by the local session but sent in another clients op space', () => {
+		it('can normalize a final ID created by the local session but sent in another clients op space', () => {
 			// Regression test for the situation in which a client creates a final ID and another client references
 			// that final ID in a message back to the creating client. The creating client will normalize it and
 			// pass the session ID of the remote (non-creating) client. This should be handled correctly.
@@ -850,7 +850,7 @@ describe('IdCompressor', () => {
 				}
 			});
 
-            itNetwork('eagerly generated final IDs that are not finalized', (network) => {
+			itNetwork('eagerly generated final IDs that are not finalized', (network) => {
 				const compressor = network.getCompressor(Client.Client1);
 				network.allocateAndSendIds(Client.Client1, 1);
 				network.deliverOperations(DestinationClient.All);
@@ -1155,7 +1155,7 @@ describe('IdCompressor', () => {
 			);
 		});
 
-        describe('Eager final ID allocation', () => {
+		describe('Eager final ID allocation', () => {
 			it('eagerly allocates final IDs when cluster creation has been finalized', () => {
 				const compressor = createCompressor(Client.Client1, 5);
 				const localId1 = compressor.generateCompressedId();

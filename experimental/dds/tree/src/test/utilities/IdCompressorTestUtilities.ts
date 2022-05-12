@@ -26,7 +26,14 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../../id-compressor/NumericUuid';
-import { FinalCompressedId, SessionId, StableId, SessionSpaceCompressedId, AttributionId, OpSpaceCompressedId } from '../../Identifiers';
+import {
+	FinalCompressedId,
+	SessionId,
+	StableId,
+	SessionSpaceCompressedId,
+	AttributionId,
+	OpSpaceCompressedId,
+} from '../../Identifiers';
 import { getIds } from '../../id-compressor/IdRange';
 import type {
 	IdCreationRange,
@@ -197,7 +204,7 @@ export class IdCompressorTestNetwork {
 		return this.getCompressor(client) as IdCompressor;
 	}
 
-    /**
+	/**
 	 * Returns a mutable handle to a compressor in the network. Use of mutation methods will break the network invariants and
 	 * should only be used if the network will not be used again. Additionally, the returned compressor will be invalidated/unusable
 	 * if any network operations cause it to be regenerated (serialization/deserialization, etc.).
@@ -264,7 +271,7 @@ export class IdCompressorTestNetwork {
 	 * Allocates a new range of local IDs and enqueues them for future delivery via a `testIdDelivery` action.
 	 * Calls to this method determine the total order of delivery, regardless of when `deliverOperations` is called.
 	 */
-    public allocateAndSendIds(client: Client, numIds: number): OpSpaceCompressedId[];
+	public allocateAndSendIds(client: Client, numIds: number): OpSpaceCompressedId[];
 
 	/**
 	 * Allocates a new range of local IDs and enqueues them for future delivery via a `testIdDelivery` action.
@@ -276,36 +283,36 @@ export class IdCompressorTestNetwork {
 		client: Client,
 		numIds: number,
 		overrides: { [index: number]: string } = {}
-        ): OpSpaceCompressedId[] | IdCreationRange {
-            assert(numIds > 0, 'Must allocate a non-zero number of IDs');
-            const compressor = this.compressors.get(client);
-            let nextIdIndex = 0;
-            const opSpaceIds: OpSpaceCompressedId[] = [];
-            for (const [overrideIndex, uuid] of Object.entries(overrides)
-                .map(([id, uuid]) => [Number.parseInt(id, 10), uuid] as [number, string])
-                .sort(([a], [b]) => a - b)) {
-                while (nextIdIndex < overrideIndex) {
-                    const newId = compressor.generateCompressedId();
-                    opSpaceIds.push(compressor.normalizeToOpSpace(newId));
-                    this.addNewId(client, newId, undefined, client, false);
-                    nextIdIndex += 1;
-                }
-                const newOverrideId = compressor.generateCompressedId(uuid);
-                opSpaceIds.push(compressor.normalizeToOpSpace(newOverrideId));
-                this.addNewId(client, newOverrideId, uuid, client, false);
-                nextIdIndex += 1;
-            }
-            const numTrailingIds = numIds - nextIdIndex;
-            if (numTrailingIds > 0) {
-                const sessionSpaceIds = generateCompressedIds(compressor, numTrailingIds);
-                for (let i = 0; i < numTrailingIds; i++) {
-                    this.addNewId(client, sessionSpaceIds[i], undefined, client, false);
-                }
-                sessionSpaceIds.forEach((id) => opSpaceIds.push(compressor.normalizeToOpSpace(id)));
-            }
-            const creationRange = compressor.takeNextCreationRange();
-            this.serverOperations.push([creationRange, opSpaceIds, client]);
-            return nextIdIndex === 0 ? opSpaceIds ?? fail() : creationRange;
+	): OpSpaceCompressedId[] | IdCreationRange {
+		assert(numIds > 0, 'Must allocate a non-zero number of IDs');
+		const compressor = this.compressors.get(client);
+		let nextIdIndex = 0;
+		const opSpaceIds: OpSpaceCompressedId[] = [];
+		for (const [overrideIndex, uuid] of Object.entries(overrides)
+			.map(([id, uuid]) => [Number.parseInt(id, 10), uuid] as [number, string])
+			.sort(([a], [b]) => a - b)) {
+			while (nextIdIndex < overrideIndex) {
+				const newId = compressor.generateCompressedId();
+				opSpaceIds.push(compressor.normalizeToOpSpace(newId));
+				this.addNewId(client, newId, undefined, client, false);
+				nextIdIndex += 1;
+			}
+			const newOverrideId = compressor.generateCompressedId(uuid);
+			opSpaceIds.push(compressor.normalizeToOpSpace(newOverrideId));
+			this.addNewId(client, newOverrideId, uuid, client, false);
+			nextIdIndex += 1;
+		}
+		const numTrailingIds = numIds - nextIdIndex;
+		if (numTrailingIds > 0) {
+			const sessionSpaceIds = generateCompressedIds(compressor, numTrailingIds);
+			for (let i = 0; i < numTrailingIds; i++) {
+				this.addNewId(client, sessionSpaceIds[i], undefined, client, false);
+			}
+			sessionSpaceIds.forEach((id) => opSpaceIds.push(compressor.normalizeToOpSpace(id)));
+		}
+		const creationRange = compressor.takeNextCreationRange();
+		this.serverOperations.push([creationRange, opSpaceIds, client]);
+		return nextIdIndex === 0 ? opSpaceIds ?? fail() : creationRange;
 	}
 
 	/**
@@ -445,7 +452,7 @@ export class IdCompressorTestNetwork {
 				const opSpaceIdA = compressorA.normalizeToOpSpace(sessionSpaceIdA);
 				if (isLocalId(opSpaceIdA)) {
 					expect.fail('IDs should have been finalized.');
-                    fail();
+					fail();
 				}
 				expect(compressorA.normalizeToSessionSpace(opSpaceIdA, compressorA.localSessionId)).equals(
 					sessionSpaceIdA
@@ -814,7 +821,7 @@ function padToLength(str: string, char: string, length: number): string {
 /**
  * Helper to generate a fixed number of IDs.
  */
- export function generateCompressedIds(compressor: IdCompressor, count: number): SessionSpaceCompressedId[] {
+export function generateCompressedIds(compressor: IdCompressor, count: number): SessionSpaceCompressedId[] {
 	const ids: SessionSpaceCompressedId[] = [];
 	for (let i = 0; i < count; i++) {
 		ids.push(compressor.generateCompressedId());

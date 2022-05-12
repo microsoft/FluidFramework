@@ -448,7 +448,7 @@ export class IdCompressor {
 	 * Returns an iterable of all IDs created by this compressor.
 	 */
 	public getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId> {
-        return this.sessionIdNormalizer[Symbol.iterator]();
+		return this.sessionIdNormalizer[Symbol.iterator]();
 	}
 
 	/**
@@ -459,14 +459,14 @@ export class IdCompressor {
 		if (isLocalId(opSpaceNormalizedId)) {
 			return this.attributionId;
 		}
-        const closestCluster = this.getClusterForFinalId(opSpaceNormalizedId);
-        if (closestCluster === undefined) {
-            if (this.sessionIdNormalizer.getCreationIndex(opSpaceNormalizedId) !== undefined) {
-                return this.attributionId;
-            } else {
-                fail('Cluster does not exist for final ID');
-            }
-        }
+		const closestCluster = this.getClusterForFinalId(opSpaceNormalizedId);
+		if (closestCluster === undefined) {
+			if (this.sessionIdNormalizer.getCreationIndex(opSpaceNormalizedId) !== undefined) {
+				return this.attributionId;
+			} else {
+				fail('Cluster does not exist for final ID');
+			}
+		}
 		const [_, cluster] = closestCluster;
 		return cluster.session.attributionId;
 	}
@@ -951,7 +951,7 @@ export class IdCompressor {
 
 		if (overrideInversionKey !== undefined) {
 			const registeredLocal = sessionIdNormalizer.addLocalId();
-            assert(registeredLocal === newLocalId, 'TODO');
+			assert(registeredLocal === newLocalId, 'TODO');
 			if (eagerFinalId !== undefined) {
 				sessionIdNormalizer.addFinalIds(eagerFinalId, eagerFinalId, cluster ?? fail());
 			}
@@ -964,7 +964,7 @@ export class IdCompressor {
 			return eagerFinalId;
 		} else {
 			const registeredLocal = sessionIdNormalizer.addLocalId();
-            assert(registeredLocal === newLocalId, 'TODO');
+			assert(registeredLocal === newLocalId, 'TODO');
 		}
 
 		return newLocalId;
@@ -988,7 +988,7 @@ export class IdCompressor {
 		if (isFinalId(id)) {
 			const possibleCluster = this.getClusterForFinalId(id);
 			if (possibleCluster === undefined) {
-                // It may be an unfinalized eager final ID, so check with normalizer to get the offset from the session UUID
+				// It may be an unfinalized eager final ID, so check with normalizer to get the offset from the session UUID
 				const creationIndex = this.sessionIdNormalizer.getCreationIndex(id);
 				if (creationIndex !== undefined) {
 					return stableIdFromNumericUuid(this.localSession.sessionUuid, creationIndex);
@@ -1119,7 +1119,7 @@ export class IdCompressor {
 		// are never handed out to a consumer, and thus could not be passed into this method.
 		const { lastFinalizedLocalId } = this.localSession;
 		if (lastFinalizedLocalId === undefined || id < lastFinalizedLocalId) {
-            // Eager final IDs do not have overrides in the cluster until finalizing
+			// Eager final IDs do not have overrides in the cluster until finalizing
 			// This means that using the normalizer to get the final/cluster associated would succeed but would not have the override,
 			// so checking localOverrides first is necessary.
 			const override = this.localOverrides.get(id);
@@ -1177,7 +1177,9 @@ export class IdCompressor {
 				}
 				return id;
 			} else {
-				const session = this.sessions.get(sessionIdIfLocal) ?? fail('No IDs have ever been finalized by the supplied session.');
+				const session =
+					this.sessions.get(sessionIdIfLocal) ??
+					fail('No IDs have ever been finalized by the supplied session.');
 				const localCount = -id;
 				const numericUuid = incrementUuid(session.sessionUuid, localCount - 1);
 				return this.compressNumericUuid(numericUuid) ?? fail('ID is not known to this compressor.');
@@ -1229,10 +1231,10 @@ export class IdCompressor {
 		return sessionSpaceId;
 	}
 
-    /**
+	/**
 	 * Returns a compressed ID for the supplied stable ID if it was created by the local session, and undefined otherwise.
 	 */
-    private getCompressedIdForStableId(stableId: StableId | NumericUuid): SessionSpaceCompressedId | undefined {
+	private getCompressedIdForStableId(stableId: StableId | NumericUuid): SessionSpaceCompressedId | undefined {
 		const numericUuid = typeof stableId === 'string' ? numericUuidFromStableId(stableId) : stableId;
 		const creationIndex = getPositiveDelta(numericUuid, this.localSession.sessionUuid, this.localIdCount - 1);
 		if (creationIndex !== undefined) {
@@ -1282,7 +1284,7 @@ export class IdCompressor {
 			) {
 				return false;
 			}
-            if (
+			if (
 				!this.sessionIdNormalizer.equals(other.sessionIdNormalizer, (a, b) =>
 					IdCompressor.idClustersEqual(a, b, false, compareLocalState)
 				)
@@ -1737,7 +1739,7 @@ export class IdCompressor {
 			}
 		}
 
-        if (serializedLocalState !== undefined) {
+		if (serializedLocalState !== undefined) {
 			compressor.sessionIdNormalizer = SessionIdNormalizer.deserialize(
 				serializedLocalState.sessionNormalizer,
 				(finalId) => {

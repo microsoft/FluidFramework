@@ -359,7 +359,7 @@ export class SessionIdNormalizer<TRangeObject> {
 			}
 			idRanges.append(firstLocal, [lastLocal, finalRanges]);
 		}
-        normalizer.nextLocalId = serialized.nextLocalId;
+		normalizer.nextLocalId = serialized.nextLocalId;
 		return normalizer;
 	}
 
@@ -367,32 +367,35 @@ export class SessionIdNormalizer<TRangeObject> {
 		other: SessionIdNormalizer<TRangeObject>,
 		compareRangeObjects: (a: TRangeObject, b: TRangeObject) => boolean = (a, b) => a === b
 	): boolean {
-		return this.nextLocalId === other.nextLocalId && this.idRanges.equals(other.idRanges, (localRangeA, localRangeB) => {
-			const [lastLocalA, finalRangesA] = localRangeA;
-			const [lastLocalB, finalRangesB] = localRangeB;
-			if (finalRangesA === undefined || finalRangesB === undefined) {
-				return finalRangesA === finalRangesB;
-			}
-
-			const rangeEquals = (finalRangeA: FinalRange<TRangeObject>, finalRangeB: FinalRange<TRangeObject>) => {
-				const [firstFinalA, lastFinalA, rangeObjectA] = finalRangeA;
-				const [firstFinalB, lastFinalB, rangeObjectB] = finalRangeB;
-				return (
-					firstFinalA === firstFinalB &&
-					lastFinalA === lastFinalB &&
-					compareRangeObjects(rangeObjectA, rangeObjectB)
-				);
-			};
-
-			if (isSingleRange(finalRangesA) || isSingleRange(finalRangesB)) {
-				if (!isSingleRange(finalRangesA) || !isSingleRange(finalRangesB)) {
-					return false;
+		return (
+			this.nextLocalId === other.nextLocalId &&
+			this.idRanges.equals(other.idRanges, (localRangeA, localRangeB) => {
+				const [lastLocalA, finalRangesA] = localRangeA;
+				const [lastLocalB, finalRangesB] = localRangeB;
+				if (finalRangesA === undefined || finalRangesB === undefined) {
+					return finalRangesA === finalRangesB;
 				}
-				return rangeEquals(finalRangesA, finalRangesB);
-			}
 
-			return lastLocalA === lastLocalB && finalRangesA.equals(finalRangesB, rangeEquals);
-		});
+				const rangeEquals = (finalRangeA: FinalRange<TRangeObject>, finalRangeB: FinalRange<TRangeObject>) => {
+					const [firstFinalA, lastFinalA, rangeObjectA] = finalRangeA;
+					const [firstFinalB, lastFinalB, rangeObjectB] = finalRangeB;
+					return (
+						firstFinalA === firstFinalB &&
+						lastFinalA === lastFinalB &&
+						compareRangeObjects(rangeObjectA, rangeObjectB)
+					);
+				};
+
+				if (isSingleRange(finalRangesA) || isSingleRange(finalRangesB)) {
+					if (!isSingleRange(finalRangesA) || !isSingleRange(finalRangesB)) {
+						return false;
+					}
+					return rangeEquals(finalRangesA, finalRangesB);
+				}
+
+				return lastLocalA === lastLocalB && finalRangesA.equals(finalRangesB, rangeEquals);
+			})
+		);
 	}
 }
 

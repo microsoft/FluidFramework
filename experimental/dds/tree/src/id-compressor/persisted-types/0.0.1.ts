@@ -89,8 +89,8 @@ export interface SerializedLocalState {
 /**
  * Serialized table for normalizing IDs made by the local session.
  */
- export interface SerializedSessionIdNormalizer {
-    readonly nextLocalId: LocalCompressedId;
+export interface SerializedSessionIdNormalizer {
+	readonly nextLocalId: LocalCompressedId;
 	readonly localRanges: readonly (readonly [
 		firstLocal: LocalCompressedId,
 		lastLocal: LocalCompressedId,
