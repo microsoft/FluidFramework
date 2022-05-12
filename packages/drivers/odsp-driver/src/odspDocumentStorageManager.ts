@@ -50,7 +50,7 @@ export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seco
 /* eslint-disable max-len */
 
 // An implementation of Promise.race that gives you the winner of the promise race
-async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index: number, value: T }> {
+async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index: number; value: T; }> {
     return new Promise((resolve, reject) => {
         promises.forEach((p, index) => {
             p.then((v) => resolve({ index, value: v })).catch(reject);
@@ -734,7 +734,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "ReadCommit");
-                const snapshotDownloader = async (url: string, fetchOptions: { [index: string]: any }) => {
+                const snapshotDownloader = async (url: string, fetchOptions: { [index: string]: any; }) => {
                     return this.epochTracker.fetchAndParseAsJSON(
                         url,
                         fetchOptions,

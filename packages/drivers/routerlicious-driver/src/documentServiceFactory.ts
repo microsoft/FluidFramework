@@ -97,7 +97,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         );
 
         // @TODO: Remove returned "string" type when removing back-compat code
-        const res = await ordererRestWrapper.post<{ id: string, token?: string, session?: ISession } | string>(
+        const res = await ordererRestWrapper.post<{ id: string; token?: string; session?: ISession; } | string>(
             `/documents/${tenantId}`,
             {
                 summary: convertSummaryToCreateNewSummary(appSummary),

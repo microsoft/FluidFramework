@@ -87,9 +87,9 @@ async function main() {
 async function orchestratorProcess(
     driver: TestDriverTypes,
     endpoint: RouterliciousEndpoint | undefined,
-    profile: ILoadTestConfig & { name: string, testUsers?: ITestUserConfig },
-    args: { testId?: string, debug?: true, verbose?: true, seed?: number, browserAuth?: true,
-        enableMetrics?: boolean },
+    profile: ILoadTestConfig & { name: string; testUsers?: ITestUserConfig; },
+    args: { testId?: string; debug?: true; verbose?: true; seed?: number; browserAuth?: true;
+        enableMetrics?: boolean; },
 ) {
     const seed = args.seed ?? Date.now();
     const seedArg = `0x${seed.toString(16)}`;

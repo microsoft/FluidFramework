@@ -81,7 +81,7 @@ const options = {
 
 nconf.argv({
     ...options,
-    transform: (obj: { key: string, value: string }) => {
+    transform: (obj: { key: string; value: string; }) => {
         if (options[obj.key] !== undefined) {
             obj.key = `fluid:test:${obj.key}`;
         }
@@ -96,7 +96,7 @@ nconf.argv({
         "fluid__test__r11sEndpointName",
         "fluid__test__baseVersion",
     ],
-    transform: (obj: { key: string, value: string }) => {
+    transform: (obj: { key: string; value: string; }) => {
         if (!obj.key.startsWith("fluid__test__")) {
             return obj;
         }

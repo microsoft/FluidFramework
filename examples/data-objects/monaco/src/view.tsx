@@ -116,8 +116,8 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
                 /**
                  * Translate the offsets used by the MergeTree into a Range that is
                  * interpretable by Monaco.
-                 * @param offset1 Starting offset
-                 * @param offset2 Ending offset
+                 * @param offset1 - Starting offset
+                 * @param offset2 - Ending offset
                  */
                 const offsetsToRange = (offset1: number, offset2?: number): monaco.Range => {
                     const pos1 = codeModel.getPositionAt(offset1);

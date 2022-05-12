@@ -246,7 +246,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     // The used state of this node as per the last GC run. This is used to update the used state of the channel
     // if it realizes after GC is run.
-    private lastUsedState: { usedRoutes: string[], gcTimestamp?: number } | undefined;
+    private lastUsedState: { usedRoutes: string[]; gcTimestamp?: number; } | undefined;
 
     public readonly id: string;
     private readonly _containerRuntime: ContainerRuntime;

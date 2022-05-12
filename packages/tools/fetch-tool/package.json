@@ -30,7 +30,6 @@
   },
   "dependencies": {
     "@fluid-tools/fluidapp-odsp-urlresolver": "^0.59.3000",
-    "@fluidframework/azure-client": "^0.59.3000",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-runtime": "^0.59.3000",
     "@fluidframework/datastore": "^0.59.3000",

@@ -39,23 +39,23 @@ export namespace Utils {
         /**
          * The(pre-order) callback function that is invoked for each property
          */
-        preCallback?: (context: TraversalContext) => any,
+        preCallback?: (context: TraversalContext) => any;
         /**
          * The (post-order) callback function that is invoked for each property
          */
-        postCallback?: (context: TraversalContext) => any,
+        postCallback?: (context: TraversalContext) => any;
         /**
          * An optional object that is passed to all invocations of the callback via the
          */
-        userData?: { [key: string]: any },
+        userData?: { [key: string]: any; };
         /**
          *  The operation that has been applied to the root of the ChangeSet (either 'insert' or 'modify')
          */
-        rootOperation?: OperationType,
+        rootOperation?: OperationType;
         /**
          *  The full typeid for the Property at the root of the ChangeSet
          */
-        rootTypeid?: string,
+        rootTypeid?: string;
     }
 
     /**
@@ -1579,7 +1579,7 @@ export namespace Utils {
      *     application.
      */
     export function getChangesToTokenizedPaths(
-        in_paths: Map<string, Map<string, any>> | { [key: string]: any },
+        in_paths: Map<string, Map<string, any>> | { [key: string]: any; },
         in_changeSet: any,
         in_callback: { (context: TraversalContext, nestedObj: any, tokenizedPath: string[], contractedPathSegment: boolean): void; (arg0: TraversalContext, arg1: any, arg2: any[], arg3: boolean): void; },
         in_options: { escapeLeadingDoubleUnderscore?: boolean; rootOperation?: OperationType; rootTypeid?: string; } = { escapeLeadingDoubleUnderscore: false, rootOperation: 'modify' }) {
@@ -2090,7 +2090,7 @@ export namespace Utils {
      * @param in_options.includeTypeidInfo - Flag to include the typeid info
      * @returns - Flat list of paths
      */
-    export function extractPathsFromChangeSet(in_changeSet: SerializedChangeSet, in_options?: { includeOperation?: boolean; includeTypeidInfo?: boolean; }): { [key: string]: { operation: string, typeInfo: string } } {
+    export function extractPathsFromChangeSet(in_changeSet: SerializedChangeSet, in_options?: { includeOperation?: boolean; includeTypeidInfo?: boolean; }): { [key: string]: { operation: string; typeInfo: string; }; } {
         const paths = {};
         Utils.traverseChangeSetRecursively(in_changeSet, {
             preCallback(context) {
