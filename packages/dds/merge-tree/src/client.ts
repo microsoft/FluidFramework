@@ -553,13 +553,14 @@ export class Client {
 
     /**
      * Gets the client args from the op if remote, otherwise uses the local clients info
-     * @param opArgs - The op arg to get the client sequence args for
+     * @param sequencedMessage - The sequencedMessage to get the client sequence args for
      */
-    private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
+     private getClientSequenceArgsForMessage(sequencedMessage: ISequencedDocumentMessage | undefined):
+        IMergeTreeClientSequenceArgs {
         // If there this no sequenced message, then the op is local
         // and unacked, so use this clients sequenced args
         //
-        if (!opArgs.sequencedMessage) {
+        if (!sequencedMessage) {
             const segWindow = this.getCollabWindow();
             return {
                 clientId: segWindow.clientId,
@@ -568,11 +569,19 @@ export class Client {
             };
         } else {
             return {
-                clientId: this.getShortClientId(opArgs.sequencedMessage.clientId),
-                referenceSequenceNumber: opArgs.sequencedMessage.referenceSequenceNumber,
-                sequenceNumber: opArgs.sequencedMessage.sequenceNumber,
+                clientId: this.getOrAddShortClientId(sequencedMessage.clientId),
+                referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
+                sequenceNumber: sequencedMessage.sequenceNumber,
             };
         }
+    }
+
+    /**
+     * Gets the client args from the op if remote, otherwise uses the local clients info
+     * @param opArgs - The op arg to get the client sequence args for
+     */
+     private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
+        return this.getClientSequenceArgsForMessage(opArgs.sequencedMessage);
     }
 
     private ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
@@ -998,23 +1007,15 @@ export class Client {
         }
     }
 
-    private getRefSeqAndClientId(op?: ISequencedDocumentMessage) {
-        if (op) {
-            return { refSeq: op.referenceSequenceNumber, clientId: this.getOrAddShortClientId(op.clientId) };
-        } else {
-            const segWindow = this.mergeTree.getCollabWindow();
-            return { refSeq: segWindow.currentSeq, clientId: segWindow.clientId };
-        }
-    }
-
     getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage) {
-        const { refSeq, clientId } = this.getRefSeqAndClientId(op);
-        return this.mergeTree.getContainingSegment<T>(pos, refSeq, clientId);
+        const args = this.getClientSequenceArgsForMessage(op);
+        return this.mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, args.clientId);
     }
 
     getSlideOnRemoveReferencePosition(pos: number, op: ISequencedDocumentMessage) {
-        const { refSeq, clientId } = this.getRefSeqAndClientId(op);
-        const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(pos, refSeq, clientId);
+        const args = this.getClientSequenceArgsForMessage(op);
+        const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(
+            pos, args.referenceSequenceNumber, args.clientId);
         if (!segoff.segment || segoff.offset === undefined || segoff.offset < 0) {
             throw new Error("Invalid reference location");
         }

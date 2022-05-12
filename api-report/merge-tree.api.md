@@ -821,7 +821,7 @@ export class LocalReference implements ReferencePosition {
     // @deprecated (undocumented)
     hasRangeLabel(label: string): boolean;
     // @deprecated (undocumented)
-    hasRangeLabels(): any;
+    hasRangeLabels(): boolean;
     // @deprecated (undocumented)
     hasTileLabel(label: string): boolean;
     // @deprecated (undocumented)
