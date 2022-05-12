@@ -12,7 +12,6 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { TextBox, TextBoxInstantiationFactory } from "../TextBox";
-import { ITodoItemInnerComponent, TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItemView } from "./TodoItemView";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -37,7 +36,7 @@ const innerComponentKey = "innerId";
  */
 export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; }> implements IFluidHTMLView {
     private text: SharedString;
-    private innerIdCell: ISharedCell<{ type: TodoItemSupportedComponents; handle: IFluidHandle; }>;
+    private innerIdCell: ISharedCell<IFluidHandle>;
     private _absoluteUrl: string | undefined;
 
     public get IFluidHTMLView() { return this; }
@@ -62,7 +61,7 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
         // user choose the component they want to embed. We store it in a cell for easier event handling.
         const innerIdCell = SharedCell.create(this.runtime);
         const textBox = await TextBoxInstantiationFactory.createChildInstance(this.context);
-        innerIdCell.set({ type: "textBox", handle: textBox.handle });
+        innerIdCell.set(textBox.handle);
         this.root.set(innerComponentKey, innerIdCell.handle);
     }
 
@@ -147,20 +146,13 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
         return this.root.get(checkedKey);
     }
 
-    public hasInnerComponent(): boolean {
-        return this.innerIdCell.get() !== undefined;
-    }
-
-    public async getInnerComponent(): Promise<ITodoItemInnerComponent> {
+    public async getInnerComponent(): Promise<TextBox> {
         const innerComponentInfo = this.innerIdCell.get();
         if (innerComponentInfo === undefined) {
             return undefined;
         }
 
-        return {
-            type: "textBox",
-            component: await innerComponentInfo.handle.get() as TextBox,
-        };
+        return innerComponentInfo.get() as Promise<TextBox>;
     }
 
     // end public API surface for the TodoItem model, used by the view

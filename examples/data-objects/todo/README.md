@@ -44,11 +44,6 @@ There are two other Fluid objects that live in the todo repo but are there to ex
 
 A Collaborative TextArea based off the React CollaborativeTextArea. This should be replaced by just pulling in the `@fluid-example/collaborative-textarea` Fluid objects.
 
-### [TextList](./src/TextList/index.tsx)
-
-Used the `SharedString` to manage a list of text items.
-
-
 ## Todo todo
 
 - TodoItem to have SharedString text, checkbox, and a textarea (no variable inner component).  Support deep linking and deletion.

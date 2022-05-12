@@ -5,7 +5,7 @@
 
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import React from "react";
-import { ITodoItemInnerComponent } from "./supportedComponent";
+import { TextBox } from "../TextBox";
 import { TodoItem } from "./TodoItem";
 
 interface TodoItemDetailsViewProperties {
@@ -13,8 +13,7 @@ interface TodoItemDetailsViewProperties {
 }
 
 interface TodoItemDetailsViewState {
-    hasInnerComponent: boolean;
-    innerComponent: ITodoItemInnerComponent | undefined;
+    innerComponent: TextBox | undefined;
 }
 
 export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProperties, TodoItemDetailsViewState> {
@@ -22,7 +21,6 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
         super(props);
 
         this.state = {
-            hasInnerComponent: this.props.todoItemModel.hasInnerComponent(),
             innerComponent: undefined,
         };
     }
@@ -33,14 +31,6 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
     }
 
     public async componentDidMount() {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        this.props.todoItemModel.on("innerComponentChanged", async () => {
-            this.setState({
-                hasInnerComponent: this.props.todoItemModel.hasInnerComponent(),
-            });
-            await this.refreshInnerComponentFromModel();
-        });
-
         await this.refreshInnerComponentFromModel();
     }
 
@@ -52,7 +42,7 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
             );
         } else {
             // Fully loaded
-            return <ReactViewAdapter view={this.state.innerComponent.component} />;
+            return <ReactViewAdapter view={this.state.innerComponent} />;
         }
     }
 }
