@@ -23,7 +23,7 @@ export class VectorUndoProvider {
         private readonly undoRemove: (segment: PermutationSegment) => void,
     ) { }
 
-    public record(operation: MergeTreeDeltaOperationType, ranges: { segment: PermutationSegment }[]) {
+    public record(operation: MergeTreeDeltaOperationType, ranges: { segment: PermutationSegment; }[]) {
         if (ranges.length > 0) {
             // Link each segment to a new TrackingGroup.  A TrackingGroup keeps track of the original
             // set of linked segments, including any fragmentatiton that occurs due to future splitting.

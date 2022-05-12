@@ -6,7 +6,9 @@
 /**
  * Allows multiple marks to compete for the same relative sibling.
  * The race is represented as an array of ranked lanes where all of the content in the lane i (race[i])
- * should appear before all of the contents in lane k for i < k.
+ * should appear before all of the contents in lane k for i \< k.
+ *
+ * ```
  * ============
  *  A
  *  +-B
@@ -84,6 +86,8 @@
  *   }
  * E]
  * ============
+ * ```
+ *
  * This information is needed in original changes to produce a merge outcome with the correct ordering
  * of the entries in the race vs other entries in concurrent edits targeting the same index and sibling.
  * For example if the original edit includes the insertion of:

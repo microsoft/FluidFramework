@@ -27,7 +27,7 @@ export type GenericProxify<TProperty> = {
 };
 
 export type ProxyType<TProperty> =
-    TProperty extends ContainerProperty ? (BaseProxifiedProperty<ContainerProperty> & { [key: string]: any }) :
+    TProperty extends ContainerProperty ? (BaseProxifiedProperty<ContainerProperty> & { [key: string]: any; }) :
     TProperty extends ValueProperty ? number | boolean | string | Record<string, unknown> :
     TProperty extends ValueArrayProperty ?
     (ProxifiedPropertyValueArray & (number[] | boolean[] | string[] | Record<string, unknown>[])) :

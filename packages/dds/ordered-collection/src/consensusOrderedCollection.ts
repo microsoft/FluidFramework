@@ -78,7 +78,7 @@ type PendingResolve<T> = (value: IConsensusOrderedCollectionValue<T> | undefined
  * Key is the acquireId from when it was acquired
  * Value is the acquired value, and the id of the client who acquired it, or undefined for unattached client
  */
-type JobTrackingInfo<T> = Map<string, { value: T, clientId: string | undefined }>;
+type JobTrackingInfo<T> = Map<string, { value: T; clientId: string | undefined; }>;
 const idForLocalUnattachedClient = undefined;
 
 /**

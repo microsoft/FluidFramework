@@ -10,7 +10,7 @@ import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { v4 as uuid } from "uuid";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, RouterliciousEndpoint } from "@fluidframework/test-driver-definitions";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
 interface IServiceEndpoint {
@@ -71,7 +71,7 @@ function getLegacyConfigFromEnv() {
     return getConfig(discoveryEndpoint, fluidHost, tenantId, tenantSecret);
 }
 
-function getEndpointConfigFromEnv(r11sEndpointName: string) {
+function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint) {
     const configStr = process.env[`fluid__test__driver__${r11sEndpointName}`];
     if (r11sEndpointName === "docker") {
         const dockerDriverPolicies = configStr === undefined ? configStr : (JSON.parse(configStr)).driverPolicies;
@@ -90,7 +90,7 @@ function getEndpointConfigFromEnv(r11sEndpointName: string) {
         config.driverPolicies);
 }
 
-function getConfigFromEnv(r11sEndpointName?: string) {
+function getConfigFromEnv(r11sEndpointName?: RouterliciousEndpoint) {
     if (r11sEndpointName === undefined) {
         const fluidHost = process.env.fluid__webpack__fluidHost;
         if (fluidHost === undefined) {
@@ -103,7 +103,7 @@ function getConfigFromEnv(r11sEndpointName?: string) {
 }
 
 export class RouterliciousTestDriver implements ITestDriver {
-    public static createFromEnv(config?: { r11sEndpointName?: string },
+    public static createFromEnv(config?: { r11sEndpointName?: RouterliciousEndpoint; },
         api: RouterliciousDriverApiType = RouterliciousDriverApi,
     ) {
         const { serviceEndpoint, tenantId, tenantSecret, driverPolicies } = getConfigFromEnv(config?.r11sEndpointName);

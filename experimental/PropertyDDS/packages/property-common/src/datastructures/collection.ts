@@ -18,7 +18,7 @@ const MSGS = {
 };
 
 export class Collection<T> {
-    protected _items: { [key: string]: T } = {};
+    protected _items: { [key: string]: T; } = {};
     protected _order: (string | number)[] = [];
 
     /**
@@ -81,7 +81,7 @@ export class Collection<T> {
      * @param in_items - List of key-value pairs to be stored in the collection
      * @returns this collection after add
      */
-    bulkAdd(in_items: { [key: string]: T }) {
+    bulkAdd(in_items: { [key: string]: T; }) {
         _.each(in_items, (item, key) => {
             this.add(key, item);
         });
@@ -93,7 +93,7 @@ export class Collection<T> {
      * @param in_items - List of key-value items to be removed
      * @returns this collection after add
      */
-    bulkRemove(in_items: { [key: string]: T }) {
+    bulkRemove(in_items: { [key: string]: T; }) {
         _.each(in_items, (item, key) => {
             this.remove(key);
         });
@@ -356,7 +356,7 @@ export class Collection<T> {
     /**
      * @returns Return an object containing the items of this collection
      */
-    getItems(): { [key: string]: T } {
+    getItems(): { [key: string]: T; } {
         const result = {};
 
         _.each(this._items, function(item, key) {

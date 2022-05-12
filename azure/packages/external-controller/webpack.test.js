@@ -4,25 +4,24 @@
  */
 
 const path = require("path");
-const { merge } = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-// const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = env => {
-    const isProduction = env && env.production;
-
-    return merge({
+    return ({
         entry: {
-            app: "./src/app.ts"
+            app: "./tests/index.ts"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{
-                test: /\.tsx?$/,
-                loader: require.resolve("ts-loader")
-            }]
+            rules: [
+                {
+                    test: /\.tsx?$/,
+                    loader: require.resolve("ts-loader")
+                },
+            ]
         },
         output: {
             filename: "[name].bundle.js",
@@ -30,16 +29,23 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
-            devtoolNamespace: "fluid-example/dice-roller",
+            devtoolNamespace: "fluid-example/draft-js",
             libraryTarget: "umd"
         },
+        devServer: {
+            static: {
+                directory: path.join(__dirname, 'tests')
+            }
+        },
         plugins: [
-            new HtmlWebpackPlugin({
-                template: "./src/index.html",
+            new webpack.ProvidePlugin({
+                process: 'process/browser'
             }),
-            // new CleanWebpackPlugin(),
+            new HtmlWebpackPlugin({
+                template: "./tests/index.html",
+            }),
         ],
-    }, isProduction
-        ? require("./webpack.prod")
-        : require("./webpack.dev"));
+        mode: "development",
+        devtool: "inline-source-map"
+    });
 };

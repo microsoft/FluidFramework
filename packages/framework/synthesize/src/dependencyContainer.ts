@@ -94,7 +94,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
                     return parent.getProvider(provider);
                 } else {
                     // older implementations of the IFluidDependencySynthesizer exposed getProvider
-                    const maybeGetProvider: { getProvider?(provider: string & keyof TMap) } = parent as any;
+                    const maybeGetProvider: { getProvider?(provider: string & keyof TMap); } = parent as any;
                     if (maybeGetProvider?.getProvider !== undefined) {
                         return maybeGetProvider.getProvider(provider);
                     }
