@@ -3,17 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Clicker, ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { DataObject, DataObjectFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { TextBox, TextBoxInstantiationFactory } from "../TextBox";
-import { TextList, TextListInstantiationFactory } from "../TextList";
 import { ITodoItemInnerComponent, TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItemView } from "./TodoItemView";
 
@@ -63,7 +61,8 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
         // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
         // user choose the component they want to embed. We store it in a cell for easier event handling.
         const innerIdCell = SharedCell.create(this.runtime);
-        innerIdCell.set(undefined);
+        const textBox = await TextBoxInstantiationFactory.createChildInstance(this.context);
+        innerIdCell.set({ type: "textBox", handle: textBox.handle });
         this.root.set(innerComponentKey, innerIdCell.handle);
     }
 
@@ -118,8 +117,6 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
             {},
             new Map([
                 TextBoxInstantiationFactory.registryEntry,
-                TextListInstantiationFactory.registryEntry,
-                ClickerInstantiationFactory.registryEntry,
             ]),
         );
 
@@ -160,62 +157,10 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
             return undefined;
         }
 
-        switch (innerComponentInfo.type) {
-            case "todo":
-                return {
-                    type: innerComponentInfo.type,
-                    component: await innerComponentInfo.handle.get() as TodoItem,
-                };
-            case "clicker":
-                return {
-                    type: innerComponentInfo.type,
-                    component: await innerComponentInfo.handle.get() as Clicker,
-                };
-            case "textBox":
-                return {
-                    type: innerComponentInfo.type,
-                    component: await innerComponentInfo.handle.get() as TextBox,
-                };
-            case "textList":
-                return {
-                    type: innerComponentInfo.type,
-                    component: await innerComponentInfo.handle.get() as TextList,
-                };
-            default:
-                throw new Error("Unknown inner component type");
-        }
-    }
-
-    /**
-     * The Todo Item can embed multiple types of components. This is where these components are defined.
-     * @param type - component to be created
-     * @param props - props to be passed into component creation
-     */
-    public async createInnerComponent(type: TodoItemSupportedComponents): Promise<void> {
-        let component: IFluidLoadable;
-        switch (type) {
-            case "todo":
-                component = await TodoItem.getFactory().createPeerInstance(
-                    this.context,
-                    { startingText: type },
-                );
-                break;
-            case "clicker":
-                component = await ClickerInstantiationFactory.createChildInstance(this.context);
-                break;
-            case "textBox":
-                component = await TextBoxInstantiationFactory.createChildInstance(this.context, type);
-                break;
-            case "textList":
-                component = await TextListInstantiationFactory.createChildInstance(this.context);
-                break;
-            default:
-        }
-
-        // Update the inner component id
-        this.innerIdCell.set({ type, handle: component.handle });
-
-        this.emit("innerComponentChanged");
+        return {
+            type: "textBox",
+            component: await innerComponentInfo.handle.get() as TextBox,
+        };
     }
 
     // end public API surface for the TodoItem model, used by the view

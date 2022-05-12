@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ClickerReactView } from "@fluid-example/clicker";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import React from "react";
-import { ITodoItemInnerComponent, TodoItemSupportedComponents } from "./supportedComponent";
+import { ITodoItemInnerComponent } from "./supportedComponent";
 import { TodoItem } from "./TodoItem";
 
 interface TodoItemDetailsViewProperties {
@@ -26,12 +25,6 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
             hasInnerComponent: this.props.todoItemModel.hasInnerComponent(),
             innerComponent: undefined,
         };
-
-        this.createInnerComponent = this.createInnerComponent.bind(this);
-    }
-
-    private async createInnerComponent(type: TodoItemSupportedComponents) {
-        await this.props.todoItemModel.createInnerComponent(type);
     }
 
     private async refreshInnerComponentFromModel(): Promise<void> {
@@ -52,32 +45,13 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
     }
 
     public render() {
-        if (!this.state.hasInnerComponent) {
-            // No one has created a detailed item yet
-            return (
-                <>
-                    <button onClick={async () => this.createInnerComponent("todo")}>todo</button>
-                    <button onClick={async () => this.createInnerComponent("clicker")}>clicker</button>
-                    <button onClick={async () => this.createInnerComponent("textBox")}>textBox</button>
-                    <button onClick={async () => this.createInnerComponent("textList")}>textList</button>
-                </>
-            );
-        } else if (this.state.innerComponent === undefined) {
+        if (this.state.innerComponent === undefined) {
             // A detailed item has been created (we have the component id), but we haven't retrieved it yet
             return (
                 <div>Loading...</div>
             );
         } else {
             // Fully loaded
-
-            if (this.state.innerComponent.type === "clicker") {
-                return <ClickerReactView clicker={this.state.innerComponent.component} />;
-            }
-
-            // createInnerComponent will create the model component for the chosen option.  For components with
-            // combined model/view we then need to get the view from it (for now).  Preferably, we would instead
-            // take the returned model and feed it into our own view component of our choosing like we do with
-            // Clicker above.
             return <ReactViewAdapter view={this.state.innerComponent.component} />;
         }
     }

@@ -47,3 +47,10 @@ A Collaborative TextArea based off the React CollaborativeTextArea. This should 
 ### [TextList](./src/TextList/index.tsx)
 
 Used the `SharedString` to manage a list of text items.
+
+
+## Todo todo
+
+- TodoItem to have SharedString text, checkbox, and a textarea (no variable inner component).  Support deep linking and deletion.
+- No editable Title
+- Split view/model
