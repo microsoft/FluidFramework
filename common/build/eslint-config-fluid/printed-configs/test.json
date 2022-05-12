@@ -79,13 +79,23 @@
             "error"
         ],
         "@typescript-eslint/explicit-function-return-type": [
-            "off"
+            "warn",
+            {
+                "allowConciseArrowFunctionExpressionsStartingWithVoid": true,
+                "allowDirectConstAssertionInArrowFunctions": true,
+                "allowExpressions": true,
+                "allowHigherOrderFunctions": true,
+                "allowTypedFunctionExpressions": true
+            }
         ],
         "@typescript-eslint/explicit-member-accessibility": [
-            "off"
+            "error",
+            {
+                "accessibility": "explicit"
+            }
         ],
         "@typescript-eslint/explicit-module-boundary-types": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/func-call-spacing": [
             "error"
@@ -100,18 +110,7 @@
             "error"
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "error",
-            {
-                "multiline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                },
-                "multilineDetection": "brackets",
-                "singleline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                }
-            }
+            "error"
         ],
         "@typescript-eslint/member-ordering": [
             "off"
@@ -139,7 +138,7 @@
             "error"
         ],
         "@typescript-eslint/no-empty-function": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-empty-interface": [
             "error"
@@ -169,7 +168,7 @@
             "off"
         ],
         "@typescript-eslint/no-invalid-this": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-loss-of-precision": [
             "error"
@@ -184,7 +183,7 @@
             "error"
         ],
         "@typescript-eslint/no-namespace": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-non-null-asserted-optional-chain": [
             "error"
@@ -224,16 +223,16 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-argument": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-assignment": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-call": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-member-access": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-return": [
             "error"
@@ -242,7 +241,7 @@
             "error"
         ],
         "@typescript-eslint/no-unused-vars": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-use-before-declare": [
             "off"
@@ -266,10 +265,28 @@
         "@typescript-eslint/prefer-function-type": [
             "error"
         ],
+        "@typescript-eslint/prefer-includes": [
+            "error"
+        ],
         "@typescript-eslint/prefer-namespace-keyword": [
             "error"
         ],
+        "@typescript-eslint/prefer-nullish-coalescing": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-optional-chain": [
+            "error"
+        ],
         "@typescript-eslint/prefer-readonly": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-return-this-type": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-string-starts-ends-with": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-ts-expect-error": [
             "error"
         ],
         "@typescript-eslint/promise-function-async": [
@@ -308,6 +325,9 @@
             "error"
         ],
         "@typescript-eslint/strict-boolean-expressions": [
+            "error"
+        ],
+        "@typescript-eslint/switch-exhaustiveness-check": [
             "error"
         ],
         "@typescript-eslint/triple-slash-reference": [
@@ -483,7 +503,7 @@
             "off"
         ],
         "linebreak-style": [
-            "off"
+            "error"
         ],
         "max-classes-per-file": [
             "off"
@@ -539,7 +559,7 @@
             "error"
         ],
         "no-debugger": [
-            "off"
+            "error"
         ],
         "no-delete-var": [
             "error"
@@ -563,7 +583,7 @@
             "off"
         ],
         "no-empty": [
-            "off"
+            "error"
         ],
         "no-empty-character-class": [
             "error"
@@ -587,7 +607,7 @@
             "off"
         ],
         "no-fallthrough": [
-            "off"
+            "error"
         ],
         "no-func-assign": [
             "off"
@@ -639,7 +659,7 @@
             {
                 "max": 1,
                 "maxBOF": 0,
-                "maxEOF": 0
+                "maxEOF": 1
             }
         ],
         "no-nested-ternary": [
@@ -761,7 +781,7 @@
             "error"
         ],
         "no-void": [
-            "off"
+            "error"
         ],
         "no-whitespace-before-property": [
             "error"
@@ -827,7 +847,7 @@
             "error"
         ],
         "require-atomic-updates": [
-            "off"
+            "error"
         ],
         "require-await": [
             "off"
@@ -875,8 +895,20 @@
         "tsdoc/syntax": [
             "error"
         ],
+        "unicode-bom": [
+            "off"
+        ],
         "unicorn/better-regex": [
             "error"
+        ],
+        "unicorn/consistent-function-scoping": [
+            "warn"
+        ],
+        "unicorn/empty-brace-spaces": [
+            "off"
+        ],
+        "unicorn/expiring-todo-comments": [
+            "warn"
         ],
         "unicorn/filename-case": [
             "error",
@@ -893,11 +925,26 @@
         "unicorn/no-unsafe-regex": [
             "error"
         ],
+        "unicorn/numeric-separators-style": [
+            "off"
+        ],
+        "unicorn/prefer-at": [
+            "off"
+        ],
+        "unicorn/prefer-node-protocol": [
+            "off"
+        ],
+        "unicorn/prefer-top-level-await": [
+            "warn"
+        ],
+        "unicorn/prevent-abbreviations": [
+            "off"
+        ],
         "use-isnan": [
             "error"
         ],
         "valid-typeof": [
-            "off"
+            "error"
         ],
         "yoda": [
             "off"

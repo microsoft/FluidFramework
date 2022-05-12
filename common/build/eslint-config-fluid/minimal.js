@@ -75,12 +75,26 @@ module.exports = {
         // ENABLED INTENTIONALLY
         "@typescript-eslint/ban-types": "error",
         "@typescript-eslint/dot-notation": "error",
+        "@typescript-eslint/no-empty-function": "warn",
+        "@typescript-eslint/no-namespace": "error",
         "@typescript-eslint/no-non-null-assertion": "error",
         "@typescript-eslint/no-unnecessary-type-assertion": "error",
+        "@typescript-eslint/no-unsafe-argument": "warn",
+        "@typescript-eslint/no-unsafe-assignment": "warn",
+        "@typescript-eslint/no-unsafe-call": "warn",
+        "@typescript-eslint/no-unsafe-member-access": "warn",
+        "@typescript-eslint/prefer-includes": "error",
+        "@typescript-eslint/prefer-nullish-coalescing": "error",
+        "@typescript-eslint/prefer-optional-chain": "error",
+        "@typescript-eslint/prefer-return-this-type": "error",
+        "@typescript-eslint/prefer-string-starts-ends-with": "error",
+        "@typescript-eslint/prefer-ts-expect-error": "error",
+        "@typescript-eslint/switch-exhaustiveness-check": "error",
         "eqeqeq": [
             "error",
             "smart"
         ],
+        "guard-for-in": "error",
         "max-len": [
             "error",
             {
@@ -95,11 +109,27 @@ module.exports = {
                 "ignoreEOLComments": true
             }
         ],
+        "no-trailing-spaces": "error",
 
         // Catches a common coding mistake where "resolve" and "reject" are confused.
         "promise/param-names": "warn",
 
-        "unicorn/better-regex": "error",
+        "unicode-bom": [
+            "off"
+        ],
+
+        // Move function definitions to the highest possible scope.
+        "unicorn/consistent-function-scoping": "warn",
+
+        // Disabled because it's too nit-picky.
+        "unicorn/empty-brace-spaces": "off",
+
+        // This rule makes it possible to pass arguments to TODO and FIXME comments to trigger ESLint to report. Rule
+        // documentation is at
+        // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v40.0.0/docs/rules/expiring-todo-comments.md
+        "unicorn/expiring-todo-comments": "warn",
+
+        // Enforces all linted files to have their names in a certain case style and lowercase file extension.
         "unicorn/filename-case": [
             "error",
             {
@@ -109,26 +139,73 @@ module.exports = {
                 }
             }
         ],
-        "unicorn/no-new-buffer": "error",
+
+        // Disallow potentially catastrophic exponential-time regular expressions.
         "unicorn/no-unsafe-regex": "error",
 
-        // DISABLED INTENTIONALLY
+        // Disabled because it interferes with our automated assert tagging.
+        "unicorn/numeric-separators-style": "off",
+
+        // Prefer .at() method for index access and String#charAt().
+        // Disabled because we need to upgrade TypeScript to 4.5+ to use the ES2022 stuff like .at().
+        "unicorn/prefer-at": "off",
+
+        // Disabled because the node protocol causes problems, especially for isomorphic packages.
+        "unicorn/prefer-node-protocol": "off",
+
+        // Top-level await is more readable and can prevent unhandled rejections.
+        "unicorn/prefer-top-level-await": "warn",
+
+        // Disabled because we don't care about using abbreviations.
+        "unicorn/prevent-abbreviations": "off",
+
+        // Enforces comparing typeof expressions against valid strings.
+        "valid-typeof": "error",
+
+        "@typescript-eslint/explicit-function-return-type": [
+            "warn",
+            {
+                "allowConciseArrowFunctionExpressionsStartingWithVoid": true,
+                "allowDirectConstAssertionInArrowFunctions": true,
+                "allowExpressions": true,
+                "allowHigherOrderFunctions": true,
+                "allowTypedFunctionExpressions": true
+            }
+        ],
+        "@typescript-eslint/explicit-member-accessibility": [
+            "error",
+            {
+                "accessibility": "explicit"
+            }
+        ],
+        "@typescript-eslint/explicit-module-boundary-types": "warn",
+
         // Disabled because we don't require that all variable declarations be explicitly typed.
         "@rushstack/typedef-var": "off",
-        "@typescript-eslint/explicit-function-return-type": "off",
-        "@typescript-eslint/explicit-member-accessibility": "off",
-        "@typescript-eslint/indent": "off", // Off because it conflicts with typescript-formatter
+
+        // Disabled because it's buggy
+        "@typescript-eslint/indent": "off",
+
         "@typescript-eslint/member-ordering": "off",
         "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-invalid-this": "error",
         "@typescript-eslint/no-parameter-properties": "off",
-        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": "error",
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/typedef": "off",
-        "func-call-spacing": "off", // Off because it conflicts with typescript-formatter
+        "func-call-spacing": "off", // Superseded by @typescript-eslint/func-call-spacing
         "no-empty": "off",
-        "no-void": "off",
-        "require-atomic-updates": "off",
+        "no-invalid-this": "off", // Superseded by @typescript-eslint/no-invalid-this
+        "no-void": "error",
+        "require-atomic-updates": "error",
         "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
+        "no-debugger": "error",
+        "no-empty": "error",
+        "no-fallthrough": "error",
+        "no-restricted-syntax": [
+            "error",
+            "ForInStatement"
+        ],
         "no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
 
         // FORMATTING RULES
@@ -142,20 +219,7 @@ module.exports = {
         "@typescript-eslint/comma-spacing": "error",
         "@typescript-eslint/func-call-spacing": "error",
         "@typescript-eslint/keyword-spacing": "error",
-        "@typescript-eslint/member-delimiter-style": [
-            "error",
-            {
-                "multiline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                },
-                "singleline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                },
-                "multilineDetection": "brackets"
-            },
-        ],
+        "@typescript-eslint/member-delimiter-style": "error",
         "@typescript-eslint/object-curly-spacing": [
             "error",
             "always",
@@ -183,11 +247,22 @@ module.exports = {
         ],
         "jsx-quotes": "error",
         "key-spacing": "error",
+        "linebreak-style": "error",
+        "no-multiple-empty-lines": [
+            "error",
+            {
+                "max": 1,
+                "maxBOF": 0,
+                "maxEOF": 1
+            }
+        ],
+        "space-infix-ops": "off", // Superseded by @typescript-eslint/space-infix-ops
         "space-unary-ops": "error",
         "switch-colon-spacing": "error",
 
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",
+
     },
     "overrides": [
         {

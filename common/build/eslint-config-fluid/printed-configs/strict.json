@@ -124,18 +124,7 @@
             "off"
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "error",
-            {
-                "multiline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                },
-                "multilineDetection": "brackets",
-                "singleline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                }
-            }
+            "error"
         ],
         "@typescript-eslint/member-ordering": [
             "off"
@@ -163,7 +152,7 @@
             "error"
         ],
         "@typescript-eslint/no-empty-function": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-empty-interface": [
             "error"
@@ -193,7 +182,7 @@
             "off"
         ],
         "@typescript-eslint/no-invalid-this": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-loss-of-precision": [
             "error"
@@ -208,7 +197,7 @@
             "error"
         ],
         "@typescript-eslint/no-namespace": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-non-null-asserted-optional-chain": [
             "error"
@@ -259,7 +248,7 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-argument": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-assignment": [
             "error"
@@ -277,7 +266,7 @@
             "error"
         ],
         "@typescript-eslint/no-unused-vars": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-use-before-declare": [
             "off"
@@ -301,10 +290,28 @@
         "@typescript-eslint/prefer-function-type": [
             "error"
         ],
+        "@typescript-eslint/prefer-includes": [
+            "error"
+        ],
         "@typescript-eslint/prefer-namespace-keyword": [
             "error"
         ],
+        "@typescript-eslint/prefer-nullish-coalescing": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-optional-chain": [
+            "error"
+        ],
         "@typescript-eslint/prefer-readonly": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-return-this-type": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-string-starts-ends-with": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-ts-expect-error": [
             "error"
         ],
         "@typescript-eslint/promise-function-async": [
@@ -343,6 +350,9 @@
             "error"
         ],
         "@typescript-eslint/strict-boolean-expressions": [
+            "error"
+        ],
+        "@typescript-eslint/switch-exhaustiveness-check": [
             "error"
         ],
         "@typescript-eslint/triple-slash-reference": [
@@ -595,7 +605,7 @@
             "error"
         ],
         "no-debugger": [
-            "off"
+            "error"
         ],
         "no-delete-var": [
             "error"
@@ -643,7 +653,7 @@
             "off"
         ],
         "no-fallthrough": [
-            "off"
+            "error"
         ],
         "no-func-assign": [
             "off"
@@ -1238,7 +1248,7 @@
             "error"
         ],
         "valid-typeof": [
-            "off"
+            "error"
         ],
         "yoda": [
             "off"
