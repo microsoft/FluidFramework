@@ -1345,7 +1345,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      */
     private getIdleClient(timestamp: number): IClientSequenceNumber | undefined {
         const client = this.clientSeqManager.peek();
-        if (client && client.canEvict &&
+        if (client?.canEvict &&
             (timestamp - client.lastUpdate > this.serviceConfiguration.deli.clientTimeout)) {
             return client;
         }

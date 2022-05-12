@@ -126,7 +126,7 @@ export namespace Utilities {
     export function assign(property: BaseProperty, value: BaseProperty | any) {
         const context = property.getContext();
         // De-proxify
-        if (value && value.getProperty) {
+        if (value?.getProperty) {
             value = value.getProperty();
         }
 

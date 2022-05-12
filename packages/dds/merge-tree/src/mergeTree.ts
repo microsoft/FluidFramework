@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-/* eslint-disable no-bitwise */
+/* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
 import { assert } from "@fluidframework/common-utils";
 import {

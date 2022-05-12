@@ -7,4 +7,7 @@ module.exports = {
     "extends": [
         "@fluidframework/eslint-config-fluid"
     ],
+    "rules": {
+        "@typescript-eslint/prefer-optional-chain": "off",
+    },
 }

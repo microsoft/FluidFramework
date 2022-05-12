@@ -81,7 +81,7 @@ import { minReferencePosition,
      * @deprecated - use getLocalReferencePosition
      */
     public toPosition() {
-        if (this.segment && this.segment.parent) {
+        if (this.segment?.parent) {
             return this.getOffset() + this.client.getPosition(this.segment);
         } else {
             return LocalReference.DetachedPosition;

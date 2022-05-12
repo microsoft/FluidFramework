@@ -334,7 +334,7 @@ export class ClientReplayTool {
                                 if (entry.path === ".attributes") {
                                     const blob = entry.value;
                                     const contents = JSON.parse(blob.contents) as { type: string; };
-                                    if (contents && contents.type) {
+                                    if (contents?.type) {
                                         if (!ddsTrees.has(contents.type)) {
                                             ddsTrees.set(contents.type, [tree]);
                                         } else {
