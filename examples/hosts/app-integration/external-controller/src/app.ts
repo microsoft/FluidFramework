@@ -65,8 +65,8 @@ const containerSchema = {
 
 function createDiceRollerControllerProps(map: SharedMap): DiceRollerControllerProps {
     return {
-        get: (key: string) => {return map.get(key) as number;},
-        set: (key: string, value: any) => {map.set(key, value);},
+        get: (key: string) => map.get(key) as number,
+        set: (key: string, value: any) => map.set(key, value),
         on(event: "valueChanged", listener: (args: IValueChanged) => void) {
             map.on(event, listener);
             return this;
