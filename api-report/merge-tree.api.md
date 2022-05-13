@@ -867,9 +867,9 @@ export class LocalReferenceCollection {
     constructor(
     segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
     // (undocumented)
-    addAfterTombstones(...refs: Iterable<LocalReference>[]): void;
+    addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
     // (undocumented)
-    addBeforeTombstones(...refs: Iterable<LocalReference>[]): void;
+    addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
     // @internal
     addLocalRef(lref: LocalReference | ReferencePosition): void;
     // (undocumented)
