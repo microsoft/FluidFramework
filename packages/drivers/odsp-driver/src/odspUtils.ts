@@ -143,7 +143,7 @@ export async function fetchHelper(
                 "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, { driverVersion });
         }
         // TCP/IP timeout
-        if (errorText.indexOf("ETIMEDOUT") !== -1) {
+        if (errorText.includes("ETIMEDOUT")) {
             throw new RetryableError(
                 "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, { driverVersion });
         }

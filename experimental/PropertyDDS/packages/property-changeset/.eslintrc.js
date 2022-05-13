@@ -27,6 +27,7 @@ module.exports = {
         "@typescript-eslint/no-unused-expressions": "off",
         "@typescript-eslint/no-var-requires": "off",
         "@typescript-eslint/prefer-for-of": "off",
+        "@typescript-eslint/prefer-includes": "off",
         "@typescript-eslint/quotes": "off",
         "@typescript-eslint/restrict-plus-operands": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
