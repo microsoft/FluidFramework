@@ -123,7 +123,8 @@ export class BasicRestWrapper extends RestWrapper {
         const options = { ...requestConfig };
         options.headers = this.generateHeaders(
             options.headers,
-            (this.getCorrelationId?.()) || uuid());
+            this.getCorrelationId?.() ?? uuid(),
+        );
 
         return new Promise<T>((resolve, reject) => {
             this.axios.request<T>(options)
