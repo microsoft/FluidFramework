@@ -250,38 +250,19 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     public delete(key: string): void {
         const currentValue = this.values.get(key);
-        // Early-exit if we can't submit a valid proposal (there's nothing to delete or already a pending proposal).
-        // TODO: More early exit logic needed probably, for currentValue.accepted.value === undefined
-        if (currentValue === undefined || currentValue.pending !== undefined) {
+        // Early-exit if:
+        if (
+            // there's nothing to delete
+            currentValue === undefined
+            // if something is pending (and so our proposal won't be valid)
+            || currentValue.pending !== undefined
+            // or if the accepted value is undefined which is equivalent to already being deleted
+            || currentValue.accepted.value === undefined
+        ) {
             return;
         }
 
-        // If not attached, we basically pretend we got an ack immediately.
-        // TODO: Should we just directly store the value rather than the full simulation?
-        if (!this.isAttached()) {
-            // Queueing as a microtask to permit callers to complete their callstacks before the result of the delete
-            // takes effect.  This more closely resembles the pattern in the attached state, where the ack will not
-            // be received synchronously.
-            queueMicrotask(() => {
-                this.handleIncomingSet(
-                    key,
-                    undefined, /* value */
-                    0 /* refSeq */,
-                    0 /* setSequenceNumber */,
-                    "detachedClient" /* clientId */,
-                );
-            });
-            return;
-        }
-
-        const setOp: IQuorumSetOperation = {
-            type: "set",
-            key,
-            value: undefined,
-            refSeq: this.runtime.deltaManager.lastSequenceNumber,
-        };
-
-        this.submitLocalMessage(setOp);
+        this.set(key, undefined);
     }
 
     /**
