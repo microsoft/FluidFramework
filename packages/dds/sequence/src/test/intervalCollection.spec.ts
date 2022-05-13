@@ -224,6 +224,40 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
+        describe.skip("intervalCollection comparator consistency", () => {
+            // This is a regression suite for an issue caught by fuzz testing:
+            // if intervals A, B, C are created which initially compare A < B < C,
+            // it's possible that string operations can change this order. Specifically,
+            // removing substrings of text can make LocalReferences which previously compared
+            // unequal now compare equal. Since the interval comparator is lexicographical on
+            // the array [start reference, end reference, id], collapsing previously-unequal
+            // references to now equal ones can cause issues.
+            // The immediate way this manifests is that attempting to remove the interval fails
+            // in red-black tree code, since the key isn't at the expected location.
+            let collection: IntervalCollection<SequenceInterval>;
+            beforeEach(() => {
+                sharedString.insertText(0, "ABCDEFG");
+                collection = sharedString.getIntervalCollection("test");
+            });
+
+            it("retains intervalTree coherency when falling back to end comparison", () => {
+                collection.add(1, 6, IntervalType.SlideOnRemove);
+                collection.add(2, 5, IntervalType.SlideOnRemove);
+                const initiallyLargest = collection.add(3, 4, IntervalType.SlideOnRemove);
+                sharedString.removeRange(1, 4);
+                collection.removeIntervalById(initiallyLargest.getIntervalId());
+            });
+
+            it("retains intervalTree coherency when falling back to id comparison", () => {
+                const [idLowest, idMiddle, idLargest] = ["a", "b", "c"];
+                collection.add(0, 1, IntervalType.SlideOnRemove, { intervalId: idLargest });
+                collection.add(0, 2, IntervalType.SlideOnRemove, { intervalId: idMiddle });
+                collection.add(0, 3, IntervalType.SlideOnRemove, { intervalId: idLowest });
+                sharedString.removeRange(1, 4);
+                collection.removeIntervalById(idLowest);
+            });
+        });
+
         it("test IntervalCollection creation events", () => {
             let createCalls1 = 0;
             const createInfo1 = [];
