@@ -17,7 +17,7 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import * as path from "path-browserify";
@@ -204,7 +204,13 @@ export interface IDirectoryNewStorageFormat {
     content: IDirectoryDataObject;
 }
 
-function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): ISummaryTreeWithStats {
+const telemetryContextPrefix = "fluid:directory:";
+
+function serializeDirectory(
+    root: SubDirectory,
+    serializer: IFluidSerializer,
+    telemetryContext?: ITelemetryContext,
+): ISummaryTreeWithStats {
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
     const builder = new SummaryTreeBuilder();
@@ -214,6 +220,12 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
     const stack: [SubDirectory, IDirectoryDataObject][] = [];
     const content: IDirectoryDataObject = {};
     stack.push([root, content]);
+
+    const instanceCountProperty = "InstanceCount";
+    let instanceCount = telemetryContext?.get(telemetryContextPrefix, instanceCountProperty) ?? 0;
+    telemetryContext?.set(telemetryContextPrefix, instanceCountProperty, ++instanceCount);
+
+    let totalBlobBytes = 0;
 
     while (stack.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -242,6 +254,7 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
                 counter++;
                 blobs.push(blobName);
                 builder.addBlob(blobName, JSON.stringify(extraContent));
+                totalBlobBytes += value.value.length;
             } else {
                 currentSubDirObject.storage[key] = result;
             }
@@ -262,6 +275,10 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
         content,
     };
     builder.addBlob(snapshotFileName, JSON.stringify(newFormat));
+
+    const totalBlobBytesProperty = "TotalBlobBytes";
+    const prevTotal = (telemetryContext?.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0) as number;
+    telemetryContext?.set(telemetryContextPrefix, totalBlobBytesProperty, prevTotal + totalBlobBytes);
 
     return builder.getSummaryTree();
 }
@@ -571,7 +588,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         return serializeDirectory(this.root, serializer);
     }
 

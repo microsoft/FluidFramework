@@ -326,7 +326,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         builder.addBlob(snapshotFileName, JSON.stringify(header));
 
         const totalBlobBytesProperty = "TotalBlobBytes";
-        const prevTotal = telemetryContext?.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0;
+        const prevTotal = (telemetryContext?.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0) as number;
         telemetryContext?.set(telemetryContextPrefix, totalBlobBytesProperty, prevTotal + totalBlobBytes);
 
         return builder.getSummaryTree();
