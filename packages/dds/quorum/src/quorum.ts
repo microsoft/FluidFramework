@@ -200,7 +200,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * {@inheritDoc IQuorum.getPending}
      */
     public getPending(key: string): any {
-        // TODO: Should this return differently for a value of undefined vs. a pending delete?
+        // TODO: Should this return differently for "nothing pending" vs. "delete pending"?
         // Maybe return the QuorumValue itself?
         return this.values.get(key)?.pending?.value;
     }
