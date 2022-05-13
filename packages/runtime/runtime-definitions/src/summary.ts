@@ -261,8 +261,9 @@ export interface ITelemetryContext {
      * Get the telemetry data being tracked
      * @param prefix - unique prefix for this data (ex: "fluid:map:")
      * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
+     * @returns undefined if item not found
      */
-    get(prefix: string, property: string): any;
+    get(prefix: string, property: string): any | undefined;
 
     /**
      * Returns a serialized version of all the telemetry data.
