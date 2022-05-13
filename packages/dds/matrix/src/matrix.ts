@@ -698,8 +698,11 @@ export class SharedMatrix<T = any>
             const localSeq = currentVector.getCollabWindow().localSeq;
             const oppositeWindow = oppositeVector.getCollabWindow();
 
-            assert(localSeq > oppositeWindow.localSeq,
-                0x2d9 /* "The 'localSeq' of the vector applying stashed op must > the 'localSeq' of the other vector." */);
+            assert(
+                localSeq > oppositeWindow.localSeq,
+                0x2d9,
+                /* "The 'localSeq' of the vector applying stashed op must > the 'localSeq' of the other vector." */
+            );
 
             oppositeWindow.localSeq = localSeq;
 
