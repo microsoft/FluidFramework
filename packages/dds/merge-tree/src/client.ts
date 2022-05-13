@@ -799,7 +799,7 @@ export class Client {
             default:
                 unreachableCase(op, "unrecognized op type");
         }
-        assert(!!metadata, "Applying op must generate a pending segment");
+        assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
         return metadata;
     }
 
