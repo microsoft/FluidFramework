@@ -55,22 +55,25 @@ These optimizations interact: for example if inlining to optimize breadth first 
 the depth of the tree of blobs will tend to be as high as the logical tree's depth, so indirection on blob handles will be more useful.
 
 For N nodes, if 1 in 20 blobs handles were randomly indirect, and we fit an average of 100 nodes in a blob, and the indirection b-tree is of branching factor 200 (4KB pages, 20 byte handle) we get:
-    - N / 100 blobs
-    - N / 2000 indirect blob references
-    - log(200, N / 2000) deep indirection table. (First page gets us to 400k nodes, 4 deep covers 3.2 trillion nodes)
-    - on average traversing an edge between nodes does 1 / 100 + log(200, N / 2000) / 2000 handle dereferences (assuming nothing is cached). (For 1M nodes, thats ~0.01)
-    - 40 bytes per node in main tree
-    - ~0.01 bytes of indirection table per node
-    - average pages updated on single change: ~20 (This might be acceptable if we batch updates, only writing batches when summarizing, since that would deduplicate a lot of intermediate updates. Also optimizing where indirection is used (instead of random) would also help a lot here).
+
+- N / 100 blobs
+- N / 2000 indirect blob references
+- log(200, N / 2000) deep indirection table. (First page gets us to 400k nodes, 4 deep covers 3.2 trillion nodes)
+- on average traversing an edge between nodes does 1 / 100 + log(200, N / 2000) / 2000 handle dereferences (assuming nothing is cached). (For 1M nodes, thats ~0.01)
+- 40 bytes per node in main tree
+- ~0.01 bytes of indirection table per node
+- average pages updated on single change: ~20 (This might be acceptable if we batch updates, only writing batches when summarizing, since that would deduplicate a lot of intermediate updates.
+Also optimizing where indirection is used (instead of random) would also help a lot here).
 
 Same states with every handle indirect:
-    - N / 100 blobs
-    - N / 100 indirect blob references
-    - log(200, N / 100) deep indirection table. (First page gets us to 20k nodes, 4 deep covers 160 million nodes)
-    - on average traversing an edge between nodes does 1 / 100 + log(200, N / 100) / 100 handle dereferences (assuming nothing is cached). (For 1M nodes, thats ~0.027)
-    - 40 bytes per node in main tree
-    - ~0.2 bytes of indirection table per node
-    - average pages updated on single change: 1 + ceil(log(200, N / 100)). Thats 2 upt to 20k nodes, 5 for 160 million.
+
+- N / 100 blobs
+- N / 100 indirect blob references
+- log(200, N / 100) deep indirection table. (First page gets us to 20k nodes, 4 deep covers 160 million nodes)
+- on average traversing an edge between nodes does 1 / 100 + log(200, N / 100) / 100 handle dereferences (assuming nothing is cached). (For 1M nodes, thats ~0.027)
+- 40 bytes per node in main tree
+- ~0.2 bytes of indirection table per node
+- average pages updated on single change: 1 + ceil(log(200, N / 100)). Thats 2 upt to 20k nodes, 5 for 160 million.
 
 ### Path B-Tree
 
