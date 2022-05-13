@@ -54,7 +54,7 @@ Some useful performance trade-offs that could be made to improve this:
 These optimizations interact: for example if inlining to optimize breadth first traversal,
 the depth of the tree of blobs will tend to be as high as the logical tree's depth, so indirection on blob handles will be more useful.
 
-For N nodes, if 1 in 20 blobs handles were randomly indirect, and we fit an average of 100 nodes in a blob, and the indirection b-tree is of branching factor 200 (4KB pages, 20 byte handle) we get:
+For N nodes, if 1 in 20 blobs' handles were randomly indirect, and we fit an average of 100 nodes in a blob, and the indirection b-tree is of branching factor 200 (4KB pages, 20 byte handle) we get:
 
 - N / 100 blobs
 - N / 2000 indirect blob references
@@ -73,13 +73,13 @@ Same states with every handle indirect:
 - on average traversing an edge between nodes does 1 / 100 + log(200, N / 100) / 100 handle dereferences (assuming nothing is cached). (For 1M nodes, thats ~0.027)
 - 40 bytes per node in main tree
 - ~0.2 bytes of indirection table per node
-- average pages updated on single change: 1 + ceil(log(200, N / 100)). Thats 2 upt to 20k nodes, 5 for 160 million.
+- average pages updated on single change: 1 + ceil(log(200, N / 100)). Thats 2 for up to 20k nodes, 5 for 160 million.
 
 ### Path B-Tree
 
-All data in the tree can be stored in a key value store under it's full path through the logical tree.
+All data in the tree can be stored in a key value store under its full path through the logical tree.
 Doing this with a [Radix tree](https://en.wikipedia.org/wiki/Radix_tree) roughly amounts to storing the logical tree.
-Rather than directly doing a Radix tree, a B-Tree can be used, which can be optimized by duplicating the common prefixes within the nodes to get storage costs closer to the radix tree.
+Rather than directly doing a Radix tree, a B-Tree can be used, which can be optimized by deduplicating the common prefixes within the nodes to get storage costs closer to the radix tree.
 Without this compression, trees with small values would be almost entirely "keys", as the paths would usually exceed the the size of the values.
 
 For this approach, its important how the paths are defined as well as how they are encoded. For example for paths into sequences, if the index in the sequence is used, inserting a sibling near the root can change the paths of almost everything in the tree.
