@@ -113,7 +113,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
 
         try {
-            const result = await this.summarizeInternalFn(fullTree, telemetryContext);
+            const result = await this.summarizeInternalFn(fullTree, true, telemetryContext);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             if (result.pathPartsForChildren !== undefined) {
                 this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(result.pathPartsForChildren);
