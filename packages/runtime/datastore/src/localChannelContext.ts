@@ -18,6 +18,7 @@ import {
     IFluidDataStoreContext,
     IGarbageCollectionData,
     ISummarizeResult,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -97,15 +98,20 @@ export abstract class LocalChannelContextBase implements IChannelContext {
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult> {
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = false,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, 0x18c /* "Channel should be loaded to summarize" */);
-        return summarizeChannelAsync(this.channel, fullTree, trackState, summaryTelemetryData);
+        return summarizeChannelAsync(this.channel, fullTree, trackState, telemetryContext);
     }
 
-    public getAttachSummary(summaryTelemetryData?: Map<string, string>): ISummarizeResult {
+    public getAttachSummary(telemetryContext?: ITelemetryContext): ISummarizeResult {
         assert(this.isLoaded && this.channel !== undefined, 0x18d /* "Channel should be loaded to take snapshot" */);
-        return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */, summaryTelemetryData);
+        return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */, telemetryContext);
     }
 
     public makeVisible(): void {

@@ -11,6 +11,7 @@ import {
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
     SummarizeInternalFn,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
     ISequencedDocumentMessage,
@@ -80,7 +81,11 @@ export class SummarizerNode implements IRootSummarizerNode {
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
-    public async summarize(fullTree: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult> {
+    public async summarize(
+        fullTree: boolean,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
         assert(this.isTrackingInProgress(), 0x1a1 /* "summarize should not be called when not tracking the summary" */);
         assert(this.wipSummaryLogger !== undefined,
             0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
@@ -108,7 +113,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
 
         try {
-            const result = await this.summarizeInternalFn(fullTree, summaryTelemetryData);
+            const result = await this.summarizeInternalFn(fullTree, telemetryContext);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             if (result.pathPartsForChildren !== undefined) {
                 this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(result.pathPartsForChildren);

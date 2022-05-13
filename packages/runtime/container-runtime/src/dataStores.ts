@@ -25,6 +25,7 @@ import {
     InboundAttachMessage,
     ISummarizeResult,
     ISummaryTreeWithStats,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
      convertSnapshotTreeToSummaryTree,
@@ -462,7 +463,11 @@ export class DataStores implements IDisposable {
         return this.contexts.size;
     }
 
-    public async summarize(fullTree: boolean, trackState: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummaryTreeWithStats> {
+    public async summarize(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -473,14 +478,14 @@ export class DataStores implements IDisposable {
                     0x165 /* "Summarizer cannot work if client has local changes" */);
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
-                const contextSummary = await context.summarize(fullTree, trackState, summaryTelemetryData);
+                const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
                 summaryBuilder.addWithStats(contextId, contextSummary);
             }));
 
         return summaryBuilder.getSummaryTree();
     }
 
-    public createSummary(summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats {
+    public createSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
         // Attaching graph of some stores can cause other stores to get bound too.
         // So keep taking summary until no new stores get bound.

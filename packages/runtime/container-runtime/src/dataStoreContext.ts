@@ -58,6 +58,7 @@ import {
     ISummarizeResult,
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -289,7 +290,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         };
 
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean, summaryTelemetryData?: Map<string, string>) => this.summarizeInternal(fullTree, trackState, summaryTelemetryData);
+            async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
+            this.summarizeInternal(fullTree, trackState, telemetryContext);
 
         this.summarizerNode = props.createSummarizerNodeFn(
             thisSummarizeInternal,
@@ -447,16 +449,25 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree, trackState, summaryTelemetryData);
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
     }
 
-    private async summarizeInternal(fullTree: boolean, trackState: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeInternalResult> {
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const summarizeResult = await this.channel!.summarize(fullTree, trackState, summaryTelemetryData);
+        const summarizeResult = await this.channel!.summarize(fullTree, trackState, telemetryContext);
         let pathPartsForChildren: string[] | undefined;
 
         if (!this.disableIsolatedChannels) {

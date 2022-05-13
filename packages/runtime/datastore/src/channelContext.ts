@@ -12,6 +12,7 @@ import {
     IGarbageCollectionData,
     ISummarizeResult,
     ISummaryTreeWithStats,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -26,7 +27,11 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
-    summarize(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummarizeResult>;
+    summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 
@@ -78,9 +83,9 @@ export function summarizeChannel(
     channel: IChannel,
     fullTree: boolean = false,
     trackState: boolean = false,
-    summaryTelemetryData?: Map<string, string>,
+    telemetryContext?: ITelemetryContext,
 ): ISummaryTreeWithStats {
-    const summarizeResult = channel.getAttachSummary(fullTree, trackState, summaryTelemetryData);
+    const summarizeResult = channel.getAttachSummary(fullTree, trackState, telemetryContext);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
@@ -91,9 +96,9 @@ export async function summarizeChannelAsync(
     channel: IChannel,
     fullTree: boolean = false,
     trackState: boolean = false,
-    summaryTelemetryData?: Map<string, string>,
+    telemetryContext?: ITelemetryContext,
 ): Promise<ISummaryTreeWithStats> {
-    const summarizeResult = await channel.summarize(fullTree, trackState, summaryTelemetryData);
+    const summarizeResult = await channel.summarize(fullTree, trackState, telemetryContext);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));

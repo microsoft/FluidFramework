@@ -18,6 +18,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -202,12 +203,20 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     /**
      * {@inheritDoc (ISharedObject:interface).getAttachSummary}
      */
-    public abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats;
+    public abstract getAttachSummary(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
 
     /**
      * {@inheritDoc (ISharedObject:interface).summarize}
      */
-    public abstract summarize(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummaryTreeWithStats>;
+    public abstract summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats>;
 
     /**
      * {@inheritDoc (ISharedObject:interface).getGCData}
@@ -474,15 +483,23 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).getAttachSummary}
      */
-    public getAttachSummary(fullTree: boolean = false, trackState: boolean = false, summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats {
-        return this.summarizeCore(this.serializer, summaryTelemetryData);
+    public getAttachSummary(
+        fullTree: boolean = false,
+        trackState: boolean = false,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
+        return this.summarizeCore(this.serializer, telemetryContext);
     }
 
     /**
      * {@inheritDoc (ISharedObject:interface).summarize}
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false, summaryTelemetryData?: Map<string, string>): Promise<ISummaryTreeWithStats> {
-        return this.summarizeCore(this.serializer, summaryTelemetryData);
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = false,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
+        return this.summarizeCore(this.serializer, telemetryContext);
     }
 
     /**
@@ -527,5 +544,5 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object.
      */
-    protected abstract summarizeCore(serializer: IFluidSerializer, summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats;
+    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
 }

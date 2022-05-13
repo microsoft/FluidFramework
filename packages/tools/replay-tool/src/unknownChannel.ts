@@ -17,6 +17,7 @@ import {
     IFluidDataStoreContext,
     IGarbageCollectionData,
     ISummaryTreeWithStats,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 
 class UnknownChannel implements IChannel {
@@ -42,7 +43,11 @@ class UnknownChannel implements IChannel {
         throw new Error("not implemented");
     }
 
-    public getAttachSummary(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): ISummaryTreeWithStats {
+    public getAttachSummary(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         return {
             stats: {
                 treeNodeCount: 1,
@@ -58,8 +63,12 @@ class UnknownChannel implements IChannel {
         };
     }
 
-    public async summarize(fullTree?: boolean, trackState?: boolean, summaryTelemetryData?: Map<string, string>): Promise<ISummaryTreeWithStats> {
-        return this.getAttachSummary(fullTree, trackState, summaryTelemetryData);
+    public async summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
+        return this.getAttachSummary(fullTree, trackState, telemetryContext);
     }
 
     public isAttached() { return true; }
