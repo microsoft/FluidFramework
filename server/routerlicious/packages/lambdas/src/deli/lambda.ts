@@ -161,6 +161,7 @@ export interface IDeliLambdaEvents extends IEvent {
     (event: "opEvent",
         listener: (type: OpEventType, sequenceNumber: number, sequencedMessagesSinceLastOpEvent: number) => void);
     (event: "updatedDurableSequenceNumber", listener: (durableSequenceNumber: number) => void);
+    (event: "controlMessage", listener: (controlMessage: IControlMessage) => void);
     (event: "close", listener: (type: LambdaCloseType) => void);
 }
 
@@ -962,7 +963,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     }
 
                     default:
-                        // ignore unknown control messages
+                        // an unknown control message was received
+                        // emit a control message event to support custom control messages
+                        this.emit("controlMessage", controlMessage);
                         break;
                 }
 
