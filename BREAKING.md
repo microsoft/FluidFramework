@@ -22,7 +22,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-to-be-removed-from-ILoaderProps-and-ILoaderServices)
 - [routerlicious-host package and ContainerUrlResolver to be removed](#routerlicious-host-package-and-ContainerUrlResolver-to-be-removed)
 - [LocalReference class and method deprecations](#LocalReference-class-and-method-deprecations)
-- [IContainerRuntime.createRootDataStore is deprecated](#IContainerRuntime-createRootDataStore-is-deprecated)
+- [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
