@@ -271,8 +271,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         let instanceCount = telemetryContext?.get(telemetryContextPrefix, instanceCountProperty) ?? 0;
         telemetryContext?.set(telemetryContextPrefix, instanceCountProperty, ++instanceCount);
 
-        const totalBlobBytesProperty = "TotalBlobBytes";
-        let totalBlobSize = telemetryContext?.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0;
+        let totalBlobBytes = 0;
 
         // Partitioning algorithm:
         // 1) Split large (over MinValueSizeSeparateSnapshotBlob = 8K) properties into their own blobs.
@@ -297,7 +296,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
                     },
                 };
                 builder.addBlob(blobName, JSON.stringify(content));
-                totalBlobSize += value.value.length;
+                totalBlobBytes += value.value.length;
             } else {
                 currentSize += value.type.length + 21; // Approximation cost of property header
                 if (value.value) {
@@ -310,7 +309,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
                     blobs.push(blobName);
                     builder.addBlob(blobName, JSON.stringify(headerBlob));
                     headerBlob = {};
-                    totalBlobSize += currentSize;
+                    totalBlobBytes += currentSize;
                     currentSize = 0;
                 }
                 headerBlob[key] = {
@@ -326,7 +325,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         };
         builder.addBlob(snapshotFileName, JSON.stringify(header));
 
-        telemetryContext?.set(telemetryContextPrefix, totalBlobBytesProperty, totalBlobSize);
+        const totalBlobBytesProperty = "TotalBlobBytes";
+        const prevTotal = telemetryContext?.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0;
+        telemetryContext?.set(telemetryContextPrefix, totalBlobBytesProperty, prevTotal + totalBlobBytes);
 
         return builder.getSummaryTree();
     }
