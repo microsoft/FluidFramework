@@ -428,7 +428,7 @@ export class LocalReferenceCollection {
         }
     }
 
-    public addBeforeTombstones(...refs: Iterable<LocalReference>[]) {
+    public addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]) {
         const beforeRefs = this.refsByOffset[0]?.before ?? ListMakeHead();
 
         for (const iterable of refs) {
@@ -455,7 +455,7 @@ export class LocalReferenceCollection {
         }
     }
 
-    public addAfterTombstones(...refs: Iterable<LocalReference>[]) {
+    public addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]) {
         const lastOffset = this.refsByOffset.length - 1;
         const afterRefs =
             this.refsByOffset[lastOffset]?.after ?? ListMakeHead();
