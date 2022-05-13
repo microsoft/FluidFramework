@@ -23,8 +23,7 @@ import { IQuorum, IQuorumEvents } from "./interfaces";
 /**
  * The accepted value information, if any.
  */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type AcceptedQuorumValue = {
+interface IAcceptedQuorumValue {
     /**
      * The accepted value.
      */
@@ -34,31 +33,25 @@ type AcceptedQuorumValue = {
      * The sequence number when the value was accepted.
      */
     sequenceNumber: number;
-};
+}
 
 /**
  * The pending change information, if any.
  */
-type PendingQuorumValue = {
-    type: "set";
+interface IPendingQuorumValue {
     value: any;
     sequenceNumber: number;
     // TODO: Consider using Set and serializing to array for snapshot
     expectedSignoffs: string[];
-} | {
-    type: "delete";
-    sequenceNumber: number;
-    // TODO: Consider using Set and serializing to array for snapshot
-    expectedSignoffs: string[];
-};
+}
 
 /**
  * Internal format of the values stored in the Quorum.
  */
 type QuorumValue =
-    { accepted: AcceptedQuorumValue; pending: undefined; }
-    | { accepted: undefined; pending: PendingQuorumValue; }
-    | { accepted: AcceptedQuorumValue; pending: PendingQuorumValue; };
+    { accepted: IAcceptedQuorumValue; pending: undefined; }
+    | { accepted: undefined; pending: IPendingQuorumValue; }
+    | { accepted: IAcceptedQuorumValue; pending: IPendingQuorumValue; };
 
 /**
  * Quorum operation formats
@@ -75,13 +68,6 @@ interface IQuorumSetOperation {
     refSeq: number;
 }
 
-interface IQuorumDeleteOperation {
-    type: "delete";
-    key: string;
-    // Same as above for set.
-    refSeq: number;
-}
-
 interface IQuorumAcceptOperation {
     type: "accept";
     key: string;
@@ -90,7 +76,7 @@ interface IQuorumAcceptOperation {
     pendingSeq: number;
 }
 
-type IQuorumOperation = IQuorumSetOperation | IQuorumDeleteOperation | IQuorumAcceptOperation;
+type IQuorumOperation = IQuorumSetOperation | IQuorumAcceptOperation;
 
 const snapshotFileName = "header";
 
@@ -186,7 +172,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         super(id, runtime, attributes);
 
         this.incomingOp.on("set", this.handleIncomingSet);
-        this.incomingOp.on("delete", this.handleIncomingDelete);
         this.incomingOp.on("accept", this.handleIncomingAccept);
 
         this.runtime.getQuorum().on("removeMember", this.handleQuorumRemoveMember);
@@ -216,12 +201,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     public getPending(key: string): any {
         // TODO: Should this return differently for a value of undefined vs. a pending delete?
-        const pending = this.values.get(key)?.pending;
-        if (pending === undefined || pending.type === "delete") {
-            return undefined;
-        }
-
-        return pending.value;
+        // Maybe return the QuorumValue itself?
+        return this.values.get(key)?.pending?.value;
     }
 
     /**
@@ -270,6 +251,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     public delete(key: string): void {
         const currentValue = this.values.get(key);
         // Early-exit if we can't submit a valid proposal (there's nothing to delete or already a pending proposal).
+        // TODO: More early exit logic needed probably, for currentValue.accepted.value === undefined
         if (currentValue === undefined || currentValue.pending !== undefined) {
             return;
         }
@@ -281,8 +263,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             // takes effect.  This more closely resembles the pattern in the attached state, where the ack will not
             // be received synchronously.
             queueMicrotask(() => {
-                this.handleIncomingDelete(
+                this.handleIncomingSet(
                     key,
+                    undefined, /* value */
                     0 /* refSeq */,
                     0 /* setSequenceNumber */,
                     "detachedClient" /* clientId */,
@@ -291,13 +274,14 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             return;
         }
 
-        const deleteOp: IQuorumDeleteOperation = {
-            type: "delete",
+        const setOp: IQuorumSetOperation = {
+            type: "set",
             key,
+            value: undefined,
             refSeq: this.runtime.deltaManager.lastSequenceNumber,
         };
 
-        this.submitLocalMessage(deleteOp);
+        this.submitLocalMessage(setOp);
     }
 
     /**
@@ -341,7 +325,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         const newQuorumValue: QuorumValue = {
             accepted,
             pending: {
-                type: "set",
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 value,
                 sequenceNumber: setSequenceNumber,
@@ -372,60 +355,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         }
     };
 
-    private readonly handleIncomingDelete = (
-        key: string,
-        refSeq: number,
-        deleteSequenceNumber: number,
-        clientId: string,
-    ): void => {
-        const currentValue = this.values.get(key);
-        // We use a consensus-like approach here, so a proposal is valid if there's a value to delete, there's no
-        // other pending change, and the delete was made with knowledge of the most recently accepted value.  Note
-        // this differs slightly from set because delete of an unset value is a no-op - these no-ops should also
-        // be prevented on the sending side but we'll guard here too.  We'll drop invalid proposals on the ground.
-        const proposalValid =
-            currentValue !== undefined
-            && currentValue.pending === undefined
-            && currentValue.accepted.sequenceNumber <= refSeq;
-        if (!proposalValid) {
-            // TODO: If delete() returns a promise we will need to resolve it false for invalid proposals.
-            return;
-        }
-
-        const accepted = currentValue?.accepted;
-
-        // We expect signoffs from all connected clients at the time the delete was sequenced, except for the client
-        // who issued the delete (that client implicitly signs off).
-        const expectedSignoffs = this.getSignoffClients().filter((quorumMemberId) => quorumMemberId !== clientId);
-
-        const newQuorumValue: QuorumValue = {
-            accepted,
-            pending: {
-                type: "delete",
-                sequenceNumber: deleteSequenceNumber,
-                expectedSignoffs,
-            },
-        };
-
-        this.values.set(key, newQuorumValue);
-
-        this.emit("pending", key);
-
-        if (expectedSignoffs.length === 0) {
-            // Only the submitting client was connected at the time the delete was sequenced.
-            this.values.delete(key);
-            this.emit("accepted", key);
-        } else if (this.runtime.clientId !== undefined && expectedSignoffs.includes(this.runtime.clientId)) {
-            // Emit an accept upon a new key entering pending state if our accept is expected.
-            const acceptOp: IQuorumAcceptOperation = {
-                type: "accept",
-                key,
-                pendingSeq: deleteSequenceNumber,
-            };
-            this.submitLocalMessage(acceptOp);
-        }
-    };
-
     private readonly handleIncomingAccept = (
         key: string,
         pendingSeq: number,
@@ -450,15 +379,11 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         if (pending.expectedSignoffs.length === 0) {
             // The pending value has settled
-            if (pending.type === "set") {
-                this.values.set(key, {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    accepted: { value: pending.value, sequenceNumber },
-                    pending: undefined,
-                });
-            } else if (pending.type === "delete") {
-                this.values.delete(key);
-            }
+            this.values.set(key, {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                accepted: { value: pending.value, sequenceNumber },
+                pending: undefined,
+            });
             this.emit("accepted", key);
         }
     };
@@ -472,19 +397,15 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
                 if (pending.expectedSignoffs.length === 0) {
                     // The pending value has settled
-                    if (pending.type === "set") {
-                        this.values.set(key, {
-                            accepted: {
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                                value: pending.value,
-                                // The sequence number of the ClientLeave message.
-                                sequenceNumber: this.runtime.deltaManager.lastSequenceNumber,
-                            },
-                            pending: undefined,
-                        });
-                    } else if (pending.type === "delete") {
-                        this.values.delete(key);
-                    }
+                    this.values.set(key, {
+                        accepted: {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            value: pending.value,
+                            // The sequence number of the ClientLeave message.
+                            sequenceNumber: this.runtime.deltaManager.lastSequenceNumber,
+                        },
+                        pending: undefined,
+                    });
                     this.emit("accepted", key);
                 }
             }
@@ -541,10 +462,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             switch (op.type) {
                 case "set":
                     this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber, message.clientId);
-                    break;
-
-                case "delete":
-                    this.incomingOp.emit("delete", op.key, op.refSeq, message.sequenceNumber, message.clientId);
                     break;
 
                 case "accept":
