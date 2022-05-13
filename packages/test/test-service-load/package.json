@@ -37,7 +37,7 @@
     "start:mini": "node ./dist/nodeStressTest.js  --profile mini",
     "start:odsp": "node ./dist/nodeStressTest.js --driver odsp",
     "start:reauth": "node ./dist/nodeStressTest.js --profile mini --browserAuth",
-    "start:t9s": "npm install start-server-and-test && start-server-and-test start:tinylicious:test 7070 start:t9s:run",
+    "start:t9s": "start-server-and-test start:tinylicious:test 7070 start:t9s:run",
     "start:t9s:run": "node ./dist/nodeStressTest.js --driver tinylicious ",
     "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
     "test": "npm run test:realsvc:run",
