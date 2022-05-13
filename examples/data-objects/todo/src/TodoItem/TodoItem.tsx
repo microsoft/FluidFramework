@@ -13,10 +13,6 @@ import ReactDOM from "react-dom";
 import { TextBox, TextBoxInstantiationFactory } from "../TextBox";
 import { TodoItemView } from "./TodoItemView";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../../package.json");
-export const TodoItemName = `${pkg.name as string}-item`;
-
 export interface ITodoItemInitialState {
     startingText: string;
 }
@@ -98,7 +94,7 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
 
     private static readonly factory =
         new DataObjectFactory(
-            TodoItemName,
+            "@fluid-example/todo-item",
             TodoItem,
             [
                 SharedString.getFactory(),

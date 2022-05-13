@@ -4,102 +4,82 @@
  */
 
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
-import { SharedString } from "@fluidframework/sequence";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { TodoItem } from "./TodoItem";
 
 interface TodoItemViewProps {
     todoItemModel: TodoItem;
 }
 
-interface TodoItemViewState {
-    checked: boolean;
-    innerComponentVisible: boolean;
-    absoluteUrl: string | undefined;
-}
+const buttonStyle = {
+    height: "25px",
+    marginLeft: "2px",
+    marginRight: "2px",
+    width: "35px",
+};
 
-export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState> {
-    private readonly itemText: SharedString;
-    private readonly buttonStyle = {
-        height: "25px",
-        marginLeft: "2px",
-        marginRight: "2px",
-        width: "35px",
+export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
+    const { todoItemModel } = props;
+    const itemText = todoItemModel.getTodoItemText();
+    const [checked, setChecked] = useState<boolean>(false);
+    const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
+    const [absoluteUrl, setAbsoluteUrl] = useState<string>(todoItemModel.absoluteUrl);
+
+    useEffect(() => {
+        todoItemModel.on("stateChanged", () => {
+            setChecked(todoItemModel.getCheckedState());
+            setAbsoluteUrl(todoItemModel.absoluteUrl);
+        });
+    }, [todoItemModel]);
+
+    const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
+        todoItemModel.setCheckedState(e.target.checked);
     };
 
-    constructor(props: TodoItemViewProps) {
-        super(props);
-
-        this.itemText = this.props.todoItemModel.getTodoItemText();
-
-        this.state = {
-            checked: this.props.todoItemModel.getCheckedState(),
-            innerComponentVisible: false,
-            absoluteUrl: this.props.todoItemModel.absoluteUrl,
-        };
-
-        this.setCheckedState = this.setCheckedState.bind(this);
-    }
-
-    public componentDidMount() {
-        this.props.todoItemModel.on("stateChanged", () => {
-            this.setState({
-                checked: this.props.todoItemModel.getCheckedState(),
-                absoluteUrl: this.props.todoItemModel.absoluteUrl,
-            });
-        });
-    }
-
-    private setCheckedState(e: React.ChangeEvent<HTMLInputElement>): void {
-        this.props.todoItemModel.setCheckedState(e.target.checked);
-    }
-
-    public render() {
-        return (
-            <div className="todo-item">
-                <h2>
-                    <input
-                        type="checkbox"
-                        name={this.props.todoItemModel.handle.absolutePath}
-                        checked={this.state.checked}
-                        onChange={this.setCheckedState} />
-                    <CollaborativeInput
-                        sharedString={this.itemText}
-                        style={{
-                            border: "none",
-                            fontFamily: "inherit",
-                            fontSize: 20,
-                            marginBottom: 5,
-                            marginTop: 5,
-                            outline: "none",
-                            width: "inherit",
-                        }} />
-                    <button
-                        name="toggleInnerVisible"
-                        style={this.buttonStyle}
-                        onClick={() => {
-                            this.setState({ innerComponentVisible: !this.state.innerComponentVisible });
-                        }}>
-                        {this.state.innerComponentVisible ? "▲" : "▼"}
-                    </button>
-                    <button
-                        name="OpenSubComponent"
-                        id={this.state.absoluteUrl}
-                        style={this.buttonStyle}
-                        onClick={() => window.open(this.state.absoluteUrl, "_blank")}
-                        disabled={this.state.absoluteUrl === undefined}>↗
-                    </button>
-                    <button
-                        style={this.buttonStyle}
-                        onClick={() => alert("Implement Delete")}>X</button>
-                </h2>
-                {
-                    // If the content is visible we will show a button or a component
-                    this.state.innerComponentVisible &&
-                    <ReactViewAdapter view={this.props.todoItemModel.getInnerComponent()} />
-                }
-            </div>
-        );
-    }
-}
+    return (
+        <div className="todo-item">
+            <h2>
+                <input
+                    type="checkbox"
+                    name={todoItemModel.handle.absolutePath}
+                    checked={checked}
+                    onChange={checkChangedHandler} />
+                <CollaborativeInput
+                    sharedString={itemText}
+                    style={{
+                        border: "none",
+                        fontFamily: "inherit",
+                        fontSize: 20,
+                        marginBottom: 5,
+                        marginTop: 5,
+                        outline: "none",
+                        width: "inherit",
+                    }} />
+                <button
+                    name="toggleInnerVisible"
+                    style={buttonStyle}
+                    onClick={() => {
+                        setDetailsVisible(!detailsVisible);
+                    }}>
+                    {detailsVisible ? "▲" : "▼"}
+                </button>
+                <button
+                    name="OpenSubComponent"
+                    id={absoluteUrl}
+                    style={buttonStyle}
+                    onClick={() => window.open(absoluteUrl, "_blank")}
+                    disabled={absoluteUrl === undefined}>↗
+                </button>
+                <button
+                    style={buttonStyle}
+                    onClick={() => alert("Implement Delete")}>X</button>
+            </h2>
+            {
+                // If the content is visible we will show a button or a component
+                detailsVisible &&
+                <ReactViewAdapter view={todoItemModel.getInnerComponent()} />
+            }
+        </div>
+    );
+};
