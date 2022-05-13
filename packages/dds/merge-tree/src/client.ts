@@ -46,13 +46,14 @@ import {
     IMergeTreeOp,
     IRelativePosition,
     MergeTreeDeltaType,
+    ReferenceType,
 } from "./ops";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
-import { ReferencePosition, RangeStackMap } from "./referencePositions";
+import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -317,13 +318,36 @@ export class Client {
         }
         return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
     }
-
+    /**
+     * @deprecated - use createReferencePosition instead
+     */
     public addLocalReference(lref: LocalReference) {
         return this.mergeTree.addLocalReference(lref);
     }
 
+    /**
+     * @deprecated - use removeReferencePosition instead
+     */
     public removeLocalReference(lref: LocalReference) {
-        return this.mergeTree.removeLocalReference(lref.segment!, lref);
+        return this.removeLocalReferencePosition(lref);
+    }
+
+    public createLocalReferencePosition(
+        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
+    ): ReferencePosition {
+        return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties, this);
+    }
+
+    public removeLocalReferencePosition(lref: ReferencePosition) {
+        return this.mergeTree.removeLocalReferencePosition(lref);
+    }
+
+    public localReferencePositionToPosition(lref: ReferencePosition) {
+        const segment = lref.getSegment();
+        if (segment === undefined) {
+            return DetachedReferencePosition;
+        }
+        return this.getPosition(segment) + lref.getOffset();
     }
 
     /**
@@ -799,7 +823,7 @@ export class Client {
             default:
                 unreachableCase(op, "unrecognized op type");
         }
-        assert(!!metadata, "Applying op must generate a pending segment");
+        assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
         return metadata;
     }
 

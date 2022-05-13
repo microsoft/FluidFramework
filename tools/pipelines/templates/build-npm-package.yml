@@ -248,20 +248,30 @@ stages:
             # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
             # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
             - task: Bash@3
+              displayName: 'Check for nyc/report directory'
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ parameters.buildDirectory }}
+                script: |
+                  test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No
+                  nyc/report directory'
+              condition: succeededOrFailed()
+            - task: Bash@3
               displayName: Patch Coverage Results
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}/nyc/report
                 script: |
                   sed -e 's/\(filename=\".*[\\/]external \)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
-              condition: succeededOrFailed()
+              condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+
             - task: PublishCodeCoverageResults@1
               displayName: Publish Code Coverage
               inputs:
                 codeCoverageTool: Cobertura
                 summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                 reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
-              condition: succeededOrFailed()
+              condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
           # Test - Upload results
           - task: PublishTestResults@2

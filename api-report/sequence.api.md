@@ -525,7 +525,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 // @public (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval> {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
-    // (undocumented)
+    // @deprecated (undocumented)
     addLocalReference(lref: LocalReference): void;
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
     // (undocumented)
@@ -533,6 +533,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     protected client: Client;
     // (undocumented)
+    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined): ReferencePosition;
+    // @deprecated (undocumented)
     createPositionReference(segment: T, offset: number, refType: ReferenceType): LocalReference;
     // (undocumented)
     protected didAttach(): void;
@@ -573,6 +575,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     protected loadedDeferred: Deferred<void>;
     // (undocumented)
+    localReferencePositionToPosition(lref: ReferencePosition): number;
+    // @deprecated (undocumented)
     localRefToPos(localRef: LocalReference): number;
     // (undocumented)
     protected onConnect(): void;
@@ -582,8 +586,10 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: SummarySerializer): void;
+    // @deprecated (undocumented)
+    removeLocalReference(lref: LocalReference): ReferencePosition;
     // (undocumented)
-    removeLocalReference(lref: LocalReference): void;
+    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition;
     // (undocumented)
     removeRange(start: number, end: number): IMergeTreeRemoveMsg;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
