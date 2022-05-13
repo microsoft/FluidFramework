@@ -117,6 +117,8 @@ export interface IDocument {
 
     createTime: number;
 
+    lastAccessTime?: number;
+
     documentId: string;
 
     tenantId: string;
