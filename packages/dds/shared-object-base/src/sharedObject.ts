@@ -552,5 +552,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object.
      */
-    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    protected abstract summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
 }
