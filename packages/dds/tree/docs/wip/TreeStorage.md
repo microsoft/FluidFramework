@@ -215,7 +215,11 @@ Both approaches are similar as far as being able to be specialized to take advan
 however its likely slightly easier to support both modes of operation for the Logical Node Tree since doing so basically amounts to tweaking the indirection logic
 (always on, but replace the indirection able with the key value store).
 
-These factors, in my (Craig's) subjective opinion seem to lean toward the Logical Node Tree as being a better choice for Shared-Tree's planned usage patterns.
+#### Decision
+
+These factors, in my (Craig's) subjective opinion, seem to lean toward the Logical Node Tree as being a better choice for Shared-Tree's planned usage patterns.
+This still needs consensus.
 A conclusion on this front is not needed for M1 (partial checkouts and incremental summaries are not technically necessary for that),
 but this area would be a good one to develop in parallel with other aspects of SharedTree.
-We practice decision encapsulation here: it would be nice to minimize the impact changing our approach for this later will have since we come up with better ideas, or change our evaluation criteria.
+This is a good place leverage decision encapsulation to minimize the impact if we change our approach later
+(ex: we come up with better ideas, find an issue with this analysis, or change our evaluation criteria).
