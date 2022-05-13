@@ -21,7 +21,6 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISummarizeInternalResult } from '@fluidframework/runtime-definitions';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions';
 import { ISummarizerNode } from '@fluidframework/runtime-definitions';
 import { ISummarizerNodeConfig } from '@fluidframework/runtime-definitions';
@@ -33,6 +32,7 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
+import { SummarizeInternalFn } from '@fluidframework/runtime-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
@@ -66,10 +66,10 @@ export function createDataStoreFactory(type: string, factory: Factory | Promise<
 export function createResponseError(status: number, value: string, request: IRequest): IResponse;
 
 // @public
-export const createRootSummarizerNode: (logger: ITelemetryLogger, summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfig) => IRootSummarizerNode;
+export const createRootSummarizerNode: (logger: ITelemetryLogger, summarizeInternalFn: SummarizeInternalFn, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfig) => IRootSummarizerNode;
 
 // @public
-export const createRootSummarizerNodeWithGC: (logger: ITelemetryLogger, summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfigWithGC, getGCDataFn?: ((fullGC?: boolean | undefined) => Promise<IGarbageCollectionData>) | undefined, getBaseGCDetailsFn?: (() => Promise<IGarbageCollectionDetailsBase>) | undefined) => IRootSummarizerNodeWithGC;
+export const createRootSummarizerNodeWithGC: (logger: ITelemetryLogger, summarizeInternalFn: SummarizeInternalFn, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfigWithGC, getGCDataFn?: ((fullGC?: boolean | undefined) => Promise<IGarbageCollectionData>) | undefined, getBaseGCDetailsFn?: (() => Promise<IGarbageCollectionDetailsBase>) | undefined) => IRootSummarizerNodeWithGC;
 
 // @public (undocumented)
 export function exceptionToResponse(err: any): IResponse;
@@ -121,7 +121,7 @@ export class ObjectStoragePartition implements IChannelStorageService {
     list(path: string): Promise<string[]>;
     // (undocumented)
     readBlob(path: string): Promise<ArrayBufferLike>;
-    }
+}
 
 // @public
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
@@ -197,11 +197,10 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     get stats(): Readonly<ISummaryStats>;
     // (undocumented)
     get summary(): ISummaryTree;
-    }
+}
 
 // @public (undocumented)
 export function utf8ByteLength(str: string): number;
-
 
 // (No @packageDocumentation comment for this package)
 
