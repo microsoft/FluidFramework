@@ -250,14 +250,22 @@ export const channelsTreeName = ".channels";
  */
 export interface ITelemetryContext {
     /**
-     * Add an object to the telemetry data.
-     * @param prefix - prefix to tag this data with (ex: "fluid:DirectoryCount:")
+     * Sets value for telemetry data being tracked.
+     * @param prefix - unique prefix to tag this data with (ex: "fluid:map:")
+     * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
      * @param value - value to attribute to this summary telemetry data
      */
-    add(prefix: string, value: string): void;
+    set(prefix: string, property: string, value: any): void;
 
     /**
-     * Returns a serialized version of the telemetry data.
+     * Get the telemetry data being tracked
+     * @param prefix - unique prefix for this data (ex: "fluid:map:")
+     * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
+     */
+    get(prefix: string, property: string): any;
+
+    /**
+     * Returns a serialized version of all the telemetry data.
      * Should be used when logging in telemetry events.
      */
     serialize(): string;
