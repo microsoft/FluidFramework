@@ -101,9 +101,11 @@ export interface IGCStats {
 export const GCNodeType = {
     // Nodes that are for data stores.
     DataStore: "DataStore",
+    // Nodes that are within a data store. For example, DDS nodes.
+    SubDataStore: "SubDataStore",
     // Nodes that are for attachment blobs, i.e., blobs uploaded via BlobManager.
     Blob: "Blob",
-    // Nodes that are neither data store not blobs. For example, root node and DDS nodes.
+    // Nodes that are neither of the above. For example, root node.
     Other: "Other",
 };
 export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
