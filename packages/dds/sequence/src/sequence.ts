@@ -48,7 +48,7 @@ import {
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
 import {
     IntervalCollection,
@@ -99,6 +99,8 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     (event: "maintenance",
         listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void);
 }
+
+const telemetryContextPrefix = "fluid:directory:";
 
 export abstract class SharedSegmentSequence<T extends ISegment>
     extends SharedObject<ISharedSegmentSequenceEvents>
@@ -441,16 +443,31 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.intervalMapKernel.keys();
     }
 
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
+
+        const instanceCountProperty = "InstanceCount";
+        let instanceCount = telemetryContext?.get(telemetryContextPrefix, instanceCountProperty) ?? 0;
+        telemetryContext?.set(telemetryContextPrefix, instanceCountProperty, ++instanceCount);
+
+        let totalBlobBytes = 0;
 
         // conditionally write the interval collection blob
         // only if it has entries
         if (this.intervalMapKernel.size > 0) {
-            builder.addBlob(snapshotFileName, this.intervalMapKernel.serialize(serializer));
+            const content = this.intervalMapKernel.serialize(serializer);
+            totalBlobBytes += content.length;
+            builder.addBlob(snapshotFileName, content);
         }
 
         builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
+
+        const totalBlobBytesProperty = "TotalBlobBytes";
+        const prevTotal = (telemetryContext?.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0) as number;
+        telemetryContext?.set(telemetryContextPrefix, totalBlobBytesProperty, prevTotal + totalBlobBytes);
 
         return builder.getSummaryTree();
     }
