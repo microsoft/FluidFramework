@@ -37,13 +37,13 @@ Some useful performance trade-offs that could be made to improve this:
 - Inline some nodes instead of storing them in separate blobs.
     Choice of which nodes to do this with impacts performance a lot and depends on usage.
     Could include choice with schema and/or usage information (both hard coded heuristics and dynamically).
-- Could indirect some (or all) blob references through an indirection table (PageTable by page Id) to reduce propagation of updates ancestors.
+- Could indirect some (or all) blob references through an indirection table (PageTable B-Tree mapping page id to blob) to avoid having to update the blobs containing the ancestors up to the root. This instead requires updating the indirection table pages (which means updating pages through the PageTable B-Tree to the root).
     - Choice of when to do this could be heuristic tuned to balance read costs, page table memory use, and write costs.
     - Can be used where depth (by number of blobs) since last indirection is high, and/or right above blobs that keep getting updated (ex: add an indirection when updating multiple parent blobs for the sole purpose of updating a specific child tht keeps changing).
     - Page ids for indirect references can be allocated such that nearby pages tend to sort near each other improving efficiency of caching nodes in indirection B tree.
     - Can rewrite parts of the tree removing or changing indirection (and possibly re-chunking). Doing this occasionally for parts of the tree that were loaded but not modified can ensure read-heavy parts of the tree have a chance to get optimally re-encoded for reading.
 - Chunk sequences: when listing the children in a sequence, allow referring to a "Chunk" which can contain multiple nodes (potentially via sub-chunks) instead of just directly to nodes.
-    This allows splatting up large sequences for more efficient editing and avoiding bloated blobs due to large sequences.
+    This allows splitting up large sequences for more efficient editing and avoiding bloated blobs due to large sequences.
     It also allows clustering similar siblings together for improved compression, which works particularly well when combined with inlining of their children.
     This also makes it easier for the root to be a sequence instead of a node, which may benefit the editing APIs.
 - Chunked sets of traits:
