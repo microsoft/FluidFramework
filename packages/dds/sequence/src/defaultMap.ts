@@ -13,7 +13,6 @@ import {
 } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    ILocalValue,
     makeSerializable,
     ValueTypeLocalValue,
 } from "./localValues";
@@ -120,7 +119,7 @@ export class DefaultMap<T> {
     /**
      * The in-memory data the map is storing.
      */
-    private readonly data = new Map<string, ILocalValue<T>>();
+    private readonly data = new Map<string, ValueTypeLocalValue<T>>();
 
     private lastProcessedSeq: number = -1;
 
@@ -342,7 +341,7 @@ export class DefaultMap<T> {
      * @param key - The key being initialized
      * @param local - Whether the message originated from the local client
      */
-    private createCore(key: string, local: boolean): ILocalValue<T> {
+    private createCore(key: string, local: boolean): ValueTypeLocalValue<T> {
         const localValue = new ValueTypeLocalValue(
             this.type.factory.load(this.makeMapValueOpEmitter(key), undefined),
             this.type,
@@ -364,7 +363,7 @@ export class DefaultMap<T> {
      * @param serializable - The remote information that we can convert into a real object
      * @returns The local value that was produced
      */
-    private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
+    private makeLocal(key: string, serializable: ISerializableValue): ValueTypeLocalValue<T> {
         assert(serializable.type !== ValueType[ValueType.Plain] && serializable.type !== ValueType[ValueType.Shared],
             "Support for plain value types removed.");
 
@@ -390,8 +389,7 @@ export class DefaultMap<T> {
             "act",
             {
                 process: (op: IMapValueTypeOperation, local, message, localOpMetadata) => {
-                    const localValue = (this.data.get(op.key) ??
-                        this.createCore(op.key, local)) as ValueTypeLocalValue<T>;
+                    const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
                     const translatedValue = parseHandles(

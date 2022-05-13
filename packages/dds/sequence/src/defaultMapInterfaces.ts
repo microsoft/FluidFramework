@@ -113,19 +113,15 @@ export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
 }
 
 /**
- * The _ready-for-serialization_ format of values contained in DDS contents.  This allows us to use
+ * The _ready-for-serialization_ format of values contained in DDS contents. This allows us to use
  * ISerializableValue.type to understand whether they're storing a Plain JS object, a SharedObject, or a value type.
  * Note that the in-memory equivalent of ISerializableValue is ILocalValue (similarly holding a type, but with
- * the _in-memory representation_ of the value instead).  An ISerializableValue is what gets passed to
- * JSON.stringify and comes out of JSON.parse.  This format is used both for snapshots (loadCore/populate)
+ * the _in-memory representation_ of the value instead). An ISerializableValue is what gets passed to
+ * JSON.stringify and comes out of JSON.parse. This format is used both for snapshots (loadCore/populate)
  * and ops (set).
- * If type is Plain, it must be a plain JS object that can survive a JSON.stringify/parse.  E.g. a URL object will
- * just get stringified to a URL string and not rehydrate as a URL object on the other side.  It may contain members
- * that are ISerializedHandle (the serialized form of a handle).
- * If type is a value type then it must be amongst the types registered via registerValueType or we won't know how
- * to serialize/deserialize it (we rely on its factory via .load() and .store()).  Its value will be type-dependent.
- * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
- * channel ID.  This type is legacy and deprecated.
+ *
+ * The DefaultMap impelmentation for sequence has been specialized to only support a single ValueType, which serializes
+ * and deserializes via .store() and .load().
  */
 export interface ISerializableValue {
     /**
