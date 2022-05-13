@@ -20,10 +20,10 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     /**
      * The id of the container this resolved url is for.
      */
-    id: string,
+    id: string;
     url: string;
-    tokens: { [name: string]: string };
-    endpoints: { [name: string]: string };
+    tokens: { [name: string]: string; };
+    endpoints: { [name: string]: string; };
 }
 
 /**

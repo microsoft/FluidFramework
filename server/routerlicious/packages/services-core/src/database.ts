@@ -45,7 +45,7 @@ export interface ICollection<T> {
      * @param options - optional settings
      * @returns - cursor you can use to iterate over aggregated results
      */
-    aggregate(group: any, options?: any): any;
+    aggregate(pipeline: any, options?: any): any;
     /**
      * Finds queries in the database
      *
@@ -75,7 +75,7 @@ export interface ICollection<T> {
      * @param query - data we want to find
      * @param value - data to insert to the database if we cannot find query
      */
-    findOrCreate(query: any, value: T): Promise<{ value: T, existing: boolean }>;
+    findOrCreate(query: any, value: T): Promise<{ value: T; existing: boolean; }>;
 
     /**
      * Finds the query in the database. If it exists, update the value to set.

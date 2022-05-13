@@ -363,7 +363,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	 * Saves the latest offset for the partition and emits the data event with the message.
 	 * If we are in the middle of rebalancing and the message was sent for a partition we will own,
 	 * the message will be saved and processed after rebalancing is completed.
-	 * @param message The message
+	 * @param message - The message
 	 */
 	private processMessage(message: kafkaTypes.Message) {
 		const partition = message.partition;

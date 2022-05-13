@@ -203,9 +203,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     };
 
     private noActiveClients: boolean;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    private canClose = false;
+
+    private closed: boolean = false;
 
     // mapping of enabled nack message types. messages will be nacked based on the provided info
     private readonly nackMessages: Map<NackMessagesType, INackMessagesControlMessageContents>;
@@ -490,6 +489,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     public close(closeType: LambdaCloseType) {
+        this.closed = true;
+
         this.checkpointContext.close();
 
         this.clearActivityIdleTimer();
@@ -511,6 +512,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         this.lastSendP = producer
             .send([message], message.tenantId, message.documentId)
             .catch((error) => {
+                if (this.closed) {
+                    return;
+                }
+
                 const errorMsg = "Could not send message to producer";
                 this.context.log?.error(
                     `${errorMsg}: ${JSON.stringify(error)}`,
@@ -702,8 +707,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         // Return if the client has already been added due to a prior join message.
                         return;
                     }
-
-                    this.canClose = false;
                 }
             }
         } else {
@@ -864,7 +867,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                             // joined since last noClient was sent to alfred
                             if (controlContents.clearCache && this.noActiveClients) {
                                 instruction = InstructionType.ClearCache;
-                                this.canClose = true;
                                 const deliCacheMsg = `Deli cache will be cleared`;
                                 this.context.log?.info(deliCacheMsg, {
                                     messageMetaData: {
@@ -1109,6 +1111,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         try {
             await this.rawDeltasProducer.send([message], message.tenantId, message.documentId);
         } catch (error) {
+            if (this.closed) {
+                return;
+            }
+
             const errorMsg = `Could not send message to alfred`;
             this.context.log?.error(
                 `${errorMsg}: ${JSON.stringify(error)}`,
@@ -1577,7 +1583,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
     /**
      * Updates the time until the state is checkpointed when idle
-     * @param rawMessage The current raw message that is initiating the timer
+     * @param rawMessage - The current raw message that is initiating the timer
      */
     private updateCheckpointIdleTimer() {
         this.clearCheckpointIdleTimer();

@@ -5,6 +5,7 @@
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
+import { take } from '@fluid-internal/stochastic-test-utils';
 import { fail, Mutable } from '../Common';
 import {
 	defaultClusterCapacity,
@@ -26,6 +27,7 @@ import {
 import {
 	Client,
 	IdCompressorTestNetwork,
+	makeOpGenerator,
 	performFuzzActions,
 	sessionIds,
 	TestIdData,
@@ -55,7 +57,12 @@ describe('IdCompressor Perf', () => {
 		includeOverrides: boolean,
 		client: Client
 	): [IdCompressor, readonly TestIdData[]] {
-		performFuzzActions(network, Math.E, includeOverrides, client, allowLocal ? false : true);
+		const maxClusterSize = 25;
+		const generator = take(1000, makeOpGenerator({ includeOverrides, validateInterval: 2000, maxClusterSize }));
+		if (network.initialClusterSize > maxClusterSize) {
+			network.enqueueCapacityChange(maxClusterSize);
+		}
+		performFuzzActions(generator, network, Math.E, client, allowLocal ? false : true);
 		return [network.getCompressorUnsafe(client), network.getIdLog(client)];
 	}
 

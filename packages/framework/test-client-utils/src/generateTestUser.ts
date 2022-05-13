@@ -10,7 +10,7 @@ import { v4 as uuid } from "uuid";
  * Create a new user object with a unique id (uuid) and random name (FIRST LAST)
  * @returns a user object with a name and id property
  */
-export const generateTestUser = (): IUser & { name: string } => {
+export const generateTestUser = (): IUser & { name: string; } => {
     const user = {
         id: uuid(),
         name: generateName(),

@@ -16,7 +16,7 @@ export class AppState implements IAppState {
         numBubbles: number,
     ) {
         this.localClient = makeClient(_width, _height, numBubbles);
-        this.clients = [ this.localClient ];
+        this.clients = [this.localClient];
     }
 
     public setSize(width?: number, height?: number) {

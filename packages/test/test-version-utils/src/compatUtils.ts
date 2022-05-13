@@ -82,9 +82,9 @@ export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRunt
 async function createVersionedFluidTestDriver(
     baseVersion: string,
     driverConfig?: {
-        type?: TestDriverTypes,
-        config?: FluidTestDriverConfig,
-        version?: number | string,
+        type?: TestDriverTypes;
+        config?: FluidTestDriverConfig;
+        version?: number | string;
     },
 ) {
     const driverApi = getDriverApi(baseVersion, driverConfig?.version);
@@ -99,9 +99,9 @@ export async function getVersionedTestObjectProvider(
     baseVersion: string,
     loaderVersion?: number | string,
     driverConfig?: {
-        type?: TestDriverTypes,
-        config?: FluidTestDriverConfig,
-        version?: number | string,
+        type?: TestDriverTypes;
+        config?: FluidTestDriverConfig;
+        version?: number | string;
     },
     runtimeVersion?: number | string,
     dataRuntimeVersion?: number | string,

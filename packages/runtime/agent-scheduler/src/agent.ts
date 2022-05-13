@@ -25,7 +25,7 @@ export interface IAgentSchedulerEvents extends IEvent {
      *      unless release() is called)
      * @param listener - callback notified when change happened for particular key
      */
-    (event: "picked" | "released" | "lost", listener: (taskId: string) => void)
+    (event: "picked" | "released" | "lost", listener: (taskId: string) => void);
 }
 
 /**

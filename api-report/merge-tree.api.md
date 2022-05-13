@@ -253,6 +253,9 @@ export interface Comparer<T> {
 }
 
 // @public (undocumented)
+export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number;
+
+// @public (undocumented)
 export const compareStrings: (a: string, b: string) => number;
 
 // @public (undocumented)
@@ -278,6 +281,9 @@ export function createMap<T>(): MapLike<T>;
 
 // @public
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
+
+// @public (undocumented)
+export const DetachedReferencePosition = -1;
 
 // @public (undocumented)
 export interface Dictionary<TKey, TData> {
@@ -782,52 +788,54 @@ export function ListMakeHead<U>(): List<U>;
 // @public (undocumented)
 export const LocalClientId = -1;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class LocalReference implements ReferencePosition {
-    constructor(client: Client, initSegment: ISegment, offset?: number, refType?: ReferenceType);
+    // @deprecated
+    constructor(client: Client, initSegment: ISegment,
+    offset?: number, refType?: ReferenceType, properties?: PropertySet);
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     compare(b: LocalReference): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     static readonly DetachedPosition: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     getClient(): Client;
     // (undocumented)
     getOffset(): number;
     // (undocumented)
     getProperties(): PropertySet | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     getRangeLabels(): string[] | undefined;
     // (undocumented)
     getSegment(): ISegment | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     getTileLabels(): string[] | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasRangeLabel(label: string): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasRangeLabels(): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasTileLabel(label: string): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasTileLabels(): boolean;
     // (undocumented)
     isLeaf(): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     max(b: LocalReference): LocalReference;
-    // (undocumented)
+    // @deprecated (undocumented)
     min(b: LocalReference): LocalReference;
-    // (undocumented)
+    // @deprecated (undocumented)
     offset: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     pairedRef?: LocalReference;
     // (undocumented)
     properties: PropertySet | undefined;
     // (undocumented)
     refType: ReferenceType;
-    // (undocumented)
+    // @deprecated (undocumented)
     segment: ISegment | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     toPosition(): number;
 }
 
@@ -897,21 +905,21 @@ export class Marker extends BaseSegment implements ReferencePosition {
     getOffset(): number;
     // (undocumented)
     getProperties(): PropertySet | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     getRangeLabels(): string[] | undefined;
     // (undocumented)
     getSegment(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     getTileLabels(): string[] | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasRangeLabel(label: string): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasRangeLabels(): boolean;
     // (undocumented)
     hasSimpleType(simpleTypeName: string): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasTileLabel(label: string): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasTileLabels(): boolean;
     // (undocumented)
     static is(segment: ISegment): segment is Marker;
@@ -934,6 +942,9 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 
 // @public (undocumented)
 export const MaxNodesInBlock = 8;
+
+// @public (undocumented)
+export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
 // @public (undocumented)
 export class MergeBlock extends MergeNode implements IMergeBlock {
@@ -970,7 +981,7 @@ export class MergeNode implements IMergeNodeCommon {
 export class MergeTree {
     constructor(options?: PropertySet | undefined);
     ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     addLocalReference(lref: LocalReference): void;
     // (undocumented)
     addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void): void;
@@ -1039,7 +1050,7 @@ export class MergeTree {
     referencePositionToLocalPosition(refPos: ReferencePosition, refSeq?: number, clientId?: number): number;
     // (undocumented)
     reloadFromSegments(segments: ISegment[]): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     removeLocalReference(segment: ISegment, lref: LocalReference): void;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: number): number | undefined;
     // (undocumented)
@@ -1129,6 +1140,9 @@ export interface MinListener {
     // (undocumented)
     onMinGE(minSeq: number): void;
 }
+
+// @public (undocumented)
+export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
 // @public (undocumented)
 export interface NodeAction<TClientData> {
@@ -1275,19 +1289,19 @@ export interface ReferencePosition {
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
     // (undocumented)
     getOffset(): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     getRangeLabels(): string[] | undefined;
     // (undocumented)
     getSegment(): ISegment | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     getTileLabels(): string[] | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasRangeLabel(label: string): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasRangeLabels(): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasTileLabel(label: string): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     hasTileLabels(): boolean;
     // (undocumented)
     isLeaf(): boolean;
@@ -1327,7 +1341,13 @@ export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefin
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean;
 
 // @public (undocumented)
+export function refHasRangeLabels(refPos: ReferencePosition): boolean;
+
+// @public (undocumented)
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
+
+// @public (undocumented)
+export function refHasTileLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
 export const reservedMarkerIdKey = "markerId";
