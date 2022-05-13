@@ -70,7 +70,7 @@ Some useful performance trade-offs that could be made to improve this:
 These optimizations interact: for example if inlining to optimize breadth first traversal,
 the depth of the tree of blobs will tend to be as high as the logical tree's depth, so indirection on blob handles will be more useful.
 
-For N nodes, if 1 in 20 blobs handles were randomly indirect, and we fit an average of 100 nodes in a blob, and the indirection b-tree is of branching factor 200 (4KB pages, 20 byte handle) we get:
+For N nodes, if 1 in 20 blobs' handles were randomly indirect, and we fit an average of 100 nodes in a blob, and the indirection b-tree is of branching factor 200 (4KB pages, 20 byte handle) we get:
 
 -   N / 100 blobs
 -   N / 2000 indirect blob references
@@ -81,7 +81,7 @@ For N nodes, if 1 in 20 blobs handles were randomly indirect, and we fit an aver
 -   average pages updated on single change: ~20 (This might be acceptable if we batch updates, only writing batches when summarizing, since that would deduplicate a lot of intermediate updates.
     Also optimizing where indirection is used (instead of random) would also help a lot here).
 
-Same states with every handle indirect:
+Same stats with every handle indirect:
 
 -   N / 100 blobs
 -   N / 100 indirect blob references
@@ -97,7 +97,7 @@ There are also additional options to update blobs in place for the actual edits 
 
 ### Path B-Tree
 
-All data in the tree can be stored in a key value store under it's full path through the logical tree.
+All data in the tree can be stored in a key value store under its full path through the logical tree.
 Doing this with a [Radix tree](https://en.wikipedia.org/wiki/Radix_tree) roughly amounts to storing the logical tree.
 Rather than directly doing a Radix tree, a B-Tree can be used, which can be optimized by omitting any common prefixes shared by every key within that node.
 This optimization not only saves a lot of space in the nodes, but also makes moves more efficient, allowing moves to reuse B-Tree nodes when the only change was the part og the path/kay that was optimized out of the node.
