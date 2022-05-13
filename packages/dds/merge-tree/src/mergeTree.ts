@@ -1516,6 +1516,7 @@ export class MergeTree {
         segment.localRefs.clear();
         for (const lref of refsToStay) {
             lref.segment = segment;
+            lref.offset = 0;
             segment.localRefs.addLocalRef(lref);
         }
     }
