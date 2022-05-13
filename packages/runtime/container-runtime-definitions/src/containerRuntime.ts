@@ -101,6 +101,8 @@ export interface IContainerRuntime extends
      * @param pkg - Package name of the data store factory
      * @param rootDataStoreId - data store ID. IDs naming space is global in container. If collision on name occurs,
      * it results in container corruption - loading this file after that will always result in error.
+     *
+     * @deprecated - will be removed in an upcoming release. See #9660.
      */
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 

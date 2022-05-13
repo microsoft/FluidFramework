@@ -22,6 +22,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-to-be-removed-from-ILoaderProps-and-ILoaderServices)
 - [routerlicious-host package and ContainerUrlResolver to be removed](#routerlicious-host-package-and-ContainerUrlResolver-to-be-removed)
 - [LocalReference class and method deprecations](#LocalReference-class-and-method-deprecations)
+- [IContainerRuntime.createRootDataStore is deprecated](#IContainerRuntime-createRootDataStore-is-deprecated)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
@@ -44,6 +45,9 @@ To support this change the following methods are deprecated with replacements th
  - removeLocalReference to removeLocalReferencePosition
 
  The above methods are changes in both the @fluidframework/merge-tree and @fluidframework/sequence packages.
+
+ ### IContainerRuntime.createRootDataStore is deprecated
+ See #9660. The API is vulnerable to name conflicts, which lead to invalid documents. As a replacement, create a regular datastore using the `IContainerRuntimeBase.createDataStore` function, then alias the datastore by using the `IDataStore.trySetAlias` function and specify a string value to serve as the alias to which the datastore needs to be bound. If successful, "Success" will be returned, and a call to `getRootDataStore` with the alias as parameter will return the same datastore.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
