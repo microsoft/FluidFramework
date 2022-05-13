@@ -186,7 +186,7 @@ export interface IDeliLambdaEvents extends IEvent {
     (event: "updatedDurableSequenceNumber", listener: (durableSequenceNumber: number) => void);
 
     /**
-     * Emitted when the lambda recieves an custom control message.
+     * Emitted when the lambda recieves a custom control message.
      */
     (event: "controlMessage", listener: (controlMessage: IControlMessage) => void);
 
