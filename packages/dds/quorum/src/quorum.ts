@@ -419,8 +419,18 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * @internal
      */
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-        const content = [...this.values.entries()];
-        return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
+        const allEntries = [...this.values.entries()];
+        // Filter out items that are ineffectual
+        const summaryEntries = allEntries.filter(([, quorumValue]) => {
+            return (
+                // Items have an effect if they are still pending, have a real value, or some client may try to
+                // reference state before the value was accepted.  Otherwise they can be dropped.
+                quorumValue.pending !== undefined
+                || quorumValue.accepted.value !== undefined
+                || quorumValue.accepted.sequenceNumber > this.runtime.deltaManager.minimumSequenceNumber
+            );
+        });
+        return createSingleBlobSummary(snapshotFileName, JSON.stringify(summaryEntries));
     }
 
     /**
