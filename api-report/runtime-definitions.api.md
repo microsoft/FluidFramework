@@ -377,8 +377,9 @@ export interface ISummaryTreeWithStats {
 
 // @public
 export interface ITelemetryContext {
-    add(prefix: string, value: string): void;
+    get(prefix: string, property: string): any | undefined;
     serialize(): string;
+    set(prefix: string, property: string, value: any): void;
 }
 
 // @public
