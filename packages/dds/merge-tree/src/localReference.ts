@@ -303,12 +303,13 @@ export class LocalReferenceCollection {
      *
      * @internal - this method should only be called by mergeTree
      */
-    public addLocalRef(lref: LocalReference) {
+    public addLocalRef(lref: LocalReference | ReferencePosition) {
         assert(
-            !refTypeIncludesFlag(lref, ReferenceType.Transient),
+            !refTypeIncludesFlag(lref, ReferenceType.Transient)
+            && lref instanceof LocalReference,
             "transient references cannot be bound to segments");
-        const refsAtOffset = this.refsByOffset[lref.offset] =
-            this.refsByOffset[lref.offset]
+        const refsAtOffset = this.refsByOffset[lref.getOffset()] =
+            this.refsByOffset[lref.getOffset()]
             ?? { at: ListMakeHead() };
         const atRefs = refsAtOffset.at =
             refsAtOffset.at
@@ -322,7 +323,14 @@ export class LocalReferenceCollection {
         this.refCount++;
     }
 
-    public removeLocalRef(lref: LocalReference) {
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
+     public removeLocalRef(lref: LocalReference | ReferencePosition) {
+        if (!(lref instanceof LocalReference)) {
+            return;
+        }
         const tryRemoveRef = (refs: List<LocalReference> | undefined) => {
             if (refs) {
                 let node = refs;
@@ -330,7 +338,7 @@ export class LocalReferenceCollection {
                     node = node.next;
                     if (node.data === lref) {
                         ListRemoveEntry(node);
-                        if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                        if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                             this.hierRefCount--;
                         }
                         this.refCount--;
