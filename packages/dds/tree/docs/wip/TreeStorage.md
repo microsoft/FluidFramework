@@ -1,47 +1,47 @@
 # Tree Storage
 
 This document assumes that the trees will be persisted into some copy on write storage in the form of blobs, which can be fetched using their "handle" which can in turn be serialized into blobs.
-This is the API of Fluid's blobs, but note that fluid requires you to upload the blob to be able to serialize a handle to it.
+This is the API of Fluid's blobs, but note that Fluid requires you to upload the blob to be able to serialize a handle to it.
 
 It is assumed that each client has access to some stored version of the tree, and keeps the "dirty" part in memory.
-It is not required that all the clients agree on what stored tree they are using, or how its chunked: all thats required to be be kept consistent is their understanding of its content.
+It is not required that all the clients agree on what stored tree they are using, or how it's chunked: all that's required to be kept consistent is their understanding of its content.
 
 ## What Gets Stored
 
 * The current tree.
-* Optional "local" history information (information stored on/withing the logical tree about history for that specific subtree.
+* Optional "local" history information (information stored on/within the logical tree about history for that specific subtree.
     This mostly makes sense for structural edits, but could point to or include high level edits/transaction information).
 * Optional references to old snapshots (ex: sequence of top level snapshots. How file system snapshots work).
-* Optional top level edit sequence (log of ops. Could be temporal history and/or logical branch history. Can include high level edit information)
+* Optional top level edit sequence (log of ops. Could be temporal history and/or logical branch history. Can include high level edit information).
 
 For the rest of this document we will ignore storage of old snapshots, and any history sequence stored at the top level, and focus just on the actual tree content.
-This tree content could be just the tree data, or the tree data augmented with history information (ex: sequences of deltas, references to edits etc): we will treat these the same.
+This tree content could be just the tree data, or the tree data augmented with history information (ex: sequences of deltas, references to edits etc.): we will treat these the same.
 
 ## Storage Approaches
 
 ### Logical Node Tree
 
 The actual tree itself can be stored directly, with each node being a blob, and referring to each other node with a handle.
-This would perform very poorly when used with fluid's blobs being pulled over the network due to:
+This would perform very poorly when used with Fluid's blobs being pulled over the network due to:
 - poor per node storage efficiency (pay full blob cost (including storing a handle in the parent) for every node)
 - lots of dependent reads when traversing down (depth of logical tree)
 - large sequences can produce large blobs (since a single node won't be split ever)
-- updates have to create O(depth) blobs, which depend on each-other (and this with fluid have to be uploaded in sequence)
+- updates have to create O(depth) blobs, which depend on each-other (and this with Fluid have to be uploaded in sequence)
 
 This does have some nice properties:
 - Accessing a child from its parent is always exactly 1 handle dereference.
 - When walking a sequence, siblings can be prefetched.
 - It's very simple and easy to implement correctly.
 
-Some useful performance trad-offs that could be made to improve this:
+Some useful performance trade-offs that could be made to improve this:
 - Inline some nodes instead of storing them in separate blobs.
     Choice of which nodes to do this with impacts performance a lot and depends on usage.
     Could include choice with schema and/or usage information (both hard coded heuristics and dynamically).
 - Could indirect some (or all) blob references through an indirection table (PageTable by page Id) to reduce propagation of updates ancestors.
     - Choice of when to do this could be heuristic tuned to balance read costs, page table memory use, and write costs.
     - Can be used where depth (by number of blobs) since last indirection is high, and/or right above blobs that keep getting updated (ex: add an indirection when updating multiple parent blobs for the sole purpose of updating a specific child tht keeps changing).
-    - Page ids for indirect references can be allocated such that nearby pages tend to sort near each-other improving efficiency of caching nodes in indirection B tree.
-    - Can rewrite parts of the tree removing or changing indirection (and possibly re-chunking). Doing this occasionally for parts of the tree that were loaded but not modified can ensure read heavy parts of the tree have a chance to get optimally re-encoded for reading.
+    - Page ids for indirect references can be allocated such that nearby pages tend to sort near each other improving efficiency of caching nodes in indirection B tree.
+    - Can rewrite parts of the tree removing or changing indirection (and possibly re-chunking). Doing this occasionally for parts of the tree that were loaded but not modified can ensure read-heavy parts of the tree have a chance to get optimally re-encoded for reading.
 - Chunk sequences: when listing the children in a sequence, allow referring to a "Chunk" which can contain multiple nodes (potentially via sub-chunks) instead of just directly to nodes.
     This allows splatting up large sequences for more efficient editing and avoiding bloated blobs due to large sequences.
     It also allows clustering similar siblings together for improved compression, which works particularly well when combined with inlining of their children.
@@ -54,7 +54,7 @@ Some useful performance trad-offs that could be made to improve this:
 These optimizations interact: for example if inlining to optimize breadth first traversal,
 the depth of the tree of blobs will tend to be as high as the logical tree's depth, so indirection on blob handles will be more useful.
 
-For N nodes, if 1 in 20 blobs handles were randomly indirect, and we fit average of 100 nodes in a blob, and the indirection b-tree is branching factor 200 (4KB pages, 20 byte handle) we get:
+For N nodes, if 1 in 20 blobs handles were randomly indirect, and we fit an average of 100 nodes in a blob, and the indirection b-tree is of branching factor 200 (4KB pages, 20 byte handle) we get:
     - N / 100 blobs
     - N / 2000 indirect blob references
     - log(200, N / 2000) deep indirection table. (First page gets us to 400k nodes, 4 deep covers 3.2 trillion nodes)
