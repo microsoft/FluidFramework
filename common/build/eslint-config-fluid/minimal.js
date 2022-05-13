@@ -188,6 +188,9 @@ module.exports = {
 
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",
+
+        "@typescript-eslint/no-invalid-this": "error",
+
     },
     "overrides": [
         {
@@ -202,6 +205,7 @@ module.exports = {
             // Rules only for test files
             "files": ["*.spec.ts", "src/test/**"],
             "rules": {
+                "@typescript-eslint/no-invalid-this": "off",
                 "@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
             }
         },
