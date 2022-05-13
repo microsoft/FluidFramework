@@ -130,7 +130,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     readonly attachState: AttachState;
     // @deprecated (undocumented)
     bindToContext(): void;
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;
@@ -139,7 +139,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     processSignal(message: any, local: boolean): void;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     setConnectionState(connected: boolean, clientId?: string): any;
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
     // (undocumented)
     readonly visibilityState?: VisibilityState_2;
@@ -305,7 +305,7 @@ export interface ISummarizeResult {
 export interface ISummarizerNode {
     // (undocumented)
     createChild(
-    summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+    summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfig): ISummarizerNode;
@@ -319,7 +319,7 @@ export interface ISummarizerNode {
     loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
-    summarize(fullTree: boolean): Promise<ISummarizeResult>;
+    summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
 }
 
 // @public (undocumented)
@@ -337,7 +337,7 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // (undocumented)
     createChild(
-    summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+    summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
@@ -349,8 +349,6 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // @deprecated (undocumented)
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
-    // (undocumented)
-    summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
@@ -377,13 +375,19 @@ export interface ISummaryTreeWithStats {
 }
 
 // @public
+export interface ITelemetryContext {
+    add(prefix: string, value: string): void;
+    serialize(): string;
+}
+
+// @public
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
 
 // @public
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 
 // @public (undocumented)
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;
 
 // @public
 const VisibilityState_2: {
