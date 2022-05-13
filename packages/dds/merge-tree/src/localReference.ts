@@ -310,7 +310,7 @@ export class LocalReferenceCollection {
     public addLocalRef(lref: LocalReference | ReferencePosition) {
         assert(
             !refTypeIncludesFlag(lref, ReferenceType.Transient),
-            "transient references cannot be bound to segments");
+            0x2df /* "transient references cannot be bound to segments" */);
         assertLocalReferences(lref);
         const refsAtOffset = this.refsByOffset[lref.getOffset()] =
             this.refsByOffset[lref.getOffset()]
