@@ -352,7 +352,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         const clientQueue = this.taskQueues.get(taskId);
         // If we have no queue for the taskId, then no one has signed up for it.
         return (
-            ((clientQueue?.includes(this.runtime.clientId)) ?? false)
+            (clientQueue?.includes(this.runtime.clientId) ?? false)
             && !this.latestPendingOps.has(taskId)
         )
             || this.latestPendingOps.get(taskId)?.type === "volunteer";
