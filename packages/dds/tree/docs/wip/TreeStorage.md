@@ -143,11 +143,14 @@ It's unclear what benefits this would offer, but if we do implement both for som
 Consider a tree with N nodes where its depth is O(N).
 
 This makes the path to the leaves, and thus the size of the key in the Path B-Tree O(N).
+Best case this can be optimized by omitting the common prefixes resulting in each node storing O(N / log (N)) portions of the key.
+This not only potentially causes the b-tree nodes to end up oversized (or store keys out of line or chunked),
+but also requires at minimum O(N*N / log (N)) key data across the whole tree, which ends up being both the size and traversal time bound.
+The update costs are also O(N).
 
-TODO: what would this means for the Path B-Tree? In practice this has to account for how it optimizes storage of paths.
-
-In the logical tree case, its O(N) space, and assuming use of some indirection, O(N) log (N) time to visit the whole tree.
+In the logical tree case, its O(N) space, and assuming use of some indirection, O(N * log(N)) time to visit the whole tree.
 Inlining can be used to get good sizes for the blobs, and indirection can be used occasionally to lower its costs by a constant factor.
+Updating the tree depends on how much indirection is used, but assuming some is used the update time and space costs are O(log(N)) due to needing to update the indirection table.
 
 ### Walking a long sequence high up in a large tree
 
