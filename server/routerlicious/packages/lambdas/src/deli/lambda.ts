@@ -1614,7 +1614,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
     /**
      * Updates the durable sequence number
-     * @param dsn New durable sequence number
+     * @param dsn - New durable sequence number
      */
     private updateDurableSequenceNumber(dsn: number) {
         this.durableSequenceNumber = dsn;
