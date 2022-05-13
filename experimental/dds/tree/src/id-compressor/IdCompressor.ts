@@ -604,7 +604,7 @@ export class IdCompressor {
 					);
 					this.checkClusterForCollision(currentCluster);
 					if (isLocal) {
-						// Example:
+						// Example with cluster size of 3:
 						// Ids generated so far:   -1  1  2 -4 -5  <-- note positive numbers are eager finals
 						//         Cluster:      [  0  1  2 ]
 						// ~ finalizing happens, causing expansion ~
@@ -619,7 +619,6 @@ export class IdCompressor {
 						this.sessionIdNormalizer.addFinalIds(finalPivot, lastFinalizedFinal, currentCluster);
 					}
 				}
-				remainingCount = 0;
 			} else {
 				// The range cannot be fully allocated in the existing cluster, so allocate any space left in it and
 				// form a new one by incrementing the previous baseUuid
