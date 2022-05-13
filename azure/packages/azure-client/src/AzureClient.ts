@@ -120,7 +120,7 @@ export class AzureClient {
         url.searchParams.append("containerId", encodeURIComponent(id));
         const sourceContainer = await loader.resolve({ url: url.href });
 
-        if(sourceContainer.resolvedUrl === undefined) {
+        if (sourceContainer.resolvedUrl === undefined) {
             throw new Error(
                 "Source container cannot resolve URL.",
             );

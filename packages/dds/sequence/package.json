@@ -80,10 +80,10 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.66048",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
-    "@fluidframework/gitresources": "^0.1036.3000-0",
+    "@fluidframework/gitresources": "^0.1036.2000-0",
     "@fluidframework/mocha-test-setup": "^0.60.1000",
-    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@^0.58.0",
-    "@fluidframework/server-services-client": "^0.1036.3000-0",
+    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@^0.59.0",
+    "@fluidframework/server-services-client": "^0.1036.2000-0",
     "@fluidframework/test-runtime-utils": "^0.60.1000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -115,24 +115,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
-    "broken": {
-      "InterfaceDeclaration_ISequenceDeltaRange": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceDeltaEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceMaintenanceEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      }
-    }
+    "version": "0.60.1000",
+    "broken": {}
   }
 }
