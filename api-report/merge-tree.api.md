@@ -759,11 +759,15 @@ export interface KeyComparer<TKey> {
 
 // @public (undocumented)
 export class List<T> {
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<T>;
     constructor(isHead: boolean, data: T | undefined);
     // (undocumented)
     clear(): void;
     // (undocumented)
     count(): number;
+    // (undocumented)
+    data: T | undefined;
     // (undocumented)
     dequeue(): T | undefined;
     // (undocumented)
@@ -780,16 +784,21 @@ export class List<T> {
     next: List<T>;
     // (undocumented)
     prev: List<T>;
-    // (undocumented)
+    // @deprecated (undocumented)
     push(data: T): void;
     // (undocumented)
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[];
+    // (undocumented)
+    unshift(data: T): void;
     // (undocumented)
     walk(fn: (data: T, l: List<T>) => void): void;
 }
 
 // @public (undocumented)
 export function ListMakeHead<U>(): List<U>;
+
+// @public (undocumented)
+export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 
 // @public (undocumented)
 export const LocalClientId = -1;
@@ -857,12 +866,12 @@ export class LocalReferenceCollection {
     // @internal
     constructor(
     segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
-    // @internal
+    // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
-    // @internal
+    // (undocumented)
     addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
     // @internal
-    addLocalRef(lref: LocalReference): void;
+    addLocalRef(lref: LocalReference | ReferencePosition): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
     // @internal
