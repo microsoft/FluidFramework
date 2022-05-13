@@ -79,12 +79,6 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 
         const sharedMapHandle = sharedMap.handle;
 
-        // The expected absolute path.
-        const absolutePath = `/default/${sharedMap.id}`;
-
-        // Verify that the local client's handle has the correct absolute path.
-        assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
-
         // Add the handle to the root DDS of `firstContainerObject1`.
         firstContainerObject1._root.set("sharedMap", sharedMapHandle);
 
@@ -93,9 +87,6 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
         assert(remoteSharedMapHandle);
-
-        // Verify that the remote client's handle has the correct absolute path.
-        assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
 
         // Get the SharedMap from the handle.
         const remoteSharedMap = await remoteSharedMapHandle.get();
@@ -108,13 +99,8 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
         const sharedMap = SharedMap.create(firstContainerObject2._runtime);
         sharedMap.set("key1", "value1");
 
-        const sharedMapHandle = sharedMap.handle;
-
         // The expected absolute path.
         const absolutePath = `/${firstContainerObject2._runtime.id}/${sharedMap.id}`;
-
-        // Verify that the local client's handle has the correct absolute path.
-        assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
 
         // Add the handle to the root DDS of `firstContainerObject1` so that the FluidDataObjectRuntime is different.
         firstContainerObject1._root.set("sharedMap", sharedMap.handle);
