@@ -784,10 +784,12 @@ export class List<T> {
     next: List<T>;
     // (undocumented)
     prev: List<T>;
-    // (undocumented)
+    // @deprecated (undocumented)
     push(data: T): void;
     // (undocumented)
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[];
+    // (undocumented)
+    unshift(data: T): void;
     // (undocumented)
     walk(fn: (data: T, l: List<T>) => void): void;
 }
@@ -864,12 +866,12 @@ export class LocalReferenceCollection {
     // @internal
     constructor(
     segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
+    // (undocumented)
+    addAfterTombstones(...refs: Iterable<LocalReference>[]): void;
+    // (undocumented)
+    addBeforeTombstones(...refs: Iterable<LocalReference>[]): void;
     // @internal
-    addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
-    // @internal
-    addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
-    // @internal
-    addLocalRef(lref: LocalReference): void;
+    addLocalRef(lref: LocalReference | ReferencePosition): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
     // @internal
