@@ -29,8 +29,10 @@ export interface ITestDriver {
 }
 
 // @public (undocumented)
-export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
+export type RouterliciousEndpoint = "frs" | "r11s" | "docker";
 
+// @public (undocumented)
+export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 // (No @packageDocumentation comment for this package)
 

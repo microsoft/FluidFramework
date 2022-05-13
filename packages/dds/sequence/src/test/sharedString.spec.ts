@@ -23,7 +23,6 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 
 const assertIntervals = (
     sharedString: SharedString,

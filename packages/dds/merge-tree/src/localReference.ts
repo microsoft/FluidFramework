@@ -6,12 +6,14 @@
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
+import { List, ListMakeHead, ListRemoveEntry } from "./collections";
 import {
     ISegment,
 } from "./mergeTree";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
-import { minReferencePosition,
+import {
+    minReferencePosition,
     maxReferencePosition,
     compareReferencePositions,
     refHasTileLabels,
@@ -21,6 +23,7 @@ import { minReferencePosition,
     refGetTileLabels,
     refHasRangeLabel,
     refHasTileLabel,
+    refTypeIncludesFlag,
 } from "./referencePositions";
 
 /**
@@ -74,7 +77,7 @@ export function _validateReferenceType(refType: ReferenceType) {
         /**
          * @deprecated - use getOffset
          */
-        public offset = 0,
+        public offset: number = 0,
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
     ) {
@@ -105,12 +108,8 @@ export function _validateReferenceType(refType: ReferenceType) {
     /**
      * @deprecated - use getLocalReferencePosition
      */
-    public toPosition() {
-        if (this.segment && this.segment.parent) {
-            return this.getOffset() + this.client.getPosition(this.segment);
-        } else {
-            return LocalReference.DetachedPosition;
-        }
+     public toPosition() {
+        return this.getClient().localReferencePositionToPosition(this);
     }
 
     /**
@@ -122,7 +121,7 @@ export function _validateReferenceType(refType: ReferenceType) {
     /**
      * @deprecated - use refHasRangeLabels
      */
-    public hasRangeLabels() {
+    public hasRangeLabels(): boolean {
         return refHasRangeLabels(this);
     }
     /**
@@ -182,13 +181,17 @@ export function _validateReferenceType(refType: ReferenceType) {
 }
 
 interface IRefsAtOffset {
-    before?: LocalReference[];
-    at?: LocalReference[];
-    after?: LocalReference[];
+    before?: List<LocalReference>;
+    at?: List<LocalReference>;
+    after?: List<LocalReference>;
+}
+
+function assertLocalReferences(lref: ReferencePosition | LocalReference): asserts lref is LocalReference {
+    assert(lref instanceof LocalReference, "lref not a Local Reference");
 }
 
 /**
- * Represents a collection of {@link LocalReference}s associated with one segment in a merge-tree.
+ * Represents a collection of {@link ReferencePosition}s associated with one segment in a merge-tree.
  */
 export class LocalReferenceCollection {
     public static append(seg1: ISegment, seg2: ISegment) {
@@ -206,10 +209,18 @@ export class LocalReferenceCollection {
         }
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public hierRefCount: number = 0;
     private readonly refsByOffset: (IRefsAtOffset | undefined)[];
     private refCount: number = 0;
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     constructor(
         /** Segment this `LocalReferenceCollection` is associated to. */
         private readonly segment: ISegment,
@@ -220,6 +231,10 @@ export class LocalReferenceCollection {
         this.refsByOffset = initialRefsByfOffset;
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public [Symbol.iterator]() {
         const subiterators: IterableIterator<LocalReference>[] = [];
         for (const refs of this.refsByOffset) {
@@ -256,16 +271,20 @@ export class LocalReferenceCollection {
         return iterator;
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public clear() {
         this.refCount = 0;
         this.hierRefCount = 0;
-        const detachSegments = (refs: LocalReference[] | undefined) => {
+        const detachSegments = (refs: List<LocalReference> | undefined) => {
             if (refs) {
-                refs.forEach((r) => {
+                for (const r of refs) {
                     if (r.segment === this.segment) {
                         r.segment = undefined;
                     }
-                });
+                }
             }
         };
         for (let i = 0; i < this.refsByOffset.length; i++) {
@@ -279,41 +298,80 @@ export class LocalReferenceCollection {
         }
     }
 
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
     public get empty() {
         return this.refCount === 0;
     }
 
-    public addLocalRef(lref: LocalReference) {
-        const refsAtOffset = this.refsByOffset[lref.offset];
-        if (refsAtOffset === undefined) {
-            this.refsByOffset[lref.offset] = {
-                at: [lref],
-            };
-        } else if (refsAtOffset.at === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.refsByOffset[lref.offset]!.at = [lref];
-        } else {
-            refsAtOffset.at.push(lref);
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
+    public createLocalRef(
+        offset: number,
+        refType: ReferenceType,
+        properties: PropertySet | undefined,
+        client: Client): ReferencePosition {
+        const ref = new LocalReference(
+            client,
+            this.segment,
+            offset,
+            refType,
+            properties,
+        );
+        if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
+            this.addLocalRef(ref);
         }
+        return ref;
+    }
 
-        if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
+    public addLocalRef(lref: LocalReference | ReferencePosition) {
+        assert(
+            !refTypeIncludesFlag(lref, ReferenceType.Transient),
+            0x2df /* "transient references cannot be bound to segments" */);
+        assertLocalReferences(lref);
+        const refsAtOffset = this.refsByOffset[lref.getOffset()] =
+            this.refsByOffset[lref.getOffset()]
+            ?? { at: ListMakeHead() };
+        const atRefs = refsAtOffset.at =
+            refsAtOffset.at
+            ?? ListMakeHead();
+
+        atRefs.enqueue(lref);
+
+        if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
             this.hierRefCount++;
         }
         this.refCount++;
     }
 
-    public removeLocalRef(lref: LocalReference) {
-        const tryRemoveRef = (refs: LocalReference[] | undefined) => {
+    /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
+     public removeLocalRef(lref: LocalReference | ReferencePosition) {
+        assertLocalReferences(lref);
+        const tryRemoveRef = (refs: List<LocalReference> | undefined) => {
             if (refs) {
-                const index = refs.indexOf(lref);
-                if (index >= 0) {
-                    refs.splice(index, 1);
-                    if (lref.hasRangeLabels() || lref.hasTileLabels()) {
-                        this.hierRefCount--;
+                let node = refs;
+                do {
+                    node = node.next;
+                    if (node.data === lref) {
+                        ListRemoveEntry(node);
+                        if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+                            this.hierRefCount--;
+                        }
+                        this.refCount--;
+                        return lref;
                     }
-                    this.refCount--;
-                    return lref;
-                }
+                } while (!node.isHead);
             }
         };
         const refAtOffset = this.refsByOffset[lref.offset];
@@ -336,6 +394,8 @@ export class LocalReferenceCollection {
     }
 
     /**
+     * @internal - this method should only be called by mergeTree
+     *
      * Called by 'append()' implementations to append local refs from the given 'other' segment to the
      * end of 'this' segment.
      *
@@ -359,6 +419,8 @@ export class LocalReferenceCollection {
     }
 
     /**
+     * @internal - this method should only be called by mergeTree
+     *
      * Splits this `LocalReferenceCollection` into the intervals [0, offset) and [offset, originalLength).
      * Local references in the former half of this split will remain associated with the segment used on construction.
      * Local references in the latter half of this split will be transferred to `splitSeg`,
@@ -378,7 +440,7 @@ export class LocalReferenceCollection {
             for (const lref of localRefs) {
                 lref.segment = splitSeg;
                 lref.offset -= offset;
-                if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                     this.hierRefCount--;
                     localRefs.hierRefCount++;
                 }
@@ -391,17 +453,17 @@ export class LocalReferenceCollection {
         }
     }
 
-    public addBeforeTombstones(...refs: Iterable<LocalReference>[]) {
-        const beforeRefs: LocalReference[] = [];
+    public addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]) {
+        const beforeRefs = this.refsByOffset[0]?.before ?? ListMakeHead();
 
         for (const iterable of refs) {
             for (const lref of iterable) {
-                // eslint-disable-next-line no-bitwise
-                if (lref.refType & ReferenceType.SlideOnRemove) {
+                assertLocalReferences(lref);
+                if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
                     beforeRefs.push(lref);
                     lref.segment = this.segment;
                     lref.offset = 0;
-                    if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                         this.hierRefCount++;
                     }
                     this.refCount++;
@@ -410,28 +472,27 @@ export class LocalReferenceCollection {
                 }
             }
         }
-        if (beforeRefs.length > 0) {
-            if (this.refsByOffset[0] === undefined) {
-                this.refsByOffset[0] = { before: beforeRefs };
-            } else if (this.refsByOffset[0].before === undefined) {
-                this.refsByOffset[0].before = beforeRefs;
-            } else {
-                this.refsByOffset[0].before.unshift(...beforeRefs);
-            }
+        if (!beforeRefs.empty() && this.refsByOffset[0]?.before === undefined) {
+            const refsAtOffset = this.refsByOffset[0] =
+                this.refsByOffset[0]
+                ?? { before: beforeRefs };
+            refsAtOffset.before = refsAtOffset.before ?? beforeRefs;
         }
     }
 
-    public addAfterTombstones(...refs: Iterable<LocalReference>[]) {
-        const afterRefs: LocalReference[] = [];
+    public addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]) {
+        const lastOffset = this.refsByOffset.length - 1;
+        const afterRefs =
+            this.refsByOffset[lastOffset]?.after ?? ListMakeHead();
 
         for (const iterable of refs) {
             for (const lref of iterable) {
-                // eslint-disable-next-line no-bitwise
-                if (lref.refType & ReferenceType.SlideOnRemove) {
+                assertLocalReferences(lref);
+                if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
                     afterRefs.push(lref);
                     lref.segment = this.segment;
                     lref.offset = this.segment.cachedLength - 1;
-                    if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                         this.hierRefCount++;
                     }
                     this.refCount++;
@@ -440,15 +501,11 @@ export class LocalReferenceCollection {
                 }
             }
         }
-        if (afterRefs.length > 0) {
-            const refsAtOffset = this.refsByOffset[this.segment.cachedLength - 1];
-            if (refsAtOffset === undefined) {
-                this.refsByOffset[this.segment.cachedLength - 1] = { after: afterRefs };
-            } else if (refsAtOffset.after === undefined) {
-                refsAtOffset.after = afterRefs;
-            } else {
-                refsAtOffset.after.push(...afterRefs);
-            }
+        if (!afterRefs.empty() && this.refsByOffset[lastOffset]?.after === undefined) {
+            const refsAtOffset = this.refsByOffset[lastOffset] =
+                this.refsByOffset[lastOffset]
+                ?? { after: afterRefs };
+            refsAtOffset.after = refsAtOffset.after ?? afterRefs;
         }
     }
 }

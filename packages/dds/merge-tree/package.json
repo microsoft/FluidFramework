@@ -73,7 +73,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.65117",
+    "@fluidframework/build-tools": "^0.2.66048",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@0.59.2000",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
@@ -128,17 +128,10 @@
       "EnumDeclaration_MergeTreeMaintenanceType": {"forwardCompat": false, "backCompat": false},
       "EnumDeclaration_RBColor": {"forwardCompat": false, "backCompat": false},
       "InterfaceDeclaration_RBNode": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_Client": {"forwardCompat": false},
-      "ClassDeclaration_MergeTree": {"forwardCompat": false},
-      "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false},
-      "InterfaceDeclaration_IConsensusInfo": {"forwardCompat": true, "backCompat": false},
-      "InterfaceDeclaration_IJSONMarkerSegment": {"forwardCompat": true, "backCompat": false},
-      "InterfaceDeclaration_IMarkerDef": {"forwardCompat": true, "backCompat": false},
-      "ClassDeclaration_LocalReference": {"forwardCompat": true, "backCompat": false},
-      "ClassDeclaration_Marker": {"forwardCompat": true, "backCompat": false},
-      "EnumDeclaration_ReferenceType": {"forwardCompat": true, "backCompat": false},
-      "comment": {
+      "ClassDeclaration_List": {"forwardCompat": false},
       "ClassDeclaration_BaseSegment": {"forwardCompat": false},
+      "ClassDeclaration_Client": {"forwardCompat": false},
+      "InterfaceDeclaration_IConsensusInfo": {"forwardCompat": false},
       "InterfaceDeclaration_IHierBlock": {"forwardCompat": false},
       "InterfaceDeclaration_IMergeBlock": {"forwardCompat": false},
       "TypeAliasDeclaration_IMergeNode": {"forwardCompat": false},
@@ -147,17 +140,20 @@
       "ClassDeclaration_IncrementalMapState": {"forwardCompat": false},
       "InterfaceDeclaration_InsertContext": {"forwardCompat": false},
       "InterfaceDeclaration_ISegment": {"forwardCompat": false},
-      "InterfaceDeclaration_ISegmentChanges": {"forwardCompat": false},
       "ClassDeclaration_LocalReferenceCollection": {"forwardCompat": false},
       "InterfaceDeclaration_LRUSegment": {"forwardCompat": false},
       "ClassDeclaration_MergeBlock": {"forwardCompat": false},
+      "InterfaceDeclaration_ISegmentChanges": {"forwardCompat": false},
+      "ClassDeclaration_Marker": {"forwardCompat": false},
       "ClassDeclaration_MergeNode": {"forwardCompat": false},
+      "ClassDeclaration_MergeTree": {"forwardCompat": false},
       "InterfaceDeclaration_SegmentAccumulator": {"forwardCompat": false},
       "InterfaceDeclaration_SegmentGroup": {"forwardCompat": false},
+      "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false},
       "ClassDeclaration_SortedSegmentSet": {"forwardCompat": false},
       "ClassDeclaration_TextSegment": {"forwardCompat": false},
       "ClassDeclaration_TrackingGroup": {"forwardCompat": false}
-      }
+
     }
   }
 }

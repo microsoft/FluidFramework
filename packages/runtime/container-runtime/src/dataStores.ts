@@ -50,6 +50,7 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
+import { GCNodeType } from "./garbageCollection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -642,14 +643,21 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Called by GC to know if a node is a data store or not. Data store ids are of the format "/dataStoreId".
+     * Called by GC to determine if a node is for a data store or for an object within a data store (for e.g. DDS).
+     * @returns the GC node type if the node belongs to a data store or object within data store, undefined otherwise.
      */
-    public isDataStoreNode(nodePath: string): boolean {
+    public getGCNodeType(nodePath: string): GCNodeType | undefined {
         const pathParts = nodePath.split("/");
-        if (pathParts.length === 2 && this.contexts.has(pathParts[1])) {
-            return true;
+        if (!this.contexts.has(pathParts[1])) {
+            return undefined;
         }
-        return false;
+
+        // Data stores paths are of the format "/dataStoreId".
+        // Sub data store paths are of the format "/dataStoreId/subPath/...".
+        if (pathParts.length === 2) {
+            return GCNodeType.DataStore;
+        }
+        return GCNodeType.SubDataStore;
     }
 }
 

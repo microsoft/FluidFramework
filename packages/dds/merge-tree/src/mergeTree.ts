@@ -51,6 +51,7 @@ import {
     PropertySet,
 } from "./properties";
 import {
+    refTypeIncludesFlag,
     RangeStackMap,
     ReferencePosition,
     refGetRangeLabels,
@@ -62,6 +63,7 @@ import {
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager } from "./segmentPropertiesManager";
+import { Client } from "./client";
 
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
@@ -299,14 +301,14 @@ function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeSta
 }
 
 function applyRangeReference(stack: Stack<ReferencePosition>, delta: ReferencePosition) {
-    if (delta.refType & ReferenceType.NestBegin) {
+    if (refTypeIncludesFlag(delta, ReferenceType.NestBegin)) {
         stack.push(delta);
         return true;
     } else {
         // Assume delta is end reference
         const top = stack.top();
         // TODO: match end with begin
-        if (top && (top.refType & ReferenceType.NestBegin)) {
+        if (top && (refTypeIncludesFlag(top, ReferenceType.NestBegin))) {
             stack.pop();
         } else {
             stack.push(delta);
@@ -337,7 +339,7 @@ function addNodeReferences(
                 if (markerId) {
                     mergeTree.mapIdToSegment(markerId, segment);
                 }
-                if (segment.refType & ReferenceType.Tile) {
+                if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
                     addTile(segment, rightmostTiles);
                     addTileIfNotPresent(segment, leftmostTiles);
                 }
@@ -354,7 +356,7 @@ function addNodeReferences(
                 if (baseSegment.localRefs && (baseSegment.localRefs.hierRefCount !== undefined) &&
                     (baseSegment.localRefs.hierRefCount > 0)) {
                     for (const lref of baseSegment.localRefs) {
-                        if (lref.refType & ReferenceType.Tile) {
+                        if (refTypeIncludesFlag(lref, ReferenceType.Tile)) {
                             addTile(lref, rightmostTiles);
                             addTileIfNotPresent(lref, leftmostTiles);
                         }
@@ -731,16 +733,16 @@ export class Marker extends BaseSegment implements ReferencePosition {
 
     toString() {
         let bbuf = "";
-        if (this.refType & ReferenceType.Tile) {
+        if (refTypeIncludesFlag(this, ReferenceType.Tile)) {
             bbuf += "Tile";
         }
-        if (this.refType & ReferenceType.NestBegin) {
+        if (refTypeIncludesFlag(this, ReferenceType.NestBegin)) {
             if (bbuf.length > 0) {
                 bbuf += "; ";
             }
             bbuf += "RangeBegin";
         }
-        if (this.refType & ReferenceType.NestEnd) {
+        if (refTypeIncludesFlag(this, ReferenceType.NestEnd)) {
             if (bbuf.length > 0) {
                 bbuf += "; ";
             }
@@ -765,7 +767,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         const rangeLabels = refGetRangeLabels(this);
         if (rangeLabels) {
             let rangeKind = "begin";
-            if (this.refType & ReferenceType.NestEnd) {
+            if (refTypeIncludesFlag(this, ReferenceType.NestEnd)) {
                 rangeKind = "end";
             }
             if (tileLabels) {
@@ -2517,6 +2519,31 @@ export class MergeTree {
         if (this.collabWindow.collaborating) {
             node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow, recur);
         }
+    }
+
+    public removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined {
+        const segment = lref.getSegment();
+        if (segment) {
+            const removedRefs = segment?.localRefs?.removeLocalRef(lref);
+            if (removedRefs !== undefined) {
+                this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
+                    LocalClientId);
+            }
+            return removedRefs;
+        }
+    }
+    public createLocalReferencePosition(
+        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
+        client: Client,
+    ): ReferencePosition {
+        const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
+        segment.localRefs = localRefs;
+
+        const segRef = localRefs.createLocalRef(offset, refType, properties, client);
+
+        this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
+            LocalClientId);
+        return segRef;
     }
 
     /**
