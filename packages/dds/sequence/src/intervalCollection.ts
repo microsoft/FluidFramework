@@ -325,11 +325,8 @@ function createPositionReference(
         segoff = client.getContainingSegment(pos);
     }
     assert(segoff.segment, "createPositionReference should find segment");
-    const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
-    if (refType !== ReferenceType.Transient) {
-        client.addLocalReference(lref);
-    }
-    return lref;
+    const ref = client.createLocalReferencePosition(segoff.segment, segoff.offset, refType, undefined);
+    return ref as LocalReference;
 }
 
 function createSequenceInterval(
