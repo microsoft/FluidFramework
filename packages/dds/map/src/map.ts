@@ -267,12 +267,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         // Should be bigger than MinValueSizeSeparateSnapshotBlob
         const MaxSnapshotBlobSize = 16 * 1024;
 
-        const instanceCountProperty = 'InstanceCount';
-        let instanceCount = telemetryContext.get(telemetryContextPrefix, instanceCountProperty) ?? 0;
-        telemetryContext.set(telemetryContextPrefix, instanceCountProperty, ++instanceCount);
+        const instanceCountProperty = "InstanceCount";
+        let instanceCount = telemetryContext?.get(telemetryContextPrefix, instanceCountProperty) ?? 0;
+        telemetryContext?.set(telemetryContextPrefix, instanceCountProperty, ++instanceCount);
 
-        const totalBlobBytesProperty = 'TotalBlobBytes';
-        let totalBlobSize = telemetryContext.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0;
+        const totalBlobBytesProperty = "TotalBlobBytes";
+        let totalBlobSize = telemetryContext?.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0;
 
         // Partitioning algorithm:
         // 1) Split large (over MinValueSizeSeparateSnapshotBlob = 8K) properties into their own blobs.
@@ -326,7 +326,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         };
         builder.addBlob(snapshotFileName, JSON.stringify(header));
 
-        telemetryContext.set(telemetryContextPrefix, totalBlobBytesProperty, totalBlobSize);
+        telemetryContext?.set(telemetryContextPrefix, totalBlobBytesProperty, totalBlobSize);
 
         return builder.getSummaryTree();
     }
