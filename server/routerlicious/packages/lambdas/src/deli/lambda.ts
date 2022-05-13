@@ -151,17 +151,48 @@ interface ICheckpoint {
 }
 
 export enum OpEventType {
+    /**
+     * There have been no sequenced ops for X milliseconds since the last message.
+     */
     Idle,
+
+    /**
+     * More than X amount of ops have been ticketed since the emit.
+     */
     MaxOps,
+
+    /**
+     * There was no previous emit for the last X milliseconds.
+     */
     MaxTime,
+
+    /**
+     * Indicates the durable sequence number was updated.
+     */
     UpdatedDurableSequenceNumber,
 }
 
 export interface IDeliLambdaEvents extends IEvent {
+    /**
+     * Emitted when certain op event heuristics are triggered.
+     */
     (event: "opEvent",
         listener: (type: OpEventType, sequenceNumber: number, sequencedMessagesSinceLastOpEvent: number) => void);
+
+    /**
+     * Emitted when the lambda is updating the durable sequence number.
+     * This usually occurs via a control message after a summary was created.
+     */
     (event: "updatedDurableSequenceNumber", listener: (durableSequenceNumber: number) => void);
+
+    /**
+     * Emitted when the lambda recieves an custom control message.
+     */
     (event: "controlMessage", listener: (controlMessage: IControlMessage) => void);
+
+    /**
+     * Emitted when the lambda is closing.
+     */
     (event: "close", listener: (type: LambdaCloseType) => void);
 }
 
