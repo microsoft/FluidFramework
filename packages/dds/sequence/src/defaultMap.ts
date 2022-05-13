@@ -5,11 +5,15 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IFluidSerializer, makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
+import {
+    IFluidSerializer,
+    makeHandlesSerializable,
+    parseHandles,
+    ValueType,
+} from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ILocalValue,
-    LocalValueMaker,
     makeSerializable,
     ValueTypeLocalValue,
 } from "./localValues";
@@ -118,11 +122,6 @@ export class DefaultMap<T> {
      */
     private readonly data = new Map<string, ILocalValue<T>>();
 
-    /**
-     * Object to create encapsulations of the values stored in the map.
-     */
-    private readonly localValueMaker: LocalValueMaker;
-
     private lastProcessedSeq: number = -1;
 
     /**
@@ -140,9 +139,7 @@ export class DefaultMap<T> {
         private readonly type: IValueType<T>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedDefaultMapEvents>(),
     ) {
-        this.localValueMaker = new LocalValueMaker(serializer);
         this.messageHandlers = this.getMessageHandlers();
-        this.localValueMaker.registerValueType(type);
     }
 
     /**
@@ -346,10 +343,9 @@ export class DefaultMap<T> {
      * @param local - Whether the message originated from the local client
      */
     private createCore(key: string, local: boolean): ILocalValue<T> {
-        const localValue: ILocalValue<T> = this.localValueMaker.makeValueType(
-            this.type.name,
-            this.makeMapValueOpEmitter(key),
-            undefined,
+        const localValue = new ValueTypeLocalValue(
+            this.type.factory.load(this.makeMapValueOpEmitter(key), undefined),
+            this.type,
         );
         const previousValue = this.data.get(key);
         this.data.set(key, localValue);
@@ -369,14 +365,15 @@ export class DefaultMap<T> {
      * @returns The local value that was produced
      */
     private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
-        if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
-            return this.localValueMaker.fromSerializable(serializable);
-        } else {
-            return this.localValueMaker.fromSerializableValueType(
-                serializable,
-                this.makeMapValueOpEmitter(key),
-            );
-        }
+        assert(serializable.type !== ValueType[ValueType.Plain] && serializable.type !== ValueType[ValueType.Shared],
+            "Support for plain value types removed.");
+
+        serializable.value = parseHandles(serializable.value, this.serializer);
+        const localValue = this.type.factory.load(
+            this.makeMapValueOpEmitter(key),
+            serializable.value,
+        );
+        return new ValueTypeLocalValue(localValue, this.type);
     }
 
     /**
