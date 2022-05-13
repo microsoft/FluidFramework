@@ -4,7 +4,7 @@
  */
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { PerformanceEvent} from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
@@ -53,8 +53,7 @@ export class ParallelRequests<T> {
             to: number,
             strongTo: boolean,
             props: ITelemetryProperties) => Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
-        private readonly responseCallback: (payload: T[]) => void)
-    {
+        private readonly responseCallback: (payload: T[]) => void) {
         this.latestRequested = from;
         this.nextToDeliver = from;
         this.knewTo = (to !== undefined);
@@ -148,7 +147,7 @@ export class ParallelRequests<T> {
 
         assert(from < this.latestRequested, 0x109 /* "unexpected next chunk position" */);
 
-        return { from, to: this.latestRequested};
+        return { from, to: this.latestRequested };
     }
 
     private addRequest() {
@@ -364,13 +363,12 @@ async function getSingleOpBatch(
     logger: ITelemetryLogger,
     signal?: AbortSignal,
     fetchReason?: string):
-        Promise<{ partial: boolean, cancel: boolean, payload: ISequencedDocumentMessage[] }>
-{
+        Promise<{ partial: boolean, cancel: boolean, payload: ISequencedDocumentMessage[] }> {
     let lastSuccessTime: number | undefined;
 
     let retry: number = 0;
     const deltas: ISequencedDocumentMessage[] = [];
-    const nothing = { partial: false, cancel: true, payload: []};
+    const nothing = { partial: false, cancel: true, payload: [] };
 
     while (signal?.aborted !== true) {
         retry++;
@@ -387,7 +385,7 @@ async function getSingleOpBatch(
             const deltasRetrievedLast = messages.length;
 
             if (deltasRetrievedLast !== 0 || !strongTo) {
-                return { payload: deltas, cancel: false, partial: partialResult};
+                return { payload: deltas, cancel: false, partial: partialResult };
             }
 
             // Storage does not have ops we need.
@@ -546,12 +544,11 @@ export function requestOps(
 }
 
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
-    read: async () => { return { done: true };},
+    read: async () => { return { done: true }; },
 };
 
 export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>):
-    IStream<ISequencedDocumentMessage[]>
-{
+    IStream<ISequencedDocumentMessage[]> {
     let messages: Promise<ISequencedDocumentMessage[]> | undefined = messagesArg;
     return {
         read: async () => {

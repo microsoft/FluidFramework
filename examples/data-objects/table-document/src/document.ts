@@ -34,7 +34,7 @@ export interface ITableDocumentEvents extends IEvent {
  * @deprecated - TableDocument is an abandoned prototype.  Please use SharedMatrix with
  *               the IMatrixProducer/Consumer interfaces instead.
  */
-export class TableDocument extends DataObject<{Events: ITableDocumentEvents}> implements ITable {
+export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
     private static readonly factory = new DataObjectFactory(

@@ -259,7 +259,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
     maxOps: 1000, // Summarize if 1000 ops received since last snapshot.
 
-    minOpsForLastSummaryAttempt: 50,
+    minOpsForLastSummaryAttempt: 10,
 
     maxAckWaitTime: 6 * 10 * 1000, // 6 min.
 
@@ -804,8 +804,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         IGarbageCollectionRuntime,
         IRuntime,
         ISummarizerRuntime,
-        ISummarizerInternalsProvider
-{
+        ISummarizerInternalsProvider {
     public get IContainerRuntime() { return this; }
     public get IFluidRouter() { return this; }
 
@@ -1346,8 +1345,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.deltaSender = this.deltaManager;
 
         this.pendingStateManager = new PendingStateManager(
-            this,
-            async (type, content) => this.applyStashedOp(type, content),
+            {
+                applyStashedOp: this.applyStashedOp.bind(this),
+                clientId: ()=>this.clientId,
+                close: this.closeFn,
+                connected: ()=>this.connected,
+                flush: this.flush.bind(this),
+                flushMode: ()=>this.flushMode,
+                reSubmit: this.reSubmit.bind(this),
+                rollback: this.rollback.bind(this),
+                setFlushMode: (mode)=>this.setFlushMode(mode),
+            },
             this._flushMode,
             pendingRuntimeState?.pending);
 
@@ -1363,8 +1371,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.summariesDisabled) {
             this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-        }
-        else {
+        } else {
             const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
             const orderedClientCollection = new OrderedClientCollection(
                 orderedClientLogger,
@@ -1397,8 +1404,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.summaryCollection,
                     async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
                 );
-            }
-            else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
+            } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
                 // Only create a SummaryManager and SummarizerClientElection
                 // if summaries are enabled and we are not the summarizer client.
                 const defaultAction = () => {
@@ -1408,7 +1414,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         // and register summary ack handler to re-register this handler
                         // after successful summary
                         this.summaryCollection.once(MessageType.SummaryAck, () => {
-                            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+                            this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });
                             // we've caught up, so re-register the default action to monitor for
                             // falling behind, and unregister ourself
                             this.summaryCollection.on("default", defaultAction);
@@ -1466,7 +1472,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // logging hardware telemetry
         logger.sendTelemetryEvent({
-            eventName:"DeviceSpec",
+            eventName: "DeviceSpec",
             ...getDeviceSpec(),
         });
 
@@ -1952,18 +1958,31 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const savedFlushMode = this.flushMode;
         this.setFlushMode(FlushMode.TurnBased);
 
-        this.trackOrderSequentiallyCalls(callback);
-        this.flush();
-        this.setFlushMode(savedFlushMode);
+        try {
+            this.trackOrderSequentiallyCalls(callback);
+            this.flush();
+        } finally{
+            this.setFlushMode(savedFlushMode);
+        }
     }
 
     private trackOrderSequentiallyCalls(callback: () => void): void {
+        let checkpoint: { rollback: () => void } | undefined;
+        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
+            checkpoint = this.pendingStateManager.checkpoint();
+        }
+
         try {
             this._orderSequentiallyCalls++;
             callback();
         } catch (error) {
-            // pre-0.58 error message: orderSequentiallyCallbackException
-            this.closeFn(new GenericError("orderSequentially callback exception", error));
+            if (checkpoint) {
+                // This will throw and close the container if rollback fails
+                checkpoint.rollback();
+            } else {
+                // pre-0.58 error message: orderSequentiallyCallbackException
+                this.closeFn(new GenericError("orderSequentially callback exception", error));
+            }
             throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
@@ -2042,8 +2061,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
-        rootDataStoreId: string): IFluidDataStoreContextDetached
-    {
+        rootDataStoreId: string): IFluidDataStoreContextDetached {
         return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
     }
 
@@ -2908,6 +2926,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+        }
+    }
+
+    private rollback(
+        type: ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown,
+    ) {
+        switch (type) {
+            case ContainerMessageType.FluidDataStoreOp:
+                // For operations, call rollbackDataStoreOp which will find the right store
+                // and trigger rollback on it.
+                this.dataStores.rollbackDataStoreOp(content, localOpMetadata);
+                break;
+            default:
+                throw new Error(`Can't rollback ${type}`);
         }
     }
 

@@ -66,8 +66,7 @@ export class ImageGalleryModel extends DataObject {
     }
 }
 
-export const ImageGalleryInstantiationFactory = new DataObjectFactory
-(
+export const ImageGalleryInstantiationFactory = new DataObjectFactory(
     imageGalleryName,
     ImageGalleryModel,
     [],

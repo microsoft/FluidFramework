@@ -51,7 +51,7 @@ export class ChannelStorageService implements IChannelStorageService {
             return blob;
         }
         const blobP = this.storage.readBlob(id);
-        blobP.catch((error) => this.logger.sendErrorEvent({ eventName: "ChannelStorageBlobError"}, error));
+        blobP.catch((error) => this.logger.sendErrorEvent({ eventName: "ChannelStorageBlobError" }, error));
 
         return blobP;
     }

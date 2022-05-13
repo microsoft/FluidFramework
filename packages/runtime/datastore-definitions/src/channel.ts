@@ -100,6 +100,13 @@ export interface IDeltaHandler {
      * when the op is ACKed or resubmitted, respectively
      */
     applyStashedOp(message: any): unknown;
+
+    /**
+     * Revert a local op.
+     * @param message - The original message that was submitted.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    rollback?(message: any, localOpMetadata: unknown): void;
 }
 
 /**

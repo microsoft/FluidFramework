@@ -101,7 +101,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             opMessages = dbMessages.map((message) => message.operation);
         } catch (error) {
             context.log?.error(`Scribe lambda creation failed. Exception: ${inspect(error)}`);
-            await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
+            await this.sendLambdaStartResult(tenantId, documentId, { lambdaName: LambdaName.Scribe, success: false });
             scribeSessionMetric?.error("Scribe lambda creation failed", error);
 
             throw error;
@@ -145,7 +145,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                     + `Current message @${message.sequenceNumber}.`
                     + `Expected message @${expectedSequenceNumber}`);
                 scribeSessionMetric?.error("Invalid message sequence from checkpoint/summary", error);
-                await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
+                await this.sendLambdaStartResult(
+                    tenantId,
+                    documentId, {
+                    lambdaName: LambdaName.Scribe,
+                    success: false,
+                });
 
                 throw error;
             }
@@ -184,7 +189,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             opsSinceLastSummary,
             scribeSessionMetric);
 
-        await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: true});
+        await this.sendLambdaStartResult(tenantId, documentId, { lambdaName: LambdaName.Scribe, success: true });
         return scribeLambda;
     }
 

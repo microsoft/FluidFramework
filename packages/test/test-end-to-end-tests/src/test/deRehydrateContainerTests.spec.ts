@@ -41,8 +41,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     let disableIsolatedChannels = false;
 
     function assertSubtree(tree: ISnapshotTreeWithBlobContents, key: string, msg?: string):
-        ISnapshotTreeWithBlobContents
-    {
+        ISnapshotTreeWithBlobContents {
         const subTree = tree.trees[key];
         assert(subTree, msg ?? `${key} subtree not present`);
         return subTree;
@@ -355,8 +354,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
         itExpects("Storage in detached container",
         [
-            {eventName:"fluid:telemetry:Container:NoRealStorageInDetachedContainer"},
-            {eventName:"fluid:telemetry:Container:NoRealStorageInDetachedContainer"},
+            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
+            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
         ],
         async () => {
             const { container } =

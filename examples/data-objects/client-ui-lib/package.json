@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/client-ui-lib",
   "version": "0.60.1000",
+  "private": true,
   "description": "Fluid client UI",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -54,7 +55,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.49.1000-63433",
+    "@fluidframework/container-definitions": "^0.49.1000-64278",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.60.1000",
     "@fluidframework/ink": "^0.60.1000",

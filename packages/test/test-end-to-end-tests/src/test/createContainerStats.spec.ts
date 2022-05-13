@@ -97,7 +97,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     it("should generate correct container load stats with two summarizer containers", async function() {
         provider = getTestObjectProvider();
         // GitHub issue: #9534
-        if(provider.driver.type === "odsp") {
+        if (provider.driver.type === "odsp") {
             this.skip();
         }
 

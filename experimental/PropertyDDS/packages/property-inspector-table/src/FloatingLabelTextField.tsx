@@ -49,12 +49,12 @@ const FloatingLabelTextField: React.FunctionComponent<IFloatingLabelTextFieldPro
       margin='dense'
       className={classNames(classes.floatingFormControl, className)}
       FormHelperTextProps={{
-        classes: {error: classes.error},
+        classes: { error: classes.error },
         style: { visibility: helperTextVisible ? "visible" : "hidden" },
         ...FormHelperTextProps,
       }}
       error={error}
-      InputLabelProps={{classes: {error: classes.error}, ...InputLabelProps}}
+      InputLabelProps={{ classes: { error: classes.error }, ...InputLabelProps }}
       {...restProps}
     />
     <div className={classes.warningIconContainer}>
@@ -73,5 +73,5 @@ FloatingLabelTextField.defaultProps = {
   helperTextVisible: true,
 };
 
-const StyledFloatingLabelTextField = withStyles(styles, {name: "FloatingLabelTextField"})(FloatingLabelTextField);
+const StyledFloatingLabelTextField = withStyles(styles, { name: "FloatingLabelTextField" })(FloatingLabelTextField);
 export { StyledFloatingLabelTextField as FloatingLabelTextField };

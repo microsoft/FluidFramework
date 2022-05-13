@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/badge",
   "version": "0.60.1000",
+  "private": true,
   "description": "Badge Fluid example component",
   "homepage": "https://fluidframework.com",
   "repository": {

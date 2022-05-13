@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/host-service-interfaces",
   "version": "0.60.1000",
+  "private": true,
   "description": "Example host service interfaces",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -33,7 +34,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.49.1000-63433",
+    "@fluidframework/container-definitions": "^0.49.1000-64278",
     "@fluidframework/core-interfaces": "^0.43.1000"
   },
   "devDependencies": {

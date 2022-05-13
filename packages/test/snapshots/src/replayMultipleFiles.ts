@@ -109,7 +109,7 @@ export async function processOneNode(args: IWorkerArgs) {
         // when generating new snapshots, match those from
         // the original file based on summarize ops
         replayArgs.testSummaries = true;
-    } else{
+    } else {
         replayArgs.snapFreq = args.snapFreq;
     }
     replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;

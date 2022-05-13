@@ -74,7 +74,7 @@ describe("Runtime", () => {
             }
 
             function emitBroadcast(timestamp = Date.now()) {
-                mockDeltaManager.emit("op",{
+                mockDeltaManager.emit("op", {
                     type: MessageType.Summarize,
                     clientId: summarizerClientId,
                     referenceSequenceNumber: lastRefSeq,
@@ -372,8 +372,8 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 0);
                 });
 
-                it("Should summarize one last time before closing >=50 ops", async () => {
-                    await emitNextOp(50); // defaulted to 50 for now
+                it("Should summarize one last time before closing >=min ops", async () => {
+                    await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
@@ -382,8 +382,8 @@ describe("Runtime", () => {
                     assertRunCounts(1, 0, 0, "should perform lastSummary");
                 });
 
-                it("Should not summarize one last time before closing <50 ops", async () => {
-                    await emitNextOp(49); // defaulted to 50 for now
+                it("Should not summarize one last time before closing <min ops", async () => {
+                    await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt - 1);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
@@ -650,8 +650,7 @@ describe("Runtime", () => {
                     try {
                         summarizer.summarizeOnDemand(undefined, { reason: "test" });
                         resolved = true;
-                    }
-                    catch {}
+                    } catch {}
 
                     await flushPromises();
                     assert(resolved === false, "already running promise should not resolve yet");
@@ -1018,7 +1017,7 @@ describe("Runtime", () => {
                 it("Should not summarize before closing", async () => {
                     await startRunningSummarizer(true /* disableHeuristics */);
 
-                    await emitNextOp(50); // defaulted to 50 for now
+                    await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();

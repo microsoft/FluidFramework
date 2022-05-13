@@ -104,7 +104,7 @@ export class BlobManager {
                 return this.getStorage().readBlob(storageId).catch((error) => {
                     this.logger.sendErrorEvent(
                         {
-                            eventName:"AttachmentReadBlobError",
+                            eventName: "AttachmentReadBlobError",
                             id: storageId,
                         },
                         error,
