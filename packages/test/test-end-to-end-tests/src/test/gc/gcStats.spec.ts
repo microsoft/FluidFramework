@@ -18,9 +18,11 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { TestDataObject } from "../mockSummarizerClient";
 
-const ensureContainerConnected = async (container: Container) => {
-    if (!container.connected) {
-        return new Promise<void>((resolve) => container.once("connected", () => resolve()));
+const ensureContainerConnectedWriteMode = async (container: Container) => {
+    const resolveIfActive = (res: () => void) => { if (container.deltaManager.active) { res(); } };
+    if (!container.deltaManager.active) {
+        await new Promise<void>((resolve) => container.on("connected", () => resolveIfActive(resolve)));
+        container.off("connected", resolveIfActive);
     }
 };
 
@@ -128,7 +130,8 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
-        await ensureContainerConnected(container);
+        // Blob stats will be different if we upload while not connected
+        await ensureContainerConnectedWriteMode(container);
         const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         defaultDataStore._root.set("blob1", blob1Handle);
@@ -166,7 +169,8 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
-        await ensureContainerConnected(container);
+        // Blob stats will be different if we upload while not connected
+        await ensureContainerConnectedWriteMode(container);
         const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         defaultDataStore._root.set("blob1", blob1Handle);
@@ -247,7 +251,8 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
-        await ensureContainerConnected(container);
+        // Blob stats will be different if we upload while not connected
+        await ensureContainerConnectedWriteMode(container);
         const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         defaultDataStore._root.set("blob1", blob1Handle);
