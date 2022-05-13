@@ -94,6 +94,10 @@ export class RouterliciousRestWrapper extends RestWrapper {
                     .catch(reject);
             }, responseBody.retryAfter * 1000));
         }
+        if (response.status === 502 && canRetry) {
+            // Retry once on 502 for intermittent failures
+            return this.request<T>(config, statusCode, false);
+        }
 
         const responseSummary = responseBody !== undefined
             ? typeof responseBody === "string" ? responseBody : safeStringify(responseBody)
