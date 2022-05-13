@@ -1766,17 +1766,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        if (connected === false) {
-            if (this.delayConnectedP !== undefined) {
-                this.delayConnectedP.canceled = true;
-                this.delayConnectedP = undefined;
-                this.mc.logger.sendTelemetryEvent({
-                    eventName: "UnsuccessfulConnectedTransition",
-                });
-            }
-            return this.setConnectionStateCore(connected, clientId);
+        if (connected === false && this.delayConnectedP !== undefined) {
+            this.delayConnectedP.canceled = true;
+            this.delayConnectedP = undefined;
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "UnsuccessfulConnectedTransition",
+            });
+            // Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
+            return;
         }
 
+        // If attachment blobs were added while disconnected, we need to delay
+        // propagation of the "connected" event until we have uploaded them to
+        // ensure we don't submit ops referencing a blob that has not been uploaded
         const connecting = connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
         if (connecting && this.blobManager.hasPendingUploads) {
             const canceled = false;
@@ -1789,9 +1791,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.closeFn(reason);
             });
             this.delayConnectedP = { canceled, promise };
-        } else {
-            this.setConnectionStateCore(connected, clientId);
+            return;
         }
+
+        this.setConnectionStateCore(connected, clientId);
     }
 
     private setConnectionStateCore(connected: boolean, clientId?: string) {
