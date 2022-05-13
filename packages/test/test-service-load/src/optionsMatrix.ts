@@ -54,7 +54,7 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     disableGC: booleanCases,
     gcAllowed: booleanCases,
     runFullGC: booleanCases,
-    runSweep: [false],
+    sweepAllowed: [false],
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {

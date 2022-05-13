@@ -83,7 +83,7 @@ notificationContext.removeNotification.bind(notificationContext);
 
 class NotificationViewer extends React.Component<WithStyles<typeof styles> &
   Omit<SnackbarProps, "classes" | "open">,
-  { open: boolean, messageInfo: string } & Pick<INotificationContext, "notificationList">> {
+  { open: boolean; messageInfo: string; } & Pick<INotificationContext, "notificationList">> {
   public static defaultProps = {
     autoHideDuration: 6000,
   };
@@ -111,12 +111,12 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
           "aria-describedby": "message-id",
           "classes": { root: classes.root, message: classes.message },
         }}
-        message={<span id='message-id'>{messageInfo}</span>}
+        message={<span id="message-id">{messageInfo}</span>}
         action={[
           <IconButton
-            key='close'
-            aria-label='Close'
-            color='inherit'
+            key="close"
+            aria-label="Close"
+            color="inherit"
             className={classes.close}
             onClick={this.handleClose}
           >

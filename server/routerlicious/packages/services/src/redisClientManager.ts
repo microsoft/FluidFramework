@@ -34,7 +34,7 @@ export class ClientManager implements IClientManager {
 
     public async addClient(tenantId: string, documentId: string, clientId: string, details: IClient): Promise<void> {
         const key = this.getKey(tenantId, documentId);
-        const data: { [key: string]: any } = { [clientId]: JSON.stringify(details) };
+        const data: { [key: string]: any; } = { [clientId]: JSON.stringify(details) };
         return executeRedisMultiWithHmsetExpire(
             this.client,
             key,

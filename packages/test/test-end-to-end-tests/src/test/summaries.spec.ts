@@ -11,7 +11,7 @@ import {
     Summarizer,
     ISummarizer,
     ISummarizeResults,
-    ISummaryRuntimeOptions, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+    ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";

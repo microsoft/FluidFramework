@@ -367,12 +367,12 @@ describe("Error Logging", () => {
             const e1 = createSampleError();
 
             const stack = extractLogSafeErrorProperties(e1, false /* sanitizeStack */).stack;
-            assert(typeof(stack) === "string");
+            assert(typeof (stack) === "string");
             assert(stack?.includes("asdf"), "stack is expected to contain the message");
             assert(stack?.includes("FooError"), "stack is expected to contain the name");
 
             const sanitizedStack = extractLogSafeErrorProperties(e1, true /* sanitizeStack */).stack;
-            assert(typeof(sanitizedStack) === "string");
+            assert(typeof (sanitizedStack) === "string");
             assert(!sanitizedStack?.includes("asdf"), "message should have been removed from sanitized stack");
             assert(sanitizedStack?.includes("FooError"), "name should still be in the sanitized stack");
         });
@@ -511,7 +511,7 @@ describe("normalizeError", () => {
             message,
             stack: stackHint,
         }).withExpectedTelemetryProps({ untrustedOrigin: 1 });
-        const untrustedInputs: { [label: string]: () => { input: any, expectedOutput: TestFluidError } } = {
+        const untrustedInputs: { [label: string]: () => { input: any; expectedOutput: TestFluidError; }; } = {
             "Fluid Error minus errorType": () => ({
                 input: sampleFluidError().withoutProperty("errorType"),
                 expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
@@ -620,7 +620,7 @@ describe("normalizeError", () => {
             assert.equal(actual.message, expected.message, "message should match");
             const actualStack = actual.stack;
             assert(actualStack !== undefined, "stack should be present as a string");
-            if (actualStack.indexOf("at Object.normalizeError") >= 0) { // This indicates the stack was populated naturally by new SimpleFluidError
+            if (actualStack.indexOf("at normalizeError") >= 0) { // This indicates the stack was populated naturally by new SimpleFluidError
                 assert.equal(expected.stack, "<<natural stack>>", "<<natural stack>> hint should be used if not overwritten");
                 expected.withExpectedTelemetryProps({ stack: actualStack });
             } else {

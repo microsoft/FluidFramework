@@ -30,7 +30,7 @@ import { areRevisionViewsSemanticallyEqual, newEdit } from '../EditUtilities';
 import { NodeIdContext } from '../NodeIdUtilities';
 import { RevisionView } from '../RevisionView';
 import { TransactionInternal } from '../TransactionInternal';
-import { Change, ChangeType, StableRange } from '../ChangeTypes';
+import { StableRange } from '../ChangeTypes';
 import { expectDefined } from './utilities/TestCommon';
 import { buildLeaf, TestTree } from './utilities/TestNode';
 import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities';
@@ -283,7 +283,6 @@ describe('CachingLogViewer', () => {
 			log,
 			baseView,
 			knownRevisions?.map((pair) => [pair[0], { view: pair[1], result: EditStatus.Applied }]),
-			/* expensiveValidation */ true,
 			editStatusCallback,
 			sequencedEditResultCallback,
 			log.numberOfSequencedEdits
@@ -629,13 +628,8 @@ describe('CachingLogViewer', () => {
 		} {
 			const log = getTestTreeLog(testTree);
 			const events: SequencedEditResult[] = [];
-			const viewer = new CachingLogViewer(
-				log,
-				simpleLogBaseView,
-				[],
-				/* expensiveValidation */ true,
-				undefined,
-				(args: SequencedEditResult) => events.push(args)
+			const viewer = new CachingLogViewer(log, simpleLogBaseView, [], undefined, (args: SequencedEditResult) =>
+				events.push(args)
 			);
 			return { log, viewer, events };
 		}
@@ -721,7 +715,7 @@ describe('CachingLogViewer', () => {
 		}
 
 		function minimalLogViewer(): CachingLogViewer {
-			return new CachingLogViewer(new EditLog(), simpleLogBaseView, [], /* expensiveValidation */ true);
+			return new CachingLogViewer(new EditLog(), simpleLogBaseView, []);
 		}
 
 		it('tracks the earliest sequenced edit in the session', () => {

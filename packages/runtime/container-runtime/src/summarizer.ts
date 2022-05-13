@@ -162,7 +162,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.runtime.closeFn();
     }
 
-    private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {
+    private async runCore(
+        onBehalfOf: string,
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason> {
         const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(this.runtime);
 
         // Wait for either external signal to cancel, or loss of connectivity.
@@ -247,6 +249,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             eventName: "RunningSummarizer",
             onBehalfOf,
             initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
+            config: JSON.stringify(this.configurationGetter()),
         });
 
         // Summarizing container ID (with clientType === "summarizer")

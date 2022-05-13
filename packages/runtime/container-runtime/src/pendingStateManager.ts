@@ -119,7 +119,7 @@ export class PendingStateManager implements IDisposable {
     }
 
     public getLocalState(): IPendingLocalState | undefined {
-        assert(this.initialStates.isEmpty(), "Must call getLocalState() after applying initial states");
+        assert(this.initialStates.isEmpty(), 0x2e1 /* "Must call getLocalState() after applying initial states" */);
         if (this.hasPendingMessages()) {
             return {
                 pendingStates: this.pendingStates.toArray().map(
@@ -230,6 +230,82 @@ export class PendingStateManager implements IDisposable {
             // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pendingStates.push(this.initialStates.shift()!);
+        }
+    }
+
+    /**
+     * Processes a local message once it's ack'd by the server to verify that there was no data corruption and that
+     * the batch information was preserved for batch messages. Also process remote messages that might have been
+     * sent from a previous container.
+     * @param message - The message that got ack'd and needs to be processed.
+     */
+    public processMessage(message: ISequencedDocumentMessage, local: boolean) {
+        // Do not process chunked ops until all pieces are available.
+        if (message.type === ContainerMessageType.ChunkedOp) {
+            return { localAck: false, localOpMetadata: undefined };
+        }
+
+        if (local) {
+            return { localAck: false, localOpMetadata: this.processPendingLocalMessage(message) };
+        } else {
+            return this.processRemoteMessage(message);
+        }
+    }
+
+    /**
+     * Listens for ACKs of stashed ops
+     */
+    private processRemoteMessage(message: ISequencedDocumentMessage) {
+        if (!isRuntimeMessage(message)) {
+            return { localAck: false, localOpMetadata: undefined };
+        }
+
+        // this message was a pending op that was actually sent successfully
+        const isOriginalClientId = message.clientId === Array.from(this.previousClientIds)[0] &&
+            message.clientSequenceNumber >= this.firstStashedCSN;
+        // this message is a pending or stashed op that was resubmitted
+        const isNewClientId = Array.from(this.previousClientIds).indexOf(message.clientId) > 0;
+
+        // if this is an ack for a stashed op, dequeue one message.
+        // we should have seen its ref seq num by now and the DDS should be ready for it to be ACKed
+        if (isOriginalClientId || isNewClientId) {
+            assert(this.clientId === undefined, 0x28b /* "multiple clients connected with stashed ops" */);
+            while (!this.pendingStates.isEmpty()) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const nextState = this.pendingStates.shift()!;
+                // if it's not a message just drop it and keep looking
+                if (nextState.type === "message") {
+                    this.assertOpMatch(nextState, message, isOriginalClientId);
+                    return { localAck: true, localOpMetadata: nextState.localOpMetadata };
+                }
+            }
+        }
+
+        if (message.type === ContainerMessageType.Rejoin && this.previousClientIds.has(message.contents?.clientId)) {
+            this.previousClientIds.add(message.clientId);
+        }
+
+        return { localAck: false, localOpMetadata: undefined };
+    }
+
+    private assertOpMatch(state: IPendingMessage, message: ISequencedDocumentMessage, isOriginalClientId: boolean) {
+        assert(message.type === state.messageType, 0x28c /* "different message type" */);
+        assert(message.clientSequenceNumber === state.clientSequenceNumber || !isOriginalClientId,
+            0x28d /* "client sequence number doesn't match" */);
+        switch (message.type) {
+            case ContainerMessageType.Attach:
+                assert(message.contents.id === state.content.id, 0x28e /* "datastore ID doesn't match" */);
+                break;
+            case ContainerMessageType.FluidDataStoreOp:
+                assert(message.contents.address === state.content.address, 0x28f /* "address doesn't match" */);
+                break;
+            case ContainerMessageType.BlobAttach:
+                // todo: assert we have blob storage, assert blob IDs match, remove blob from blob storage since it made
+                // it through successfully
+                break;
+            case ContainerMessageType.Rejoin:
+            default:
+                throw new Error(`${message.type} not expected`);
         }
     }
 

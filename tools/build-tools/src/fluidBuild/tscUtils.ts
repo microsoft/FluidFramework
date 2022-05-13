@@ -11,6 +11,86 @@ export const parseCommandLine = defaultTscUtil.parseCommandLine;
 export const findConfigFile = defaultTscUtil.findConfigFile;
 export const readConfigFile = defaultTscUtil.readConfigFile;
 
+// See convertToProgramBuildInfoCompilerOptions in typescript src/compiler/builder.ts
+const incrementalOptions = [
+    // affectsEmit === true
+    "assumeChangesOnlyAffectDirectDependencies",
+    "target",
+    "listFilesOnly",
+    "module",
+    "jsx",
+    "declaration",
+    "declarationMap",
+    "emitDeclarationOnly",
+    "sourceMap",
+    "outFile",
+    "outDir",
+    "rootDir",
+    "composite",
+    "tsBuildInfoFile",
+    "removeComments",
+    "importHelpers",
+    "importsNotUsedAsValues",
+    "downlevelIteration",
+    "esModuleInterop",
+    "sourceRoot",
+    "mapRoot",
+    "inlineSourceMap",
+    "inlineSources",
+    "emitDecoratorMetadata",
+    "jsxImportSource",
+    "out",
+    "reactNamespace",
+    "emitBOM",
+    "newLine",
+    "stripInternal",
+    "noEmitHelpers",
+    "noEmitOnError",
+    "preserveConstEnums",
+    "declarationDir",
+    "useDefineForClassFields",
+    "preserveValueImports",
+
+    // affectsSemanticDiagnostics === true
+    "noImplicitAny",
+    "strictNullChecks",
+    "strictPropertyInitialization",
+    "noImplicitThis",
+    "useUnknownInCatchVariables",
+    "noUnusedLocals",
+    "noUnusedParameters",
+    "exactOptionalPropertyTypes",
+    "noImplicitReturns",
+    "noFallthroughCasesInSwitch",
+    "noUncheckedIndexedAccess",
+    "noImplicitOverride",
+    "allowSyntheticDefaultImports",
+    "allowUmdGlobalAccess",
+    "experimentalDecorators",
+    "noErrorTruncation",
+    "noImplicitUseStrict",
+    "allowUnusedLabels",
+    "allowUnreachableCode",
+    "suppressExcessPropertyErrors",
+    "suppressImplicitAnyIndexErrors",
+    "noStrictGenericChecks",
+    "useDefineForClassFields",
+
+    "skipLibCheck",
+    "skipdefaultlibcheck",
+    "strict",
+].sort();  // sort it so that the result of the filter is sorted as well.
+
+export function filterIncrementalOptions(options: any) {
+    const newOptions: any = {};
+    for (const key of incrementalOptions) {
+        if (options[key] !== undefined) {
+            newOptions[key] = options[key];
+        }
+    }
+    return newOptions;
+}
+
 export function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cwd: string) {
     // Shallow clone 'CompilerOptions' before modifying.
     const result = { ...options };

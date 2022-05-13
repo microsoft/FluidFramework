@@ -219,7 +219,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * be true when the proposal is accepted, and false if
      * the proposal is rejected.
      */
-    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>
+    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
 
     /**
      * Attaches the Container to the Container specified by the given Request.
@@ -393,7 +393,7 @@ export type ILoaderOptions = {
     /**
      * Max time(in ms) container will wait for a leave message of a disconnected client.
     */
-    maxClientLeaveWaitTime?: number,
+    maxClientLeaveWaitTime?: number;
 };
 
 /**
@@ -443,7 +443,7 @@ export interface IContainerLoadMode {
          * Also there might be a lot of trailing ops and applying them might take time, so hosts are
          * recommended to have some progress UX / cancellation built into loading flow when using this option.
          */
-        | "all"
+        | "all";
     deltaConnection?:
         /*
          * Connection to delta stream is made only when Container.resume() call is made. Op processing
@@ -462,7 +462,7 @@ export interface IContainerLoadMode {
          * Ops processing is enabled and ops are flowing through the system.
          * Default value.
          */
-        | undefined
+        | undefined;
 }
 
 /**
@@ -509,6 +509,6 @@ export interface IPendingLocalState {
  * when attaching.
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
-    blobsContents: {[path: string]: ArrayBufferLike},
-    trees: {[path: string]: ISnapshotTreeWithBlobContents},
+    blobsContents: { [path: string]: ArrayBufferLike },
+    trees: { [path: string]: ISnapshotTreeWithBlobContents },
 }

@@ -131,12 +131,12 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
      * Attempts to connect the container to the delta stream and process ops
      */
-    connect(): void;
+    connect?(): void;
 
     /**
      * Disconnects the container from the delta stream and stops processing ops
      */
-    disconnect(): void;
+    disconnect?(): void;
 
     /**
      * Create a new data object or DDS of the specified type.  In order to share the data object or DDS with other

@@ -105,16 +105,16 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 /** Options affecting summarize behavior. */
 export interface ISummarizeOptions {
     /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-    readonly fullTree?: boolean,
+    readonly fullTree?: boolean;
     /** True to ask the server what the latest summary is first; defaults to false */
-    readonly refreshLatestAck?: boolean,
+    readonly refreshLatestAck?: boolean;
 }
 
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
-    readonly summaryLogger: ITelemetryLogger,
+    readonly summaryLogger: ITelemetryLogger;
     /** Tells when summary process should be cancelled */
-    readonly cancellationToken: ISummaryCancellationToken,
+    readonly cancellationToken: ISummaryCancellationToken;
 }
 
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
@@ -154,8 +154,8 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly opsSizesSinceLastSummary: number;
     /** Number of non-system ops since the last summary @see isSystemMessage */
     readonly nonSystemOpsSinceLastSummary: number;
-    /** Number of members in the quorum at when summary was generated. */
-    readonly quorumSize?: number;
+    /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
+    readonly summaryNumber: number;
 }
 
 /** Base results for all submitSummary attempts. */
@@ -311,7 +311,7 @@ export interface ISummarizer extends
     /* Closes summarizer. Any pending processes (summary in flight) are abandoned. */
     close(): void;
 
-    run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
 
     /**
      * Attempts to generate a summary on demand. If already running, takes no action.

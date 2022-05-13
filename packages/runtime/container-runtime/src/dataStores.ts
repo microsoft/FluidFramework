@@ -272,8 +272,8 @@ export class DataStores implements IDisposable {
             return false;
         }
 
-        const currentContext = this.contexts.get(aliasMessage.internalId);
-        if (currentContext === undefined) {
+        const context = this.contexts.get(aliasMessage.internalId);
+        if (context === undefined) {
             this.logger.sendErrorEvent({
                 eventName: "AliasFluidDataStoreNotFound",
                 fluidDataStoreId: aliasMessage.internalId,
@@ -281,8 +281,15 @@ export class DataStores implements IDisposable {
             return false;
         }
 
-        this.aliasMap.set(aliasMessage.alias, currentContext.id);
-        currentContext.setInMemoryRoot();
+        const handle = new FluidObjectHandle(
+            context,
+            aliasMessage.internalId,
+            this.runtime.IFluidHandleContext,
+        );
+        this.runtime.addedGCOutboundReference(this.containerRuntimeHandle, handle);
+
+        this.aliasMap.set(aliasMessage.alias, context.id);
+        context.setInMemoryRoot();
         return true;
     }
 
@@ -375,7 +382,7 @@ export class DataStores implements IDisposable {
     public rollbackDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
-        assert(!!context, "There should be a store context for the op");
+        assert(!!context, 0x2e0 /* "There should be a store context for the op" */);
         context.rollback(envelope.contents, localOpMetadata);
     }
 
@@ -427,7 +434,10 @@ export class DataStores implements IDisposable {
             assert(!local, 0x163 /* "Missing datastore for local signal" */);
             this.logger.sendTelemetryEvent({
                 eventName: "SignalFluidDataStoreNotFound",
-                fluidDataStoreId: address,
+                fluidDataStoreId: {
+                    value: address,
+                    tag: TelemetryDataTag.PackageData,
+                },
             });
             return;
         }

@@ -184,7 +184,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).connect}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
      */
     public connect(services: IChannelServices) {
         this.services = services;
@@ -192,19 +192,19 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).isAttached}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).isAttached}
      */
     public isAttached(): boolean {
         return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).getAttachSummary}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
      */
     public abstract getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 
     /**
-     * {@inheritDoc (ISharedObject:interface).summarize}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
      */
     public abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
@@ -416,13 +416,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     }
 
     /**
-     * Revert an op
-     */
-    protected rollback(content: any, localOpMetadata: unknown) {
-        throw new Error("rollback not supported");
-    }
-
-    /**
      * Apply changes from an op. Used when rehydrating an attached container
      * with pending changes. This prepares the SharedObject for seeing an ACK
      * for the op or resubmitting the op upon reconnection.
@@ -480,14 +473,14 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).getAttachSummary}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
      */
     public getAttachSummary(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
         return this.summarizeCore(this.serializer);
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).summarize}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
      */
     public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummaryTreeWithStats> {
         return this.summarizeCore(this.serializer);

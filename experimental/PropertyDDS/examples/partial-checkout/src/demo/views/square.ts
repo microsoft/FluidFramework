@@ -57,7 +57,7 @@ export class Square {
         ctx?.clearRect(this.position.x, this.position.y, this.length, this.length);
     }
 
-    public updatePosition(position: { x: number, y: number }) {
+    public updatePosition(position: { x: number; y: number; }) {
         this.board.clean();
         this.position = position;
         this.board.draw();

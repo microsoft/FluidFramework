@@ -12,13 +12,13 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
-    quorumClients: () => IQuorumClients | undefined,
+    quorumClients: () => IQuorumClients | undefined;
     logConnectionStateChangeTelemetry:
-        (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
-    shouldClientJoinWrite: () => boolean,
-    maxClientLeaveWaitTime: number | undefined,
-    logConnectionIssue: (eventName: string) => void,
-    connectionStateChanged: () => void,
+        (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void;
+    shouldClientJoinWrite: () => boolean;
+    maxClientLeaveWaitTime: number | undefined;
+    logConnectionIssue: (eventName: string) => void;
+    connectionStateChanged: () => void;
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -134,7 +134,7 @@ export class ConnectionStateHandler {
 
         assert(this.prevClientLeftTimer.hasTimer === false ||
             (this.clientId !== undefined && quorumClients.getMember(this.clientId) !== undefined),
-            "Must only wait for leave message when clientId in quorum");
+            0x2dc /* "Must only wait for leave message when clientId in quorum" */);
 
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
