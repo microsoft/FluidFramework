@@ -12,8 +12,11 @@ import { ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
     quorumClients: () => IQuorumClients | undefined;
-    logConnectionStateChangeTelemetry:
-    (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void;
+    logConnectionStateChangeTelemetry: (
+        value: ConnectionState,
+        oldState: ConnectionState,
+        reason?: string | undefined
+    ) => void;
     shouldClientJoinWrite: () => boolean;
     maxClientLeaveWaitTime: number | undefined;
     logConnectionIssue: (eventName: string) => void;
