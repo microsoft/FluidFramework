@@ -133,9 +133,13 @@ async function orchestratorProcess(
             childArgs.push("--enableOpsMetrics");
         }
 
+        if (endpoint) {
+            childArgs.push(`--driverEndpoint`, endpoint);
+        }
+
         runnerArgs.push(childArgs);
     }
-    console.log(runnerArgs.join("\n"));
+    console.log(runnerArgs.map((a) => a.join(" ")).join("\n"));
 
     if (args.enableMetrics === true) {
         setInterval(() => {
