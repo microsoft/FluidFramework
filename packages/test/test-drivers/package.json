@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "npm run tsc && npm run build:test && npm run build:esnext",
+    "build:compile": "npm run tsc && npm run typetests:gen && npm run build:test && npm run build:esnext",
     "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -32,7 +32,8 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -106,6 +107,10 @@
   },
   "typeValidation": {
     "version": "0.59.3000",
-    "broken": {}
+    "broken": {
+        "InterfaceDeclaration_FluidTestDriverConfig": {
+          "forwardCompat": false
+      }
+    }
   }
 }

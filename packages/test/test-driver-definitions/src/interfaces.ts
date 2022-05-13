@@ -8,6 +8,8 @@ import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframe
 
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
+export type RouterliciousEndpoint = "frs" | "r11s" | "docker";
+
 export interface ITestDriver{
     /**
      * The type of server the test driver executes against
