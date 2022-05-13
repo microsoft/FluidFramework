@@ -130,9 +130,10 @@
       "ClassDeclaration_SharedSegmentSequence": {"forwardCompat": false},
       "ClassDeclaration_SharedSequence": {"forwardCompat": false},
       "ClassDeclaration_SharedString": {"forwardCompat": false},
-      "TypeAliasDeclaration_SharedStringSegment": {"forwardCompat": false},
+      "TypeAliasDeclaration_SharedStringSegment": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SparseMatrix": {"forwardCompat": false},
-      "ClassDeclaration_SubSequence": {"forwardCompat": false}
+      "ClassDeclaration_SubSequence": {"forwardCompat": false},
+      "ClassDeclaration_SequenceInterval": {"backCompat": false}
     }
   }
 }

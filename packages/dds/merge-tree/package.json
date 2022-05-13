@@ -152,8 +152,13 @@
       "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false},
       "ClassDeclaration_SortedSegmentSet": {"forwardCompat": false},
       "ClassDeclaration_TextSegment": {"forwardCompat": false},
-      "ClassDeclaration_TrackingGroup": {"forwardCompat": false}
-
+      "ClassDeclaration_TrackingGroup": {"forwardCompat": false},
+      "InterfaceDeclaration_IConsensusInfo": {"forwardCompat": false, "backCompat": false},
+      "InterfaceDeclaration_IJSONMarkerSegment": {"backCompat": false},
+      "InterfaceDeclaration_IMarkerDef": {"backCompat": false},
+      "ClassDeclaration_LocalReference": {"forwardCompat": false, "backCompat": false},
+      "ClassDeclaration_Marker": {"forwardCompat": false, "backCompat": false},
+      "EnumDeclaration_ReferenceType": {"backCompat": false}
     }
   }
 }

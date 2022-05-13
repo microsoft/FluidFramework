@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { ReferenceType } from "@fluidframework/merge-tree";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
@@ -20,8 +21,13 @@ const assertIntervals = (
     sharedString: SharedString,
     intervalCollection: IntervalCollection<SequenceInterval>,
     expected: readonly { start: number; end: number; }[],
+    validateOverlapping: boolean = true,
 ) => {
-    const actual = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    const actual = Array.from(intervalCollection);
+    if (validateOverlapping && sharedString.getLength() > 0) {
+        const overlapping = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
+        assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+    }
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
 
@@ -131,17 +137,304 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
-        it("can slide intervals on create conflict with remove range", () => {
+        it("errors creating invalid intervals", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+
+            assert.throws(() => collection1.add(0, 0, IntervalType.SlideOnRemove),
+                "Should throw creating interval on empty string");
+            assert.throws(() => collection1.add(1, 3, IntervalType.SlideOnRemove),
+                "Should throw creating interval on empty string");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            assert.throws(() => collection1.add(2, 5, IntervalType.SlideOnRemove),
+                "Should throw creating interval past end of string");
+            // TODO:ransomr where should we check for negative positions?
+            // assert.throws(() => collection1.add(-1, 2, IntervalType.SlideOnRemove),
+            //     "Should throw creating interval at negative position");
+        });
+
+        it("can create and slide interval to a marker", () => {
+            sharedString.insertText(0, "ABCD");
+            sharedString.insertMarker(4, ReferenceType.Tile, { nodeType: "Paragraph" });
+            const collection1 = sharedString.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            collection1.add(3, 4, IntervalType.SlideOnRemove);
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString, collection1, [
+                { start: 3, end: 4 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 3, end: 4 },
+            ]);
+
+            sharedString.removeRange(3, 4);
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString, collection1, [
+                { start: 3, end: 3 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 3, end: 3 },
+            ]);
+        });
+
+        it("can slide intervals nearer", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");
             containerRuntimeFactory.processAllMessages();
             const collection2 = sharedString2.getIntervalCollection("test");
 
+            // Conflicting remove/add interval at end of string
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+            sharedString2.removeRange(3, 4);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 2 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 2 },
+            ]);
+
+            // Remove location of end of interval
+            sharedString.removeRange(2, 3);
+            assert.equal(sharedString.getText(), "AB");
+            assertIntervals(sharedString, collection1, [
+                // TODO:ransomr odd behavior - end of interval doesn't slide
+                // until ack, so position beyond end of string
+                { start: 1, end: 2 },
+            ]);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 1 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 1 },
+            ]);
+
+            // Remove location of start and end of interval
+            sharedString.removeRange(1, 2);
+            assertIntervals(sharedString, collection1, [
+                // TODO:ransomr odd behavior - start of interval doesn't slide
+                // until ack, so not found by overlapping search
+                { start: 1, end: 1 },
+            ], false);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 0, end: 0 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 0, end: 0 },
+            ]);
+
+            // Interval on empty string
+            sharedString.removeRange(0, 1);
+            assertIntervals(sharedString, collection1, [
+                // TODO:ransomr Search finds interval at end of string
+                { start: 0, end: 0 },
+            ]);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                // TODO:ransomr remove interval when string is acked empty
+                { start: -1, end: -1 },
+            ], false);
+            assertIntervals(sharedString2, collection2, [
+                { start: -1, end: -1 },
+            ], false);
+        });
+
+        it("consistent after remove all/insert text conflict", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.insertText(0, "XYZ");
+            sharedString2.removeRange(0, 4);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 2, end: 2 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 2, end: 2 },
+            ]);
+
+            sharedString2.removeRange(0, 3);
+            sharedString.insertText(0, "PQ");
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: -1, end: -1 },
+            ], false);
+            assertIntervals(sharedString2, collection2, [
+                { start: -1, end: -1 },
+            ], false);
+
+            sharedString2.removeRange(0, 2);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: -1, end: -1 },
+            ], false);
+            assertIntervals(sharedString2, collection2, [
+                { start: -1, end: -1 },
+            ], false);
+        });
+
+        it("can slide intervals on remove ack", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+            containerRuntimeFactory.processAllMessages();
+
+            sharedString.insertText(2, "X");
+            assert.strictEqual(sharedString.getText(), "ABXCD");
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 4 },
+            ]);
+
+            sharedString2.removeRange(1, 2);
+            assert.strictEqual(sharedString2.getText(), "ACD");
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 2 },
+            ]);
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "AXCD");
+            assert.strictEqual(sharedString2.getText(), "AXCD");
+
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 3 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 3 },
+            ]);
+        });
+
+        it("can slide intervals to segment not referenced by remove", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.insertText(2, "X");
+            assert.strictEqual(sharedString.getText(), "ABXCD");
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+
+            sharedString2.removeRange(1, 2);
+            assert.strictEqual(sharedString2.getText(), "ACD");
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "AXCD");
+            assert.strictEqual(sharedString2.getText(), "AXCD");
+
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 2 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 2 },
+            ]);
+        });
+
+        it("can slide intervals on create ack", () => {
+            // Create and connect a third SharedString.
+            const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
+            const containerRuntime3 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
+            const services3 = {
+                deltaConnection: containerRuntime3.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+
+            const sharedString3 = new SharedString(
+                dataStoreRuntime3, "shared-string-3", SharedStringFactory.Attributes);
+            sharedString3.initializeLocal();
+            sharedString3.connect(services3);
+
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+            const collection3 = sharedString3.getIntervalCollection("test");
+
+            sharedString.removeRange(1, 2);
+            assert.strictEqual(sharedString.getText(), "ACD");
+
+            sharedString2.insertText(2, "X");
+            assert.strictEqual(sharedString2.getText(), "ABXCD");
+
+            collection3.add(1, 3, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "AXCD");
+            assert.strictEqual(sharedString2.getText(), "AXCD");
+            assert.strictEqual(sharedString3.getText(), "AXCD");
+
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 3 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 3 },
+            ]);
+            assertIntervals(sharedString3, collection3, [
+                { start: 1, end: 3 },
+            ]);
+        });
+
+        it("can slide intervals on create before remove", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            collection2.add(1, 3, IntervalType.SlideOnRemove);
+
             sharedString.removeRange(1, 3);
+
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 1 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 1 },
+            ]);
+        });
+
+        it("can slide intervals on remove before create", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCDE");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.removeRange(1, 3);
+            assert.strictEqual(sharedString.getText(), "ADE");
 
             collection2.add(1, 3, IntervalType.SlideOnRemove);
 
             containerRuntimeFactory.processAllMessages();
+
+            // before fixing this, at this point the start range on sharedString
+            // is on the removed segment. Can't detect that from the interval API.
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 1 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 1 },
+            ]);
+
+            // More operations reveal the problem
+            sharedString.insertText(2, "X");
+            assert.strictEqual(sharedString.getText(), "ADXE");
+            sharedString2.removeRange(1, 2);
+            assert.strictEqual(sharedString2.getText(), "AE");
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "AXE");
 
             assertIntervals(sharedString2, collection2, [
                 { start: 1, end: 1 },
@@ -274,6 +567,9 @@ describe("SharedString interval collections", () => {
                 createInfo2[createCalls2++] = { local, label };
             };
             sharedString2.on("createIntervalCollection", createCallback2);
+
+            sharedString.insertText(0, "hello world");
+            containerRuntimeFactory.processAllMessages();
 
             const collection1: IntervalCollection<SequenceInterval> = sharedString.getIntervalCollection("test1");
             const interval1 = collection1.add(0, 1, IntervalType.SlideOnRemove);
