@@ -30,7 +30,28 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     interface LoggingHeader {
         headerName: string;
         logName: string;
+        subKeyName?: string;
+        mapping?: Map<string, string | number | boolean>;
     }
+    const mapResponseOrigin: Map<string, string> = new Map([
+        ["c", "cache"],
+        ["g", "graph"],
+      ]);
+
+    const xfluidTelemetry = "x-fluid-telemetry";
+    // X-Fluid-Telemetry contains a key value pair in the following format:
+    // X-Fluid-Telemetry:key1=value1,key2,key3=value3,
+    // Ex. X-Fluid-Telemetry:Origin=c,isSomeDataPoint (there will be no isSomeDataPoint=false or isSomeDataPoint=True)
+    const xFluidTelemetryParser = (fluidTelemetry: string, fieldName: string) => {
+        const outputMap = fluidTelemetry.split(",").map((keyValuePair) => keyValuePair.split("="));
+        for (const [key, value] of outputMap) {
+            if (key.trim() === fieldName) {
+                return value?.trim() ?? true;
+            }
+        }
+        return undefined;
+    };
+
     // We rename headers so that otel doesn't scrub them away. Otel doesn't allow
     // certain characters in headers including '-'
     const headersToLog: LoggingHeader[] = [
@@ -39,6 +60,9 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
         { headerName: "client-request-id", logName: "clientRequestId" },
         { headerName: "x-msedge-ref", logName: "xMsedgeRef" },
         { headerName: "X-Fluid-Retries", logName: "serverRetries" },
+        { headerName: "content-encoding", logName: "contentEncoding" },
+        { headerName: "content-type", logName: "contentType" },
+        { headerName: xfluidTelemetry, logName: "responseOrigin", subKeyName: "Origin", mapping: mapResponseOrigin },
     ];
     const additionalProps: ITelemetryProperties = {
         sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
@@ -47,7 +71,14 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     headersToLog.forEach((header) => {
         const headerValue = headers.get(header.headerName);
         if (headerValue !== undefined && headerValue !== null) {
-            additionalProps[header.logName] = headerValue;
+            if (header.subKeyName === undefined) {
+                additionalProps[header.logName] = headerValue;
+            } else if (header.headerName === xfluidTelemetry) {
+                const fieldValue = xFluidTelemetryParser(headerValue, header.subKeyName);
+                if (fieldValue !== undefined) {
+                    additionalProps[header.logName] = header.mapping?.get(fieldValue) ?? fieldValue;
+                }
+            }
         }
     });
     return additionalProps;
