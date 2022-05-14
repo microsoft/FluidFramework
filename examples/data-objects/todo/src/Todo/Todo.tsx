@@ -72,6 +72,7 @@ export class Todo extends DataObject implements IFluidHTMLView {
      * Creates a new view for a caller that doesn't directly support React
      */
     public render(div: HTMLElement) {
+        console.warn("Todo.render()");
         // TODO: Temporary - this should ultimately come from the app, who controls the URL format.
         const getDirectLink = (itemId: string) => {
             const pathParts = window.location.pathname.split("/");

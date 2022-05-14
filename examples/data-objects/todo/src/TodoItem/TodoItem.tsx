@@ -98,6 +98,7 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
     // start IFluidHTMLView
 
     public render(div: HTMLElement) {
+        console.warn("TodoItem.render()");
         // TODO: Temporary - this should ultimately come from the app, who controls the URL format.
         const getDirectLink = (itemId: string) => {
             const pathParts = window.location.pathname.split("/");

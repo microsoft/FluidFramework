@@ -29,11 +29,14 @@ const getDirectLink = (itemId: string) => {
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
     runtime.IFluidHandleContext.resolveHandle(request);
 
-// The defaultViewRequestHandler responds to empty requests with the default view (a DiceRollerView).  Since we wrap
+// The todoRequestHandler provides a TodoView for either a request for "todo" or for an empty request.  Since we wrap
 // it with a mountableViewRequestHandler below, the view will be wrapped in a MountableView if the requester includes
 // the mountableView request header.
-const defaultViewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
-    if (request.pathParts.length === 0) {
+const todoRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
+    if (
+        request.pathParts.length === 0
+        || request.pathParts.length === 1 && request.pathParts[0] === todoId
+    ) {
         const objectRequest = RequestParser.create({
             url: ``,
             headers: request.headers,
@@ -54,7 +57,7 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
                 TodoInstantiationFactory.registryEntry,
             ]),
             undefined,
-            [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler, innerRequestHandler])],
+            [mountableViewRequestHandler(MountableView, [todoRequestHandler, innerRequestHandler])],
         );
     }
 
