@@ -5,12 +5,11 @@
 
 import {
     BaseContainerRuntimeFactory,
-    ContainerRuntimeFactoryWithDefaultDataStore,
+    // ContainerRuntimeFactoryWithDefaultDataStore,
     mountableViewRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-// import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
@@ -29,15 +28,6 @@ const getDirectLink = (itemId: string) => {
 
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
     runtime.IFluidHandleContext.resolveHandle(request);
-
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    TodoInstantiationFactory,
-    new Map([
-        TodoInstantiationFactory.registryEntry,
-    ]),
-    undefined,
-    [innerRequestHandler],
-);
 
 // The defaultViewRequestHandler responds to empty requests with the default view (a DiceRollerView).  Since we wrap
 // it with a mountableViewRequestHandler below, the view will be wrapped in a MountableView if the requester includes
@@ -73,4 +63,4 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     }
 }
 
-export const TaskSelectionFactory = new TodoContainerRuntimeFactory();
+export const fluidExport = new TodoContainerRuntimeFactory();
