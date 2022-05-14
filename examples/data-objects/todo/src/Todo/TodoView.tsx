@@ -40,7 +40,7 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 
         return () => {
             todoModel.off("todoItemsChanged", refreshTodoItemListFromModel);
-        }
+        };
     }, [todoModel]);
 
     if (titleString === undefined) {
