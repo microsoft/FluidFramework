@@ -9,7 +9,8 @@ import React, { useEffect, useState } from "react";
 import { TodoItem } from "./TodoItem";
 
 interface TodoItemViewProps {
-    todoItemModel: TodoItem;
+    readonly todoItemModel: TodoItem;
+    readonly getDirectLink: (itemId: string) => string;
 }
 
 const buttonStyle = {
@@ -20,16 +21,15 @@ const buttonStyle = {
 };
 
 export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
-    const { todoItemModel } = props;
+    const { todoItemModel, getDirectLink } = props;
     const itemText = todoItemModel.getTodoItemText();
     const [checked, setChecked] = useState<boolean>(false);
     const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
-    const [absoluteUrl, setAbsoluteUrl] = useState<string>(todoItemModel.absoluteUrl);
+    const itemId = todoItemModel.id;
 
     useEffect(() => {
         todoItemModel.on("stateChanged", () => {
             setChecked(todoItemModel.getCheckedState());
-            setAbsoluteUrl(todoItemModel.absoluteUrl);
         });
     }, [todoItemModel]);
 
@@ -66,10 +66,10 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
                 </button>
                 <button
                     name="OpenSubComponent"
-                    id={absoluteUrl}
+                    id={itemId}
                     style={buttonStyle}
-                    onClick={() => window.open(absoluteUrl, "_blank")}
-                    disabled={absoluteUrl === undefined}>↗
+                    onClick={() => window.open(getDirectLink(itemId), "_blank")}
+                    disabled={itemId === undefined}>↗
                 </button>
                 <button
                     style={buttonStyle}

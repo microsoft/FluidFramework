@@ -72,10 +72,17 @@ export class Todo extends DataObject implements IFluidHTMLView {
      * Creates a new view for a caller that doesn't directly support React
      */
     public render(div: HTMLElement) {
+        // TODO: Temporary - this should ultimately come from the app, who controls the URL format.
+        const getDirectLink = (itemId: string) => {
+            const pathParts = window.location.pathname.split("/");
+            const containerName = pathParts[2];
+
+            return `/doc/${containerName}/${itemId}`;
+        };
         // Because we are using React and our caller is not we will use the
         // ReactDOM to render our JSX.Element directly into the provided div.
         ReactDOM.render(
-            <TodoView todoModel={this} />,
+            <TodoView todoModel={this} getDirectLink={getDirectLink}/>,
             div,
         );
     }

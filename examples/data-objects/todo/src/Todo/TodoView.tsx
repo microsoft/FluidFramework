@@ -11,7 +11,8 @@ import { TodoItemView } from "../TodoItem/TodoItemView";
 import { Todo } from "./Todo";
 
 interface TodoViewProps {
-    todoModel: Todo;
+    readonly todoModel: Todo;
+    readonly getDirectLink: (itemId: string) => string;
 }
 
 interface TodoViewState {
@@ -83,6 +84,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         const todoItemComponents = this.state.todoItemComponents.map((todoItemComponent) => (
             <TodoItemView
                 todoItemModel={todoItemComponent}
+                getDirectLink={this.props.getDirectLink}
                 key={todoItemComponent.handle.absolutePath}
             />
         ));

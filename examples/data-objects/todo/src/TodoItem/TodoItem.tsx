@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory, waitForAttach } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
@@ -32,10 +32,8 @@ const innerComponentKey = "innerId";
 export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; }> implements IFluidHTMLView {
     private text: SharedString;
     private innerComponent: TextBox | undefined;
-    private _absoluteUrl: string | undefined;
 
     public get IFluidHTMLView() { return this; }
-    public get absoluteUrl() { return this._absoluteUrl; }
 
     /**
      * Do creation work
@@ -80,14 +78,6 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
                 }
             }
         });
-
-        waitForAttach(this.runtime)
-            .then(async () => {
-                const url = await this.context.getAbsoluteUrl(this.handle.absolutePath);
-                this._absoluteUrl = url;
-                this.emit("stateChanged");
-            })
-            .catch(console.error);
     }
 
     public static getFactory() { return TodoItem.factory; }
@@ -108,8 +98,15 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
     // start IFluidHTMLView
 
     public render(div: HTMLElement) {
+        // TODO: Temporary - this should ultimately come from the app, who controls the URL format.
+        const getDirectLink = (itemId: string) => {
+            const pathParts = window.location.pathname.split("/");
+            const containerName = pathParts[2];
+
+            return `/doc/${containerName}/${itemId}`;
+        };
         ReactDOM.render(
-            <TodoItemView todoItemModel={this} />,
+            <TodoItemView todoItemModel={this} getDirectLink={getDirectLink}/>,
             div,
         );
     }
