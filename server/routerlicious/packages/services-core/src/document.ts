@@ -117,6 +117,7 @@ export interface IDocument {
 
     createTime: number;
 
+    // Timestamp of the latest document session end
     lastAccessTime?: number;
 
     documentId: string;
