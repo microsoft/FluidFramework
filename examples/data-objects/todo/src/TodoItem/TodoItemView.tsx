@@ -23,14 +23,20 @@ const buttonStyle = {
 export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
     const { todoItemModel, getDirectLink } = props;
     const itemText = todoItemModel.getTodoItemText();
-    const [checked, setChecked] = useState<boolean>(false);
+    const [checked, setChecked] = useState<boolean>(todoItemModel.getCheckedState());
     const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
     const itemId = todoItemModel.id;
 
     useEffect(() => {
-        todoItemModel.on("stateChanged", () => {
+        const refreshCheckedStateFromModel = () => {
             setChecked(todoItemModel.getCheckedState());
-        });
+        }
+        todoItemModel.on("stateChanged", refreshCheckedStateFromModel);
+        refreshCheckedStateFromModel();
+
+        return () => {
+            todoItemModel.off("stateChanged", refreshCheckedStateFromModel);
+        };
     }, [todoItemModel]);
 
     const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
