@@ -12,15 +12,15 @@ export interface ITodoItemInitialState {
     startingText: string;
 }
 
-const checkedKey = "checked";
 const textKey = "text";
 const detailedTextKey = "detailedText";
+const checkedKey = "checked";
 
 /**
  * Todo Item is a singular todo entry consisting of:
- * - Boolean stored in the root SharedDirectory for the checkbox
  * - SharedString for the item's text
  * - SharedString for the item's detailed text
+ * - Boolean stored in the root SharedDirectory for the checkbox
  */
 export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; }> {
     private text: SharedString;
@@ -51,7 +51,6 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
             if (!local) {
                 if (changed.key === checkedKey) {
                     this.emit("checkedStateChanged");
-                    this.emit("stateChanged");
                 }
             }
         });
@@ -87,7 +86,7 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
 
     public setCheckedState(newState: boolean): void {
         this.root.set(checkedKey, newState);
-        this.emit("stateChanged");
+        this.emit("checkedStateChanged");
     }
 
     // end public API surface for the TodoItem model, used by the view

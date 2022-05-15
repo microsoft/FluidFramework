@@ -30,11 +30,11 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
         const refreshCheckedStateFromModel = () => {
             setChecked(todoItemModel.getCheckedState());
         };
-        todoItemModel.on("stateChanged", refreshCheckedStateFromModel);
+        todoItemModel.on("checkedStateChanged", refreshCheckedStateFromModel);
         refreshCheckedStateFromModel();
 
         return () => {
-            todoItemModel.off("stateChanged", refreshCheckedStateFromModel);
+            todoItemModel.off("checkedStateChanged", refreshCheckedStateFromModel);
         };
     }, [todoItemModel]);
 
