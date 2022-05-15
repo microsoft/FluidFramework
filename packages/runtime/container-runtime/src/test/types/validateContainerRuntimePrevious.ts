@@ -459,7 +459,6 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<current.IContainerRuntimeOptions>);
 use_current_InterfaceDeclaration_IContainerRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -1269,7 +1268,6 @@ declare function get_old_InterfaceDeclaration_ISummaryRuntimeOptions():
 declare function use_current_InterfaceDeclaration_ISummaryRuntimeOptions(
     use: TypeOnly<current.ISummaryRuntimeOptions>);
 use_current_InterfaceDeclaration_ISummaryRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummaryRuntimeOptions());
 
 /*

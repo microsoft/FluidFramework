@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-version-utils",
-  "version": "0.59.3000",
+  "version": "0.60.1000",
   "description": "End to end tests",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -52,30 +52,30 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.59.3000",
-    "@fluidframework/cell": "^0.59.3000",
+    "@fluidframework/aqueduct": "^0.60.1000",
+    "@fluidframework/cell": "^0.60.1000",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000",
-    "@fluidframework/container-loader": "^0.59.3000",
-    "@fluidframework/container-runtime": "^0.59.3000",
+    "@fluidframework/container-definitions": "^0.49.1000-64278",
+    "@fluidframework/container-loader": "^0.60.1000",
+    "@fluidframework/container-runtime": "^0.60.1000",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/counter": "^0.59.3000",
-    "@fluidframework/datastore-definitions": "^0.59.3000",
-    "@fluidframework/driver-definitions": "^0.46.1000",
-    "@fluidframework/driver-utils": "^0.59.3000",
-    "@fluidframework/ink": "^0.59.3000",
-    "@fluidframework/map": "^0.59.3000",
-    "@fluidframework/matrix": "^0.59.3000",
-    "@fluidframework/mocha-test-setup": "^0.59.3000",
-    "@fluidframework/ordered-collection": "^0.59.3000",
+    "@fluidframework/counter": "^0.60.1000",
+    "@fluidframework/datastore-definitions": "^0.60.1000",
+    "@fluidframework/driver-definitions": "^0.47.1000-0",
+    "@fluidframework/driver-utils": "^0.60.1000",
+    "@fluidframework/ink": "^0.60.1000",
+    "@fluidframework/map": "^0.60.1000",
+    "@fluidframework/matrix": "^0.60.1000",
+    "@fluidframework/mocha-test-setup": "^0.60.1000",
+    "@fluidframework/ordered-collection": "^0.60.1000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/register-collection": "^0.59.3000",
-    "@fluidframework/runtime-definitions": "^0.59.3000",
-    "@fluidframework/sequence": "^0.59.3000",
-    "@fluidframework/test-driver-definitions": "^0.59.3000",
-    "@fluidframework/test-drivers": "^0.59.3000",
-    "@fluidframework/test-utils": "^0.59.3000",
+    "@fluidframework/register-collection": "^0.60.1000",
+    "@fluidframework/runtime-definitions": "^0.60.1000",
+    "@fluidframework/sequence": "^0.60.1000",
+    "@fluidframework/test-driver-definitions": "^0.60.1000",
+    "@fluidframework/test-drivers": "^0.60.1000",
+    "@fluidframework/test-utils": "^0.60.1000",
     "nconf": "^0.11.4",
     "proper-lockfile": "^4.1.2",
     "semver": "^7.3.4"
@@ -116,7 +116,7 @@
     "webpack-cli": "^4.9.2"
   },
   "typeValidation": {
-    "version": "0.59.3000",
+    "version": "0.60.1000",
     "broken": {}
   }
 }

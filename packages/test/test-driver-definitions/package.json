@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-driver-definitions",
-  "version": "0.59.3000",
+  "version": "0.60.1000",
   "description": "A driver abstraction and implementations for testing against server",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -57,7 +57,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/driver-definitions": "^0.46.1000",
+    "@fluidframework/driver-definitions": "^0.47.1000-0",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "uuid": "^8.3.1"
   },
@@ -89,7 +89,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
+    "version": "0.60.1000",
     "broken": {}
   }
 }

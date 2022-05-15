@@ -354,7 +354,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             applyStashedOp: (content: any): unknown => {
                 return this.applyStashedOp(content);
             },
-            rollback:  (content: any, localOpMetadata: unknown) => {
+            rollback: (content: any, localOpMetadata: unknown) => {
                 this.rollback(content, localOpMetadata);
             },
         });

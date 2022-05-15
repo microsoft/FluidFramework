@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-host",
-  "version": "0.59.3000",
+  "version": "0.60.1000",
   "description": "Routerlicious host interfaces",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,7 +36,7 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/driver-definitions": "^0.46.1000",
+    "@fluidframework/driver-definitions": "^0.47.1000-0",
     "axios": "^0.26.0"
   },
   "devDependencies": {
@@ -67,7 +67,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
+    "version": "0.60.1000",
     "broken": {}
   }
 }

@@ -17,6 +17,7 @@ import {
     IFluidModule,
     IHostLoader,
     ILoader,
+    IPendingLocalState,
     ILoaderOptions as ILoaderOptions1,
     IProxyLoaderFactory,
     LoaderHeader,
