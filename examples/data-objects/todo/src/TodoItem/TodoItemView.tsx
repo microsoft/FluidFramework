@@ -84,7 +84,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
                 // If the content is visible we will show a button or a component
                 detailsVisible &&
                 <CollaborativeTextArea
-                    sharedStringHelper={new SharedStringHelper(todoItemModel.getDetailedText().text)}
+                    sharedStringHelper={new SharedStringHelper(todoItemModel.getDetailedText())}
                 />
             }
         </div>

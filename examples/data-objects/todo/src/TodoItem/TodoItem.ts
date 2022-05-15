@@ -7,7 +7,6 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { TextBox, TextBoxInstantiationFactory } from "../TextBox";
 
 export interface ITodoItemInitialState {
     startingText: string;
@@ -15,7 +14,7 @@ export interface ITodoItemInitialState {
 
 const checkedKey = "checked";
 const textKey = "text";
-const innerComponentKey = "innerId";
+const detailedTextKey = "detailedText";
 
 /**
  * Todo Item is a singular todo entry consisting of:
@@ -27,7 +26,7 @@ const innerComponentKey = "innerId";
  */
 export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; }> {
     private text: SharedString;
-    private detailedText: TextBox | undefined;
+    private detailedText: SharedString;
 
     /**
      * Do creation work
@@ -44,15 +43,13 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
         // The state of the checkbox
         this.root.set(checkedKey, false);
 
-        // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
-        // user choose the component they want to embed. We store it in a cell for easier event handling.
-        const textBox = await TextBoxInstantiationFactory.createChildInstance(this.context);
-        this.root.set(innerComponentKey, textBox.handle);
+        const detailedText = SharedString.create(this.runtime);
+        this.root.set(detailedTextKey, detailedText.handle);
     }
 
     protected async hasInitialized() {
-        const text = this.root.get<IFluidHandle<SharedString>>(textKey).get();
-        const innerComponent = this.root.get<IFluidHandle<TextBox>>(innerComponentKey).get();
+        const textP = this.root.get<IFluidHandle<SharedString>>(textKey).get();
+        const detailedTextP = this.root.get<IFluidHandle<SharedString>>(detailedTextKey).get();
 
         this.setCheckedState = this.setCheckedState.bind(this);
 
@@ -60,8 +57,8 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
             this.text,
             this.detailedText,
         ] = await Promise.all([
-            text,
-            innerComponent,
+            textP,
+            detailedTextP,
         ]);
 
         this.root.on("valueChanged", (changed: IValueChanged, local: boolean) => {
@@ -84,9 +81,6 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
                 SharedString.getFactory(),
             ],
             {},
-            new Map([
-                TextBoxInstantiationFactory.registryEntry,
-            ]),
         );
 
     // start public API surface for the TodoItem model, used by the view
@@ -105,7 +99,8 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
         return this.root.get(checkedKey);
     }
 
-    public getDetailedText(): TextBox {
+    // Would prefer not to hand this out, and instead give back a component?
+    public getDetailedText(): SharedString {
         return this.detailedText;
     }
 
