@@ -9,13 +9,13 @@ import {
     mountableViewRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 import React from "react";
 import { Todo, TodoInstantiationFactory } from "./Todo";
 import { TodoView } from "./Todo/TodoView";
+import { TodoItem } from "./TodoItem";
+import { TodoItemView } from "./TodoItem/TodoItemView";
 
 const todoId = "todo";
 
@@ -25,9 +25,6 @@ const getDirectLink = (itemId: string) => {
 
     return `/doc/${containerName}/${itemId}`;
 };
-
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-    runtime.IFluidHandleContext.resolveHandle(request);
 
 // The todoRequestHandler provides a TodoView for either a request for "todo" or for an empty request.  Since we wrap
 // it with a mountableViewRequestHandler below, the view will be wrapped in a MountableView if the requester includes
@@ -50,6 +47,18 @@ const todoRequestHandler = async (request: RequestParser, runtime: IContainerRun
     }
 };
 
+const todoItemRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
+    if (request.pathParts.length === 1 && request.pathParts[0] !== todoId) {
+        // TODO: Different way to get the data store
+        const response = await runtime.IFluidHandleContext.resolveHandle(request);
+        if (response.status === 200 && response.mimeType === "fluid/object") {
+            const todoItem = response.value as TodoItem;
+            const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem, getDirectLink });
+            return { status: 200, mimeType: "fluid/object", value: viewResponse };
+        }
+    }
+};
+
 class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
         super(
@@ -57,7 +66,7 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
                 TodoInstantiationFactory.registryEntry,
             ]),
             undefined,
-            [mountableViewRequestHandler(MountableView, [todoRequestHandler, innerRequestHandler])],
+            [mountableViewRequestHandler(MountableView, [todoRequestHandler, todoItemRequestHandler])],
         );
     }
 
