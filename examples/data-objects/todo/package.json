@@ -55,7 +55,6 @@
     "@fluidframework/runtime-utils": "^0.59.3000",
     "@fluidframework/sequence": "^0.59.3000",
     "@fluidframework/view-adapters": "^0.59.3000",
-    "@fluidframework/view-interfaces": "^0.59.3000",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "uuid": "^8.3.1"

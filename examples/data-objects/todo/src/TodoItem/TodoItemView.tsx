@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@fluid-experimental/react-inputs";
-import { ReactViewAdapter } from "@fluidframework/view-adapters";
+import { CollaborativeInput, CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import React, { useEffect, useState } from "react";
 import { TodoItem } from "./TodoItem";
 
@@ -84,7 +83,9 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
             {
                 // If the content is visible we will show a button or a component
                 detailsVisible &&
-                <ReactViewAdapter view={todoItemModel.getInnerComponent()} />
+                <CollaborativeTextArea
+                    sharedStringHelper={new SharedStringHelper(todoItemModel.getDetailedText().text)}
+                />
             }
         </div>
     );

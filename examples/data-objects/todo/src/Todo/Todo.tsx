@@ -7,12 +7,8 @@ import { DataObject } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import React from "react";
-import ReactDOM from "react-dom";
 import { v4 as uuid } from "uuid";
 import { ITodoItemInitialState, TodoItem } from "../TodoItem/index";
-import { TodoView } from "./TodoView";
 
 export const TodoName = "Todo";
 
@@ -28,14 +24,12 @@ interface ITodoStorageFormat {
  * - New todo item entry
  * - List of todo items
  */
-export class Todo extends DataObject implements IFluidHTMLView {
+export class Todo extends DataObject {
     // DDS ids stored as variables to minimize simple string mistakes
     private readonly todoItemsKey = "todo-items";
     private readonly todoTitleKey = "todo-title";
 
     private todoItemsMap: ISharedMap;
-
-    public get IFluidHTMLView() { return this; }
 
     // Would prefer not to hand this out, and instead give back a title component?
     public async getTodoTitleString() {
@@ -65,30 +59,6 @@ export class Todo extends DataObject implements IFluidHTMLView {
             }
         });
     }
-
-    // start IFluidHTMLView
-
-    /**
-     * Creates a new view for a caller that doesn't directly support React
-     */
-    public render(div: HTMLElement) {
-        console.warn("Todo.render()");
-        // TODO: Temporary - this should ultimately come from the app, who controls the URL format.
-        const getDirectLink = (itemId: string) => {
-            const pathParts = window.location.pathname.split("/");
-            const containerName = pathParts[2];
-
-            return `/doc/${containerName}/${itemId}`;
-        };
-        // Because we are using React and our caller is not we will use the
-        // ReactDOM to render our JSX.Element directly into the provided div.
-        ReactDOM.render(
-            <TodoView todoModel={this} getDirectLink={getDirectLink}/>,
-            div,
-        );
-    }
-
-    // end IFluidHTMLView
 
     // start public API surface for the Todo model, used by the view
 

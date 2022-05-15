@@ -7,11 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import React from "react";
-import ReactDOM from "react-dom";
 import { TextBox, TextBoxInstantiationFactory } from "../TextBox";
-import { TodoItemView } from "./TodoItemView";
 
 export interface ITodoItemInitialState {
     startingText: string;
@@ -29,11 +25,9 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; }> implements IFluidHTMLView {
+export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; }> {
     private text: SharedString;
-    private innerComponent: TextBox | undefined;
-
-    public get IFluidHTMLView() { return this; }
+    private detailedText: TextBox | undefined;
 
     /**
      * Do creation work
@@ -64,7 +58,7 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
 
         [
             this.text,
-            this.innerComponent,
+            this.detailedText,
         ] = await Promise.all([
             text,
             innerComponent,
@@ -95,25 +89,6 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
             ]),
         );
 
-    // start IFluidHTMLView
-
-    public render(div: HTMLElement) {
-        console.warn("TodoItem.render()");
-        // TODO: Temporary - this should ultimately come from the app, who controls the URL format.
-        const getDirectLink = (itemId: string) => {
-            const pathParts = window.location.pathname.split("/");
-            const containerName = pathParts[2];
-
-            return `/doc/${containerName}/${itemId}`;
-        };
-        ReactDOM.render(
-            <TodoItemView todoItemModel={this} getDirectLink={getDirectLink}/>,
-            div,
-        );
-    }
-
-    // end IFluidHTMLView
-
     // start public API surface for the TodoItem model, used by the view
 
     // Would prefer not to hand this out, and instead give back a component?
@@ -130,8 +105,8 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
         return this.root.get(checkedKey);
     }
 
-    public getInnerComponent(): TextBox {
-        return this.innerComponent;
+    public getDetailedText(): TextBox {
+        return this.detailedText;
     }
 
     // end public API surface for the TodoItem model, used by the view
