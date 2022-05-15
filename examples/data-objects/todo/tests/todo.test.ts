@@ -13,7 +13,8 @@ describe("ToDo", () => {
                 const subComponentButton = document.getElementsByName("OpenSubComponent");
                 const button = subComponentButton[i] as HTMLDivElement;
                 if (button) {
-                    return button.id;
+                    // TODO: Something better here
+                    return `${window.location.href}/${button.id}`;
                 }
 
                 return "";
@@ -47,49 +48,28 @@ describe("ToDo", () => {
         expect(result).toBeTruthy();
     });
 
-    test("todo item can have nested clicker", async () => {
+    test("todo item has detailed text", async () => {
         // Add item
-        await expect(page).toFill("input[name=itemName]", "ToDoClicker");
+        await expect(page).toFill("input[name=itemName]", "ToDoDetails");
         await expect(page).toClick("button[name=createItem]");
 
-        // Expand subitems and add clicker
+        // Expand details
         await expect(page).toClick("button[name=toggleInnerVisible]");
-        await expect(page).toClick("button", { text: "clicker" });
 
-        // Check clicker exists
-        const foundClicker = await page.evaluate(() => {
-            const clicker = document.body.querySelector(".clicker-value-class");
-            return clicker !== null && clicker !== undefined;
+        // Check details exist
+        const foundDetails = await page.evaluate(() => {
+            const details = document.querySelector("textarea");
+            return details !== null && details !== undefined;
         });
-        expect(foundClicker).toBeTruthy();
+        expect(foundDetails).toBeTruthy();
 
-        // Hide subitems and check clicker disappears
+        // Hide details and check they disappear
         await expect(page).toClick("button[name=toggleInnerVisible]");
-        const hiddenClicker = await page.evaluate(() => {
-            const clicker = document.body.querySelector(".clicker-value-class");
-            return clicker === null || clicker === undefined;
+        const hiddenDetails = await page.evaluate(() => {
+            const details = document.querySelector("textarea");
+            return details === null || details === undefined;
         });
-        expect(hiddenClicker).toBeTruthy();
-    });
-
-    test("todo item can nest multiple todo items", async () => {
-        // Add item
-        await expect(page).toFill("input[name=itemName]", "ToDoNested1");
-        await expect(page).toClick("button[name=createItem]");
-
-        // Expand subitems and add another todo item
-        await expect(page).toClick("button[name=toggleInnerVisible]");
-        await expect(page).toClick("button", { text: "todo" });
-
-        // Expand sub todo subitems and add another todo item
-        await expect(page).toClick(".todo-item .todo-item button[name=toggleInnerVisible]");
-        await expect(page).toClick("button", { text: "todo" });
-
-        const nestedTodo = await page.evaluate(() => {
-            const todo = document.body.querySelector(".todo-item .todo-item .todo-item");
-            return todo !== null && todo !== undefined;
-        });
-        expect(nestedTodo).toBeTruthy();
+        expect(hiddenDetails).toBeTruthy();
     });
 
     test("todo sub components routing", async () => {
@@ -97,27 +77,6 @@ describe("ToDo", () => {
         await expect(page).toClick("button[name=createItem]");
         await expect(page).toFill("input[name=itemName]", "ToDoItem2");
         await expect(page).toClick("button[name=createItem]");
-
-        const itemUrl = await getItemUrl(0);
-        await page.goto(itemUrl, { waitUntil: "load" });
-        await page.waitFor(() => window["fluidStarted"]);
-        const result = await page.evaluate(() => {
-            let itemLists = document.body.querySelectorAll(".todo-item");
-            let items = itemLists[0].childNodes;
-            return items.length === 1;
-        });
-
-        expect(result).toBeTruthy();
-    });
-
-    test("todo sub components routing for nested component", async () => {
-        // Add item
-        await expect(page).toFill("input[name=itemName]", "ToDoNested1");
-        await expect(page).toClick("button[name=createItem]");
-
-        // Expand subitems and add another todo item
-        await expect(page).toClick("button[name=toggleInnerVisible]");
-        await expect(page).toClick("button", { text: "todo" });
 
         const itemUrl = await getItemUrl(0);
         await page.goto(itemUrl, { waitUntil: "load" });
