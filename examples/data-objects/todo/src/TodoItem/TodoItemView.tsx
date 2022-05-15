@@ -21,7 +21,7 @@ const buttonStyle = {
 
 export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
     const { todoItemModel, getDirectLink } = props;
-    const itemText = todoItemModel.getTodoItemText();
+    const itemText = todoItemModel.getText();
     const [checked, setChecked] = useState<boolean>(todoItemModel.getCheckedState());
     const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
     const itemId = todoItemModel.id;

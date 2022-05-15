@@ -18,48 +18,34 @@ const detailedTextKey = "detailedText";
 
 /**
  * Todo Item is a singular todo entry consisting of:
- * - Checkbox
- * - Collaborative string
- * - Embedded component
- * - Link to open component in separate tab
- * - Button to remove entry
+ * - Boolean stored in the root SharedDirectory for the checkbox
+ * - SharedString for the item's text
+ * - SharedString for the item's detailed text
  */
 export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; }> {
     private text: SharedString;
     private detailedText: SharedString;
 
-    /**
-     * Do creation work
-     */
     protected async initializingFirstTime(initialState?: ITodoItemInitialState) {
-        // Set initial state if it was provided
+        // The text of the todo item, with initial value if it was provided
         const newItemText = initialState?.startingText ?? "New Item";
-
-        // The text of the todo item
         const text = SharedString.create(this.runtime);
         text.insertText(0, newItemText);
         this.root.set(textKey, text.handle);
 
-        // The state of the checkbox
-        this.root.set(checkedKey, false);
-
+        // The detailed text of the todo item
         const detailedText = SharedString.create(this.runtime);
         this.root.set(detailedTextKey, detailedText.handle);
+
+        // The state of the checkbox
+        this.root.set(checkedKey, false);
     }
 
     protected async hasInitialized() {
         const textP = this.root.get<IFluidHandle<SharedString>>(textKey).get();
         const detailedTextP = this.root.get<IFluidHandle<SharedString>>(detailedTextKey).get();
 
-        this.setCheckedState = this.setCheckedState.bind(this);
-
-        [
-            this.text,
-            this.detailedText,
-        ] = await Promise.all([
-            textP,
-            detailedTextP,
-        ]);
+        [this.text, this.detailedText] = await Promise.all([textP, detailedTextP]);
 
         this.root.on("valueChanged", (changed: IValueChanged, local: boolean) => {
             if (!local) {
@@ -86,22 +72,22 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
     // start public API surface for the TodoItem model, used by the view
 
     // Would prefer not to hand this out, and instead give back a component?
-    public getTodoItemText() {
+    public getText() {
         return this.text;
     }
 
-    public setCheckedState(newState: boolean): void {
-        this.root.set(checkedKey, newState);
-        this.emit("stateChanged");
+    // Would prefer not to hand this out, and instead give back a component?
+    public getDetailedText(): SharedString {
+        return this.detailedText;
     }
 
     public getCheckedState(): boolean {
         return this.root.get(checkedKey);
     }
 
-    // Would prefer not to hand this out, and instead give back a component?
-    public getDetailedText(): SharedString {
-        return this.detailedText;
+    public setCheckedState(newState: boolean): void {
+        this.root.set(checkedKey, newState);
+        this.emit("stateChanged");
     }
 
     // end public API surface for the TodoItem model, used by the view
