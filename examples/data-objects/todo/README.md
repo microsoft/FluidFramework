@@ -22,7 +22,7 @@ You can run this example using the following steps:
 
 There are two Fluid objects that make up the Todo application:
 
-### [Todo](./src/Todo/index.tsx)
+### [Todo](./src/Todo/index.ts)
 
 A Todo is the top level Fluid object and contains three core concepts:
 
@@ -30,7 +30,7 @@ A Todo is the top level Fluid object and contains three core concepts:
 2. Ability to create new Todo Items
 3. Collection of Todo Items
 
-### [TodoItem](./src/TodoItem/index.tsx)
+### [TodoItem](./src/TodoItem/index.ts)
 
 A Todo Item is a singular todo entry. Because each Todo Item is its own Fluid object each Todo Item can be independently opened.
 
@@ -40,12 +40,10 @@ Todo Items can contain one inner Fluid object. These can currently be another To
 
 There are two other Fluid objects that live in the todo repo but are there to extend functionality of `TodoItem`
 
-### [TextBox](./src/TextBox/index.tsx)
+### [TextBox](./src/TextBox/index.ts)
 
 A Collaborative TextArea based off the React CollaborativeTextArea. This should be replaced by just pulling in the `@fluid-example/collaborative-textarea` Fluid objects.
 
 ## Todo todo
 
-- TodoItem to have SharedString text, checkbox, and a textarea (no variable inner component).  Support deep linking and deletion.
-- No editable Title
-- Split view/model
+- TodoItem to support deletion and better deep linking.
