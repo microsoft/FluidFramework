@@ -29,14 +29,12 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
             .catch(console.error);
 
         const refreshTodoItemListFromModel = () => {
-            todoModel.getTodoItemComponents()
+            todoModel.getTodoItems()
                 .then(setTodoItems)
                 .catch(console.error);
         };
         todoModel.on("todoItemsChanged", refreshTodoItemListFromModel);
         refreshTodoItemListFromModel();
-
-        // TODO: Consider autofocusing the input after load finishes
 
         return () => {
             todoModel.off("todoItemsChanged", refreshTodoItemListFromModel);
@@ -49,7 +47,7 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 
     const handleCreateClick = async (ev: React.FormEvent<HTMLFormElement>): Promise<void> => {
         ev.preventDefault();
-        await todoModel.addTodoItemComponent({
+        await todoModel.addTodoItem({
             startingText: newItemTextInputRef.current.value,
         });
         newItemTextInputRef.current.value = "";
@@ -86,7 +84,9 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
                 <input
                     type="text"
                     ref={newItemTextInputRef}
-                    name="itemName" />
+                    name="itemName"
+                    autoFocus
+                />
                 <button type="submit" name="createItem">+</button>
             </form>
             <div className="todo-item-list">

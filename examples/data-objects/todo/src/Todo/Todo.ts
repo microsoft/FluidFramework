@@ -62,7 +62,7 @@ export class Todo extends DataObject {
 
     // start public API surface for the Todo model, used by the view
 
-    public async addTodoItemComponent(props?: ITodoItemInitialState) {
+    public async addTodoItem(props?: ITodoItemInitialState) {
         // Create a new todo item
         const component = await TodoItem.getFactory().createChildInstance(this.context, props);
 
@@ -78,7 +78,13 @@ export class Todo extends DataObject {
         this.emit("todoItemsChanged");
     }
 
-    public async getTodoItemComponents() {
+    // public async deleteTodoItem(id: string) {
+    //     if (this.todoItemsMap.delete(id)) {
+    //         this.emit("todoItemsChanged");
+    //     }
+    // }
+
+    public async getTodoItems() {
         const todoItemsEntries: [string, ITodoStorageFormat][] = [...this.todoItemsMap.entries()];
         todoItemsEntries.sort((entryA, entryB) => {
             // Sort on keys as strings

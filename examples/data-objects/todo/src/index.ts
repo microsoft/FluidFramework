@@ -19,6 +19,10 @@ import { TodoItemView } from "./TodoItem/TodoItemView";
 
 const todoId = "todo";
 
+// NOTE: Normally url logic should belong to the app (not the container code).  This way the app retains control
+// over its url format (e.g. here, the /doc/containerName path is actually determined by webpack-fluid-loader).
+// It's entirely possible that an app may choose not to permit direct linking even.
+// It is, however, appropriate for the container code to define the in-container routing (e.g. /itemId).
 const getDirectLink = (itemId: string) => {
     const pathParts = window.location.pathname.split("/");
     const containerName = pathParts[2];
@@ -49,7 +53,12 @@ const todoRequestHandler = async (request: RequestParser, runtime: IContainerRun
 
 const todoItemRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
     if (request.pathParts.length === 1 && request.pathParts[0] !== todoId) {
-        // TODO: Different way to get the data store
+        // NOTE: This approach is not ideal, since it makes some assumptions about how the ContainerRuntime
+        // resolves handles.  Alternative approaches that could be considered with their own tradeaoffs:
+        // - Make the TodoItems as rootDataStores, allowing them to still be directly loaded without having to route
+        //   through another intermediate data store.  But, then we're generating extra roots.
+        // - Use a single rootDataStore to act as a directory to handles for our TodoItems.  This would avoid
+        //   excessive roots, but would require a double-route through this intermediate data store.
         const response = await runtime.IFluidHandleContext.resolveHandle(request);
         if (response.status === 200 && response.mimeType === "fluid/object") {
             const todoItem = response.value as TodoItem;
