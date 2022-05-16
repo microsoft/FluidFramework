@@ -23,6 +23,7 @@ import {
     PropertySet,
     RedBlackTree,
     ReferenceType,
+    referenceTypeIncludesFlag,
     reservedRangeLabelsKey,
     UnassignedSequenceNumber,
 } from "@fluidframework/merge-tree";
@@ -324,9 +325,13 @@ function createPositionReference(
         assert((refType & ReferenceType.SlideOnRemove) === 0, "SlideOnRemove references must be op created");
         segoff = client.getContainingSegment(pos);
     }
-    assert(segoff.segment, "createPositionReference should find segment");
-    const ref = client.createLocalReferencePosition(segoff.segment, segoff.offset, refType, undefined);
-    return ref as LocalReference;
+    if (segoff.segment) {
+        const ref = client.createLocalReferencePosition(segoff.segment, segoff.offset, refType, undefined);
+        return ref as LocalReference;
+    } else {
+        assert(referenceTypeIncludesFlag(refType, ReferenceType.Transient), "Non-transient references need segment");
+        return new LocalReference(client, undefined);
+    }
 }
 
 function createSequenceInterval(
@@ -529,20 +534,19 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     public findOverlappingIntervals(startPosition: number, endPosition: number) {
-        if (!this.intervalTree.intervals.isEmpty()) {
-            const transientInterval =
-                this.helpers.create(
-                    "transient",
-                    startPosition,
-                    endPosition,
-                    this.client,
-                    IntervalType.Transient);
-
-            const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
-            return overlappingIntervalNodes.map((node) => node.key);
-        } else {
+        if (endPosition < startPosition || this.intervalTree.intervals.isEmpty()) {
             return [];
         }
+        const transientInterval =
+            this.helpers.create(
+                "transient",
+                startPosition,
+                endPosition,
+                this.client,
+                IntervalType.Transient);
+
+        const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
+        return overlappingIntervalNodes.map((node) => node.key);
     }
 
     public previousInterval(pos: number) {
