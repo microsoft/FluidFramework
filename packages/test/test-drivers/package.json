@@ -107,10 +107,6 @@
   },
   "typeValidation": {
     "version": "0.59.3000",
-    "broken": {
-        "InterfaceDeclaration_FluidTestDriverConfig": {
-          "forwardCompat": false
-      }
-    }
+    "broken": {}
   }
 }

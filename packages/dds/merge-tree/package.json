@@ -127,6 +127,7 @@
       "EnumDeclaration_MergeTreeMaintenanceType": {"forwardCompat": false, "backCompat": false},
       "EnumDeclaration_RBColor": {"forwardCompat": false, "backCompat": false},
       "InterfaceDeclaration_RBNode": {"forwardCompat": false, "backCompat": false},
+      "ClassDeclaration_List": {"forwardCompat": false},
       "ClassDeclaration_BaseSegment": {"forwardCompat": false},
       "ClassDeclaration_Client": {"forwardCompat": false},
       "InterfaceDeclaration_IConsensusInfo": {"forwardCompat": false},
