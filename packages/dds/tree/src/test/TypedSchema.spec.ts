@@ -6,8 +6,8 @@
 
 // TODO: what is the pattern for testing packages which have folders inside src?
 import { FieldKind, ValueSchema } from "../schema/Schema";
-import { typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo } from "../schema/TypedSchema";
-import { requireTrue } from "../TypeCheck";
+import { typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo } from "../schema/typedSchema";
+import { requireTrue } from "../typeCheck";
 
 // These tests currently just cover the type checking, so its all compile time.
 

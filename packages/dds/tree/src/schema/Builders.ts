@@ -10,7 +10,8 @@ import {
 /**
  * APIs to help build schema.
  *
- * TODO: make these infer typescript type level data.
+ * See typedSchema.ts for a wrapper for these APIs that captures the types as TypeScript types
+ * in addition to runtime data.
  */
 
 /**

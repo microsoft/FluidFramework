@@ -22,7 +22,7 @@ import {
 	isAny,
 	eitherIsAny,
 	isStrictSubset,
-} from "./TypeCheck";
+} from "./typeCheck";
 
 /**
  * Checks that typeCheck's constraints work as intended.
