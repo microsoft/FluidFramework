@@ -7,7 +7,7 @@ the implementation consist of collection of modules which can be composed in a f
 This breakdown is intended as an architectural approach to ensure we can deliver functionality in an incremental way (minimizing the work needed for the early milestones),
 as well as quickly respond to specific feature requests, and perform targeted unit testing.
 
-These module boundaries could additionally be exposed as public packages,
+These module boundaries could optionally be publicly exported from packages (or be exposed as packages themselves),
 allowing our consumers to also extend and configure the functionality in these ways (increasing our internal API stability obligations),
 however that is a separate decision which is considered out of scope here.
 
@@ -46,9 +46,9 @@ Lists here are examples of options we could provide, and are not intended to be 
 -   Schema importers: We will likely want at least one tool that takes input schema files and generates the types used by the `Schema` library.
     Some options are listed here, but little thought has gone into this list:
 
-        -   [json schema](https://json-schema.org/)
-        -   graphQL
-        -   typescript DSL (like [TypeBox](https://www.npmjs.com/package/@sinclair/typebox)) that supports runtime and compile type typing without code gen.
+    -   [json schema](https://json-schema.org/)
+    -   graphQL
+    -   typescript DSL (like [TypeBox](https://www.npmjs.com/package/@sinclair/typebox)) that supports runtime and compile type typing without code gen.
 
 -   Schema libraries: We likely want to provide some useful schema, using and compatible with some importer (above):
 
@@ -74,22 +74,24 @@ Lists here are examples of options we could provide, and are not intended to be 
         -   Support operations that introduce schema into the document as data (collected/tracked by the state tracker), which can be used to validate data (ex: in the change updater)
         -   Support global/static/hard-coded schema: nothing is needed in the state tracker for these, but they could be applied/enforced just like ones it could track (ex: in the change updater)
 
--   Rebaser's State Trackers: tracks information the rebaser needs to update changes. May also track other information the user might want even if it isn't needed to do the change updating (ex: maybe they want to tree to interpret edits). May need to have their state written into DDS summaries. These are specific to particular ChangeSet implementations.
+-   Rebaser's State Trackers: tracks information the rebaser needs to update changes.
+    May also track other information the user might want even if it isn't needed to do the change updating (ex: maybe they want to access the tree to interpret edits).
+    May need to have their state written into DDS summaries. These are specific to particular ChangeSet implementations.
 
     -   Empty State Tracker: Tracks nothing.
-    -   Tree State Tracker: Keeps a copy of the tree, applying changes as it goes. Uses `Forest`. If doing partial checkout, would sometimes need to lazily new parts of the tree as they are modified.
+    -   Tree State Tracker: Keeps a copy of the tree, applying changes as it goes. Uses `Forest`. If doing partial checkout, would sometimes need to lazily download new parts of the tree as they are modified.
     -   Change Tracker: Tracks what changes have happened in the collaboration window.
     -   Schema Tracker: Tracks the schema associated with the document (Only makes sense for change sets which can contain schema operations, like insert schema).
 
 -   Rebaser's Change Updater: Each supports some set of field kinds.
-    (Note that all of these can have a second variant that adds reply of higher level edits as an option to handle conflicts, or even as a first choice approach).
+    (Note that all of these can have a second variant that adds replay of higher level edits as an option to handle conflicts, or even as a first choice approach).
 
-        -   Treeless Peer Rebase: Automatic, deterministic, performant does not require Tree State Tracker.
-            Uses Schema Tracker and Change Tracker to update indexes in range traits, and conservatively mark conflicted when changes might interfere in ways it can't handle.
-        -   Treeful Rebase: Automatic, deterministic, but requires Tree State Tracker.
-            Can apply exact tree constraints. Save as above but conflicts in less cases by being less conservative.
-        -   Out-of-line User Assisted: Same as Treeful Rebase, but allows user interaction to resolve conflicts.
-            Useful for when a user explicitly initiates a merge between branches.
+    -   Treeless Peer Rebase: Automatic, deterministic, performant does not require Tree State Tracker.
+        Uses Schema Tracker and Change Tracker to update indexes in range traits, and conservatively mark conflicted when changes might interfere in ways it can't handle.
+    -   Treeful Rebase: Automatic, deterministic, but requires Tree State Tracker.
+        Can apply exact tree constraints. Save as above but conflicts in less cases by being less conservative.
+    -   Out-of-line User Assisted: Same as Treeful Rebase, but allows user interaction to resolve conflicts.
+        Useful for when a user explicitly initiates a merge between branches.
 
 ## Possible System / Service Configurations
 
