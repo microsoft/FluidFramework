@@ -98,6 +98,7 @@ import {
     responseToException,
     seqFromTree,
     calculateStats,
+    TelemetryContext,
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
@@ -2277,9 +2278,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
         }
 
-        // TODO: provide instance of ITelemetryCOntext
-
-        const { stats, summary } = await this.summarizerNode.summarize(fullTree, trackState);
+        const { stats, summary } = await this.summarizerNode.summarize(fullTree, trackState, new TelemetryContext());
 
         assert(summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);

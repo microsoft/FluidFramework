@@ -21,7 +21,12 @@ import {
     ITreeEntry,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryStats, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    ISummaryStats,
+    ISummarizeResult,
+    ISummaryTreeWithStats,
+    ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -328,4 +333,30 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
         entries,
         unreferenced: summaryTree.unreferenced,
     };
+}
+
+export class TelemetryContext implements ITelemetryContext {
+    private telemetry = new Map<string, any>();
+
+    /**
+     * {@inheritDoc (ITelemetryContext:interface).set}
+     */
+    set(prefix: string, property: string, value: any): void {
+        this.telemetry[`${prefix}${property}`] = value;
+    }
+
+    /**
+     * {@inheritDoc (ITelemetryContext:interface).get}
+     */
+    get(prefix: string, property: string): any | undefined {
+        const key = `${prefix}${property}`;
+        return this.telemetry.has(key) ? this.telemetry[key] : undefined;
+    }
+
+    /**
+     * {@inheritDoc (ITelemetryContext:interface).serialize}
+     */
+    serialize(): string {
+        return JSON.stringify(this.telemetry);
+    }
 }
