@@ -91,7 +91,7 @@ describe("Container Runtime", () => {
             );
             const service = new MockDocumentService(
                 undefined,
-                () => deltaConnection.disposed ? new MockDocumentDeltaConnection("test") : deltaConnection,
+                () => deltaConnection,
             );
             const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
@@ -249,6 +249,9 @@ describe("Container Runtime", () => {
                 undefined,
                 () => deltaConnection.disposed ? new MockDocumentDeltaConnection("test") : deltaConnection,
             );
+
+            // overwriting connection mode to return the requested mode from client
+            // instead of default to "write" in MockDocumentDeltaConnection
             service.connectToDeltaStream = async (newClient: IClient): Promise<IDocumentDeltaConnection> => {
                 const connection = deltaConnection.disposed ? new MockDocumentDeltaConnection("test") : deltaConnection;
                 connection.mode = newClient.mode;
@@ -296,6 +299,7 @@ describe("Container Runtime", () => {
             deltaConnection.emitOp(docId, [leaveMessage]);
             // Yield the event loop because the inbound op will be processed asynchronously.
             await yieldEventLoop();
+
             assert.strictEqual(deltaManager2.connectionManager.connectionMode, "read",
                 "new connection should be in read mode");
         });
