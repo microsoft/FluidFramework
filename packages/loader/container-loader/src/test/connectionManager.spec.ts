@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { Deferred } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IAnyDriverError, NonRetryableError, RetryableError } from "@fluidframework/driver-utils";
-import { IClient, INack, NackErrorType, ISequencedDocumentSystemMessage } from "@fluidframework/protocol-definitions";
+import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { ConnectionManager } from "../connectionManager";
@@ -141,33 +141,5 @@ describe("connectionManager", () => {
         assert(closed, "closeHandler should be called in response to 403 nack");
         assert(!oldConnection.disposed, "connection shouldn't be disposed since mock closeHandler doesn't do it - don't expect it here after fatal nack");
         assert(!mockLogger.matchEvents([{ eventName: "reconnectingDespiteFatalError" }]), "Should not see reconnectingDespiteFatalError event after fatal nack");
-    });
-
-    it("should reconnect as read with leave op", async () => {
-        const connectionManager = new ConnectionManager(
-            () => mockDocumentService,
-            client as IClient,
-            true /* reconnectAllowed */,
-            mockLogger,
-            props,
-        );
-        connectionManager.connect();
-        await waitForConnection();
-        assert.strictEqual(connectionManager.connectionMode, "write", "connection mode should be write");
-
-        const message: ISequencedDocumentSystemMessage = {
-            clientId: `${nextClientId}`,
-            data: `${connectionManager.clientId}`,
-            sequenceNumber:1,
-            term:1,
-            minimumSequenceNumber:0,
-            clientSequenceNumber:1,
-            referenceSequenceNumber:1,
-            type:"leave",
-            contents:"",
-            timestamp:1,
-        };
-        connectionManager.beforeProcessingIncomingOp(message);
-        assert.strictEqual(connectionManager.connectionMode, "read", "should be reconnected as read mode");
     });
 });
