@@ -52,9 +52,9 @@ export enum DriverErrorType {
 
     /**
      * Generic fetch failure.
-     * Most of such failures are due to client being offline, or DNS is not reachable, such errors map to
-     * DriverErrorType.offlineError. Anything else that can't be diagnose as likely offline maps to this error.
-     * This can also indicate no response from server.
+     * This may be due to the client being offline (though, if we are able to detect offline state it will be
+     * logged as an offlineError instead).  Other possibilities could be DNS errors, malformed fetch request,
+     * CSP violation, etc.  This can also indicate no response from server.
      */
     fetchFailure = "fetchFailure",
 
