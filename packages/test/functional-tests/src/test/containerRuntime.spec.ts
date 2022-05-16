@@ -9,8 +9,10 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager";
 // eslint-disable-next-line import/no-internal-modules
@@ -69,7 +71,7 @@ describe("Container Runtime", () => {
             return messages as ISequencedDocumentMessage[];
         }
 
-        // Function to process an inbound op. It adds delay to simluate time taken in processing an op.
+        // Function to process an inbound op. It adds delay to simulate time taken in processing an op.
         function processOp(message: ISequencedDocumentMessage) {
             scheduleManager.beforeOpProcessing(message);
 
@@ -89,7 +91,7 @@ describe("Container Runtime", () => {
             );
             const service = new MockDocumentService(
                 undefined,
-                () => deltaConnection,
+                () => deltaConnection.disposed ? new MockDocumentDeltaConnection("test") : deltaConnection,
             );
             const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
@@ -190,7 +192,7 @@ describe("Container Runtime", () => {
             DeltaScheduler's processing time to process`, async () => {
             await startDeltaManager();
             // Since each message takes more than DeltaScheduler.processingTime to process (see processOp above),
-            // we will send 1 non-batch op and more that one batch ops. This should ensure that we give up the JS turn
+            // we will send 1 non-batch op and more than one batch ops. This should ensure that we give up the JS turn
             // after the non-batch op is processed and then process the batch ops together in the next turn.
             const count = 3;
             const clientId: string = "test-client";
@@ -218,7 +220,7 @@ describe("Container Runtime", () => {
             DeltaScheduler's processing time to process`, async () => {
             await startDeltaManager();
             // Since each message takes more than DeltaScheduler.processingTime to process (see processOp above),
-            // we will send more that one batch ops and 1 non-batch op. This should ensure that we give up the JS turn
+            // we will send more than one batch ops and 1 non-batch op. This should ensure that we give up the JS turn
             // after the batch ops are processed and then process the non-batch op in the next turn.
             const count = 3;
             const clientId: string = "test-client";
@@ -240,6 +242,62 @@ describe("Container Runtime", () => {
             // a single turn.
             assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
             assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
+        });
+
+        it("reconnects after receiving a leave op", async () => {
+            const service = new MockDocumentService(
+                undefined,
+                () => deltaConnection.disposed ? new MockDocumentDeltaConnection("test") : deltaConnection,
+            );
+            service.connectToDeltaStream = async (newClient: IClient): Promise<IDocumentDeltaConnection> => {
+                const connection = deltaConnection.disposed ? new MockDocumentDeltaConnection("test") : deltaConnection;
+                connection.mode = newClient.mode;
+                return connection;
+            };
+            const client = { mode: "write", details: { capabilities: { interactive: true } } };
+
+            const deltaManager2 = new DeltaManager<ConnectionManager>(
+                () => service,
+                DebugLogger.create("fluid:testDeltaManager"),
+                () => true,
+                (props: IConnectionManagerFactoryArgs) => new ConnectionManager(
+                    () => service,
+                    client as IClient,
+                    true,
+                    DebugLogger.create("fluid:testConnectionManager"),
+                    props),
+            );
+            await deltaManager2.attachOpHandler(0, 0, 1, {
+                process(message: ISequencedDocumentMessage) {
+                    processOp(message);
+                    return {};
+                },
+                processSignal() { },
+            });
+            await new Promise((resolve) => {
+                deltaManager2.on("connect", resolve);
+                deltaManager2.connect({ reason: "test" });
+            });
+            assert(deltaManager2.active, "deltaManager should be in write mode");
+
+            const leaveMessage: ISequencedDocumentSystemMessage = {
+                clientId: "null",
+                data: `"${deltaManager2.connectionManager.clientId}"`,
+                minimumSequenceNumber: 0,
+                sequenceNumber: seq++,
+                type: MessageType.ClientLeave,
+                term: 1,
+                clientSequenceNumber: 1,
+                referenceSequenceNumber: 1,
+                contents: "",
+                timestamp: 1,
+            };
+
+            deltaConnection.emitOp(docId, [leaveMessage]);
+            // Yield the event loop because the inbound op will be processed asynchronously.
+            await yieldEventLoop();
+            assert.strictEqual(deltaManager2.connectionManager.connectionMode, "read",
+                "new connection should be in read mode");
         });
     });
 });
