@@ -1211,8 +1211,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // ...load in the existing quorum
         // Initialize the protocol handler
-        // this._protocolHandler =
-        //     await this.initializeProtocolStateFromSnapshot(attributes, this.storageService, snapshot);
         this._protocolHandler = pendingLocalState === undefined
             ? await this.initializeProtocolStateFromSnapshot(attributes, this.storageService, snapshot)
             : await this.initializeProtocolState(
