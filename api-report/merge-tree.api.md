@@ -1375,6 +1375,9 @@ export enum ReferenceType {
 }
 
 // @public (undocumented)
+export function referenceTypeIncludesFlag(refType: ReferenceType, flags: ReferenceType): boolean;
+
+// @public (undocumented)
 export const refGetRangeLabels: (refPos: ReferencePosition) => string[] | undefined;
 
 // @public (undocumented)

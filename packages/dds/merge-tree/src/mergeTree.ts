@@ -9,6 +9,7 @@
 /* eslint-disable no-bitwise */
 
 import { assert } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import {
     Comparer,
     Heap,
@@ -52,6 +53,7 @@ import {
 } from "./properties";
 import {
     refTypeIncludesFlag,
+    referenceTypeIncludesFlag,
     RangeStackMap,
     ReferencePosition,
     refGetRangeLabels,
@@ -107,6 +109,10 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
     }
     assert(maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
         0x2bf /* "both removedClientIds and removedSeq should be set or not set" */);
+}
+
+function isRemoved(segment: ISegment): boolean {
+    return toRemovalInfo(segment) !== undefined;
 }
 
 function isRemovedAndAcked(segment: ISegment): boolean {
@@ -1441,7 +1447,11 @@ export class MergeTree {
             }
             return true;
         });
-        const offset = slideToSegment ? (foundSegmentPastStart ? 0 : slideToSegment.cachedLength - 1) : 0;
+        let offset = 0;
+        if (slideToSegment && !foundSegmentPastStart && !isRemoved(slideToSegment)) {
+            // If slid nearer onto a non-removed segment, offset should be at the end of the segment
+            offset = slideToSegment.cachedLength - 1;
+        }
         return { segment: slideToSegment, offset };
     }
 
@@ -1452,6 +1462,9 @@ export class MergeTree {
         let segoff = this.getContainingSegment(pos, refSeq, clientId);
         if (segoff.segment && isRemovedAndAcked(segoff.segment)) {
             segoff = this.getSlideToSegment(segoff.segment);
+        }
+        if (segoff.segment && isRemoved(segoff.segment)) {
+            segoff.offset = 0;
         }
         return segoff;
     }
@@ -2537,6 +2550,14 @@ export class MergeTree {
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
         client: Client,
     ): ReferencePosition {
+        if (isRemoved(segment)) {
+            if (!referenceTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
+                throw new UsageError("Can only create SlideOnRemove local reference position on a removed segment");
+            }
+            if (offset !== 0) {
+                throw new UsageError("Local reference position offset on removed segment must be 0");
+            }
+        }
         const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
         segment.localRefs = localRefs;
 

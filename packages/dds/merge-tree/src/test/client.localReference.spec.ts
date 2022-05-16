@@ -140,6 +140,39 @@ describe("MergeTree.Client", () => {
         assert.equal(client1.localReferencePositionToPosition(c1LocalRef), client2.getLength() - 1);
     });
 
+    it("Remove segments from end with sliding local reference", () => {
+        const client1 = new TestClient();
+
+        client1.startOrUpdateCollaboration("1");
+        let seq = 0;
+        const insert = client1.makeOpMessage(
+            client1.insertTextLocal(0, "ABCD"),
+            ++seq);
+        insert.minimumSequenceNumber = seq - 1;
+        client1.applyMsg(insert);
+
+        const segInfo = client1.getContainingSegment(3);
+        const c1LocalRef = client1.createLocalReferencePosition(
+            segInfo.segment!, segInfo.offset!, ReferenceType.SlideOnRemove, undefined);
+
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 3);
+
+        const remove1 = client1.makeOpMessage(
+            client1.removeRangeLocal(3, 4), ++seq);
+        remove1.minimumSequenceNumber = seq - 1;
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 3);
+
+        const remove2 = client1.makeOpMessage(
+            client1.removeRangeLocal(1, 3), ++seq);
+        remove2.minimumSequenceNumber = seq - 1;
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 1);
+
+        client1.applyMsg(remove1);
+        client1.applyMsg(remove2);
+
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 0);
+    });
+
     it("Remove all segments with sliding local reference", () => {
         const client1 = new TestClient();
         const client2 = new TestClient();

@@ -246,6 +246,24 @@ describe("SharedString interval collections", () => {
             ], false);
         });
 
+        it("can slide intervals nearer to locally removed segment", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString2.removeRange(3, 4);
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+            sharedString.removeRange(1, 3);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 0, end: 0 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 0, end: 0 },
+            ]);
+        });
+
         it("consistent after remove all/insert text conflict", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");
@@ -391,7 +409,7 @@ describe("SharedString interval collections", () => {
             containerRuntimeFactory.processAllMessages();
             const collection2 = sharedString2.getIntervalCollection("test");
 
-            collection2.add(1, 3, IntervalType.SlideOnRemove);
+            collection2.add(2, 3, IntervalType.SlideOnRemove);
 
             sharedString.removeRange(1, 3);
 
