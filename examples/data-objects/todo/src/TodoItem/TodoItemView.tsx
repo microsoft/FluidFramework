@@ -9,7 +9,6 @@ import { TodoItem } from "./TodoItem";
 
 interface TodoItemViewProps {
     readonly todoItemModel: TodoItem;
-    readonly getDirectLink: (itemId: string) => string;
 }
 
 const buttonStyle = {
@@ -20,11 +19,10 @@ const buttonStyle = {
 };
 
 export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
-    const { todoItemModel, getDirectLink } = props;
+    const { todoItemModel } = props;
     const itemText = todoItemModel.getText();
     const [checked, setChecked] = useState<boolean>(todoItemModel.getCheckedState());
     const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
-    const itemId = todoItemModel.id;
 
     useEffect(() => {
         const refreshCheckedStateFromModel = () => {
@@ -51,6 +49,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
                     name={todoItemModel.handle.absolutePath}
                     checked={checked}
                     onChange={checkChangedHandler} />
+                <span>{detailsVisible ? "▲" : "▼"}</span>
                 <CollaborativeInput
                     sharedString={itemText}
                     style={{
@@ -63,23 +62,13 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
                         width: "inherit",
                     }} />
                 <button
-                    name="toggleInnerVisible"
+                    name="toggleDetailsVisible"
                     style={buttonStyle}
                     onClick={() => {
                         setDetailsVisible(!detailsVisible);
                     }}>
                     {detailsVisible ? "▲" : "▼"}
                 </button>
-                <button
-                    name="OpenSubComponent"
-                    id={itemId}
-                    style={buttonStyle}
-                    onClick={() => window.open(getDirectLink(itemId), "_blank")}
-                    disabled={itemId === undefined}>↗
-                </button>
-                <button
-                    style={buttonStyle}
-                    onClick={() => alert("Implement Delete")}>X</button>
             </h2>
             {
                 // If the content is visible we will show a button or a component

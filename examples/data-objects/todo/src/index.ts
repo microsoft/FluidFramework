@@ -58,7 +58,7 @@ const todoRequestHandler = async (request: RequestParser, runtime: IContainerRun
         // accessing them directly).  But the positive is that we can use encapsulated handles rather than making
         // assumptions about the ids or making the TodoItems roots.
         const todoItem: TodoItem = await todo.getTodoItem(request.pathParts[0]);
-        const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem, getDirectLink });
+        const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem });
         return { status: 200, mimeType: "fluid/object", value: viewResponse };
     }
 };

@@ -10,6 +10,13 @@ import { TodoItem } from "../TodoItem/TodoItem";
 import { TodoItemView } from "../TodoItem/TodoItemView";
 import { Todo } from "./Todo";
 
+const buttonStyle = {
+    height: "25px",
+    marginLeft: "2px",
+    marginRight: "2px",
+    width: "35px",
+};
+
 interface TodoViewProps {
     readonly todoModel: Todo;
     readonly getDirectLink: (itemId: string) => string;
@@ -53,14 +60,21 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
         newItemTextInputRef.current.value = "";
     };
 
-    // Using the list of TodoItem components, make a list of TodoItemViews.  We know they're available because
-    // this.state.modelLoaded is true.
+    // Using the list of TodoItem components, make a list of TodoItemViews.
     const todoItemViews = todoItems.map((todoItem) => (
-        <TodoItemView
-            todoItemModel={todoItem}
-            getDirectLink={getDirectLink}
-            key={todoItem.id}
-        />
+        <div key={todoItem.id}>
+            <TodoItemView todoItemModel={todoItem} />
+            <button
+                name="OpenSubComponent"
+                id={todoItem.id}
+                style={buttonStyle}
+                onClick={() => window.open(getDirectLink(todoItem.id), "_blank")}
+                disabled={todoItem.id === undefined}>↗
+            </button>
+            <button
+                style={buttonStyle}
+                onClick={() => todoModel.deleteTodoItem(todoItem.id)}>X</button>
+        </div>
     ));
 
     // TodoView is made up of an editable title input, an input/button for submitting new items, and the list
