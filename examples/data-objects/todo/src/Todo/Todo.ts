@@ -4,9 +4,8 @@
  */
 
 import { DataObject } from "@fluidframework/aqueduct";
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { RequestParser } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 // import { v4 as uuid } from "uuid";
 import { ITodoItemInitialState, TodoItem } from "../TodoItem/index";
@@ -31,21 +30,6 @@ export class Todo extends DataObject {
     private readonly todoTitleKey = "todo-title";
 
     private todoItemsMap: ISharedMap;
-
-    // Todo uses request handling similar to the collection pattern, though the TodoItems are actually distinct
-    // data stores in this case (whereas in the collection pattern, the items are not distinct data stores).
-    // We'll respond to subrequests to return specific TodoItems.
-    public async request(request: IRequest): Promise<IResponse> {
-        const requestParser = RequestParser.create(request);
-        // We interpret the first path part as the id of the TodoItem that we should retrieve
-        if (requestParser.pathParts.length === 1) {
-            const todoItem = this.getTodoItem(requestParser.pathParts[0]);
-            console.log(todoItem);
-            return { mimeType: "fluid/object", status: 200, value: todoItem };
-        }
-        // Otherwise we'll return the Todo itself
-        return super.request(request);
-    }
 
     /**
      * Do setup work here

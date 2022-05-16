@@ -30,48 +30,37 @@ const getDirectLink = (itemId: string) => {
     return `/doc/${containerName}/${itemId}`;
 };
 
-// The todoRequestHandler provides a TodoView for either a request for "todo" or for an empty request.  Since we wrap
-// it with a mountableViewRequestHandler below, the view will be wrapped in a MountableView if the requester includes
-// the mountableView request header.
+// The todoRequestHandler provides a TodoView for an empty request, or a TodoItemView for a request with the item id.
+// Since we wrap it with a mountableViewRequestHandler below, the view will be wrapped in a MountableView if the
+// requester includes the mountableView request header.
 const todoRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
-    if (
-        request.pathParts.length === 0
-        || request.pathParts.length === 1 && request.pathParts[0] === todoId
-    ) {
-        const objectRequest = RequestParser.create({
-            url: ``,
-            headers: request.headers,
-        });
-        const todo = await requestFluidObject<Todo>(
-            await runtime.getRootDataStore(todoId),
-            objectRequest,
-        );
+    // This handler will provide a TodoView for requests of length 0, or a TodoItemView for requests of length 1.
+    // Otherwise return nothing.
+    if (request.pathParts.length > 1) {
+        return undefined;
+    }
+
+    const objectRequest = RequestParser.create({
+        url: ``,
+        headers: request.headers,
+    });
+    const todo = await requestFluidObject<Todo>(
+        await runtime.getRootDataStore(todoId),
+        objectRequest,
+    );
+
+    if (request.pathParts.length === 0) {
         const viewResponse = React.createElement(TodoView, { todoModel: todo, getDirectLink });
         return { status: 200, mimeType: "fluid/object", value: viewResponse };
-    }
-};
-
-const todoItemRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
-    if (request.pathParts.length === 1 && request.pathParts[0] !== todoId) {
-        // To get a TodoItem from the Todo, we retrieve the Todo same as above but then issue a further request
-        // to that TodoItem with the TodoItem's id.
+    } else {
+        // To get a TodoItem, we first get the Todo and then retrieve the specific item.
         // The downside of this approach is that we must realize the Todo to get at its TodoItems (rather than
         // accessing them directly).  But the positive is that we can use encapsulated handles rather than making
         // assumptions about the ids or making the TodoItems roots.
-        const objectRequest = RequestParser.create({
-            url: request.pathParts[0],
-            headers: request.headers,
-        });
-        const todoItem = await requestFluidObject<TodoItem>(
-            await runtime.getRootDataStore(todoId),
-            objectRequest,
-        );
-
-        if (todoItem !== undefined) {
-            const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem, getDirectLink });
-            return { status: 200, mimeType: "fluid/object", value: viewResponse };
-        }
-   }
+        const todoItem: TodoItem = await todo.getTodoItem(request.pathParts[0]);
+        const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem, getDirectLink });
+        return { status: 200, mimeType: "fluid/object", value: viewResponse };
+    }
 };
 
 class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
@@ -81,7 +70,7 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
                 TodoInstantiationFactory.registryEntry,
             ]),
             undefined,
-            [mountableViewRequestHandler(MountableView, [todoRequestHandler, todoItemRequestHandler])],
+            [mountableViewRequestHandler(MountableView, [todoRequestHandler])],
         );
     }
 
