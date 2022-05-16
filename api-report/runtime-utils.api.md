@@ -202,16 +202,10 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 
 // @public (undocumented)
 export class TelemetryContext implements ITelemetryContext {
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/runtime-utils" does not have an export "ITelemetryContext"
-    //
     // (undocumented)
     get(prefix: string, property: string): any | undefined;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/runtime-utils" does not have an export "ITelemetryContext"
-    //
     // (undocumented)
     serialize(): string;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/runtime-utils" does not have an export "ITelemetryContext"
-    //
     // (undocumented)
     set(prefix: string, property: string, value: any): void;
 }

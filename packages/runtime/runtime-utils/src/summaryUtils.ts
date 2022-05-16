@@ -339,14 +339,14 @@ export class TelemetryContext implements ITelemetryContext {
     private telemetry = new Map<string, any>();
 
     /**
-     * {@inheritDoc (ITelemetryContext:interface).set}
+     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
      */
     set(prefix: string, property: string, value: any): void {
         this.telemetry[`${prefix}${property}`] = value;
     }
 
     /**
-     * {@inheritDoc (ITelemetryContext:interface).get}
+     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
      */
     get(prefix: string, property: string): any | undefined {
         const key = `${prefix}${property}`;
@@ -354,7 +354,7 @@ export class TelemetryContext implements ITelemetryContext {
     }
 
     /**
-     * {@inheritDoc (ITelemetryContext:interface).serialize}
+     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.serialize}
      */
     serialize(): string {
         return JSON.stringify(this.telemetry);
