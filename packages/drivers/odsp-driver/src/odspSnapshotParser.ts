@@ -64,9 +64,6 @@ export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
     const val: ISnapshotContents = {
         blobs: blobsWithBufferContent,
         ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
-        // This statement cannot use optional chaining safely because if it shortcirrcuits an undefined error will be
-        // thrown
-        // // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
         sequenceNumber: odspSnapshot?.trees[0].sequenceNumber,
         snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
     };
