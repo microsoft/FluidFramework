@@ -107,7 +107,7 @@
     "@fluidframework/test-version-utils": "^0.59.3000",
     "@fluidframework/undo-redo": "^0.59.3000",
     "cross-env": "^7.0.2",
-    "mocha": "^8.4.0",
+    "mocha": "^10.0.0",
     "semver": "^7.3.4",
     "sinon": "^7.4.2",
     "start-server-and-test": "^1.11.7",

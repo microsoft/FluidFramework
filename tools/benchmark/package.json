@@ -35,7 +35,7 @@
     "benchmark": "^2.1.4",
     "chai": "^4.2.0",
     "easy-table": "^1.1.1",
-    "mocha": "^8.1.1"
+    "mocha": "^10.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
