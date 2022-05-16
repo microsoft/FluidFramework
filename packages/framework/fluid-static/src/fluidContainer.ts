@@ -68,6 +68,24 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 /**
+ * State returned by {@link IFluidContainer.attach}
+ */
+export interface ContainerAttachReturnState {
+    /**
+     * The ID of the container.
+     *
+     * TODO: anything more interesting to say here?
+     */
+    containerId: string;
+
+    /**
+     * An optional token returned from the connected service.
+     * This token is service-specific and is opaque as far as the Fluid container is concerned.
+     */
+    serviceToken?: unknown;
+}
+
+/**
  * The IFluidContainer provides an entrypoint into the client side of collaborative Fluid data.  It provides access
  * to the data as well as status on the collaboration session.
  */
@@ -124,11 +142,13 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
      * A newly created container starts detached from the collaborative service.  Calling attach() uploads the
      * new container to the service and connects to the collaborative service.
-     * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
+     * @returns A promise which resolves when the attach is complete.
+     * See {@link ContainerAttachReturnState} for the returned state.
      */
-    attach(): Promise<string>;
+    attach(): Promise<ContainerAttachReturnState>;
 
     /**
+     * TODO: define delta stream (file bug)
      * Attempts to connect the container to the delta stream and process ops
      */
     connect?(): void;
@@ -153,7 +173,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 }
 
 /**
- * Implementation of the IFluidContainer.
+ * Implementation of the {@link IFluidContainer}.
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
@@ -219,7 +239,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
      * {@inheritDoc IFluidContainer.attach}
      */
-    public async attach(): Promise<string> {
+    public async attach(): Promise<ContainerAttachReturnState> {
         throw new Error("Cannot attach container. Container is not in detached state");
     }
 

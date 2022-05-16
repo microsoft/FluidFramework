@@ -130,7 +130,7 @@ describe("TinyliciousClient", () => {
      */
     it("can get a container successfully", async () => {
         const containerCreate = (await tinyliciousClient.createContainer(schema)).container;
-        const containerId = await containerCreate.attach();
+        const { containerId } = await containerCreate.attach();
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
                 resolve();
@@ -151,7 +151,7 @@ describe("TinyliciousClient", () => {
      */
     it("can change initialObjects value", async () => {
         const containerCreate = (await tinyliciousClient.createContainer(schema)).container;
-        const containerId = await containerCreate.attach();
+        const { containerId: containerId } = await containerCreate.attach();
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
                 resolve();

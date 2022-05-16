@@ -20,6 +20,12 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
+export interface ContainerAttachReturnState {
+    containerId: string;
+    serviceToken?: unknown;
+}
+
+// @public
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
@@ -40,7 +46,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 // @public
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     constructor(container: IContainer, rootDataObject: RootDataObject);
-    attach(): Promise<string>;
+    attach(): Promise<ContainerAttachReturnState>;
     get attachState(): AttachState;
     connect(): Promise<void>;
     get connected(): boolean;
@@ -61,7 +67,7 @@ export interface IConnection {
 
 // @public
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
-    attach(): Promise<string>;
+    attach(): Promise<ContainerAttachReturnState>;
     readonly attachState: AttachState;
     connect?(): void;
     // @deprecated

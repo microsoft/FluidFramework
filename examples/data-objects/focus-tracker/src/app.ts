@@ -59,7 +59,8 @@ async function start(): Promise<void> {
     if (createNew) {
         // The client will create a new container using the schema
         ({ container, services } = await client.createContainer(containerSchema));
-        containerId = await container.attach();
+        const attachState = await container.attach();
+        containerId = attachState.containerId;
         // The new container has its own unique ID that can be used to access it in another session
         location.hash = containerId;
     } else {

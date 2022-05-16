@@ -80,11 +80,14 @@ export class TinyliciousClient {
                 if (this.attachState !== AttachState.Detached) {
                     throw new Error("Cannot attach container. Container is not in detached state");
                 }
+
                 const request = createTinyliciousCreateNewRequest();
                 await container.attach(request);
                 const resolved = container.resolvedUrl;
                 ensureFluidResolvedUrl(resolved);
-                return resolved.id;
+
+                // TODO: token
+                return { containerId: resolved.id };
             }
         })(container, rootDataObject);
 
