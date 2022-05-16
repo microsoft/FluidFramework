@@ -30,6 +30,7 @@ import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummarizeInternalFn } from '@fluidframework/runtime-definitions';
@@ -197,6 +198,22 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     get stats(): Readonly<ISummaryStats>;
     // (undocumented)
     get summary(): ISummaryTree;
+}
+
+// @public (undocumented)
+export class TelemetryContext implements ITelemetryContext {
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/runtime-utils" does not have an export "ITelemetryContext"
+    //
+    // (undocumented)
+    get(prefix: string, property: string): any | undefined;
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/runtime-utils" does not have an export "ITelemetryContext"
+    //
+    // (undocumented)
+    serialize(): string;
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/runtime-utils" does not have an export "ITelemetryContext"
+    //
+    // (undocumented)
+    set(prefix: string, property: string, value: any): void;
 }
 
 // @public (undocumented)
