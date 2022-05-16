@@ -32,8 +32,6 @@ interface IMapSerializationFormat {
 
 const snapshotFileName = "header";
 
-const telemetryContextPrefix = "fluid:map:";
-
 /**
  * The factory that defines the map.
  * @sealed
@@ -146,7 +144,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid:map:");
         this.kernel = new MapKernel(
             this.serializer,
             this.handle,
@@ -267,9 +265,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         // Should be bigger than MinValueSizeSeparateSnapshotBlob
         const MaxSnapshotBlobSize = 16 * 1024;
 
-        const instanceCountProperty = "InstanceCount";
-        let instanceCount = telemetryContext?.get(telemetryContextPrefix, instanceCountProperty) ?? 0;
-        telemetryContext?.set(telemetryContextPrefix, instanceCountProperty, ++instanceCount);
+        this.incrementSummarizeInstanceCount(telemetryContext);
 
         let totalBlobBytes = 0;
 
@@ -325,9 +321,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         };
         builder.addBlob(snapshotFileName, JSON.stringify(header));
 
-        const totalBlobBytesProperty = "TotalBlobBytes";
-        const prevTotal = (telemetryContext?.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0) as number;
-        telemetryContext?.set(telemetryContextPrefix, totalBlobBytesProperty, prevTotal + totalBlobBytes);
+        this.increaseSummarizeTotalBlobBytes(totalBlobBytes, telemetryContext);
 
         return builder.getSummaryTree();
     }

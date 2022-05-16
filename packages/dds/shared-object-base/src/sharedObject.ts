@@ -479,7 +479,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
-        attributes: IChannelAttributes) {
+        attributes: IChannelAttributes,
+        private readonly telemetryContextPrefix: string = "",
+    ) {
         super(id, runtime, attributes);
 
         this._serializer = new FluidSerializer(
@@ -556,4 +558,16 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         serializer: IFluidSerializer,
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats;
+
+    protected incrementSummarizeInstanceCount(telemetryContext?: ITelemetryContext): void {
+        const instanceCountProperty = "InstanceCount";
+        let instanceCount = telemetryContext?.get(this.telemetryContextPrefix, instanceCountProperty) ?? 0;
+        telemetryContext?.set(this.telemetryContextPrefix, instanceCountProperty, ++instanceCount);
+    }
+
+    protected increaseSummarizeTotalBlobBytes(totalBlobBytes: number, telemetryContext?: ITelemetryContext): void {
+        const totalBlobBytesProperty = "TotalBlobBytes";
+        const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, totalBlobBytesProperty) ?? 0) as number;
+        telemetryContext?.set(this.telemetryContextPrefix, totalBlobBytesProperty, prevTotal + totalBlobBytes);
+    }
 }

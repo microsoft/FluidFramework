@@ -100,8 +100,6 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
         listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void);
 }
 
-const telemetryContextPrefix = "fluid:directory:";
-
 export abstract class SharedSegmentSequence<T extends ISegment>
     extends SharedObject<ISharedSegmentSequenceEvents>
     implements ISharedIntervalCollection<SequenceInterval> {
@@ -175,7 +173,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
     ) {
-        super(id, dataStoreRuntime, attributes);
+        super(id, dataStoreRuntime, attributes, "fluid:sequence:");
 
         this.loadedDeferred.promise.catch((error) => {
             this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
@@ -449,9 +447,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
 
-        const instanceCountProperty = "InstanceCount";
-        let instanceCount = telemetryContext?.get(telemetryContextPrefix, instanceCountProperty) ?? 0;
-        telemetryContext?.set(telemetryContextPrefix, instanceCountProperty, ++instanceCount);
+        this.incrementSummarizeInstanceCount(telemetryContext);
 
         let totalBlobBytes = 0;
 
@@ -465,9 +461,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
         builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
 
-        const totalBlobBytesProperty = "TotalBlobBytes";
-        const prevTotal = (telemetryContext?.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0) as number;
-        telemetryContext?.set(telemetryContextPrefix, totalBlobBytesProperty, prevTotal + totalBlobBytes);
+        this.increaseSummarizeTotalBlobBytes(totalBlobBytes, telemetryContext);
 
         return builder.getSummaryTree();
     }

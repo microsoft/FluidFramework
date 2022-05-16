@@ -204,85 +204,6 @@ export interface IDirectoryNewStorageFormat {
     content: IDirectoryDataObject;
 }
 
-const telemetryContextPrefix = "fluid:directory:";
-
-function serializeDirectory(
-    root: SubDirectory,
-    serializer: IFluidSerializer,
-    telemetryContext?: ITelemetryContext,
-): ISummaryTreeWithStats {
-    const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
-
-    const builder = new SummaryTreeBuilder();
-    let counter = 0;
-    const blobs: string[] = [];
-
-    const stack: [SubDirectory, IDirectoryDataObject][] = [];
-    const content: IDirectoryDataObject = {};
-    stack.push([root, content]);
-
-    const instanceCountProperty = "InstanceCount";
-    let instanceCount = telemetryContext?.get(telemetryContextPrefix, instanceCountProperty) ?? 0;
-    telemetryContext?.set(telemetryContextPrefix, instanceCountProperty, ++instanceCount);
-
-    let totalBlobBytes = 0;
-
-    while (stack.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const [currentSubDir, currentSubDirObject] = stack.pop()!;
-        for (const [key, value] of currentSubDir.getSerializedStorage(serializer)) {
-            if (!currentSubDirObject.storage) {
-                currentSubDirObject.storage = {};
-            }
-            const result: ISerializableValue = {
-                type: value.type,
-                // eslint-disable-next-line @typescript-eslint/ban-types
-                value: value.value && JSON.parse(value.value) as object,
-            };
-            if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
-                const extraContent: IDirectoryDataObject = {};
-                let largeContent = extraContent;
-                if (currentSubDir.absolutePath !== posix.sep) {
-                    for (const dir of currentSubDir.absolutePath.substr(1).split(posix.sep)) {
-                        const subDataObject: IDirectoryDataObject = {};
-                        largeContent.subdirectories = { [dir]: subDataObject };
-                        largeContent = subDataObject;
-                    }
-                }
-                largeContent.storage = { [key]: result };
-                const blobName = `blob${counter}`;
-                counter++;
-                blobs.push(blobName);
-                builder.addBlob(blobName, JSON.stringify(extraContent));
-                totalBlobBytes += value.value.length;
-            } else {
-                currentSubDirObject.storage[key] = result;
-            }
-        }
-
-        for (const [subdirName, subdir] of currentSubDir.subdirectories()) {
-            if (!currentSubDirObject.subdirectories) {
-                currentSubDirObject.subdirectories = {};
-            }
-            const subDataObject: IDirectoryDataObject = {};
-            currentSubDirObject.subdirectories[subdirName] = subDataObject;
-            stack.push([subdir as SubDirectory, subDataObject]);
-        }
-    }
-
-    const newFormat: IDirectoryNewStorageFormat = {
-        blobs,
-        content,
-    };
-    builder.addBlob(snapshotFileName, JSON.stringify(newFormat));
-
-    const totalBlobBytesProperty = "TotalBlobBytes";
-    const prevTotal = (telemetryContext?.get(telemetryContextPrefix, totalBlobBytesProperty) ?? 0) as number;
-    telemetryContext?.set(telemetryContextPrefix, totalBlobBytesProperty, prevTotal + totalBlobBytes);
-
-    return builder.getSummaryTree();
-}
-
 /**
  * The factory that defines the directory.
  * @sealed
@@ -415,7 +336,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid:directory:");
         this.localValueMaker = new LocalValueMaker(this.serializer);
         this.setMessageHandlers();
         // Mirror the containedValueChanged op on the SharedDirectory
@@ -592,7 +513,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         serializer: IFluidSerializer,
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
-        return serializeDirectory(this.root, serializer);
+        return this.serializeDirectory(this.root, serializer);
     }
 
     /**
@@ -830,6 +751,79 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     protected applyStashedOp() {
         throw new Error("not implemented");
+    }
+
+    private serializeDirectory(
+        root: SubDirectory,
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
+        const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
+
+        const builder = new SummaryTreeBuilder();
+        let counter = 0;
+        const blobs: string[] = [];
+
+        const stack: [SubDirectory, IDirectoryDataObject][] = [];
+        const content: IDirectoryDataObject = {};
+        stack.push([root, content]);
+
+        this.incrementSummarizeInstanceCount(telemetryContext);
+
+        let totalBlobBytes = 0;
+
+        while (stack.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const [currentSubDir, currentSubDirObject] = stack.pop()!;
+            for (const [key, value] of currentSubDir.getSerializedStorage(serializer)) {
+                if (!currentSubDirObject.storage) {
+                    currentSubDirObject.storage = {};
+                }
+                const result: ISerializableValue = {
+                    type: value.type,
+                    // eslint-disable-next-line @typescript-eslint/ban-types
+                    value: value.value && JSON.parse(value.value) as object,
+                };
+                if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+                    const extraContent: IDirectoryDataObject = {};
+                    let largeContent = extraContent;
+                    if (currentSubDir.absolutePath !== posix.sep) {
+                        for (const dir of currentSubDir.absolutePath.substr(1).split(posix.sep)) {
+                            const subDataObject: IDirectoryDataObject = {};
+                            largeContent.subdirectories = { [dir]: subDataObject };
+                            largeContent = subDataObject;
+                        }
+                    }
+                    largeContent.storage = { [key]: result };
+                    const blobName = `blob${counter}`;
+                    counter++;
+                    blobs.push(blobName);
+                    builder.addBlob(blobName, JSON.stringify(extraContent));
+                    totalBlobBytes += value.value.length;
+                } else {
+                    currentSubDirObject.storage[key] = result;
+                }
+            }
+
+            for (const [subdirName, subdir] of currentSubDir.subdirectories()) {
+                if (!currentSubDirObject.subdirectories) {
+                    currentSubDirObject.subdirectories = {};
+                }
+                const subDataObject: IDirectoryDataObject = {};
+                currentSubDirObject.subdirectories[subdirName] = subDataObject;
+                stack.push([subdir as SubDirectory, subDataObject]);
+            }
+        }
+
+        const newFormat: IDirectoryNewStorageFormat = {
+            blobs,
+            content,
+        };
+        builder.addBlob(snapshotFileName, JSON.stringify(newFormat));
+
+        this.increaseSummarizeTotalBlobBytes(totalBlobBytes, telemetryContext);
+
+        return builder.getSummaryTree();
     }
 }
 
