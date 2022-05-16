@@ -169,7 +169,7 @@
             "off"
         ],
         "@typescript-eslint/no-invalid-this": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-loss-of-precision": [
             "error"
