@@ -10,6 +10,9 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
+// @public (undocumented)
+export type DriverEndpoint = RouterliciousEndpoint | OdspEndpoint;
+
 // @public
 export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
     flush(): Promise<void>;
@@ -27,6 +30,9 @@ export interface ITestDriver {
     readonly userIndex?: number;
     readonly version: string;
 }
+
+// @public (undocumented)
+export type OdspEndpoint = "odsp" | "odsp-df";
 
 // @public (undocumented)
 export type RouterliciousEndpoint = "frs" | "r11s" | "docker";
