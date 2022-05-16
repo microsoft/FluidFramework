@@ -1019,6 +1019,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
         this._flushMode = runtimeOptions.flushMode;
+        const gcMonitoringContext = loggerToMonitoringContext(
+            ChildLogger.create(this.mc.logger, "GarbageCollector"));
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
@@ -1026,7 +1028,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             () => this.messageAtLastSummary?.timestamp,
             context.baseSnapshot,
             async <T>(id: string) => readAndParse<T>(this.storage, id),
-            this.mc.logger,
+            gcMonitoringContext,
             existing,
             metadata,
         );

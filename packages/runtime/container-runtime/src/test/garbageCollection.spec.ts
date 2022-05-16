@@ -82,7 +82,7 @@ describe("Garbage Collection Tests", () => {
             () => Date.now(),
             baseSnapshot,
             async <T>(id: string) => getNodeGCDetails(id) as T,
-            mockLogger,
+            mc,
             metadata !== undefined /* existing */,
             metadata,
         );

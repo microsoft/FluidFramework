@@ -30,8 +30,6 @@ import {
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import {
-    ChildLogger,
-    loggerToMonitoringContext,
     MonitoringContext,
     PerformanceEvent,
     TelemetryDataTag,
@@ -250,7 +248,7 @@ export class GarbageCollector implements IGarbageCollector {
         getLastSummaryTimestampMs: () => number | undefined,
         baseSnapshot: ISnapshotTree | undefined,
         readAndParseBlob: ReadAndParseBlob,
-        baseLogger: ITelemetryLogger,
+        monitoringContext: MonitoringContext,
         existing: boolean,
         metadata?: IContainerRuntimeMetadata,
     ): IGarbageCollector {
@@ -261,7 +259,7 @@ export class GarbageCollector implements IGarbageCollector {
             getLastSummaryTimestampMs,
             baseSnapshot,
             readAndParseBlob,
-            baseLogger,
+            monitoringContext,
             existing,
             metadata,
         );
@@ -367,12 +365,11 @@ export class GarbageCollector implements IGarbageCollector {
         private readonly getLastSummaryTimestampMs: () => number | undefined,
         baseSnapshot: ISnapshotTree | undefined,
         readAndParseBlob: ReadAndParseBlob,
-        baseLogger: ITelemetryLogger,
+        monitoringContext: MonitoringContext,
         existing: boolean,
         metadata?: IContainerRuntimeMetadata,
     ) {
-        this.mc = loggerToMonitoringContext(
-            ChildLogger.create(baseLogger, "GarbageCollector"));
+        this.mc = monitoringContext;
 
         this.deleteTimeoutMs = this.gcOptions.deleteTimeoutMs ?? defaultDeleteTimeoutMs;
 
