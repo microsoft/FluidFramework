@@ -73,7 +73,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
         for (const [key, value] of keyValueMap) {
             const fluidKV = fluidKeyValuesToLog.find((t) => t.headerName === key.trim());
             if (fluidKV !== undefined) {
-                const fieldValue = value?.trim() ?? true;
+                const fieldValue = value?.trim() ?? true; // assume true for a key without value.
                 additionalProps[fluidKV.logName] = fluidKV.mapping?.get(fieldValue) ?? fieldValue;
             }
         }
