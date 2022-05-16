@@ -162,7 +162,7 @@ interface IRefsAtOffset {
 }
 
 function assertLocalReferences(lref: ReferencePosition | LocalReference): asserts lref is LocalReference {
-    assert(lref instanceof LocalReference, "lref not a Local Reference");
+    assert(lref instanceof LocalReference, 0x2e0 /* "lref not a Local Reference" */);
 }
 
 /**
