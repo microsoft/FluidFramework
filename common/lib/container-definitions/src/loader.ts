@@ -375,24 +375,15 @@ export type ILoaderOptions = {
      */
     provideScopeLoader?: boolean;
 
-    // Below two are the options based on which we decide how often client needs to send noops in case of active
-    // connection which is not sending any op. The end result is the "AND" of these 2 options. So the client
-    // should hit the min time and count to send the noop.
-    /**
-     * Set min time(in ms) frequency with which noops would be sent in case of active connection which is
-     * not sending any op.
-     */
-    noopTimeFrequency?: number;
-
-    /**
-     * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
-     */
-    noopCountFrequency?: number;
-
     /**
      * Max time(in ms) container will wait for a leave message of a disconnected client.
     */
     maxClientLeaveWaitTime?: number;
+
+    /**
+     * Enable adding the protocol tree to the summary.
+     */
+    summarizeProtocolTree?: boolean;
 };
 
 /**

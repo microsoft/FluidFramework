@@ -128,7 +128,8 @@ function createCachedResolver(resolver: IUrlResolver) {
     return cacheResolver;
 }
 
-export interface ILoaderOptions extends ILoaderOptions1{
+// To be removed once the latest version of container definitions is picked up. #260 (ADO)
+export interface ILoaderOptions extends ILoaderOptions1 {
     summarizeProtocolTree?: boolean;
 }
 
