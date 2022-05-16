@@ -42,6 +42,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
         todoItemModel.setCheckedState(e.target.checked);
     };
 
+    // TODO: Consider moving the action buttons to the TodoView?  Routing through Todo?
     return (
         <div className="todo-item">
             <h2>

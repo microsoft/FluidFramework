@@ -46,4 +46,4 @@ A Collaborative TextArea based off the React CollaborativeTextArea. This should 
 
 ## Todo todo
 
-- TodoItem to support deletion and better deep linking.
+- TodoItem to support deletion.

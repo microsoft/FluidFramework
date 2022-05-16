@@ -42,30 +42,36 @@ const todoRequestHandler = async (request: RequestParser, runtime: IContainerRun
             url: ``,
             headers: request.headers,
         });
-        const model = await requestFluidObject<Todo>(
+        const todo = await requestFluidObject<Todo>(
             await runtime.getRootDataStore(todoId),
             objectRequest,
         );
-        const viewResponse = React.createElement(TodoView, { todoModel: model, getDirectLink });
+        const viewResponse = React.createElement(TodoView, { todoModel: todo, getDirectLink });
         return { status: 200, mimeType: "fluid/object", value: viewResponse };
     }
 };
 
 const todoItemRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
     if (request.pathParts.length === 1 && request.pathParts[0] !== todoId) {
-        // NOTE: This approach is not ideal, since it makes some assumptions about how the ContainerRuntime
-        // resolves handles.  Alternative approaches that could be considered with their own tradeaoffs:
-        // - Make the TodoItems as rootDataStores, allowing them to still be directly loaded without having to route
-        //   through another intermediate data store.  But, then we're generating extra roots.
-        // - Use a single rootDataStore to act as a directory to handles for our TodoItems.  This would avoid
-        //   excessive roots, but would require a double-route through this intermediate data store.
-        const response = await runtime.IFluidHandleContext.resolveHandle(request);
-        if (response.status === 200 && response.mimeType === "fluid/object") {
-            const todoItem = response.value as TodoItem;
+        // To get a TodoItem from the Todo, we retrieve the Todo same as above but then issue a further request
+        // to that TodoItem with the TodoItem's id.
+        // The downside of this approach is that we must realize the Todo to get at its TodoItems (rather than
+        // accessing them directly).  But the positive is that we can use encapsulated handles rather than making
+        // assumptions about the ids or making the TodoItems roots.
+        const objectRequest = RequestParser.create({
+            url: request.pathParts[0],
+            headers: request.headers,
+        });
+        const todoItem = await requestFluidObject<TodoItem>(
+            await runtime.getRootDataStore(todoId),
+            objectRequest,
+        );
+
+        if (todoItem !== undefined) {
             const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem, getDirectLink });
             return { status: 200, mimeType: "fluid/object", value: viewResponse };
         }
-    }
+   }
 };
 
 class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
