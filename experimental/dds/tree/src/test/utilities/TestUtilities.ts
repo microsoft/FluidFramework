@@ -316,7 +316,7 @@ export async function setUpLocalServerTestSharedTree(
 			TestDataStoreType,
 			new TestFluidObjectFactory(registry),
 			{
-                enableOfflineLoad: true,
+				enableOfflineLoad: true,
 				summaryOptions: {
 					summaryConfigOverrides: {
 						...DefaultSummaryConfiguration,
