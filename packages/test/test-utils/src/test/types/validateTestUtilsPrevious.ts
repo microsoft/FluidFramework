@@ -480,7 +480,6 @@ declare function get_old_VariableDeclaration_TestContainerRuntimeFactory():
 declare function use_current_VariableDeclaration_TestContainerRuntimeFactory(
     use: TypeOnly<typeof current.TestContainerRuntimeFactory>);
 use_current_VariableDeclaration_TestContainerRuntimeFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_TestContainerRuntimeFactory());
 
 /*

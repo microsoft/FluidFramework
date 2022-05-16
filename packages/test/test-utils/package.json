@@ -111,8 +111,6 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {
-      "VariableDeclaration_TestContainerRuntimeFactory": {"forwardCompat": false}
-    }
+    "broken": { }
   }
 }

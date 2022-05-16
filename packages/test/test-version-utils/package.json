@@ -112,10 +112,6 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {
-      "InterfaceDeclaration_ITestDataObject": {
-        "backCompat": false
-      }
-    }
+    "broken": { }
   }
 }
