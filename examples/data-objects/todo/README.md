@@ -18,7 +18,7 @@ You can run this example using the following steps:
 1. Run `npm run start` from this directory (examples/data-objects/todo) and open <http://localhost:8080> in a web browser to see the app running.
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-## Todo Fluid Objects
+## Todo Fluid objects
 
 There are two Fluid objects that make up the Todo application:
 
@@ -28,7 +28,7 @@ A Todo is the top level Fluid object.  It can create, delete, and provides acces
 
 ### [TodoItem](./src/TodoItem/TodoItem.ts)
 
-A Todo Item is a singular todo entry.  It has editable text (using a SharedString), as well as editable detail text.  It also stores a boolean for the checkbox.
+A Todo Item is a singular todo entry.  It has editable text as well as editable detail text (also using a SharedString).  It also stores a boolean for the checkbox.
 
 ## The views
 
