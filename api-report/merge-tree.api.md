@@ -1638,9 +1638,6 @@ export const UnassignedSequenceNumber = -1;
 // @public
 export const UniversalSequenceNumber = 0;
 
-// @internal (undocumented)
-export function _validateReferenceType(refType: ReferenceType): void;
-
 // (No @packageDocumentation comment for this package)
 
 ```
