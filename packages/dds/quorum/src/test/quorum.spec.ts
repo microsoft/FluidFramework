@@ -212,6 +212,23 @@ describe("Quorum", () => {
             assert.strictEqual(quorum1.get(expectedKey), expectedValue, "Wrong value in Quorum 1");
             assert.strictEqual(quorum2.get(expectedKey), expectedValue, "Wrong value in Quorum 2");
         });
+
+        it("Resolves simultaneous sets and deletes with first-write-wins", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "expected");
+            quorum2.set(targetKey, "unexpected1");
+            containerRuntimeFactory.processAllMessages();
+
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Unexpected value in quorum1");
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Unexpected value in quorum2");
+
+            quorum2.delete(targetKey);
+            quorum1.set(targetKey, "unexpected2");
+            containerRuntimeFactory.processAllMessages();
+
+            assert.strictEqual(quorum1.get(targetKey), undefined, "Unexpected value in quorum1");
+            assert.strictEqual(quorum2.get(targetKey), undefined, "Unexpected value in quorum2");
+        });
     });
 
     describe("Detached/Attach", () => {
