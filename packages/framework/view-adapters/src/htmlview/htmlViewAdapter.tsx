@@ -89,7 +89,7 @@ export class HTMLViewAdapter implements IFluidHTMLView {
 
         const maybeView: FluidObject<IFluidHTMLView> = this.view;
         const htmlView = maybeView.IFluidHTMLView;
-        if (htmlView !== undefined && htmlView.remove !== undefined) {
+        if (htmlView?.remove !== undefined) {
             htmlView.remove();
             this.containerNode = undefined;
             return;
