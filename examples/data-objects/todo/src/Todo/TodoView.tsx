@@ -10,12 +10,8 @@ import { TodoItem } from "../TodoItem/TodoItem";
 import { TodoItemView } from "../TodoItem/TodoItemView";
 import { Todo } from "./Todo";
 
-const buttonStyle = {
-    height: "25px",
-    marginLeft: "2px",
-    marginRight: "2px",
-    width: "35px",
-};
+// eslint-disable-next-line import/no-unassigned-import
+import "./style.css";
 
 interface TodoViewProps {
     readonly todoModel: Todo;
@@ -70,12 +66,12 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
             <button
                 name="OpenSubComponent"
                 id={id}
-                style={buttonStyle}
+                className="action-button"
                 onClick={() => window.open(getDirectLink(id), "_blank")}
             >↗
             </button>
             <button
-                style={buttonStyle}
+                className="action-button"
                 onClick={() => todoModel.deleteTodoItem(id)}>X</button>
         </div>
     ));
@@ -87,15 +83,6 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
             <CollaborativeInput
                 className="todo-title"
                 sharedString={titleString}
-                style={{
-                    border: "none",
-                    fontFamily: "inherit",
-                    fontSize: 30,
-                    marginBottom: 5,
-                    marginTop: 5,
-                    outline: "none",
-                    width: "inherit",
-                }}
             />
             <form onSubmit={handleCreateClick}>
                 <input

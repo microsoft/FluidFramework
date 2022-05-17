@@ -26,6 +26,13 @@ module.exports = env => {
                 loader: require.resolve("ts-loader")
             },
             {
+                test: /\.css$/,
+                use: [
+                    require.resolve("style-loader"), // creates style nodes from JS strings
+                    require.resolve("css-loader"), // translates CSS into CommonJS
+                ]
+            },
+            {
                 test: /\.js$/,
                 use: [require.resolve("source-map-loader")],
                 enforce: "pre"

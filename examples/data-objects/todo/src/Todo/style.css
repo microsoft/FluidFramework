@@ -1,0 +1,14 @@
+.todo-title {
+    border: none;
+    font-size: 30px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    outline: none;
+}
+
+.action-button {
+    height: 25px;
+    margin-left: 2px;
+    margin-right: 2px;
+    width: 35px;
+}

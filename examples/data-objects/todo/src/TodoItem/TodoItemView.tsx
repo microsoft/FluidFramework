@@ -7,16 +7,12 @@ import { CollaborativeInput, CollaborativeTextArea, SharedStringHelper } from "@
 import React, { useEffect, useState } from "react";
 import { TodoItem } from "./TodoItem";
 
+// eslint-disable-next-line import/no-unassigned-import
+import "./style.css";
+
 interface TodoItemViewProps {
     readonly todoItemModel: TodoItem;
 }
-
-const buttonStyle = {
-    height: "25px",
-    marginLeft: "2px",
-    marginRight: "2px",
-    width: "35px",
-};
 
 export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
     const { todoItemModel } = props;
@@ -40,7 +36,6 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
         todoItemModel.setCheckedState(e.target.checked);
     };
 
-    // TODO: Consider moving the action buttons to the TodoView?  Routing through Todo?
     return (
         <div className="todo-item">
             <h2>
@@ -52,18 +47,11 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
                 <span>{detailsVisible ? "▲" : "▼"}</span>
                 <CollaborativeInput
                     sharedString={itemText}
-                    style={{
-                        border: "none",
-                        fontFamily: "inherit",
-                        fontSize: 20,
-                        marginBottom: 5,
-                        marginTop: 5,
-                        outline: "none",
-                        width: "inherit",
-                    }} />
+                    className="collaborative-input"
+                />
                 <button
                     name="toggleDetailsVisible"
-                    style={buttonStyle}
+                    className="action-button"
                     onClick={() => {
                         setDetailsVisible(!detailsVisible);
                     }}>

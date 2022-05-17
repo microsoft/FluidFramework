@@ -1,0 +1,14 @@
+.collaborative-input {
+    border: none;
+    font-size: 20px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    outline: none;
+}
+
+.action-button {
+    height: 25px;
+    margin-left: 2px;
+    margin-right: 2px;
+    width: 35px;
+}
