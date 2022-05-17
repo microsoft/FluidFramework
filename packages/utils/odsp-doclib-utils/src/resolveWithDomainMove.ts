@@ -12,7 +12,7 @@ import { IOdspResolvedUrl, OdspErrorType } from "@fluidframework/odsp-driver-def
  * @param error - error whose type is to be determined.
  * @returns - True is the error is domain move error.
  */
-export function isDomainMoveError(error: any) {
+ export function isDomainMoveError(error: any) {
     if (typeof error === "object" && error !== null
         && error.errorType === OdspErrorType.locationRedirection) {
         return true;
@@ -35,13 +35,17 @@ export async function resolveWithDomainChangeHandling<T>(
     let req: IRequest = request;
     let success = false;
     let response: T | undefined;
+    let odspResolvedUrl: IOdspResolvedUrl | undefined;
     do {
         try {
             response = await api(req);
             success = true;
         } catch(error: any) {
             if (isDomainMoveError(error)) {
-                const odspResolvedUrl = await urlResolver.resolve(req) as IOdspResolvedUrl;
+                // Need to generate only once.
+                if (!odspResolvedUrl) {
+                    odspResolvedUrl = await urlResolver.resolve(req) as IOdspResolvedUrl;
+                }
                 // Generate the new SiteUrl from the redirection location.
                 const newSiteDomain = new URL(error.redirectLocation).origin;
                 const newSiteUrl = `${newSiteDomain}${new URL(odspResolvedUrl.siteUrl).pathname}`;
