@@ -5,11 +5,9 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "target": "es6",
         "module": "esnext",
         "outDir": "dist",
         "jsx": "react",
-        "allowSyntheticDefaultImports": true,
         "types": [
             "react",
             "react-dom",
