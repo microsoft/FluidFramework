@@ -62,6 +62,9 @@ export class SharedMapRevertible implements IRevertible {
         return;
     }
 
+    /**
+     * Compare change to be rolled back against this revertible
+     */
     public matchRollback?(key: string, target: ISharedMap): boolean {
         return this.map === target &&
             this.changed.key === key &&
