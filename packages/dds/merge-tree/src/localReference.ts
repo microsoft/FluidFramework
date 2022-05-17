@@ -49,7 +49,7 @@ export function _validateReferenceType(refType: ReferenceType) {
 /**
  * @deprecated - Use ReferencePosition
  */
- export class LocalReference implements ReferencePosition {
+export class LocalReference implements ReferencePosition {
     /**
      * @deprecated - use DetachedReferencePosition
      */
@@ -105,7 +105,7 @@ export function _validateReferenceType(refType: ReferenceType) {
     /**
      * @deprecated - use getLocalReferencePosition
      */
-     public toPosition() {
+    public toPosition() {
         return this.getClient().localReferencePositionToPosition(this);
     }
 
@@ -184,7 +184,7 @@ interface IRefsAtOffset {
 }
 
 function assertLocalReferences(lref: ReferencePosition | LocalReference): asserts lref is LocalReference {
-    assert(lref instanceof LocalReference, "lref not a Local Reference");
+    assert(lref instanceof LocalReference, 0x2e0 /* "lref not a Local Reference" */);
 }
 
 /**
@@ -353,7 +353,7 @@ export class LocalReferenceCollection {
      *
      * @internal - this method should only be called by mergeTree
      */
-     public removeLocalRef(lref: LocalReference | ReferencePosition) {
+    public removeLocalRef(lref: LocalReference | ReferencePosition) {
         assertLocalReferences(lref);
         const tryRemoveRef = (refs: List<LocalReference> | undefined) => {
             if (refs) {
