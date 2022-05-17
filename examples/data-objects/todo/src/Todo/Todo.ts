@@ -7,7 +7,7 @@ import { DataObject } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-// import { v4 as uuid } from "uuid";
+import { v4 as uuid } from "uuid";
 import { ITodoItemInitialState, TodoItem } from "../TodoItem";
 
 export const TodoName = "Todo";
@@ -76,7 +76,7 @@ export class Todo extends DataObject {
         const todoItem = await TodoItem.getFactory().createChildInstance(this.context, props);
 
         // Generate an ID that we can sort on later, and store the handle.
-        const id = `${Date.now()}-${todoItem.id}`;
+        const id = `${Date.now()}-${uuid()}`;
 
         this.todoItemsMap.set(
             id,
