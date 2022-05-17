@@ -677,7 +677,7 @@ describe('IdCompressor', () => {
 			);
 		});
 
-		it('can normalize a final ID created by the local session but sent in another client\'s op space', () => {
+		it("can normalize a final ID created by the local session but sent in another client's op space", () => {
 			// Regression test for the situation in which a client creates a final ID and another client references
 			// that final ID in a message back to the creating client. The creating client will normalize it and
 			// pass the session ID of the remote (non-creating) client. This should be handled correctly.
