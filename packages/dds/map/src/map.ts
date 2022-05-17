@@ -321,6 +321,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         };
         builder.addBlob(snapshotFileName, JSON.stringify(header));
 
+        totalBlobBytes += currentSize;
         this.increaseSummarizeTotalBlobBytes(totalBlobBytes, telemetryContext);
 
         return builder.getSummaryTree();

@@ -799,9 +799,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     counter++;
                     blobs.push(blobName);
                     builder.addBlob(blobName, JSON.stringify(extraContent));
-                    totalBlobBytes += value.value.length;
                 } else {
                     currentSubDirObject.storage[key] = result;
+                }
+
+                if (value.value) {
+                    totalBlobBytes += value.value.length;
                 }
             }
 
