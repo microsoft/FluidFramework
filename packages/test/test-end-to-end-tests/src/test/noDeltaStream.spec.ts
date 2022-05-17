@@ -78,7 +78,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                 if (initContainer.isDirty) {
                     await timeoutPromise(
                         (res) => initContainer.once("saved", () => res()),
-                        { durationMs: 2 * (timeout / 3), errorMsg: "Not saved before timeout" });
+                        { durationMs: timeout / 2, errorMsg: "Not saved before timeout" });
                 }
                 initContainer.close();
             }
@@ -124,7 +124,6 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
             const provider = getTestObjectProvider();
             switch (provider.driver.type) {
                 case "local":
-                case "tinylicious":
                     break;
                 default:
                     this.skip();
