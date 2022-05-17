@@ -54,7 +54,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/aqueduct": "^0.59.3000",
+    "@fluidframework/aqueduct": "^0.59.4000",
     "@fluidframework/build-tools": "^0.2.66793",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@^0.59.0",
