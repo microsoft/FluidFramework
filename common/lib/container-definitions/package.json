@@ -74,6 +74,21 @@
   },
   "typeValidation": {
     "version": "0.48.2000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IContainer": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IContainerContext": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IDeltaManager": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IRuntime": {
+        "forwardCompat": false
+      }
+    }
   }
 }
