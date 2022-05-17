@@ -79,6 +79,9 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
     getIntervalCollection(label: string): IntervalCollection<TInterval>;
 }
 
+/**
+ * @deprecated - SharedIntervalCollection is not maintained and is planned to be removed.
+ */
 export class SharedIntervalCollection
     extends SharedObject implements ISharedIntervalCollection<Interval> {
     /**

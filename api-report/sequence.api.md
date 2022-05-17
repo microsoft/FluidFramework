@@ -416,7 +416,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class SharedIntervalCollection extends SharedObject implements ISharedIntervalCollection<Interval> {
     // (undocumented)
     readonly [Symbol.toStringTag]: string;
