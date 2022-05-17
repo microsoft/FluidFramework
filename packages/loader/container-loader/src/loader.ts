@@ -50,6 +50,7 @@ import {
 import { Container } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
+import { isDomainMoveError } from "./resolveWithDomainMoveError";
 
 function canUseCache(request: IRequest): boolean {
     if (request.headers === undefined) {
@@ -353,7 +354,7 @@ export class Loader implements IHostLoader {
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
         const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
         return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
-            const resolved = await this.resolveCore(
+            const resolved = await this.resolveWithDomainChangeHandling(
                 request,
                 pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
             );
@@ -363,7 +364,7 @@ export class Loader implements IHostLoader {
 
     public async request(request: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Request" }, async () => {
-            const resolved = await this.resolveCore(request);
+            const resolved = await this.resolveWithDomainChangeHandling(request);
             return resolved.container.request({
                 ...request,
                 url: `${resolved.parsed.path}${resolved.parsed.query}`,
@@ -392,13 +393,17 @@ export class Loader implements IHostLoader {
         }).catch((error) => {});
     }
 
-    private async resolveCore(
-        request: IRequest,
-        pendingLocalState?: IPendingLocalState,
-    ): Promise<{ container: Container; parsed: IParsedUrl; }> {
+    private async resolveUrl(request: IRequest): Promise<IFluidResolvedUrl> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
+        return resolvedAsFluid;
+    }
 
+    private async getContainer(
+        resolvedAsFluid: IFluidResolvedUrl,
+        request: IRequest,
+        pendingLocalState?: IPendingLocalState,
+    ): Promise<{ container: Container; parsed: IParsedUrl }> {
         // Parse URL into data stores
         const parsed = parseUrl(resolvedAsFluid.url);
         if (parsed === undefined) {
@@ -453,6 +458,35 @@ export class Loader implements IHostLoader {
         }
 
         return { container, parsed };
+    }
+
+    private async resolveWithDomainChangeHandling(
+        request: IRequest,
+        pendingLocalState?: IPendingLocalState,
+    ): Promise<{ container: Container; parsed: IParsedUrl }> {
+        let req: IRequest = request;
+        let success = false;
+        let response;
+        do {
+            const resolvedUrl = await this.resolveUrl(req);
+            try {
+                response = await this.getContainer(resolvedUrl, req, pendingLocalState);
+                success = true;
+            } catch (error: any) {
+                if (isDomainMoveError(error)) {
+                    const absoluteUrl = await this.services.urlResolver.getAbsoluteUrl(
+                        resolvedUrl,
+                        "/",
+                        undefined,
+                        error.redirectionLocation,
+                    );
+                    req = { url: absoluteUrl, headers: req.headers };
+                } else {
+                    throw error;
+                }
+            }
+        } while(!success);
+        return response;
     }
 
     private get cachingEnabled() {

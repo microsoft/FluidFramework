@@ -75,6 +75,10 @@ export enum DriverErrorType {
       * The document is read-only and delta stream connection is forbidden.
       */
      deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
+
+    // The location of file can change. So if the file location moves and we try to access the older location, then
+    // this error is thrown by server to let the client know about the new redirect location.
+    locationRedirection = "locationRedirection",
 }
 
 /**

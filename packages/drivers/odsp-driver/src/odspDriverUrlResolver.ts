@@ -162,12 +162,19 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
         packageInfoSource?: IContainerPackageInfo,
+        redirectLocation?: string,
     ): Promise<string> {
         let dataStorePath = relativeUrl;
         if (dataStorePath.startsWith("/")) {
             dataStorePath = dataStorePath.substr(1);
         }
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+        if (redirectLocation !== undefined) {
+            // Generate the new SiteUrl from the redirection location.
+            const newSiteDomain = new URL(redirectLocation).origin;
+            const newSiteUrl = `${newSiteDomain}${new URL(odspResolvedUrl.siteUrl).pathname}`;
+            odspResolvedUrl.siteUrl = newSiteUrl;
+        }
         // back-compat: GitHub #9653
         const isFluidPackage = (pkg: any) =>
             typeof pkg === "object"

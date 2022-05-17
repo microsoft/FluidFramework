@@ -191,8 +191,15 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         dataStorePath: string,
         packageInfoSource?: IContainerPackageInfo,
+        redirectLocation?: string,
     ): Promise<string> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+        if (redirectLocation !== undefined) {
+            // Generate the new SiteUrl from the redirection location.
+            const newSiteDomain = new URL(redirectLocation).origin;
+            const newSiteUrl = `${newSiteDomain}${new URL(odspResolvedUrl.siteUrl).pathname}`;
+            odspResolvedUrl.siteUrl = newSiteUrl;
+        }
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
         const shareLinkUrl = new URL(shareLink);
         // back-compat: GitHub #9653
