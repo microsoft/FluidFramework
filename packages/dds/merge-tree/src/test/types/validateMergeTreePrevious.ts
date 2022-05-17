@@ -686,6 +686,7 @@ declare function get_current_InterfaceDeclaration_IConsensusInfo():
 declare function use_old_InterfaceDeclaration_IConsensusInfo(
     use: TypeOnly<old.IConsensusInfo>);
 use_old_InterfaceDeclaration_IConsensusInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusInfo());
 
 /*

@@ -189,7 +189,8 @@
         "forwardCompat": false
       },
       "InterfaceDeclaration_IConsensusInfo": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "InterfaceDeclaration_IHierBlock": {
         "forwardCompat": false
