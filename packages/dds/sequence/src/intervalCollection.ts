@@ -18,6 +18,8 @@ import {
     IntervalConflictResolver,
     IntervalNode,
     IntervalTree,
+    List,
+    ListMakeHead,
     LocalReference,
     MergeTreeDeltaType,
     PropertiesManager,
@@ -852,7 +854,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     private pendingChangeEnd: Map<string, ISerializedInterval[]>;
     // TODO: Once no longer implemented as a ValueType, use LocalOpMetadata to store
     // pending references
-    private readonly pendingReferences: LocalReference[] = [];
+    private readonly pendingReferences: List<LocalReference> = ListMakeHead();
 
     public get attached(): boolean {
         return !!this.localCollection;
@@ -915,8 +917,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (interval) {
             // TODO: Rethink the abstraction and interfaces here to avoid the instanceof check
             if (interval instanceof SequenceInterval) {
-                this.pendingReferences.push(interval.start);
-                this.pendingReferences.push(interval.end);
+                this.pendingReferences.enqueue(interval.start);
+                this.pendingReferences.enqueue(interval.end);
             }
             const serializedInterval = {
                 end,
@@ -1173,10 +1175,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
 
         if (local) {
-            assert(this.pendingReferences.length >= 2, "Pending reference not saved");
-            this.ackReference(this.pendingReferences[0]);
-            this.ackReference(this.pendingReferences[1]);
-            this.pendingReferences.splice(0, 2);
+            assert(this.pendingReferences.count() >= 2, "Pending reference not saved");
+            this.ackReference(this.pendingReferences.dequeue());
+            this.ackReference(this.pendingReferences.dequeue());
             return;
         }
 
