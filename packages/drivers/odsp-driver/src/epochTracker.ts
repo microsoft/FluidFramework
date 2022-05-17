@@ -404,6 +404,8 @@ export class EpochTrackerWithRedemption extends EpochTracker {
                 })
                 .catch((error) => {
                     this.treesLatestDeferral.reject(error);
+                    // Handles the rejected promise within treesLatestDeferral.
+                    this.treesLatestDeferral.promise.catch(() => {});
                     throw error;
                 });
         }
@@ -429,6 +431,8 @@ export class EpochTrackerWithRedemption extends EpochTracker {
             // So treesLatest is the only call that can have parallel joinSession request.
             if (fetchType === "treesLatest") {
                 this.treesLatestDeferral.reject(error);
+                // Handles the rejected promise within treesLatestDeferral.
+                this.treesLatestDeferral.promise.catch(() => {});
             }
             if (fetchType !== "joinSession" || error.statusCode < 401 || error.statusCode > 404 || completed) {
                 throw error;
