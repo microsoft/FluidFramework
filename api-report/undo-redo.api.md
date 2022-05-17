@@ -23,7 +23,6 @@ export class SharedMapRevertible implements IRevertible {
     constructor(changed: IValueChanged, map: ISharedMap);
     // (undocumented)
     discard(): void;
-    // (undocumented)
     matchRollback?(key: string, target: ISharedMap): boolean;
     // (undocumented)
     revert(): void;
