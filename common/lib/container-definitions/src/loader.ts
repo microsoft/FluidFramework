@@ -384,15 +384,15 @@ export type ILoaderOptions = {
      * @deprecated - the property will be moved to
      * {@link @fluidframework/protocol-definitions/config.ts#IClientConfiguration}
      */
-     noopTimeFrequency?: number;
+    noopTimeFrequency?: number;
 
-     /**
-      * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
-      *
-      * @deprecated - the property will be moved to
-      * {@link @fluidframework/protocol-definitions/config.ts#IClientConfiguration}
-      */
-     noopCountFrequency?: number;
+    /**
+     * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
+     *
+     * @deprecated - the property will be moved to
+     * {@link @fluidframework/protocol-definitions/config.ts#IClientConfiguration}
+     */
+    noopCountFrequency?: number;
 
     /**
      * Max time(in ms) container will wait for a leave message of a disconnected client.
