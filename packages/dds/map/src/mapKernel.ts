@@ -552,7 +552,6 @@ export class MapKernel {
      * not process the incoming operation.
      * @param op - Operation to check
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @returns True if the operation should be processed, false otherwise
