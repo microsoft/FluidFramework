@@ -157,7 +157,7 @@ export class SnapshotLegacy {
                 if ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= this.seq!) &&
                     ((segment.removedSeq === undefined) || (segment.removedSeq === UnassignedSequenceNumber) ||
                         (segment.removedSeq > this.seq!))) {
-                    if (prev && prev.canAppend(segment)
+                    if (prev?.canAppend(segment)
                         && matchProperties(prev.properties, segment.properties)
                     ) {
                         prev = prev.clone();
