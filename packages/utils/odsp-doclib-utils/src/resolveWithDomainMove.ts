@@ -21,11 +21,11 @@ export function isDomainMoveError(error: any) {
 }
 
 /**
- * 
+ * Handles odsp domain change handling while fulfilling the loader request.
  * @param api - Callback in which user can wrap the loader.resolve or loader.request call.
  * @param request - request to be resolved.
  * @param urlResolver - resolver used to resolve the url.
- * @returns 
+ * @returns - Response from the api call.
  */
 export async function resolveWithDomainChangeHandling<T>(
     api: (request: IRequest) => Promise<T>,
@@ -42,7 +42,7 @@ export async function resolveWithDomainChangeHandling<T>(
         } catch(error: any) {
             if (isDomainMoveError(error)) {
                 const odspResolvedUrl = await urlResolver.resolve(req) as IOdspResolvedUrl;
-                // Generate the new Url from the 
+                // Generate the new SiteUrl from the redirection location.
                 const newSiteDomain = new URL(error.redirectLocation).origin;
                 const newSiteUrl = `${newSiteDomain}${new URL(odspResolvedUrl.siteUrl).pathname}`;
                 odspResolvedUrl.siteUrl = newSiteUrl;
