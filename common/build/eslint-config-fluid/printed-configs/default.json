@@ -269,6 +269,9 @@
         "@typescript-eslint/prefer-namespace-keyword": [
             "error"
         ],
+        "@typescript-eslint/prefer-optional-chain": [
+            "error"
+        ],
         "@typescript-eslint/prefer-readonly": [
             "error"
         ],

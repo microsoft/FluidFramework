@@ -32,6 +32,7 @@ module.exports = {
         "@typescript-eslint/no-var-requires": "off",
         "@typescript-eslint/object-curly-spacing": "off",
         "@typescript-eslint/prefer-for-of": "off",
+        "@typescript-eslint/prefer-optional-chain": "off",
         "@typescript-eslint/quotes": "off",
         "@typescript-eslint/restrict-plus-operands": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
