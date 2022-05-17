@@ -34,6 +34,8 @@ class DeferralWithCallback extends Deferred<void> {
     }
 }
 
+const failOnUnhandledRejection = () => assert.fail("Rejections should not cause unhandled rejection event");
+
 describe("Tests for Epoch Tracker With Redemption", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
@@ -44,6 +46,8 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 
     before(async () => {
         hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+
+        process.addListener("unhandledRejection", failOnUnhandledRejection);
     });
 
     beforeEach(() => {
@@ -56,7 +60,12 @@ describe("Tests for Epoch Tracker With Redemption", () => {
             },
             new TelemetryUTLogger());
         epochCallback = new DeferralWithCallback();
+
         (epochTracker as any).treesLatestDeferral = epochCallback;
+    });
+
+    after(() => {
+        process.removeListener("unhandledRejection", failOnUnhandledRejection);
     });
 
     afterEach(async () => {
@@ -130,5 +139,10 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                 "Error should be file not found or access denied error");
         }
         assert.strictEqual(success, false, "Join session should fail if treesLatest call has failed");
+    });
+
+    it("Failed fetchAndParseAsJson should not trigger unhandled rejection event", async () => {
+        const treesLatestP = epochTracker.fetchAndParseAsJSON("garbage", {}, "treesLatest");
+        await assert.rejects(treesLatestP, "(treesLatest) invalid URL, right?");
     });
 });
