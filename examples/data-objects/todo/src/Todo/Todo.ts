@@ -12,11 +12,6 @@ import { ITodoItemInitialState, TodoItem } from "../TodoItem/index";
 
 export const TodoName = "Todo";
 
-interface ITodoStorageFormat {
-    index: string;
-    handle: IFluidHandle<TodoItem>;
-}
-
 /**
  * Todo base component.
  * Visually contains the following:
@@ -66,31 +61,38 @@ export class Todo extends DataObject {
         // Create a new todo item
         const todoItem = await TodoItem.getFactory().createChildInstance(this.context, props);
 
-        // Generate a key that we can sort on later, and store the handle.
+        // Generate an ID that we can sort on later, and store the handle.
+        const id = `${Date.now()}-${todoItem.id}`
+
         this.todoItemsMap.set(
-            todoItem.id,
-            {
-                index: `${Date.now()}-${todoItem.id}`,
-                handle: todoItem.handle,
-            },
+            id,
+            todoItem.handle,
         );
 
         this.emit("todoItemsChanged");
     }
 
-    public async getTodoItems() {
-        const todoItemsEntries: [string, ITodoStorageFormat][] = [...this.todoItemsMap.entries()];
-        todoItemsEntries.sort((entryA, entryB) => {
+    public async getTodoItems(): Promise<[string, TodoItem][]> {
+        const todoItemsEntries: [string, IFluidHandle<TodoItem>][] = [...this.todoItemsMap.entries()];
+        const todoItemsEntriesResolvedP = todoItemsEntries.map(
+            async ([key, todoItemHandle]): Promise<[string, TodoItem]> => {
+                const todoItem = await todoItemHandle.get();
+                return [key, todoItem];
+            },
+        );
+        const todoItemsEntriesResolved = await Promise.all(todoItemsEntriesResolvedP);
+        todoItemsEntriesResolved.sort((entryA, entryB) => {
             // Sort on keys as strings
-            return entryA[1].index.localeCompare(entryB[1].index);
+            return entryA[0].localeCompare(entryB[0]);
         });
-        const todoItemComponentPromises = todoItemsEntries.map(async (entry) => entry[1].handle.get());
-
-        return Promise.all(todoItemComponentPromises);
+        return todoItemsEntriesResolved;
     }
 
     public async getTodoItem(id: string) {
-        return this.todoItemsMap.get(id)?.handle.get() as Promise<TodoItem>;
+        const maybeHandle: IFluidHandle<TodoItem> | undefined = this.todoItemsMap.get(id);
+        if (maybeHandle !== undefined) {
+            return maybeHandle.get();
+        }
     }
 
     public async deleteTodoItem(id: string) {

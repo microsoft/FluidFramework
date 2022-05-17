@@ -25,7 +25,7 @@ interface TodoViewProps {
 export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
     const { todoModel, getDirectLink } = props;
 
-    const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
+    const [todoItems, setTodoItems] = useState<[string, TodoItem][]>([]);
     const [titleString, setTitleString] = useState<SharedString | undefined>();
 
     const newItemTextInputRef = useRef<HTMLInputElement>(null);
@@ -61,19 +61,19 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
     };
 
     // Using the list of TodoItem components, make a list of TodoItemViews.
-    const todoItemViews = todoItems.map((todoItem) => (
-        <div key={todoItem.id}>
+    const todoItemViews = todoItems.map(([id, todoItem]) => (
+        <div key={id}>
             <TodoItemView todoItemModel={todoItem} />
             <button
                 name="OpenSubComponent"
-                id={todoItem.id}
+                id={id}
                 style={buttonStyle}
-                onClick={() => window.open(getDirectLink(todoItem.id), "_blank")}
-                disabled={todoItem.id === undefined}>↗
+                onClick={() => window.open(getDirectLink(id), "_blank")}
+            >↗
             </button>
             <button
                 style={buttonStyle}
-                onClick={() => todoModel.deleteTodoItem(todoItem.id)}>X</button>
+                onClick={() => todoModel.deleteTodoItem(id)}>X</button>
         </div>
     ));
 
