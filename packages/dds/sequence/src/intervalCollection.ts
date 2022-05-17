@@ -1052,6 +1052,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.ackChange(serializedInterval, local, op);
     }
 
+    /** @internal */
     public ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
@@ -1137,6 +1138,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.ackAdd(serializedInterval, local, op);
     }
 
+    /** @internal */
     public ackAdd(
         serializedInterval: ISerializedInterval,
         local: boolean,
@@ -1179,6 +1181,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.ackDelete(serializedInterval, local, op);
     }
 
+    /** @internal */
     public ackDelete(
         serializedInterval: ISerializedInterval,
         local: boolean,

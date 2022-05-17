@@ -122,11 +122,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
     constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]);
-    // (undocumented)
+    // @internal (undocumented)
     ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
-    // (undocumented)
+    // @internal (undocumented)
     ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
-    // (undocumented)
+    // @internal (undocumented)
     ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     // (undocumented)
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
