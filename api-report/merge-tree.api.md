@@ -96,7 +96,7 @@ export class Client {
     accumWindow: number;
     // (undocumented)
     accumWindowTime: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     addLocalReference(lref: LocalReference): void;
     // (undocumented)
     addLongClientId(longClientId: string): void;
@@ -113,6 +113,8 @@ export class Client {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
+    // (undocumented)
+    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): ReferencePosition;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
     protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -163,6 +165,8 @@ export class Client {
     // (undocumented)
     localOps: number;
     // (undocumented)
+    localReferencePositionToPosition(lref: ReferencePosition): number;
+    // (undocumented)
     localTime: number;
     // (undocumented)
     localTransaction(groupOp: IMergeTreeGroupMsg): void;
@@ -185,8 +189,10 @@ export class Client {
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
+    // @deprecated (undocumented)
+    removeLocalReference(lref: LocalReference): ReferencePosition | undefined;
     // (undocumented)
-    removeLocalReference(lref: LocalReference): void;
+    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
@@ -753,11 +759,15 @@ export interface KeyComparer<TKey> {
 
 // @public (undocumented)
 export class List<T> {
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<T>;
     constructor(isHead: boolean, data: T | undefined);
     // (undocumented)
     clear(): void;
     // (undocumented)
     count(): number;
+    // (undocumented)
+    data: T | undefined;
     // (undocumented)
     dequeue(): T | undefined;
     // (undocumented)
@@ -774,16 +784,21 @@ export class List<T> {
     next: List<T>;
     // (undocumented)
     prev: List<T>;
-    // (undocumented)
+    // @deprecated (undocumented)
     push(data: T): void;
     // (undocumented)
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[];
+    // (undocumented)
+    unshift(data: T): void;
     // (undocumented)
     walk(fn: (data: T, l: List<T>) => void): void;
 }
 
 // @public (undocumented)
 export function ListMakeHead<U>(): List<U>;
+
+// @public (undocumented)
+export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 
 // @public (undocumented)
 export const LocalClientId = -1;
@@ -841,31 +856,37 @@ export class LocalReference implements ReferencePosition {
 
 // @public
 export class LocalReferenceCollection {
-    // (undocumented)
+    // @internal
     [Symbol.iterator](): {
         next(): IteratorResult<LocalReference>;
         [Symbol.iterator](): any;
     };
     // Warning: (ae-forgotten-export) The symbol "IRefsAtOffset" needs to be exported by the entry point index.d.ts
+    //
+    // @internal
     constructor(
     segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
     // (undocumented)
-    addAfterTombstones(...refs: Iterable<LocalReference>[]): void;
+    addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
     // (undocumented)
-    addBeforeTombstones(...refs: Iterable<LocalReference>[]): void;
-    // (undocumented)
-    addLocalRef(lref: LocalReference): void;
+    addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
+    // @internal
+    addLocalRef(lref: LocalReference | ReferencePosition): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
+    // @internal
     append(other: LocalReferenceCollection): void;
-    // (undocumented)
+    // @internal
     clear(): void;
-    // (undocumented)
+    // @internal
+    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): ReferencePosition;
+    // @internal
     get empty(): boolean;
-    // (undocumented)
+    // @internal
     hierRefCount: number;
-    // (undocumented)
-    removeLocalRef(lref: LocalReference): LocalReference | undefined;
+    // @internal
+    removeLocalRef(lref: LocalReference | ReferencePosition): LocalReference | undefined;
+    // @internal
     split(offset: number, splitSeg: ISegment): void;
 }
 
@@ -993,6 +1014,8 @@ export class MergeTree {
     // (undocumented)
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
+    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): ReferencePosition;
+    // (undocumented)
     findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
         tile: ReferencePosition;
         pos: number;
@@ -1052,6 +1075,8 @@ export class MergeTree {
     reloadFromSegments(segments: ISegment[]): void;
     // @deprecated (undocumented)
     removeLocalReference(segment: ISegment, lref: LocalReference): void;
+    // (undocumented)
+    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: number): number | undefined;
     // (undocumented)
     root: IMergeBlock;
@@ -1348,6 +1373,9 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string): boole
 
 // @public (undocumented)
 export function refHasTileLabels(refPos: ReferencePosition): boolean;
+
+// @public (undocumented)
+export function refTypeIncludesFlag(refPos: ReferencePosition, flags: ReferenceType): boolean;
 
 // @public (undocumented)
 export const reservedMarkerIdKey = "markerId";

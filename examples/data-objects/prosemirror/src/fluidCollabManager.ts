@@ -159,8 +159,8 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                 openPrompt({
                     title: "Insert component",
                     fields: {
-                        src: new TextField({ label: "Url", required: true, value: nodeAttrs && nodeAttrs.src }),
-                        title: new TextField({ label: "Title", value: nodeAttrs && nodeAttrs.title }),
+                        src: new TextField({ label: "Url", required: true, value: nodeAttrs?.src }),
+                        title: new TextField({ label: "Title", value: nodeAttrs?.title }),
                         alt: new TextField({
                             label: "Description",
                             value: nodeAttrs ? nodeAttrs.alt : state.doc.textBetween(from, to, " "),

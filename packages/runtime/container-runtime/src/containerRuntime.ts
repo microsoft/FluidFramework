@@ -1089,7 +1089,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobId: string) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
             this.logger,
         );
@@ -1298,7 +1299,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get IFluidTokenProvider() {
-        if (this.options && this.options.intelligence) {
+        if (this.options?.intelligence) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
                 intelligence: this.options.intelligence,
@@ -2146,18 +2147,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Returns the type of the GC node. Currently, there are nodes that belong to data store and nodes that belong
-     * to the blob manager.
+     * Returns the type of the GC node. Currently, there are nodes that belong to the root ("/"), data stores or
+     * blob manager.
      */
     public getNodeType(nodePath: string): GCNodeType {
         if (this.isBlobPath(nodePath)) {
             return GCNodeType.Blob;
         }
-        if (this.dataStores.isDataStoreNode(nodePath)) {
-            return GCNodeType.DataStore;
-        }
-        // Root node ("/") and DDS nodes belong to "Other" node types.
-        return GCNodeType.Other;
+        return this.dataStores.getGCNodeType(nodePath) ?? GCNodeType.Other;
     }
 
     /**
@@ -2165,13 +2162,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * data store or an attachment blob.
      */
     public getGCNodePackagePath(nodePath: string): readonly string[] | undefined {
-        // If the node is a blob, return "_blobs" as the package path.
-        if (this.isBlobPath(nodePath)) {
-            return ["_blobs"];
+        switch (this.getNodeType(nodePath)) {
+            case GCNodeType.Blob:
+                return ["_blobs"];
+            case GCNodeType.DataStore:
+            case GCNodeType.SubDataStore:
+                return this.dataStores.getDataStorePackagePath(nodePath);
+            default:
+                assert(false, 0x2de /* "Package path requested for unsupported node type." */);
         }
-        const dataStorePkgPath = this.dataStores.getDataStorePackagePath(nodePath);
-        assert(dataStorePkgPath !== undefined, 0x2d6 /* "Package path requested for unknown node type." */);
-        return dataStorePkgPath;
     }
 
     /**

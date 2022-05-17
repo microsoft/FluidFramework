@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "0.59.3000",
+  "version": "0.59.4000",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,13 +35,13 @@
   },
   "dependencies": {
     "@fluidframework/container-definitions": "^0.48.1000",
-    "@fluidframework/fluid-static": "^0.59.2000",
-    "@fluidframework/map": "^0.59.2000",
-    "@fluidframework/sequence": "^0.59.2000"
+    "@fluidframework/fluid-static": "^0.59.4000",
+    "@fluidframework/map": "^0.59.4000",
+    "@fluidframework/sequence": "^0.59.4000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66048",
+    "@fluidframework/build-tools": "^0.2.66793",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -69,10 +69,58 @@
   "typeValidation": {
     "version": "0.59.3000",
     "broken": {
-      "InterfaceDeclaration_ISequenceDeltaRange": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_SequenceDeltaEvent": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_SequenceEvent": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false, "backCompat": false}
+      "InterfaceDeclaration_ISequenceDeltaRange": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceDeltaEvent": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceEvent": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceMaintenanceEvent": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISharedString": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_MatrixSegment": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_PaddingSegment": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_RunSegment": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SharedNumberSequence": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SharedObjectSequence": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SharedSequence": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_SharedStringSegment": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SparseMatrix": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SubSequence": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SharedSegmentSequence": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SharedString": {
+        "forwardCompat": false
+      }
     }
   }
 }
