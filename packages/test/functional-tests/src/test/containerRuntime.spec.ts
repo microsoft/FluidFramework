@@ -281,7 +281,9 @@ describe("Container Runtime", () => {
                 deltaManager2.on("connect", resolve);
                 deltaManager2.connect({ reason: "test" });
             });
-            assert(deltaManager2.active, "deltaManager should be in write mode");
+            assert(deltaManager2.active, "deltaManager should be active");
+            assert.strictEqual(deltaManager2.connectionManager.connectionMode, "write",
+                "connection mode should be write");
 
             const leaveMessage: ISequencedDocumentSystemMessage = {
                 clientId: "null",
@@ -302,6 +304,7 @@ describe("Container Runtime", () => {
 
             assert.strictEqual(deltaManager2.connectionManager.connectionMode, "read",
                 "new connection should be in read mode");
+            assert(deltaManager2.active,"deltaManager should still be active");
         });
     });
 });
