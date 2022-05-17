@@ -7,6 +7,7 @@
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import {
     addProperties,
     Client,
@@ -329,7 +330,9 @@ function createPositionReference(
         const ref = client.createLocalReferencePosition(segoff.segment, segoff.offset, refType, undefined);
         return ref as LocalReference;
     } else {
-        assert(refTypeIncludesFlag(refType, ReferenceType.Transient), "Non-transient references need segment");
+        if (!refTypeIncludesFlag(refType, ReferenceType.Transient)) {
+            throw new UsageError("Non-transient references need segment");
+        }
         return new LocalReference(client, undefined);
     }
 }
