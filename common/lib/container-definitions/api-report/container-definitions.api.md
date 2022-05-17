@@ -448,6 +448,7 @@ export type ILoaderOptions = {
     noopTimeFrequency?: number;
     noopCountFrequency?: number;
     maxClientLeaveWaitTime?: number;
+    summarizeProtocolTree?: boolean;
 };
 
 // @public (undocumented)
