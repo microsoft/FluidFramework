@@ -139,6 +139,9 @@
       "TypeAliasDeclaration_MatrixSegment": {
         "forwardCompat": false
       },
+      "ClassDeclaration_IntervalCollection": {
+        "forwardCompat": false
+      },
       "ClassDeclaration_PaddingSegment": {
         "forwardCompat": false
       },
