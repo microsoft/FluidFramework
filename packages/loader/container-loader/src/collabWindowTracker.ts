@@ -35,7 +35,7 @@ export class CollabWindowTracker {
 
     constructor(
         private readonly submit: (type: MessageType, contents: any) => void,
-        private readonly NoopTimeFrequency: number = defaultNoopTimeFrequency,
+        NoopTimeFrequency: number = defaultNoopTimeFrequency,
         private readonly NoopCountFrequency: number = defaultNoopCountFrequency,
     ) {
         if (NoopTimeFrequency !== Infinity) {

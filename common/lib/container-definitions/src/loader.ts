@@ -375,6 +375,25 @@ export type ILoaderOptions = {
      */
     provideScopeLoader?: boolean;
 
+    // Below two are the options based on which we decide how often client needs to send noops in case of active
+    // connection which is not sending any op. The end result is the "AND" of these 2 options. So the client
+    // should hit the min time and count to send the noop.
+    /**
+     * Set min time(in ms) frequency with which noops would be sent in case of active connection which is
+     * not sending any op.
+     * @deprecated - the property will be moved to
+     * {@link @fluidframework/protocol-definitions/config.ts#IClientConfiguration}
+     */
+     noopTimeFrequency?: number;
+
+     /**
+      * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
+      *
+      * @deprecated - the property will be moved to
+      * {@link @fluidframework/protocol-definitions/config.ts#IClientConfiguration}
+      */
+     noopCountFrequency?: number;
+
     /**
      * Max time(in ms) container will wait for a leave message of a disconnected client.
     */
