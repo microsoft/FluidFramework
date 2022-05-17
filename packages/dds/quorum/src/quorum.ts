@@ -30,7 +30,13 @@ interface IAcceptedQuorumValue {
     value: any;
 
     /**
-     * The sequence number when the value was accepted.
+     * The sequence number when the value was accepted, which will normally coincide with one of three possibilities:
+     * - The sequence number of the "accept" op from the final client we expected signoff from
+     * - The sequence number of the ClientLeave of the final client we expected signoff from
+     * - The sequence number of the "set" op, if there were no expected signoffs (i.e. only the submitting client
+     *   was connected when the op was sequenced)
+     *
+     * For values set in detached state, it will be 0.
      */
     sequenceNumber: number;
 }
@@ -40,8 +46,15 @@ interface IAcceptedQuorumValue {
  */
 interface IPendingQuorumValue {
     value: any;
+    /**
+     * The sequence number when this value went pending -- the sequence number of the "set" op.
+     */
     sequenceNumber: number;
-    // TODO: Consider using Set and serializing to array for snapshot
+    /**
+     * The list of clientIds that we expect "accept" ops from.  Clients are also removed from this list if they
+     * disconnect without accepting.  When this list empties, the pending value transitions to accepted.
+     * TODO: Consider using a Set locally, and serializing to array just for the snapshot
+     */
     expectedSignoffs: string[];
 }
 
@@ -61,18 +74,26 @@ interface IQuorumSetOperation {
     key: string;
     value: any;
 
-    // Message can be delivered with delay - resubmitted on reconnect.
-    // As such, refSeq needs to reference seq # at the time op was created,
-    // not when op was actually sent over wire (ISequencedDocumentMessage.referenceSequenceNumber),
-    // as client can ingest ops in between.
+    /**
+     * A "set" is only valid if it is made with knowledge of the most-recent accepted proposal - its reference
+     * sequence number is greater than or equal to the sequence number when that prior value was accepted.
+     *
+     * However, we can't trust the built-in referenceSequenceNumber of the op because of resubmit on reconnect,
+     * which will update the referenceSequenceNumber on our behalf.
+     *
+     * Instead we need to separately stamp the real reference sequence number on the op itself.
+     */
     refSeq: number;
 }
 
 interface IQuorumAcceptOperation {
     type: "accept";
     key: string;
-    // The sequence number when the value went pending.
-    // To be used to validate that we are accepting the correct intended value.
+    /**
+     * The sequence number when the value to be accepted went pending.  This is used to validate that we are
+     * accepting the specific proposal that we intended, and not another proposal for the same key.
+     * TODO: We may not need this if we filter out resubmission of "accept" ops on reconnect.
+     */
     pendingSeq: number;
 }
 
