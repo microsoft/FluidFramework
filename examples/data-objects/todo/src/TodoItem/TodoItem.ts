@@ -77,18 +77,6 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
         });
     }
 
-    public static getFactory() { return TodoItem.factory; }
-
-    private static readonly factory =
-        new DataObjectFactory(
-            "@fluid-example/todo-item",
-            TodoItem,
-            [
-                SharedString.getFactory(),
-            ],
-            {},
-        );
-
     // start public API surface for the TodoItem model, used by the view
 
     // Would prefer not to hand this out, and instead give back a component?
@@ -116,3 +104,12 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
 
     // end public API surface for the TodoItem model, used by the view
 }
+
+export const TodoItemFactory = new DataObjectFactory(
+    "@fluid-example/todo-item",
+    TodoItem,
+    [
+        SharedString.getFactory(),
+    ],
+    {},
+);
