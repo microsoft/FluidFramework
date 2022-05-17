@@ -258,14 +258,13 @@ describe('IdCompressor Perf', () => {
 
 	function getLastLocalId(client: Client, network: IdCompressorTestNetwork): LocalCompressedId {
 		const log = network.getIdLog(client);
-		let id: LocalCompressedId | undefined;
 		for (let i = log.length - 1; i > 0; i--) {
 			const cur = log[i].id;
 			if (isLocalId(cur)) {
-				id = cur;
+				return cur;
 			}
 		}
-		return id ?? fail('no local ID found in log');
+		fail('no local ID found in log');
 	}
 
 	let localId!: LocalCompressedId;

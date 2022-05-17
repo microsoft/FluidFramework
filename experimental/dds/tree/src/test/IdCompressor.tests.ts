@@ -219,7 +219,7 @@ describe('IdCompressor', () => {
 		});
 
 		it('created with finalization', () => {
-			const compressor = createCompressor(Client.Client1, 10);
+			const compressor = createCompressor(Client.Client1, idCount);
 			const ids: SessionSpaceCompressedId[] = [];
 			for (let i = 0; i < idCount; i++) {
 				if (i === Math.floor(idCount / 2)) {
@@ -677,7 +677,7 @@ describe('IdCompressor', () => {
 			);
 		});
 
-		it('can normalize a final ID created by the local session but sent in another clients op space', () => {
+		it('can normalize a final ID created by the local session but sent in another client\'s op space', () => {
 			// Regression test for the situation in which a client creates a final ID and another client references
 			// that final ID in a message back to the creating client. The creating client will normalize it and
 			// pass the session ID of the remote (non-creating) client. This should be handled correctly.
@@ -1240,27 +1240,20 @@ describe('IdCompressor', () => {
 				const range1 = compressor.takeNextCreationRange();
 				const localId2 = compressor.generateCompressedId();
 				const range2 = compressor.takeNextCreationRange();
-				const localId3 = compressor.generateCompressedId();
-				const range3 = compressor.takeNextCreationRange();
 				expect(isLocalId(localId1)).to.be.true;
 				expect(isLocalId(localId2)).to.be.true;
-				expect(isLocalId(localId3)).to.be.true;
 
 				compressor.finalizeCreationRange(range1);
 				compressor.finalizeCreationRange(range2);
-				compressor.finalizeCreationRange(range3);
 
 				const opSpaceId1 = compressor.normalizeToOpSpace(localId1);
 				const opSpaceId2 = compressor.normalizeToOpSpace(localId2);
-				const opSpaceId3 = compressor.normalizeToOpSpace(localId3);
 
 				expectAssert(isFinalId(opSpaceId1));
 				expectAssert(isFinalId(opSpaceId2));
-				expectAssert(isFinalId(opSpaceId3));
 
 				expect(compressor.normalizeToSessionSpace(opSpaceId1)).to.equal(localId1);
 				expect(compressor.normalizeToSessionSpace(opSpaceId2)).to.equal(localId2);
-				expect(compressor.normalizeToSessionSpace(opSpaceId3)).to.equal(localId3);
 			});
 		});
 
