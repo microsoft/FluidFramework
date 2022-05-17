@@ -60,7 +60,7 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 
     // Using the list of TodoItem components, make a list of TodoItemViews.
     const todoItemViews = todoItems.map(([id, todoItem]) => (
-        <div key={id}>
+        <div className="item-wrap" key={id}>
             <TodoItemView todoItemModel={todoItem} />
             <button
                 name="OpenSubComponent"
@@ -85,12 +85,13 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
             />
             <form onSubmit={handleCreateClick}>
                 <input
+                    className="new-item-text"
                     type="text"
                     ref={newItemTextInputRef}
                     name="itemName"
                     autoFocus
                 />
-                <button type="submit" name="createItem">+</button>
+                <button className="new-item-button" type="submit" name="createItem">+</button>
             </form>
             <div className="todo-item-list">
                 {todoItemViews}
