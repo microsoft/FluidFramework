@@ -12,9 +12,8 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 import React from "react";
-import { Todo, TodoInstantiationFactory } from "./Todo";
-import { TodoView } from "./Todo/TodoView";
-import { TodoItemView } from "./TodoItem/TodoItemView";
+import { Todo, TodoInstantiationFactory, TodoView } from "./Todo";
+import { TodoItemView } from "./TodoItem";
 
 const todoId = "todo";
 

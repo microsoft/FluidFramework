@@ -6,8 +6,7 @@
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 import { SharedString } from "@fluidframework/sequence";
 import React, { useEffect, useRef, useState } from "react";
-import { TodoItem } from "../TodoItem/TodoItem";
-import { TodoItemView } from "../TodoItem/TodoItemView";
+import { TodoItem, TodoItemView } from "../TodoItem";
 import { Todo } from "./Todo";
 
 // eslint-disable-next-line import/no-unassigned-import

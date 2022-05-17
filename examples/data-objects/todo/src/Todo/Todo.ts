@@ -8,7 +8,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 // import { v4 as uuid } from "uuid";
-import { ITodoItemInitialState, TodoItem } from "../TodoItem/index";
+import { ITodoItemInitialState, TodoItem } from "../TodoItem";
 
 export const TodoName = "Todo";
 
