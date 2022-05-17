@@ -111,7 +111,6 @@ export class Client {
     applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
     // (undocumented)
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
-    // (undocumented)
     changeReferenceType(reference: ReferencePosition, refType: ReferenceType): void;
     // (undocumented)
     cloneFromSegments(): Client;

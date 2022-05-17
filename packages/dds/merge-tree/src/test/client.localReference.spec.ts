@@ -6,6 +6,7 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { Marker } from "../mergeTree";
 import { ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { createClientsAtInitialState } from "./testClientLogger";
@@ -169,6 +170,62 @@ describe("MergeTree.Client", () => {
 
         client1.applyMsg(remove1);
         client1.applyMsg(remove2);
+
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 0);
+    });
+
+    it("changeReferenceType throws", () => {
+        const client1 = new TestClient();
+        client1.startOrUpdateCollaboration("1");
+        let seq = 0;
+        const insert = client1.makeOpMessage(
+            client1.insertTextLocal(0, "ABCD"),
+            ++seq);
+        insert.minimumSequenceNumber = seq - 1;
+        client1.applyMsg(insert);
+
+        const segInfo = client1.getContainingSegment(2);
+        const c1LocalRef = client1.createLocalReferencePosition(
+            segInfo.segment!, segInfo.offset!, ReferenceType.Transient, undefined);
+
+        assert.throws(() => { client1.changeReferenceType(c1LocalRef, ReferenceType.SlideOnRemove); },
+            "should throw changing Transient reference");
+        const marker = new Marker(ReferenceType.StayOnRemove);
+        assert.throws(() => { client1.changeReferenceType(marker, ReferenceType.SlideOnRemove); },
+            "should throw when called on Marker");
+
+        const c2LocalRef = client1.createLocalReferencePosition(
+            segInfo.segment!, segInfo.offset!, ReferenceType.StayOnRemove, undefined);
+        assert.throws(() => { client1.changeReferenceType(c2LocalRef, ReferenceType.Simple); },
+            "should throw not changing to SlideOnRemove");
+    });
+
+    it("changeReferenceType slides reference", () => {
+        const client1 = new TestClient();
+
+        client1.startOrUpdateCollaboration("1");
+        let seq = 0;
+        const insert = client1.makeOpMessage(
+            client1.insertTextLocal(0, "ABCD"),
+            ++seq);
+        insert.minimumSequenceNumber = seq - 1;
+        client1.applyMsg(insert);
+
+        const segInfo = client1.getContainingSegment(2);
+        const c1LocalRef = client1.createLocalReferencePosition(
+            segInfo.segment!, segInfo.offset!, ReferenceType.StayOnRemove, undefined);
+
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 2);
+
+        const remove1 = client1.makeOpMessage(
+            client1.removeRangeLocal(1, 4), ++seq);
+        remove1.minimumSequenceNumber = seq - 1;
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 1);
+
+        client1.applyMsg(remove1);
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 1);
+
+        client1.changeReferenceType(c1LocalRef, ReferenceType.SlideOnRemove);
 
         assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 0);
     });

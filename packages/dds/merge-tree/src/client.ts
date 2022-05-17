@@ -1045,9 +1045,21 @@ export class Client {
         return segoff;
     }
 
+    /**
+     * Changes the type of a LocalReference. Only supports changing
+     * to a type which includes SlideOnRemove.
+     * @param reference - The reference to change. Must be a LocalReference.
+     * @param refType - The type to change to. Must include SlideOnRemove.
+     */
     changeReferenceType(reference: ReferencePosition, refType: ReferenceType): void {
         if (!(reference instanceof LocalReference)) {
             throw new UsageError("changeReferenceType requires LocalReference");
+        }
+        if (refTypeIncludesFlag(reference, ReferenceType.Transient)) {
+            throw new UsageError("changeReferenceType called on TransientReference");
+        }
+        if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
+            throw new UsageError("changeReferenceType only support SlideOnRemove");
         }
         _validateReferenceType(refType);
         reference.refType = refType;
