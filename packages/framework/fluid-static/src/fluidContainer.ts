@@ -72,7 +72,7 @@ export interface IFluidContainerEvents extends IEvent {
  */
 export interface ContainerAttachReturnState {
     /**
-     * The ID of the container.
+     * The unique ID of the container.
      *
      * TODO: anything more interesting to say here?
      */
