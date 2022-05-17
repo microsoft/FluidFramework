@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { take } from '@fluid-internal/stochastic-test-utils';
