@@ -84,7 +84,7 @@ export class PropertyTemplateWrapper {
      * @package
      */
     hasCompiledTemplate() {
-        return !!this._compiledPropertyTemplate;
+        return Boolean(this._compiledPropertyTemplate);
     }
 
     /**

@@ -168,6 +168,10 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+                // The implicit coercion below also informs TypeScript that
+                // odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem cannot be null. Removing the implicit coercion
+                // here would make the subsequent code more complex.
+                // eslint-disable-next-line no-implicit-coercion
                 assert(!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
                     0x1ed /* "Share link should be present" */);
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");

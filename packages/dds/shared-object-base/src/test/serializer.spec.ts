@@ -91,6 +91,7 @@ describe("FluidSerializer", () => {
         }
 
         // Non-finite numbers are coerced to null.  Date is coerced to string.
+        // eslint-disable-next-line no-implicit-coercion
         const tricky = createNestedCases([-Infinity, NaN, +Infinity, new Date()]);
 
         // Undefined is extra special in that it can't appear at the root, but can appear

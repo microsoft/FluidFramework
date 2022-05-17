@@ -48,7 +48,7 @@ export async function fetchJoinSession(
     const token = await getStorageToken(options, "JoinSession");
 
     const tokenRefreshProps = options.refresh
-        ? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
+        ? { hasClaims: Boolean(options.claims), hasTenantId: Boolean(options.tenantId) }
         : {};
     const details: ITelemetryProperties = {
         refreshedToken: options.refresh,

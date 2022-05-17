@@ -291,8 +291,8 @@ export function toInstrumentedOdspTokenFetcher(
             {
                 eventName: `${name}_GetToken`,
                 attempts: options.refresh ? 2 : 1,
-                hasClaims: !!options.claims,
-                hasTenantId: !!options.tenantId,
+                hasClaims: Boolean(options.claims),
+                hasTenantId: Boolean(options.tenantId),
             },
             async (event) => tokenFetcher({
                 ...options,

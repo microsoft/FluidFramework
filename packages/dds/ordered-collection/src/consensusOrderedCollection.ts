@@ -114,7 +114,7 @@ export class ConsensusOrderedCollection<T = any>
         // Disconnect order matters because it defines the order items go back to the queue.
         // So we put items back to queue only when we process our own removeMember event.
         runtime.getQuorum().on("removeMember", (clientId: string) => {
-            assert(!!clientId, 0x067 /* "Missing clientId for removal!" */);
+            assert(Boolean(clientId), 0x067 /* "Missing clientId for removal!" */);
             this.removeClient(clientId);
         });
     }

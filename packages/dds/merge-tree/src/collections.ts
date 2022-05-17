@@ -288,6 +288,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     }
 
     private isRed(node: RBNode<TKey, TData> | undefined) {
+        // eslint-disable-next-line no-implicit-coercion
         return !!node && (node.color === RBColor.RED);
     }
 
@@ -920,10 +921,12 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     }
 
     public matchNode(node: IntervalNode<T> | undefined, key: T) {
+        // eslint-disable-next-line no-implicit-coercion
         return !!node && node.key.overlaps(key);
     }
 
     public continueSubtree(node: IntervalNode<T> | undefined, key: T) {
+        // eslint-disable-next-line no-implicit-coercion
         return !!node && node.data.minmax.overlaps(key);
     }
 

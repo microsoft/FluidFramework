@@ -198,7 +198,7 @@ export class SharedPropertyTree extends SharedObject {
 	public commit(metadata?: Metadata, submitEmptyChange?: boolean) {
 		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
 
-		let doSubmit = !!submitEmptyChange;
+        let doSubmit = Boolean(submitEmptyChange);
 
 		// if no override provided dont submit unless metadata are provided
 		if (submitEmptyChange === undefined) {
@@ -466,7 +466,7 @@ export class SharedPropertyTree extends SharedObject {
 				this.remoteChanges = snapshotSummary.remoteChanges;
 				this.unrebasedRemoteChanges = snapshotSummary.unrebasedRemoteChanges;
 
-				const isPartialCheckoutActive = !!(this.options.clientFiltering && this.options.paths);
+                const isPartialCheckoutActive = Boolean(this.options.clientFiltering && this.options.paths);
 				if (isPartialCheckoutActive && this.options.paths) {
 					this.remoteTipView = ChangeSetUtils.getFilteredChangeSetByPaths(
 						this.remoteTipView,

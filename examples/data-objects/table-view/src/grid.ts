@@ -316,7 +316,7 @@ export class GridView {
         }
 
         // 'getTdFromRowCol(..)' return false if row/col are outside the sheet range.
-        return !!newParent;
+        return Boolean(newParent);
     }
 
     private moveInputByOffset(e: KeyboardEvent, rowOffset: number, colOffset: number) {

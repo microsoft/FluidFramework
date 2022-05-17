@@ -307,7 +307,7 @@ export class Layout extends EventEmitter {
         // Note: Removing and inserting a new text node has the side-effect of reseting the caret blink.
         //       Because text nodes are always leaves, this is harmless.
         let existing = this.next;
-        if (!!existing && isTextNode(existing) && this.nodeToSegment(existing) === this.segment) {
+        if (Boolean(existing) && isTextNode(existing) && this.nodeToSegment(existing) === this.segment) {
             this.removeNode(existing);
         }
         existing = document.createTextNode(text);
@@ -433,7 +433,7 @@ export class Layout extends EventEmitter {
         const existing = this.next;
         // Reuse the existing element if possible, otherwise create a new one.  Note that
         // 'layout.pushNode(..)' will clean up the old node if needed.
-        return !!existing && hasTagName(existing, tag) && this.nodeToSegment(existing) === this.segment
+        return Boolean(existing) && hasTagName(existing, tag) && this.nodeToSegment(existing) === this.segment
             ? existing
             : document.createElement(tag);
     }
@@ -560,7 +560,7 @@ export class Layout extends EventEmitter {
         // Union the delta range with the current invalidated range (if any).
         const doc = this.doc;
         /* eslint-disable @typescript-eslint/unbound-method */
-        _start = this.unionRef(doc, _start, this.startInvalid, Math.min, +Infinity);
+        _start = this.unionRef(doc, _start, this.startInvalid, Math.min, Number(Infinity));
         _end = this.unionRef(doc, _end, this.endInvalid, Math.max, -Infinity);
         /* eslint-enable @typescript-eslint/unbound-method */
         this.startInvalid = updateRef(doc, this.startInvalid, _start);

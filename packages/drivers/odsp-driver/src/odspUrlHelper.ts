@@ -46,7 +46,7 @@ export function isSpoUrl(url: string): boolean {
 
     // Format: foo.sharepoint.com/_api/v2.1./drives/bar/items/baz and foo.sharepoint-df.com/...
     const spoRegex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)/;
-    return !!spoRegex.exec(urlLower);
+    return Boolean(spoRegex.exec(urlLower));
 }
 
 /**
@@ -69,7 +69,7 @@ export function isOdcUrl(url: string | URL): boolean {
     // Format: /v2.1/drives('ABC123')/items('ABC123!123')
     const odcODataRegex = /\/v2.1\/drives\('[^/]+'\)\/items\('[\da-z]+!\d+'\)/;
 
-    return !!(odcRegex.exec(path) || odcODataRegex.exec(path));
+    return Boolean(odcRegex.exec(path) || odcODataRegex.exec(path));
 }
 
 /**

@@ -150,6 +150,9 @@ async function prep(allowPacking: boolean, blobSizeLimit: number | undefined) {
     });
 
     const snapshot = await aggregator.getSnapshotTree();
+    // The implicit coercion below also informs TypeScript that snapshot cannot be null. Removing the implicit coercion
+    // here would make the subsequent code more complex.
+    // eslint-disable-next-line no-implicit-coercion
     assert(!!snapshot, "Missing snapshot tree!");
 
     const service = new FlattenedStorageService(snapshot, aggregator);

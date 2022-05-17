@@ -963,8 +963,8 @@ export class TemplateValidator {
     private readonly _allowDraft: boolean;
     private readonly _skipSemver: boolean;
     constructor(in_params: TemplateValidatorOptions = { skipSemver: false, allowDraft: false }) {
-        this._skipSemver = in_params ? !!in_params.skipSemver : false;
-        this._allowDraft = in_params ? !!in_params.allowDraft : false;
+        this._skipSemver = in_params ? Boolean(in_params.skipSemver) : false;
+        this._allowDraft = in_params ? Boolean(in_params.allowDraft) : false;
         // Used by validate()
         if (in_params && in_params.inheritsFrom !== undefined && in_params.hasSchema !== undefined) {
             this._inheritsFrom = in_params.inheritsFrom;

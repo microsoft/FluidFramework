@@ -74,7 +74,7 @@ export class DocumentDeltaConnection
     private readonly trackedListeners: Map<string, (...args: any[]) => void> = new Map();
 
     protected get hasDetails(): boolean {
-        return !!this._details;
+        return Boolean(this._details);
     }
 
     public get disposed() {

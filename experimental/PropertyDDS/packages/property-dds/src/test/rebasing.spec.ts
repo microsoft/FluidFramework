@@ -53,7 +53,7 @@ function createDerivedGuid(referenceGuid: string, identifier: string) {
 	);
 }
 console.assert = (condition: boolean, ...data: any[]) => {
-	assert(!!condition, "Console Assert");
+    assert(Boolean(condition), "Console Assert");
 };
 
 function getFunctionSource(fun: any): string {

@@ -60,7 +60,7 @@ import {
     refHasRangeLabels,
     refHasTileLabel,
     refHasTileLabels,
- } from "./referencePositions";
+} from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager } from "./segmentPropertiesManager";
 import { Client } from "./client";
@@ -509,6 +509,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     }
 
     public hasProperty(key: string): boolean {
+        // eslint-disable-next-line no-implicit-coercion
         return !!this.properties && (this.properties[key] !== undefined);
     }
 
@@ -543,6 +544,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
         switch (opArgs.op.type) {
             case MergeTreeDeltaType.ANNOTATE:
+                // eslint-disable-next-line no-implicit-coercion
                 assert(!!this.propertyManager, 0x044 /* "On annotate ack, missing segment property manager!" */);
                 this.propertyManager.ackPendingProperties(opArgs.op);
                 return true;
@@ -674,6 +676,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
     }
 
     hasSimpleType(simpleTypeName: string) {
+        // eslint-disable-next-line no-implicit-coercion
         return !!this.properties &&
             this.properties[reservedMarkerSimpleTypeKey] === simpleTypeName;
     }
@@ -782,7 +785,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
             pbuf += JSON.stringify(this.properties, (key, value) => {
                 // Avoid circular reference when stringifying makers containing handles.
                 // (Substitute a debug string instead.)
-                const handle = !!value && value.IFluidHandle;
+                const handle = Boolean(value) && value.IFluidHandle;
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return handle
@@ -1839,6 +1842,9 @@ export class MergeTree {
         // if the change isn't at a boundary, we need to split the segment
         if (refOffset !== 0 && refSegLen !== undefined && refSegLen !== 0) {
             const splitSeg = this.splitLeafSegment(refSegment, refOffset);
+            // The implicit coercion below also informs TypeScript that splitSeg.next cannot be null. Removing the
+            // implicit coercion here would make the subsequent code more complex.
+            // eslint-disable-next-line no-implicit-coercion
             assert(!!splitSeg.next, 0x050 /* "Next segment changes are undefined!" */);
             this.insertChildNode(refSegment.parent!, splitSeg.next, refSegment.index + 1);
             rebalanceTree(splitSeg.next);
@@ -2394,6 +2400,7 @@ export class MergeTree {
             if (start < length) {
                 const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
                 refSegment = afterSegOff.segment;
+                // eslint-disable-next-line no-implicit-coercion
                 assert(!!refSegment, 0x052 /* "Missing reference segment!" */);
                 if (!refSegment.localRefs) {
                     refSegment.localRefs = new LocalReferenceCollection(refSegment);
@@ -2402,6 +2409,7 @@ export class MergeTree {
             } else if (length > 0) {
                 const beforeSegOff = this.getContainingSegment(length - 1, refSeq, clientId);
                 refSegment = beforeSegOff.segment;
+                // eslint-disable-next-line no-implicit-coercion
                 assert(!!refSegment, 0x053 /* "Missing reference segment!" */);
                 if (!refSegment.localRefs) {
                     refSegment.localRefs = new LocalReferenceCollection(refSegment);

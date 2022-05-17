@@ -114,8 +114,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         }
 
         if (this.isLoaded) {
-            assert(!!this.channel, 0x192 /* "Channel should be there if loaded!!" */);
-            this.channel.connect(this.servicesGetter().value);
+            assert(Boolean(this.channel), 0x192 /* "Channel should be there if loaded!!" */);
+            this.channel?.connect(this.servicesGetter().value);
         }
         this.globallyVisible = true;
     }

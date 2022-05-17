@@ -80,7 +80,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
             // Started with ops - return empty set.
             return [];
         } else if (this.versionName !== undefined) {
-            assert(!!this.docTree, 0x094 /* "Missing snapshot tree!" */);
+            assert(Boolean(this.docTree), 0x094 /* "Missing snapshot tree!" */);
             return [{
                 id: versionId,
                 treeId: FileStorageVersionTreeId,

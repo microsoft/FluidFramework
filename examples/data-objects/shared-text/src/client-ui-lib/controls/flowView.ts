@@ -2661,7 +2661,7 @@ export class FlowView extends ui.Component {
                 }
             }
 
-            const lc = !!(tileInfo.tile as Paragraph.IParagraphMarker).listCache;
+            const lc = Boolean((tileInfo.tile as Paragraph.IParagraphMarker).listCache);
             console.log(`tile at pos ${tileInfo.pos} with props${buf} and list cache: ${lc}`);
         }
     }

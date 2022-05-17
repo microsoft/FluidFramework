@@ -69,7 +69,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         if (createNewSummary === undefined) {
             throw new Error("Empty file summary creation isn't supported in this driver.");
         }
-        assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
+        assert(Boolean(resolvedUrl.endpoints.ordererUrl), 0x0b2 /* "Missing orderer URL!" */);
         let parsedUrl = parseFluidUrl(resolvedUrl.url);
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");

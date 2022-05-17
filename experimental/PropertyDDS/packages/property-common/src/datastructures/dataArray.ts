@@ -511,7 +511,7 @@ class BoolDataArray extends UniversalDataArray {
     private arraySetBool(array, values, offset = 0) {
         let index = 0;
         values.forEach(function(value) {
-            array[index + offset] = !!(value as boolean);
+            array[index + offset] = Boolean(value as boolean);
             index++;
         });
     }
@@ -522,7 +522,7 @@ class BoolDataArray extends UniversalDataArray {
      * @param in_array - the array to be inserted
      */
     insertRange(in_offset: number, in_array: any[]) {
-        const toBeAdded: any[] = in_array.map((val) => !!(val as boolean));
+        const toBeAdded: any[] = in_array.map((val) => Boolean(val as boolean));
         this._buffer.splice.call(this._buffer, ...([in_offset, 0].concat(toBeAdded)));
         this.size = this.size + in_array.length;
     }

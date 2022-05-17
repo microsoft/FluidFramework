@@ -27,7 +27,7 @@ import {
 export const buildTreePath = (...nodeNames: string[]): string =>
     nodeNames
         .map((nodeName) => nodeName.replace(/^\//, "").replace(/\/$/, ""))
-        .filter((nodeName) => !!nodeName)
+        .filter((nodeName) => Boolean(nodeName))
         .join("/");
 
 /**

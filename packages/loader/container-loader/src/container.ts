@@ -36,7 +36,7 @@ import {
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
- } from "@fluidframework/container-utils";
+} from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -286,14 +286,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end({ ...props, ...loadOptions.loadMode });
                         resolve(container);
                     },
-                    (error) => {
-                        const err = normalizeError(error);
-                        // Depending where error happens, we can be attempting to connect to web socket
-                        // and continuously retrying (consider offline mode)
-                        // Host has no container to close, so it's prudent to do it here
-                        container.close(err);
-                        onClosed(err);
-                    });
+                        (error) => {
+                            const err = normalizeError(error);
+                            // Depending where error happens, we can be attempting to connect to web socket
+                            // and continuously retrying (consider offline mode)
+                            // Host has no container to close, so it's prudent to do it here
+                            container.close(err);
+                            onClosed(err);
+                        });
             }),
             { start: true, end: true, cancel: "generic" },
         );
@@ -547,7 +547,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     name: typeof name === "string" ? name : undefined,
                 },
                 error);
-            });
+        });
         this._audience = new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
@@ -687,10 +687,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         }
                         break;
                     case connectedEventName:
-                         if (this.connected) {
+                        if (this.connected) {
                             listener(this.clientId);
-                         }
-                         break;
+                        }
+                        break;
                     case disconnectedEventName:
                         if (!this.connected) {
                             listener();
@@ -859,6 +859,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
                 if (hasAttachmentBlobs) {
                     // upload blobs to storage
+
+                    // The implicit coercion below also informs TypeScript that
+                    // this.loader.services.detachedBlobStorage cannot be null. Removing the implicit coercion here
+                    // would make the subsequent code more complex.
+                    // eslint-disable-next-line no-implicit-coercion
                     assert(!!this.loader.services.detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
 
                     // build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
@@ -909,7 +914,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 throw newError;
             }
         },
-        { start: true, end: true, cancel: "generic" });
+            { start: true, end: true, cancel: "generic" });
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -1266,6 +1271,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
         if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
+        // The implicit coercion below also informs TypeScript that this.loader.services.detachedBlobStorage cannot be
+        // null. Removing the implicit coercion here would make the subsequent code more complex.
+        // eslint-disable-next-line no-implicit-coercion
             assert(!!this.loader.services.detachedBlobStorage && this.loader.services.detachedBlobStorage.size > 0,
                 0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */);
             delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
@@ -1420,7 +1428,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (key === "code" || key === "code2") {
                     if (!isFluidCodeDetails(value)) {
                         this.mc.logger.sendErrorEvent({
-                                eventName: "CodeProposalNotIFluidCodeDetails",
+                            eventName: "CodeProposalNotIFluidCodeDetails",
                         });
                     }
                     this.processCodeProposal().catch((error) => {

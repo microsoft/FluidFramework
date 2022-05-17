@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+// The implicit coercions (!!) in this file also informs TypeScript that coerced values cannot be null, which
+// simplifies some subsequent code.
+/* eslint-disable no-implicit-coercion */
+
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,

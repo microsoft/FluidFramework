@@ -267,7 +267,7 @@ export class BlobManager {
     public summarize(): ISummaryTreeWithStats {
         // If we have a redirect table it means the container is about to transition to "Attaching" state, so we need
         // to return an actual snapshot containing all the real storage IDs we know about.
-        const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;
+        const attachingOrAttached = Boolean(this.redirectTable) || this.runtime.attachState !== AttachState.Detached;
         const blobIds = attachingOrAttached ? this.blobIds : this.detachedBlobIds;
         const builder = new SummaryTreeBuilder();
         blobIds.forEach((blobId) => {

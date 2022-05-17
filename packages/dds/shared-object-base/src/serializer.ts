@@ -13,7 +13,7 @@ import { RemoteFluidObjectHandle } from "./remoteObjectHandle";
 /**
  * JSON serialized form of an IFluidHandle
  */
- export interface ISerializedHandle {
+export interface ISerializedHandle {
     // Marker to indicate to JSON.parse that the object is a Fluid handle
     type: "__fluid_handle__";
 
@@ -85,14 +85,13 @@ export class FluidSerializer implements IFluidSerializer {
      *
      * Any unbound handles encountered are bound to the provided IFluidHandle.
      */
-     public encode(
+    public encode(
         input: any,
         bind: IFluidHandle,
     ) {
         // If the given 'input' cannot contain handles, return it immediately.  Otherwise,
         // return the result of 'recursivelyReplace()'.
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return !!input && typeof input === "object"
+        return Boolean(input) && typeof input === "object"
             ? this.recursivelyReplace(input, this.encodeValue, bind)
             : input;
     }
@@ -106,11 +105,10 @@ export class FluidSerializer implements IFluidSerializer {
      *
      * The decoded handles are implicitly bound to the handle context of this serializer.
      */
-     public decode(input: any) {
+    public decode(input: any) {
         // If the given 'input' cannot contain handles, return it immediately.  Otherwise,
         // return the result of 'recursivelyReplace()'.
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return !!input && typeof input === "object"
+        return Boolean(input) && typeof input === "object"
             ? this.recursivelyReplace(input, this.decodeValue)
             : input;
     }
@@ -181,8 +179,7 @@ export class FluidSerializer implements IFluidSerializer {
         let clone: object | undefined;
         for (const key of Object.keys(input)) {
             const value = input[key];
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            if (!!value && typeof value === "object") {
+            if (Boolean(value) && typeof value === "object") {
                 // Note: Except for IFluidHandle, `input` must not contain circular references (as object must
                 //       be JSON serializable.)  Therefore, guarding against infinite recursion here would only
                 //       lead to a later error when attempting to stringify().

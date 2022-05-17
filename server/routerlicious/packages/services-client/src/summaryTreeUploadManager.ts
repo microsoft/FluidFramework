@@ -127,12 +127,12 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
             switch (handleType) {
                 case SummaryType.Blob: {
                     const tryId = previousSnapshot.blobs[key];
-                    assert(!!tryId, 0x0b4 /* "Parent summary does not have blob handle for specified path." */);
+                    assert(Boolean(tryId), 0x0b4 /* "Parent summary does not have blob handle for specified path." */);
                     return tryId;
                 }
                 case SummaryType.Tree: {
                     const tryId = previousSnapshot.trees[key]?.id;
-                    assert(!!tryId, 0x0b5 /* "Parent summary does not have tree handle for specified path." */);
+                    assert(Boolean(tryId), 0x0b5 /* "Parent summary does not have tree handle for specified path." */);
                     return tryId;
                 }
                 default:

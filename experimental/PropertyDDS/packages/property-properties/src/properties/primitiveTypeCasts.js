@@ -152,7 +152,7 @@ const _castFunctors = {
      * @protected
      */
     Boolean: function(in_value) {
-        return !!in_value;
+        return Boolean(in_value);
     },
 };
 

@@ -753,7 +753,7 @@ export class ConnectionManager implements IConnectionManager {
         // reset clientSequenceNumber if we are using new clientId.
         // we keep info about old connection as long as possible to be able to account for all non-acked ops
         // that we pick up on next connection.
-        assert(!!this.connection, 0x0e4 /* "Lost old connection!" */);
+        assert(Boolean(this.connection), 0x0e4 /* "Lost old connection!" */);
         if (this.lastSubmittedClientId !== this.connection?.clientId) {
             this.lastSubmittedClientId = this.connection?.clientId;
             this.clientSequenceNumber = 0;

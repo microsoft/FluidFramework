@@ -105,8 +105,8 @@ export class OdspSummaryUploadManager {
                 {
                     eventName: "uploadSummary",
                     attempt: options.refresh ? 2 : 1,
-                    hasClaims: !!options.claims,
-                    hasTenantId: !!options.tenantId,
+                    hasClaims: Boolean(options.claims),
+                    hasTenantId: Boolean(options.tenantId),
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                     blobs,
                     size: postBody.length,

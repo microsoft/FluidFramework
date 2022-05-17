@@ -238,7 +238,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             getStorageToken,
             logger,
             epochTracker,
-            !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+            Boolean(this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader),
         );
     }
 
@@ -254,7 +254,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const { url, headers } = getUrlAndHeadersWithAuth(
                 `${this.attachmentPOSTUrl}/content`,
                 storageToken,
-                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                Boolean(this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader),
             );
             headers["Content-Type"] = "application/octet-stream";
 
@@ -301,7 +301,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     unAuthedUrl,
                     storageToken,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    Boolean(this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader),
                 );
 
                 return PerformanceEvent.timedExecAsync(
@@ -514,7 +514,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const { url, headers } = getUrlAndHeadersWithAuth(
                 `${this.snapshotUrl}/versions?top=${count}`,
                 storageToken,
-                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                Boolean(this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader),
             );
 
             // Fetch the latest snapshot versions for the document
@@ -604,7 +604,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.odspResolvedUrl,
                 this.getStorageToken,
                 snapshotOptions,
-                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                Boolean(this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader),
                 this.logger,
                 snapshotDownloader,
                 putInCache,
@@ -629,7 +629,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.odspResolvedUrl,
                     this.getStorageToken,
                     snapshotOptionsWithoutBlobs,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    Boolean(this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader),
                     this.logger,
                     snapshotDownloader,
                     putInCache,
@@ -746,7 +746,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     storageToken,
                     id,
                     this.fetchFullSnapshot,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    Boolean(this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader),
                     this.logger,
                     snapshotDownloader,
                 );

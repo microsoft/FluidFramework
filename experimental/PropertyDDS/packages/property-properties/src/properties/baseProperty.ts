@@ -482,7 +482,7 @@ export abstract class BaseProperty {
      * @returns Is the property dirty?
      */
     _isDirty(in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY): boolean {
-        return !!(this._getDirtyFlags() & in_dirtinessType);
+        return Boolean(this._getDirtyFlags() & in_dirtinessType);
     }
 
     /**

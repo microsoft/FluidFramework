@@ -27,11 +27,11 @@ import {
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
-     convertSnapshotTreeToSummaryTree,
-     convertToSummaryTree,
-     create404Response,
-     responseToException,
-     SummaryTreeBuilder,
+    convertSnapshotTreeToSummaryTree,
+    convertToSummaryTree,
+    create404Response,
+    responseToException,
+    SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { ChildLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -54,10 +54,10 @@ import { GCNodeType } from "./garbageCollection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
- /**
-  * This class encapsulates data store handling. Currently it is only used by the container runtime,
-  * but eventually could be hosted on any channel once we formalize the channel api boundary.
-  */
+/**
+ * This class encapsulates data store handling. Currently it is only used by the container runtime,
+ * but eventually could be hosted on any channel once we formalize the channel api boundary.
+ */
 export class DataStores implements IDisposable {
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -190,7 +190,7 @@ export class DataStores implements IDisposable {
             return;
         }
 
-         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
+        // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         if (this.alreadyProcessed(attachMessage.id)) {
             // TODO: dataStoreId may require a different tag from PackageData #7488
             const error = new DataCorruptionError(
@@ -305,14 +305,14 @@ export class DataStores implements IDisposable {
      */
     private makeDataStoreLocallyVisible(id: string): void {
         const localContext = this.contexts.getUnbound(id);
-        assert(!!localContext, 0x15f /* "Could not find unbound context to bind" */);
+        assert(Boolean(localContext), 0x15f /* "Could not find unbound context to bind" */);
 
         /**
          * If the container is not detached, it is globally visible to all clients. This data store should also be
          * globally visible. Move it to attaching state and send an "attach" op for it.
          * If the container is detached, this data store will be part of the summary that makes the container attached.
          */
-        if (this.runtime.attachState !== AttachState.Detached) {
+        if (localContext && this.runtime.attachState !== AttachState.Detached) {
             localContext.emit("attaching");
             const message = localContext.generateAttachMessage();
 
@@ -376,6 +376,9 @@ export class DataStores implements IDisposable {
     public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
+        // The implicit coercion below also informs TypeScript that context cannot be null. Removing the implicit
+        // coercion here would make the subsequent code more complex.
+        // eslint-disable-next-line no-implicit-coercion
         assert(!!context, 0x160 /* "There should be a store context for the op" */);
         context.reSubmit(envelope.contents, localOpMetadata);
     }
@@ -383,6 +386,9 @@ export class DataStores implements IDisposable {
     public async applyStashedOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
+        // The implicit coercion below also informs TypeScript that context cannot be null. Removing the implicit
+        // coercion here would make the subsequent code more complex.
+        // eslint-disable-next-line no-implicit-coercion
         assert(!!context, 0x161 /* "There should be a store context for the op" */);
         return context.applyStashedOp(envelope.contents);
     }
@@ -397,6 +403,9 @@ export class DataStores implements IDisposable {
         const envelope = message.contents as IEnvelope;
         const transformed = { ...message, contents: envelope.contents };
         const context = this.contexts.get(envelope.address);
+        // The implicit coercion below also informs TypeScript that context cannot be null. Removing the implicit
+        // coercion here would make the subsequent code more complex.
+        // eslint-disable-next-line no-implicit-coercion
         assert(!!context, 0x162 /* "There should be a store context for the op" */);
         context.process(transformed, local, localMessageMetadata);
 
@@ -460,7 +469,7 @@ export class DataStores implements IDisposable {
         } else {
             eventName = "attached";
         }
-        for (const [,context] of this.contexts) {
+        for (const [, context] of this.contexts) {
             // Fire only for bounded stores.
             if (!this.contexts.isNotBound(context.id)) {
                 context.emit(eventName);
@@ -516,6 +525,10 @@ export class DataStores implements IDisposable {
                     } else {
                         // If this data store is not yet loaded, then there should be no changes in the snapshot from
                         // which it was created as it is detached container. So just use the previous snapshot.
+
+                        // The implicit coercion below also informs TypeScript that this.baseSnapshot cannot be null.
+                        // Removing the implicit coercion here would make the subsequent code more complex.
+                        // eslint-disable-next-line no-implicit-coercion
                         assert(!!this.baseSnapshot,
                             0x166 /* "BaseSnapshot should be there as detached container loaded from snapshot" */);
                         dataStoreSummary = convertSnapshotTreeToSummaryTree(this.baseSnapshot.trees[key]);
@@ -671,7 +684,7 @@ export function getSummaryForDatastores(
 
     if (rootHasIsolatedChannels(metadata)) {
         const datastoresSnapshot = snapshot.trees[channelsTreeName];
-        assert(!!datastoresSnapshot, 0x168 /* `expected ${channelsTreeName} tree in snapshot` */);
+        assert(Boolean(datastoresSnapshot), 0x168 /* `expected ${channelsTreeName} tree in snapshot` */);
         return datastoresSnapshot;
     } else {
         // back-compat: strip out all non-datastore paths before giving to DataStores object.

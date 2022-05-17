@@ -271,7 +271,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     public constructor(props) {
       super(props);
       const { followReferences } = props;
-      this.dataCreation = !!this.props.dataCreationHandler && !!this.props.dataCreationOptionGenerationHandler;
+      this.dataCreation =
+        Boolean(this.props.dataCreationHandler) && Boolean(this.props.dataCreationOptionGenerationHandler);
       this.columns = this.generateColumns(props.width);
       this.toTableRowOptions = { addDummy: true, ascending: defaultSort.order === SortOrder.ASC,
         depth: 0, followReferences };
@@ -486,7 +487,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       };
 
       const getEmptyPanel = (repoIsExpired: boolean = false) => {
-        const modalEnabled = !!repositoryUrn && !!currentUrn && !isV1Urn;
+        const modalEnabled = Boolean(repositoryUrn) && Boolean(currentUrn) && !isV1Urn;
         if (repoIsExpired) {
           return (
             <Empty
@@ -568,7 +569,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
             sortBy={sortBy}
             footerHeight={32}
             footerRenderer={this.footerRenderer}
-            emptyRenderer={getEmptyPanel(!!expired)}
+            emptyRenderer={getEmptyPanel(Boolean(expired))}
             components={components}
           />
           {
@@ -868,7 +869,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
               followReferences={followReferences}
               iconRenderer={rowIconRenderer!}
               rowData={rowData}
-              readOnly={!!readOnly}
+              readOnly={Boolean(readOnly)}
             />
           );
         } else {

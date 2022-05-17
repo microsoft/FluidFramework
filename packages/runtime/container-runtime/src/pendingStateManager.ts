@@ -451,6 +451,10 @@ export class PendingStateManager implements IDisposable {
      */
     private peekNextPendingState(): IPendingState {
         const nextPendingState = this.pendingStates.peekFront();
+
+        // The implicit coercion below also informs TypeScript that context cannot be null. Removing the implicit
+        // coercion here would make the subsequent code more complex.
+        // eslint-disable-next-line no-implicit-coercion
         assert(!!nextPendingState, 0x171 /* "No pending state found for the remote message" */);
         return nextPendingState;
     }

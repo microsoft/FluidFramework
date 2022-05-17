@@ -234,7 +234,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
                     if (!isPrimitiveTypeid && removalCS && isObject(removalCS) && removalCS[key] !== undefined) {
                         // Split out the two parts: all the keys other than remove/insert should match exactly.
                         // The contents 'remove' and 'insert', if they exist, should also match.
-                        deeplyEqualCS = !!insertedEntries[key].insert === !!removalCS[key].remove;
+                        deeplyEqualCS = Boolean(insertedEntries[key].insert) === Boolean(removalCS[key].remove);
 
                         // If there are 'insert' and 'remove', see if the removed data matches the inserted data
                         if (deeplyEqualCS && insertedEntries[key].insert) {

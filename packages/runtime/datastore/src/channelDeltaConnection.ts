@@ -13,6 +13,9 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;
 
     private get handler(): IDeltaHandler {
+        // The implicit coercion below also informs TypeScript that this._handler cannot be null. Removing the implicit
+        // coercion here would make the subsequent code more complex.
+        // eslint-disable-next-line no-implicit-coercion
         assert(!!this._handler, 0x177 /* "Missing delta handler" */);
         return this._handler;
     }

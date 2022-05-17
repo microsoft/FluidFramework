@@ -71,6 +71,7 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
 }
 
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
+    // eslint-disable-next-line no-implicit-coercion
     return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
 
@@ -162,6 +163,7 @@ export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
+    // eslint-disable-next-line no-implicit-coercion
     return !!metadata && !metadata.disableIsolatedChannels;
 }
 

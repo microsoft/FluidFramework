@@ -106,6 +106,9 @@ export class DocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         await this.connectToStorage();
+        // The implicit coercion below also informs TypeScript that this.documentStorageService cannot be null. Removing
+        // the implicit coercion here would make the subsequent code more complex.
+        // eslint-disable-next-line no-implicit-coercion
         assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);

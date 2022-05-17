@@ -282,6 +282,9 @@ export class ConsensusRegisterCollection<T>
                 data.atomic = atomicUpdate;
             }
         } else {
+            // The implicit coercion below also informs TypeScript that data cannot be null. Removing the implicit
+            // coercion here would make the subsequent code more complex.
+            // eslint-disable-next-line no-implicit-coercion
             assert(!!data, 0x06f /* "data missing for non-atomic inbound update!" */);
         }
 

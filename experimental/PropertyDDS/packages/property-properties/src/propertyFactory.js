@@ -1526,7 +1526,7 @@ class PropertyFactory {
      * @private
      */
     _isRegisteredTypeid(in_typeid, in_scope) {
-        return !!this._get(in_typeid, undefined, in_scope);
+        return Boolean(this._get(in_typeid, undefined, in_scope));
     }
 
     /**
@@ -1657,7 +1657,7 @@ class PropertyFactory {
                         );
 
                         this._parseTemplate(templateOrConstructor, in_scope,
-                            !!(templateOrConstructor.inherits), out_propertyDef);
+                            Boolean(templateOrConstructor.inherits), out_propertyDef);
                     } else {
                         // If we have other contexts, we have to create the corresponding property object for that context
 
@@ -1889,7 +1889,7 @@ class PropertyFactory {
         in_options = in_options || {};
 
         if (in_templateTypeid === in_baseTypeid &&
-            (!!in_options.includeSelf || in_options.includeSelf === undefined)) {
+            (Boolean(in_options.includeSelf) || in_options.includeSelf === undefined)) {
             return true;
         }
 
@@ -1940,7 +1940,7 @@ class PropertyFactory {
         var scope = in_options.workspace ?
             in_options.workspace.getRoot()._getCheckedOutRepositoryInfo().getScope() :
             in_options.scope;
-        this._getAllParentsForTemplateInternal(in_typeid, parents, !!in_options.includeBaseProperty, scope);
+        this._getAllParentsForTemplateInternal(in_typeid, parents, Boolean(in_options.includeBaseProperty), scope);
 
         return _.keys(parents);
     }

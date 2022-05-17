@@ -121,6 +121,9 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
         const blob = this.blobs.get(blobId);
+        // The implicit coercion below also informs TypeScript that blob cannot be null. Removing the implicit
+        // coercion here would make the subsequent code more complex.
+        // eslint-disable-next-line no-implicit-coercion
         assert(!!blob, "blob not found");
         return blob;
     }

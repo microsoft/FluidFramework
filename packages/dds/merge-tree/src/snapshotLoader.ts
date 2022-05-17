@@ -41,7 +41,7 @@ export class SnapshotLoader {
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]>; }> {
         const headerLoadedP =
             services.readBlob(SnapshotLegacy.header).then((header) => {
-                assert(!!header, 0x05f /* "Missing blob header on legacy snapshot!" */);
+                assert(Boolean(header), 0x05f /* "Missing blob header on legacy snapshot!" */);
                 return this.loadHeader(bufferToString(header, "utf8"));
             });
 

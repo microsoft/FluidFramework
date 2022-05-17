@@ -16,7 +16,7 @@ function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCe
     const { rowData } = props;
     // Convert to number if it is possible and the type is not an integer with 64 bits.
     if (rowData.typeid !== "Uint64" && rowData.typeid !== "Int64" && rowData.typeid !== "String") {
-        val = !isNaN(+val) ? +val : val;
+        val = !isNaN(Number(val)) ? Number(val) : val;
     }
 
     const proxiedParent = PropertyProxy.proxify(rowData.parent!);

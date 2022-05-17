@@ -467,12 +467,12 @@ export function textTokenToItems(
         const fontSize = leadSegment.properties.fontSize;
         if (fontSize !== undefined) {
             lfontstr = `${fontSize} ${fontFamily}`;
-            divHeight = +fontSize;
+            divHeight = Number(fontSize);
         }
         // This is not complete because can be % or normal etc.
         const lineHeight = leadSegment.properties.lineHeight;
         if (lineHeight !== undefined) {
-            divHeight = Math.floor((+lineHeight) * divHeight);
+            divHeight = Math.floor((Number(lineHeight)) * divHeight);
         }
         const fontWeight = leadSegment.properties.fontWeight;
         if (fontWeight) {

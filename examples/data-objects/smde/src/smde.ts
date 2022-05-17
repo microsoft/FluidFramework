@@ -57,6 +57,9 @@ export class Smde extends EventEmitter implements
     private smde: SimpleMDE | undefined;
 
     private get text() {
+        // The implicit coercion below also informs TypeScript that this._text cannot be null. Removing the implicit
+        // coercion here would make the subsequent code more complex.
+        // eslint-disable-next-line no-implicit-coercion
         assert(!!this._text, "SharedString property missing!");
         return this._text;
     }

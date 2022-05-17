@@ -236,6 +236,6 @@ function toIODSPDriveItem(parsedDriveItemBody: any): IOdspDriveItem {
         name: parsedDriveItemBody.name,
         driveId: parsedDriveItemBody.parentReference.driveId,
         itemId: parsedDriveItemBody.id,
-        isFolder: !!parsedDriveItemBody.folder,
+        isFolder: Boolean(parsedDriveItemBody.folder),
     };
 }

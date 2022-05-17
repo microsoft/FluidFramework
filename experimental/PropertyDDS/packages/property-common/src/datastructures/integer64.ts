@@ -50,7 +50,7 @@ export class Integer64 {
         let high = this.getValueHigh();
         let low = this.getValueLow();
         let result = "";
-        const sign = !!(isSigned && (high & 0x80000000)); // eslint-disable-line no-bitwise
+        const sign = Boolean(isSigned && (high & 0x80000000)); // eslint-disable-line no-bitwise
         if (sign) {
             high = ~high; // eslint-disable-line no-bitwise
             low = BIT32 - low;

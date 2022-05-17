@@ -143,6 +143,9 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      * @param id - The id of the context to resolve to
      */
     private resolveDeferred(id: string) {
+        // The implicit coercions below also inform TypeScript that context and deferred cannot be null. Removing the
+        // implicit coercions here would make the subsequent code more complex.
+        /* eslint-disable no-implicit-coercion */
         const context = this._contexts.get(id);
         assert(!!context, 0x15a /* "Cannot find context to resolve to" */);
         assert(!this.notBoundContexts.has(id),
@@ -151,6 +154,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         const deferred = this.deferredContexts.get(id);
         assert(!!deferred, 0x15c /* "Cannot find deferred to resolve" */);
         deferred.resolve(context);
+        /* eslint-enable no-implicit-coercion */
     }
 
     /**

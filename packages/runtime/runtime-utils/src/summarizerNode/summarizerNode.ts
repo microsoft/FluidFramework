@@ -203,6 +203,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         // This should come from wipLocalPaths in normal cases, or from the latestSummary
         // if parentIsFailure or parentIsReused is true.
         // If there is no latestSummary, clearSummary and return before reaching this code.
+        // eslint-disable-next-line no-implicit-coercion
         assert(!!localPathsToUse, 0x1a5 /* "Tracked summary local paths not set" */);
 
         const summary = new SummaryNode({
@@ -558,7 +559,7 @@ export class SummarizerNode implements IRootSummarizerNode {
             case CreateSummarizerNodeSource.FromSummary: {
                 if (this.initialSummary === undefined) {
                     assert(
-                        !!parentLatestSummary,
+                        Boolean(parentLatestSummary),
                         0x1ac /* "Cannot create child from summary if parent does not have latest summary" */);
                 }
                 // fallthrough to local
@@ -577,7 +578,7 @@ export class SummarizerNode implements IRootSummarizerNode {
                     }
                     if (createParam.type === CreateSummarizerNodeSource.FromSummary) {
                         // Locally created would not have differential subtree.
-                        assert(!!childSummary, 0x1ad /* "Missing child summary tree" */);
+                        assert(Boolean(childSummary), 0x1ad /* "Missing child summary tree" */);
                     }
                     let childSummaryWithStats: ISummaryTreeWithStats | undefined;
                     if (childSummary !== undefined) {

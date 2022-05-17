@@ -130,7 +130,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             }
         }
 
-        const summarizer = !!request.headers?.[DriverHeader.summarizingClient];
+        const summarizer = Boolean(request.headers?.[DriverHeader.summarizingClient]);
 
         return {
             type: "fluid",

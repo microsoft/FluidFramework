@@ -41,7 +41,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
-    return !!fileName.match(invalidCharsRegex);
+    return Boolean(fileName.match(invalidCharsRegex));
 };
 
 /**

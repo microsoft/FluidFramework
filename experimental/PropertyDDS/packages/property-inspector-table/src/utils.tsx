@@ -450,7 +450,7 @@ export const toTableRows = (
 ): IInspectorRow[] => {
   const { ascending, parentIsConstant } = { ...OPTION_DEFAULTS, ...options };
   const dataCreation = (props.readOnly !== true) && !parentIsConstant &&
-    !!props.dataCreationHandler && !!props.dataCreationOptionGenerationHandler;
+    Boolean(props.dataCreationHandler) && Boolean(props.dataCreationOptionGenerationHandler);
   const subRows: IInspectorRow[] = [];
 
   const parentProperty = data.getProperty();
@@ -493,7 +493,7 @@ const createInvalidReference = (parentData: BaseProxifiedProperty, propertyId: s
                                 pathPrefix: string) => {
   const parentProperty = parentData.getProperty();
   const newId = getShortId(pathPrefix + parentProperty.getAbsolutePath(), propertyId);
-  const parentIsConstant = !!options.parentIsConstant;
+  const parentIsConstant = Boolean(options.parentIsConstant);
   const newRow: IInspectorRow = {
     children: undefined,
     context: "single",
@@ -519,7 +519,7 @@ export const singlePropertyTableRow = (parentData: BaseProxifiedProperty, proper
                                        props: IToTableRowsProps, options: IPropertyToTableRowOptions,
                                        pathPrefix: string): IInspectorRow => {
   const { depth, addDummy, dataCreation, followReferences, ascending } = options;
-  const parentIsConstant = !!options.parentIsConstant;
+  const parentIsConstant = Boolean(options.parentIsConstant);
   const parentProperty = parentData.getProperty();
   let property;
   // when we try to access an non-existing element of an array, the 'get' method throws which causes app crash
@@ -607,7 +607,7 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
   const propertyProxy = (prop && PropertyFactory.instanceOf(prop, "BaseProperty") ?
     PropertyProxy.proxify(prop) : prop) as BaseProxifiedProperty;
   const { depth, addDummy, dataCreation, followReferences, ascending } = options;
-  const parentIsConstant = !!options.parentIsConstant;
+  const parentIsConstant = Boolean(options.parentIsConstant);
   const collectionTypeid = getCollectionTypeid(collectionProperty);
   const isReferenceCollection = isReferenceCollectionTypeid(collectionTypeid);
   // Always start with the collection typeid, and fresh variables

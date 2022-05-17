@@ -74,7 +74,7 @@ export interface IJSONSegmentWithMergeInfo {
  * Returns true if the given 'spec' is an IJSONSegmentWithMergeInfo.
  */
 export function hasMergeInfo(spec: IJSONSegment | IJSONSegmentWithMergeInfo): spec is IJSONSegmentWithMergeInfo {
-    return !!spec && typeof spec === "object" && "json" in spec;
+    return Boolean(spec) && typeof spec === "object" && "json" in spec;
 }
 
 export function serializeAsMinSupportedVersion(

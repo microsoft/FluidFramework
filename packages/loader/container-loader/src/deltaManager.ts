@@ -377,7 +377,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         assert(this.handler === undefined, 0x0e2 /* "DeltaManager already has attached op handler!" */);
         this.handler = handler;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        assert(!!(this.handler as any), 0x0e3 /* "Newly set op handler is null/undefined!" */);
+        assert(Boolean(this.handler as any), 0x0e3 /* "Newly set op handler is null/undefined!" */);
 
         // There should be no pending fetch!
         // This API is called right after attachOpHandler by Container.load().

@@ -95,7 +95,7 @@ const createObjectProxy = (
 // string paths.
 function indexify(key: string | symbol): string | symbol | number {
     if (typeof key === "string") {
-        const asNumber = +key;
+        const asNumber = Number(key);
         // eslint-disable-next-line no-bitwise
         if ((asNumber | 0) === asNumber) {
             return asNumber;

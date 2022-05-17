@@ -19,7 +19,7 @@ export class SchemaValidator {
         in_options = in_options || {};
 
         if (in_templateTypeid === in_baseTypeid &&
-            (!!in_options.includeSelf || in_options.includeSelf === undefined)) {
+            (Boolean(in_options.includeSelf) || in_options.includeSelf === undefined)) {
             return true;
         }
 

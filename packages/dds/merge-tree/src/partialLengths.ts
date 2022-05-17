@@ -493,7 +493,7 @@ export class PartialSequenceLengths {
             if (this.clientSeqNumbers[clientId].length > 0) {
                 buf += `Client `;
                 if (glc) {
-                    buf += `${glc(+clientId)}`;
+                    buf += `${glc(Number(clientId))}`;
                 } else {
                     buf += `${clientId}`;
                 }
@@ -645,7 +645,7 @@ export class PartialSequenceLengths {
             }
 
             // If we have client view, we should have the flat view
-            assert(!!this.partialLengths, 0x059 /* "Client view exists but flat view does not!" */);
+            assert(Boolean(this.partialLengths), 0x059 /* "Client view exists but flat view does not!" */);
             const flatCount = this.verifyPartialLengths(this.partialLengths, false);
 
             // The number of partial lengths on the client view and flat view should be the same

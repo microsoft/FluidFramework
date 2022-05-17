@@ -846,7 +846,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     private pendingChangeEnd: Map<string, ISerializedInterval[]>;
 
     public get attached(): boolean {
-        return !!this.localCollection;
+        return Boolean(this.localCollection);
     }
 
     constructor(private readonly helpers: IIntervalHelpers<TInterval>, private readonly requiresClient: boolean,

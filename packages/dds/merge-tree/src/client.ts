@@ -707,7 +707,7 @@ export class Client {
     private resetPendingDeltaToOps(
         resetOp: IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): IMergeTreeDeltaOp[] {
-        assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
+        assert(Boolean(segmentGroup), 0x033 /* "Segment group undefined" */);
         const NACKedSegmentGroup = this.mergeTree.pendingSegments?.dequeue();
         assert(segmentGroup === NACKedSegmentGroup,
             0x034 /* "Segment group not at head of merge tree pending queue" */);
@@ -823,6 +823,8 @@ export class Client {
             default:
                 unreachableCase(op, "unrecognized op type");
         }
+
+        // eslint-disable-next-line no-implicit-coercion
         assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
         return metadata;
     }

@@ -26,6 +26,9 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         } else if (server === "www.office.com") {
             const getRequiredParam = (name: string): string => {
                 const value = reqUrl.searchParams.get(name);
+                // The implicit coercion below also informs TypeScript that value cannot be null. Removing
+                // the implicit coercion here would make the subsequent code more complex.
+                // eslint-disable-next-line no-implicit-coercion
                 assert(!!value, 0x097 /* `Missing ${name} from office.com URL parameter` */);
                 return value;
             };
