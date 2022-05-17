@@ -31,6 +31,7 @@ const snapshotFileName = "header";
 
 /**
  * The factory that defines the SharedIntervalCollection
+ * @deprecated - SharedIntervalCollection is not maintained and is planned to be removed.
  */
 export class SharedIntervalCollectionFactory implements IChannelFactory {
     public static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";

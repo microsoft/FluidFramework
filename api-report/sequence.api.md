@@ -442,7 +442,7 @@ export class SharedIntervalCollection extends SharedObject implements ISharedInt
     waitIntervalCollection(label: string): Promise<IntervalCollection<Interval>>;
 }
 
-// @public
+// @public @deprecated
 export class SharedIntervalCollectionFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
