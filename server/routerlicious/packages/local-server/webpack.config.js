@@ -24,7 +24,11 @@ module.exports = {
     },
     resolve: {
         extensions: [ '.tsx', '.ts', '.js' ],
-        fallback: { "buffer": false },
+        fallback: {
+            // To polyfill buffer, use: require.resolve("buffer/")
+            buffer: false,
+            util: false,
+        },
     },
     output: {
         filename: '[name].bundle.js',
