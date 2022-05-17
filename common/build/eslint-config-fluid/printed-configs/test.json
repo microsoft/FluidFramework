@@ -598,6 +598,9 @@
         "no-global-assign": [
             "error"
         ],
+        "no-implicit-coercion": [
+            "error"
+        ],
         "no-implied-eval": [
             "off"
         ],
