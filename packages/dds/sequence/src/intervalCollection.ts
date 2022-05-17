@@ -316,7 +316,7 @@ function createPositionReference(
     refType: ReferenceType,
     op?: ISequencedDocumentMessage): LocalReference {
     const segoff = client.getContainingSegment(pos, op);
-    if (segoff && segoff.segment) {
+    if (segoff?.segment) {
         const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
         if (refType !== ReferenceType.Transient) {
             client.addLocalReference(lref);

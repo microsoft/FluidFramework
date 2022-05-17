@@ -188,6 +188,8 @@ module.exports = {
 
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",
+
+        "@typescript-eslint/prefer-optional-chain": "error",
     },
     "overrides": [
         {

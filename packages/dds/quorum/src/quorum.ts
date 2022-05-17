@@ -231,7 +231,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     public set(key: string, value: any): void {
         const currentValue = this.values.get(key);
         // Early-exit if we can't submit a valid proposal (there's already a pending proposal)
-        if (currentValue !== undefined && currentValue.pending !== undefined) {
+        if (currentValue?.pending !== undefined) {
             return;
         }
 
