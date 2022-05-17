@@ -39,7 +39,17 @@ const reservedIntervalIdKey = "intervalId";
 export enum IntervalType {
     Simple = 0x0,
     Nest = 0x1,
+    /**
+     * SlideOnRemove indicates that the ends of the interval will slide if the segment
+     * they reference is removed and acked.
+     * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md` for details
+     * SlideOnRemove is the default interval behavior and does not need to be specified.
+     */
     SlideOnRemove = 0x2, // SlideOnRemove is default behavior - all intervals are SlideOnRemove
+    /**
+     * @internal
+     * A temporary interval, used internally
+     */
     Transient = 0x4,
 }
 
@@ -899,6 +909,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.localCollection.getIntervalById(id);
     }
 
+    /**
+     * Create a new interval and add it to the collection
+     * @param start - interval start position
+     * @param end - interval end position
+     * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
+     * @param props - properties of the interval
+     * @returns - the created interval
+     */
     public add(
         start: number,
         end: number,
