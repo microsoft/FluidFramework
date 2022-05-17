@@ -14,7 +14,6 @@ import { MountableView } from "@fluidframework/view-adapters";
 import React from "react";
 import { Todo, TodoInstantiationFactory } from "./Todo";
 import { TodoView } from "./Todo/TodoView";
-import { TodoItem } from "./TodoItem";
 import { TodoItemView } from "./TodoItem/TodoItemView";
 
 const todoId = "todo";
@@ -57,9 +56,11 @@ const todoRequestHandler = async (request: RequestParser, runtime: IContainerRun
         // The downside of this approach is that we must realize the Todo to get at its TodoItems (rather than
         // accessing them directly).  But the positive is that we can use encapsulated handles rather than making
         // assumptions about the ids or making the TodoItems roots.
-        const todoItem: TodoItem = await todo.getTodoItem(request.pathParts[0]);
-        const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem });
-        return { status: 200, mimeType: "fluid/object", value: viewResponse };
+        const todoItem = await todo.getTodoItem(request.pathParts[0]);
+        if (todoItem !== undefined) {
+            const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem });
+            return { status: 200, mimeType: "fluid/object", value: viewResponse };
+        }
     }
 };
 

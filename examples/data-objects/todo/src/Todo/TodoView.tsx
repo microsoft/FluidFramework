@@ -54,6 +54,9 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
 
     const handleCreateClick = async (ev: React.FormEvent<HTMLFormElement>): Promise<void> => {
         ev.preventDefault();
+        if (newItemTextInputRef.current === null) {
+            throw new Error("New item text field missing");
+        }
         await todoModel.addTodoItem({
             startingText: newItemTextInputRef.current.value,
         });

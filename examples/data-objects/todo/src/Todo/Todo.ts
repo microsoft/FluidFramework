@@ -24,7 +24,13 @@ export class Todo extends DataObject {
     private readonly todoItemsKey = "todo-items";
     private readonly todoTitleKey = "todo-title";
 
-    private todoItemsMap: ISharedMap;
+    private _todoItemsMap: ISharedMap | undefined;
+    private get todoItemsMap(): ISharedMap {
+        if (this._todoItemsMap === undefined) {
+            throw new Error("Attempted to access todoItemsMap before initialized");
+        }
+        return this._todoItemsMap;
+    }
 
     /**
      * Do setup work here
@@ -41,7 +47,11 @@ export class Todo extends DataObject {
     }
 
     protected async hasInitialized() {
-        this.todoItemsMap = await this.root.get<IFluidHandle<ISharedMap>>(this.todoItemsKey).get();
+        const todoItemsHandle = this.root.get<IFluidHandle<ISharedMap>>(this.todoItemsKey);
+        if (todoItemsHandle === undefined) {
+            throw new Error("Todo items ISharedMap missing");
+        }
+        this._todoItemsMap = await todoItemsHandle.get();
         // Hide the DDS eventing used by the model, expose a model-specific event interface.
         this.todoItemsMap.on("valueChanged", (changed, local) => {
             if (!local) {
@@ -54,7 +64,11 @@ export class Todo extends DataObject {
 
     // Would prefer not to hand this out, and instead give back a title component?
     public async getTodoTitleString() {
-        return this.root.get<IFluidHandle<SharedString>>(this.todoTitleKey).get();
+        const todoTitleHandle = this.root.get<IFluidHandle<SharedString>>(this.todoTitleKey);
+        if (todoTitleHandle === undefined) {
+            throw new Error("Todo title SharedString missing");
+        }
+        return todoTitleHandle.get();
     }
 
     public async addTodoItem(props?: ITodoItemInitialState) {
@@ -62,7 +76,7 @@ export class Todo extends DataObject {
         const todoItem = await TodoItem.getFactory().createChildInstance(this.context, props);
 
         // Generate an ID that we can sort on later, and store the handle.
-        const id = `${Date.now()}-${todoItem.id}`
+        const id = `${Date.now()}-${todoItem.id}`;
 
         this.todoItemsMap.set(
             id,
@@ -95,7 +109,7 @@ export class Todo extends DataObject {
         }
     }
 
-    public async deleteTodoItem(id: string) {
+    public deleteTodoItem(id: string) {
         if (this.todoItemsMap.delete(id)) {
             this.emit("todoItemsChanged");
         }

@@ -23,8 +23,20 @@ const checkedKey = "checked";
  * - Boolean stored in the root SharedDirectory for the checkbox
  */
 export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; }> {
-    private text: SharedString;
-    private detailedText: SharedString;
+    private _text: SharedString | undefined;
+    private get text(): SharedString {
+        if (this._text === undefined) {
+            throw new Error("Attempted to access text before initialized");
+        }
+        return this._text;
+    }
+    private _detailedText: SharedString | undefined;
+    private get detailedText(): SharedString {
+        if (this._detailedText === undefined) {
+            throw new Error("Attempted to access detailedText before initialized");
+        }
+        return this._detailedText;
+    }
 
     protected async initializingFirstTime(initialState?: ITodoItemInitialState) {
         // The text of the todo item, with initial value if it was provided
@@ -42,10 +54,19 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
     }
 
     protected async hasInitialized() {
-        const textP = this.root.get<IFluidHandle<SharedString>>(textKey).get();
-        const detailedTextP = this.root.get<IFluidHandle<SharedString>>(detailedTextKey).get();
+        const textHandle = this.root.get<IFluidHandle<SharedString>>(textKey);
+        if (textHandle === undefined) {
+            throw new Error("Text SharedString missing");
+        }
+        const textP = textHandle.get();
 
-        [this.text, this.detailedText] = await Promise.all([textP, detailedTextP]);
+        const detailedTextHandle = this.root.get<IFluidHandle<SharedString>>(detailedTextKey);
+        if (detailedTextHandle === undefined) {
+            throw new Error("Detailed text SharedString missing");
+        }
+        const detailedTextP = detailedTextHandle.get();
+
+        [this._text, this._detailedText] = await Promise.all([textP, detailedTextP]);
 
         this.root.on("valueChanged", (changed: IValueChanged, local: boolean) => {
             if (!local) {
@@ -81,7 +102,11 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
     }
 
     public getCheckedState(): boolean {
-        return this.root.get(checkedKey);
+        const checkedState: boolean | undefined = this.root.get(checkedKey);
+        if (checkedState === undefined) {
+            throw new Error("Checked state missing");
+        }
+        return checkedState;
     }
 
     public setCheckedState(newState: boolean): void {
