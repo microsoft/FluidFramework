@@ -304,7 +304,7 @@ describe("Container Runtime", () => {
 
             assert.strictEqual(deltaManager2.connectionManager.connectionMode, "read",
                 "new connection should be in read mode");
-            assert(deltaManager2.active,"deltaManager should still be active");
+            assert(deltaManager2.active, "deltaManager should still be active");
         });
     });
 });
