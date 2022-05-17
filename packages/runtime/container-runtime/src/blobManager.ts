@@ -74,9 +74,9 @@ export class BlobManager {
         snapshot: IBlobManagerLoadInfo,
         private readonly getStorage: () => IDocumentStorageService,
         private readonly attachBlobCallback: (blobId: string) => void,
-        // To be called when a blob is requested. blobPath is the path of the blob's node in GC's graph. It's
-        // of the format `/<BlobManager.basePath>/<blobId>`;
-        private readonly blobRetrievedCallback: (blobPath: string) => void,
+        // To be called when a blob node is requested. blobPath is the path of the blob's node in GC's graph. It's
+        // of the format `/<BlobManager.basePath>/<blobId>`.
+        private readonly gcNodeUpdated: (blobPath: string) => void,
         private readonly runtime: IContainerRuntime,
         private readonly logger: ITelemetryLogger,
     ) {
@@ -105,8 +105,8 @@ export class BlobManager {
         const storageId = this.redirectTable?.get(blobId) ?? blobId;
         assert(this.hasBlob(storageId), 0x11f /* "requesting unknown blobs" */);
 
-        // When this blob is retrieved, let the container runtime know.
-        this.blobRetrievedCallback(this.getBlobGCNodePath(blobId));
+        // When this blob is retrieved, let the container runtime know that the corresponding GC node got updated.
+        this.gcNodeUpdated(this.getBlobGCNodePath(blobId));
 
         return new BlobHandle(
             `${BlobManager.basePath}/${storageId}`,
