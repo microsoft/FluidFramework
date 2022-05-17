@@ -153,7 +153,6 @@ export class Client {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    // (undocumented)
     getSlideOnRemoveReferencePosition(pos: number, op: ISequencedDocumentMessage): {
         segment: ISegment | undefined;
         offset: number | undefined;

@@ -1035,6 +1035,14 @@ export class Client {
         return this.mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, args.clientId);
     }
 
+    /**
+     * Returns the segment and offset for creating a SlideOnRemove reference position
+     * in response to a remote op.
+     * Will return a location which is slid in an eventually consistent way.
+     * @param pos - The remote position
+     * @param op - The remote op
+     * @returns - segment and offset at which to create a SlideOnRemove reference position.
+     */
     getSlideOnRemoveReferencePosition(pos: number, op: ISequencedDocumentMessage) {
         const args = this.getClientSequenceArgsForMessage(op);
         const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(
