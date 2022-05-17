@@ -36,7 +36,6 @@ declare function get_current_ClassDeclaration_DocumentServiceFactoryProxy():
 declare function use_old_ClassDeclaration_DocumentServiceFactoryProxy(
     use: TypeOnly<old.DocumentServiceFactoryProxy>);
 use_old_ClassDeclaration_DocumentServiceFactoryProxy(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DocumentServiceFactoryProxy());
 
 /*
@@ -61,7 +60,6 @@ declare function get_current_InterfaceDeclaration_ICombinedDriver():
 declare function use_old_InterfaceDeclaration_ICombinedDriver(
     use: TypeOnly<old.ICombinedDriver>);
 use_old_InterfaceDeclaration_ICombinedDriver(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICombinedDriver());
 
 /*
@@ -86,7 +84,6 @@ declare function get_current_InterfaceDeclaration_IDocumentServiceFactoryProxy()
 declare function use_old_InterfaceDeclaration_IDocumentServiceFactoryProxy(
     use: TypeOnly<old.IDocumentServiceFactoryProxy>);
 use_old_InterfaceDeclaration_IDocumentServiceFactoryProxy(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentServiceFactoryProxy());
 
 /*

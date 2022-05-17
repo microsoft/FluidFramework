@@ -152,7 +152,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
           onClick={handleClick}
           className={classes.iconButton}
         >
-          <SvgIcon svgId='meatball-menu-32' className={classes.meatballIcon} hoverable />
+          <SvgIcon svgId="meatball-menu-32" className={classes.meatballIcon} hoverable />
         </IconButton>
         <ModalConsumer>
           {({ showModal, hideModal }) => (
@@ -170,7 +170,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
                 disablePadding: true,
               }}
               classes={{ paper: classes.styledMenu }}
-              id='customized-menu'
+              id="customized-menu"
               anchorEl={anchorEl}
               keepMounted={true}
               open={Boolean(anchorEl)}
@@ -182,7 +182,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
                   className={classes.menuItem}
                   onClick={() => handleContextMenuItemClick("copy", options, name, urn, showModal)}
                 >
-                  <SvgIcon svgId='copy-16' className={classes.menuIcon} />
+                  <SvgIcon svgId="copy-16" className={classes.menuIcon} />
                   Copy Path
                   <textarea ref={ref} className={classes.hiddenTextArea} />
                 </MenuItem>}
@@ -191,7 +191,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
                   className={classes.menuItem}
                   onClick={() => handleContextMenuItemClick("edit", options, name, urn, showModal, hideModal)}
                 >
-                  <SvgIcon svgId='edit-16' className={classes.menuIcon} />
+                  <SvgIcon svgId="edit-16" className={classes.menuIcon} />
                   Edit Reference Path
                 </MenuItem>}
               {options.share !== undefined &&
@@ -199,7 +199,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
                   className={classes.menuItem}
                   onClick={() => handleContextMenuItemClick("share", options, name, urn, showModal)}
                 >
-                  <SvgIcon svgId='share-16' className={classes.menuIcon} />
+                  <SvgIcon svgId="share-16" className={classes.menuIcon} />
                   Share
                 </MenuItem>
               }
@@ -208,7 +208,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
                   className={classes.menuItem}
                   onClick={() => handleContextMenuItemClick("delete", options, name, urn, showModal, hideModal)}
                 >
-                  <SvgIcon svgId='delete-trash-16' className={classes.menuIcon} />
+                  <SvgIcon svgId="delete-trash-16" className={classes.menuIcon} />
                   Delete
                 </MenuItem>}
             </Menu>

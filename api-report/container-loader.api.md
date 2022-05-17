@@ -115,7 +115,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     subLogger: TelemetryLogger;
     // (undocumented)
     static version: string;
-    }
+}
 
 // @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
@@ -168,6 +168,7 @@ export interface ILoaderProps {
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
+    // @deprecated
     readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
     readonly scope?: FluidObject;
     readonly urlResolver: IUrlResolver;
@@ -179,6 +180,7 @@ export interface ILoaderServices {
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
+    // @deprecated
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
     readonly scope: FluidObject;
     readonly subLogger: ITelemetryLogger;
@@ -229,7 +231,6 @@ export class RelativeLoader implements ILoader {
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
-
 
 // (No @packageDocumentation comment for this package)
 

@@ -106,6 +106,7 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
     /**
      * Returns the snapshot tree.
      */
+    // eslint-disable-next-line @rushstack/no-new-null
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         return this.storage.getSnapshotTree(version);
     }
@@ -113,6 +114,7 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
     /**
      * Retrieves all versions of the document starting at the specified versionId - or null if from the head
      */
+    // eslint-disable-next-line @rushstack/no-new-null
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return this.storage.getVersions(versionId, count);
     }

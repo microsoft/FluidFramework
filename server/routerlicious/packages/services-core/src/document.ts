@@ -36,7 +36,8 @@ export interface IDocumentStorage {
         initialHash: string,
         ordererUrl: string,
         historianUrl: string,
-        values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
+        values: [string, ICommittedProposal][],
+        enableDiscovery: boolean): Promise<IDocumentDetails>;
 }
 
 export interface IClientSequenceNumber {

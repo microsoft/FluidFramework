@@ -9,7 +9,8 @@ import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { SharedTree } from '../../SharedTree';
 import { WriteFormat } from '../../persisted-types';
 import { performFuzzActions } from '../fuzz/SharedTreeFuzzTests';
-import { makeOpGenerator, take } from '../fuzz/Generators';
+import { makeOpGenerator } from '../fuzz/Generators';
+import { takeAsync } from '../stochastic-test-utilities';
 import { expectAssert } from '../Summary.tests';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import { setUpLocalServerTestSharedTree, setUpTestSharedTree, testDocumentsPathBase } from './TestUtilities';
@@ -61,7 +62,7 @@ async function generateRandomTree(
 	writeFormat: WriteFormat,
 	summarizeHistory: boolean
 ): Promise<SharedTree> {
-	const generator = take(
+	const generator = takeAsync(
 		1000,
 		makeOpGenerator({
 			editConfig: { maxTreeSize },

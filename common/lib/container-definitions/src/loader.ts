@@ -509,6 +509,6 @@ export interface IPendingLocalState {
  * when attaching.
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
-    blobsContents: {[path: string]: ArrayBufferLike},
-    trees: {[path: string]: ISnapshotTreeWithBlobContents},
+    blobsContents: { [path: string]: ArrayBufferLike },
+    trees: { [path: string]: ISnapshotTreeWithBlobContents },
 }
