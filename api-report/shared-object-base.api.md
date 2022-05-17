@@ -109,6 +109,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
+    // (undocumented)
     connect(services: IChannelServices): void;
     get connected(): boolean;
     protected didAttach(): void;
@@ -123,6 +124,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     get IFluidLoadable(): this;
     initializeLocal(): void;
     protected initializeLocalCore(): void;
+    // (undocumented)
     isAttached(): boolean;
     load(services: IChannelServices): Promise<void>;
     protected abstract loadCore(services: IChannelStorageService): Promise<void>;

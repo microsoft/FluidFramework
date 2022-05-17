@@ -185,7 +185,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).connect}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
      */
     public connect(services: IChannelServices) {
         this.services = services;
@@ -193,14 +193,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).isAttached}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).isAttached}
      */
     public isAttached(): boolean {
         return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).getAttachSummary}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
      */
     public abstract getAttachSummary(
         fullTree?: boolean,
@@ -209,7 +209,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     ): ISummaryTreeWithStats;
 
     /**
-     * {@inheritDoc (ISharedObject:interface).summarize}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
      */
     public abstract summarize(
         fullTree?: boolean,
@@ -363,7 +363,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             applyStashedOp: (content: any): unknown => {
                 return this.applyStashedOp(content);
             },
-            rollback:  (content: any, localOpMetadata: unknown) => {
+            rollback: (content: any, localOpMetadata: unknown) => {
                 this.rollback(content, localOpMetadata);
             },
         });
@@ -491,7 +491,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).getAttachSummary}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
      */
     public getAttachSummary(
         fullTree: boolean = false,
@@ -502,7 +502,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).summarize}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
      */
     public async summarize(
         fullTree: boolean = false,

@@ -70,6 +70,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import {
     GCDataBuilder,
+    removeRouteFromAllNodes,
     unpackChildNodesGCDetails,
     unpackChildNodesUsedRoutes,
 } from "@fluidframework/garbage-collector";
@@ -676,6 +677,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         let channelBaseGCDetails = (await this.channelsBaseGCDetails).get(channelId);
         if (channelBaseGCDetails === undefined) {
             channelBaseGCDetails = {};
+        } else if (channelBaseGCDetails.gcData?.gcNodes !== undefined) {
+            // Note: if the child channel has an explicit handle route to its parent, it will be removed here and
+            // expected to be added back by the parent when getGCData is called.
+            removeRouteFromAllNodes(channelBaseGCDetails.gcData.gcNodes, this.absolutePath);
         }
 
         // Currently, channel context's are always considered used. So, it there are no used routes for it, we still

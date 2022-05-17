@@ -7,7 +7,7 @@ module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
     transform: {
-        "^.+\\.(j|t)sx?$": "ts-jest",
+        "^.+\\.ts$": "ts-jest",
     },
     globals: {
         'ts-jest': {

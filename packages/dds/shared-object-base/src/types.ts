@@ -4,7 +4,7 @@
  */
 
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IGarbageCollectionData,

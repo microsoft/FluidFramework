@@ -28,7 +28,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
     }): void;
     addRouteToAllNodes(outboundRoute: string): void;
     // (undocumented)
-    readonly gcNodes: {
+    get gcNodes(): {
         [id: string]: string[];
     };
     // (undocumented)
