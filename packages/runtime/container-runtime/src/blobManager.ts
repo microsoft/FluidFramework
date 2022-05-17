@@ -74,6 +74,9 @@ export class BlobManager {
         snapshot: IBlobManagerLoadInfo,
         private readonly getStorage: () => IDocumentStorageService,
         private readonly attachBlobCallback: (blobId: string) => void,
+        // To be called when a blob node is requested. blobPath is the path of the blob's node in GC's graph. It's
+        // of the format `/<BlobManager.basePath>/<blobId>`.
+        private readonly gcNodeUpdated: (blobPath: string) => void,
         private readonly runtime: IContainerRuntime,
         private readonly logger: ITelemetryLogger,
     ) {
@@ -89,9 +92,21 @@ export class BlobManager {
         return this.blobIds.has(id) || this.detachedBlobIds.has(id);
     }
 
+    /**
+     * For a blobId, returns its path in GC's graph. The node path is of the format `/<BlobManager.basePath>/<blobId>`
+     * This path must match the path of the blob handle returned by the createBlob API because blobs are marked
+     * referenced by storing these handles in a referenced DDS.
+     */
+    private getBlobGCNodePath(blobId: string) {
+        return `/${BlobManager.basePath}/${blobId}`;
+    }
+
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
         const storageId = this.redirectTable?.get(blobId) ?? blobId;
         assert(this.hasBlob(storageId), 0x11f /* "requesting unknown blobs" */);
+
+        // When this blob is retrieved, let the container runtime know that the corresponding GC node got updated.
+        this.gcNodeUpdated(this.getBlobGCNodePath(blobId));
 
         return new BlobHandle(
             `${BlobManager.basePath}/${storageId}`,
@@ -212,14 +227,10 @@ export class BlobManager {
      * about this for now because the data is a simple list of blob ids.
      */
     public getGCData(fullGC: boolean = false): IGarbageCollectionData {
-        const getGCNodePath = (blobId: string) => { return `/${BlobManager.basePath}/${blobId}`; };
         const gcData: IGarbageCollectionData = { gcNodes: {} };
-        /**
-          * The node path is of the format `/_blobs/blobId`. This path must match the path of the blob handle returned
-          * by the createBlob API because blobs are marked referenced by storing these handles in a referenced DDS.
-          */
+
         this.blobIds.forEach((blobId: string) => {
-            gcData.gcNodes[getGCNodePath(blobId)] = [];
+            gcData.gcNodes[this.getBlobGCNodePath(blobId)] = [];
         });
 
         /**
@@ -233,7 +244,7 @@ export class BlobManager {
             for (const [localId, storageId] of this.redirectTable) {
                 // Add node for the localId and add a route to the storageId node. The storageId node will have been
                 // added above when adding nodes for this.blobIds.
-                gcData.gcNodes[getGCNodePath(localId)] = [getGCNodePath(storageId)];
+                gcData.gcNodes[this.getBlobGCNodePath(localId)] = [this.getBlobGCNodePath(storageId)];
             }
         }
 
@@ -245,7 +256,8 @@ export class BlobManager {
      * @param unusedRoutes - These are the blob node ids that are unused and should be deleted.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]): void {
-        // The routes or blob node paths are in the same format as returned in getGCData - `/_blobs/blobId`.
+        // The routes or blob node paths are in the same format as returned in getGCData -
+        // `/<BlobManager.basePath>/<blobId>`.
         for (const route of unusedRoutes) {
             const pathParts = route.split("/");
             assert(
