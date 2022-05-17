@@ -9,7 +9,7 @@ import { IThrottlingMetrics, IThrottleStorageManager } from "@fluidframework/ser
  * In-memory cache implementation of IThrottleManager for testing
  */
 export class TestThrottleStorageManager implements IThrottleStorageManager {
-    private readonly cache: { [key: string]: IThrottlingMetrics } = {};
+    private readonly cache: { [key: string]: IThrottlingMetrics; } = {};
 
     async setThrottlingMetric(
         id: string,

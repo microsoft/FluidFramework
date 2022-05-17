@@ -6,17 +6,17 @@
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { expect } from 'chai';
-import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
-import { WriteFormat } from '../../persisted-types';
-import { fail } from '../../Common';
-import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import {
 	AsyncGenerator,
 	chainAsync as chain,
 	makeRandom,
 	takeAsync as take,
 	performFuzzActionsAsync as performFuzzActionsBase,
-} from '../stochastic-test-utilities';
+} from '@fluid-internal/stochastic-test-utils';
+import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
+import { WriteFormat } from '../../persisted-types';
+import { fail } from '../../Common';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import { FuzzTestState, EditGenerationConfig, Operation } from './Types';
 import { makeOpGenerator } from './Generators';
 
@@ -28,11 +28,13 @@ const adjustSeed = 0;
 
 /**
  * Performs random actions on a set of clients.
- * @param generator finite generator for a sequence of Operations to test. The test will run until this generator is exhausted.
- * @param seed the seed for the random generation of the fuzz actions
- * @param synchronizeAtEnd if provided, all client will have all operations delivered from the server at the end of the test
- * @param saveInfo optionally provide an operation number at which a history of all operations will be saved to disk at a given filepath.
- * This can be useful for debugging why a fuzz test may have failed.
+ * @param generator - finite generator for a sequence of Operations to test. The test will run until this generator is
+ * exhausted.
+ * @param seed - the seed for the random generation of the fuzz actions
+ * @param synchronizeAtEnd - if provided, all client will have all operations delivered from the server at the end of
+ * the test
+ * @param saveInfo - optionally provide an operation number at which a history of all operations will be saved to disk
+ * at a given filepath. This can be useful for debugging why a fuzz test may have failed.
  */
 export async function performFuzzActions(
 	generator: AsyncGenerator<Operation, FuzzTestState>,
@@ -128,7 +130,17 @@ export async function performFuzzActions(
 	);
 
 	if (synchronizeAtEnd) {
-		await finalState.testObjectProvider?.ensureSynchronized();
+		if (finalState.testObjectProvider !== undefined) {
+			await finalState.testObjectProvider.ensureSynchronized();
+			const events = finalState.testObjectProvider.logger.reportAndClearTrackedEvents();
+			expect(events.expectedNotFound.length).to.equal(0);
+			// Tolerate failed edit chunk uploads, because they are fire-and-forget and can fail (e.g. the uploading client leaves before upload completes).
+			expect(
+				events.unexpectedErrors.every(
+					(e) => e.eventName === 'fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure'
+				)
+			).to.be.true;
+		}
 		const trees = [
 			...finalState.activeCollaborators.map(({ tree }) => tree),
 			...finalState.passiveCollaborators.map(({ tree }) => tree),
@@ -267,8 +279,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 			runMixedVersionTests(false, testCount, testLength);
 		});
 
-		// TODO: fix these tests. See https://github.com/microsoft/FluidFramework/issues/10103
-		describe.skip('with history summarization', () => {
+		describe('with history summarization', () => {
 			runMixedVersionTests(true, testCount, testLength);
 		});
 	});

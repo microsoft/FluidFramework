@@ -26,8 +26,8 @@ interface ILocalData<T> {
 interface ILocalRegister<T> {
     // Register value, wrapped for backwards compatibility with < 0.17
     value: {
-        type: "Plain",
-        value: T,
+        type: "Plain";
+        value: T;
     };
 
     // The sequence number when last consensus was reached
@@ -58,14 +58,14 @@ interface IRegisterOperation {
 }
 
 /**
- * IRegisterOperation format in versions < 0.17
+ * IRegisterOperation format in versions \< 0.17
  */
 interface IRegisterOperationOld<T> {
     key: string;
     type: "write";
     value: {
-        type: "Plain",
-        value: T,
+        type: "Plain";
+        value: T;
     };
     refSeq: number;
 }
@@ -181,7 +181,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-        const dataObj: { [key: string]: ILocalData<T> } = {};
+        const dataObj: { [key: string]: ILocalData<T>; } = {};
         this.data.forEach((v, k) => { dataObj[k] = v; });
 
         return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));

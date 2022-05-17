@@ -94,7 +94,7 @@ describeFullCompat("GC unreferenced flag in downloaded snapshot", (getTestObject
      * @param summaryVersion - The version of the summary that got uploaded to be used to download it from the server.
      */
     async function validateUnreferencedFlag(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+        summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
         unreferencedDataStoreIds: string[],
     ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger);

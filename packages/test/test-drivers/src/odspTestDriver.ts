@@ -23,7 +23,7 @@ import {
     getDriveItemByRootFileName,
     IClientConfig,
 } from "@fluidframework/odsp-doclib-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, OdspEndpoint } from "@fluidframework/test-driver-definitions";
 import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
@@ -36,7 +36,7 @@ interface IOdspTestLoginInfo {
     siteUrl: string;
     username: string;
     password: string;
-    supportsBrowserAuth?: boolean
+    supportsBrowserAuth?: boolean;
 }
 
 type TokenConfig = IOdspTestLoginInfo & IClientConfig;
@@ -44,32 +44,42 @@ type TokenConfig = IOdspTestLoginInfo & IClientConfig;
 interface IOdspTestDriverConfig extends TokenConfig {
     directory: string;
     driveId: string;
-    options: HostStoragePolicy | undefined
+    options: HostStoragePolicy | undefined;
 }
 
 // specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
 interface LoginTenantRange {
-    prefix: string,
-    start: number,
-    count: number,
-    password: string,
+    prefix: string;
+    start: number;
+    count: number;
+    password: string;
 }
 
 interface LoginTenants {
     [tenant: string]: {
-        range: LoginTenantRange,
+        range: LoginTenantRange;
         // add different format here
+    };
+}
+
+export function assertOdspEndpoint(
+    endpoint: string | undefined,
+): asserts endpoint is OdspEndpoint | undefined {
+    if (endpoint === undefined || endpoint === "odsp" || endpoint === "odsp-df") {
+        return;
     }
+    throw new TypeError("Not a odsp endpoint");
 }
 
 /**
  * Get from the env a set of credential to use from a single tenant
- * @param tenantIndex interger to choose the tenant from an array
- * @param requestedUserName specific user name to filter to
+ * @param tenantIndex - interger to choose the tenant from an array
+ * @param requestedUserName - specific user name to filter to
  */
-function getCredentials(tenantIndex: number, requestedUserName?: string) {
-    const creds: { [user: string]: string } = {};
-    const loginTenants = process.env.login__odsp__test__tenants;
+function getCredentials(odspEndpointName: OdspEndpoint, tenantIndex: number, requestedUserName?: string) {
+    const creds: { [user: string]: string; } = {};
+    const loginTenants = odspEndpointName === "odsp" ?
+        process.env.login__odsp__test__tenants : process.env.login__odsp_df__test__tenants;
     if (loginTenants !== undefined) {
         const tenants: LoginTenants = JSON.parse(loginTenants);
         const tenantNames = Object.keys(tenants);
@@ -86,10 +96,11 @@ function getCredentials(tenantIndex: number, requestedUserName?: string) {
             }
         }
     } else {
-        const loginAccounts = process.env.login__odsp__test__accounts;
-        assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
+        const loginAccounts = odspEndpointName === "odsp" ?
+            process.env.login__odsp__test__accounts : process.env.login__odsp_df__test__accounts;
+        assert(loginAccounts !== undefined, "Missing login__odsp/odspdf__test__accounts");
         // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
-        const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
+        const passwords: { [user: string]: string; } = JSON.parse(loginAccounts);
 
         // Need to choose one out of the set as these account might be from different tenant
         const username = requestedUserName ?? Object.keys(passwords)[0];
@@ -129,16 +140,19 @@ export class OdspTestDriver implements ITestDriver {
 
     public static async createFromEnv(
         config?: {
-            directory?: string,
-            username?: string,
-            options?: HostStoragePolicy,
-            supportsBrowserAuth?: boolean,
-            tenantIndex?: number,
+            directory?: string;
+            username?: string;
+            options?: HostStoragePolicy;
+            supportsBrowserAuth?: boolean;
+            tenantIndex?: number;
+            odspEndpointName?: string;
         },
         api: OdspDriverApiType = OdspDriverApi,
     ) {
         const tenantIndex = config?.tenantIndex ?? 0;
-        const creds = getCredentials(tenantIndex, config?.username);
+        assertOdspEndpoint(config?.odspEndpointName);
+        const endpointName = config?.odspEndpointName ?? "odsp";
+        const creds = getCredentials(endpointName, tenantIndex, config?.username);
         // Pick a random one on the list (only supported for >= 0.46)
         const users = Object.keys(creds);
         const randomUserIndex = compare(api.version, "0.46.0") >= 0 ?
@@ -234,7 +248,7 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     private static async getStorageToken(
-        options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
+        options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean; },
         config: IOdspTestLoginInfo & IClientConfig,
     ) {
         const host = new URL(options.siteUrl).host;

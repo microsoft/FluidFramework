@@ -12,7 +12,7 @@ export const gcBlobKey = "gc";
  */
 export interface IGarbageCollectionData {
     /** The GC nodes of a Fluid object in the Container. Each node has an id and a set of routes to other GC nodes. */
-    gcNodes: { [ id: string ]: string[] };
+    gcNodes: { [ id: string ]: string[]; };
 }
 
 /**

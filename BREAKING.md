@@ -20,6 +20,8 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove ICodeLoader interface](#Remove-ICodeLoader-interface)
 - [IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release](#ifluidcontainer-connect-and-ifluidcontainer-disconnect-will-be-made-mandatory-in-future-major-release)
 - [proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-to-be-removed-from-ILoaderProps-and-ILoaderServices)
+- [routerlicious-host package and ContainerUrlResolver to be removed](#routerlicious-host-package-and-ContainerUrlResolver-to-be-removed)
+- [LocalReference class and method deprecations](#LocalReference-class-and-method-deprecations)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
@@ -29,6 +31,19 @@ In major release 1.0, the optional functions `IFluidContainer.connect()` and `IF
 
 ### proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices
 The `proxyLoaderFactories` member on `ILoaderProps` and `ILoaderServices` has been deprecated in 0.59 and will be removed in an upcoming release.
+
+### routerlicious-host package and ContainerUrlResolver to be removed
+The `@fluidframework/routerlicious-host` package and its `ContainerUrlResolver` have been deprecated in 0.59 and will be removed in an upcoming release.
+
+### LocalReference class and method deprecations
+The class LocalReference in the @fluidframework/merge-tree packing is being deprecated. Please transition usage to the ReferencePosition interface from the same package.
+To support this change the following methods are deprecated with replacements that operate on ReferencePosition rather than LocalReference
+ - createPositionReference to createLocalReferencePosition
+ - addLocalReference to createLocalReferencePosition
+ - localRefToPos to localReferencePositionToPosition
+ - removeLocalReference to removeLocalReferencePosition
+
+ The above methods are changes in both the @fluidframework/merge-tree and @fluidframework/sequence packages.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)

@@ -116,7 +116,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
 
     /** Generates a summary and returns the data store channel sub-tree */
     async function getSummaryChannelsTree(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+        summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
     ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger);
         latestAckedSummary = summaryResult.ackedSummary;
@@ -140,7 +140,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
      * GC state for these have an unreferenced timestamp.
      */
     async function validateGCState(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+        summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
         shouldGCRun: boolean,
         shouldRegenerateSummary: boolean,
         unreferencedDataStoreIds: string[] = [],

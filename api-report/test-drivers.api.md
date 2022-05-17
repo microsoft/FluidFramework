@@ -21,8 +21,16 @@ import { LocalDocumentServiceFactory } from '@fluidframework/local-driver';
 import { LocalResolver } from '@fluidframework/local-driver';
 import { OdspDocumentServiceFactory } from '@fluidframework/odsp-driver';
 import { OdspDriverUrlResolver } from '@fluidframework/odsp-driver';
+import { OdspEndpoint } from '@fluidframework/test-driver-definitions';
 import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicious-driver';
+import { RouterliciousEndpoint } from '@fluidframework/test-driver-definitions';
 import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
+
+// @public (undocumented)
+export function assertOdspEndpoint(endpoint: string | undefined): asserts endpoint is OdspEndpoint | undefined;
+
+// @public (undocumented)
+export function assertRouterliciousEndpoint(endpoint: string | undefined): asserts endpoint is RouterliciousEndpoint | undefined;
 
 // @public (undocumented)
 export function createFluidTestDriver(fluidTestDriverType?: TestDriverTypes, config?: FluidTestDriverConfig, api?: DriverApiType): Promise<LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver>;
@@ -111,6 +119,7 @@ export class OdspTestDriver implements ITestDriver {
         options?: HostStoragePolicy;
         supportsBrowserAuth?: boolean;
         tenantIndex?: number;
+        odspEndpointName?: string;
     }, api?: OdspDriverApiType): Promise<OdspTestDriver>;
     // (undocumented)
     createUrlResolver(): IUrlResolver;
@@ -174,7 +183,6 @@ export class TinyliciousTestDriver implements ITestDriver {
     // (undocumented)
     get version(): string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

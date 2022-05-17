@@ -44,16 +44,16 @@ const enum SnapshotPath {
 }
 
 interface ISetOp<T> {
-    type: MatrixOp.set,
-    row: number,
-    col: number,
-    value: MatrixItem<T>,
+    type: MatrixOp.set;
+    row: number;
+    col: number;
+    value: MatrixItem<T>;
 }
 
 interface ISetOpMetadata {
-    rowHandle: Handle,
-    colHandle: Handle,
-    localSeq: number,
+    rowHandle: Handle;
+    colHandle: Handle;
+    localSeq: number;
 }
 
 /**
@@ -698,14 +698,17 @@ export class SharedMatrix<T = any>
             const localSeq = currentVector.getCollabWindow().localSeq;
             const oppositeWindow = oppositeVector.getCollabWindow();
 
-            assert(localSeq > oppositeWindow.localSeq,
-                "The 'localSeq' of the vector applying stashed op must > the 'localSeq' of the other vector.");
+            assert(
+                localSeq > oppositeWindow.localSeq,
+                0x2d9,
+                /* "The 'localSeq' of the vector applying stashed op must > the 'localSeq' of the other vector." */
+            );
 
             oppositeWindow.localSeq = localSeq;
 
             return metadata;
         } else {
-            assert(content.type === MatrixOp.set, "Unknown SharedMatrix 'op' type.");
+            assert(content.type === MatrixOp.set, 0x2da /* "Unknown SharedMatrix 'op' type." */);
 
             const setOp = content as ISetOp<T>;
             const rowHandle = this.rows.getAllocatedHandle(setOp.row);

@@ -64,7 +64,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     protected readonly pendingSummaries = new Map<string, SummaryNode>();
     private readonly outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
-    private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
+    private wipLocalPaths: { localPath: EscapedPath; additionalPath?: EscapedPath; } | undefined;
     private wipSkipRecursion = false;
 
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
@@ -394,7 +394,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     public async loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: ReadAndParseBlob,
-    ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }> {
+    ): Promise<{ baseSummary: ISnapshotTree; outstandingOps: ISequencedDocumentMessage[]; }> {
         const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
