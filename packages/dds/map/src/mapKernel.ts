@@ -580,7 +580,8 @@ export class MapKernel {
                     0x014 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
                 const pendingMessage = localOpMetadata as IMapLocalOpMetadata;
                 const pendingKeyMessage = this.pendingKeys.get(op.key);
-                if (pendingKeyMessage !== undefined && pendingKeyMessage[0] === pendingMessage[0]) {
+                if (pendingKeyMessage !== undefined &&
+                    pendingKeyMessage.pendingMessageId === pendingMessage.pendingMessageId) {
                     this.pendingKeys.delete(op.key);
                 }
             }
