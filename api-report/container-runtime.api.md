@@ -528,6 +528,11 @@ export interface ISummarizerInternalsProvider {
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 }
 
+// @public @deprecated (undocumented)
+export interface ISummarizerOptions {
+    disableHeuristics: boolean;
+}
+
 // @public (undocumented)
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
@@ -639,8 +644,6 @@ export interface ISummaryRuntimeOptions {
     maxOpsSinceLastSummary?: number;
     // @deprecated (undocumented)
     summarizerClientElection?: boolean;
-    // Warning: (ae-forgotten-export) The symbol "ISummarizerOptions" needs to be exported by the entry point index.d.ts
-    //
     // @deprecated (undocumented)
     summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
     summaryConfigOverrides?: ISummaryConfiguration;

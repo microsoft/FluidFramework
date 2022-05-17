@@ -121,6 +121,10 @@ export interface IContainerLoadOptions {
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
+    /**
+     * Serialized state from a previous instance of this container
+     */
+     serializedContainerState?: IPendingContainerState;
     resolvedUrl: IFluidResolvedUrl;
     /**
      * Control which snapshot version to load from.  See IParsedUrl for detailed information.

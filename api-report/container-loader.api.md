@@ -139,6 +139,7 @@ export interface IContainerLoadOptions {
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
+    serializedContainerState?: IPendingContainerState;
     version: string | undefined;
 }
 
