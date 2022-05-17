@@ -312,7 +312,7 @@ export class IdCompressorTestNetwork {
 		}
 		const creationRange = compressor.takeNextCreationRange();
 		this.serverOperations.push([creationRange, opSpaceIds, client]);
-		return nextIdIndex === 0 ? opSpaceIds ?? fail() : creationRange;
+		return nextIdIndex === 0 ? opSpaceIds : creationRange;
 	}
 
 	/**
@@ -827,11 +827,4 @@ export function generateCompressedIds(compressor: IdCompressor, count: number): 
 		ids.push(compressor.generateCompressedId());
 	}
 	return ids;
-}
-
-/**
- * Expects `condition` and applies a type assertion.
- */
-export function expectAssert(condition: unknown, message?: string): asserts condition {
-	expect(condition, message);
 }
