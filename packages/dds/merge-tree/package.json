@@ -215,8 +215,9 @@
       "InterfaceDeclaration_ISegment": {
         "forwardCompat": false
       },
-      "ClassDeclaration_LocalReference": {"forwardCompat": false},
-        "forwardCompat": false
+      "ClassDeclaration_LocalReference": {
+        "forwardCompat": false,
+        "backCompat": false
       },
       "ClassDeclaration_LocalReferenceCollection": {
         "forwardCompat": false
@@ -231,7 +232,8 @@
         "forwardCompat": false
       },
       "ClassDeclaration_Marker": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "ClassDeclaration_MergeNode": {
         "forwardCompat": false
@@ -257,8 +259,6 @@
       "ClassDeclaration_TrackingGroup": {"forwardCompat": false},
       "InterfaceDeclaration_IJSONMarkerSegment": {"backCompat": false},
       "InterfaceDeclaration_IMarkerDef": {"backCompat": false},
-      "ClassDeclaration_LocalReference": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_Marker": {"forwardCompat": false, "backCompat": false},
       "EnumDeclaration_ReferenceType": {"backCompat": false}
     }
   }
