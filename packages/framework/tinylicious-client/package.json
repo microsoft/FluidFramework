@@ -71,7 +71,7 @@
     "typescript": "~4.5.5"
   },
   "peerDependencies": {
-    "fluid-framework": "^0.50.0"
+    "fluid-framework": "^0.60.1000"
   },
   "typeValidation": {
     "version": "0.60.1000",
