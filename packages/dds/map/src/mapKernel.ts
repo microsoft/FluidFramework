@@ -9,7 +9,6 @@ import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ISerializableValue,
     ISerializedValue,
-    IValueChanged,
     ISharedMapEvents,
 } from "./interfaces";
 import {
@@ -112,6 +111,11 @@ export interface IMapDataObjectSerialized {
     [key: string]: ISerializedValue;
 }
 
+interface IMapLocalOpMetadata {
+    pendingMessageId: number;
+    previousValue: ILocalValue;
+}
+
 /**
  * A SharedMap is a map-like distributed data structure.
  */
@@ -136,7 +140,7 @@ export class MapKernel {
     /**
      * Keys that have been modified locally but not yet ack'd from the server.
      */
-    private readonly pendingKeys: Map<string, number> = new Map();
+    private readonly pendingKeys: Map<string, IMapLocalOpMetadata> = new Map();
 
     /**
      * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
@@ -286,7 +290,7 @@ export class MapKernel {
             this.handle);
 
         // Set the value locally.
-        this.setCore(
+        const previousValue = this.setCore(
             key,
             localValue,
             true,
@@ -302,7 +306,7 @@ export class MapKernel {
             type: "set",
             value: serializableValue,
         };
-        this.submitMapKeyMessage(op);
+        this.submitMapKeyMessage(op, previousValue);
     }
 
     /**
@@ -312,20 +316,20 @@ export class MapKernel {
      */
     public delete(key: string): boolean {
         // Delete the key locally first.
-        const successfullyRemoved = this.deleteCore(key, true);
+        const previousValue = this.deleteCore(key, true);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
-            return successfullyRemoved;
+            return previousValue !== undefined;
         }
 
         const op: IMapDeleteOperation = {
             key,
             type: "delete",
         };
-        this.submitMapKeyMessage(op);
+        this.submitMapKeyMessage(op, previousValue);
 
-        return successfullyRemoved;
+        return previousValue !== undefined;
     }
 
     /**
@@ -419,7 +423,7 @@ export class MapKernel {
 
     /**
      * Process the given op if a handler is registered.
-     * @param message - The message to process
+     * @param op - The message to process
      * @param local - Whether the message originated from the local client
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
@@ -441,17 +445,42 @@ export class MapKernel {
     }
 
     /**
+     * Rollback a local op
+     * @param op - The operation to rollback
+     * @param localOpMetadata - The local metadata associated with the op.
+     */
+    public rollback(op: any, localOpMetadata: unknown) {
+        if (op.type !== "delete" && op.type !== "set") {
+            throw new Error("Unsupported op for rollback");
+        }
+
+        const metadata = localOpMetadata as IMapLocalOpMetadata;
+        if (metadata === undefined) {
+            this.deleteCore(op.key, true);
+        } else {
+            this.setCore(op.key, metadata.previousValue, true, true);
+        }
+
+        // BUGBUG: This isn't right. It should revert it to the value it was before the rolled back op.
+        this.pendingKeys.delete(op.key);
+    }
+
+    /**
      * Set implementation used for both locally sourced sets as well as incoming remote sets.
      * @param key - The key being set
      * @param value - The value being set
      * @param local - Whether the message originated from the local client
-     * @param op - The message if from a remote set, or null if from a local set
+     * @returns Previous value of the key
      */
-    private setCore(key: string, value: ILocalValue, local: boolean): void {
+    private setCore(key: string, value: ILocalValue, local: boolean, rollback: boolean = false): any {
         const previousValue = this.get(key);
         this.data.set(key, value);
-        const event: IValueChanged = { key, previousValue };
-        this.eventEmitter.emit("valueChanged", event, local, this.eventEmitter);
+        if (rollback) {
+            this.eventEmitter.emit("rollback", key, this.eventEmitter);
+        } else {
+            this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
+        }
+        return previousValue;
     }
 
     /**
@@ -468,17 +497,19 @@ export class MapKernel {
      * Delete implementation used for both locally sourced deletes as well as incoming remote deletes.
      * @param key - The key being deleted
      * @param local - Whether the message originated from the local client
-     * @param op - The message if from a remote delete, or null if from a local delete
-     * @returns True if the key existed and was deleted, false if it did not exist
+     * @returns Previous value of the key if it existed, undefined if it did not exist
      */
-    private deleteCore(key: string, local: boolean): boolean {
+    private deleteCore(key: string, local: boolean, rollback: boolean = false): any {
         const previousValue = this.get(key);
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
-            const event: IValueChanged = { key, previousValue };
-            this.eventEmitter.emit("valueChanged", event, local, this.eventEmitter);
+            if (rollback) {
+                this.eventEmitter.emit("rollback", key, this.eventEmitter);
+            } else {
+                this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
+            }
         }
-        return successfullyRemoved;
+        return previousValue;
     }
 
     /**
@@ -533,7 +564,8 @@ export class MapKernel {
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
             if (local) {
-                assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                assert(localOpMetadata !== undefined &&
+                    (localOpMetadata as IMapLocalOpMetadata).pendingMessageId < this.pendingClearMessageId,
                     0x013 /* "Received out of order op when there is an unackd clear message" */);
             }
             // If we have an unack'd clear, we can ignore all ops.
@@ -546,9 +578,9 @@ export class MapKernel {
             if (local) {
                 assert(localOpMetadata !== undefined,
                     0x014 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
-                const pendingMessageId = localOpMetadata as number;
-                const pendingKeyMessageId = this.pendingKeys.get(op.key);
-                if (pendingKeyMessageId === pendingMessageId) {
+                const pendingMessage = localOpMetadata as IMapLocalOpMetadata;
+                const pendingKeyMessage = this.pendingKeys.get(op.key);
+                if (pendingKeyMessage !== undefined && pendingKeyMessage[0] === pendingMessage[0]) {
                     this.pendingKeys.delete(op.key);
                 }
             }
@@ -604,11 +636,11 @@ export class MapKernel {
                 },
                 submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata but send a new one on each submit.
-                    this.submitMapKeyMessage(op);
+                    this.submitMapKeyMessage(op, localOpMetadata);
                 },
                 getStashedOpLocalMetadata: (op: IMapDeleteOperation) => {
                     // We don't reuse the metadata but send a new one on each submit.
-                    return this.getMapKeyMessageLocalMetadata(op);
+                    return this.getMapKeyMessageLocalMetadataWithPendingValue(op);
                 },
             });
         messageHandlers.set(
@@ -625,11 +657,11 @@ export class MapKernel {
                 },
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata but send a new one on each submit.
-                    this.submitMapKeyMessage(op);
+                    this.submitMapKeyMessage(op, localOpMetadata);
                 },
                 getStashedOpLocalMetadata: (op: IMapSetOperation) => {
                     // We don't reuse the metadata but send a new one on each submit.
-                    return this.getMapKeyMessageLocalMetadata(op);
+                    return this.getMapKeyMessageLocalMetadataWithPendingValue(op);
                 },
             });
 
@@ -651,18 +683,24 @@ export class MapKernel {
         this.submitMessage(op, pendingMessageId);
     }
 
-    private getMapKeyMessageLocalMetadata(op: IMapKeyOperation): number {
+    private getMapKeyMessageLocalMetadataWithPendingValue(op: IMapKeyOperation): unknown {
+        const previous = this.pendingKeys.get(op.key);
+        return this.getMapKeyMessageLocalMetadata(op, previous ? previous.previousValue : undefined);
+    }
+
+    private getMapKeyMessageLocalMetadata(op: IMapKeyOperation, previousValue: any): unknown {
         const pendingMessageId = ++this.pendingMessageId;
-        this.pendingKeys.set(op.key, pendingMessageId);
-        return pendingMessageId;
+        const localMetadata = { pendingMessageId, previousValue };
+        this.pendingKeys.set(op.key, localMetadata);
+        return localMetadata;
     }
 
     /**
      * Submit a map key message to remote clients.
      * @param op - The map key message
      */
-    private submitMapKeyMessage(op: IMapKeyOperation): void {
-        const pendingMessageId = this.getMapKeyMessageLocalMetadata(op);
-        this.submitMessage(op, pendingMessageId);
+    private submitMapKeyMessage(op: IMapKeyOperation, previousValue: any): void {
+        const localMetadata = this.getMapKeyMessageLocalMetadata(op, previousValue);
+        this.submitMessage(op, localMetadata);
     }
 }

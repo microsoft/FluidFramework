@@ -82,7 +82,7 @@ export class UndoRedoStackManager {
         revertStack: UndoRedoStack,
         pushStack: UndoRedoStack,
     ) {
-        // Close the pushStack, as it could get  new ops
+        // Close the pushStack, as it could get new ops
         // from the revert, and we don't want those combined
         // with any existing operation
         pushStack.closeCurrentOperationIfInProgress();
@@ -187,6 +187,32 @@ export class UndoRedoStackManager {
         } else {
             operationStack.push(revertible);
         }
+    }
+
+    public rollbackLastRevertible?(): IRevertible | undefined {
+        if (this.mode !== UndoRedoMode.None) {
+            throw new Error("Cannot rollback while undo or redo is happening");
+        }
+
+        // Search the undo stack for the first defined operation stack
+        while (!this.undoStack.empty() && this.undoStack.top() === undefined) {
+            this.undoStack.pop();
+        }
+        if (this.undoStack.empty()) {
+            return undefined;
+        }
+
+        const operationStack = this.undoStack.top();
+        if (operationStack !== undefined && !operationStack.empty()) {
+            // Discard and return the last revertible pushed
+            const operation = operationStack.pop();
+            if (operationStack.empty()) {
+                this.undoStack.pop();
+            }
+            return operation;
+        }
+
+        return undefined;
     }
 
     private clearRedoStack() {

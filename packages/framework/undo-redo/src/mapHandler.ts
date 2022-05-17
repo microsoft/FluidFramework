@@ -15,14 +15,28 @@ export class SharedMapUndoRedoHandler {
 
     public attachMap(map: ISharedMap) {
         map.on("valueChanged", this.mapDeltaHandler);
+        map.on("rollback", this.mapRollbackHandler);
     }
     public detachMap(map: ISharedMap) {
         map.off("valueChanged", this.mapDeltaHandler);
+        map.off("rollback", this.mapRollbackHandler);
     }
 
     private readonly mapDeltaHandler = (changed: IValueChanged, local: boolean, target: ISharedMap) => {
         if (local) {
             this.stackManager.pushToCurrentOperation(new SharedMapRevertible(changed, target));
+        }
+    };
+
+    private readonly mapRollbackHandler = (key: string, target: ISharedMap) => {
+        const lastRevertible = this.stackManager.rollbackLastRevertible ?
+            this.stackManager.rollbackLastRevertible() : undefined;
+        if (!lastRevertible) {
+            throw new Error("Nothing to rollback");
+        }
+        const sharedMapRevertible = lastRevertible as SharedMapRevertible;
+        if (sharedMapRevertible.matchRollback && !sharedMapRevertible.matchRollback(key, target)) {
+                throw new Error("Last revertible does not match operation rolled back");
         }
     };
 }
@@ -37,10 +51,20 @@ export class SharedMapRevertible implements IRevertible {
     ) { }
 
     public revert() {
-        this.map.set(this.changed.key, this.changed.previousValue);
+        if (this.changed.previousValue === undefined) {
+            this.map.delete(this.changed.key);
+        } else {
+            this.map.set(this.changed.key, this.changed.previousValue);
+        }
     }
 
     public discard() {
         return;
+    }
+
+    public matchRollback?(key: string, target: ISharedMap): boolean {
+        return this.map === target &&
+            this.changed.key === key &&
+            this.changed.previousValue === target[key];
     }
 }
