@@ -5,4 +5,3 @@
 
 export * from "./Todo";
 export * from "./TodoView";
-export * from "./todoInstantiationFactory";

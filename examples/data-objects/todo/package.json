@@ -45,7 +45,6 @@
     "@fluid-example/clicker": "^0.59.3000",
     "@fluid-experimental/react-inputs": "^0.59.3000",
     "@fluidframework/aqueduct": "^0.59.3000",
-    "@fluidframework/cell": "^0.59.3000",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-runtime-definitions": "^0.59.3000",
     "@fluidframework/core-interfaces": "^0.43.1000",

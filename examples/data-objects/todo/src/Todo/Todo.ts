@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
@@ -12,18 +12,16 @@ import { ITodoItemInitialState, TodoItem } from "../TodoItem";
 
 export const TodoName = "Todo";
 
+const todoItemsKey = "todo-items";
+const todoTitleKey = "todo-title";
+
 /**
- * Todo base component.
- * Visually contains the following:
+ * Todo data object.
+ * Contains the following:
  * - Title
- * - New todo item entry
  * - List of todo items
  */
 export class Todo extends DataObject {
-    // DDS ids stored as variables to minimize simple string mistakes
-    private readonly todoItemsKey = "todo-items";
-    private readonly todoTitleKey = "todo-title";
-
     private _todoItemsMap: ISharedMap | undefined;
     private get todoItemsMap(): ISharedMap {
         if (this._todoItemsMap === undefined) {
@@ -33,21 +31,19 @@ export class Todo extends DataObject {
     }
 
     /**
-     * Do setup work here
+     * Create the map for todo items and a string for the title
      */
     protected async initializingFirstTime() {
-        // Create a list for of all inner todo item components.
-        // We will use this to know what components to load.
         const map = SharedMap.create(this.runtime);
-        this.root.set(this.todoItemsKey, map.handle);
+        this.root.set(todoItemsKey, map.handle);
 
         const text = SharedString.create(this.runtime);
         text.insertText(0, "Title");
-        this.root.set(this.todoTitleKey, text.handle);
+        this.root.set(todoTitleKey, text.handle);
     }
 
     protected async hasInitialized() {
-        const todoItemsHandle = this.root.get<IFluidHandle<ISharedMap>>(this.todoItemsKey);
+        const todoItemsHandle = this.root.get<IFluidHandle<ISharedMap>>(todoItemsKey);
         if (todoItemsHandle === undefined) {
             throw new Error("Todo items ISharedMap missing");
         }
@@ -64,7 +60,7 @@ export class Todo extends DataObject {
 
     // Would prefer not to hand this out, and instead give back a title component?
     public async getTodoTitleString() {
-        const todoTitleHandle = this.root.get<IFluidHandle<SharedString>>(this.todoTitleKey);
+        const todoTitleHandle = this.root.get<IFluidHandle<SharedString>>(todoTitleKey);
         if (todoTitleHandle === undefined) {
             throw new Error("Todo title SharedString missing");
         }
@@ -117,3 +113,17 @@ export class Todo extends DataObject {
 
     // end public API surface for the Todo model, used by the view
 }
+
+export const TodoFactory =
+    new DataObjectFactory(
+        TodoName,
+        Todo,
+        [
+            SharedMap.getFactory(),
+            SharedString.getFactory(),
+        ],
+        {},
+        new Map([
+            TodoItem.getFactory().registryEntry,
+        ]),
+    );

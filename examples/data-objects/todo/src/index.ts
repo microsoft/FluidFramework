@@ -12,7 +12,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 import React from "react";
-import { Todo, TodoInstantiationFactory, TodoView } from "./Todo";
+import { Todo, TodoFactory, TodoView } from "./Todo";
 import { TodoItemView } from "./TodoItem";
 
 const todoId = "todo";
@@ -67,7 +67,7 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
         super(
             new Map([
-                TodoInstantiationFactory.registryEntry,
+                TodoFactory.registryEntry,
             ]),
             undefined,
             [mountableViewRequestHandler(MountableView, [todoRequestHandler])],
@@ -75,7 +75,7 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await runtime.createRootDataStore(TodoInstantiationFactory.type, todoId);
+        await runtime.createRootDataStore(TodoFactory.type, todoId);
     }
 }
 
