@@ -130,6 +130,7 @@ export class BroadcasterLambda implements IPartitionLambda {
             const value = baseMessage as INackMessage | ISequencedOperationMessage | ITicketedSignalMessage;
 
             if (value.type === SequencedOperationType) {
+                // console.log(`broadcaster before= ${JSON.stringify(value.operation)}`);
                 const timeNow = Date.now();
                  if (!value.operation.traces) {
                      value.operation.traces = [];
@@ -140,6 +141,7 @@ export class BroadcasterLambda implements IPartitionLambda {
                          service: "broadcaster",
                          timestamp: timeNow,
                     });
+                // console.log(`broadcaster after= ${JSON.stringify(value.operation)}`);
             }
 
             if (this.serviceConfiguration.broadcaster.includeEventInMessageBatchName) {

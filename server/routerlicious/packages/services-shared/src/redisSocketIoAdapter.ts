@@ -247,7 +247,7 @@ export class RedisSocketIoAdapter extends Adapter {
             // block full broadcasts and multi room broadcasts
             return;
         }
-
+        // console.log(`redisAdapter before= ${JSON.stringify(packet.data)}`);
         const time = Date.now();
          if (packet.data && packet.data.length > 1) {
              if (packet.data[2] && packet.data[2].length > 0) {
@@ -264,7 +264,7 @@ export class RedisSocketIoAdapter extends Adapter {
                  });
              }
          }
-
+        // console.log(`redisAdapter after= ${JSON.stringify(packet.data)}`);
         super.broadcast(packet, opts);
 
         this.publish(packet, opts);
@@ -351,7 +351,7 @@ export class RedisSocketIoAdapter extends Adapter {
             const opts: BroadcastOptions = {
                 rooms: new Set([room]),
             };
-
+            // console.log(`redisAdapter before= ${JSON.stringify(packet.data)}`);
             if (packet.data && packet.data.length > 1) {
                 if (packet.data[2] && packet.data[2].length > 0) {
                     packet.data[2].forEach((element) => {
@@ -367,6 +367,7 @@ export class RedisSocketIoAdapter extends Adapter {
                     });
                 }
             }
+            // console.log(`redisAdapter after= ${JSON.stringify(packet.data)}`);
             // only allow room broadcasts
             super.broadcast(packet, opts);
 
