@@ -28,7 +28,7 @@ import {
 /**
  * @deprecated - Use ReferencePosition
  */
- export class LocalReference implements ReferencePosition {
+export class LocalReference implements ReferencePosition {
     /**
      * @deprecated - use DetachedReferencePosition
      */
@@ -83,7 +83,7 @@ import {
     /**
      * @deprecated - use getLocalReferencePosition
      */
-     public toPosition() {
+    public toPosition() {
         return this.getClient().localReferencePositionToPosition(this);
     }
 
@@ -331,7 +331,7 @@ export class LocalReferenceCollection {
      *
      * @internal - this method should only be called by mergeTree
      */
-     public removeLocalRef(lref: LocalReference | ReferencePosition) {
+    public removeLocalRef(lref: LocalReference | ReferencePosition) {
         assertLocalReferences(lref);
         const tryRemoveRef = (refs: List<LocalReference> | undefined) => {
             if (refs) {
