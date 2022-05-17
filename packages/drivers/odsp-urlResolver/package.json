@@ -49,7 +49,7 @@
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@0.59.2000",
     "@rushstack/eslint-config": "^2.5.1",
-    "@types/mocha": "^8.2.2",
+    "@types/mocha": "^9.1.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",

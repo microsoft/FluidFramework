@@ -99,7 +99,7 @@
     "@types/json-stringify-safe": "^5.0.0",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/lodash": "^4.14.118",
-    "@types/mocha": "^8.2.2",
+    "@types/mocha": "^9.1.1",
     "@types/morgan": "^1.7.35",
     "@types/nconf": "^0.10.2",
     "@types/request": "^2.47.1",
