@@ -874,9 +874,9 @@ export class IdCompressor {
 			(IdCompressor.isStableInversionKey(inversionKey) ? inversionKey : undefined);
 
 		if (override !== undefined) {
-			const localId = this.getCompressedIdForStableId(override);
-			if (localId !== undefined) {
-				return localId;
+			const sessionSpaceId = this.getCompressedIdForStableId(override);
+			if (sessionSpaceId !== undefined) {
+				return sessionSpaceId;
 			}
 		}
 
@@ -1090,9 +1090,9 @@ export class IdCompressor {
 
 		if (isStable) {
 			// May have already computed the numeric UUID, so avoid recomputing if possible
-			const localId = this.getCompressedIdForStableId(numericUuid ?? inversionKey);
-			if (localId !== undefined) {
-				return localId;
+			const sessionSpaceId = this.getCompressedIdForStableId(numericUuid ?? inversionKey);
+			if (sessionSpaceId !== undefined) {
+				return sessionSpaceId;
 			}
 		}
 		return undefined;
