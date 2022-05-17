@@ -294,6 +294,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.client.getRangeExtentsOfPosition(pos);
     }
 
+    /**
+     * @deprecated - use createLocalReferencePosition
+     */
     public createPositionReference(
         segment: T,
         offset: number,
@@ -305,12 +308,27 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return lref;
     }
 
+    public createLocalReferencePosition(
+        segment: T,
+        offset: number,
+        refType: ReferenceType,
+        properties: PropertySet | undefined): ReferencePosition {
+        return this.client.createLocalReferencePosition(
+            segment,
+            offset,
+            refType,
+            properties);
+    }
+
+    /**
+     * @deprecated - use localReferencePositionToPosition
+     */
     public localRefToPos(localRef: LocalReference) {
-        if (localRef.segment) {
-            return localRef.offset + this.getPosition(localRef.segment);
-        } else {
-            return -1;
-        }
+        return this.client.localReferencePositionToPosition(localRef);
+    }
+
+    public localReferencePositionToPosition(lref: ReferencePosition): number {
+        return this.client.localReferencePositionToPosition(lref);
     }
 
     /**
@@ -355,12 +373,22 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
+    /**
+     * @deprecated - use createLocalReferencePosition
+     */
     public addLocalReference(lref: LocalReference) {
         return this.client.addLocalReference(lref);
     }
 
+    /**
+     * @deprecated - use removeLocalReferencePosition
+     */
     public removeLocalReference(lref: LocalReference) {
-        return this.client.removeLocalReference(lref);
+        return this.client.removeLocalReferencePosition(lref);
+    }
+
+    public removeLocalReferencePosition(lref: ReferencePosition) {
+        return this.client.removeLocalReferencePosition(lref);
     }
 
     /**
