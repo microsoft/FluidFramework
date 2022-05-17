@@ -264,6 +264,13 @@ export class DefaultMap<T> {
      */
     public populateFromSerializable(json: IMapDataObjectSerializable): void {
         for (const [key, serializable] of Object.entries(json)) {
+            // Back-compat: legacy documents may have handles to an intervalCollection map kernel.
+            // These collections should be empty, and ValueTypes are no longer supported.
+            if (serializable.type === ValueType[ValueType.Plain]
+                || serializable.type === ValueType[ValueType.Shared]) {
+                continue;
+            }
+
             const localValue = {
                 key,
                 value: this.makeLocal(key, serializable),
