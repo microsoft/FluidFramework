@@ -11,13 +11,10 @@ import { PropertySet, MapLike } from "./properties";
 export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
-export function referenceTypeIncludesFlag(refType: ReferenceType, flags: ReferenceType): boolean {
+export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean {
+    const refType = typeof refPosOrType === "number" ? refPosOrType : refPosOrType.refType;
     // eslint-disable-next-line no-bitwise
     return (refType & flags) !== 0;
-}
-
-export function refTypeIncludesFlag(refPos: ReferencePosition, flags: ReferenceType): boolean {
-    return referenceTypeIncludesFlag(refPos.refType, flags);
 }
 
 export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>

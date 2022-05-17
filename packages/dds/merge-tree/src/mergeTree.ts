@@ -53,7 +53,6 @@ import {
 } from "./properties";
 import {
     refTypeIncludesFlag,
-    referenceTypeIncludesFlag,
     RangeStackMap,
     ReferencePosition,
     refGetRangeLabels,
@@ -1511,9 +1510,9 @@ export class MergeTree {
         const refsToSlide: LocalReference[] = [];
         const refsToStay: LocalReference[] = [];
         for (const lref of segment.localRefs) {
-            if (lref.refType & ReferenceType.StayOnRemove) {
+            if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
                 refsToStay.push(lref);
-            } else if (lref.refType & ReferenceType.SlideOnRemove) {
+            } else if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
                 if (pending) {
                     refsToStay.push(lref);
                 } else {
@@ -2551,7 +2550,7 @@ export class MergeTree {
         client: Client,
     ): ReferencePosition {
         if (isRemoved(segment)) {
-            if (!referenceTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
+            if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
                 throw new UsageError("Can only create SlideOnRemove local reference position on a removed segment");
             }
             if (offset !== 0) {

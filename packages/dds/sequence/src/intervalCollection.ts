@@ -23,7 +23,7 @@ import {
     PropertySet,
     RedBlackTree,
     ReferenceType,
-    referenceTypeIncludesFlag,
+    refTypeIncludesFlag,
     reservedRangeLabelsKey,
     UnassignedSequenceNumber,
 } from "@fluidframework/merge-tree";
@@ -329,7 +329,7 @@ function createPositionReference(
         const ref = client.createLocalReferencePosition(segoff.segment, segoff.offset, refType, undefined);
         return ref as LocalReference;
     } else {
-        assert(referenceTypeIncludesFlag(refType, ReferenceType.Transient), "Non-transient references need segment");
+        assert(refTypeIncludesFlag(refType, ReferenceType.Transient), "Non-transient references need segment");
         return new LocalReference(client, undefined);
     }
 }

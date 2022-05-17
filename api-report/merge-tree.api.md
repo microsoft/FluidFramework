@@ -1375,9 +1375,6 @@ export enum ReferenceType {
 }
 
 // @public (undocumented)
-export function referenceTypeIncludesFlag(refType: ReferenceType, flags: ReferenceType): boolean;
-
-// @public (undocumented)
 export const refGetRangeLabels: (refPos: ReferencePosition) => string[] | undefined;
 
 // @public (undocumented)
@@ -1396,7 +1393,7 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string): boole
 export function refHasTileLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
-export function refTypeIncludesFlag(refPos: ReferencePosition, flags: ReferenceType): boolean;
+export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
 // @public (undocumented)
 export const reservedMarkerIdKey = "markerId";

@@ -31,16 +31,13 @@ import {
  */
 export function _validateReferenceType(refType: ReferenceType) {
     let exclusiveCount = 0;
-    // eslint-disable-next-line no-bitwise
-    if ((refType & ReferenceType.Transient) > 0) {
+    if (refTypeIncludesFlag(refType, ReferenceType.Transient)) {
         ++exclusiveCount;
     }
-    // eslint-disable-next-line no-bitwise
-    if ((refType & ReferenceType.SlideOnRemove) > 0) {
+    if (refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
         ++exclusiveCount;
     }
-    // eslint-disable-next-line no-bitwise
-    if ((refType & ReferenceType.StayOnRemove) > 0) {
+    if (refTypeIncludesFlag(refType, ReferenceType.StayOnRemove)) {
         ++exclusiveCount;
     }
     if (exclusiveCount > 1) {

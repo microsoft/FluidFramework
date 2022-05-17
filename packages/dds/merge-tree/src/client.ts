@@ -54,7 +54,7 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
-import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
+import { ReferencePosition, RangeStackMap, DetachedReferencePosition, refTypeIncludesFlag } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -1051,8 +1051,7 @@ export class Client {
         }
         _validateReferenceType(refType);
         reference.refType = refType;
-        // eslint-disable-next-line no-bitwise
-        if ((refType & ReferenceType.SlideOnRemove) !== 0) {
+        if (refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
             this.mergeTree.slideReference(reference);
         }
     }
