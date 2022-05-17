@@ -12,10 +12,11 @@ import "./style.css";
 
 interface TodoItemViewProps {
     readonly todoItemModel: TodoItem;
+    readonly className?: string;
 }
 
 export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
-    const { todoItemModel } = props;
+    const { todoItemModel, className } = props;
     const itemText = todoItemModel.getText();
     const [checked, setChecked] = useState<boolean>(todoItemModel.getCheckedState());
     const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
@@ -37,10 +38,11 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
     };
 
     return (
-        <div className="todo-item">
+        <div className={`todo-item ${className}`}>
             <h2>
                 <input
                     type="checkbox"
+                    className="todo-item-checkbox"
                     name={todoItemModel.handle.absolutePath}
                     checked={checked}
                     onChange={checkChangedHandler} />

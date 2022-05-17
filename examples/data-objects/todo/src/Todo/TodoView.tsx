@@ -61,7 +61,7 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
     // Using the list of TodoItem components, make a list of TodoItemViews.
     const todoItemViews = todoItems.map(([id, todoItem]) => (
         <div className="item-wrap" key={id}>
-            <TodoItemView todoItemModel={todoItem} />
+            <TodoItemView todoItemModel={todoItem} className="todo-item-view" />
             <button
                 name="OpenSubComponent"
                 id={id}

@@ -1,3 +1,8 @@
+.todo-item-checkbox {
+    width: 30px;
+    height: 30px;
+}
+
 .collaborative-input {
     border: none;
     font-size: 20px;

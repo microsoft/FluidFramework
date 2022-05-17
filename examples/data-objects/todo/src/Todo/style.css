@@ -36,6 +36,11 @@
     border: 1px solid #666;
 }
 
+.todo-item-view {
+    display: inline-block;
+    width: calc(100% - 100px);
+}
+
 .action-button {
     height: 25px;
     margin-left: 2px;
