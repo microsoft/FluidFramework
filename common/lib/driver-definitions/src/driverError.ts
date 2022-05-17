@@ -51,10 +51,10 @@ export enum DriverErrorType {
     writeError = "writeError",
 
     /**
-     * Generic fetch failure.
+     * A generic fetch failure that indicates we were not able to get a response from the server.
      * This may be due to the client being offline (though, if we are able to detect offline state it will be
      * logged as an offlineError instead).  Other possibilities could be DNS errors, malformed fetch request,
-     * CSP violation, etc.  This can also indicate no response from server.
+     * CSP violation, etc.
      */
     fetchFailure = "fetchFailure",
 
