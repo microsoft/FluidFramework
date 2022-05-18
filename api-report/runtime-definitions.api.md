@@ -28,6 +28,7 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
+import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 
 // @public
 export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
@@ -377,9 +378,9 @@ export interface ISummaryTreeWithStats {
 
 // @public
 export interface ITelemetryContext {
-    get(prefix: string, property: string): any | undefined;
+    get(prefix: string, property: string): TelemetryEventPropertyType;
     serialize(): string;
-    set(prefix: string, property: string, value: any): void;
+    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
 }
 
 // @public

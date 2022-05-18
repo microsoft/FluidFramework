@@ -563,7 +563,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     private incrementSummarizeInstanceCount(telemetryContext?: ITelemetryContext): void {
         const instanceCountProperty = "InstanceCount";
-        let instanceCount = telemetryContext?.get(this.telemetryContextPrefix, instanceCountProperty) ?? 0;
+        let instanceCount = (telemetryContext?.get(this.telemetryContextPrefix, instanceCountProperty) ?? 0) as number;
         telemetryContext?.set(this.telemetryContextPrefix, instanceCountProperty, ++instanceCount);
     }
 
