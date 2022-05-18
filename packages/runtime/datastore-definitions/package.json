@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/datastore-definitions",
-  "version": "0.59.3000",
+  "version": "0.59.3001",
   "description": "Fluid data store definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,12 +36,12 @@
     "@fluidframework/container-definitions": "^0.48.1000",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/runtime-definitions": "^0.59.3000",
+    "@fluidframework/runtime-definitions": "^0.59.3001",
     "@types/node": "^14.18.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@0.59.2000",
+    "@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@0.59.3000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -64,7 +64,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
+    "version": "0.59.3001",
     "broken": {}
   }
 }
