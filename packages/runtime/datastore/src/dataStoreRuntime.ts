@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// The implicit coercions (!!) in this file also informs TypeScript that coerced values cannot be null, which
-// simplifies some subsequent code.
-/* eslint-disable no-implicit-coercion */
-
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
@@ -380,7 +376,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.contextsDeferred.set(id, deferred);
         }
 
-        assert(!!context.channel, 0x17a /* "Channel should be loaded when created!!" */);
+        assert(context.channel !== undefined, 0x17a /* "Channel should be loaded when created!!" */);
         return context.channel;
     }
 
@@ -759,7 +755,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
-                    assert(!!this.dataStoreContext.baseSnapshot,
+                    assert(this.dataStoreContext.baseSnapshot !== undefined,
                         0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */);
                     summaryTree = convertSnapshotTreeToSummaryTree(this.dataStoreContext.baseSnapshot.trees[contextId]);
                 }
@@ -847,7 +843,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
-                    assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
+                    assert(channelContext !== undefined, 0x183 /* "There should be a channel context for the op" */);
                     channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
                 }
@@ -863,7 +859,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public async applyStashedOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
         const channelContext = this.contexts.get(envelope.address);
-        assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
+        assert(channelContext !== undefined, 0x184 /* "There should be a channel context for the op" */);
         await channelContext.getChannel();
         return channelContext.applyStashedOp(envelope.contents);
     }
@@ -884,7 +880,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         };
 
         const channelContext = this.contexts.get(envelope.address);
-        assert(!!channelContext, 0x185 /* "Channel not found" */);
+        assert(channelContext !== undefined, 0x185 /* "Channel not found" */);
         channelContext.processOp(transformed, local, localOpMetadata);
 
         return channelContext;

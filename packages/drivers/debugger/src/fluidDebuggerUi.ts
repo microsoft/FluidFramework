@@ -287,10 +287,7 @@ export class DebuggerUI {
     }
 
     public disableNextOpButton(disable: boolean) {
-        // The implicit coercion below also informs TypeScript that this.buttonOps cannot be null. Removing the implicit
-        // coercion here would make the subsequent code more complex.
-        // eslint-disable-next-line no-implicit-coercion
-        assert(!!this.buttonOps, 0x088 /* "Missing button ops button!" */);
+        assert(this.buttonOps !== undefined, 0x088 /* "Missing button ops button!" */);
         this.buttonOps.disabled = disable;
     }
 

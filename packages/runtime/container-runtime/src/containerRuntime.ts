@@ -2782,20 +2782,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
                 const trace = Trace.start();
 
-                // The implicit coercions below also inform TypeScript that the values cannot be null. Removing the
-                // implicit coercion here would make the subsequent code more complex.
-                /* eslint-disable no-implicit-coercion */
                 const versions = await this.storage.getVersions(versionId, 1);
-                assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
+                assert(versions?.[0] !== undefined, 0x137 /* "Failed to get version from storage" */);
                 stats.getVersionDuration = trace.trace().duration;
 
                 const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-                assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+                assert(maybeSnapshot !== undefined, 0x138 /* "Failed to get snapshot from storage" */);
                 stats.getSnapshotDuration = trace.trace().duration;
 
                 perfEvent.end(stats);
                 return maybeSnapshot;
-                /* eslint-enable no-implicit-coercion */
         });
     }
 

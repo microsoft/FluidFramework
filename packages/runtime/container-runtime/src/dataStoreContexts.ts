@@ -142,19 +142,15 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      * Triggers the deferred to resolve, indicating the context is not local-only
      * @param id - The id of the context to resolve to
      */
-    private resolveDeferred(id: string) {
-        // The implicit coercions below also inform TypeScript that context and deferred cannot be null. Removing the
-        // implicit coercions here would make the subsequent code more complex.
-        /* eslint-disable no-implicit-coercion */
+     private resolveDeferred(id: string) {
         const context = this._contexts.get(id);
-        assert(!!context, 0x15a /* "Cannot find context to resolve to" */);
+         assert(context !== undefined, 0x15a /* "Cannot find context to resolve to" */);
         assert(!this.notBoundContexts.has(id),
             0x15b /* "Expected this id to already be removed from notBoundContexts" */);
 
         const deferred = this.deferredContexts.get(id);
-        assert(!!deferred, 0x15c /* "Cannot find deferred to resolve" */);
-        deferred.resolve(context);
-        /* eslint-enable no-implicit-coercion */
+         assert(deferred !== undefined, 0x15c /* "Cannot find deferred to resolve" */);
+         deferred.resolve(context);
     }
 
     /**

@@ -1842,10 +1842,7 @@ export class MergeTree {
         // if the change isn't at a boundary, we need to split the segment
         if (refOffset !== 0 && refSegLen !== undefined && refSegLen !== 0) {
             const splitSeg = this.splitLeafSegment(refSegment, refOffset);
-            // The implicit coercion below also informs TypeScript that splitSeg.next cannot be null. Removing the
-            // implicit coercion here would make the subsequent code more complex.
-            // eslint-disable-next-line no-implicit-coercion
-            assert(!!splitSeg.next, 0x050 /* "Next segment changes are undefined!" */);
+            assert(splitSeg.next !== undefined, 0x050 /* "Next segment changes are undefined!" */);
             this.insertChildNode(refSegment.parent!, splitSeg.next, refSegment.index + 1);
             rebalanceTree(splitSeg.next);
             startSeg = splitSeg.next;

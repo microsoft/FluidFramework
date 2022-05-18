@@ -376,20 +376,14 @@ export class DataStores implements IDisposable {
     public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
-        // The implicit coercion below also informs TypeScript that context cannot be null. Removing the implicit
-        // coercion here would make the subsequent code more complex.
-        // eslint-disable-next-line no-implicit-coercion
-        assert(!!context, 0x160 /* "There should be a store context for the op" */);
+        assert(context !== undefined, 0x160 /* "There should be a store context for the op" */);
         context.reSubmit(envelope.contents, localOpMetadata);
     }
 
     public async applyStashedOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
-        // The implicit coercion below also informs TypeScript that context cannot be null. Removing the implicit
-        // coercion here would make the subsequent code more complex.
-        // eslint-disable-next-line no-implicit-coercion
-        assert(!!context, 0x161 /* "There should be a store context for the op" */);
+        assert(context !== undefined, 0x161 /* "There should be a store context for the op" */);
         return context.applyStashedOp(envelope.contents);
     }
 
@@ -403,10 +397,7 @@ export class DataStores implements IDisposable {
         const envelope = message.contents as IEnvelope;
         const transformed = { ...message, contents: envelope.contents };
         const context = this.contexts.get(envelope.address);
-        // The implicit coercion below also informs TypeScript that context cannot be null. Removing the implicit
-        // coercion here would make the subsequent code more complex.
-        // eslint-disable-next-line no-implicit-coercion
-        assert(!!context, 0x162 /* "There should be a store context for the op" */);
+        assert(context !== undefined, 0x162 /* "There should be a store context for the op" */);
         context.process(transformed, local, localMessageMetadata);
 
         // Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
@@ -526,11 +517,7 @@ export class DataStores implements IDisposable {
                     } else {
                         // If this data store is not yet loaded, then there should be no changes in the snapshot from
                         // which it was created as it is detached container. So just use the previous snapshot.
-
-                        // The implicit coercion below also informs TypeScript that this.baseSnapshot cannot be null.
-                        // Removing the implicit coercion here would make the subsequent code more complex.
-                        // eslint-disable-next-line no-implicit-coercion
-                        assert(!!this.baseSnapshot,
+                        assert(this.baseSnapshot !== undefined,
                             0x166 /* "BaseSnapshot should be there as detached container loaded from snapshot" */);
                         dataStoreSummary = convertSnapshotTreeToSummaryTree(this.baseSnapshot.trees[key]);
                     }

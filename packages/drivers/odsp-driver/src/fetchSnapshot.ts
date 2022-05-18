@@ -93,11 +93,11 @@ export async function fetchSnapshotWithRedeem(
     forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: (
-            finalOdspResolvedUrl: IOdspResolvedUrl,
-            storageToken: string,
-            snapshotOptions: ISnapshotOptions | undefined,
-            controller?: AbortController,
-        ) => Promise<ISnapshotRequestAndResponseOptions>,
+        finalOdspResolvedUrl: IOdspResolvedUrl,
+        storageToken: string,
+        snapshotOptions: ISnapshotOptions | undefined,
+        controller?: AbortController,
+    ) => Promise<ISnapshotRequestAndResponseOptions>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
@@ -126,12 +126,13 @@ export async function fetchSnapshotWithRedeem(
             await redeemSharingLink(
                 odspResolvedUrl, storageTokenFetcher, logger, forceAccessTokenViaAuthorizationHeader);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
-                { ...odspResolvedUrl,
-                    shareLinkInfo: {
-                        ...odspResolvedUrl.shareLinkInfo,
-                        sharingLinkToRedeem: undefined,
-                    },
-                };
+            {
+                ...odspResolvedUrl,
+                shareLinkInfo: {
+                    ...odspResolvedUrl.shareLinkInfo,
+                    sharingLinkToRedeem: undefined,
+                },
+            };
 
             return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
@@ -168,19 +169,15 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                // The implicit coercion below also informs TypeScript that
-                // odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem cannot be null. Removing the implicit coercion
-                // here would make the subsequent code more complex.
-                // eslint-disable-next-line no-implicit-coercion
-                assert(!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
-                    0x1ed /* "Share link should be present" */);
-                const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
-                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem);
-                const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
-                const { url, headers } = getUrlAndHeadersWithAuth(
-                    redeemUrl, storageToken, forceAccessTokenViaAuthorizationHeader);
-                headers.prefer = "redeemSharingLink";
-                return fetchAndParseAsJSONHelper(url, { headers });
+            assert(odspResolvedUrl?.shareLinkInfo?.sharingLinkToRedeem !== undefined,
+                0x1ed /* "Share link should be present" */);
+            const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
+            const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem);
+            const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
+            const { url, headers } = getUrlAndHeadersWithAuth(
+                redeemUrl, storageToken, forceAccessTokenViaAuthorizationHeader);
+            headers.prefer = "redeemSharingLink";
+            return fetchAndParseAsJSONHelper(url, { headers });
         }),
     );
 }
@@ -191,11 +188,11 @@ async function fetchLatestSnapshotCore(
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
     snapshotDownloader: (
-            finalOdspResolvedUrl: IOdspResolvedUrl,
-            storageToken: string,
-            snapshotOptions: ISnapshotOptions | undefined,
-            controller?: AbortController,
-        ) => Promise<ISnapshotRequestAndResponseOptions>,
+        finalOdspResolvedUrl: IOdspResolvedUrl,
+        storageToken: string,
+        snapshotOptions: ISnapshotOptions | undefined,
+        controller?: AbortController,
+    ) => Promise<ISnapshotRequestAndResponseOptions>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     enableRedeemFallback?: boolean,
 ): Promise<ISnapshotContents> {
@@ -519,7 +516,7 @@ function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any)
     if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined
         && (typeof error === "object" && error !== null)
         && (error.errorType === DriverErrorType.authorizationError
-        || error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)) {
+            || error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)) {
         return true;
     }
     return false;
@@ -532,9 +529,9 @@ function getEncodedShareUrl(url: string): string {
      */
     let encodedUrl = fromUtf8ToBase64(encodeURI(url));
     encodedUrl = encodedUrl
-      .replace(/=+$/g, "")
-      .replace(/\//g, "_")
-      .replace(/\+/g, "-");
+        .replace(/=+$/g, "")
+        .replace(/\//g, "_")
+        .replace(/\+/g, "-");
     encodedUrl = "u!".concat(encodedUrl);
     return encodedUrl;
 }

@@ -135,10 +135,8 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        // The implicit coercion below also informs TypeScript that parsedUrl.pathname cannot be null. Removing the
-        // implicit coercion here would make the subsequent code more complex.
-        // eslint-disable-next-line no-implicit-coercion
-        assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
+        // According to the typings pathname cannot be undefined, only null (or string).
+        assert(parsedUrl.pathname !== null, 0x0b9 /* "PathName should exist" */);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         assert(Boolean(tenantId), 0x0ba /* "Tenant id should exist" */);
         assert(Boolean(documentId), 0x0bb /* "Document id should exist" */);

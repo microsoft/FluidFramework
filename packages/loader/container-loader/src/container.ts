@@ -859,12 +859,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
                 if (hasAttachmentBlobs) {
                     // upload blobs to storage
-
-                    // The implicit coercion below also informs TypeScript that
-                    // this.loader.services.detachedBlobStorage cannot be null. Removing the implicit coercion here
-                    // would make the subsequent code more complex.
-                    // eslint-disable-next-line no-implicit-coercion
-                    assert(!!this.loader.services.detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
+                    assert(this.loader.services.detachedBlobStorage !== undefined,
+                        0x24e /* "assertion for type narrowing" */);
 
                     // build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
                     // support blob handles that only know about the local IDs
@@ -1271,10 +1267,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
         if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
-        // The implicit coercion below also informs TypeScript that this.loader.services.detachedBlobStorage cannot be
-        // null. Removing the implicit coercion here would make the subsequent code more complex.
-        // eslint-disable-next-line no-implicit-coercion
-            assert(!!this.loader.services.detachedBlobStorage && this.loader.services.detachedBlobStorage.size > 0,
+            assert(this.loader.services.detachedBlobStorage !== undefined &&
+                this.loader.services.detachedBlobStorage.size > 0,
                 0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */);
             delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
         }

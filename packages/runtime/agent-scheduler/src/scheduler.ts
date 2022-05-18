@@ -81,10 +81,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
-        // The implicit coercion below also informs TypeScript that clientId cannot be null. Removing the implicit
-        // coercion here would make the subsequent code more complex.
-        // eslint-disable-next-line no-implicit-coercion
-        assert(!!clientId, 0x117 /* "Trying to get missing clientId!" */);
+        assert(clientId !== undefined, 0x117 /* "Trying to get missing clientId!" */);
         return clientId;
     }
 

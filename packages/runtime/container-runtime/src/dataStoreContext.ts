@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// The implicit coercions (!!) in this file also informs TypeScript that coerced values cannot be null, which
-// simplifies some subsequent code.
-/* eslint-disable no-implicit-coercion */
-
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
@@ -590,7 +586,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
-        assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
+        assert(this.channel !== undefined, 0x146 /* "Channel must exist when submitting message" */);
         const fluidDataStoreContent: FluidDataStoreMessage = {
             content,
             type,
@@ -627,7 +623,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
+        assert(this.channel !== undefined, 0x147 /* "Channel must exist on submitting signal" */);
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
@@ -716,7 +712,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     public abstract getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
+        assert(this.channel !== undefined, 0x14b /* "Channel must exist when resubmitting ops" */);
         const innerContents = contents as FluidDataStoreMessage;
         this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
@@ -725,7 +721,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!this.channel) {
             await this.realize();
         }
-        assert(!!this.channel, 0x14c /* "Channel must exist when rebasing ops" */);
+        assert(this.channel !== undefined, 0x14c /* "Channel must exist when rebasing ops" */);
         const innerContents = contents as FluidDataStoreMessage;
         return this.channel.applyStashedOp(innerContents.content);
     }
@@ -798,7 +794,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
             this.pending = loadedSummary.outstandingOps.concat(this.pending!);
         }
 
-        if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
+        if (tree?.blobs[dataStoreAttributesBlobName] !== undefined) {
             // Need to get through snapshot and use that to populate extraBlobs
             const attributes =
                 await localReadAndParse<ReadFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
