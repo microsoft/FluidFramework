@@ -13,7 +13,8 @@ import {
     generateTestUser,
     InsecureTokenProvider,
 } from "@fluidframework/test-client-utils";
-import { IValueChanged ,
+import {
+    IValueChanged,
     IFluidContainer,
     SharedMap,
 } from "fluid-framework";
@@ -79,7 +80,7 @@ function createDiceRollerControllerProps(map: SharedMap): DiceRollerControllerPr
 }
 
 function createDiceRollerControllerPropsFromContainer(container: IFluidContainer):
-[DiceRollerControllerProps, DiceRollerControllerProps] {
+    [DiceRollerControllerProps, DiceRollerControllerProps] {
     const diceRollerController1Props: DiceRollerControllerProps = createDiceRollerControllerProps(
         container.initialObjects.map1 as SharedMap);
     const diceRollerController2Props: DiceRollerControllerProps = createDiceRollerControllerProps(
