@@ -357,7 +357,7 @@ export class RedisSocketIoAdapter extends Adapter {
             const lumberjackProperties = {
                 [BaseTelemetryProperties.tenantId]: split[1].replace("#", ""),
                 [BaseTelemetryProperties.documentId]: split[2].replace("#", "").replace("\"", ""),
-                "Traces": "abc"
+                Traces: "{}",
             };
             if (packet.data && packet.data.length > 1) {
                 if (packet.data[2] && packet.data[2].length > 0) {
@@ -371,7 +371,8 @@ export class RedisSocketIoAdapter extends Adapter {
                                 service: "redisAdapter",
                                 timestamp: time,
                             });
-                        // console.log(`redisAdapter after= ${JSON.stringify(element.traces)} and packet = ${JSON.stringify(packet.data[2])}`,
+                        // console.log(`redisAdapter after= ${JSON.stringify(element.traces)}
+                        // and packet = ${JSON.stringify(packet.data[2])}`,
                         // `tenantId=${split[1].replace("#", "")}`,
                         // `doc=${split[2].replace("#", "").replace("\"", "")}`);
                         lumberjackProperties.Traces = element.traces;
