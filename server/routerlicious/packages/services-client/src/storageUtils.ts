@@ -194,7 +194,7 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
             blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
         });
     }
-    const flatSummaryTree = flatSummary.trees && flatSummary.trees[0];
+    const flatSummaryTree = flatSummary.trees?.[0];
     const sequenceNumber = flatSummaryTree?.sequenceNumber;
     const snapshotTree = buildHierarchy(
         flatSummaryTree,

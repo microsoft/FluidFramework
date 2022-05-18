@@ -18,7 +18,7 @@ import {
     ITelemetryBufferedLogger,
     ITestDriver,
     TestDriverTypes,
-    RouterliciousEndpoint,
+    DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
 import {
     createFluidTestDriver,
@@ -69,7 +69,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     send(event: ITelemetryBaseEvent): void {
         if (typeof event.testCategoryOverride === "string") {
             event.category = event.testCategoryOverride;
-        } else if (typeof event.message === "string" && event.message.indexOf("FaultInjectionNack") > -1) {
+        } else if (typeof event.message === "string" && event.message.includes("FaultInjectionNack")) {
             event.category = "generic";
         }
         this.baseLogger?.send({ ...event, hostName: pkgName });
@@ -191,7 +191,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
 
 export async function createTestDriver(
     driver: TestDriverTypes,
-    r11sEndpointName: RouterliciousEndpoint | undefined,
+    endpointName: DriverEndpoint | undefined,
     seed: number,
     runId: number | undefined,
     supportsBrowserAuth?: true,
@@ -204,9 +204,10 @@ export async function createTestDriver(
                 directory: "stress",
                 options: options[(runId ?? seed) % options.length],
                 supportsBrowserAuth,
+                odspEndpointName: endpointName,
             },
             r11s: {
-                r11sEndpointName,
+                r11sEndpointName: endpointName,
             },
         });
 }
