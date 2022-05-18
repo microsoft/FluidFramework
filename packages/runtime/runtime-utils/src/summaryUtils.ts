@@ -343,7 +343,7 @@ export class TelemetryContext implements ITelemetryContext {
      * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
      */
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void {
-        this.telemetry[`${prefix}${property}`] = value;
+        this.telemetry.set(`${prefix}${property}`, value);
     }
 
     /**
