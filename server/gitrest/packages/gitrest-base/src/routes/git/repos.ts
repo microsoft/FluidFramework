@@ -4,10 +4,10 @@
  */
 
 import { ICreateRepoParams } from "@fluidframework/gitresources";
+import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";
-import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory } from "../../utils";
-import { handleResponse } from "../utils";
+import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory, logAndThrowApiError } from "../../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
@@ -22,22 +22,23 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         }
 
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        const repoManagerP = repoManagerFactory.create({ ...repoManagerParams, repoName: createParams.name })
+            .then(() => undefined)
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
-        const repoManagerP = repoManagerFactory.create({
-            ...repoManagerParams,
-            repoName: createParams.name,
-        });
-
-        handleResponse(repoManagerP.then(() => undefined), response, undefined, undefined, 201);
+        handleResponse(repoManagerP, response, undefined, undefined, 201);
     });
 
     /**
      * Retrieves an existing get repository
      */
     router.get("/repos/:owner/:repo", (request, response, next) => {
-        const repoManagerP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request));
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        const repoManagerP = repoManagerFactory.open(repoManagerParams)
+            .then(() => ({ name: request.params.repo }))
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
-        handleResponse(repoManagerP.then(() => ({ name: request.params.repo })), response);
+        handleResponse(repoManagerP, response);
     });
 
     return router;

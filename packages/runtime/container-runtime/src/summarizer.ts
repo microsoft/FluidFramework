@@ -247,6 +247,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             eventName: "RunningSummarizer",
             onBehalfOf,
             initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
+            config: JSON.stringify(this.configurationGetter()),
         });
 
         // Summarizing container ID (with clientType === "summarizer")

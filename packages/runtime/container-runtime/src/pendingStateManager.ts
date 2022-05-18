@@ -380,12 +380,12 @@ export class PendingStateManager implements IDisposable {
     public checkpoint() {
         const checkpointHead = this.pendingStates.peekBack();
         return {
-            rollback:() => {
+            rollback: () => {
                 try {
-                    while(this.pendingStates.peekBack() !== checkpointHead) {
+                    while (this.pendingStates.peekBack() !== checkpointHead) {
                         this.rollbackNextPendingState();
                     }
-                } catch(err) {
+                } catch (err) {
                     const error = wrapError(err, (message) => {
                         return DataProcessingError.create(
                             `RollbackError: ${message}`,

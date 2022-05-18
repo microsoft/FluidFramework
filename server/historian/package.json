@@ -48,7 +48,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.63777",
+    "@fluidframework/build-tools": "^0.2.64540",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/compression": "0.0.36",
