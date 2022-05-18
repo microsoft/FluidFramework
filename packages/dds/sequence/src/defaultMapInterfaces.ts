@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 /**
@@ -74,7 +74,12 @@ export interface IValueOperation<T> {
      * @param message - The operation itself
      * @alpha
      */
-    process(value: T, params: any, local: boolean, message: ISequencedDocumentMessage | undefined);
+    process(
+        value: T,
+        params: any,
+        local: boolean,
+        message: ISequencedDocumentMessage | undefined
+    );
 }
 
 /**
@@ -100,73 +105,23 @@ export interface IValueType<T> {
     ops: Map<string, IValueOperation<T>>;
 }
 
-/**
- * Container types that are able to create value types as contained values.
- */
-export interface IValueTypeCreator {
-    /**
-     * Create a new value type at the given key.
-     * @param key - Key to create the value type at
-     * @param type - Type of the value type to create
-     * @param params - Initialization params for the value type
-     * @alpha
-     */
-    createValueType(key: string, type: string, params: any): this;
-}
-
-export interface ISharedMapEvents extends ISharedObjectEvents {
+export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
     (event: "valueChanged" | "create", listener: (
         changed: IValueChanged,
         local: boolean,
         target: IEventThisPlaceHolder) => void);
-    (event: "clear", listener: (
-        local: boolean,
-        target: IEventThisPlaceHolder
-    ) => void);
 }
 
 /**
- * Shared map interface
- */
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
-    /**
-     * Retrieves the given key from the map.
-     * @param key - Key to retrieve from
-     * @returns The stored value, or undefined if the key is not set
-     */
-    get<T = any>(key: string): T | undefined;
-
-    /**
-     * A form of get except it will only resolve the promise once the key exists in the map.
-     * @param key - Key to retrieve from
-     * @returns The stored value once available
-     */
-    wait<T = any>(key: string): Promise<T>;
-
-    /**
-     * Sets the value stored at key to the provided value.
-     * @param key - Key to set at
-     * @param value - Value to set
-     * @returns The ISharedMap itself
-     */
-    set<T = any>(key: string, value: T): this;
-
-}
-
-/**
- * The _ready-for-serialization_ format of values contained in DDS contents.  This allows us to use
+ * The _ready-for-serialization_ format of values contained in DDS contents. This allows us to use
  * ISerializableValue.type to understand whether they're storing a Plain JS object, a SharedObject, or a value type.
  * Note that the in-memory equivalent of ISerializableValue is ILocalValue (similarly holding a type, but with
- * the _in-memory representation_ of the value instead).  An ISerializableValue is what gets passed to
- * JSON.stringify and comes out of JSON.parse.  This format is used both for snapshots (loadCore/populate)
+ * the _in-memory representation_ of the value instead). An ISerializableValue is what gets passed to
+ * JSON.stringify and comes out of JSON.parse. This format is used both for snapshots (loadCore/populate)
  * and ops (set).
- * If type is Plain, it must be a plain JS object that can survive a JSON.stringify/parse.  E.g. a URL object will
- * just get stringified to a URL string and not rehydrate as a URL object on the other side.  It may contain members
- * that are ISerializedHandle (the serialized form of a handle).
- * If type is a value type then it must be amongst the types registered via registerValueType or we won't know how
- * to serialize/deserialize it (we rely on its factory via .load() and .store()).  Its value will be type-dependent.
- * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
- * channel ID.  This type is legacy and deprecated.
+ *
+ * The DefaultMap impelmentation for sequence has been specialized to only support a single ValueType, which serializes
+ * and deserializes via .store() and .load().
  */
 export interface ISerializableValue {
     /**
