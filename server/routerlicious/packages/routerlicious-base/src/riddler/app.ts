@@ -46,10 +46,9 @@ export function create(
     app.set("trust proxy", 1);
 
     if (loggerFormat === "json") {
-        app.use((request, response, next) => {
+        app.use((request, response, next): void => {
             const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return morgan((tokens, req, res) => {
+            morgan((tokens, req, res) => {
                 const messageMetaData = {
                     [HttpProperties.method]: tokens.method(req, res),
                     [HttpProperties.pathCategory]: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,

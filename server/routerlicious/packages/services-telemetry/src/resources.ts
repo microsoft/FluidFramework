@@ -6,7 +6,6 @@
 import { serializeError } from "serialize-error";
 import { Lumber } from "./lumber";
 import { LumberEventName } from "./lumberEventNames";
-import { Lumberjack } from "./lumberjack";
 
 const isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
 const isNode = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
@@ -157,13 +156,3 @@ export const getLumberBaseProperties = (documentId: string, tenantId: string) =>
     [BaseTelemetryProperties.tenantId]: tenantId,
     [BaseTelemetryProperties.documentId]: documentId,
 });
-
-// Helper method to log HTTP metadata
-export const logRequestMetric = (messageMetaData) => {
-    const restProperties = new Map(Object.entries(messageMetaData));
-    restProperties.set(CommonProperties.telemetryGroupName, messageMetaData.eventName);
-    const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest, restProperties);
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    messageMetaData.status?.startsWith("2") ? httpMetric.success("Request successful")
-        : httpMetric.error("Request failed");
-};
