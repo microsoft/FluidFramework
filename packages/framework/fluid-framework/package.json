@@ -61,69 +61,13 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
-    "fluid-framework-previous": "npm:fluid-framework@0.59.2000",
+    "fluid-framework-previous": "npm:fluid-framework@0.59.3000",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
-    "broken": {
-      "ClassDeclaration_IntervalCollection": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_ISequenceDeltaRange": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceDeltaEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceMaintenanceEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISharedString": {
-        "forwardCompat": false
-      },
-      "TypeAliasDeclaration_MatrixSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_PaddingSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_RunSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedNumberSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedObjectSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedSequence": {
-        "forwardCompat": false
-      },
-      "TypeAliasDeclaration_SharedStringSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SparseMatrix": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SubSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedSegmentSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedString": {
-        "forwardCompat": false
-      }
-    }
+    "version": "0.59.4000",
+    "broken": {}
   }
 }
