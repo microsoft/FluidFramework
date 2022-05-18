@@ -14,27 +14,6 @@
                 "odsp":{
                     "loader":{
                         "summarizeProtocolTree": [false]
-                    },
-                    "configurations":{
-                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [0, 1]
-                    }
-                }
-            }
-        },
-        "ci": {
-            "opRatePerMin": 10,
-            "progressIntervalMs": 15000,
-            "numClients": 120,
-            "totalSendCount": 10000,
-            "totalBlobCount": 480,
-            "blobSize": 256,
-            "readWriteCycleMs": 30000,
-            "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 150000,
-            "optionOverrides":{
-                "odsp":{
-                    "loader":{
-                        "summarizeProtocolTree": [false]
                     }
                 }
             }
