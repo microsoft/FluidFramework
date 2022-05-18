@@ -23,9 +23,15 @@ import morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
-import { bindCorrelationId } from "@fluidframework/server-services-utils";
+import { bindCorrelationId, getCorrelationIdWithHttpFallback } from "@fluidframework/server-services-utils";
 import { RestLessServer } from "@fluidframework/server-services";
-import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+    BaseTelemetryProperties,
+    CommonProperties,
+    HttpProperties,
+    LumberEventName,
+    Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
 
@@ -76,24 +82,38 @@ export function create(
     app.use(compression());
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
-        app.use(morgan((tokens, req, res) => {
-            const messageMetaData = {
-                method: tokens.method(req, res),
-                pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
-                url: tokens.url(req, res),
-                driverVersion: tokens.req(req, res, DriverVersionHeaderName),
-                status: tokens.status(req, res),
-                contentLength: tokens.res(req, res, "content-length"),
-                durationInMs: tokens["response-time"](req, res),
-                tenantId: getTenantIdFromRequest(req.params),
-                documentId: getIdFromRequest(req.params),
-                serviceName: "alfred",
-                eventName: "http_requests",
-             };
-             logRequestMetric(messageMetaData);
-             winston.info("request log generated", { messageMetaData });
-             return undefined;
-        }, { stream }));
+        app.use((request, response, next) => {
+            console.log("[DEBUG] Starting app use");
+            const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
+            console.log("[DEBUG] Will return morgan");
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return morgan((tokens, req, res) => {
+                console.log("[DEBUG] Starting morgan");
+                const messageMetaData = {
+                    [HttpProperties.method]: tokens.method(req, res),
+                    [HttpProperties.pathCategory]: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
+                    [HttpProperties.url]: tokens.url(req, res),
+                    [HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
+                    [HttpProperties.status]: tokens.status(req, res),
+                    [HttpProperties.contentLength]: tokens.res(req, res, "content-length"),
+                    [HttpProperties.responseTime]: tokens["response-time"](req, res),
+                    [BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+                    [BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+                    [BaseTelemetryProperties.correlationId]: getCorrelationIdWithHttpFallback(req, res),
+                    [CommonProperties.serviceName]: "alfred",
+                    [CommonProperties.telemetryGroupName]: "http_requests",
+                };
+                httpMetric.setProperties(messageMetaData);
+                console.log("[DEBUG] Will log within morgan");
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                messageMetaData.status?.startsWith("2") ?
+                    httpMetric.success("Request successful") :
+                    httpMetric.error("Request failed");
+                winston.info("request log generated", { messageMetaData });
+                console.log("[DEBUG] Finished logging in morgan");
+                return undefined;
+            }, { stream })(request, response, next);
+        });
     } else {
         app.use(morgan(loggerFormat, { stream }));
     }

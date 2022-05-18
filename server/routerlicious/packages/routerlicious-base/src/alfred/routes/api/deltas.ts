@@ -268,5 +268,12 @@ export function create(
         },
     );
 
+    router.get(
+        "/testCorrelationId",
+        (request, response, next) => {
+            console.log("[DEBUG] Running Router GET for testCorrelationId...");
+        },
+    );
+
     return router;
 }

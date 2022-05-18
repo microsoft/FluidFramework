@@ -27,6 +27,7 @@ export enum LumberType {
 export enum BaseTelemetryProperties {
     tenantId = "tenantId",
     documentId = "documentId",
+    correlationId = "correlationId",
 }
 
 // Incoming message properties
@@ -34,6 +35,16 @@ export enum QueuedMessageProperties {
     topic = "topic",
     partition = "partition",
     offset = "offset",
+}
+
+export enum HttpProperties {
+    contentLength = "contentLength",
+    driverVersion = "driverVersion",
+    method = "method",
+    pathCategory = "pathCategory",
+    responseTime = "responseTime",
+    status = "status",
+    url = "url",
 }
 
 export enum CommonProperties {
@@ -67,6 +78,7 @@ export enum CommonProperties {
 
     // Miscellaneous properties
     restart = "restart",
+    serviceName = "serviceName",
     telemetryGroupName = "telemetryGroupName",
 }
 
