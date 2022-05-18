@@ -25,7 +25,6 @@ function getFileLocations(): [string, string] {
     // Relative to this generated js file being executed
     testCollateralPath = nodePath.join(__dirname, "..", testCollateralPath);
     workerPath = nodePath.join(__dirname, "..", workerPath);
-    assert(fs.existsSync(testCollateralPath), `Cannot find test collateral path: ${origTestCollateralPath}`);
     assert(fs.existsSync(workerPath), `Cannot find worker js file: ${workerPath}`);
     return [testCollateralPath, workerPath];
 }
@@ -192,6 +191,10 @@ export async function processContent(mode: Mode, concurrently = true) {
     }
 
     return limiter.waitAll();
+}
+
+export function testCollateralExists() {
+    return fs.existsSync(fileLocation);
 }
 
 /**
