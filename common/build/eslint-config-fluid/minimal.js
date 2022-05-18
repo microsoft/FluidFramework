@@ -95,6 +95,7 @@ module.exports = {
                 "ignoreEOLComments": true
             }
         ],
+        "use-isnan": "error",
 
         // Catches a common coding mistake where "resolve" and "reject" are confused.
         "promise/param-names": "warn",
