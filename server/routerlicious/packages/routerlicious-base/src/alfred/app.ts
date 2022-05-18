@@ -21,7 +21,6 @@ import cors from "cors";
 import express from "express";
 import morgan from "morgan";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import { bindCorrelationId, getCorrelationIdWithHttpFallback } from "@fluidframework/server-services-utils";
 import { RestLessServer } from "@fluidframework/server-services";
@@ -43,7 +42,6 @@ const split = require("split");
  */
 const stream = split().on("data", (message) => {
     if (message !== undefined) {
-        winston.info(message);
         Lumberjack.info(message);
     }
 });
@@ -83,12 +81,9 @@ export function create(
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
         app.use((request, response, next) => {
-            console.log("[DEBUG] Starting app use");
             const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
-            console.log("[DEBUG] Will return morgan");
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return morgan((tokens, req, res) => {
-                console.log("[DEBUG] Starting morgan");
                 const messageMetaData = {
                     [HttpProperties.method]: tokens.method(req, res),
                     [HttpProperties.pathCategory]: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
@@ -104,13 +99,11 @@ export function create(
                     [CommonProperties.telemetryGroupName]: "http_requests",
                 };
                 httpMetric.setProperties(messageMetaData);
-                console.log("[DEBUG] Will log within morgan");
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                messageMetaData.status?.startsWith("2") ?
-                    httpMetric.success("Request successful") :
+                if (messageMetaData.status?.startsWith("2")) {
+                    httpMetric.success("Request successful");
+                } else {
                     httpMetric.error("Request failed");
-                winston.info("request log generated", { messageMetaData });
-                console.log("[DEBUG] Finished logging in morgan");
+                }
                 return undefined;
             }, { stream })(request, response, next);
         });

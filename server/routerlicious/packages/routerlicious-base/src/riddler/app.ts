@@ -14,7 +14,6 @@ import {
 import * as bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
-import * as winston from "winston";
 import { bindCorrelationId, getCorrelationIdWithHttpFallback } from "@fluidframework/server-services-utils";
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as api from "./api";
@@ -27,7 +26,6 @@ const split = require("split");
  */
 const stream = split().on("data", (message) => {
     if (message !== undefined) {
-        winston.info(message);
         Lumberjack.info(message);
     }
 });
@@ -48,8 +46,9 @@ export function create(
     app.set("trust proxy", 1);
 
     if (loggerFormat === "json") {
-        app.use(() => {
+        app.use((request, response, next) => {
             const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return morgan((tokens, req, res) => {
                 const messageMetaData = {
                     [HttpProperties.method]: tokens.method(req, res),
@@ -64,13 +63,13 @@ export function create(
                     [CommonProperties.telemetryGroupName]: "http_requests",
                 };
                 httpMetric.setProperties(messageMetaData);
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                messageMetaData.status?.startsWith("2") ?
-                    httpMetric.success("Request successful") :
+                if (messageMetaData.status?.startsWith("2")) {
+                    httpMetric.success("Request successful");
+                } else {
                     httpMetric.error("Request failed");
-                winston.info("request log generated", { messageMetaData });
+                }
                 return undefined;
-            });
+            })(request, response, next);
         });
     } else {
         app.use(morgan(loggerFormat, { stream }));
