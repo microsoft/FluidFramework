@@ -30,7 +30,6 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     interface LoggingHeader {
         headerName: string;
         logName: string;
-        mapping?: Map<string, string | number | boolean>;
     }
 
     // We rename headers so that otel doesn't scrub them away. Otel doesn't allow
@@ -60,25 +59,26 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     // Ex. x-fluid-telemetry:Origin=c,isSomeDataPoint (there will be no isSomeDataPoint=false or isSomeDataPoint=True)
     const fluidTelemetry = headers.get("x-fluid-telemetry");
     if (fluidTelemetry !== undefined && fluidTelemetry !== null) {
-        const mapResponseOrigin: Map<string, string> = new Map([
-            ["c", "cache"],
-            ["g", "graph"],
-          ]);
-
-        const fluidKeyValuesToLog: LoggingHeader[] = [
-            { headerName: "Origin", logName: "responseOrigin", mapping: mapResponseOrigin },
-        ];
-
         const keyValueMap = fluidTelemetry.split(",").map((keyValuePair) => keyValuePair.split("="));
         for (const [key, value] of keyValueMap) {
-            const fluidKV = fluidKeyValuesToLog.find((t) => t.headerName === key.trim());
-            if (fluidKV !== undefined) {
-                const fieldValue = value?.trim() ?? true; // assume true for a key without value.
-                additionalProps[fluidKV.logName] = fluidKV.mapping?.get(fieldValue) ?? fieldValue;
-            }
-        }
+            if ("Origin" === key.trim()) {
+                let fieldValue: string;
+                switch (value?.trim()) {
+                    case "c":
+                        fieldValue = "cache";
+                    break;
+                    case "g":
+                        fieldValue = "graph";
+                    break;
+                    default:
+                        fieldValue = "undefined";
+                }
+                const logName = "responseOrigin";
+                additionalProps[logName] = fieldValue;
+                break;
+           }
+       }
     }
-
     return additionalProps;
 }
 
