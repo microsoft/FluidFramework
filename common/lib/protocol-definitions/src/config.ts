@@ -39,8 +39,9 @@ export interface IClientConfiguration {
      * noopTimeFrequency & noopCountFrequency control how often a client with "write" connection needs to send
      * noop messages in case no other ops are being sent. Any op (including noops) result in client
      * communicating its reference sequence number to the relay service, which can recalculate MSN based on new info.
-     * Clients send noop when either noopTimeFrequency ms elapsed from receiving the last op or when receiving
-     * noopCountFrequency ops.
+     * Clients send noops when either noopTimeFrequency ms elapsed from receiving the last op or when receiving
+     * noopCountFrequency ops and only if the client did not have a chance to communicate its reference sequence
+     * number via regular ops.
      * 'Infinity' will disable this feature and if no value is provided, the client choses some reasonable value.
      */
     noopTimeFrequency?: number;
