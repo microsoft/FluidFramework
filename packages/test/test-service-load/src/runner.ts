@@ -64,6 +64,7 @@ async function main() {
     if (endpoint === "odsp-df" && profileArg === "ci") {
         profileArg = "ci-df";
     }
+    const profile = getProfile(profileArg);
 
     if (log !== undefined) {
         process.env.DEBUG = log;
