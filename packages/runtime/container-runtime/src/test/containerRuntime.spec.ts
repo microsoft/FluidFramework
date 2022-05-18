@@ -697,7 +697,7 @@ describe("Runtime", () => {
                     mockLogger.assertMatch([]);
                 });
 
-            it(`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
+            it.only(`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
                 "processing local op will not close the container", async () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
@@ -707,6 +707,7 @@ describe("Runtime", () => {
                             type: "op",
                             clientId: "clientId",
                             sequenceNumber: 0,
+                            clientSequenceNumber: 0,
                             contents: {
                                 address: "address",
                             },
@@ -728,6 +729,7 @@ describe("Runtime", () => {
                             type: "op",
                             clientId: "clientId",
                             sequenceNumber: 0,
+                            clientSequenceNumber: 0,
                             contents: {
                                 address: "address",
                             },

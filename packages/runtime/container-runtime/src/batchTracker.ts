@@ -25,7 +25,7 @@ export class BatchTracker {
         this.logger = ChildLogger.create(logger, "Batching");
 
         this.batchEventEmitter.on("batchBegin", (message: ISequencedDocumentMessage) => {
-            this.startBatchSequenceNumber = message.sequenceNumber;
+            this.startBatchSequenceNumber = message.clientSequenceNumber;
             this.batchProcessingStartTimeStamp = dateTimeProvider();
             this.trackedBatchCount++;
         });
@@ -35,7 +35,7 @@ export class BatchTracker {
                 this.startBatchSequenceNumber !== undefined && this.batchProcessingStartTimeStamp !== undefined,
                 0x2ba /* "batchBegin must fire before batchEnd" */);
 
-            const length = message.sequenceNumber - this.startBatchSequenceNumber + 1;
+            const length = message.clientSequenceNumber - this.startBatchSequenceNumber + 1;
             if (length >= batchLengthThreshold) {
                 this.logger.sendErrorEvent({
                     eventName: "LengthTooBig",
@@ -75,6 +75,6 @@ export class BatchTracker {
 export const BindBatchTracker = (
     batchEventEmitter: EventEmitter,
     logger: ITelemetryLogger,
-    batchLengthThreshold: number = 128,
+    batchLengthThreshold: number = 500,
     batchCountSamplingRate: number = 1000,
 ) => new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate);
