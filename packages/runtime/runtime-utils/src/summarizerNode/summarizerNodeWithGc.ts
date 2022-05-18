@@ -176,7 +176,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If trackState is true, get summary from base summarizer node which tracks summary state.
         // If trackState is false, get summary from summarizeInternal.
         return trackState
-            ? super.summarize(fullTree, true, telemetryContext)
+            ? super.summarize(fullTree, true /* trackState */, telemetryContext)
             : this.summarizeFn(fullTree, trackState, telemetryContext);
     }
 
