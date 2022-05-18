@@ -494,6 +494,13 @@ export function configureWebSocketServices(
                                     if (message.traces) {
                                         // End of tracking. Write traces.
                                         // TODO: add Lumber metric here?
+                                        const lumberjackProperties = {
+                                            [BaseTelemetryProperties.tenantId]: connection.tenantId,
+                                            [BaseTelemetryProperties.documentId]: connection.documentId,
+                                            Traces: "{}",
+                                        };
+                                        lumberjackProperties.Traces = JSON.stringify(message.traces);
+                                        Lumberjack.info(`Traces-submitOp`, lumberjackProperties);
                                         metricLogger.writeLatencyMetric("latency", message.traces).catch(
                                             (error) => {
                                                 logger.error(error.stack);

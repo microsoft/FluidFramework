@@ -376,7 +376,7 @@ export class RedisSocketIoAdapter extends Adapter {
                         // `tenantId=${split[1].replace("#", "")}`,
                         // `doc=${split[2].replace("#", "").replace("\"", "")}`);
                         lumberjackProperties.Traces = element.traces;
-                        Lumberjack.info("Traces", lumberjackProperties);
+                        Lumberjack.info(`Traces-${element.type}`, lumberjackProperties);
                     });
                 }
             }
