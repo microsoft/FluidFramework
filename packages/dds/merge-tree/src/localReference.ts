@@ -97,7 +97,7 @@ import { minReferencePosition,
     /**
      * @deprecated - use refHasRangeLabels
      */
-    public hasRangeLabels() {
+    public hasRangeLabels(): boolean {
         return refHasRangeLabels(this);
     }
     /**
