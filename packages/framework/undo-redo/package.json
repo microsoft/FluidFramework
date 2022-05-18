@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/undo-redo",
-  "version": "0.59.3000",
+  "version": "0.59.3001",
   "description": "Undo Redo",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -60,17 +60,17 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/map": "^0.59.3000",
-    "@fluidframework/matrix": "^0.59.3000",
-    "@fluidframework/merge-tree": "^0.59.3000",
-    "@fluidframework/sequence": "^0.59.3000"
+    "@fluidframework/map": "^0.59.3001",
+    "@fluidframework/matrix": "^0.59.3001",
+    "@fluidframework/merge-tree": "^0.59.3001",
+    "@fluidframework/sequence": "^0.59.3001"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.66793",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^0.59.3000",
-    "@fluidframework/test-runtime-utils": "^0.59.3000",
+    "@fluidframework/mocha-test-setup": "^0.59.3001",
+    "@fluidframework/test-runtime-utils": "^0.59.3001",
     "@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@0.59.2000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -104,7 +104,9 @@
   "typeValidation": {
     "version": "0.59.3000",
     "broken": {
-      "ClassDeclaration_SharedSegmentSequenceRevertible": {"forwardCompat": false}
+      "ClassDeclaration_SharedSegmentSequenceRevertible": {
+        "forwardCompat": false
+      }
     }
   }
 }
