@@ -91,7 +91,7 @@ import { minReferencePosition,
     /**
      * @deprecated - use refHasTileLabels
      */
-    public hasTileLabels() {
+    public hasTileLabels(): boolean {
         return refHasTileLabels(this);
     }
     /**
