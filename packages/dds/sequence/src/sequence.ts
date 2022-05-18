@@ -447,19 +447,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
 
-        let totalBlobBytes = 0;
-
         // conditionally write the interval collection blob
         // only if it has entries
         if (this.intervalMapKernel.size > 0) {
             const content = this.intervalMapKernel.serialize(serializer);
-            totalBlobBytes += content.length;
             builder.addBlob(snapshotFileName, content);
         }
 
         builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
-
-        this.increaseSummarizeTotalBlobBytes(totalBlobBytes, telemetryContext);
 
         return builder.getSummaryTree();
     }

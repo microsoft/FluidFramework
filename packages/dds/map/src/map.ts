@@ -265,8 +265,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         // Should be bigger than MinValueSizeSeparateSnapshotBlob
         const MaxSnapshotBlobSize = 16 * 1024;
 
-        let totalBlobBytes = 0;
-
         // Partitioning algorithm:
         // 1) Split large (over MinValueSizeSeparateSnapshotBlob = 8K) properties into their own blobs.
         //    Naming (across snapshots) of such blob does not have to be stable across snapshots,
@@ -290,7 +288,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
                     },
                 };
                 builder.addBlob(blobName, JSON.stringify(content));
-                totalBlobBytes += value.value.length;
             } else {
                 currentSize += value.type.length + 21; // Approximation cost of property header
                 if (value.value) {
@@ -303,7 +300,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
                     blobs.push(blobName);
                     builder.addBlob(blobName, JSON.stringify(headerBlob));
                     headerBlob = {};
-                    totalBlobBytes += currentSize;
                     currentSize = 0;
                 }
                 headerBlob[key] = {
@@ -318,9 +314,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             content: headerBlob,
         };
         builder.addBlob(snapshotFileName, JSON.stringify(header));
-
-        totalBlobBytes += currentSize;
-        this.increaseSummarizeTotalBlobBytes(totalBlobBytes, telemetryContext);
 
         return builder.getSummaryTree();
     }

@@ -768,8 +768,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         const content: IDirectoryDataObject = {};
         stack.push([root, content]);
 
-        let totalBlobBytes = 0;
-
         while (stack.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const [currentSubDir, currentSubDirObject] = stack.pop()!;
@@ -800,10 +798,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 } else {
                     currentSubDirObject.storage[key] = result;
                 }
-
-                if (value.value) {
-                    totalBlobBytes += value.value.length;
-                }
             }
 
             for (const [subdirName, subdir] of currentSubDir.subdirectories()) {
@@ -821,8 +815,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             content,
         };
         builder.addBlob(snapshotFileName, JSON.stringify(newFormat));
-
-        this.increaseSummarizeTotalBlobBytes(totalBlobBytes, telemetryContext);
 
         return builder.getSummaryTree();
     }

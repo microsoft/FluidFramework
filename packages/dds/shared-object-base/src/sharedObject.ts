@@ -499,7 +499,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
         this.incrementSummarizeInstanceCount(telemetryContext);
-        return this.summarizeCore(this.serializer, telemetryContext);
+
+        const result = this.summarizeCore(this.serializer, telemetryContext);
+        this.increaseSummarizeTotalBlobBytes(result.stats.totalBlobSize, telemetryContext);
+        return result;
     }
 
     /**
@@ -511,7 +514,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummaryTreeWithStats> {
         this.incrementSummarizeInstanceCount(telemetryContext);
-        return this.summarizeCore(this.serializer, telemetryContext);
+
+        const result = this.summarizeCore(this.serializer, telemetryContext);
+        this.increaseSummarizeTotalBlobBytes(result.stats.totalBlobSize, telemetryContext);
+        return result;
     }
 
     /**
@@ -567,7 +573,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         telemetryContext?.set(this.telemetryContextPrefix, instanceCountProperty, ++instanceCount);
     }
 
-    protected increaseSummarizeTotalBlobBytes(totalBlobBytes: number, telemetryContext?: ITelemetryContext): void {
+    private increaseSummarizeTotalBlobBytes(totalBlobBytes: number, telemetryContext?: ITelemetryContext): void {
         const totalBlobBytesProperty = "TotalBlobBytes";
         const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, totalBlobBytesProperty) ?? 0) as number;
         telemetryContext?.set(this.telemetryContextPrefix, totalBlobBytesProperty, prevTotal + totalBlobBytes);
