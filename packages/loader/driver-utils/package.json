@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-utils",
-  "version": "0.59.3000",
+  "version": "0.59.4000",
   "description": "Collection of utility functions for Fluid drivers",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -65,19 +65,19 @@
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/driver-definitions": "^0.46.1000",
     "@fluidframework/gitresources": "^0.1036.3000-0",
-    "@fluidframework/protocol-base": "^0.1036.3000-0",
+    "@fluidframework/protocol-base": "^0.1036.3000-66438",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/telemetry-utils": "^0.59.3000",
+    "@fluidframework/telemetry-utils": "^0.59.4000",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66048",
+    "@fluidframework/build-tools": "^0.2.66793",
     "@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@0.59.2000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
-    "@fluidframework/mocha-test-setup": "^0.59.3000",
-    "@fluidframework/runtime-utils": "^0.59.3000",
+    "@fluidframework/mocha-test-setup": "^0.59.4000",
+    "@fluidframework/runtime-utils": "^0.59.4000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",

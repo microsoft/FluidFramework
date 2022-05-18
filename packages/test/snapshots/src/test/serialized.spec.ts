@@ -169,7 +169,7 @@ function *recurseFiles(rootPath: string): IterableIterator<string> {
     for (const child of fs.readdirSync(rootPath)) {
         const filenameFull = `${rootPath}/${child}`;
         const stat = fs.statSync(filenameFull);
-        if (stat && stat.isDirectory()) {
+        if (stat?.isDirectory()) {
             yield *recurseFiles(filenameFull);
         } else {
             yield filenameFull;

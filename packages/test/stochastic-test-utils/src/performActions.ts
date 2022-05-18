@@ -102,7 +102,7 @@ export async function performFuzzActionsAsync<
             state = await applyOperation(operation);
         } catch (err) {
             console.log(`Error encountered on operation number ${operations.length}`);
-            if (saveInfo !== undefined && saveInfo.saveOnFailure) {
+            if (saveInfo?.saveOnFailure === true) {
                 await fs.writeFile(saveInfo.filepath, JSON.stringify(operations, undefined, 4));
             }
             throw err;
@@ -198,7 +198,7 @@ export function performFuzzActions<TOperation extends { type: string | number; }
             state = applyOperation(operation);
         } catch (err) {
             console.log(`Error encountered on operation number ${operations.length}`);
-            if (saveInfo !== undefined && saveInfo.saveOnFailure) {
+            if (saveInfo?.saveOnFailure === true) {
                 writeFileSync(saveInfo.filepath, JSON.stringify(operations, undefined, 4));
             }
             throw err;

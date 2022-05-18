@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/merge-tree",
-  "version": "0.59.3000",
+  "version": "0.59.4000",
   "description": "Merge tree",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -63,20 +63,20 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.48.1000",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore-definitions": "^0.59.3000",
+    "@fluidframework/datastore-definitions": "^0.59.4000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/runtime-definitions": "^0.59.3000",
-    "@fluidframework/runtime-utils": "^0.59.3000",
-    "@fluidframework/shared-object-base": "^0.59.3000",
-    "@fluidframework/telemetry-utils": "^0.59.3000"
+    "@fluidframework/runtime-definitions": "^0.59.4000",
+    "@fluidframework/runtime-utils": "^0.59.4000",
+    "@fluidframework/shared-object-base": "^0.59.4000",
+    "@fluidframework/telemetry-utils": "^0.59.4000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66048",
+    "@fluidframework/build-tools": "^0.2.66793",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@0.59.2000",
-    "@fluidframework/mocha-test-setup": "^0.59.3000",
-    "@fluidframework/test-runtime-utils": "^0.59.3000",
+    "@fluidframework/mocha-test-setup": "^0.59.4000",
+    "@fluidframework/test-runtime-utils": "^0.59.4000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
@@ -110,24 +110,152 @@
   "typeValidation": {
     "version": "0.59.3000",
     "broken": {
-      "InterfaceDeclaration_IMergeTreeAnnotateMsg": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeDelta": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {"forwardCompat": false, "backCompat": false},
-      "TypeAliasDeclaration_IMergeTreeDeltaOp": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeDeltaOpArgs": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeGroupMsg": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeInsertMsg": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs": {"forwardCompat": false, "backCompat": false},
-      "TypeAliasDeclaration_IMergeTreeOp": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeRemoveMsg":  {"forwardCompat": false, "backCompat": false},
-      "TypeAliasDeclaration_IntervalNode":  {"forwardCompat": false, "backCompat": false},
-      "TypeAliasDeclaration_MergeTreeDeltaOperationType":  {"forwardCompat": false, "backCompat": false},
-      "TypeAliasDeclaration_MergeTreeDeltaOperationTypes": {"forwardCompat": false, "backCompat": false},
-      "EnumDeclaration_MergeTreeDeltaType": {"forwardCompat": false, "backCompat": false},
-      "EnumDeclaration_MergeTreeMaintenanceType": {"forwardCompat": false, "backCompat": false},
-      "EnumDeclaration_RBColor": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_RBNode": {"forwardCompat": false, "backCompat": false}
-
+      "InterfaceDeclaration_IMergeTreeAnnotateMsg": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeDelta": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_IMergeTreeDeltaOp": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeDeltaOpArgs": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeGroupMsg": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeInsertMsg": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_IMergeTreeOp": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeRemoveMsg": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_IntervalNode": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_MergeTreeDeltaOperationType": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_MergeTreeDeltaOperationTypes": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "EnumDeclaration_MergeTreeDeltaType": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "EnumDeclaration_MergeTreeMaintenanceType": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "EnumDeclaration_RBColor": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_RBNode": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ClassDeclaration_List": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_BaseSegment": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_Client": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IConsensusInfo": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IHierBlock": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IMergeBlock": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_IMergeNode": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IMergeNodeCommon": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeSegmentDelta": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_IncrementalMapState": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_InsertContext": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISegment": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_LocalReference": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_LocalReferenceCollection": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_LRUSegment": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_MergeBlock": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISegmentChanges": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_Marker": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_MergeNode": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_MergeTree": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_SegmentAccumulator": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_SegmentGroup": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SnapshotLegacy": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SortedSegmentSet": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_TextSegment": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_TrackingGroup": {
+        "forwardCompat": false
+      }
     }
   }
 }
