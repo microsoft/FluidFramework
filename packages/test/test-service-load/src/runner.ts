@@ -52,7 +52,7 @@ async function main() {
 
     const driver: TestDriverTypes = commander.driver;
     const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
-    const profileArg: string = commander.profile;
+    let profileArg: string = commander.profile;
     const url: string = commander.url;
     const runId: number = commander.runId;
     const log: string | undefined = commander.log;
@@ -60,7 +60,10 @@ async function main() {
     const seed: number = commander.seed;
     const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
-    const profile = getProfile(profileArg);
+    // We can have some features which only works in df. So choose profile accordingly.
+    if (endpoint === "odsp-df" && profileArg === "ci") {
+        profileArg = "ci-df";
+    }
 
     if (log !== undefined) {
         process.env.DEBUG = log;
