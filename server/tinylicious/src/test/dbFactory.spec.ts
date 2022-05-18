@@ -31,7 +31,7 @@ interface ITestDelta {
     tenantId: string;
     operation: {
         sequenceNumber: number;
-    }
+    };
 }
 
 /**
@@ -43,8 +43,8 @@ interface ITestConfig {
         db: {
             inMemory: boolean;
             path?: string;
-        }
-    }
+        };
+    };
 
     // dispose method to allow the config to do any cleanup - i.e. delete the temporary
     // directory used by leveldb
