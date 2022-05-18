@@ -78,5 +78,6 @@ export async function getSession(ordererUrl: string,
     tempSession.isSessionAlive = isSessionAlive;
     Lumberjack.info(`Returning the session from the discovery: ${JSON.stringify(tempSession)}`,
         lumberjackProperties);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return tempSession;
 }
