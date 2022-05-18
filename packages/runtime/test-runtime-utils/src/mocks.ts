@@ -245,6 +245,25 @@ export class MockContainerRuntimeFactory {
             }
         }
     }
+
+    public processSomeMessages?(count: number) {
+        let remaining = count;
+        while (this.messages.length > 0 && remaining > 0) {
+            let msg = this.messages.shift();
+
+            // Explicitly JSON clone the value to match the behavior of going thru the wire.
+            msg = JSON.parse(JSON.stringify(msg));
+
+            this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
+            msg.sequenceNumber = ++this.sequenceNumber;
+            msg.minimumSequenceNumber = this.getMinSeq();
+            for (const runtime of this.runtimes) {
+                runtime.process(msg);
+            }
+
+            remaining--;
+        }
+    }
 }
 
 export class MockQuorum implements IQuorum, EventEmitter {

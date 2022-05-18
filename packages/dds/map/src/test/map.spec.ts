@@ -375,7 +375,7 @@ describe("Map", () => {
 
                     // Verify the remote SharedMap
                     assert.equal(map2.has("test"), true, "could not find the set key in remote map");
-                    assert.equal(map2.get("test"), value, "could note get the set key from remote map");
+                    assert.equal(map2.get("test"), value, "could not get the set key from remote map");
                 });
 
                 it("Should be able to set a shared object handle as a key", () => {
@@ -417,6 +417,38 @@ describe("Map", () => {
                     assert.equal(retrievedSubMap, subMap, "could not get nested map 1");
                     const retrievedSubMap2 = await retrieved.nestedObj.subMap2Handle.get();
                     assert.equal(retrievedSubMap2, subMap2, "could not get nested map 2");
+                });
+
+                it("Shouldn't overwrite value if there is pending set", () => {
+                    const value1 = "value1";
+                    const pending1 = "pending1";
+                    const pending2 = "pending2";
+                    map1.set("test", value1);
+                    map2.set("test", pending1);
+                    map2.set("test", pending2);
+
+                    if (containerRuntimeFactory.processSomeMessages === undefined) {
+                        return;
+                    }
+                    containerRuntimeFactory.processSomeMessages(1);
+
+                    // Verify the SharedMap with processed message
+                    assert.equal(map1.has("test"), true, "could not find the set key");
+                    assert.equal(map1.get("test"), value1, "could not get the set key");
+
+                    // Verify the SharedMap with 2 pending messages
+                    assert.equal(map2.has("test"), true, "could not find the set key in pending map");
+                    assert.equal(map2.get("test"), pending2, "could not get the set key from pending map");
+
+                    containerRuntimeFactory.processSomeMessages(1);
+
+                    // Verify the SharedMap gets updated from remote
+                    assert.equal(map1.has("test"), true, "could not find the set key");
+                    assert.equal(map1.get("test"), pending1, "could not get the set key");
+
+                    // Verify the SharedMap with 1 pending message
+                    assert.equal(map2.has("test"), true, "could not find the set key in pending map");
+                    assert.equal(map2.get("test"), pending2, "could not get the set key from pending map");
                 });
             });
 
