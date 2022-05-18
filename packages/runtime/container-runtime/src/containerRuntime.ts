@@ -1429,7 +1429,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
 
-    private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
+    private addContainerStateToSummary(
+        summaryTree: ISummaryTreeWithStats,
+        fullTree: boolean,
+        trackState: boolean,
+    ) {
         this.addMetadataToSummary(summaryTree);
 
         if (this.chunkMap.size > 0) {
@@ -1455,7 +1459,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
-            const gcSummary = this.garbageCollector.summarize();
+            const gcSummary = this.garbageCollector.summarize(fullTree, trackState);
             if (gcSummary !== undefined) {
                 addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
             }
@@ -1997,7 +2001,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
-        this.addContainerStateToSummary(summarizeResult);
+        const fullTree = true;
+        const trackState = false;
+        this.addContainerStateToSummary(summarizeResult, fullTree, trackState);
         return summarizeResult.summary;
     }
 
@@ -2020,7 +2026,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             wrapSummaryInChannelsTree(summarizeResult);
             pathPartsForChildren = [channelsTreeName];
         }
-        this.addContainerStateToSummary(summarizeResult);
+        this.addContainerStateToSummary(summarizeResult, fullTree, trackState);
         return {
             ...summarizeResult,
             id: "",

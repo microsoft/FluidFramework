@@ -21,6 +21,7 @@ import {
     defaultSessionExpiryDurationMs,
     GarbageCollector,
     gcBlobPrefix,
+    gcBlobRootKey,
     GCNodeType,
     gcTreeKey,
     IGarbageCollectionRuntime,
@@ -534,7 +535,7 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
 
-            const summaryTree = garbageCollector.summarize()?.summary;
+            const summaryTree = garbageCollector.summarize(true, false)?.summary;
             assert(summaryTree !== undefined, "Nothing to summarize after running GC");
 
             let rootGCState: IGarbageCollectionState = { gcNodes: {} };
@@ -883,6 +884,42 @@ describe("Garbage Collection Tests", () => {
                 },
             ]);
             assert(eventsFound, `Expected unknownReferenceEvent event!`);
+        });
+    });
+
+    describe("No changes to GC between summaries", () => {
+        let garbageCollector: IGarbageCollector;
+        const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+        beforeEach(() => {
+            closeCalled = false;
+            const settings = { "Fluid.GarbageCollection.trackGCStateKey": "true" };
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
+            defaultGCData.gcNodes = {};
+            garbageCollector = createGarbageCollector();
+        });
+
+        afterEach(() => {
+            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+        });
+
+        it("No changes to GC between summaries creates a blob handle", async () => {
+            // Initialize nodes A & D.
+            defaultGCData.gcNodes["/"] = nodes;
+            const fullTree = false;
+            const trackState = true;
+
+            await garbageCollector.collectGarbage({ runGC: true });
+            const tree1 = garbageCollector.summarize(fullTree, trackState);
+            assert(tree1 !== undefined, "Expected a tree on first summarize");
+            const gcBlobType = tree1.summary.tree[gcBlobRootKey].type;
+            assert(gcBlobType === SummaryType.Blob, `Expected a SummaryType.Blob on first summarize, got ${gcBlobType}`);
+
+            await garbageCollector.collectGarbage({ runGC: true });
+            const tree2 = garbageCollector.summarize(fullTree, trackState);
+            assert(tree2 !== undefined, "Expected a tree on second summarize");
+            const gcBlobHandleType = tree2.summary.tree[gcBlobRootKey].type;
+            assert(gcBlobHandleType === SummaryType.Handle, `Expected a SummaryType.Handle on second summarize, got ${gcBlobHandleType}`);
         });
     });
 });
