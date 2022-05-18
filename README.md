@@ -77,17 +77,12 @@ See also: [Contributing](#Contributing)
 
 ### Other First-Time Build Requirements
 
-Note that in order to install package dependencies and build the code, you will also need to ensure your development environment is configured with the following:
-
-- A [Python](https://www.python.org/downloads) installation, with the appropriate path variables configured.
+- [node-gyp](https://github.com/nodejs/node-gyp) Requirements
+  - Ensure that the requirements listed [here](https://github.com/nodejs/node-gyp#installation) are satisfied for your environment.
 
 #### On Windows
 
-- [Visual Studio](https://visualstudio.microsoft.com/downloads) and/or Windows Build Tools are installed.
-    - Also ensure that your installation includes the `Desktop development with C++` option.
-    - Note that if you install more recent versions [Node.js](https://nodejs.org/en/), it will include the required tools here.
-      But if you use [nvm](https://github.com/nvm-sh/nvm) to install `Node.js`, these may not be installed correctly.
-- You have enabled running scripts by setting your environment's [Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
+- Ensure that you have enabled running Powershell scripts by setting your environment's [Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
 
 ## Testing
 
