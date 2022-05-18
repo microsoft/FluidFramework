@@ -337,7 +337,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 }
 
 export class TelemetryContext implements ITelemetryContext {
-    private telemetry = new Map<string, TelemetryEventPropertyType>();
+    private readonly telemetry = new Map<string, TelemetryEventPropertyType>();
 
     /**
      * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
