@@ -49,13 +49,15 @@ interface IMapMessageHandler {
      * Communicate the operation to remote clients.
      * @param op - The map operation to submit
      */
-    submit(op: IMapOperation): void;
+    submit(op: IMapOperation, localOpMetadata: any): void;
 
     getStashedOpLocalMetadata(op: IMapOperation): unknown;
 }
 
 export interface IMapMessageLocalMetadata {
     lastProcessedSeq: number;
+    // TODO: Better types
+    valueMetadata: any;
 }
 
 /**
@@ -302,7 +304,7 @@ export class DefaultMap<T> {
             if (this.lastProcessedSeq !== mapLocalMetadata?.lastProcessedSeq) {
                 throw new Error("SharedInterval does not support reconnect in presence of external changes");
             }
-            handler.submit(op as IMapOperation);
+            handler.submit(op as IMapOperation, localOpMetadata.valueMetadata);
             return true;
         }
         return false;
@@ -402,14 +404,14 @@ export class DefaultMap<T> {
                     const translatedValue = parseHandles(
                         op.value.value,
                         this.serializer);
-                    handler.process(previousValue, translatedValue, local, message);
+                    handler.process(previousValue, translatedValue, local, message, localOpMetadata?.valueMetadata);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
                 },
-                submit: (op: IMapValueTypeOperation) => {
+                submit: (op: IMapValueTypeOperation, valueMetadata: any) => {
                     this.submitMessage(
                         op,
-                        { lastProcessedSeq: this.lastProcessedSeq },
+                        { lastProcessedSeq: this.lastProcessedSeq, valueMetadata },
                     );
                 },
                 getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
@@ -427,7 +429,7 @@ export class DefaultMap<T> {
      * @returns A value op emitter for the given key
      */
     private makeMapValueOpEmitter(key: string): IValueOpEmitter {
-        const emit = (opName: string, previousValue: any, params: any) => {
+        const emit = (opName: string, previousValue: any, params: any, valueMetadata: unknown) => {
             const translatedParams = makeHandlesSerializable(
                 params,
                 this.serializer,
@@ -442,7 +444,7 @@ export class DefaultMap<T> {
                 },
             };
             // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.submitMessage(op, { lastProcessedSeq: this.lastProcessedSeq });
+            this.submitMessage(op, { lastProcessedSeq: this.lastProcessedSeq, valueMetadata });
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);

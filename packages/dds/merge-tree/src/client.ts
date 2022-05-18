@@ -705,7 +705,7 @@ export class Client {
     }
 
     public findSegOffForReconnection(pos: number, seqNumberFrom: number, seqNumberTo: number, localSeq: number): { segment: ISegment; offset: number } {
-        assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq, "localSeq greater than collab window");
         let segment: ISegment | undefined;
         let posAccumulated = 0;
         let offset = pos;

@@ -81,10 +81,10 @@ export interface IValueOperation<T> {
         params: any,
         local: boolean,
         message: ISequencedDocumentMessage | undefined,
-        localOpMetadata: unknown
+        localOpMetadata: unknown | undefined
     );
 
-    rebase(value: T, op: IValueTypeOperationValue, localOpMetadata: unknown): IValueTypeOperationValue;
+    rebase(value: T, op: IValueTypeOperationValue, localOpMetadata: unknown | undefined): IValueTypeOperationValue;
 }
 
 /**
