@@ -480,7 +480,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         id: string,
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
-        private readonly telemetryContextPrefix: string = "",
+        private readonly telemetryContextPrefix: string,
     ) {
         super(id, runtime, attributes);
 

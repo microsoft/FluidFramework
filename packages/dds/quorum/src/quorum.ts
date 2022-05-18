@@ -183,7 +183,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
     public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid:quorum:");
 
         this.incomingOp.on("set", this.handleIncomingSet);
         this.incomingOp.on("delete", this.handleIncomingDelete);
