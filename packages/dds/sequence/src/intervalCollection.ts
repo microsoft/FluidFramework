@@ -30,7 +30,7 @@ import {
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
-import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./mapKernelInterfaces";
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./defaultMapInterfaces";
 
 const reservedIntervalIdKey = "intervalId";
 
@@ -132,8 +132,7 @@ export class Interval implements ISerializableInterval {
                     return 0;
                 }
                 return 0;
-            }
-            else {
+            } else {
                 return endResult;
             }
         } else {
@@ -239,8 +238,7 @@ export class SequenceInterval implements ISerializableInterval {
                     return 0;
                 }
                 return 0;
-            }
-            else {
+            } else {
                 return endResult;
             }
         } else {
@@ -320,7 +318,7 @@ function createPositionReference(
     refType: ReferenceType,
     op?: ISequencedDocumentMessage): LocalReference {
     const segoff = client.getContainingSegment(pos, op);
-    if (segoff && segoff.segment) {
+    if (segoff?.segment) {
         const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
         if (refType !== ReferenceType.Transient) {
             client.addLocalReference(lref);
@@ -463,14 +461,12 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                 this.intervalTree.map((interval: TInterval) => {
                     results.push(interval);
                 });
-            }
-            else {
+            } else {
                 this.intervalTree.mapBackward((interval: TInterval) => {
                     results.push(interval);
                 });
             }
-        }
-        else {
+        } else {
             const transientInterval: TInterval = this.helpers.create(
                 "transient",
                 start,
@@ -488,16 +484,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                             results.push(interval);
                         }
                     });
-                }
-                else {
+                } else {
                     this.intervalTree.mapBackward((interval: TInterval) => {
                         if (transientInterval.compareEnd(interval) === 0) {
                             results.push(interval);
                         }
                     });
                 }
-            }
-            else {
+            } else {
                 // Start and (possibly) end provided. Walk the subtrees that may contain
                 // this start position.
                 const compareFn =
@@ -518,8 +512,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                     this.intervalTree.intervals.walkExactMatchesForward(
                         compareFn, actionFn, continueLeftFn, continueRightFn,
                     );
-                }
-                else {
+                } else {
                     this.intervalTree.intervals.walkExactMatchesBackward(
                         compareFn, actionFn, continueLeftFn, continueRightFn,
                     );
@@ -697,12 +690,7 @@ export class SequenceIntervalCollectionValueType
                 "add",
                 {
                     process: (value, params, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.addInternal(params, local, op);
+                        value.ackAdd(params, local, op);
                     },
                     rebase: (value, op, localOpMetadata) => {
                         return { ...op, value: value.rebaseInternal(op.value, (localOpMetadata as IntervalCollectionOpMetadata).localSeq) }
@@ -713,10 +701,7 @@ export class SequenceIntervalCollectionValueType
                 "delete",
                 {
                     process: (value, params, local, op) => {
-                        if (local) {
-                            return;
-                        }
-                        value.deleteInterval(params, local, op);
+                        value.ackDelete(params, local, op);
                     },
                     rebase: (value, op) => {
                         console.log(JSON.stringify(op));
@@ -728,7 +713,7 @@ export class SequenceIntervalCollectionValueType
                 "change",
                 {
                     process: (value, params, local, op) => {
-                        value.changeInterval(params, local, op);
+                        value.ackChange(params, local, op);
                     },
                     rebase: (value, op, localOpMetadata) => {
                         return { ...op, value: value.rebaseInternal(op.value, (localOpMetadata as IntervalCollectionOpMetadata).localSeq) };
@@ -790,12 +775,7 @@ export class IntervalCollectionValueType
                 "add",
                 {
                     process: (value, params, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.addInternal(params, local, op);
+                        value.ackAdd(params, local, op);
                     },
                     rebase: (value, op) => op
                 },
@@ -804,10 +784,7 @@ export class IntervalCollectionValueType
                 "delete",
                 {
                     process: (value, params, local, op) => {
-                        if (local) {
-                            return;
-                        }
-                        value.deleteInterval(params, local, op);
+                        value.ackDelete(params, local, op);
                     },
                     rebase: (value, op) => op
                 },
@@ -816,7 +793,7 @@ export class IntervalCollectionValueType
                 "change",
                 {
                     process: (value, params, local, op) => {
-                        value.changeInterval(params, local, op);
+                        value.ackChange(params, local, op);
                     },
                     rebase: (value, op, localMetadata) => {
                         return op;
@@ -870,8 +847,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     private localCollection: LocalIntervalCollection<TInterval>;
     private onDeserialize: DeserializeCallback;
     private client: Client;
-    private pendingChangeStart: Map<string, ISerializedInterval[]>;
-    private pendingChangeEnd: Map<string, ISerializedInterval[]>;
+    private pendingChangesStart: Map<string, ISerializedInterval[]>;
+    private pendingChangesEnd: Map<string, ISerializedInterval[]>;
 
     public get attached(): boolean {
         return !!this.localCollection;
@@ -981,7 +958,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
         }
-        if (typeof(id) !== "string") {
+        if (typeof (id) !== "string") {
             throw new Error("Change API requires an ID that is a string");
         }
         if (!props) {
@@ -1008,7 +985,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
         }
-        if (typeof(id) !== "string") {
+        if (typeof (id) !== "string") {
             throw new Error("Change API requires an ID that is a string");
         }
 
@@ -1033,16 +1010,16 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
     private addPendingChange(id: string, serializedInterval: ISerializedInterval) {
         if (serializedInterval.start !== undefined) {
-            if (!this.pendingChangeStart) {
-                this.pendingChangeStart = new Map<string, ISerializedInterval[]>();
+            if (!this.pendingChangesStart) {
+                this.pendingChangesStart = new Map<string, ISerializedInterval[]>();
             }
-            this.addPendingChangeHelper(id, this.pendingChangeStart, serializedInterval);
+            this.addPendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
         }
         if (serializedInterval.end !== undefined) {
-            if (!this.pendingChangeEnd) {
-                this.pendingChangeEnd = new Map<string, ISerializedInterval[]>();
+            if (!this.pendingChangesEnd) {
+                this.pendingChangesEnd = new Map<string, ISerializedInterval[]>();
             }
-            this.addPendingChangeHelper(id, this.pendingChangeEnd, serializedInterval);
+            this.addPendingChangeHelper(id, this.pendingChangesEnd, serializedInterval);
         }
     }
 
@@ -1063,10 +1040,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         // Change ops always have an ID.
         const id: string = serializedInterval.properties[reservedIntervalIdKey];
         if (serializedInterval.start !== undefined) {
-            this.removePendingChangeHelper(id, this.pendingChangeStart, serializedInterval);
+            this.removePendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
         }
         if (serializedInterval.end !== undefined) {
-            this.removePendingChangeHelper(id, this.pendingChangeEnd, serializedInterval);
+            this.removePendingChangeHelper(id, this.pendingChangesEnd, serializedInterval);
         }
     }
 
@@ -1089,16 +1066,22 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     private hasPendingChangeStart(id: string) {
-        const entries = this.pendingChangeStart?.get(id);
+        const entries = this.pendingChangesStart?.get(id);
         return entries && entries.length !== 0;
     }
 
     private hasPendingChangeEnd(id: string) {
-        const entries = this.pendingChangeEnd?.get(id);
+        const entries = this.pendingChangesEnd?.get(id);
         return entries && entries.length !== 0;
     }
 
+    /** @deprecated - use ackChange */
     public changeInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
+        return this.ackChange(serializedInterval, local, op);
+    }
+
+    /** @internal */
+    public ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
         }
@@ -1118,8 +1101,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                         props: serializedInterval.properties,
                     });
             }
-        }
-        else {
+        } else {
             // If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
             // should be the winning change.
             // Note that the ID is in the property bag only to allow us to find the interval.
@@ -1233,10 +1215,25 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
     // }
 
+    /** @deprecated - use ackAdd */
     public addInternal(
         serializedInterval: ISerializedInterval,
         local: boolean,
         op: ISequencedDocumentMessage) {
+        return this.ackAdd(serializedInterval, local, op);
+    }
+
+    /** @internal */
+    public ackAdd(
+        serializedInterval: ISerializedInterval,
+        local: boolean,
+        op: ISequencedDocumentMessage) {
+        if (local) {
+            // Local ops were applied when the message was created and there's no "pending add"
+            // state to bookkeep
+            return;
+        }
+
         if (!this.attached) {
             throw new Error("attachSequence must be called");
         }
@@ -1251,14 +1248,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             op);
 
         if (interval) {
-            // Local ops get submitted to the server. Remote ops have the deserializer run.
-            if (local) {
-                // Review: Is this case possible?
-                this.emitter.emit("add", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
-            } else {
-                if (this.onDeserialize) {
-                    this.onDeserialize(interval);
-                }
+            if (this.onDeserialize) {
+                this.onDeserialize(interval);
             }
         }
 
@@ -1267,10 +1258,26 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return interval;
     }
 
+    /** @deprecated - use ackDelete */
     public deleteInterval(
         serializedInterval: ISerializedInterval,
         local: boolean,
         op: ISequencedDocumentMessage): void {
+        return this.ackDelete(serializedInterval, local, op);
+    }
+
+    /** @internal */
+    public ackDelete(
+        serializedInterval: ISerializedInterval,
+        local: boolean,
+        op: ISequencedDocumentMessage): void {
+        if (local) {
+            // Local ops were applied when the message was created and there's no "pending delete"
+            // state to bookkeep: remote operation application takes into account possibility of
+            // locally deleted interval whenever a lookup happens.
+            return;
+        }
+
         if (!this.attached) {
             throw new Error("attach must be called prior to deleting intervals");
         }

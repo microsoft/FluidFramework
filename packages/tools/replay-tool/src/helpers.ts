@@ -27,7 +27,7 @@ import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 
 const normalizeOpts: ISnapshotNormalizerConfig =
-    {excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f)=>f.type)};
+    { excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f) => f.type) };
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
@@ -55,18 +55,27 @@ export function compareWithReferenceSnapshot(
     /**
      * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
      * package versions with X before we compare them. This is how it will looks like:
-     * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
-     * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
+     * Before replace -
+     *
+     * ```
+     * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
+     * ```
+     *
+     * After replace  -
+     *
+     * ```
+     * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
+     * ```
      */
     const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
     const normalizedSnapshot = JSON.parse(
-        stringify(getNormalizedFileSnapshot(snapshot), {space: 2})
+        stringify(getNormalizedFileSnapshot(snapshot), { space: 2 })
             .replace(packageVersionRegex, packageVersionPlaceholder),
     );
     const normalizedReferenceSnapshot = JSON.parse(
-        stringify(getNormalizedFileSnapshot(referenceSnapshot), {space: 2})
+        stringify(getNormalizedFileSnapshot(referenceSnapshot), { space: 2 })
             .replace(packageVersionRegex, packageVersionPlaceholder),
     );
 

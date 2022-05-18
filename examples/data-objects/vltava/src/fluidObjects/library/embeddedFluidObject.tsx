@@ -21,8 +21,7 @@ interface IEmbeddedFluidObjectWrapperState {
  * This ideally shouldn't be here but is here for now to unblock me not knowing how to use ReactViewAdapter.
  */
 export class EmbeddedFluidObjectWrapper
-    extends React.Component<IEmbeddedFluidObjectWrapperProps, IEmbeddedFluidObjectWrapperState>
-{
+    extends React.Component<IEmbeddedFluidObjectWrapperProps, IEmbeddedFluidObjectWrapperState> {
     constructor(props: IEmbeddedFluidObjectWrapperProps) {
         super(props);
         this.state = {

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
@@ -14,7 +16,7 @@ import {
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
     defaultSessionExpiryDurationMs,
     GarbageCollector,
@@ -36,13 +38,14 @@ describe("Garbage Collection Tests", () => {
     ];
 
     let clock: SinonFakeTimers;
-    let mockLogger: MockLogger;
+    const mockLogger: MockLogger = new MockLogger();
+    const mc = mixinMonitoringContext(mockLogger, sessionStorageConfigProvider.value);
     let closeCalled = false;
     // Time after which unreferenced nodes can be deleted.
     const deleteTimeoutMs = 500;
-    const testPkgPath = [ "testPkg" ];
+    const testPkgPath = ["testPkg"];
     // The package data is tagged in the telemetry event.
-    const eventPkg = { value:`/${testPkgPath.join("/")}`, tag: TelemetryDataTag.PackageData };
+    const eventPkg = { value: `/${testPkgPath.join("/")}`, tag: TelemetryDataTag.PackageData };
 
     const getNodeType = (nodePath: string) => {
         if (nodePath.split("/").length !== 2) {
@@ -72,7 +75,6 @@ describe("Garbage Collection Tests", () => {
         getNodeGCDetails: (id: string) => IGarbageCollectionDetailsBase = () => emptyGCDetails,
         metadata: IContainerRuntimeMetadata | undefined = undefined,
     ) => {
-        mockLogger = new MockLogger();
         return GarbageCollector.create(
             gcRuntime,
             { gcAllowed: true, deleteTimeoutMs },
@@ -92,6 +94,7 @@ describe("Garbage Collection Tests", () => {
 
     afterEach(() => {
         clock.reset();
+        mockLogger.clear();
     });
 
     after(() => {
@@ -100,28 +103,105 @@ describe("Garbage Collection Tests", () => {
 
     describe("Session expiry", () => {
         const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+        const injectedSettings = {};
+        const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
+        const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
+        const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
+        before(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
+        });
         beforeEach(() => {
             closeCalled = false;
-            const settings = { "Fluid.GarbageCollection.RunSessionExpiry": "true" };
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
+            injectedSettings[runSessionExpiryKey] = "true";
         });
-        afterEach(() => {
+        after(() => {
             sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
         });
 
+        function closeCalledAfterExactTicks(ticks: number) {
+            clock.tick(ticks - 1);
+            if (closeCalled) {
+                return false;
+            }
+            clock.tick(1);
+            return closeCalled;
+        }
+
         it("Session expires for an existing container", async () => {
             const metadata: IContainerRuntimeMetadata =
-                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 1 };
+                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
             createGarbageCollector(undefined, undefined, metadata);
-            clock.tick(1);
-            assert(closeCalled, "Close should have been called.");
+            assert(closeCalledAfterExactTicks(10), "Close should have been called at exact expiry.");
         });
 
         it("Session expires for a new container", async () => {
             createGarbageCollector();
+            assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exact expiry.");
+        });
+
+        it("Session expiry disabled via DisableSessionExpiry config", async () => {
+            // disable expiry even though it's set to run (meaning expiry value will present)
+            injectedSettings[disableSessionExpiryKey] = "true";
+            createGarbageCollector();
+            assert(!closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should NOT have been called due to disable.");
+        });
+
+        it("Session expiry explicitly not disabled via DisableSessionExpiry config", async () => {
+            // Explicitly set value to false (instead of relying on undefined)
+            injectedSettings[disableSessionExpiryKey] = "false";
+            createGarbageCollector();
+            assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exact expiry.");
+        });
+
+        it("Session expiry overridden via TestOverride setting (existing container)", async () => {
+            // Override expiry to 2 seconds
+            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
+            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
+            assert(customExpiryMs, "setting not found!");
+
+            const metadata: IContainerRuntimeMetadata =
+                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
+            createGarbageCollector(undefined, undefined, metadata);
+            assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
+        });
+
+        it("Session expiry overridden via TestOverride setting (new container)", async () => {
+            // Override expiry to 2 seconds
+            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
+            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
+            assert(customExpiryMs, "setting not found!");
+
+            createGarbageCollector();
+            assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
+        });
+
+        it("Session expiry override ignored if RunSessionExpiry setting disabled", async () => {
+            injectedSettings[runSessionExpiryKey] = "false";
+            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
+            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
+            assert(customExpiryMs, "setting not found!");
+
+            createGarbageCollector();
+
+            clock.tick(customExpiryMs);
+            assert(!closeCalled, "Close should not have been called since runSessionExpiry disabled.");
             clock.tick(defaultSessionExpiryDurationMs);
-            assert(closeCalled, "Close should have been called.");
+            assert(!closeCalled, "Close should not have been called since runSessionExpiry disabled.");
+        });
+
+        it("Session expiry override ignored if DisableSessionExpiry is true", async () => {
+            injectedSettings[disableSessionExpiryKey] = "true";
+            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
+            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
+            assert(customExpiryMs, "setting not found!");
+
+            createGarbageCollector();
+
+            clock.tick(customExpiryMs);
+            assert(!closeCalled, "Close should not have been called since DisableSessionExpiry true.");
+            clock.tick(defaultSessionExpiryDurationMs);
+            assert(!closeCalled, "Close should not have been called since DisableSessionExpiry true.");
         });
     });
 
@@ -160,11 +240,11 @@ describe("Garbage Collection Tests", () => {
 
         beforeEach(async () => {
             // Set up the reference graph such that all nodes are referenced. Add in a couple of cycles in the graph.
-            defaultGCData.gcNodes["/"] = [ nodes[0] ];
-            defaultGCData.gcNodes[nodes[0]] = [ nodes[1] ];
-            defaultGCData.gcNodes[nodes[1]] = [ nodes[0], nodes[2] ];
-            defaultGCData.gcNodes[nodes[2]] = [ nodes[3] ];
-            defaultGCData.gcNodes[nodes[3]] = [ nodes[0] ];
+            defaultGCData.gcNodes["/"] = [nodes[0]];
+            defaultGCData.gcNodes[nodes[0]] = [nodes[1]];
+            defaultGCData.gcNodes[nodes[1]] = [nodes[0], nodes[2]];
+            defaultGCData.gcNodes[nodes[2]] = [nodes[3]];
+            defaultGCData.gcNodes[nodes[3]] = [nodes[0]];
         });
         it("doesn't generate events for referenced nodes", async () => {
             const garbageCollector = createGarbageCollector();
@@ -434,8 +514,8 @@ describe("Garbage Collection Tests", () => {
     });
 
     /**
-     * These tests validate such scenarios where nodes transition from unreferenced -> referenced -> unreferenced state
-     * by verifying that their unreferenced timestamps are updated correctly.
+     * These tests validate such scenarios where nodes transition from unreferenced -\> referenced -\> unreferenced
+     * state by verifying that their unreferenced timestamps are updated correctly.
      *
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
      */
@@ -493,14 +573,14 @@ describe("Garbage Collection Tests", () => {
         /**
          * Validates that we can detect references that were added and then removed.
          * 1. Summary 1 at t1. V = [A*, B]. E = []. B has unreferenced time t1.
-         * 2. Reference from A to B added. E = [A -> B].
+         * 2. Reference from A to B added. E = [A -\> B].
          * 3. Reference from A to B removed. E = [].
          * 4. Summary 2 at t2. V = [A*, B]. E = []. B has unreferenced time t2.
-         * Validates that the unreferenced time for B is t2 which is > t1.
+         * Validates that the unreferenced time for B is t2 which is \> t1.
          */
         it(`Scenario 1 - Reference added and then removed`, async () => {
             // Initialize nodes A and B.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
             defaultGCData.gcNodes[nodeB] = [];
 
@@ -511,9 +591,9 @@ describe("Garbage Collection Tests", () => {
             const nodeBTime1 = timestamps1.get(nodeB);
             assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
 
-            // 2. Add reference from A to B. E = [A -> B].
+            // 2. Add reference from A to B. E = [A -\> B].
             garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            defaultGCData.gcNodes[nodeA] = [nodeB];
 
             // 3. Remove reference from A to B. E = [].
             defaultGCData.gcNodes[nodeA] = [];
@@ -529,21 +609,21 @@ describe("Garbage Collection Tests", () => {
 
         /**
          * Validates that we can detect references that were added transitively and then removed.
-         * 1. Summary 1 at t1. V = [A*, B, C]. E = [B -> C]. B and C have unreferenced time t2.
-         * 2. Reference from A to B added. E = [A -> B, B -> C].
-         * 3. Reference from B to C removed. E = [A -> B].
+         * 1. Summary 1 at t1. V = [A*, B, C]. E = [B -\> C]. B and C have unreferenced time t2.
+         * 2. Reference from A to B added. E = [A -\> B, B -\> C].
+         * 3. Reference from B to C removed. E = [A -\> B].
          * 4. Reference from A to B removed. E = [].
          * 5. Summary 2 at t2. V = [A*, B, C]. E = []. B and C have unreferenced time t2.
-         * Validates that the unreferenced time for B and C is t2 which is > t1.
+         * Validates that the unreferenced time for B and C is t2 which is \> t1.
          */
         it(`Scenario 2 - Reference transitively added and removed`, async () => {
             // Initialize nodes A, B and C.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
-            defaultGCData.gcNodes[nodeB] = [ nodeC ];
+            defaultGCData.gcNodes[nodeB] = [nodeC];
             defaultGCData.gcNodes[nodeC] = [];
 
-            // 1. Run GC and generate summary 1. E = [B -> C].
+            // 1. Run GC and generate summary 1. E = [B -\> C].
             const timestamps1 = await getUnreferencedTimestamps();
             assert(timestamps1.get(nodeA) === undefined, "A should be referenced");
 
@@ -552,11 +632,11 @@ describe("Garbage Collection Tests", () => {
             assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
             assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
-            // 2. Add reference from A to B. E = [A -> B, B -> C].
+            // 2. Add reference from A to B. E = [A -\> B, B -\> C].
             garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            defaultGCData.gcNodes[nodeA] = [nodeB];
 
-            // 3. Remove reference from B to C. E = [A -> B].
+            // 3. Remove reference from B to C. E = [A -\> B].
             defaultGCData.gcNodes[nodeB] = [];
 
             // 4. Remove reference from A to B. E = [].
@@ -574,21 +654,21 @@ describe("Garbage Collection Tests", () => {
 
         /**
          * Validates that we can detect chain of references in which the first reference was added and then removed.
-         * 1. Summary 1 at t1. V = [A*, B, C, D]. E = [B -> C, C -> D]. B, C and D have unreferenced time t2.
-         * 2. Reference from A to B added. E = [A -> B, B -> C, C -> D].
-         * 3. Reference from A to B removed. E = [B -> C, C -> D].
-         * 4. Summary 2 at t2. V = [A*, B, C, D]. E = [B -> C, C -> D]. B, C and D have unreferenced time t2.
-         * Validates that the unreferenced time for B, C and D is t2 which is > t1.
+         * 1. Summary 1 at t1. V = [A*, B, C, D]. E = [B -\> C, C -\> D]. B, C and D have unreferenced time t2.
+         * 2. Reference from A to B added. E = [A -\> B, B -\> C, C -\> D].
+         * 3. Reference from A to B removed. E = [B -\> C, C -\> D].
+         * 4. Summary 2 at t2. V = [A*, B, C, D]. E = [B -\> C, C -\> D]. B, C and D have unreferenced time t2.
+         * Validates that the unreferenced time for B, C and D is t2 which is \> t1.
          */
         it(`Scenario 3 - Reference added through chain of references and removed`, async () => {
             // Initialize nodes A, B, C and D.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
-            defaultGCData.gcNodes[nodeB] = [ nodeC ];
-            defaultGCData.gcNodes[nodeC] = [ nodeD ];
+            defaultGCData.gcNodes[nodeB] = [nodeC];
+            defaultGCData.gcNodes[nodeC] = [nodeD];
             defaultGCData.gcNodes[nodeD] = [];
 
-            // 1. Run GC and generate summary 1. E = [B -> C, C -> D].
+            // 1. Run GC and generate summary 1. E = [B -\> C, C -\> D].
             const timestamps1 = await getUnreferencedTimestamps();
             assert(timestamps1.get(nodeA) === undefined, "A should be referenced");
 
@@ -599,14 +679,14 @@ describe("Garbage Collection Tests", () => {
             assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
             assert(nodeDTime1 !== undefined, "D should have unreferenced timestamp");
 
-            // 2. Add reference from A to B. E = [A -> B, B -> C, C -> D].
+            // 2. Add reference from A to B. E = [A -\> B, B -\> C, C -\> D].
             garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            defaultGCData.gcNodes[nodeA] = [nodeB];
 
-            // 3. Remove reference from A to B. E = [B -> C, C -> D].
+            // 3. Remove reference from A to B. E = [B -\> C, C -\> D].
             defaultGCData.gcNodes[nodeA] = [];
 
-            // 4. Run GC and generate summary 2. E = [B -> C, C -> D].
+            // 4. Run GC and generate summary 2. E = [B -\> C, C -\> D].
             const timestamps2 = await getUnreferencedTimestamps();
             assert(timestamps2.get(nodeA) === undefined, "A should be referenced");
 
@@ -622,15 +702,15 @@ describe("Garbage Collection Tests", () => {
          * Validates that we can detect references that were added and removed via new nodes.
          * 1. Summary 1 at t1. V = [A*, C]. E = []. C has unreferenced time t1.
          * 2. Node B is created. E = [].
-         * 3. Reference from A to B added. E = [A -> B].
-         * 4. Reference from B to C added. E = [A -> B, B -> C].
-         * 5. Reference from B to C removed. E = [A -> B].
-         * 6. Summary 2 at t2. V = [A*, B, C]. E = [A -> B]. C has unreferenced time t2.
-         * Validates that the unreferenced time for C is t2 which is > t1.
+         * 3. Reference from A to B added. E = [A -\> B].
+         * 4. Reference from B to C added. E = [A -\> B, B -\> C].
+         * 5. Reference from B to C removed. E = [A -\> B].
+         * 6. Summary 2 at t2. V = [A*, B, C]. E = [A -\> B]. C has unreferenced time t2.
+         * Validates that the unreferenced time for C is t2 which is \> t1.
          */
         it(`Scenario 4 - Reference added via new nodes and removed`, async () => {
             // Initialize nodes A, B and C.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
             defaultGCData.gcNodes[nodeC] = [];
 
@@ -644,18 +724,18 @@ describe("Garbage Collection Tests", () => {
             // 2. Create node B, i.e., add B to GC data. E = [].
             defaultGCData.gcNodes[nodeB] = [];
 
-            // 3. Add reference from A to B. E = [A -> B].
+            // 3. Add reference from A to B. E = [A -\> B].
             garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            defaultGCData.gcNodes[nodeA] = [nodeB];
 
-            // 4. Add reference from B to C. E = [A -> B, B -> C].
+            // 4. Add reference from B to C. E = [A -\> B, B -\> C].
             garbageCollector.addedOutboundReference(nodeB, nodeC);
-            defaultGCData.gcNodes[nodeB] = [ nodeC ];
+            defaultGCData.gcNodes[nodeB] = [nodeC];
 
-            // 5. Remove reference from B to C. E = [A -> B].
+            // 5. Remove reference from B to C. E = [A -\> B].
             defaultGCData.gcNodes[nodeB] = [];
 
-            // 6. Run GC and generate summary 2. E = [A -> B].
+            // 6. Run GC and generate summary 2. E = [A -\> B].
             const timestamps2 = await getUnreferencedTimestamps();
             assert(timestamps2.get(nodeA) === undefined, "A should be referenced");
             assert(timestamps2.get(nodeB) === undefined, "B should be referenced");
@@ -667,18 +747,18 @@ describe("Garbage Collection Tests", () => {
         /**
          * Validates that references added by unreferences nodes do not show up as references.
          * 1. Summary 1 at t1. V = [A*, B, C]. E = []. B and C have unreferenced time t1.
-         * 2. Reference from B to C. E = [B -> C].
-         * 3. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. B and C have unreferenced time t1.
+         * 2. Reference from B to C. E = [B -\> C].
+         * 3. Summary 2 at t2. V = [A*, B, C]. E = [B -\> C]. B and C have unreferenced time t1.
          * Validates that the unreferenced time for B and C is still t1.
          */
         it(`Scenario 5 - Reference added via unreferenced nodes`, async () => {
             // Initialize nodes A, B and C.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
             defaultGCData.gcNodes[nodeB] = [];
             defaultGCData.gcNodes[nodeC] = [];
 
-            // 1. Run GC and generate summary 1. E = [B -> C].
+            // 1. Run GC and generate summary 1. E = [B -\> C].
             const timestamps1 = await getUnreferencedTimestamps();
             assert(timestamps1.get(nodeA) === undefined, "A should be referenced");
 
@@ -687,11 +767,11 @@ describe("Garbage Collection Tests", () => {
             assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
             assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
-            // 2. Add reference from B to C. E = [B -> C].
+            // 2. Add reference from B to C. E = [B -\> C].
             garbageCollector.addedOutboundReference(nodeB, nodeC);
-            defaultGCData.gcNodes[nodeB] = [ nodeC ];
+            defaultGCData.gcNodes[nodeB] = [nodeC];
 
-            // 3. Run GC and generate summary 2. E = [B -> C].
+            // 3. Run GC and generate summary 2. E = [B -\> C].
             const timestamps2 = await getUnreferencedTimestamps();
             assert(timestamps2.get(nodeA) === undefined, "A should be referenced");
 
@@ -704,16 +784,16 @@ describe("Garbage Collection Tests", () => {
         /**
          * Validates that we can detect multiple references that were added and then removed by the same node.
          * 1. Summary 1 at t1. V = [A*, B, C]. E = []. B and C have unreferenced time t1.
-         * 2. Reference from A to B added. E = [A -> B].
-         * 3. Reference from A to C added. E = [A -> B, A -> C].
-         * 4. Reference from A to B removed. E = [A -> C].
+         * 2. Reference from A to B added. E = [A -\> B].
+         * 3. Reference from A to C added. E = [A -\> B, A -\> C].
+         * 4. Reference from A to B removed. E = [A -\> C].
          * 5. Reference from A to C removed. E = [].
          * 6. Summary 2 at t2. V = [A*, B]. E = []. B and C have unreferenced time t2.
-         * Validates that the unreferenced time for B and C is t2 which is > t1.
+         * Validates that the unreferenced time for B and C is t2 which is \> t1.
          */
         it(`Scenario 6 - Multiple references added and then removed by same node`, async () => {
             // Initialize nodes A, B and C.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            defaultGCData.gcNodes["/"] = [nodeA];
             defaultGCData.gcNodes[nodeA] = [];
             defaultGCData.gcNodes[nodeB] = [];
             defaultGCData.gcNodes[nodeC] = [];
@@ -727,16 +807,16 @@ describe("Garbage Collection Tests", () => {
             assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
             assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
-            // 2. Add reference from A to B. E = [A -> B].
+            // 2. Add reference from A to B. E = [A -\> B].
             garbageCollector.addedOutboundReference(nodeA, nodeB);
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            defaultGCData.gcNodes[nodeA] = [nodeB];
 
-            // 3. Add reference from A to C. E = [A -> B, A -> C].
+            // 3. Add reference from A to C. E = [A -\> B, A -\> C].
             garbageCollector.addedOutboundReference(nodeA, nodeC);
-            defaultGCData.gcNodes[nodeA] = [ nodeB, nodeC ];
+            defaultGCData.gcNodes[nodeA] = [nodeB, nodeC];
 
-            // 4. Remove reference from A to B. E = [A -> C].
-            defaultGCData.gcNodes[nodeA] = [ nodeC ];
+            // 4. Remove reference from A to B. E = [A -\> C].
+            defaultGCData.gcNodes[nodeA] = [nodeC];
 
             // 5. Remove reference from A to C. E = [].
             defaultGCData.gcNodes[nodeA] = [];
@@ -755,14 +835,14 @@ describe("Garbage Collection Tests", () => {
          * Validates that we generate error on detecting reference during GC that was not notified explicitly.
          * 1. Summary 1 at t1. V = [A*]. E = [].
          * 2. Node B is created. E = [].
-         * 3. Reference from A to B added without notifying GC. E = [A -> B].
-         * 4. Summary 2 at t2. V = [A*, B]. E = [A -> B].
+         * 3. Reference from A to B added without notifying GC. E = [A -\> B].
+         * 4. Summary 2 at t2. V = [A*, B]. E = [A -\> B].
          * Validates that we log an error since B is detected as a referenced node but its reference was notified
          * to GC.
          */
         it(`Scenario 7 - Reference added without notifying GC`, async () => {
             // Initialize nodes A & D.
-            defaultGCData.gcNodes["/"] = [ nodeA, nodeD ];
+            defaultGCData.gcNodes["/"] = [nodeA, nodeD];
             defaultGCData.gcNodes[nodeA] = [];
             defaultGCData.gcNodes[nodeD] = [];
 
@@ -776,16 +856,16 @@ describe("Garbage Collection Tests", () => {
             defaultGCData.gcNodes[nodeC] = [];
 
             // 3. Add reference from A to B, A to C, A to E, D to C, and E to A without calling addedOutboundReference.
-            // E = [A -> B, A -> C, A -> E, D -> C, E -> A].
-            defaultGCData.gcNodes[nodeA] = [ nodeB, nodeC, nodeE ];
-            defaultGCData.gcNodes[nodeD] = [ nodeC ];
-            defaultGCData.gcNodes[nodeE] = [ nodeA ];
+            // E = [A -\> B, A -\> C, A -\> E, D -\> C, E -\> A].
+            defaultGCData.gcNodes[nodeA] = [nodeB, nodeC, nodeE];
+            defaultGCData.gcNodes[nodeD] = [nodeC];
+            defaultGCData.gcNodes[nodeE] = [nodeA];
 
             // 4. Add reference from A to D with calling addedOutboundReference
             defaultGCData.gcNodes[nodeA].push(nodeD);
             garbageCollector.addedOutboundReference(nodeA, nodeD);
 
-            // 5. Run GC and generate summary 2. E = [A -> B, A -> C, A -> E, D -> C, E -> A].
+            // 5. Run GC and generate summary 2. E = [A -\> B, A -\> C, A -\> E, D -\> C, E -\> A].
             await getUnreferencedTimestamps();
 
             // Validate that we got the "gcUnknownOutboundReferences" error.

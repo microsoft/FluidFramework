@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -195,8 +195,8 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
  * Directly used in JSON.stringify, direct result from JSON.parse.
  */
 export interface IDirectoryDataObject {
-    storage?: { [key: string]: ISerializableValue };
-    subdirectories?: { [subdirName: string]: IDirectoryDataObject };
+    storage?: { [key: string]: ISerializableValue; };
+    subdirectories?: { [subdirName: string]: IDirectoryDataObject; };
 }
 
 export interface IDirectoryNewStorageFormat {

@@ -34,7 +34,7 @@ export class ClientManager implements IClientManager {
 
     public async addClient(tenantId: string, documentId: string, clientId: string, details: IClient): Promise<void> {
         const key = this.getKey(tenantId, documentId);
-        const data: { [key: string]: any } = { [clientId]: JSON.stringify(details) };
+        const data: { [key: string]: any; } = { [clientId]: JSON.stringify(details) };
         return executeRedisMultiWithHmsetExpire(
             this.client,
             key,
@@ -74,7 +74,7 @@ export class ClientManager implements IClientManager {
 
     /**
      * Called when the expiration time of clients should be extended.
-     * @param clientTimeout Amount of time in milliseconds to add to the clients expiration time.
+     * @param clientTimeout - Amount of time in milliseconds to add to the clients expiration time.
      */
     public async extendSequencedClients(
         tenantId: string,

@@ -349,7 +349,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         const removeColEnd = srcCol + numCols;
         const ops = [];
 
-        for (let r = 0, rowStart = 0; r < this.numRows; r++ , rowStart += maxCols) {
+        for (let r = 0, rowStart = 0; r < this.numRows; r++, rowStart += maxCols) {
             ops.push(this.client.removeRangeLocal(rowStart + removeColStart, rowStart + removeColEnd));
             const insertPos = rowStart + destCol;
             const segment = new PaddingSegment(numCols);

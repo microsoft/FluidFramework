@@ -12,3 +12,10 @@ export function expectDefined<T>(value: T | undefined): T {
 	expect(value).to.be.not.undefined;
 	return value as T;
 }
+
+/**
+ * Expects `condition` and applies a type assertion.
+ */
+export function expectAssert(condition: unknown, message?: string): asserts condition {
+	expect(condition, message);
+}

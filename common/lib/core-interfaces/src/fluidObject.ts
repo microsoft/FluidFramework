@@ -23,7 +23,7 @@ export interface IFluidObject {
     /**
      * @deprecated - use `FluidObject<IFluidRunnable>` instead
      */
-    readonly IFluidRunnable?: IFluidRunnable
+    readonly IFluidRunnable?: IFluidRunnable;
     /**
      * @deprecated - use `FluidObject<IFluidRouter>` instead
      */

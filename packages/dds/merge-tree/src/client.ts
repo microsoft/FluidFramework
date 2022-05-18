@@ -25,7 +25,6 @@ import {
     ISegmentAction,
     Marker,
     MergeTree,
-    RangeStackMap,
     SegmentGroup,
 } from "./mergeTree";
 import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
@@ -47,17 +46,18 @@ import {
     IMergeTreeOp,
     IRelativePosition,
     MergeTreeDeltaType,
+    ReferenceType,
 } from "./ops";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
+import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
     MergeTreeMaintenanceCallback,
-    ReferencePosition,
 } from "./index";
 
 function elapsedMicroseconds(trace: Trace) {
@@ -318,13 +318,36 @@ export class Client {
         }
         return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
     }
-
+    /**
+     * @deprecated - use createReferencePosition instead
+     */
     public addLocalReference(lref: LocalReference) {
         return this.mergeTree.addLocalReference(lref);
     }
 
+    /**
+     * @deprecated - use removeReferencePosition instead
+     */
     public removeLocalReference(lref: LocalReference) {
-        return this.mergeTree.removeLocalReference(lref.segment!, lref);
+        return this.removeLocalReferencePosition(lref);
+    }
+
+    public createLocalReferencePosition(
+        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
+    ): ReferencePosition {
+        return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties, this);
+    }
+
+    public removeLocalReferencePosition(lref: ReferencePosition) {
+        return this.mergeTree.removeLocalReferencePosition(lref);
+    }
+
+    public localReferencePositionToPosition(lref: ReferencePosition) {
+        const segment = lref.getSegment();
+        if (segment === undefined) {
+            return DetachedReferencePosition;
+        }
+        return this.getPosition(segment) + lref.getOffset();
     }
 
     /**
@@ -629,8 +652,7 @@ export class Client {
     getLongClientId(shortClientId: number) {
         if (shortClientId >= 0) {
             return this.shortClientIdMap[shortClientId];
-        }
-        else {
+        } else {
             return "original";
         }
     }
@@ -812,22 +834,29 @@ export class Client {
 
     public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
     public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
-    public applyStashedOp(op: IMergeTreeOp) {
+    public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
+    public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
+        let metadata: SegmentGroup | SegmentGroup[] | undefined;
         switch (op.type) {
             case MergeTreeDeltaType.INSERT:
                 this.applyInsertOp({ op });
-                return this.peekPendingSegmentGroups();
+                metadata = this.peekPendingSegmentGroups();
+                break;
             case MergeTreeDeltaType.REMOVE:
                 this.applyRemoveRangeOp({ op });
-                return this.peekPendingSegmentGroups();
+                metadata = this.peekPendingSegmentGroups();
+                break;
             case MergeTreeDeltaType.ANNOTATE:
                 this.applyAnnotateRangeOp({ op });
-                return this.peekPendingSegmentGroups();
+                metadata = this.peekPendingSegmentGroups();
+                break;
             case MergeTreeDeltaType.GROUP:
                 return op.ops.map((o) => this.applyStashedOp(o));
             default:
                 unreachableCase(op, "unrecognized op type");
         }
+        assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
+        return metadata;
     }
 
     public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
@@ -841,8 +870,7 @@ export class Client {
             };
             if (opArgs.sequencedMessage?.clientId === this.longClientId || local) {
                 this.ackPendingSegment(opArgs);
-            }
-            else {
+            } else {
                 this.applyRemoteOp(opArgs);
             }
         }
@@ -947,7 +975,7 @@ export class Client {
             assert(
                 catchUpMsgs === undefined || catchUpMsgs.length === 0,
                 0x03f /* "New format should not emit catchup ops" */);
-            const snap = new SnapshotV1(this.mergeTree, this.logger, (id)=>this.getLongClientId(id));
+            const snap = new SnapshotV1(this.mergeTree, this.logger, (id) => this.getLongClientId(id));
             snap.extractSync();
             return snap.emit(serializer, handle);
         } else {
@@ -961,7 +989,7 @@ export class Client {
         runtime: IFluidDataStoreRuntime,
         storage: IChannelStorageService,
         serializer: IFluidSerializer,
-    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]>; }> {
         const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger, serializer);
 
         return loader.initialize(storage);
@@ -975,8 +1003,7 @@ export class Client {
         const segWindow = this.getCollabWindow();
         if (segWindow.collaborating) {
             return UnassignedSequenceNumber;
-        }
-        else {
+        } else {
             return UniversalSequenceNumber;
         }
     }
@@ -1031,8 +1058,7 @@ export class Client {
         if (op) {
             clientId = this.getOrAddShortClientId(op.clientId);
             seq = op.referenceSequenceNumber;
-        }
-        else {
+        } else {
             const segWindow = this.mergeTree.getCollabWindow();
             seq = segWindow.currentSeq;
             clientId = segWindow.clientId;

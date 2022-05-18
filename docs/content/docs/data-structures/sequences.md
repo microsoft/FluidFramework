@@ -11,13 +11,13 @@ aliases:
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=packages/dds/sequence/README.md&start=2&end=252) -->
 The **@fluidframework/sequence** packages supports distributed data structures which are list-like.  It includes
-SharedString for storing storing and simultaneously editing a sequence of text. Note that SharedString is a sequence
+SharedString for storing and simultaneously editing a sequence of text. Note that SharedString is a sequence
 DDS but it has additional specialized features and behaviors for working with text.
 
 Sequence DDSes share a common base class, SharedSegmentSequence. For the remainder of this document, the term
 *sequence* refers to this base class.
 
-*Item*s are the individual units that are stored within the sequence (i.e. in a SharedString the items are characters),
+*Item*s are the individual units that are stored within the sequence (e.g. in a SharedString the items are characters),
 but regardless of the type of data stored in the sequence, every item in a sequence is at a specific *position* starting
 at 0, similar to an array. However, sequences differ from arrays in that the positions can move as local and remote
 editors make modifications to the sequence.
@@ -64,7 +64,7 @@ sequence, to insert at the end.
     //   content:
     // positions:
 
-    // insert text at positions 0
+    // insert text at position 0
     sharedString.insertText(0, "hi");
     //   content: hi
     // positions: 01

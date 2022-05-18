@@ -8,7 +8,7 @@ import { IClientConfig } from '@fluidframework/odsp-doclib-utils';
 import { IOdspTokens } from '@fluidframework/odsp-doclib-utils';
 import { ITree } from '@fluidframework/protocol-definitions';
 
-// @public (undocumented)
+// @public
 export const gcBlobPrefix = "__gc";
 
 // @public (undocumented)
@@ -82,14 +82,13 @@ export class OdspTokenManager {
     getPushTokens(server: string, clientConfig: IClientConfig, tokenConfig: OdspTokenConfig, forceRefresh?: boolean, forceReauth?: boolean): Promise<IOdspTokens>;
     // (undocumented)
     updateTokensCache(key: IOdspTokenManagerCacheKey, value: IOdspTokens): Promise<void>;
-    }
+}
 
 // @public (undocumented)
 export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens>;
 
 // @public (undocumented)
 export function saveRC(rc: IResources): Promise<void>;
-
 
 // (No @packageDocumentation comment for this package)
 

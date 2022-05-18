@@ -88,5 +88,5 @@ const Empty: React.FunctionComponent<IEmptyProps & WithStyles<typeof styles>> = 
   );
 };
 
-const StyledEmpty = withStyles(styles, {name: "Empty"})(Empty);
+const StyledEmpty = withStyles(styles, { name: "Empty" })(Empty);
 export { StyledEmpty as Empty };
