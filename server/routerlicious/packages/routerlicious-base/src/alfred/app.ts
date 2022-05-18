@@ -22,29 +22,15 @@ import express from "express";
 import morgan from "morgan";
 import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
-import { bindCorrelationId, getCorrelationIdWithHttpFallback } from "@fluidframework/server-services-utils";
-import { RestLessServer } from "@fluidframework/server-services";
 import {
-    BaseTelemetryProperties,
-    CommonProperties,
-    HttpProperties,
-    LumberEventName,
-    Lumberjack,
-} from "@fluidframework/server-services-telemetry";
+    alternativeMorganLoggerMiddleware,
+    bindCorrelationId,
+    jsonMorganLoggerMiddleware,
+} from "@fluidframework/server-services-utils";
+import { RestLessServer } from "@fluidframework/server-services";
+import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const split = require("split");
-
-/**
- * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
- */
-const stream = split().on("data", (message) => {
-    if (message !== undefined) {
-        Lumberjack.info(message);
-    }
-});
 
 export function create(
     config: Provider,
@@ -80,34 +66,16 @@ export function create(
     app.use(compression());
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
-        app.use((request, response, next): void => {
-            const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
-            morgan((tokens, req, res) => {
-                const messageMetaData = {
-                    [HttpProperties.method]: tokens.method(req, res),
-                    [HttpProperties.pathCategory]: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
-                    [HttpProperties.url]: tokens.url(req, res),
-                    [HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
-                    [HttpProperties.status]: tokens.status(req, res),
-                    [HttpProperties.contentLength]: tokens.res(req, res, "content-length"),
-                    [HttpProperties.responseTime]: tokens["response-time"](req, res),
-                    [BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
-                    [BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
-                    [BaseTelemetryProperties.correlationId]: getCorrelationIdWithHttpFallback(req, res),
-                    [CommonProperties.serviceName]: "alfred",
-                    [CommonProperties.telemetryGroupName]: "http_requests",
-                };
-                httpMetric.setProperties(messageMetaData);
-                if (messageMetaData.status?.startsWith("2")) {
-                    httpMetric.success("Request successful");
-                } else {
-                    httpMetric.error("Request failed");
-                }
-                return undefined;
-            }, { stream })(request, response, next);
-        });
+        const computeExtraProperties = (tokens: morgan.TokenIndexer, req: express.Request, res: express.Response) => {
+            return {
+                [HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
+                [BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+                [BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+            };
+        };
+        app.use(jsonMorganLoggerMiddleware("alfred", computeExtraProperties));
     } else {
-        app.use(morgan(loggerFormat, { stream }));
+        app.use(alternativeMorganLoggerMiddleware(loggerFormat));
     }
 
     app.use(cookieParser());
