@@ -10,10 +10,10 @@
  * - sliding: entries expire after the given duration in MS of inactivity (i.e. get resets the clock)
  */
 export type PromiseCacheExpiry = {
-    policy: "indefinite"
+    policy: "indefinite";
 } | {
-    policy: "absolute" | "sliding",
-    durationMs: number,
+    policy: "absolute" | "sliding";
+    durationMs: number;
 };
 
 /**
@@ -21,9 +21,9 @@ export type PromiseCacheExpiry = {
  */
 export interface PromiseCacheOptions {
     /** Common expiration policy for all items added to this cache */
-    expiry?: PromiseCacheExpiry,
+    expiry?: PromiseCacheExpiry;
     /** If the stored Promise is rejected with a particular error, should the given key be removed? */
-    removeOnError?: (e: any) => boolean,
+    removeOnError?: (e: any) => boolean;
 }
 
 /**
