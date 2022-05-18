@@ -1089,7 +1089,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobId: string) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
             this.logger,
         );
@@ -1298,7 +1299,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get IFluidTokenProvider() {
-        if (this.options && this.options.intelligence) {
+        if (this.options?.intelligence) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
                 intelligence: this.options.intelligence,

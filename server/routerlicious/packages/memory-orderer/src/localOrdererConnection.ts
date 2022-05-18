@@ -116,14 +116,12 @@ export class LocalOrdererConnection implements IOrdererConnection {
             // Add trace
             messages.forEach((message) => {
                 const operation = message.operation;
-                if (operation && operation.traces) {
-                    operation.traces.push(
-                        {
-                            action: "start",
-                            service: "alfred",
-                            timestamp: performance.now(),
-                        });
-                }
+                operation?.traces?.push(
+                    {
+                        action: "start",
+                        service: "alfred",
+                        timestamp: performance.now(),
+                    });
             });
         }
 

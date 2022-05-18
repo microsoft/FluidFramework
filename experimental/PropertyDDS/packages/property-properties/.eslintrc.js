@@ -11,6 +11,7 @@ module.exports = {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "rules": {
+        // Many rules are disabled in PropertyDDS projects. See https://github.com/microsoft/FluidFramework/pull/10272
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/comma-spacing": "off",
         "@typescript-eslint/dot-notation": "off",
@@ -31,6 +32,7 @@ module.exports = {
         "@typescript-eslint/no-var-requires": "off",
         "@typescript-eslint/object-curly-spacing": "off",
         "@typescript-eslint/prefer-for-of": "off",
+        "@typescript-eslint/prefer-optional-chain": "off",
         "@typescript-eslint/quotes": "off",
         "@typescript-eslint/restrict-plus-operands": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
