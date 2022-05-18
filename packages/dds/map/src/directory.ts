@@ -768,8 +768,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         const content: IDirectoryDataObject = {};
         stack.push([root, content]);
 
-        this.incrementSummarizeInstanceCount(telemetryContext);
-
         let totalBlobBytes = 0;
 
         while (stack.length > 0) {

@@ -93,8 +93,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     // (undocumented)
     protected increaseSummarizeTotalBlobBytes(totalBlobBytes: number, telemetryContext?: ITelemetryContext): void;
-    // (undocumented)
-    protected incrementSummarizeInstanceCount(telemetryContext?: ITelemetryContext): void;
     protected processGCDataCore(serializer: SummarySerializer): void;
     // (undocumented)
     protected get serializer(): IFluidSerializer;

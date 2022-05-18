@@ -265,8 +265,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         // Should be bigger than MinValueSizeSeparateSnapshotBlob
         const MaxSnapshotBlobSize = 16 * 1024;
 
-        this.incrementSummarizeInstanceCount(telemetryContext);
-
         let totalBlobBytes = 0;
 
         // Partitioning algorithm:

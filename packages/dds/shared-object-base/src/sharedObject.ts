@@ -498,6 +498,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         trackState: boolean = false,
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
+        this.incrementSummarizeInstanceCount(telemetryContext);
         return this.summarizeCore(this.serializer, telemetryContext);
     }
 
@@ -509,6 +510,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         trackState: boolean = false,
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummaryTreeWithStats> {
+        this.incrementSummarizeInstanceCount(telemetryContext);
         return this.summarizeCore(this.serializer, telemetryContext);
     }
 
@@ -559,7 +561,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats;
 
-    protected incrementSummarizeInstanceCount(telemetryContext?: ITelemetryContext): void {
+    private incrementSummarizeInstanceCount(telemetryContext?: ITelemetryContext): void {
         const instanceCountProperty = "InstanceCount";
         let instanceCount = telemetryContext?.get(this.telemetryContextPrefix, instanceCountProperty) ?? 0;
         telemetryContext?.set(this.telemetryContextPrefix, instanceCountProperty, ++instanceCount);

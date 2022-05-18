@@ -447,8 +447,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
 
-        this.incrementSummarizeInstanceCount(telemetryContext);
-
         let totalBlobBytes = 0;
 
         // conditionally write the interval collection blob
