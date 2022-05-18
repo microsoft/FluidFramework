@@ -10,6 +10,7 @@ import { PacketType } from "socket.io-parser";
 import * as uuid from "uuid";
 
 import { promiseTimeout } from "@fluidframework/server-services-client";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export interface ISocketIoRedisConnection {
     publish(channel: string, message: string): Promise<void>;
@@ -352,6 +353,12 @@ export class RedisSocketIoAdapter extends Adapter {
                 rooms: new Set([room]),
             };
             // console.log(`redisAdapter before= ${JSON.stringify(packet.data)}`);
+            const split = JSON.stringify(channel).split("/");
+            const lumberjackProperties = {
+                [BaseTelemetryProperties.tenantId]: split[1].replace("#", ""),
+                [BaseTelemetryProperties.documentId]: split[2].replace("#", "").replace("\"", ""),
+                "Traces": "abc"
+            };
             if (packet.data && packet.data.length > 1) {
                 if (packet.data[2] && packet.data[2].length > 0) {
                     packet.data[2].forEach((element) => {
@@ -364,10 +371,14 @@ export class RedisSocketIoAdapter extends Adapter {
                                 service: "redisAdapter",
                                 timestamp: time,
                             });
+                        // console.log(`redisAdapter after= ${JSON.stringify(element.traces)} and packet = ${JSON.stringify(packet.data[2])}`,
+                        // `tenantId=${split[1].replace("#", "")}`,
+                        // `doc=${split[2].replace("#", "").replace("\"", "")}`);
+                        lumberjackProperties.Traces = element.traces;
+                        Lumberjack.info("Traces", lumberjackProperties);
                     });
                 }
             }
-            // console.log(`redisAdapter after= ${JSON.stringify(packet.data)}`);
             // only allow room broadcasts
             super.broadcast(packet, opts);
 
