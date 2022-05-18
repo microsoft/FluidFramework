@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 /* globals should, expect */
-import { DataBindingTree } from '../../src/data_binder/dataBindingTree';
+import { DataBindingTree } from '../data_binder/dataBindingTree';
 import { catchConsoleErrors } from './catchConsoleError';
 
 describe('DataBindingTree', function() {

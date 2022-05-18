@@ -1345,14 +1345,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.pendingStateManager = new PendingStateManager(
             {
                 applyStashedOp: this.applyStashedOp.bind(this),
-                clientId: ()=>this.clientId,
+                clientId: () => this.clientId,
                 close: this.closeFn,
-                connected: ()=>this.connected,
+                connected: () => this.connected,
                 flush: this.flush.bind(this),
-                flushMode: ()=>this.flushMode,
+                flushMode: () => this.flushMode,
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
-                setFlushMode: (mode)=>this.setFlushMode(mode),
+                setFlushMode: (mode) => this.setFlushMode(mode),
             },
             this._flushMode,
             pendingRuntimeState?.pending);
@@ -1407,7 +1407,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // if summaries are enabled and we are not the summarizer client.
                 const defaultAction = () => {
                     if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
-                        this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
+                        this.logger.sendErrorEvent({ eventName: "SummaryStatus:Behind" });
                         // unregister default to no log on every op after falling behind
                         // and register summary ack handler to re-register this handler
                         // after successful summary
@@ -1959,7 +1959,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         try {
             this.trackOrderSequentiallyCalls(callback);
             this.flush();
-        } finally{
+        } finally {
             this.setFlushMode(savedFlushMode);
         }
     }

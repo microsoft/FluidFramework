@@ -319,7 +319,7 @@ export class ContainerContext implements IContainerContext {
         });
     }
 
-    private async loadCodeModule(codeDetails: IFluidCodeDetails) {
+    private async loadCodeModule(codeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
         const loadCodeResult = await PerformanceEvent.timedExecAsync(
             this.taggedLogger,
             { eventName: "CodeLoad" },
@@ -336,7 +336,7 @@ export class ContainerContext implements IContainerContext {
             // If "module" is not in the result, we are using a legacy ICodeLoader.  Fix the result up with details.
             // Once usage drops to 0 we can remove this compat path.
             this.taggedLogger.sendTelemetryEvent({ eventName: "LegacyCodeLoader" });
-            return { module: loadCodeResult, details: codeDetails };
+            return loadCodeResult;
         }
     }
     // #endregion
