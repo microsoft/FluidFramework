@@ -30,7 +30,6 @@
     "lint:fix": "npm run eslint:fix",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "test:webpack": "webpack --config webpack.config.js",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
@@ -76,7 +75,6 @@
     "@types/mocha": "^9.1.1",
     "@types/nock": "^9.3.0",
     "@types/node": "^14.18.0",
-    "@types/webpack": "^4.41.2",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
