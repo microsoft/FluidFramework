@@ -49,7 +49,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     disconnect(): Promise<void>;
     dispose(): void;
     get disposed(): boolean;
-    get initialObjects(): Record<string, IFluidLoadable>;
+    get initialObjects(): LoadableObjectRecord;
     get isDirty(): boolean;
 }
 

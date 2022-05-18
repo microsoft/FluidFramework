@@ -239,7 +239,7 @@ describe("Runtime", () => {
                         pending: { pendingStates: [{
                             type: "attach",
                             content: {},
-                        }]},
+                        }] },
                         savedOps: [],
                     };
 
