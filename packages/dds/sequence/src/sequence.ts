@@ -55,8 +55,8 @@ import {
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
-import { IMapMessageLocalMetadata, DefaultMap } from "./defaultMap";
-import { IValueChanged } from "./defaultMapInterfaces";
+import { DefaultMap } from "./defaultMap";
+import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 

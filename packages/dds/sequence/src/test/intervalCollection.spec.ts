@@ -380,7 +380,7 @@ describe("SharedString interval collections", () => {
 
     // TODO: Enable this test suite once correctness issues with reconnect are addressed.
     // See https://github.com/microsoft/FluidFramework/issues/8739 for more context.
-    describe.skip("reconnect", () => {
+    describe("reconnect", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;

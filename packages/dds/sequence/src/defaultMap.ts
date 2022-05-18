@@ -24,6 +24,7 @@ import {
     IValueType,
     IValueTypeOperationValue,
     ISharedDefaultMapEvents,
+    IMapMessageLocalMetadata,
 } from "./defaultMapInterfaces";
 
 /**
@@ -49,15 +50,11 @@ interface IMapMessageHandler {
      * Communicate the operation to remote clients.
      * @param op - The map operation to submit
      */
-    submit(op: IMapOperation, localOpMetadata: any): void;
+    submit(op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata): void;
+
+    tryResubmit?(op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata): void;
 
     getStashedOpLocalMetadata(op: IMapOperation): unknown;
-}
-
-export interface IMapMessageLocalMetadata {
-    lastProcessedSeq: number;
-    // TODO: Better types
-    valueMetadata: any;
 }
 
 /**
@@ -122,8 +119,6 @@ export class DefaultMap<T> {
      * The in-memory data the map is storing.
      */
     private readonly data = new Map<string, ValueTypeLocalValue<T>>();
-
-    private lastProcessedSeq: number = -1;
 
     /**
      * Create a new default map.
@@ -298,13 +293,7 @@ export class DefaultMap<T> {
         const type: string = op.type;
         const handler = this.messageHandlers.get(type);
         if (handler !== undefined) {
-            const mapLocalMetadata: Partial<IMapMessageLocalMetadata> = localOpMetadata;
-            // we don't know how to rebase these operations, so if any other op has come in
-            // we will fail.
-            if (this.lastProcessedSeq !== mapLocalMetadata?.lastProcessedSeq) {
-                throw new Error("SharedInterval does not support reconnect in presence of external changes");
-            }
-            handler.submit(op as IMapOperation, localOpMetadata.valueMetadata);
+            (handler.tryResubmit ?? handler.submit)(op as IMapOperation, localOpMetadata);
             return true;
         }
         return false;
@@ -333,9 +322,6 @@ export class DefaultMap<T> {
         message: ISequencedDocumentMessage | undefined,
         localOpMetadata: unknown,
     ): boolean {
-        // track the seq of every incoming message, so we can detect if any
-        // changes happened during a resubmit
-        this.lastProcessedSeq = message.sequenceNumber;
         const handler = this.messageHandlers.get(op.type);
         if (handler !== undefined) {
             handler.process(op, local, message, localOpMetadata as IMapMessageLocalMetadata);
@@ -404,15 +390,21 @@ export class DefaultMap<T> {
                     const translatedValue = parseHandles(
                         op.value.value,
                         this.serializer);
-                    handler.process(previousValue, translatedValue, local, message, localOpMetadata?.valueMetadata);
+                    handler.process(previousValue, translatedValue, local, message, localOpMetadata);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
                 },
-                submit: (op: IMapValueTypeOperation, valueMetadata: any) => {
+                submit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
                     this.submitMessage(
                         op,
-                        { lastProcessedSeq: this.lastProcessedSeq, valueMetadata },
+                        localOpMetadata,
                     );
+                },
+                tryResubmit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
+                    const localValue = this.data.get(op.key);
+                    const handler = localValue.getOpHandler(op.value.opName);
+                    // TODO: Maybe should return localMetadata? can match design of applyStashedOp perhaps
+                    this.submitMessage({ ...op, value: handler.rebase(localValue.value, op.value, localOpMetadata) }, localOpMetadata)
                 },
                 getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
                     assert(false, 0x016 /* "apply stashed op not implemented for custom value type ops" */);
@@ -429,7 +421,7 @@ export class DefaultMap<T> {
      * @returns A value op emitter for the given key
      */
     private makeMapValueOpEmitter(key: string): IValueOpEmitter {
-        const emit = (opName: string, previousValue: any, params: any, valueMetadata: unknown) => {
+        const emit = (opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata) => {
             const translatedParams = makeHandlesSerializable(
                 params,
                 this.serializer,
@@ -444,7 +436,7 @@ export class DefaultMap<T> {
                 },
             };
             // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.submitMessage(op, { lastProcessedSeq: this.lastProcessedSeq, valueMetadata });
+            this.submitMessage(op, localOpMetadata);
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);

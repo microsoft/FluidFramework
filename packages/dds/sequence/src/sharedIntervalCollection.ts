@@ -24,8 +24,9 @@ import {
     IntervalCollectionValueType,
     ISerializableInterval,
 } from "./intervalCollection";
-import { IMapMessageLocalMetadata, DefaultMap } from "./defaultMap";
+import { DefaultMap } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";
+import { IMapMessageLocalMetadata } from "./defaultMapInterfaces";
 
 const snapshotFileName = "header";
 

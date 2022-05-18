@@ -1165,23 +1165,15 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (!this.attached) {
             throw new Error("attachSequence must be called");
         }
-        // somehow don't need seq number??
+
         const { start, end, intervalType, properties, sequenceNumber } = serializedInterval;
-
-
-        // const { pos1: startRebased, pos2: endRebased } = this.client.regeneratePendingOp(createAnnotateRangeOp(start, end, {}, undefined), this.client.peekPendingSegmentGroups()) as IMergeTreeAnnotateMsg;
-        // this.client.getOrAddShortClientId()
-        // This approach assumes the local client's minSeq hasn't been updated to match the collab window yet. Is that valid?
-
         const seqNumberTo = this.client.getCollabWindow().currentSeq;
+
         const segOffStart = this.client.findSegOffForReconnection(start, sequenceNumber, seqNumberTo, localSeq);
         const segOffEnd = this.client.findSegOffForReconnection(end, sequenceNumber, seqNumberTo, localSeq);
         const startRebased = this.client.findReconnectionPosition(segOffStart.segment, localSeq) + segOffStart.offset;
         const endRebased = this.client.findReconnectionPosition(segOffEnd.segment, localSeq) + segOffEnd.offset;
-        // const startRebased = this.client.resolveRemoteClientPosition(start, sequenceNumber, this.client.longClientId + "rebase"); // ewwwww
-        // const endRebased = this.client.resolveRemoteClientPosition(end, sequenceNumber, this.client.longClientId + "rebase");
 
-        // TODO: Uniformize creation paths. Do we need to remove the existing interval as part of this rebase? If not, there are probably IDs we need to line up.
         const interval = this.localCollection.createInterval(startRebased, endRebased, intervalType);
         interval.addProperties(properties);
         const rebased = interval.serialize(this.client);
@@ -1191,29 +1183,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
         return rebased;
     }
-
-    // private rebaseLocalClientPosition(pos: number, referenceSequenceNumber: number): number {
-    //     const clientId = this.client.getOrAddShortClientId(this.client.longClientId + "rebase");
-    //     const segmentInfo = this.client.getContainingSegment(
-    //         pos,
-    //         { referenceSequenceNumber, clientId } as unknown as ISequencedDocumentMessage);
-
-    //     const segwindow = this.client.getCollabWindow();
-
-    //     if (segmentInfo && segmentInfo.segment) {
-    //         const segmentPosition = this.client.getPosition(segmentInfo.segment, segwindow.currentSeq, segwindow.clientId);
-
-    //         if (segmentInfo.segment.removedSeq !== undefined) { // should prob also check against segwindow.currentSeq
-    //             return segmentPosition;
-    //         }
-    //         return segmentPosition + segmentInfo.offset!;
-    //     } else {
-    //         if (remoteClientPosition === this.getLength(remoteClientRefSeq, remoteClientId)) {
-    //             return this.getLength(segwindow.currentSeq, segwindow.clientId);
-    //         }
-    //     }
-
-    // }
 
     /** @deprecated - use ackAdd */
     public addInternal(

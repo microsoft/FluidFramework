@@ -34,7 +34,12 @@ export interface IValueOpEmitter {
      * @param localOpMetadata - JSONable local metadata which should be submitted with the op
      * @alpha
      */
-    emit(opName: string, previousValue: any, params: any, localOpMetadata: unknown): void;
+    emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
+}
+
+
+export interface IMapMessageLocalMetadata {
+    localSeq: number;
 }
 
 /**
