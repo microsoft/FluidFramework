@@ -128,7 +128,7 @@ function createCachedResolver(resolver: IUrlResolver) {
     return cacheResolver;
 }
 
-export interface ILoaderOptions extends ILoaderOptions1{
+export interface ILoaderOptions extends ILoaderOptions1 {
     summarizeProtocolTree?: boolean;
 }
 
