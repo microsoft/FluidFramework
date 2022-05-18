@@ -30,13 +30,9 @@ export class AzureUrlResolver implements IUrlResolver {
         ) {
             return {
                 endpoints: {
-                    // TODO: why do we remove the `/` from the url here?
-                    // deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/new`,
-                    deltaStorageUrl: `${ordererUrl}deltas/${tenantId}/new`,
+                    deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/new`,
                     ordererUrl,
-                    // TODO: why do we remove the `/` from the url here?
-                    // storageUrl: `${storageUrl}/repos/${tenantId}`,
-                    storageUrl: `${storageUrl}repos/${tenantId}`,
+                    storageUrl: `${storageUrl}/repos/${tenantId}`,
                 },
                 // id is a mandatory attribute, but it's ignored by the driver for new container requests.
                 id: "",
@@ -52,13 +48,9 @@ export class AzureUrlResolver implements IUrlResolver {
         const documentUrl = `${ordererUrl}/${tenantId}/${containerId}`;
         return Promise.resolve({
             endpoints: {
-                // TODO: why do we remove the `/` from the url here?
-                // deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/${containerId}`,
-                deltaStorageUrl: `${ordererUrl}deltas/${tenantId}/${containerId}`,
+                deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/${containerId}`,
                 ordererUrl,
-                // TODO: why do we remove the `/` from the url here?
-                // storageUrl: `${storageUrl}/repos/${tenantId}`,
-                storageUrl: `${storageUrl}repos/${tenantId}`,
+                storageUrl: `${storageUrl}/repos/${tenantId}`,
             },
             id: containerId,
             tokens: {},

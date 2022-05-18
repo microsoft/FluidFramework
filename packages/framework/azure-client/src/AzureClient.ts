@@ -64,6 +64,8 @@ export class AzureClient {
      * @param props - Properties for initializing a new AzureClient instance
      */
     constructor(private readonly props: AzureClientProps) {
+        // remove trailing slash from URL if any
+        props.connection.endpoint = props.connection.endpoint.replace(/\/$/, "");
         this.urlResolver = new AzureUrlResolver();
         // The local service implementation differs from the Azure Fluid Relay in blob
         // storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
