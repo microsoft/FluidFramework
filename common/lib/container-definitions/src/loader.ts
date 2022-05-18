@@ -398,11 +398,6 @@ export type ILoaderOptions = {
      * Max time(in ms) container will wait for a leave message of a disconnected client.
     */
     maxClientLeaveWaitTime?: number;
-
-    /**
-     * Enable adding the protocol tree to the summary.
-     */
-    summarizeProtocolTree?: boolean;
 };
 
 /**
