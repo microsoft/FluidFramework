@@ -83,7 +83,8 @@ function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint) {
     }
     assert(configStr, `Missing config for ${r11sEndpointName}`);
     const config = JSON.parse(configStr);
-    return getConfig(config.discoveryEndpoint,
+    return getConfig(
+        config.discoveryEndpoint,
         config.host,
         config.tenantId,
         config.tenantSecret,
