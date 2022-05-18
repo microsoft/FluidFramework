@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TelemetryEventPropertyType } from "@fluidframework/common-definitions";
 import {
     SummaryTree,
     ISummaryTree,
@@ -255,7 +256,7 @@ export interface ITelemetryContext {
      * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
      * @param value - value to attribute to this summary telemetry data
      */
-    set(prefix: string, property: string, value: any): void;
+    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
 
     /**
      * Get the telemetry data being tracked
@@ -263,7 +264,7 @@ export interface ITelemetryContext {
      * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
      * @returns undefined if item not found
      */
-    get(prefix: string, property: string): any | undefined;
+    get(prefix: string, property: string): TelemetryEventPropertyType;
 
     /**
      * Returns a serialized version of all the telemetry data.

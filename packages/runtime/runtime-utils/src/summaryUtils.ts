@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TelemetryEventPropertyType } from "@fluidframework/common-definitions";
 import {
     bufferToString,
     fromBase64ToUtf8,
@@ -336,21 +337,20 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 }
 
 export class TelemetryContext implements ITelemetryContext {
-    private telemetry = new Map<string, any>();
+    private telemetry = new Map<string, TelemetryEventPropertyType>();
 
     /**
      * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
      */
-    set(prefix: string, property: string, value: any): void {
+    set(prefix: string, property: string, value: TelemetryEventPropertyType): void {
         this.telemetry[`${prefix}${property}`] = value;
     }
 
     /**
      * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
      */
-    get(prefix: string, property: string): any | undefined {
-        const key = `${prefix}${property}`;
-        return this.telemetry.has(key) ? this.telemetry[key] : undefined;
+    get(prefix: string, property: string): TelemetryEventPropertyType {
+        return this.telemetry.get(`${prefix}${property}`);
     }
 
     /**
