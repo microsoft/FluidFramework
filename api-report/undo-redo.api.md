@@ -23,7 +23,6 @@ export class SharedMapRevertible implements IRevertible {
     constructor(changed: IValueChanged, map: ISharedMap);
     // (undocumented)
     discard(): void;
-    matchRollback?(key: string, target: ISharedMap): boolean;
     // (undocumented)
     revert(): void;
 }
@@ -72,8 +71,6 @@ export class UndoRedoStackManager {
     redoOperation(): boolean;
     // (undocumented)
     removeListener(event: "changePushed", listener: () => void): void;
-    // (undocumented)
-    rollbackLastRevertible?(): IRevertible | undefined;
     // (undocumented)
     undoOperation(): boolean;
 }

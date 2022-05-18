@@ -458,7 +458,7 @@ export class MapKernel {
         if (metadata === undefined) {
             this.deleteCore(op.key, true);
         } else {
-            this.setCore(op.key, metadata.previousValue, true, true);
+            this.setCore(op.key, metadata.previousValue, true);
         }
 
         // BUGBUG: This isn't right. It should revert it to the value it was before the rolled back op.
@@ -472,14 +472,10 @@ export class MapKernel {
      * @param local - Whether the message originated from the local client
      * @returns Previous value of the key
      */
-    private setCore(key: string, value: ILocalValue, local: boolean, rollback: boolean = false): any {
+    private setCore(key: string, value: ILocalValue, local: boolean): any {
         const previousValue = this.get(key);
         this.data.set(key, value);
-        if (rollback) {
-            this.eventEmitter.emit("rollback", key, this.eventEmitter);
-        } else {
-            this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
-        }
+        this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
         return previousValue;
     }
 
@@ -499,15 +495,11 @@ export class MapKernel {
      * @param local - Whether the message originated from the local client
      * @returns Previous value of the key if it existed, undefined if it did not exist
      */
-    private deleteCore(key: string, local: boolean, rollback: boolean = false): any {
+    private deleteCore(key: string, local: boolean): any {
         const previousValue = this.get(key);
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
-            if (rollback) {
-                this.eventEmitter.emit("rollback", key, this.eventEmitter);
-            } else {
-                this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
-            }
+            this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
         }
         return previousValue;
     }

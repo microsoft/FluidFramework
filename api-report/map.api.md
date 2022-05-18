@@ -130,8 +130,6 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
-    (event: "rollback", listener: (key: string, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public

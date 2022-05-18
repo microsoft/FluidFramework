@@ -245,19 +245,6 @@ export interface IDirectoryValueChanged extends IValueChanged {
  * - `local` - Whether the clear originated from the this client.
  *
  * - `target` - The map itself.
- *
- * ### "rollback"
- *
- * The rollback event is emitted when a map edit is rolled back.
- *
- * #### Listener signature
- *
- * ```typescript
- * (key: string, target: IEventThisPlaceHolder) => void
- * ```
- * - `key` - The key of the value rolled back.
- *
- * - `target` - The map itself.
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
@@ -266,9 +253,6 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
         target: IEventThisPlaceHolder) => void);
     (event: "clear", listener: (
         local: boolean,
-        target: IEventThisPlaceHolder) => void);
-    (event: "rollback", listener: (
-        key: string,
         target: IEventThisPlaceHolder) => void);
 }
 
