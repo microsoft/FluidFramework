@@ -108,7 +108,7 @@ export class PropertyTemplateWrapper {
         const isCreationType = (typeid) => {
             const creationTypes =
                 ['ContainerProperty', 'NodeProperty', 'Enum', 'BinaryProperty', 'Binary', 'RepositoryReferenceProperty'];
-            return creationTypes.indexOf(typeid) !== -1;
+            return creationTypes.includes(typeid);
         };
 
         if (isCreationType(in_typeid)) {
