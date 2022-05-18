@@ -140,7 +140,7 @@ export class MapKernel {
     /**
      * Keys that have been modified locally but not yet ack'd from the server.
      */
-    private readonly pendingKeys: Map<string, IMapLocalOpMetadata> = new Map();
+    private readonly pendingKeys: Map<string, IMapLocalOpMetadata[]> = new Map();
 
     /**
      * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
@@ -455,14 +455,20 @@ export class MapKernel {
         }
 
         const metadata = localOpMetadata as IMapLocalOpMetadata;
-        if (metadata === undefined) {
+        if (metadata.previousValue === undefined) {
             this.deleteCore(op.key, true);
         } else {
             this.setCore(op.key, metadata.previousValue, true);
         }
 
-        // BUGBUG: This isn't right. It should revert it to the value it was before the rolled back op.
-        this.pendingKeys.delete(op.key);
+        const pendingMetadata = this.pendingKeys.get(op.key);
+        const lastPending = pendingMetadata?.pop();
+        if (!pendingMetadata || !lastPending || lastPending.pendingMessageId !== metadata.pendingMessageId) {
+            throw new Error("Rollback op does not match last pending");
+        }
+        if (pendingMetadata.length === 0) {
+            this.pendingKeys.delete(op.key);
+        }
     }
 
     /**
@@ -570,10 +576,17 @@ export class MapKernel {
                 assert(localOpMetadata !== undefined,
                     0x014 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
                 const pendingMessage = localOpMetadata as IMapLocalOpMetadata;
-                const pendingKeyMessage = this.pendingKeys.get(op.key);
-                if (pendingKeyMessage !== undefined &&
-                    pendingKeyMessage.pendingMessageId === pendingMessage.pendingMessageId) {
-                    this.pendingKeys.delete(op.key);
+                const pendingMetadata = this.pendingKeys.get(op.key);
+                if (pendingMetadata !== undefined) {
+                    const index = pendingMetadata.findIndex(
+                        (value) => value.pendingMessageId === pendingMessage.pendingMessageId);
+                    if (index === pendingMetadata.length - 1) {
+                        // Remove the key if it was the latest pending message for the key
+                        this.pendingKeys.delete(op.key);
+                    } else if (index !== -1) {
+                        // Keep only the pending messages set after the op
+                        this.pendingKeys.set(op.key, pendingMetadata.slice(index + 1));
+                    }
                 }
             }
             return false;
@@ -677,13 +690,19 @@ export class MapKernel {
 
     private getMapKeyMessageLocalMetadataWithPendingValue(op: IMapKeyOperation): unknown {
         const previous = this.pendingKeys.get(op.key);
-        return this.getMapKeyMessageLocalMetadata(op, previous ? previous.previousValue : undefined);
+        return this.getMapKeyMessageLocalMetadata(op,
+            previous ? previous[previous.length - 1].previousValue : undefined);
     }
 
     private getMapKeyMessageLocalMetadata(op: IMapKeyOperation, previousValue: any): unknown {
         const pendingMessageId = ++this.pendingMessageId;
         const localMetadata = { pendingMessageId, previousValue };
-        this.pendingKeys.set(op.key, localMetadata);
+        const pendingMetadata = this.pendingKeys.get(op.key);
+        if (pendingMetadata !== undefined) {
+            pendingMetadata.push(localMetadata);
+        } else {
+            this.pendingKeys.set(op.key, [localMetadata]);
+        }
         return localMetadata;
     }
 
