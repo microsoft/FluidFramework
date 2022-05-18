@@ -24,8 +24,8 @@ const resolutionCache = new Map<string, string>();
 const revision = 1;
 
 interface InstalledJson {
-    revision: number,
-    installed: string[],
+    revision: number;
+    installed: string[];
 }
 
 async function ensureInstalledJson() {

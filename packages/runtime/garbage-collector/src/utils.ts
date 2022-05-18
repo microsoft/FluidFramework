@@ -17,7 +17,7 @@ import {
  * @returns a clone of the given GC data.
  */
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
-    const clonedGCNodes: { [ id: string ]: string[] } = {};
+    const clonedGCNodes: { [ id: string ]: string[]; } = {};
     for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
         clonedGCNodes[id] = Array.from(outboundRoutes);
     }
@@ -58,7 +58,7 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
         }
         // gcData should not undefined as its always at least initialized as  empty above.
         assert(childGCDetails.gcData !== undefined, 0x2af /* "Child GC data should have been initialized" */);
-        childGCDetails.gcData.gcNodes[childGCNodeId] = Array.from(outboundRoutes);
+        childGCDetails.gcData.gcNodes[childGCNodeId] = [...new Set(outboundRoutes)];
         childGCDetailsMap.set(childId, childGCDetails);
     }
 
@@ -110,16 +110,17 @@ export function unpackChildNodesUsedRoutes(usedRoutes: string[]) {
 }
 
 /**
- * Removes the given route from the outbound routes of all the given GC nodes.
+ * Removes the given route from the outbound routes of all the given GC nodes, and any duplicates
  * @param gcNodes - The nodes from which the route is to be removed.
  * @param outboundRoute - The route to be removed.
  */
-export function removeRouteFromAllNodes(gcNodes: { [ id: string ]: string[] }, outboundRoute: string) {
-    for (const outboundRoutes of Object.values(gcNodes)) {
-        const index = outboundRoutes.indexOf(outboundRoute);
-        if (index > -1) {
-            outboundRoutes.splice(index, 1);
-        }
+export function removeRouteFromAllNodes(gcNodes: { [ id: string ]: string[]; }, outboundRoute: string) {
+    const channels = Object.entries(gcNodes);
+    for (const [nodeId, outboundRoutes] of channels) {
+        // Remove route from channel to parent for each channel
+        const outboundRoutesSet = new Set(outboundRoutes);
+        outboundRoutesSet.delete(outboundRoute);
+        gcNodes[nodeId] = [...outboundRoutesSet];
     }
 }
 
@@ -130,7 +131,7 @@ export function concatGarbageCollectionStates(
     gcState1: IGarbageCollectionState,
     gcState2: IGarbageCollectionState,
 ): IGarbageCollectionState {
-    const combinedGCNodes: { [ id: string ]: IGarbageCollectionNodeData } = {};
+    const combinedGCNodes: { [ id: string ]: IGarbageCollectionNodeData; } = {};
     for (const [nodeId, nodeData] of Object.entries(gcState1.gcNodes)) {
         combinedGCNodes[nodeId] = {
             outboundRoutes: Array.from(nodeData.outboundRoutes),
@@ -179,10 +180,17 @@ export function concatGarbageCollectionData(gcData1: IGarbageCollectionData, gcD
 }
 
 export class GCDataBuilder implements IGarbageCollectionData {
-    public readonly gcNodes: { [ id: string ]: string[] } = {};
+    private readonly gcNodesSet: { [ id: string ]: Set<string>; } = {};
+    public get gcNodes(): { [ id: string ]: string[]; } {
+        const gcNodes = {};
+        for (const [nodeId, outboundRoutes] of Object.entries(this.gcNodesSet)) {
+            gcNodes[nodeId] = [...outboundRoutes];
+        }
+        return gcNodes;
+    }
 
     public addNode(id: string, outboundRoutes: string[]) {
-        this.gcNodes[id] = Array.from(outboundRoutes);
+        this.gcNodesSet[id] = new Set(outboundRoutes);
     }
 
     /**
@@ -191,7 +199,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
      * - Prefixes the given `prefixId` to the given nodes' ids.
      * - Adds the outbound routes of the nodes against the normalized and prefixed id.
      */
-    public prefixAndAddNodes(prefixId: string, gcNodes: { [ id: string ]: string[] }) {
+    public prefixAndAddNodes(prefixId: string, gcNodes: { [ id: string ]: string[]; }) {
         for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
             let normalizedId = id;
             // Remove any starting slashes from the id.
@@ -207,14 +215,14 @@ export class GCDataBuilder implements IGarbageCollectionData {
                 normalizedId = normalizedId.substr(0, normalizedId.length - 1);
             }
 
-            // Add the outbound routes against the normalized and prefixed id.
-            this.gcNodes[normalizedId] = outboundRoutes;
+            // Add the outbound routes against the normalized and prefixed id without duplicates.
+            this.gcNodesSet[normalizedId] = new Set(outboundRoutes);
         }
     }
 
-    public addNodes(gcNodes: { [ id: string ]: string[] }) {
+    public addNodes(gcNodes: { [ id: string ]: string[]; }) {
         for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
-            this.gcNodes[id] = Array.from(outboundRoutes);
+            this.gcNodesSet[id] = new Set(outboundRoutes);
         }
     }
 
@@ -222,8 +230,8 @@ export class GCDataBuilder implements IGarbageCollectionData {
      * Adds the given outbound route to the outbound routes of all GC nodes.
      */
     public addRouteToAllNodes(outboundRoute: string) {
-        for (const outboundRoutes of Object.values(this.gcNodes)) {
-            outboundRoutes.push(outboundRoute);
+        for (const outboundRoutes of Object.values(this.gcNodesSet)) {
+            outboundRoutes.add(outboundRoute);
         }
     }
 

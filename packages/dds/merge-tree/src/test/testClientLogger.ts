@@ -17,8 +17,8 @@ function getOpString(msg: ISequencedDocumentMessage | undefined) {
     }
     const op = msg.contents as IMergeTreeOp;
     const opType = op.type.toString();
-    // eslint-disable-next-line @typescript-eslint/dot-notation, max-len
-    const opPos = op && op["pos1"] !== undefined ? `@${op["pos1"]}${op["pos2"] !== undefined ? `,${op["pos2"]}` : ""}` : "";
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    const opPos = op?.["pos1"] !== undefined ? `@${op["pos1"]}${op["pos2"] !== undefined ? `,${op["pos2"]}` : ""}` : "";
 
     const seq = msg.sequenceNumber < 0 ? "L" : (msg.sequenceNumber - msg.minimumSequenceNumber).toString();
     const ref = (msg.referenceSequenceNumber - msg.minimumSequenceNumber).toString();
@@ -31,7 +31,7 @@ type ClientMap = Partial<Record<"A" | "B" | "C" | "D" | "E", TestClient>>;
 export function createClientsAtInitialState<TClients extends ClientMap>(
     initialState: string,
     ... clientIds: (string & keyof TClients)[]
-): Record<keyof TClients, TestClient> & { all: TestClient[] } {
+): Record<keyof TClients, TestClient> & { all: TestClient[]; } {
     const setup = (c: TestClient) => {
         c.insertTextLocal(0, initialState);
         while (c.getText().includes("-")) {
@@ -194,7 +194,7 @@ export class TestClientLogger {
         return str;
     }
 
-    private static getSegString(client: TestClient): { acked: string, local: string } {
+    private static getSegString(client: TestClient): { acked: string; local: string; } {
         let acked: string = "";
         let local: string = "";
         const nodes = [...client.mergeTree.root.children];

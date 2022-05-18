@@ -22,7 +22,7 @@ import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-serv
 /**
  * Validates a JWT token to authorize routerlicious.
  * @returns decoded claims.
- * @throws {NetworkError} if claims are invalid.
+ * @throws {@link NetworkError} if claims are invalid.
  */
 export function validateTokenClaims(
     token: string,

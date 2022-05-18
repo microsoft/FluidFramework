@@ -42,7 +42,7 @@ export class DebugLogger extends TelemetryLogger {
     static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     static mixinDebugLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
-    }
+}
 
 // @public (undocumented)
 export const disconnectedEventName = "disconnected";
@@ -52,7 +52,7 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
     constructor(errorHandler: (eventName: EventEmitterEventType, error: any) => void);
     // (undocumented)
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
-    }
+}
 
 // @public
 export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean): {
@@ -177,6 +177,8 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     constructor();
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string): void;
     assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string): void;
+    // (undocumented)
+    clear(): void;
     // (undocumented)
     events: ITelemetryBaseEvent[];
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;
@@ -304,14 +306,13 @@ export class ThresholdCounter {
     constructor(threshold: number, logger: ITelemetryLogger, thresholdMultiple?: number);
     send(eventName: string, value: number): void;
     sendIfMultiple(eventName: string, value: number): void;
-    }
+}
 
 // @public
 export function wrapError<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;
 
 // @public
 export function wrapErrorAndLog<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
-
 
 // (No @packageDocumentation comment for this package)
 

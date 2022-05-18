@@ -378,6 +378,7 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
 }
 
 /**
+ * ```
  * function (thing: ObjectWithMaybeFoo) {
  * 	   const x: MyActualType = {
  * 	       bar: 3
@@ -386,6 +387,7 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
  *
  * 	    copyPropertyIfDefined(thing, x, 'foo');
  * }
+ * ```
  * @returns
  */
 

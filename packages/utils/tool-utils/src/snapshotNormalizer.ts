@@ -10,6 +10,9 @@ import {
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 
+/** The name of the metadata blob added to the root of the container runtime. */
+const metadataBlobName = ".metadata";
+/** The prefix that all GC blob names start with. */
 export const gcBlobPrefix = "__gc";
 
 export interface ISnapshotNormalizerConfig {
@@ -91,6 +94,23 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
         content = JSON.stringify(gcState);
     }
 
+    /**
+      * The metadata blob has "summaryNumber" or "summaryCount" that tells which summary this is for a container. It can
+      * be different in summaries of two clients even if they are generated at the same sequence#. For instance, at seq#
+      * 1000, if one client has summarized 10 times and other has summarizer 15 times, summaryNumber will be different
+      * for them. So, update "summaryNumber" to 0 for purposes of comparing snapshots.
+      */
+    if (blobName === metadataBlobName) {
+        const metadata = JSON.parse(content);
+        if (metadata.summaryNumber !== undefined) {
+            metadata.summaryNumber = 0;
+        }
+        if (metadata.summaryCount !== undefined) {
+            metadata.summaryCount = 0;
+        }
+        content = JSON.stringify(metadata);
+    }
+
     // Deep sort the content if it's parseable.
     try {
         let contentObj = JSON.parse(content);
@@ -118,8 +138,10 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
     // parsed and deep sorted.
     const normalizedEntries: ITreeEntry[] = [];
 
+    // The metadata blob in the root of the summary tree needs to be normalized.
+    const blobsToNormalize = [metadataBlobName, ...config?.blobsToNormalize ?? []];
     for (const entry of snapshot.entries) {
-        normalizedEntries.push(normalizeEntry(entry, config));
+        normalizedEntries.push(normalizeEntry(entry, { ...config, blobsToNormalize }));
     }
 
     // Sort the tree entries based on their path.
@@ -148,7 +170,7 @@ function normalizeEntry(
             if (config?.excludedChannelContentTypes !== undefined) {
                 for (const maybeAttributes of entry.value.entries) {
                     if (maybeAttributes.type === TreeEntry.Blob && maybeAttributes.path === ".attributes") {
-                        const parsed: { type?: string } = JSON.parse(maybeAttributes.value.contents);
+                        const parsed: { type?: string; } = JSON.parse(maybeAttributes.value.contents);
                         if (parsed.type !== undefined && config.excludedChannelContentTypes.includes(parsed.type)) {
                             // remove everything to match the unknown channel
                             return new TreeTreeEntry(entry.path, { entries: [maybeAttributes] });

@@ -14,9 +14,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
     constructor(private readonly collection: Collection<T>) {
     }
 
-    public aggregate(group: any, options?: any): AggregationCursor<T> {
-        const pipeline: any = [];
-        pipeline.$group = group;
+    public aggregate(pipeline: any, options?: any): AggregationCursor<T> {
         return this.collection.aggregate(pipeline, options);
     }
 
@@ -88,7 +86,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
         await this.collection.createIndex(index, { expireAfterSeconds });
     }
 
-    public async findOrCreate(query: any, value: T): Promise<{ value: T, existing: boolean }> {
+    public async findOrCreate(query: any, value: T): Promise<{ value: T; existing: boolean; }> {
         const result = await this.collection.findOneAndUpdate(
             query,
             {

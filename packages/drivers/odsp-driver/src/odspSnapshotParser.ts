@@ -16,7 +16,7 @@ import { ISnapshotContents } from "./odspUtils";
  * @returns the hierarchical tree
  */
 function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
-    const lookup: { [path: string]: api.ISnapshotTree } = {};
+    const lookup: { [path: string]: api.ISnapshotTree; } = {};
     // id is required for root tree as it will be used to determine the version we loaded from.
     const root: api.ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
     lookup[""] = root;
@@ -64,7 +64,7 @@ export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
     const val: ISnapshotContents = {
         blobs: blobsWithBufferContent,
         ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
-        sequenceNumber: odspSnapshot.trees && (odspSnapshot.trees[0]).sequenceNumber,
+        sequenceNumber: odspSnapshot?.trees[0].sequenceNumber,
         snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
     };
     return val;

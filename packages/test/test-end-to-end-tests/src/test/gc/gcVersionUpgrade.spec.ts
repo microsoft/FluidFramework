@@ -108,7 +108,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
      * @param dataStoresAsHandles - List of data stores whose summary should be handles.
      */
     async function validateDataStoreSummaryState(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+        summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
         dataStoresAsHandles: string[],
     ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger);
