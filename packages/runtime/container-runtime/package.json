@@ -138,10 +138,9 @@
       },
       "InterfaceDeclaration_IConnectableRuntime": {"backCompat": false},
       "InterfaceDeclaration_ISummarizerRuntime": {"backCompat": false},
-      "InterfaceDeclaration_IGeneratedSummaryStats": {"backCompat": false},
-      "InterfaceDeclaration_IGenerateSummaryTreeResult": {"backCompat": false},
-      "TypeAliasDeclaration_SubmitSummaryResult": {"backCompat": false},
-      "InterfaceDeclaration_IUploadSummaryResult": {"backCompat": false},
+      "InterfaceDeclaration_IProvideSummarizer": {"forwardCompat": false},
+      "InterfaceDeclaration_ISummarizer": {"forwardCompat": false},
+      "ClassDeclaration_Summarizer": {"forwardCompat": false},
       "InterfaceDeclaration_ISubmitSummaryOpResult": {"backCompat": false}
     }
   }
