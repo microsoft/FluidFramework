@@ -79,6 +79,9 @@ See also: [Contributing](#Contributing)
 
 - [node-gyp](https://github.com/nodejs/node-gyp) Requirements
   - Ensure that the requirements listed [here](https://github.com/nodejs/node-gyp#installation) are satisfied for your environment.
+  - Also note that the version of `node-gyp` pulled in by our current version of `Node.js` (14.x.x) **is not** compatible with Visual Studio 2022.
+    This has been fixed on more recent versions of `node-gyp`, but until we update to a more recent version of `Node.js`, we recommend using an earlier version of Visual Studio / its build tools.
+    Version 17 seems to be stable.
 
 #### On Windows
 
