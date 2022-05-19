@@ -2278,7 +2278,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
         }
 
-        const { stats, summary } = await this.summarizerNode.summarize(fullTree, trackState, new TelemetryContext());
+        const telemetryContext = new TelemetryContext();
+        const { stats, summary } = await this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
+
+        this.logger.sendTelemetryEvent({ eventName: "SummarizeTelemetry", details: telemetryContext.serialize() });
 
         assert(summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);
