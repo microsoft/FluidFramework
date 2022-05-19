@@ -110,6 +110,7 @@
   "typeValidation": {
     "version": "0.59.4000",
     "broken": {
+      "ClassDeclaration_Client": {"forwardCompat": false},
       "InterfaceDeclaration_IMergeTreeAnnotateMsg": {"forwardCompat": false, "backCompat": false},
       "InterfaceDeclaration_IMergeTreeDelta": {"forwardCompat": false, "backCompat": false},
       "InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {"forwardCompat": false, "backCompat": false},
