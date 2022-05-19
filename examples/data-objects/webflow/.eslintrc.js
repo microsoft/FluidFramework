@@ -14,7 +14,6 @@ module.exports = {
         "max-len": "off",
         "no-bitwise": "off",
         "no-case-declarations": "off",
-        "no-null/no-null": "off"
     },
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]

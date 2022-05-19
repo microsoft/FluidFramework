@@ -12,12 +12,12 @@ import {
 
 describe("createResponseError", () => {
     it("Strip URL query param ", () => {
-        const response = createResponseError(400, "SomeValue", { url: "http://foo.com?a=b"});
+        const response = createResponseError(400, "SomeValue", { url: "http://foo.com?a=b" });
         assert.strictEqual(response.value, "SomeValue: http://foo.com");
     });
 
     it("request / response / error handling ", () => {
-        const request = { url: "/foo/bar?something"};
+        const request = { url: "/foo/bar?something" };
         const response = createResponseError(401, "some value", request);
         const value = "some value: /foo/bar";
         assert.strict.equal(response.status, 401, "status code");

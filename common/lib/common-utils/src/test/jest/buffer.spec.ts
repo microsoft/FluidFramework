@@ -136,7 +136,7 @@ describe("Buffer isomorphism", () => {
         expect(nodeBufferBase64).toEqual(browserBufferBase64);
     });
 
-    test("bufferToString with utf8 encoding is compatible",() => {
+    test("bufferToString with utf8 encoding is compatible", () => {
         const test = "hello";
         const nodeBufferUtf8 = BufferNode.stringToBuffer(test, "utf8");
         const browserBufferUtf8 = BufferBrowser.stringToBuffer(test, "utf8");
@@ -154,7 +154,7 @@ describe("Buffer isomorphism", () => {
         expect(browserStringBase64).toEqual("aGVsbG8=");
     });
 
-    test("bufferToString with base64 encoding is compatible",() => {
+    test("bufferToString with base64 encoding is compatible", () => {
         const test = "aGVsbG90aGVyZQ==";
         const nodeBufferBase64 = BufferNode.stringToBuffer(test, "base64");
         const browserBufferBase64 = BufferBrowser.stringToBuffer(test, "base64");
@@ -165,14 +165,14 @@ describe("Buffer isomorphism", () => {
         expect(nodeStringBase64).toEqual(test);
         expect(browserStringBase64).toEqual(test);
 
-        const nodeStringUtf8 = BufferNode.bufferToString(nodeBufferBase64,"utf8");
-        const browserStringUtf8 = BufferBrowser.bufferToString(browserBufferBase64,"utf8");
+        const nodeStringUtf8 = BufferNode.bufferToString(nodeBufferBase64, "utf8");
+        const browserStringUtf8 = BufferBrowser.bufferToString(browserBufferBase64, "utf8");
         expect(nodeStringUtf8).toEqual(browserStringUtf8);
         expect(nodeStringUtf8).toEqual("hellothere");
         expect(browserStringUtf8).toEqual("hellothere");
     });
 
-    test("bufferToString working with IsoBuffer",() => {
+    test("bufferToString working with IsoBuffer", () => {
         const test = "aGVsbG90aGVyZQ==";
 
         const buffer = BufferBrowser.IsoBuffer.from(test, "base64");

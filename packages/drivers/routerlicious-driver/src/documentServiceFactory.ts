@@ -66,7 +66,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
+        if (createNewSummary === undefined) {
+            throw new Error("Empty file summary creation isn't supported in this driver.");
+        }
         assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
         let parsedUrl = parseFluidUrl(resolvedUrl.url);
         if (!parsedUrl.pathname) {
@@ -95,7 +97,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         );
 
         // @TODO: Remove returned "string" type when removing back-compat code
-        const res = await ordererRestWrapper.post<{ id: string, token?: string, session?: ISession } | string>(
+        const res = await ordererRestWrapper.post<{ id: string; token?: string; session?: ISession; } | string>(
             `/documents/${tenantId}`,
             {
                 summary: convertSummaryToCreateNewSummary(appSummary),
@@ -131,7 +133,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
         // is sufficient to determine if the token will be undefined or not.
         if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
-            await this.tokenProvider.documentPostCreateCallback (documentId, token);
+            await this.tokenProvider.documentPostCreateCallback(documentId, token);
         }
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
@@ -179,7 +181,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             throw new Error(
                 `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
-        const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion }});
+        const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion } });
 
         let fluidResolvedUrl: IResolvedUrl;
         if (!isCreateContainer && this.driverPolicies.enableDiscovery) {

@@ -17,7 +17,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         this.collectionName = `${namespace}-${name}`;
     }
 
-    public aggregate(group: any, options?: any): any {
+    public aggregate(pipeline: any, options?: any): any {
         throw new Error("Method Not Implemented");
     }
 
@@ -30,7 +30,8 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
     /**
      * {@inheritDoc @fluidframework/server-services-core#ICollection.find}
-     *
+     */
+    /*
      * Each query key consists of several keys separated by '.' e.g: "operation.sequenceNumber".
      * The hierarchical syntax allows finding nested key patterns.
      */
@@ -96,7 +97,8 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
     /**
      * {@inheritDoc @fluidframework/server-services-core#ICollection.findOne}
-     *
+     */
+    /*
      * Query is expected to have a member "_id" which is a string used to find value in the database.
      */
     public async findOne(query: any): Promise<any> {
@@ -105,7 +107,8 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
     /**
      * {@inheritDoc @fluidframework/server-services-core#ICollection.update}
-     *
+     */
+    /*
      * Query is expected to have a member "_id" which is a string used to find value in the database.
      */
     public async update(query: any, set: any, addToSet: any): Promise<void> {
@@ -122,7 +125,8 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
     /**
      * {@inheritDoc @fluidframework/server-services-core#ICollection.upsert}
-     *
+     */
+    /*
      * Query is expected to have a member "_id" which is a string used to find value in the database.
      */
     public async upsert(query: any, set: any, addToSet: any): Promise<void> {
@@ -139,7 +143,8 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
     /**
      * {@inheritDoc @fluidframework/server-services-core#ICollection.insertOne}
-     *
+     */
+    /*
      * Value is expected to have a member "_id" which is a string used to search in the database.
      */
     public async insertOne(value: any): Promise<any> {
@@ -157,10 +162,11 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
     /**
      * {@inheritDoc @fluidframework/server-services-core#ICollection.findOrCreate}
-     *
+     */
+    /*
      * Value and query are expected to have a member "_id" which is a string used to search or insert in the database.
      */
-    public async findOrCreate(query: any, value: any): Promise<{ value: any, existing: boolean }> {
+    public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean; }> {
         const existing = this.findOneInternal(query);
         if (existing) {
             return { value: existing, existing: true };
@@ -171,7 +177,8 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
     /**
      * {@inheritDoc @fluidframework/server-services-core#ICollection.insertMany}
-     *
+     */
+    /*
      * Each element in values is expected to have a member "_id" which is a string used to insert in the database.
      */
     public async insertMany(values: any[], ordered: boolean): Promise<void> {

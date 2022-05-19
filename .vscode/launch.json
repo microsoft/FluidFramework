@@ -5,6 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "layer-check",
+            "program": "${workspaceFolder}/tools/build-tools/dist/layerCheck/layerCheck.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "args": [
+                "--verbose"
+            ],
+            "cwd": "${workspaceFolder}",
+            "type": "node"
+        },
+        {
             "type": "node",
             "request": "attach",
             "name": "Attach by Process ID",
@@ -298,7 +311,9 @@
                 "--no-cache",
                 "${file}"
             ],
-            "runtimeArgs": ["--unhandled-rejections=strict"],
+            "runtimeArgs": [
+                "--unhandled-rejections=strict"
+            ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
         }

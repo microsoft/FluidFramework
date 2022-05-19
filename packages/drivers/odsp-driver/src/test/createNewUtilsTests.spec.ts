@@ -78,7 +78,7 @@ describe("Create New Utils Tests", () => {
     };
 
     it("Should convert as expected and check contents", async () => {
-        const snapshot = convertCreateNewSummaryTreeToTreeAndBlobs(createSummary(),"");
+        const snapshot = convertCreateNewSummaryTreeToTreeAndBlobs(createSummary(), "");
         test(snapshot);
     });
 
@@ -112,7 +112,7 @@ describe("Create New Utils Tests", () => {
         };
 
         const odspResolvedUrl = await mockFetchOk(
-                async () =>createNewFluidFile(
+                async () => createNewFluidFile(
                     async (_options) => "token",
                     newFileParams,
                     new TelemetryNullLogger(),
@@ -121,8 +121,8 @@ describe("Create New Utils Tests", () => {
                     fileEntry,
                     true,
                     false,
-                ) ,
-                { itemId: "itemId1", id: "Summary handle"},
+                ),
+                { itemId: "itemId1", id: "Summary handle" },
                 { "x-fluid-epoch": "epoch1" },
                 );
         const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
@@ -162,7 +162,7 @@ describe("Create New Utils Tests", () => {
         // Test that sharing link is set appropriately when it is received in the response from ODSP
         const mockSharingLink = "mockSharingLink";
         let odspResolvedUrl = await mockFetchOk(
-                async () =>createNewFluidFile(
+                async () => createNewFluidFile(
                     async (_options) => "token",
                     newFileParams,
                     new TelemetryNullLogger(),
@@ -172,11 +172,11 @@ describe("Create New Utils Tests", () => {
                     false,
                     false,
                 ),
-                { itemId: "mockItemId", id: "mockId", sharingLink: mockSharingLink, sharingLinkErrorReason: undefined},
+                { itemId: "mockItemId", id: "mockId", sharingLink: mockSharingLink, sharingLinkErrorReason: undefined },
                 { "x-fluid-epoch": "epoch1" },
                 );
-        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink,{
-            type:createLinkType,
+        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
+            type: createLinkType,
             link: mockSharingLink,
             error: undefined,
         });
@@ -184,7 +184,7 @@ describe("Create New Utils Tests", () => {
         // Test that error message is set appropriately when it is received in the response from ODSP
         const mockError = "mockError";
         odspResolvedUrl = await mockFetchOk(
-            async () =>createNewFluidFile(
+            async () => createNewFluidFile(
                 async (_options) => "token",
                 newFileParams,
                 new TelemetryNullLogger(),
@@ -194,11 +194,11 @@ describe("Create New Utils Tests", () => {
                 false,
                 false,
             ),
-            { itemId: "mockItemId", id: "mockId", sharingLink: undefined, sharingLinkErrorReason: mockError},
+            { itemId: "mockItemId", id: "mockId", sharingLink: undefined, sharingLinkErrorReason: mockError },
             { "x-fluid-epoch": "epoch1" },
             );
-        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink,{
-            type:createLinkType,
+        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
+            type: createLinkType,
             link: undefined,
             error: mockError,
         });

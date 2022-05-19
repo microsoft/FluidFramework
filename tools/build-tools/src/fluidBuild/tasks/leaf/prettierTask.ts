@@ -5,14 +5,15 @@
 
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { BuildPackage } from "../../buildGraph";
+import { ScriptDependencies } from "../../../common/npmPackage";
 import { globFn, existsSync, readFileAsync } from "../../../common/utils";
 import ignore from "ignore";
 
 export class PrettierTask extends LeafWithDoneFileTask {
     private parsed: boolean = false;
     private glob: string | undefined;
-    constructor(node: BuildPackage, command: string) {
-        super(node, command);
+    constructor(node: BuildPackage, command: string, scriptDeps: ScriptDependencies) {
+        super(node, command, scriptDeps);
 
         // TODO: something better
         const args = this.command.split(" ");

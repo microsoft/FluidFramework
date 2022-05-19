@@ -26,11 +26,12 @@ export const fetchIncorrectResponse = 712;
 // and is not likely to change.
 export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
-export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null}) {
+export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null; }) {
     interface LoggingHeader {
         headerName: string;
         logName: string;
     }
+
     // We rename headers so that otel doesn't scrub them away. Otel doesn't allow
     // certain characters in headers including '-'
     const headersToLog: LoggingHeader[] = [
@@ -39,6 +40,8 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
         { headerName: "client-request-id", logName: "clientRequestId" },
         { headerName: "x-msedge-ref", logName: "xMsedgeRef" },
         { headerName: "X-Fluid-Retries", logName: "serverRetries" },
+        { headerName: "content-encoding", logName: "contentEncoding" },
+        { headerName: "content-type", logName: "contentType" },
     ];
     const additionalProps: ITelemetryProperties = {
         sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
@@ -50,6 +53,32 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
             additionalProps[header.logName] = headerValue;
         }
     });
+
+    // x-fluid-telemetry contains a key value pair in the following format:
+    // x-fluid-telemetry:key1=value1,key2,key3=value3,
+    // Ex. x-fluid-telemetry:Origin=c
+    const fluidTelemetry = headers.get("x-fluid-telemetry");
+    if (fluidTelemetry !== undefined && fluidTelemetry !== null) {
+        const keyValueMap = fluidTelemetry.split(",").map((keyValuePair) => keyValuePair.split("="));
+        for (const [key, value] of keyValueMap) {
+            if ("Origin" === key.trim()) {
+                let fieldValue: string;
+                switch (value?.trim()) {
+                    case "c":
+                        fieldValue = "cache";
+                    break;
+                    case "g":
+                        fieldValue = "graph";
+                    break;
+                    default:
+                        fieldValue = value?.trim();
+                }
+                const logName = "responseOrigin";
+                additionalProps[logName] = fieldValue;
+                break;
+           }
+       }
+    }
     return additionalProps;
 }
 
@@ -60,26 +89,26 @@ export interface IFacetCodes {
 /** Empirically-based model of error response inner error from ODSP */
 export interface OdspErrorResponseInnerError {
     code?: string;
-    innerError?: OdspErrorResponseInnerError
+    innerError?: OdspErrorResponseInnerError;
 }
 
 /** Empirically-based model of error responses from ODSP */
 export interface OdspErrorResponse {
     error: OdspErrorResponseInnerError & {
         message: string;
-    }
+    };
 }
 
 /** Empirically-based type guard for error responses from ODSP */
 function isOdspErrorResponse(x: any): x is OdspErrorResponse {
     const error = x?.error;
-    return typeof(error?.message) === "string" &&
-        (error?.code === undefined || typeof(error?.code) === "string");
+    return typeof (error?.message) === "string" &&
+        (error?.code === undefined || typeof (error?.code) === "string");
 }
 
 export function tryParseErrorResponse(
     response: string | undefined,
-): { success: true, errorResponse: OdspErrorResponse } | { success: false } {
+): { success: true; errorResponse: OdspErrorResponse; } | { success: false; } {
     try {
         if (response !== undefined) {
             const parsed = JSON.parse(response);
@@ -87,8 +116,7 @@ export function tryParseErrorResponse(
                 return { success: true, errorResponse: parsed };
             }
         }
-    }
-    catch(e) {}
+    } catch (e) {}
     return { success: false };
 }
 
@@ -168,7 +196,7 @@ export function createOdspNetworkError(
                 errorMessage, DriverErrorType.unsupportedClientProtocolVersion, driverProps);
             break;
         case 410:
-            error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp,driverProps);
+            error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, driverProps);
             break;
         case 409:
             // This status code is sent by the server when the client and server epoch mismatches.

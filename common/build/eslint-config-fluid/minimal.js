@@ -38,6 +38,8 @@ module.exports = {
         "@typescript-eslint/eslint-plugin",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-promise
         "eslint-plugin-promise",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-tsdoc
+        "eslint-plugin-tsdoc",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
         "react",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
@@ -128,6 +130,67 @@ module.exports = {
         "require-atomic-updates": "off",
         "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
         "no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
+
+        // FORMATTING RULES
+        "@typescript-eslint/brace-style": [
+            "error",
+            "1tbs",
+            {
+                "allowSingleLine": true,
+            },
+        ],
+        "@typescript-eslint/comma-spacing": "error",
+        "@typescript-eslint/func-call-spacing": "error",
+        "@typescript-eslint/keyword-spacing": "error",
+        "@typescript-eslint/member-delimiter-style": [
+            "error",
+            {
+                "multiline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "singleline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "multilineDetection": "brackets"
+            },
+        ],
+        "@typescript-eslint/object-curly-spacing": [
+            "error",
+            "always",
+        ],
+        "@typescript-eslint/semi": [
+            "error",
+            "always"
+        ],
+        "@typescript-eslint/space-before-function-paren": [
+            "error",
+            {
+                "anonymous": "never",
+                "asyncArrow": "always",
+                "named": "never"
+            }
+        ],
+        "@typescript-eslint/space-infix-ops": "error",
+        "@typescript-eslint/type-annotation-spacing": "error",
+        "array-bracket-spacing": "error",
+        "arrow-spacing": "error",
+        "block-spacing": "error",
+        "dot-location": [
+            "error",
+            "property",
+        ],
+        "jsx-quotes": "error",
+        "key-spacing": "error",
+        "space-unary-ops": "error",
+        "switch-colon-spacing": "error",
+
+        // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
+        "tsdoc/syntax": "error",
+
+        "@typescript-eslint/prefer-includes": "error",
+        "@typescript-eslint/prefer-optional-chain": "error",
     },
     "overrides": [
         {
@@ -143,6 +206,17 @@ module.exports = {
             "files": ["*.spec.ts", "src/test/**"],
             "rules": {
                 "@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
+            }
+        },
+        {
+            // Rules only for type validation files
+            "files": ["**/types/*validate*Previous.ts"],
+            "rules": {
+                "@typescript-eslint/comma-spacing": "off",
+                "@typescript-eslint/consistent-type-imports": "off",
+                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-unsafe-argument": "off",
+                "max-lines": "off",
             }
         },
     ],

@@ -74,7 +74,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
     const factory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
-        [ SharedMatrix.getFactory(), SharedString.getFactory() ],
+        [SharedMatrix.getFactory(), SharedString.getFactory()],
         []);
 
     const runtimeOptions: IContainerRuntimeOptions = {
@@ -112,7 +112,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 
         let dataStoreTree: ISummaryTree | undefined;
         const channelsTree = (summary.tree[".channels"] as ISummaryTree)?.tree ?? summary.tree;
-        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
+        for (const [id, summaryObject] of Object.entries(channelsTree)) {
             if (id === dataStoreId) {
                 assert(
                     summaryObject.type === SummaryType.Tree,

@@ -45,11 +45,11 @@ describe("Throttler", () => {
         delayFn,
         expectedDelays,
     }: {
-        message: string,
-        delayWindowMs: number,
-        maxDelayMs: number,
-        delayFn: (numAttempts: number) => number,
-        expectedDelays: number[],
+        message: string;
+        delayWindowMs: number;
+        maxDelayMs: number;
+        delayFn: (numAttempts: number) => number;
+        expectedDelays: number[];
     }) {
         describe(message, () => {
             beforeEach(() => { throttler = new Throttler(delayWindowMs, maxDelayMs, delayFn); });

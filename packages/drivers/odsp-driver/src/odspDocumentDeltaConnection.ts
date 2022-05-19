@@ -58,7 +58,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         const socketReference = SocketReference.socketIoSockets.get(key);
 
         // Verify the socket is healthy before reusing it
-        if (socketReference && socketReference.disconnected) {
+        if (socketReference?.disconnected) {
             // The socket is in a bad state. fully remove the reference
             socketReference.closeSocket();
             return undefined;
@@ -279,7 +279,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
     private readonly requestOpsNoncePrefix: string;
     private pushCallCounter = 0;
-    private readonly getOpsMap: Map<string, { start: number, from: number, to: number }> = new Map();
+    private readonly getOpsMap: Map<string, { start: number; from: number; to: number; }> = new Map();
     private flushOpNonce: string | undefined;
     private flushDeferred: Deferred<FlushResult> | undefined;
 
