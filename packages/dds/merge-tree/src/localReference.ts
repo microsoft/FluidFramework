@@ -91,13 +91,13 @@ import { minReferencePosition,
     /**
      * @deprecated - use refHasTileLabels
      */
-    public hasTileLabels() {
+    public hasTileLabels(): boolean {
         return refHasTileLabels(this);
     }
     /**
      * @deprecated - use refHasRangeLabels
      */
-    public hasRangeLabels() {
+    public hasRangeLabels(): boolean {
         return refHasRangeLabels(this);
     }
     /**

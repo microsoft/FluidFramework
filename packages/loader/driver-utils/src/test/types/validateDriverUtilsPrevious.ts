@@ -189,24 +189,12 @@ use_old_FunctionDeclaration_configurableUrlResolver(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree():
-    TypeOnly<typeof old.convertSnapshotAndBlobsToSummaryTree>;
-declare function use_current_RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
-    use: TypeOnly<typeof current.convertSnapshotAndBlobsToSummaryTree>);
-use_current_RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
-    get_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {"backCompat": false}
 */
-declare function get_current_RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree():
-    TypeOnly<typeof current.convertSnapshotAndBlobsToSummaryTree>;
-declare function use_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
-    use: TypeOnly<typeof old.convertSnapshotAndBlobsToSummaryTree>);
-use_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
-    get_current_RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -646,24 +634,12 @@ use_old_FunctionDeclaration_isOnline(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISummaryTreeAssemblerProps():
-    TypeOnly<old.ISummaryTreeAssemblerProps>;
-declare function use_current_RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps(
-    use: TypeOnly<current.ISummaryTreeAssemblerProps>);
-use_current_RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps(
-    get_old_InterfaceDeclaration_ISummaryTreeAssemblerProps());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps():
-    TypeOnly<current.ISummaryTreeAssemblerProps>;
-declare function use_old_InterfaceDeclaration_ISummaryTreeAssemblerProps(
-    use: TypeOnly<old.ISummaryTreeAssemblerProps>);
-use_old_InterfaceDeclaration_ISummaryTreeAssemblerProps(
-    get_current_RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1079,24 +1055,12 @@ use_old_FunctionDeclaration_streamObserver(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedClassDeclaration_SummaryTreeAssembler": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SummaryTreeAssembler():
-    TypeOnly<old.SummaryTreeAssembler>;
-declare function use_current_RemovedClassDeclaration_SummaryTreeAssembler(
-    use: TypeOnly<current.SummaryTreeAssembler>);
-use_current_RemovedClassDeclaration_SummaryTreeAssembler(
-    get_old_ClassDeclaration_SummaryTreeAssembler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedClassDeclaration_SummaryTreeAssembler": {"backCompat": false}
 */
-declare function get_current_RemovedClassDeclaration_SummaryTreeAssembler():
-    TypeOnly<current.SummaryTreeAssembler>;
-declare function use_old_ClassDeclaration_SummaryTreeAssembler(
-    use: TypeOnly<old.SummaryTreeAssembler>);
-use_old_ClassDeclaration_SummaryTreeAssembler(
-    get_current_RemovedClassDeclaration_SummaryTreeAssembler());
 
 /*
 * Validate forward compat by using old type in place of current type
