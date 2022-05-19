@@ -247,16 +247,12 @@ describe("Container Runtime", () => {
         it("reconnects after receiving a leave op", async () => {
             const service = new MockDocumentService(
                 undefined,
-                () => deltaConnection.disposed ? new MockDocumentDeltaConnection("test") : deltaConnection,
+                (newClient: IClient) => {
+                    const connection = new MockDocumentDeltaConnection("test");
+                    connection.mode = newClient.mode;
+                },
             );
 
-            // overwriting connection mode to return the requested mode from client
-            // instead of default to "write" in MockDocumentDeltaConnection
-            service.connectToDeltaStream = async (newClient: IClient): Promise<IDocumentDeltaConnection> => {
-                const connection = deltaConnection.disposed ? new MockDocumentDeltaConnection("test") : deltaConnection;
-                connection.mode = newClient.mode;
-                return connection;
-            };
             const client = { mode: "write", details: { capabilities: { interactive: true } } };
 
             const deltaManager2 = new DeltaManager<ConnectionManager>(
@@ -301,10 +297,21 @@ describe("Container Runtime", () => {
             deltaConnection.emitOp(docId, [leaveMessage]);
             // Yield the event loop because the inbound op will be processed asynchronously.
             await yieldEventLoop();
+            await deltaManager2.attachOpHandler(0, 0, 1, {
+                process(message: ISequencedDocumentMessage) {
+                    processOp(message);
+                    return {};
+                },
+                processSignal() { },
+            });
+            await new Promise((resolve) => {
+                deltaManager2.on("connect", resolve);
+                deltaManager2.connect({ reason: "test" });
+            });
 
             assert.strictEqual(deltaManager2.connectionManager.connectionMode, "read",
                 "new connection should be in read mode");
-            assert(deltaManager2.active, "deltaManager should still be active");
+            assert(deltaManager2.active, "deltaManager should be in read mode");
         });
     });
 });
