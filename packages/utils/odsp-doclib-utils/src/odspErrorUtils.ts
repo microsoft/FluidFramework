@@ -56,7 +56,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
 
     // x-fluid-telemetry contains a key value pair in the following format:
     // x-fluid-telemetry:key1=value1,key2,key3=value3,
-    // Ex. x-fluid-telemetry:Origin=c,isSomeDataPoint (there will be no isSomeDataPoint=false or isSomeDataPoint=True)
+    // Ex. x-fluid-telemetry:Origin=c
     const fluidTelemetry = headers.get("x-fluid-telemetry");
     if (fluidTelemetry !== undefined && fluidTelemetry !== null) {
         const keyValueMap = fluidTelemetry.split(",").map((keyValuePair) => keyValuePair.split("="));
@@ -71,7 +71,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
                         fieldValue = "graph";
                     break;
                     default:
-                        fieldValue = "undefined";
+                        fieldValue = value?.trim();
                 }
                 const logName = "responseOrigin";
                 additionalProps[logName] = fieldValue;
