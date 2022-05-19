@@ -127,7 +127,16 @@
       "EnumDeclaration_MergeTreeDeltaType": {"forwardCompat": false, "backCompat": false},
       "EnumDeclaration_MergeTreeMaintenanceType": {"forwardCompat": false, "backCompat": false},
       "EnumDeclaration_RBColor": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_RBNode": {"forwardCompat": false, "backCompat": false}
+      "InterfaceDeclaration_RBNode": {"forwardCompat": false, "backCompat": false},
+      "ClassDeclaration_Client": {"forwardCompat": false},
+      "InterfaceDeclaration_IConsensusInfo": {"backCompat": false},
+      "InterfaceDeclaration_IJSONMarkerSegment": {"backCompat": false},
+      "InterfaceDeclaration_IMarkerDef": {"backCompat": false},
+      "ClassDeclaration_LocalReference": {"backCompat": false},
+      "ClassDeclaration_Marker": {"backCompat": false},
+      "ClassDeclaration_MergeTree": {"forwardCompat": false},
+      "EnumDeclaration_ReferenceType": {"backCompat": false},
+      "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false}
     }
   }
 }

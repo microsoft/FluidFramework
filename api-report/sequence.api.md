@@ -128,7 +128,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     // @internal (undocumented)
     ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
-    // (undocumented)
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
     // (undocumented)
     addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;

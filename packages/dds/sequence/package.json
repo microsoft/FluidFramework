@@ -122,7 +122,9 @@
       "ClassDeclaration_SequenceDeltaEvent": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceEvent": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_IntervalCollection": {"forwardCompat": false}
+      "ClassDeclaration_IntervalCollection": {"forwardCompat": false},
+      "ClassDeclaration_SequenceInterval": {"backCompat": false},
+      "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false}
     }
   }
 }
