@@ -2202,7 +2202,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case GCNodeType.SubDataStore:
                 return this.dataStores.getDataStorePackagePath(nodePath);
             default:
-                assert(false, "Package path requested for unsupported node type.");
+                assert(false, 0x2d8 /* "Package path requested for unsupported node type." */);
         }
     }
 
