@@ -248,7 +248,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
  export class DocumentPostCreateError extends Error {
     public constructor(
         /**
-         * Inner {@link Error} being wrapped.
+         * Inner error being wrapped.
          */
         private readonly innerError: Error,
     ) {
