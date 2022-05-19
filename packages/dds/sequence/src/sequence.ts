@@ -173,7 +173,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
     ) {
-        super(id, dataStoreRuntime, attributes, "fluid:sequence:");
+        super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
         this.loadedDeferred.promise.catch((error) => {
             this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);

@@ -144,7 +144,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes, "fluid:map:");
+        super(id, runtime, attributes, "fluid_map_");
         this.kernel = new MapKernel(
             this.serializer,
             this.handle,

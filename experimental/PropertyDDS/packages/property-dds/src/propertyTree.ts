@@ -120,7 +120,7 @@ export class SharedPropertyTree extends SharedObject {
 		attributes: IChannelAttributes,
 		options: SharedPropertyTreeOptions,
 	) {
-		super(id, runtime, attributes, "fluid:propertyTree:");
+		super(id, runtime, attributes, "fluid_propertyTree_");
 
 		this.options = options;
 		// Quick hack to let the root be aware of the DDS hosting it.

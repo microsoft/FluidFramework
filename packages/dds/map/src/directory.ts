@@ -336,7 +336,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes, "fluid:directory:");
+        super(id, runtime, attributes, "fluid_directory_");
         this.localValueMaker = new LocalValueMaker(this.serializer);
         this.setMessageHandlers();
         // Mirror the containedValueChanged op on the SharedDirectory

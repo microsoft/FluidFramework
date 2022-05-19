@@ -78,7 +78,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
-        super(id, runtime, attributes, "fluid:counter:");
+        super(id, runtime, attributes, "fluid_counter_");
     }
 
     /**

@@ -113,7 +113,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes, "fluid:sharedIntervalCollection:");
+        super(id, runtime, attributes, "fluid_sharedIntervalCollection_");
         this.intervalMapKernel = new MapKernel(
             this.serializer,
             this.handle,
