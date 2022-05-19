@@ -76,7 +76,6 @@
     "json-stringify-safe": "^5.0.1",
     "jsonwebtoken": "^8.4.0",
     "lodash": "^4.17.21",
-    "morgan": "^1.8.1",
     "nconf": "^0.12.0",
     "request": "^2.88.0",
     "sillyname": "^0.1.0",

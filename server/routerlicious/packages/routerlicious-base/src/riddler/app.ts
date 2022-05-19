@@ -7,7 +7,6 @@ import { MongoManager, ISecretManager } from "@fluidframework/server-services-co
 import { BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
-import morgan from "morgan";
 import {
     alternativeMorganLoggerMiddleware,
     bindCorrelationId,
@@ -32,12 +31,14 @@ export function create(
     app.set("trust proxy", 1);
 
     if (loggerFormat === "json") {
-        const computeExtraProperties = (tokens: morgan.TokenIndexer, req: express.Request, res: express.Response) => {
-            return {
-                [BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
-            };
-        };
-        app.use(jsonMorganLoggerMiddleware("riddler", computeExtraProperties));
+        app.use(
+            jsonMorganLoggerMiddleware(
+                "riddler",
+                (tokens, req, res) => {
+                    return {
+                        [BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+                    };
+                }));
     } else {
         app.use(alternativeMorganLoggerMiddleware(loggerFormat));
     }

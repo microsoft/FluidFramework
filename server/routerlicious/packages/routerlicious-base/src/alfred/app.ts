@@ -19,7 +19,6 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import morgan from "morgan";
 import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import {
@@ -66,14 +65,16 @@ export function create(
     app.use(compression());
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
-        const computeExtraProperties = (tokens: morgan.TokenIndexer, req: express.Request, res: express.Response) => {
-            return {
-                [HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
-                [BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
-                [BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
-            };
-        };
-        app.use(jsonMorganLoggerMiddleware("alfred", computeExtraProperties));
+        app.use(
+            jsonMorganLoggerMiddleware(
+                "alfred",
+                (tokens, req, res) => {
+                    return {
+                        [HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
+                        [BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+                        [BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+                    };
+                }));
     } else {
         app.use(alternativeMorganLoggerMiddleware(loggerFormat));
     }
