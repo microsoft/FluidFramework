@@ -113,6 +113,11 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": { }
+    "broken": {
+      "TypeAliasDeclaration_ExpectedEvents": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }

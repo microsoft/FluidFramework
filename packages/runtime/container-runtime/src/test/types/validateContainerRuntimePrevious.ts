@@ -881,7 +881,6 @@ declare function get_current_InterfaceDeclaration_ISubmitSummaryOpResult():
 declare function use_old_InterfaceDeclaration_ISubmitSummaryOpResult(
     use: TypeOnly<old.ISubmitSummaryOpResult>);
 use_old_InterfaceDeclaration_ISubmitSummaryOpResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISubmitSummaryOpResult());
 
 /*

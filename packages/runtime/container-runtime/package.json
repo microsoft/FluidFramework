@@ -140,8 +140,7 @@
       "InterfaceDeclaration_ISummarizerRuntime": {"backCompat": false},
       "InterfaceDeclaration_IProvideSummarizer": {"forwardCompat": false},
       "InterfaceDeclaration_ISummarizer": {"forwardCompat": false},
-      "ClassDeclaration_Summarizer": {"forwardCompat": false},
-      "InterfaceDeclaration_ISubmitSummaryOpResult": {"backCompat": false}
+      "ClassDeclaration_Summarizer": {"forwardCompat": false}
     }
   }
 }
