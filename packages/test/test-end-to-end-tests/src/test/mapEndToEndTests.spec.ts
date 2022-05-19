@@ -361,6 +361,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         assert.notEqual(error, undefined, "No error");
         assert.equal(error?.message, errorMessage, "Unexpected error message");
         assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedMap.size, 0);
         assert.equal(sharedMap.has("key"), false);
     });
 
@@ -380,6 +381,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         assert.notEqual(error, undefined, "No error");
         assert.equal(error?.message, errorMessage, "Unexpected error message");
         assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedMap.size, 1);
         assert.equal(sharedMap.get("key"), "old", `Unexpected value ${sharedMap.get("key")}`);
     });
 
@@ -398,6 +400,28 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         assert.notEqual(error, undefined, "No error");
         assert.equal(error?.message, errorMessage, "Unexpected error message");
         assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedMap.size, 1);
         assert.equal(sharedMap.get("key"), "old", `Unexpected value ${sharedMap.get("key")}`);
+    });
+
+    it("Should rollback clear", async () => {
+        sharedMap.set("key1", "old1");
+        sharedMap.set("key2", "old2");
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedMap.clear();
+                throw new Error("callback failure");
+            });
+        } catch (err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedMap.size, 2);
+        assert.equal(sharedMap.get("key1"), "old1", `Unexpected value ${sharedMap.get("key1")}`);
+        assert.equal(sharedMap.get("key2"), "old2", `Unexpected value ${sharedMap.get("key2")}`);
     });
 });

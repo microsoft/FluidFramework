@@ -450,6 +450,77 @@ describe("Map", () => {
                     assert.equal(map2.has("test"), true, "could not find the set key in pending map");
                     assert.equal(map2.get("test"), pending2, "could not get the set key from pending map");
                 });
+
+                it("Shouldn't set values when pending clear", () => {
+                    const key = "test";
+                    map1.set(key, "map1value1");
+                    map2.set(key, "map2value2");
+                    map2.clear();
+                    map2.set(key, "map2value3");
+                    map2.clear();
+
+                    if (containerRuntimeFactory.processSomeMessages === undefined) {
+                        return;
+                    }
+                    // map1.set(key, "map1value1");
+                    containerRuntimeFactory.processSomeMessages(1);
+
+                    // Verify the SharedMap with processed message
+                    assert.equal(map1.has("test"), true, "could not find the set key");
+                    assert.equal(map1.get("test"), "map1value1", "could not get the set key");
+
+                    // Verify the SharedMap with 2 pending clears
+                    assert.equal(map2.has("test"), false, "found the set key in pending map");
+
+                    // map2.set(key, "map2value2");
+                    containerRuntimeFactory.processSomeMessages(1);
+
+                    // Verify the SharedMap gets updated from remote
+                    assert.equal(map1.has("test"), true, "could not find the set key");
+                    assert.equal(map1.get("test"), "map2value2", "could not get the set key");
+
+                    // Verify the SharedMap with 2 pending clears
+                    assert.equal(map2.has("test"), false, "found the set key in pending map");
+
+                    // map2.clear();
+                    containerRuntimeFactory.processSomeMessages(1);
+
+                    // Verify the SharedMap gets updated from remote clear
+                    assert.equal(map1.has("test"), false, "found the set key");
+
+                    // Verify the SharedMap with 1 pending clear
+                    assert.equal(map2.has("test"), false, "found the set key in pending map");
+
+                    // map2.set(key, "map2value3");
+                    containerRuntimeFactory.processSomeMessages(1);
+
+                    // Verify the SharedMap gets updated from remote
+                    assert.equal(map1.has("test"), true, "could not find the set key");
+                    assert.equal(map1.get("test"), "map2value3", "could not get the set key");
+
+                    // Verify the SharedMap with 1 pending clear
+                    assert.equal(map2.has("test"), false, "found the set key in pending map");
+
+                    // map2.clear();
+                    containerRuntimeFactory.processSomeMessages(1);
+
+                    // Verify the SharedMap gets updated from remote clear
+                    assert.equal(map1.has("test"), false, "found the set key");
+
+                    // Verify the SharedMap with no more pending clear
+                    assert.equal(map2.has("test"), false, "found the set key in pending map");
+
+                    map1.set(key, "map1value4");
+                    containerRuntimeFactory.processSomeMessages(1);
+
+                    // Verify the SharedMap gets updated from local
+                    assert.equal(map1.has("test"), true, "could not find the set key");
+                    assert.equal(map1.get("test"), "map1value4", "could not get the set key");
+
+                    // Verify the SharedMap gets updated from remote
+                    assert.equal(map1.has("test"), true, "could not find the set key");
+                    assert.equal(map1.get("test"), "map1value4", "could not get the set key");
+                });
             });
 
             describe(".forEach()", () => {
