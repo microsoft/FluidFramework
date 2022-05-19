@@ -15,21 +15,8 @@
                     "loader":{
                         "summarizeProtocolTree": [false]
                     }
-                }
-            }
-        },
-        "ci-df": {
-            "opRatePerMin": 10,
-            "progressIntervalMs": 15000,
-            "numClients": 120,
-            "totalSendCount": 10000,
-            "totalBlobCount": 480,
-            "blobSize": 256,
-            "readWriteCycleMs": 30000,
-            "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 150000,
-            "optionOverrides":{
-                "odsp":{
+                },
+                "odsp-odsp-df":{
                     "loader":{
                         "summarizeProtocolTree": [false]
                     },

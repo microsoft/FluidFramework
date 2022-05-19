@@ -52,7 +52,7 @@ async function main() {
 
     const driver: TestDriverTypes = commander.driver;
     const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
-    let profileArg: string = commander.profile;
+    const profileArg: string = commander.profile;
     const url: string = commander.url;
     const runId: number = commander.runId;
     const log: string | undefined = commander.log;
@@ -60,10 +60,6 @@ async function main() {
     const seed: number = commander.seed;
     const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
-    // We can have some features which only works in df. So choose profile accordingly.
-    if (endpoint === "odsp-df" && profileArg === "ci") {
-        profileArg = "ci-df";
-    }
     const profile = getProfile(profileArg);
 
     if (log !== undefined) {
@@ -145,14 +141,15 @@ async function runnerProcess(
     let metricsCleanup: () => void = () => {};
 
     try {
+        const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
         const loaderOptions = generateLoaderOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.loader);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader);
 
         const containerOptions = generateRuntimeOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.container);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container);
 
         const configurations = generateConfigurations(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.configurations);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations);
         const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,
