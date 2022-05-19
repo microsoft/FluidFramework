@@ -47,6 +47,7 @@ module.exports = {
         "prefer-const": "off",
         "prefer-template": "off",
         "quote-props": "off",
+        "tsdoc/syntax": "off",
         "unicorn/better-regex": "off",
         "unicorn/filename-case": "off"
     }

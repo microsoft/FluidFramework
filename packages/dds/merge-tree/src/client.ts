@@ -25,7 +25,6 @@ import {
     ISegmentAction,
     Marker,
     MergeTree,
-    RangeStackMap,
     SegmentGroup,
 } from "./mergeTree";
 import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
@@ -53,11 +52,11 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
+import { ReferencePosition, RangeStackMap } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
     MergeTreeMaintenanceCallback,
-    ReferencePosition,
 } from "./index";
 
 function elapsedMicroseconds(trace: Trace) {
@@ -1002,7 +1001,7 @@ export class Client {
         let clientId: number;
         if (op) {
             clientId = this.getOrAddShortClientId(op.clientId);
-            seq = op.sequenceNumber;
+            seq = op.referenceSequenceNumber;
         } else {
             const segWindow = this.mergeTree.getCollabWindow();
             seq = segWindow.currentSeq;

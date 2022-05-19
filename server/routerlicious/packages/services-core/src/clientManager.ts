@@ -63,7 +63,7 @@ export interface IClientManager {
 
     /**
      * Called when the expiration time of clients should be extended.
-     * @param clientTimeout Amount of time in milliseconds to add to the clients expiration time.
+     * @param clientTimeout - Amount of time in milliseconds to add to the clients expiration time.
      */
     extendSequencedClients(
         tenantId: string,
