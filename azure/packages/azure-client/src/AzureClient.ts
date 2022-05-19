@@ -157,5 +157,4 @@ export class AzureClient {
             logger: this.props.logger,
         });
     }
-    // #endregion
 }

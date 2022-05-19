@@ -288,7 +288,7 @@ export class EpochTracker implements IPersistedFileCache {
         assert(typeof body === "string", 0x21d /* "body is not string" */);
         const splitBody = body.split("\r\n");
         const firstLine = splitBody.shift();
-        assert(firstLine !== undefined && firstLine.startsWith("--"), 0x21e /* "improper boundary format" */);
+        assert(firstLine?.startsWith("--") === true, 0x21e /* "improper boundary format" */);
         const formParams = [firstLine];
         Object.entries(headers).forEach(([key, value]) => {
             formParams.push(`${key}: ${value}`);
