@@ -18,8 +18,6 @@ import {
     IntervalConflictResolver,
     IntervalNode,
     IntervalTree,
-    List,
-    ListMakeHead,
     LocalReference,
     MergeTreeDeltaType,
     PropertiesManager,
@@ -856,9 +854,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     private client: Client;
     private pendingChangesStart: Map<string, ISerializedInterval[]>;
     private pendingChangesEnd: Map<string, ISerializedInterval[]>;
-    // TODO: Once no longer implemented as a ValueType, use LocalOpMetadata to store
-    // pending references
-    private readonly pendingReferences: List<LocalReference> = ListMakeHead();
 
     public get attached(): boolean {
         return !!this.localCollection;
@@ -927,11 +922,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         const interval: TInterval = this.localCollection.addInterval(start, end, intervalType, props);
 
         if (interval) {
-            // TODO: Rethink the abstraction and interfaces here to avoid the instanceof check
-            if (interval instanceof SequenceInterval) {
-                this.pendingReferences.enqueue(interval.start);
-                this.pendingReferences.enqueue(interval.end);
-            }
             const serializedInterval = {
                 end,
                 intervalType,
@@ -1111,6 +1101,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             // This is an ack from the server. Remove the pending change.
             this.removePendingChange(serializedInterval);
             const id: string = serializedInterval.properties[reservedIntervalIdKey];
+            // Could store the interval in the localOpMetadata to avoid the getIntervalById call
             interval = this.getIntervalById(id);
             if (interval) {
                 // Let the propertyManager prune its pending change-properties set.
@@ -1119,6 +1110,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                         type: MergeTreeDeltaType.ANNOTATE,
                         props: serializedInterval.properties,
                     });
+
+                // in current usage, interval is always a SequenceInterval
+                if (interval instanceof SequenceInterval) {
+                    this.ackReference(interval.start);
+                    this.ackReference(interval.end);
+                }
             }
         } else {
             // If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
@@ -1178,6 +1175,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     private ackReference(lref: LocalReference) {
+        if (!refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
+            return;
+        }
         let refType = lref.refType;
         refType = refType & ~ReferenceType.StayOnRemove;
         refType = refType | ReferenceType.SlideOnRemove;
@@ -1198,9 +1198,16 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         local: boolean,
         op: ISequencedDocumentMessage) {
         if (local) {
-            assert(this.pendingReferences.count() >= 2, "Pending reference not saved");
-            this.ackReference(this.pendingReferences.dequeue());
-            this.ackReference(this.pendingReferences.dequeue());
+            const id: string = serializedInterval.properties[reservedIntervalIdKey];
+            // Could store the interval in the localOpMetadata to avoid the getIntervalById call
+            const localInterval = this.getIntervalById(id);
+            if (localInterval) {
+                // in current usage, interval is always a SequenceInterval
+                if (localInterval instanceof SequenceInterval) {
+                    this.ackReference(localInterval.start);
+                    this.ackReference(localInterval.end);
+                }
+            }
             return;
         }
 

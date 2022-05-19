@@ -412,6 +412,67 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
+        it("can slide intervals on change ack", () => {
+            // Create and connect a third SharedString.
+            const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
+            const containerRuntime3 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
+            const services3 = {
+                deltaConnection: containerRuntime3.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+
+            const sharedString3 = new SharedString(
+                dataStoreRuntime3, "shared-string-3", SharedStringFactory.Attributes);
+            sharedString3.initializeLocal();
+            sharedString3.connect(services3);
+
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            const interval = collection1.add(0, 0, IntervalType.SlideOnRemove);
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+            const collection3 = sharedString3.getIntervalCollection("test");
+
+            sharedString.removeRange(1, 2);
+            assert.strictEqual(sharedString.getText(), "ACD");
+
+            sharedString2.insertText(2, "X");
+            assert.strictEqual(sharedString2.getText(), "ABXCD");
+
+            collection3.change(interval.getIntervalId(), 1, 3);
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "AXCD");
+            assert.strictEqual(sharedString2.getText(), "AXCD");
+            assert.strictEqual(sharedString3.getText(), "AXCD");
+
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 3 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 3 },
+            ]);
+            assertIntervals(sharedString3, collection3, [
+                { start: 1, end: 3 },
+            ]);
+
+            sharedString.removeRange(3, 4);
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 3 },
+            ]);
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 2 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 2 },
+            ]);
+            assertIntervals(sharedString3, collection3, [
+                { start: 1, end: 2 },
+            ]);
+        });
+
         it("can slide intervals on create before remove", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");
