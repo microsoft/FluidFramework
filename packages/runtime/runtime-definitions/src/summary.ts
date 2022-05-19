@@ -272,3 +272,7 @@ export interface ITelemetryContext {
      */
     serialize(): string;
 }
+
+export const blobCountPropertyName = "BlobCount";
+
+export const totalBlobSizePropertyName = "TotalBlobSize";

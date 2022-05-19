@@ -19,6 +19,8 @@ import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
     ITelemetryContext,
+    blobCountPropertyName,
+    totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -498,10 +500,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         trackState: boolean = false,
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
-        this.incrementSummarizeInstanceCount(telemetryContext);
-
         const result = this.summarizeCore(this.serializer, telemetryContext);
-        this.increaseSummarizeTotalBlobBytes(result.stats.totalBlobSize, telemetryContext);
+        this.incrementTelemetryMetric(blobCountPropertyName, result.stats.blobNodeCount, telemetryContext);
+        this.incrementTelemetryMetric(totalBlobSizePropertyName, result.stats.totalBlobSize, telemetryContext);
         return result;
     }
 
@@ -513,10 +514,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         trackState: boolean = false,
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummaryTreeWithStats> {
-        this.incrementSummarizeInstanceCount(telemetryContext);
-
         const result = this.summarizeCore(this.serializer, telemetryContext);
-        this.increaseSummarizeTotalBlobBytes(result.stats.totalBlobSize, telemetryContext);
+        this.incrementTelemetryMetric(blobCountPropertyName, result.stats.blobNodeCount, telemetryContext);
+        this.incrementTelemetryMetric(totalBlobSizePropertyName, result.stats.totalBlobSize, telemetryContext);
         return result;
     }
 
@@ -567,15 +567,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats;
 
-    private incrementSummarizeInstanceCount(telemetryContext?: ITelemetryContext): void {
-        const instanceCountProperty = "InstanceCount";
-        let instanceCount = (telemetryContext?.get(this.telemetryContextPrefix, instanceCountProperty) ?? 0) as number;
-        telemetryContext?.set(this.telemetryContextPrefix, instanceCountProperty, ++instanceCount);
-    }
-
-    private increaseSummarizeTotalBlobBytes(totalBlobBytes: number, telemetryContext?: ITelemetryContext): void {
-        const totalBlobBytesProperty = "TotalBlobBytes";
-        const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, totalBlobBytesProperty) ?? 0) as number;
-        telemetryContext?.set(this.telemetryContextPrefix, totalBlobBytesProperty, prevTotal + totalBlobBytes);
+    private incrementTelemetryMetric(propertyName: string, incrementBy: number, telemetryContext?: ITelemetryContext) {
+        const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, propertyName) ?? 0) as number;
+        telemetryContext?.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
     }
 }
