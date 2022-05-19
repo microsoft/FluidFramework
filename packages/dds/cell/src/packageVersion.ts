@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/cell";
-export const pkgVersion = "0.59.1001";
+export const pkgVersion = "0.59.1002";

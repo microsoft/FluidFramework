@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/counter",
-  "version": "0.59.1001",
+  "version": "0.59.1002",
   "description": "Counter DDS",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -59,18 +59,18 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore-definitions": "^0.59.1001",
-    "@fluidframework/driver-utils": "^0.59.1001",
+    "@fluidframework/datastore-definitions": "^0.59.1002",
+    "@fluidframework/driver-utils": "^0.59.1002",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/runtime-definitions": "^0.59.1001",
-    "@fluidframework/shared-object-base": "^0.59.1001"
+    "@fluidframework/runtime-definitions": "^0.59.1002",
+    "@fluidframework/shared-object-base": "^0.59.1002"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/counter-previous": "npm:@fluidframework/counter@^0.58.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@fluidframework/mocha-test-setup": "^0.59.1001",
-    "@fluidframework/test-runtime-utils": "^0.59.1001",
+    "@fluidframework/mocha-test-setup": "^0.59.1002",
+    "@fluidframework/test-runtime-utils": "^0.59.1002",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
