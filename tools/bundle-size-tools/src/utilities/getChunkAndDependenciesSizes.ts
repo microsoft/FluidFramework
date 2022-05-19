@@ -53,7 +53,7 @@ export function getChunkAndDependencySizes(stats: StatsCompilation, chunkName: s
   const processedDependencies = new Set<number|string>();
 
   // Get the initial set of dependencies
-  const dependenciesToProcess = [...rootChunk.parents??[], ...rootChunk.siblings??[]];
+  const dependenciesToProcess = [...rootChunk.parents ?? [], ...rootChunk.siblings ?? []];
 
   while (dependenciesToProcess.length > 0) {
     const chunkToProcess = dependenciesToProcess.pop()!;
