@@ -210,19 +210,11 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('can upload full chunks with incomplete chunks in the edit log', async () => {
-		testObjectProvider.logger.registerExpectedEvent(
-			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' }
-		);
 		await addNewEditChunks(1, 50);
 		expect(editChunksUploaded).to.equal(1);
 	});
 
 	it('correctly saves handles and their corresponding starting revisions to the summary', async () => {
-		testObjectProvider.logger.registerExpectedEvent(
-			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' }
-		);
 		await addNewEditChunks(4);
 
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
@@ -278,11 +270,6 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('does not cause misaligned chunks', async () => {
-		testObjectProvider.logger.registerExpectedEvent(
-			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' }
-		);
 		await addNewEditChunks(1, 50);
 
 		const summary = sharedTree.saveSummary();
@@ -309,11 +296,6 @@ describe('SharedTree history virtualization', () => {
 
 	it('does not cause misaligned chunks for format version 0.0.2', async () => {
 		await useSharedTreeSummaryv0_0_2();
-		testObjectProvider.logger.registerExpectedEvent(
-			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' }
-		);
 
 		// Add enough edits for a chunk and a half
 		await addNewEditChunks(1, 50);
