@@ -242,7 +242,7 @@
             "error"
         ],
         "@typescript-eslint/no-unused-vars": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-use-before-declare": [
             "off"
