@@ -8,29 +8,31 @@ import { Mode, processContent, testCollateralExists } from "../replayMultipleFil
 describe("Snapshots", function() {
     this.timeout(300000);
 
-    function skipIfCollateralDoesNotExist(itFnScope) {
-        if (!testCollateralExists()) {
-            itFnScope.skip();
-        }
-    }
+    let collateralExists = false;
 
-    it("Stress Test", async function() {
-        skipIfCollateralDoesNotExist(this);
+    before(() => {
+        collateralExists = testCollateralExists();
+    });
+
+    beforeEach(function() {
+        if (!collateralExists) {
+            this.skip();
+        }
+    });
+
+    it("Stress Test", async () => {
         await processContent(Mode.Stress);
     });
 
-    it("writes snapshot in correct format", async function() {
-        skipIfCollateralDoesNotExist(this);
+    it("writes snapshot in correct format", async () => {
         await processContent(Mode.Compare);
     });
 
-    it("loads snapshots in old format", async function() {
-        skipIfCollateralDoesNotExist(this);
+    it("loads snapshots in old format", async () => {
         await processContent(Mode.Validate);
     });
 
-    it("loads snapshots in old format and writes in correct format", async function() {
-        skipIfCollateralDoesNotExist(this);
+    it("loads snapshots in old format and writes in correct format", async () => {
         await processContent(Mode.BackCompat);
     });
 });
