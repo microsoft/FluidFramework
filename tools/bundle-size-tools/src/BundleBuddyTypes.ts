@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { StatsCompilation } from 'webpack';
+import * as Webpack from 'webpack';
 
 /**
  * A map of bundles friendly names to their relevant metrics
@@ -47,7 +47,7 @@ export type BundleComparisonResult = {
  * may have one associated with them.
  */
 export type WebpackStatsProcessor = (
-  stats: StatsCompilation,
+  stats: Webpack.Stats.ToJsonOutput,
   config: BundleBuddyConfig | undefined
 ) => BundleMetricSet | undefined;
 

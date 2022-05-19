@@ -6,14 +6,14 @@
 import { BundleFileData } from './getBundleFilePathsFromFolder';
 import { runProcessorsOnStatsFile } from '../utilities/runProcessorOnStatsFile';
 import { WebpackStatsProcessor, BundleBuddyConfig, BundleSummaries } from '../BundleBuddyTypes';
-import { StatsCompilation } from 'webpack';
+import { Stats } from 'webpack';
 
 export interface GetBundleSummariesArgs {
   bundlePaths: BundleFileData[];
 
   statsProcessors: WebpackStatsProcessor[];
 
-  getStatsFile: (relativePath: string) => Promise<StatsCompilation>;
+  getStatsFile: (relativePath: string) => Promise<Stats.ToJsonOutput>;
 
   getBundleBuddyConfigFile: (
     bundleName: string
