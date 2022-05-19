@@ -1140,12 +1140,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
 
         const { start, end, intervalType, properties, sequenceNumber } = serializedInterval;
-        const seqNumberTo = this.client.getCollabWindow().currentSeq;
-
-        const segOffStart = this.client.findSegOffForReconnection(start, sequenceNumber, seqNumberTo, localSeq);
-        const segOffEnd = this.client.findSegOffForReconnection(end, sequenceNumber, seqNumberTo, localSeq);
-        const startRebased = this.client.findReconnectionPosition(segOffStart.segment, localSeq) + segOffStart.offset;
-        const endRebased = this.client.findReconnectionPosition(segOffEnd.segment, localSeq) + segOffEnd.offset;
+        const startRebased = this.client.rebasePosition(start, sequenceNumber, localSeq);
+        const endRebased = this.client.rebasePosition(end, sequenceNumber, localSeq);
 
         const interval = this.localCollection.createInterval(startRebased, endRebased, intervalType);
         interval.addProperties(properties);

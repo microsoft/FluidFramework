@@ -670,7 +670,7 @@ export class Client {
      * @param segment - The segment to find the position for
      * @param localSeq - The localSeq to find the position of the segment at
      */
-    public findReconnectionPosition(segment: ISegment, localSeq: number) {
+    protected findReconnectionPosition(segment: ISegment, localSeq: number) {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
         let segmentPosition = 0;
         /*
@@ -704,12 +704,15 @@ export class Client {
         return segmentPosition;
     }
 
-    public findSegOffForReconnection(
+    /**
+     * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
+     * of the current sequence number. This is desirable when rebasing operations for reconnection.
+     */
+    public rebasePosition(
         pos: number,
         seqNumberFrom: number,
-        seqNumberTo: number,
         localSeq: number,
-    ): { segment: ISegment; offset: number; } {
+    ): number {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, "localSeq greater than collab window");
         let segment: ISegment | undefined;
         let posAccumulated = 0;
@@ -738,6 +741,7 @@ export class Client {
         });
 
         assert(segment !== undefined, "No segment found");
+        const seqNumberTo = this.getCollabWindow().currentSeq;
         if ((segment.removedSeq !== undefined && segment.removedSeq <= seqNumberTo)
             || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
             // Segment that the position was in has been removed: null out offset.
@@ -745,7 +749,7 @@ export class Client {
         }
 
         assert(0 <= offset && offset < segment.cachedLength, "Invalid offset");
-        return { segment, offset };
+        return this.findReconnectionPosition(segment, localSeq) + offset;
     }
 
     private resetPendingDeltaToOps(
