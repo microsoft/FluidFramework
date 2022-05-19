@@ -113,7 +113,7 @@ export interface IMapDataObjectSerialized {
 
 interface IMapLocalOpMetadata {
     pendingMessageId: number;
-    previousValue: ILocalValue;
+    previousValue: ILocalValue | undefined;
 }
 
 /**
@@ -476,13 +476,14 @@ export class MapKernel {
      * @param key - The key being set
      * @param value - The value being set
      * @param local - Whether the message originated from the local client
-     * @returns Previous value of the key
+     * @returns Previous local value of the key, if any
      */
-    private setCore(key: string, value: ILocalValue, local: boolean): any {
-        const previousValue = this.get(key);
+    private setCore(key: string, value: ILocalValue, local: boolean): ILocalValue | undefined {
+        const previousLocalValue = this.data.get(key);
+        const previousValue = previousLocalValue?.value;
         this.data.set(key, value);
         this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
-        return previousValue;
+        return previousLocalValue;
     }
 
     /**
@@ -499,15 +500,16 @@ export class MapKernel {
      * Delete implementation used for both locally sourced deletes as well as incoming remote deletes.
      * @param key - The key being deleted
      * @param local - Whether the message originated from the local client
-     * @returns Previous value of the key if it existed, undefined if it did not exist
+     * @returns Previous local value of the key if it existed, undefined if it did not exist
      */
-    private deleteCore(key: string, local: boolean): any {
-        const previousValue = this.get(key);
+    private deleteCore(key: string, local: boolean): ILocalValue | undefined {
+        const previousLocalValue = this.data.get(key);
+        const previousValue = previousLocalValue?.value;
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
             this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
         }
-        return previousValue;
+        return previousLocalValue;
     }
 
     /**
@@ -641,7 +643,7 @@ export class MapKernel {
                 },
                 submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata but send a new one on each submit.
-                    this.submitMapKeyMessage(op, localOpMetadata);
+                    this.submitMapKeyMessage(op, (localOpMetadata as IMapLocalOpMetadata)?.previousValue);
                 },
                 getStashedOpLocalMetadata: (op: IMapDeleteOperation) => {
                     // We don't reuse the metadata but send a new one on each submit.
@@ -662,7 +664,7 @@ export class MapKernel {
                 },
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata but send a new one on each submit.
-                    this.submitMapKeyMessage(op, localOpMetadata);
+                    this.submitMapKeyMessage(op, (localOpMetadata as IMapLocalOpMetadata)?.previousValue);
                 },
                 getStashedOpLocalMetadata: (op: IMapSetOperation) => {
                     // We don't reuse the metadata but send a new one on each submit.
@@ -694,7 +696,7 @@ export class MapKernel {
             previous ? previous[previous.length - 1].previousValue : undefined);
     }
 
-    private getMapKeyMessageLocalMetadata(op: IMapKeyOperation, previousValue: any): unknown {
+    private getMapKeyMessageLocalMetadata(op: IMapKeyOperation, previousValue: ILocalValue | undefined): unknown {
         const pendingMessageId = ++this.pendingMessageId;
         const localMetadata = { pendingMessageId, previousValue };
         const pendingMetadata = this.pendingKeys.get(op.key);
@@ -710,7 +712,7 @@ export class MapKernel {
      * Submit a map key message to remote clients.
      * @param op - The map key message
      */
-    private submitMapKeyMessage(op: IMapKeyOperation, previousValue: any): void {
+    private submitMapKeyMessage(op: IMapKeyOperation, previousValue: ILocalValue | undefined): void {
         const localMetadata = this.getMapKeyMessageLocalMetadata(op, previousValue);
         this.submitMessage(op, localMetadata);
     }
