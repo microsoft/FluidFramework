@@ -24,6 +24,7 @@ export interface IValueChanged {
 
 /**
  * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
+ * @internal
  */
 export interface IValueOpEmitter {
     /**
@@ -37,7 +38,9 @@ export interface IValueOpEmitter {
     emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
 }
 
-
+/**
+ * @internal
+ */
 export interface IMapMessageLocalMetadata {
     localSeq: number;
 }

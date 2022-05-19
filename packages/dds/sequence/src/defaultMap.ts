@@ -404,7 +404,10 @@ export class DefaultMap<T> {
                     const localValue = this.data.get(op.key);
                     const handler = localValue.getOpHandler(op.value.opName);
                     // TODO: Maybe should return localMetadata? can match design of applyStashedOp perhaps
-                    this.submitMessage({ ...op, value: handler.rebase(localValue.value, op.value, localOpMetadata) }, localOpMetadata)
+                    this.submitMessage(
+                        { ...op, value: handler.rebase(localValue.value, op.value, localOpMetadata) },
+                        localOpMetadata,
+                    );
                 },
                 getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
                     assert(false, 0x016 /* "apply stashed op not implemented for custom value type ops" */);

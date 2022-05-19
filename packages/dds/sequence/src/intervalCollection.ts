@@ -659,10 +659,6 @@ class SequenceIntervalCollectionFactory
     }
 }
 
-interface IntervalCollectionOpMetadata {
-    localSeq: number
-}
-
 export class SequenceIntervalCollectionValueType
     implements IValueType<IntervalCollection<SequenceInterval>> {
     public static Name = "sharedStringIntervalCollection";
@@ -682,42 +678,7 @@ export class SequenceIntervalCollectionValueType
     private static readonly _factory: IValueFactory<IntervalCollection<SequenceInterval>> =
         new SequenceIntervalCollectionFactory();
 
-    private static readonly _ops: Map<string, IValueOperation<IntervalCollection<SequenceInterval>>> =
-        new Map<string, IValueOperation<IntervalCollection<SequenceInterval>>>(
-            [[
-                "add",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackAdd(params, local, op);
-                    },
-                    rebase: (value, op, localOpMetadata) => {
-                        return { ...op, value: value.rebaseLocalInterval(op.value, localOpMetadata.localSeq) }
-                    }
-                },
-            ],
-            [
-                "delete",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackDelete(params, local, op);
-                    },
-                    rebase: (value, op) => {
-                        // Deletion of intervals is based on id, so requires no rebasing.
-                        return op
-                    }
-                },
-            ],
-            [
-                "change",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackChange(params, local, op);
-                    },
-                    rebase: (value, op, localOpMetadata) => {
-                        return { ...op, value: value.rebaseLocalInterval(op.value, localOpMetadata.localSeq) };
-                    }
-                },
-            ]]);
+    private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
 const compareIntervalEnds = (a: Interval, b: Interval) => a.end - b.end;
@@ -767,37 +728,45 @@ export class IntervalCollectionValueType
 
     private static readonly _factory: IValueFactory<IntervalCollection<Interval>> =
         new IntervalCollectionFactory();
-    private static readonly _ops: Map<string, IValueOperation<IntervalCollection<Interval>>> =
-        new Map<string, IValueOperation<IntervalCollection<Interval>>>(
-            [[
-                "add",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackAdd(params, local, op);
-                    },
-                    rebase: (value, op) => op
+    private static readonly _ops = makeOpsMap<Interval>();
+}
+
+function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<IntervalCollection<T>>> {
+    return new Map<string, IValueOperation<IntervalCollection<T>>>(
+        [[
+            "add",
+            {
+                process: (value, params, local, op) => {
+                    value.ackAdd(params, local, op);
                 },
-            ],
-            [
-                "delete",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackDelete(params, local, op);
-                    },
-                    rebase: (value, op) => op
+                rebase: (value, op, localOpMetadata) => {
+                    return { ...op, value: value.rebaseLocalInterval(op.value, localOpMetadata.localSeq) };
                 },
-            ],
-            [
-                "change",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackChange(params, local, op);
-                    },
-                    rebase: (value, op, localMetadata) => {
-                        return op;
-                    }
+            },
+        ],
+        [
+            "delete",
+            {
+                process: (value, params, local, op) => {
+                    value.ackDelete(params, local, op);
                 },
-            ]]);
+                rebase: (value, op) => {
+                    // Deletion of intervals is based on id, so requires no rebasing.
+                    return op;
+                },
+            },
+        ],
+        [
+            "change",
+            {
+                process: (value, params, local, op) => {
+                    value.ackChange(params, local, op);
+                },
+                rebase: (value, op, localOpMetadata) => {
+                    return { ...op, value: value.rebaseLocalInterval(op.value, localOpMetadata.localSeq) };
+                },
+            },
+        ]]);
 }
 
 export type DeserializeCallback = (properties: PropertySet) => void;
@@ -852,6 +821,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return !!this.localCollection;
     }
 
+    /** @internal */
     constructor(private readonly helpers: IIntervalHelpers<TInterval>, private readonly requiresClient: boolean,
         private readonly emitter: IValueOpEmitter,
         serializedIntervals: ISerializedInterval[]) {
@@ -933,7 +903,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
-                this.emitter.emit("delete", undefined, interval.serialize(this.client), { localSeq: this.getNextLocalSeq() });
+                this.emitter.emit(
+                    "delete",
+                    undefined,
+                    interval.serialize(this.client),
+                    { localSeq: this.getNextLocalSeq() },
+                );
             } else {
                 if (this.onDeserialize) {
                     this.onDeserialize(interval);
@@ -1158,7 +1133,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
     public rebaseLocalInterval(
         serializedInterval: ISerializedInterval,
-        localSeq: number
+        localSeq: number,
     ) {
         if (!this.attached) {
             throw new Error("attachSequence must be called");

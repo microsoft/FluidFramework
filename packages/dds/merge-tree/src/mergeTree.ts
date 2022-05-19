@@ -1931,9 +1931,6 @@ export class MergeTree {
         if (segmentInfo && segmentInfo.segment) {
             const segmentPosition = this.getPosition(segmentInfo.segment, segwindow.currentSeq, segwindow.clientId);
 
-            if (segmentInfo.segment.removedSeq !== undefined) {
-                return segmentPosition;
-            }
             return segmentPosition + segmentInfo.offset!;
         } else {
             if (remoteClientPosition === this.getLength(remoteClientRefSeq, remoteClientId)) {
