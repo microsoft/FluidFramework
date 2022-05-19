@@ -357,7 +357,7 @@ export class RedisSocketIoAdapter extends Adapter {
             const lumberjackProperties = {
                 [BaseTelemetryProperties.tenantId]: split[1].replace("#", ""),
                 [BaseTelemetryProperties.documentId]: split[2].replace("#", "").replace("\"", ""),
-                Traces: "{}",
+                // Traces: "{}",
             };
             if (packet.data && packet.data.length > 1) {
                 if (packet.data[2] && packet.data[2].length > 0) {
@@ -375,11 +375,13 @@ export class RedisSocketIoAdapter extends Adapter {
                         // and packet = ${JSON.stringify(packet.data[2])}`,
                         // `tenantId=${split[1].replace("#", "")}`,
                         // `doc=${split[2].replace("#", "").replace("\"", "")}`);
-                        lumberjackProperties.Traces = element.traces;
-                        Lumberjack.info(`Traces-${element.type}`, lumberjackProperties);
+                        // lumberjackProperties.Traces = element.traces;
+                        // Lumberjack.info(`Traces-${element.type}`, lumberjackProperties);
                     });
                 }
             }
+            // lumberjackProperties.Traces = element.traces;
+            Lumberjack.info(`Traces-${JSON.stringify(packet.data[2])}`, lumberjackProperties);
             // only allow room broadcasts
             super.broadcast(packet, opts);
 
