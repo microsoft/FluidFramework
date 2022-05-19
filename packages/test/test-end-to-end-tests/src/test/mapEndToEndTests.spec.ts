@@ -354,7 +354,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
                 sharedMap.set("key", 0);
                 throw new Error(errorMessage);
             });
-        } catch(err) {
+        } catch (err) {
             error = err as Error;
         }
 
@@ -373,7 +373,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
                 sharedMap.set("key", "last");
                 throw new Error("callback failure");
             });
-        } catch(err) {
+        } catch (err) {
             error = err as Error;
         }
 
@@ -391,7 +391,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
                 sharedMap.delete("key");
                 throw new Error("callback failure");
             });
-        } catch(err) {
+        } catch (err) {
             error = err as Error;
         }
 
