@@ -178,5 +178,5 @@ export function logAndThrowApiError(error: any, request: Request, params: IRepoM
     // 400 by default, using something different here would override the expected behavior and cause issues. Because
     // of that, for now, we use 400 here. But ideally, we would revisit every RepoManager API and make sure that API
     // is actively throwing NetworkErrors with appropriate status codes according to what the protocols expect.
-    throw new NetworkError(error?.code ?? 400, `Error when processing ${request.method} request to ${request.url}`);
+    throw new NetworkError(400, `Error when processing ${request.method} request to ${request.url}`);
 }

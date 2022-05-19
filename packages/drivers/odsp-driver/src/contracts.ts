@@ -82,7 +82,6 @@ export interface IDocumentStorageGetVersionsResponse {
 }
 
 export interface IDocumentStorageVersion {
-    message: string;
     id: string;
 }
 
