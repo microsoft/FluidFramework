@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/test-client-utils";
-export const pkgVersion = "0.59.2002";
+export const pkgVersion = "0.59.2003";
