@@ -148,7 +148,7 @@ export class SharedIntervalCollection
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata);
+        this.intervalCollections.tryResubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata);
     }
 
     protected onDisconnect() { }

@@ -175,7 +175,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     nextInterval(pos: number): TInterval;
     // (undocumented)
     previousInterval(pos: number): TInterval;
-    // (undocumented)
+    // @internal (undocumented)
     rebaseLocalInterval(serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
     // (undocumented)
     removeIntervalById(id: string): TInterval;
@@ -270,9 +270,6 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 
 // @internal
 export interface IValueOpEmitter {
-    // Warning: (ae-incompatible-release-tags) The symbol "emit" is marked as @alpha, but its signature references "IMapMessageLocalMetadata" which is marked as @internal
-    //
-    // @alpha
     emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
 }
 

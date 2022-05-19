@@ -33,7 +33,7 @@ export interface IValueOpEmitter {
      * @param previousValue - JSONable previous value as defined by the value type
      * @param params - JSONable params for the operation as defined by the value type
      * @param localOpMetadata - JSONable local metadata which should be submitted with the op
-     * @alpha
+     * @internal
      */
     emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
 }
@@ -92,7 +92,19 @@ export interface IValueOperation<T> {
         localOpMetadata: unknown | undefined
     );
 
-    rebase(value: T, op: IValueTypeOperationValue, localOpMetadata: IMapMessageLocalMetadata): IValueTypeOperationValue;
+    /**
+     * Rebases an `op` on `value` from its original perspective (ref/local seq) to the current
+     * perspective. Should be invoked on reconnection.
+     * @param value - The current value stored at the given key, which should be the value type.
+     * @param op - The op to be rebased.
+     * @param localOpMetadata - Any local metadata that was originally submitted with the op.
+     * @returns A rebased version of the op and any local metadata that should be submitted with it.
+     */
+    rebase(
+        value: T,
+        op: IValueTypeOperationValue,
+        localOpMetadata: IMapMessageLocalMetadata
+    ): { rebasedOp: IValueTypeOperationValue; rebasedLocalOpMetadata: IMapMessageLocalMetadata; };
 }
 
 /**

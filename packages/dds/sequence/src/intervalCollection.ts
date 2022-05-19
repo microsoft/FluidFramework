@@ -28,7 +28,14 @@ import {
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
-import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./defaultMapInterfaces";
+import {
+    IMapMessageLocalMetadata,
+    IValueFactory,
+    IValueOpEmitter,
+    IValueOperation,
+    IValueType,
+    IValueTypeOperationValue,
+} from "./defaultMapInterfaces";
 
 const reservedIntervalIdKey = "intervalId";
 
@@ -732,6 +739,16 @@ export class IntervalCollectionValueType
 }
 
 function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<IntervalCollection<T>>> {
+    const rebase = (
+        value: IntervalCollection<T>,
+        op: IValueTypeOperationValue,
+        { localSeq }: IMapMessageLocalMetadata,
+    ) => {
+        const rebasedValue = value.rebaseLocalInterval(op.value, localSeq);
+        const rebasedOp = { ...op, value: rebasedValue };
+        return { rebasedOp, rebasedLocalOpMetadata: { localSeq } };
+    };
+
     return new Map<string, IValueOperation<IntervalCollection<T>>>(
         [[
             "add",
@@ -739,9 +756,7 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
                 process: (value, params, local, op) => {
                     value.ackAdd(params, local, op);
                 },
-                rebase: (value, op, localOpMetadata) => {
-                    return { ...op, value: value.rebaseLocalInterval(op.value, localOpMetadata.localSeq) };
-                },
+                rebase,
             },
         ],
         [
@@ -750,9 +765,9 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
                 process: (value, params, local, op) => {
                     value.ackDelete(params, local, op);
                 },
-                rebase: (value, op) => {
+                rebase: (value, op, localOpMetadata) => {
                     // Deletion of intervals is based on id, so requires no rebasing.
-                    return op;
+                    return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
                 },
             },
         ],
@@ -762,9 +777,7 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
                 process: (value, params, local, op) => {
                     value.ackChange(params, local, op);
                 },
-                rebase: (value, op, localOpMetadata) => {
-                    return { ...op, value: value.rebaseLocalInterval(op.value, localOpMetadata.localSeq) };
-                },
+                rebase,
             },
         ]]);
 }
@@ -1131,6 +1144,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         });
     }
 
+    /** @internal */
     public rebaseLocalInterval(
         serializedInterval: ISerializedInterval,
         localSeq: number,

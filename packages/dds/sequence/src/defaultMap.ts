@@ -52,7 +52,7 @@ interface IMapMessageHandler {
      */
     submit(op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata): void;
 
-    tryResubmit?(op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata): void;
+    resubmit(op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata): void;
 
     getStashedOpLocalMetadata(op: IMapOperation): unknown;
 }
@@ -289,11 +289,11 @@ export class DefaultMap<T> {
      * also sent if we are asked to resubmit the message.
      * @returns True if the operation was submitted, false otherwise.
      */
-    public trySubmitMessage(op: any, localOpMetadata: IMapMessageLocalMetadata): boolean {
+    public tryResubmitMessage(op: any, localOpMetadata: IMapMessageLocalMetadata): boolean {
         const type: string = op.type;
         const handler = this.messageHandlers.get(type);
         if (handler !== undefined) {
-            (handler.tryResubmit ?? handler.submit)(op as IMapOperation, localOpMetadata);
+            handler.resubmit(op as IMapOperation, localOpMetadata);
             return true;
         }
         return false;
@@ -400,13 +400,16 @@ export class DefaultMap<T> {
                         localOpMetadata,
                     );
                 },
-                tryResubmit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
+                resubmit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
                     const localValue = this.data.get(op.key);
                     const handler = localValue.getOpHandler(op.value.opName);
-                    // TODO: Maybe should return localMetadata? can match design of applyStashedOp perhaps
+                    const {
+                        rebasedOp,
+                        rebasedLocalOpMetadata,
+                    } = handler.rebase(localValue.value, op.value, localOpMetadata);
                     this.submitMessage(
-                        { ...op, value: handler.rebase(localValue.value, op.value, localOpMetadata) },
-                        localOpMetadata,
+                        { ...op, value: rebasedOp },
+                        rebasedLocalOpMetadata,
                     );
                 },
                 getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {

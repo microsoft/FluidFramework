@@ -522,7 +522,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     protected onDisconnect() {}
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        if (!this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
+        if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
                     content as IMergeTreeOp,
