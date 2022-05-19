@@ -11,7 +11,7 @@ module.exports = {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "rules": {
-        // TODO(marcus): remove the linting issues
+        // Many rules are disabled in PropertyDDS projects. See https://github.com/microsoft/FluidFramework/pull/10272
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-unsafe-return": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",

@@ -32,7 +32,7 @@ import {
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
-import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./mapKernelInterfaces";
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./defaultMapInterfaces";
 
 const reservedIntervalIdKey = "intervalId";
 
@@ -712,7 +712,7 @@ export class SequenceIntervalCollectionValueType
                 "add",
                 {
                     process: (value, params, local, op) => {
-                        value.addInternal(params, local, op);
+                        value.ackAdd(params, local, op);
                     },
                 },
             ],
@@ -720,10 +720,7 @@ export class SequenceIntervalCollectionValueType
                 "delete",
                 {
                     process: (value, params, local, op) => {
-                        if (local) {
-                            return;
-                        }
-                        value.deleteInterval(params, local, op);
+                        value.ackDelete(params, local, op);
                     },
                 },
             ],
@@ -731,7 +728,7 @@ export class SequenceIntervalCollectionValueType
                 "change",
                 {
                     process: (value, params, local, op) => {
-                        value.changeInterval(params, local, op);
+                        value.ackChange(params, local, op);
                     },
                 },
             ]]);
@@ -790,7 +787,7 @@ export class IntervalCollectionValueType
                 "add",
                 {
                     process: (value, params, local, op) => {
-                        value.addInternal(params, local, op);
+                        value.ackAdd(params, local, op);
                     },
                 },
             ],
@@ -798,10 +795,7 @@ export class IntervalCollectionValueType
                 "delete",
                 {
                     process: (value, params, local, op) => {
-                        if (local) {
-                            return;
-                        }
-                        value.deleteInterval(params, local, op);
+                        value.ackDelete(params, local, op);
                     },
                 },
             ],
@@ -809,7 +803,7 @@ export class IntervalCollectionValueType
                 "change",
                 {
                     process: (value, params, local, op) => {
-                        value.changeInterval(params, local, op);
+                        value.ackChange(params, local, op);
                     },
                 },
             ]]);
@@ -860,8 +854,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     private localCollection: LocalIntervalCollection<TInterval>;
     private onDeserialize: DeserializeCallback;
     private client: Client;
-    private pendingChangeStart: Map<string, ISerializedInterval[]>;
-    private pendingChangeEnd: Map<string, ISerializedInterval[]>;
+    private pendingChangesStart: Map<string, ISerializedInterval[]>;
+    private pendingChangesEnd: Map<string, ISerializedInterval[]>;
     // TODO: Once no longer implemented as a ValueType, use LocalOpMetadata to store
     // pending references
     private readonly pendingReferences: List<LocalReference> = ListMakeHead();
@@ -1035,16 +1029,16 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
     private addPendingChange(id: string, serializedInterval: ISerializedInterval) {
         if (serializedInterval.start !== undefined) {
-            if (!this.pendingChangeStart) {
-                this.pendingChangeStart = new Map<string, ISerializedInterval[]>();
+            if (!this.pendingChangesStart) {
+                this.pendingChangesStart = new Map<string, ISerializedInterval[]>();
             }
-            this.addPendingChangeHelper(id, this.pendingChangeStart, serializedInterval);
+            this.addPendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
         }
         if (serializedInterval.end !== undefined) {
-            if (!this.pendingChangeEnd) {
-                this.pendingChangeEnd = new Map<string, ISerializedInterval[]>();
+            if (!this.pendingChangesEnd) {
+                this.pendingChangesEnd = new Map<string, ISerializedInterval[]>();
             }
-            this.addPendingChangeHelper(id, this.pendingChangeEnd, serializedInterval);
+            this.addPendingChangeHelper(id, this.pendingChangesEnd, serializedInterval);
         }
     }
 
@@ -1065,10 +1059,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         // Change ops always have an ID.
         const id: string = serializedInterval.properties[reservedIntervalIdKey];
         if (serializedInterval.start !== undefined) {
-            this.removePendingChangeHelper(id, this.pendingChangeStart, serializedInterval);
+            this.removePendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
         }
         if (serializedInterval.end !== undefined) {
-            this.removePendingChangeHelper(id, this.pendingChangeEnd, serializedInterval);
+            this.removePendingChangeHelper(id, this.pendingChangesEnd, serializedInterval);
         }
     }
 
@@ -1091,16 +1085,22 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     private hasPendingChangeStart(id: string) {
-        const entries = this.pendingChangeStart?.get(id);
+        const entries = this.pendingChangesStart?.get(id);
         return entries && entries.length !== 0;
     }
 
     private hasPendingChangeEnd(id: string) {
-        const entries = this.pendingChangeEnd?.get(id);
+        const entries = this.pendingChangesEnd?.get(id);
         return entries && entries.length !== 0;
     }
 
+    /** @deprecated - use ackChange */
     public changeInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
+        return this.ackChange(serializedInterval, local, op);
+    }
+
+    /** @internal */
+    public ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
         }
@@ -1184,19 +1184,28 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.client.changeReferenceType(lref, refType);
     }
 
+    /** @deprecated - use ackAdd */
     public addInternal(
         serializedInterval: ISerializedInterval,
         local: boolean,
         op: ISequencedDocumentMessage) {
-        if (!this.attached) {
-            throw new Error("attachSequence must be called");
-        }
+        return this.ackAdd(serializedInterval, local, op);
+    }
 
+    /** @internal */
+    public ackAdd(
+        serializedInterval: ISerializedInterval,
+        local: boolean,
+        op: ISequencedDocumentMessage) {
         if (local) {
             assert(this.pendingReferences.count() >= 2, "Pending reference not saved");
             this.ackReference(this.pendingReferences.dequeue());
             this.ackReference(this.pendingReferences.dequeue());
             return;
+        }
+
+        if (!this.attached) {
+            throw new Error("attachSequence must be called");
         }
 
         this.localCollection.ensureSerializedId(serializedInterval);
@@ -1219,10 +1228,26 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return interval;
     }
 
+    /** @deprecated - use ackDelete */
     public deleteInterval(
         serializedInterval: ISerializedInterval,
         local: boolean,
         op: ISequencedDocumentMessage): void {
+        return this.ackDelete(serializedInterval, local, op);
+    }
+
+    /** @internal */
+    public ackDelete(
+        serializedInterval: ISerializedInterval,
+        local: boolean,
+        op: ISequencedDocumentMessage): void {
+        if (local) {
+            // Local ops were applied when the message was created and there's no "pending delete"
+            // state to bookkeep: remote operation application takes into account possibility of
+            // locally deleted interval whenever a lookup happens.
+            return;
+        }
+
         if (!this.attached) {
             throw new Error("attach must be called prior to deleting intervals");
         }

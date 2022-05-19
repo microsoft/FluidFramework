@@ -51,7 +51,7 @@ export class TenantManager implements ITenantManager {
     constructor(private readonly url: string) {
     }
 
-    public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }> {
+    public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string; }> {
         throw new Error("Method not implemented.");
     }
 
