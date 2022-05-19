@@ -706,7 +706,7 @@ describe("Runtime", () => {
                         containerRuntime.process({
                             type: "op",
                             clientId: "clientId",
-                            clientSequenceNumber: 0,
+                            sequenceNumber: 0,
                             contents: {
                                 address: "address",
                             },
@@ -727,7 +727,7 @@ describe("Runtime", () => {
                         containerRuntime.process({
                             type: "op",
                             clientId: "clientId",
-                            clientSequenceNumber: 0,
+                            sequenceNumber: 0,
                             contents: {
                                 address: "address",
                             },
