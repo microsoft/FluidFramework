@@ -153,11 +153,6 @@ export class MapKernel {
     private pendingMessageId: number = -1;
 
     /**
-     * Latest clear localOpMetadata that has happened locally but not yet ack'd from the server.
-     */
-    private pendingClear: IMapClearLocalOpMetadata | undefined;
-
-    /**
      * The pending ids of any clears that have been performed locally but not yet ack'd from the server
      */
     private readonly pendingClearMessageIds: number[] = [];
@@ -652,11 +647,9 @@ export class MapKernel {
                     this.submitMapClearMessage(op, (localOpMetadata as IMapClearLocalOpMetadata).previousMap);
                 },
                 getStashedOpLocalMetadata: (op: IMapClearOperation) => {
-                    if (!this.pendingClear) {
-                        throw new Error("No pending clear for stashed op");
-                    }
                     // We don't reuse the metadata pendingMessageId but send a new one on each submit.
-                    return this.getMapClearMessageLocalMetadata(op, this.pendingClear.previousMap);
+                    // BUGBUG: the local metadata is wrong
+                    return this.getMapClearMessageLocalMetadata(op, new Map<string, ILocalValue>());
                 },
             });
         messageHandlers.set(
@@ -706,8 +699,7 @@ export class MapKernel {
         IMapClearLocalOpMetadata {
         const pendingMessageId = ++this.pendingMessageId;
         this.pendingClearMessageIds.push(pendingMessageId);
-        this.pendingClear = { pendingMessageId, previousMap };
-        return this.pendingClear;
+        return { pendingMessageId, previousMap };
     }
 
     /**
