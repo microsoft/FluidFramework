@@ -14,6 +14,7 @@
             "args": [
                 "--verbose"
             ],
+            "cwd": "${workspaceFolder}",
             "type": "node"
         },
         {
