@@ -29,6 +29,10 @@ const options: webpack.Configuration = {
     },
     resolve: {
         extensions: ['.js'],
+        fallback: {
+            buffer: false,
+            util: false,
+        },
     },
     output: {
         filename: '[name].bundle.js',

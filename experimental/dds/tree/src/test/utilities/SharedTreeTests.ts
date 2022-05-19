@@ -1322,11 +1322,6 @@ export function runSharedTreeOperationsTests(
 				writeFormat,
 				summarizeHistory: false,
 			});
-			testObjectProvider.logger.registerExpectedEvent(
-				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' }
-			);
 
 			applyNoop(tree);
 			await testObjectProvider.ensureSynchronized();
