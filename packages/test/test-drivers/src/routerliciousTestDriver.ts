@@ -39,6 +39,8 @@ function getConfig(
     assert(tenantId, "Missing tenantId");
     assert(tenantSecret, "Missing tenant secret");
     if (discoveryEndpoint !== undefined) {
+        // The hostUrl and deltaStorageUrl will be replaced by the URLs of the discovery result.
+        // The deltaStorageUrl is firstly set to https://dummy-historian to make the workflow successful.
         return {
             serviceEndpoint: {
                 hostUrl: "",
