@@ -59,6 +59,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         };
     }
 
+    /**
+     * {@inheritDoc IDocumentServiceFactory.createContainer}
+     *
+     * @throws {@link DocumentPostCreateError}
+     * If an exception is thrown while invoking the provided {@link ITokenProvider.documentPostCreateCallback}.
+     */
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
@@ -133,7 +139,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
         // is sufficient to determine if the token will be undefined or not.
         if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
-            await this.tokenProvider.documentPostCreateCallback(documentId, token);
+            try {
+                await this.tokenProvider.documentPostCreateCallback(documentId, token);
+            } catch (error: any) {
+                throw new DocumentPostCreateError(error);
+            }
         }
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
@@ -225,5 +235,39 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache);
+    }
+}
+
+/**
+ * Error returned by {@link RouterliciousDocumentServiceFactory.createContainer} when an error is thrown
+ * in {@link ITokenProvider.documentPostCreateCallback}.
+ * It is the consumer's responsibility to ensure that any state related to container creation is appropriately
+ * cleaned up in the event of failure.
+ * E.g. TODO
+ */
+ export class DocumentPostCreateError extends Error {
+    public constructor(
+        /**
+         * Inner error being wrapped.
+         */
+        private readonly innerError: Error,
+    ) {
+        super(DocumentPostCreateError.createMessage(innerError));
+    }
+
+    /**
+     * {@inheritDoc Error.name}
+     */
+    public readonly name = "DocumentPostCreateError";
+
+    /**
+     * {@inheritDoc Error.stack}
+     */
+    public get stack() { return this.innerError.stack; }
+
+    private static createMessage(innerError: Error): string {
+        return `An error was thrown in the provided callback provided to "documentPostCreateCallback".\n`
+            + "Inner exception:\n"
+            + `\t${innerError.message}`;
     }
 }
