@@ -136,7 +136,7 @@ the service knows nothing about the contents of any Fluid container.
                                                          v
                                              +-----------+-------------+
                                              |    Fluid Container or   |
-                                             |       Fluid Object      |
+                                             |       Shared Object     |
                                              |                         |
                                              +-------------------------+
 ```
