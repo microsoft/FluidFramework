@@ -50,6 +50,7 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
+import { GCNodeType } from "./garbageCollection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -90,8 +91,8 @@ export class DataStores implements IDisposable {
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
         getBaseGCDetails: () => Promise<Map<string, IGarbageCollectionDetailsBase>>,
-        private readonly dataStoreChanged: (
-            dataStorePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
+        private readonly gcNodeUpdated: (
+            nodePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
         private readonly aliasMap: Map<string, string>,
         private readonly writeGCDataAtRoot: boolean,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
@@ -399,8 +400,9 @@ export class DataStores implements IDisposable {
         assert(!!context, 0x162 /* "There should be a store context for the op" */);
         context.process(transformed, local, localMessageMetadata);
 
-        // Notify that a data store changed. This is used to detect if a deleted data store is being used.
-        this.dataStoreChanged(
+        // Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
+        // being used.
+        this.gcNodeUpdated(
             `/${envelope.address}`,
             message.timestamp,
             context.isLoaded ? context.packagePath : undefined,
@@ -642,14 +644,21 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Called by GC to know if a node is a data store or not. Data store ids are of the format "/dataStoreId".
+     * Called by GC to determine if a node is for a data store or for an object within a data store (for e.g. DDS).
+     * @returns the GC node type if the node belongs to a data store or object within data store, undefined otherwise.
      */
-    public isDataStoreNode(nodePath: string): boolean {
+    public getGCNodeType(nodePath: string): GCNodeType | undefined {
         const pathParts = nodePath.split("/");
-        if (pathParts.length === 2 && this.contexts.has(pathParts[1])) {
-            return true;
+        if (!this.contexts.has(pathParts[1])) {
+            return undefined;
         }
-        return false;
+
+        // Data stores paths are of the format "/dataStoreId".
+        // Sub data store paths are of the format "/dataStoreId/subPath/...".
+        if (pathParts.length === 2) {
+            return GCNodeType.DataStore;
+        }
+        return GCNodeType.SubDataStore;
     }
 }
 

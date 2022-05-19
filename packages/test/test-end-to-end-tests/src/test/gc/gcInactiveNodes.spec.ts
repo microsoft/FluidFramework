@@ -8,9 +8,10 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
@@ -18,10 +19,10 @@ import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils"
 import { TestDataObject } from "../mockSummarizerClient";
 
 /**
- * Validates this scenario: When a data store becomes inactive (has been unreferenced for a given amount of time),
- * using that data store results in an error telemetry.
+ * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
+ * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
-describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
+describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
     const pkg = "TestDataObject";
     const dataObjectFactory = new DataObjectFactory(
         pkg,
@@ -50,6 +51,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let summarizerRuntime: ContainerRuntime;
     let defaultDataStore: TestDataObject;
+    let summarizerDefaultDataStore: TestDataObject;
     let mockLogger: MockLogger;
 
     /** Waits for the delete timeout to expire. */
@@ -97,6 +99,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
         const summarizerContainer = await provider.loadContainer(runtimeFactory, { logger: mockLogger }) as Container;
+        summarizerDefaultDataStore = await requestFluidObject<TestDataObject>(summarizerContainer, "/");
         summarizerRuntime = (await requestFluidObject<TestDataObject>(summarizerContainer, "/")).containerRuntime;
     });
 
@@ -108,19 +111,27 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         const dataStore1 = await dataObjectFactory.createInstance(defaultDataStore.containerRuntime);
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
 
-        // Summarize with dataStore1 as referenced and validate that no unreferneced errors were logged.
+        // Make changes to the data store - send an op and load it.
+        dataStore1._root.set("key", "value1");
+        await summarizerRuntime.resolveHandle({ url: `/${dataStore1.id}` });
+
+        // Summarize and validate that no unreferenced errors were logged.
         await summarize();
         validateNoInactiveEvents();
 
-        // Mark dataStore1 as unreferenced, summarize and validate that no unreferenced errors were logged.
+        // Mark dataStore1 as unreferenced, send an op and load it.
         defaultDataStore._root.delete("dataStore1");
+        dataStore1._root.set("key", "value2");
+        await summarizerRuntime.resolveHandle({ url: `/${dataStore1.id}` });
+
+        // Summarize and validate that no unreferenced errors were logged.
         await summarize();
         validateNoInactiveEvents();
 
         // Wait for delete timeout. This will ensure that the unreferenced data store is inactive.
         await waitForDeleteTimeout();
 
-        // Make changes to the inactive data store and validate that we get the inactiveObjectChanged event.
+        // Make changes to the inactive data store and validate that we get the changedEvent.
         dataStore1._root.set("key", "value");
         await provider.ensureSynchronized();
         assert(
@@ -132,9 +143,10 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
                     pkg: { value: `/${pkg}`, tag: TelemetryDataTag.PackageData },
                 },
             ]),
-            "inactiveObjectChanged event not generated as expected",
+            "changed event not generated as expected",
         );
 
+        // Load the data store and validate that we get loadedEvent.
         await summarizerRuntime.resolveHandle({ url: `/${dataStore1.id}` });
         assert(
             mockLogger.matchEvents([
@@ -144,10 +156,10 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
                     id: `/${dataStore1.id}`,
                 },
             ]),
-            "inactiveObjectLoaded event not generated as expected",
+            "loaded event not generated as expected",
         );
 
-        // Make a change again and validate that we don't get another inactiveObjectChanged event as we only log it
+        // Make a change again and validate that we don't get another changedEvent as we only log it
         // once per data store per session.
         dataStore1._root.set("key2", "value2");
         await provider.ensureSynchronized();
@@ -165,7 +177,63 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
                     pkg: { value: `/${pkg}`, tag: TelemetryDataTag.PackageData },
                 },
             ]),
-            "inactiveObjectRevived event not generated as expected",
+            "revived event not generated as expected",
+        );
+    });
+
+    itExpects("can generate events when unreferenced attachment blob is accessed after it's inactive", [
+        { eventName: loadedEvent, timeout: deleteTimeoutMs },
+        { eventName: revivedEvent, timeout: deleteTimeoutMs },
+    ], async () => {
+        // Upload an attachment blobs and mark them referenced.
+        const blobContents = "Blob contents";
+        const blobHandle = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+        defaultDataStore._root.set("blob", blobHandle);
+
+        await provider.ensureSynchronized();
+
+        // Get the blob handle in the summarizer client. Don't retrieve the underlying blob yet. We will do that after
+        // the blob node is inactive.
+        const summarizerBlobHandle = summarizerDefaultDataStore._root.get<IFluidHandle<ArrayBufferLike>>("blob");
+        assert(summarizerBlobHandle !== undefined, "Blob handle not sync'd to summarizer client");
+
+        // Summarize and validate that no unreferenced errors were logged.
+        await summarize();
+        validateNoInactiveEvents();
+
+        // Mark blob as unreferenced, summarize and validate that no unreferenced errors are logged yet.
+        defaultDataStore._root.delete("blob");
+        await summarize();
+        validateNoInactiveEvents();
+
+        // Wait for delete timeout. This will ensure that the unreferenced blob is inactive.
+        await waitForDeleteTimeout();
+
+        // Retrieve the blob in the summarizer client now and validate that we get the loadedEvent.
+        await summarizerBlobHandle.get();
+        assert(
+            mockLogger.matchEvents([
+                {
+                    eventName: loadedEvent,
+                    timeout: deleteTimeoutMs,
+                    id: summarizerBlobHandle.absolutePath,
+                },
+            ]),
+            "updated event not generated as expected for attachment blobs",
+        );
+
+        // Add the handle back, summarize and validate that we get the revivedEvent.
+        defaultDataStore._root.set("blob", blobHandle);
+        await provider.ensureSynchronized();
+        assert(
+            mockLogger.matchEvents([
+                {
+                    eventName: revivedEvent,
+                    timeout: deleteTimeoutMs,
+                    id: summarizerBlobHandle.absolutePath,
+                },
+            ]),
+            "revived event not generated as expected for attachment blobs",
         );
     });
 });

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/runtime-definitions",
-  "version": "0.59.3000",
+  "version": "0.59.4000",
   "description": "Fluid Runtime definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66048",
+    "@fluidframework/build-tools": "^0.2.66793",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@0.59.2000",
     "@microsoft/api-extractor": "^7.22.2",
