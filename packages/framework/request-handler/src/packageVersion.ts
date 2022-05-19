@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/request-handler";
-export const pkgVersion = "0.59.1001";
+export const pkgVersion = "0.59.1002";
