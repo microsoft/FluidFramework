@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from './generators';
-export * from './types';
-export * from './performActions';
-export * from './random';
+export * from "./generators";
+export * from "./types";
+export * from "./performActions";
+export * from "./random";
