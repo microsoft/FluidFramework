@@ -76,8 +76,7 @@
   "typeValidation": {
     "version": "0.60.1000",
     "broken": {
-      "InterfaceDeclaration_IFluidContainer": {"forwardCompat": false},
-      "ClassDeclaration_FluidContainer": {"forwardCompat": false}
+      "InterfaceDeclaration_IFluidContainer": {"forwardCompat": false}
     }
   }
 }
