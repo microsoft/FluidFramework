@@ -117,7 +117,12 @@ export class Client {
     createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): ReferencePosition;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
-    findReconnectionPosition(segment: ISegment, localSeq: number): number;
+    protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
+    // (undocumented)
+    findSegOffForReconnection(pos: number, seqNumberFrom: number, seqNumberTo: number, localSeq: number): {
+        segment: ISegment;
+        offset: number;
+    };
     // (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;

@@ -89,7 +89,7 @@ export interface IValueOperation<T> {
         localOpMetadata: unknown | undefined
     );
 
-    rebase(value: T, op: IValueTypeOperationValue, localOpMetadata: unknown | undefined): IValueTypeOperationValue;
+    rebase(value: T, op: IValueTypeOperationValue, localOpMetadata: IMapMessageLocalMetadata): IValueTypeOperationValue;
 }
 
 /**

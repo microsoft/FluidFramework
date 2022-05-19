@@ -435,7 +435,7 @@ export class DefaultMap<T> {
                     value: translatedParams,
                 },
             };
-            // Send the localOpMetadata as undefined because we don't care about the ack.
+
             this.submitMessage(op, localOpMetadata);
 
             const event: IValueChanged = { key, previousValue };

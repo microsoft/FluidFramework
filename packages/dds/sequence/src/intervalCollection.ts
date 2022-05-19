@@ -11,11 +11,9 @@ import {
     addProperties,
     Client,
     ConflictAction,
-    // createAnnotateRangeOp,
     createMap,
     ICombiningOp,
     IInterval,
-    // IMergeTreeAnnotateMsg,
     IntervalConflictResolver,
     IntervalNode,
     IntervalTree,
@@ -693,7 +691,7 @@ export class SequenceIntervalCollectionValueType
                         value.ackAdd(params, local, op);
                     },
                     rebase: (value, op, localOpMetadata) => {
-                        return { ...op, value: value.rebaseInternal(op.value, (localOpMetadata as IntervalCollectionOpMetadata).localSeq) }
+                        return { ...op, value: value.rebaseLocalInterval(op.value, localOpMetadata.localSeq) }
                     }
                 },
             ],
@@ -704,7 +702,7 @@ export class SequenceIntervalCollectionValueType
                         value.ackDelete(params, local, op);
                     },
                     rebase: (value, op) => {
-                        console.log(JSON.stringify(op));
+                        // Deletion of intervals is based on id, so requires no rebasing.
                         return op
                     }
                 },
@@ -716,7 +714,7 @@ export class SequenceIntervalCollectionValueType
                         value.ackChange(params, local, op);
                     },
                     rebase: (value, op, localOpMetadata) => {
-                        return { ...op, value: value.rebaseInternal(op.value, (localOpMetadata as IntervalCollectionOpMetadata).localSeq) };
+                        return { ...op, value: value.rebaseLocalInterval(op.value, localOpMetadata.localSeq) };
                     }
                 },
             ]]);
@@ -1158,7 +1156,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         });
     }
 
-    public rebaseInternal(
+    public rebaseLocalInterval(
         serializedInterval: ISerializedInterval,
         localSeq: number
     ) {

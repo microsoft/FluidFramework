@@ -670,7 +670,7 @@ export class Client {
      * @param segment - The segment to find the position for
      * @param localSeq - The localSeq to find the position of the segment at
      */
-    public findReconnectionPosition(segment: ISegment, localSeq: number) {
+    protected findReconnectionPosition(segment: ISegment, localSeq: number) {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
         let segmentPosition = 0;
         /*
@@ -704,18 +704,29 @@ export class Client {
         return segmentPosition;
     }
 
-    public findSegOffForReconnection(pos: number, seqNumberFrom: number, seqNumberTo: number, localSeq: number): { segment: ISegment; offset: number } {
+    public findSegOffForReconnection(
+        pos: number,
+        seqNumberFrom: number,
+        seqNumberTo: number,
+        localSeq: number,
+    ): { segment: ISegment; offset: number; } {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, "localSeq greater than collab window");
         let segment: ISegment | undefined;
         let posAccumulated = 0;
         let offset = pos;
+        const isInsertedInView = (seg: ISegment) =>
+            (seg.seq !== undefined && seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom)
+            || (seg.localSeq !== undefined && seg.localSeq <= localSeq);
+
+        const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment) =>
+            (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= seqNumberFrom)
+            || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
+
         this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
-            assert(seg.seq !== undefined || seg.localSeq !== undefined, 'Either seq or localSeq should be defined');
+            assert(seg.seq !== undefined || seg.localSeq !== undefined, "Either seq or localSeq should be defined");
             segment = seg;
 
-            if (((seg.seq !== undefined && seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom) || (seg.localSeq !== undefined && seg.localSeq <= localSeq))                // Is inserted
-                && (seg.removedSeq === undefined || (seg.localRemovedSeq !== undefined && seg.localRemovedSeq! > localSeq) || (seg.removedSeq !== undefined && seg.removedSeq > seqNumberFrom))     // Not removed
-            ) {
+            if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
                 posAccumulated += seg.cachedLength;
                 if (offset >= seg.cachedLength) {
                     offset -= seg.cachedLength;
@@ -726,13 +737,14 @@ export class Client {
             return posAccumulated < pos;
         });
 
-        assert(segment !== undefined, 'No segment found');
-        if ((segment.removedSeq !== undefined && segment.removedSeq <= seqNumberTo) || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
+        assert(segment !== undefined, "No segment found");
+        if ((segment.removedSeq !== undefined && segment.removedSeq <= seqNumberTo)
+            || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
             // Segment that the position was in has been removed: null out offset.
             offset = 0;
         }
 
-        assert(0 <= offset && offset < segment.cachedLength, 'Invalid offset');
+        assert(0 <= offset && offset < segment.cachedLength, "Invalid offset");
         return { segment, offset };
     }
 
