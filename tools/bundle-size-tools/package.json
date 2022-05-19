@@ -22,7 +22,8 @@
     "jszip": "^3.2.2",
     "msgpack-lite": "^0.1.26",
     "pako": "^1.0.10",
-    "typescript": "~4.5.5"
+    "typescript": "~4.5.5",
+    "webpack": "^5.72.0"
   },
   "devDependencies": {
     "@types/jszip": "^3.4.1",
