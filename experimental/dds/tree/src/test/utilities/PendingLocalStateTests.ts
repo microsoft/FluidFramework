@@ -92,70 +92,81 @@ export function runPendingLocalStateTests(
 			expect(editLog.getEditLogSummary().editChunks.length).to.equal(2);
 		});
 
-        it('applies and submits ops from 0.0.2 in 0.0.2', async () => applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_0_2));
-        it('applies and submits ops from 0.0.2 in 0.1.1', async () => applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_1_1));
-        it('fails to apply ops from 0.1.1 in 0.0.2', async () => expect(applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_0_2)).to.be.rejectedWith('Attempted to resubmit op of version newer than current version'));
-        it('applies and submits ops from 0.1.1 in 0.1.1', async () => applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_1_1));
+		it('applies and submits ops from 0.0.2 in 0.0.2', async () =>
+			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_0_2));
+		it('applies and submits ops from 0.0.2 in 0.1.1', async () =>
+			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_1_1));
+		it('fails to apply ops from 0.1.1 in 0.0.2', async () =>
+			expect(applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_0_2)).to.be.rejectedWith(
+				'Attempted to resubmit op of version newer than current version'
+			));
+		it('applies and submits ops from 0.1.1 in 0.1.1', async () =>
+			applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_1_1));
 
-        async function applyStashedOp(treeVersion: WriteFormat, opVersion: WriteFormat): Promise<void> {
-            const { container: stashingContainer, tree: stashingTree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-                id: documentId,
-                writeFormat: opVersion,
-            });
-            const stashingTestTree = setUpTestTree(stashingTree);
-            const { tree: observerTree } = await setUpLocalServerTestSharedTree({
-                id: documentId,
-                testObjectProvider,
-                writeFormat: treeVersion,
-            });
-            const url = (await stashingContainer.getAbsoluteUrl('/')) ?? fail('Container unable to resolve "/".');
-            await testObjectProvider.ensureSynchronized();
-            const initialEditLogLength = stashingTree.edits.length;
+		async function applyStashedOp(treeVersion: WriteFormat, opVersion: WriteFormat): Promise<void> {
+			const {
+				container: stashingContainer,
+				tree: stashingTree,
+				testObjectProvider,
+			} = await setUpLocalServerTestSharedTree({
+				id: documentId,
+				writeFormat: opVersion,
+			});
+			const stashingTestTree = setUpTestTree(stashingTree);
+			const { tree: observerTree } = await setUpLocalServerTestSharedTree({
+				id: documentId,
+				testObjectProvider,
+				writeFormat: treeVersion,
+			});
+			const url = (await stashingContainer.getAbsoluteUrl('/')) ?? fail('Container unable to resolve "/".');
+			await testObjectProvider.ensureSynchronized();
+			const initialEditLogLength = stashingTree.edits.length;
 
-            const { pendingLocalState, actionReturn: edit } = await withContainerOffline(
-                testObjectProvider,
-                stashingContainer,
-                () => stashingTree.applyEdit(...Change.insertTree(stashingTestTree.buildLeaf(), StablePlace.after(stashingTestTree.left)))
-            );
-            await testObjectProvider.ensureSynchronized();
-            const observerLeftTraitAfterStash = observerTree.currentView.getTrait(
-                stashingTestTree.left.traitLocation.translate(observerTree)
-            );
-            const loader = testObjectProvider.makeTestLoader();
+			const { pendingLocalState, actionReturn: edit } = await withContainerOffline(
+				testObjectProvider,
+				stashingContainer,
+				() =>
+					stashingTree.applyEdit(
+						...Change.insertTree(stashingTestTree.buildLeaf(), StablePlace.after(stashingTestTree.left))
+					)
+			);
+			await testObjectProvider.ensureSynchronized();
+			const observerLeftTraitAfterStash = observerTree.currentView.getTrait(
+				stashingTestTree.left.traitLocation.translate(observerTree)
+			);
+			const loader = testObjectProvider.makeTestLoader();
 
-            // Simulate reconnect of user 1; a new container will be created which passes the stashed local state in its
-            // load request.
-            const stashingContainer2 = await loader.resolve({ url }, pendingLocalState);
-            const dataObject2 = await requestFluidObject<ITestFluidObject>(stashingContainer2, '/');
-            const stashingTree2 = await dataObject2.getSharedObject<SharedTree>(documentId);
-            expect((stashingTree2.edits as unknown as EditLog<ChangeInternal>).isLocalEdit(edit.id)).to.be.true; // Kludge
+			// Simulate reconnect of user 1; a new container will be created which passes the stashed local state in its
+			// load request.
+			const stashingContainer2 = await loader.resolve({ url }, pendingLocalState);
+			const dataObject2 = await requestFluidObject<ITestFluidObject>(stashingContainer2, '/');
+			const stashingTree2 = await dataObject2.getSharedObject<SharedTree>(documentId);
+			expect((stashingTree2.edits as unknown as EditLog<ChangeInternal>).isLocalEdit(edit.id)).to.be.true; // Kludge
 
-            await testObjectProvider.ensureSynchronized();
+			await testObjectProvider.ensureSynchronized();
 
-            expect(observerLeftTraitAfterStash.length).to.equal(
-                1,
-                'Observing tree should not receive edits made by the stashing tree after it went offline.'
-            );
-            expect(stashingTree2.currentView.getTrait(stashingTestTree.left.traitLocation.translate(stashingTree2)).length).to.equal(
-                2,
-                'Tree which loaded with stashed pending edits should apply them.'
-            );
-            expect(observerTree.currentView.getTrait(stashingTestTree.left.traitLocation.translate(observerTree)).length).to.equal(
-                2,
-                'Tree collaborating with a client that applies stashed pending edits should see them.'
-            );
+			expect(observerLeftTraitAfterStash.length).to.equal(
+				1,
+				'Observing tree should not receive edits made by the stashing tree after it went offline.'
+			);
+			expect(
+				stashingTree2.currentView.getTrait(stashingTestTree.left.traitLocation.translate(stashingTree2)).length
+			).to.equal(2, 'Tree which loaded with stashed pending edits should apply them.');
+			expect(
+				observerTree.currentView.getTrait(stashingTestTree.left.traitLocation.translate(observerTree)).length
+			).to.equal(2, 'Tree collaborating with a client that applies stashed pending edits should see them.');
 
-            const stableEdit = stabilizeEdit(stashingTree, edit as unknown as Edit<ChangeInternal>);
-            expect(
-                stabilizeEdit(observerTree, (await getEditLogInternal(observerTree).tryGetEdit(edit.id)) ?? fail())
-            ).to.deep.equal(stableEdit);
+			const stableEdit = stabilizeEdit(stashingTree, edit as unknown as Edit<ChangeInternal>);
+			expect(
+				stabilizeEdit(observerTree, (await getEditLogInternal(observerTree).tryGetEdit(edit.id)) ?? fail())
+			).to.deep.equal(stableEdit);
 
-            expect(
-                stabilizeEdit(stashingTree2, (await getEditLogInternal(stashingTree2).tryGetEdit(edit.id)) ?? fail())
-            ).to.deep.equal(stableEdit);
+			expect(
+				stabilizeEdit(stashingTree2, (await getEditLogInternal(stashingTree2).tryGetEdit(edit.id)) ?? fail())
+			).to.deep.equal(stableEdit);
 
-            expect(observerTree.edits.length).to.equal(initialEditLogLength + 1);
-            expect(stashingTree2.edits.length).to.equal(initialEditLogLength + 1);
-        }
+			expect(observerTree.edits.length).to.equal(initialEditLogLength + 1);
+			expect(stashingTree2.edits.length).to.equal(initialEditLogLength + 1);
+		}
 	});
 }

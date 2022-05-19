@@ -950,7 +950,7 @@ export class IdCompressor {
 
 		if (overrideInversionKey !== undefined) {
 			const registeredLocal = sessionIdNormalizer.addLocalId();
-			assert(registeredLocal === newLocalId, 'TODO');
+			assert(registeredLocal === newLocalId, 'Session ID Normalizer produced unexpected local ID');
 			if (eagerFinalId !== undefined) {
 				sessionIdNormalizer.addFinalIds(eagerFinalId, eagerFinalId, cluster ?? fail());
 			}
@@ -963,7 +963,7 @@ export class IdCompressor {
 			return eagerFinalId;
 		} else {
 			const registeredLocal = sessionIdNormalizer.addLocalId();
-			assert(registeredLocal === newLocalId, 'TODO');
+			assert(registeredLocal === newLocalId, 'Session ID Normalizer produced unexpected local ID');
 		}
 
 		return newLocalId;
@@ -1022,30 +1022,35 @@ export class IdCompressor {
 		}
 	}
 
-    /**
-     * Decompresses an ID from the given session.
+	/**
+	 * Decompresses an ID from the given session.
 	 * `id` is not guaranteed to have a corresponding ID in this compressor's session space, as `id` may not have been finalized.
 	 * For example, `id` could be a local ID that was never acked and thus does not have a corresponding final (and thus does not
 	 * exist in this compressor's session space).
-     */
-    public decompressRemote(id: OpSpaceCompressedId, remoteSessionId: SessionId): StableId | string {
-        assert(remoteSessionId !== this.localSessionId, 'Remote session may not belong to this compressor');
-        const session = this.sessions.get(remoteSessionId) ?? this.createSession(remoteSessionId, undefined);
-        if (isLocalId(id)) {
-            return stableIdFromNumericUuid(session.sessionUuid, -id - 1);
-        } else {
-            const correspondingStable = this.tryDecompress(id);
+	 */
+	public decompressRemote(id: OpSpaceCompressedId, remoteSessionId: SessionId): StableId | string {
+		assert(remoteSessionId !== this.localSessionId, 'Remote session may not belong to this compressor');
+		const session = this.sessions.get(remoteSessionId) ?? this.createSession(remoteSessionId, undefined);
+		if (isLocalId(id)) {
+			return stableIdFromNumericUuid(session.sessionUuid, -id - 1);
+		} else {
+			const correspondingStable = this.tryDecompress(id);
 			if (correspondingStable === undefined) {
 				// This case should only be hit if `id` was an eagerly generated final ID from `remoteSessionId`
-				const closestCluster = this.finalIdToCluster.getPairOrNextLower(id) ?? fail('Final ID does not exist and could not have been eagerly generated.');
+				const closestCluster =
+					this.finalIdToCluster.getPairOrNextLower(id) ??
+					fail('Final ID does not exist and could not have been eagerly generated.');
 				const [clusterBase, cluster] = closestCluster;
 				const clusterIndex = id - clusterBase;
-				assert(clusterIndex >= cluster.count && clusterIndex < cluster.capacity, 'Final ID does not exist and could not have been eagerly generated.');
+				assert(
+					clusterIndex >= cluster.count && clusterIndex < cluster.capacity,
+					'Final ID does not exist and could not have been eagerly generated.'
+				);
 				return stableIdFromNumericUuid(cluster.baseUuid, clusterIndex);
 			}
 			return correspondingStable;
-        }
-    }
+		}
+	}
 
 	/**
 	 * Recompresses a decompressed ID, which could be a UUID or an override string.

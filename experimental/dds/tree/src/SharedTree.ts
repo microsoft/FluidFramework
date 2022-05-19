@@ -1549,11 +1549,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @param content - op to apply locally.
 	 */
 	protected applyStashedOp(op: unknown): void {
-        // In addition to updating the state of the tree as each stashed op is applied, we actually need to change the content of
-        // the ops themselves to preserve ID compatibility across sessions. Thus, we actually prevent the framework from submitting
-        // the stashed ops on our behalf (see override of `resubmitCore`) and submit them ourselves in the body of this method.
+		// In addition to updating the state of the tree as each stashed op is applied, we actually need to change the content of
+		// the ops themselves to preserve ID compatibility across sessions. Thus, we actually prevent the framework from submitting
+		// the stashed ops on our behalf (see override of `resubmitCore`) and submit them ourselves in the body of this method.
 
-        // - TODO non edit stached ops ??
+		// - TODO non edit stached ops ??
 
 		const sharedTreeOp = op as SharedTreeOp | SharedTreeOp_0_0_2;
 		switch (sharedTreeOp.type) {
@@ -1575,23 +1575,36 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					case WriteFormat.v0_1_1:
 						switch (sharedTreeOp.version) {
 							case WriteFormat.v0_0_2:
-                                // Use the IDs from the stashed ops as overrides for the equivalent new ops
-		                        this.applyEditLocally(convertEditIds(sharedTreeOp.edit, (id) => this.generateNodeId(id)), undefined);
-                                break;
+								// Use the IDs from the stashed ops as overrides for the equivalent new ops
+								this.applyEditLocally(
+									convertEditIds(sharedTreeOp.edit, (id) => this.generateNodeId(id)),
+									undefined
+								);
+								break;
 							case WriteFormat.v0_1_1: {
-                                // Interpret the IDs from the stashed ops as stable IDs, and use those as overrides for the equivalent new ops
-                                const normalizer: NodeIdNormalizer<OpSpaceNodeId> = {
-                                    localSessionId: this.idCompressor.localSessionId,
-                                    normalizeToSessionSpace: (id, _sessionId) => {
-                                        const stableId = this.idCompressor.decompressRemote(id, sharedTreeOp.idRange.sessionId);
-                                        return this.generateNodeId(stableId);
-                                    },
-                                    normalizeToOpSpace: (id) => this.idNormalizer.normalizeToOpSpace(id)
-                                };
+								// Interpret the IDs from the stashed ops as stable IDs, and use those as overrides for the equivalent new ops
+								const normalizer: NodeIdNormalizer<OpSpaceNodeId> = {
+									localSessionId: this.idCompressor.localSessionId,
+									normalizeToSessionSpace: (id, _sessionId) => {
+										const stableId = this.idCompressor.decompressRemote(
+											id,
+											sharedTreeOp.idRange.sessionId
+										);
+										return this.generateNodeId(stableId);
+									},
+									normalizeToOpSpace: (id) => this.idNormalizer.normalizeToOpSpace(id),
+								};
 
-                                this.applyEditInternal(this.encoder_0_1_1.decodeEditOp(sharedTreeOp, this.encodeSemiSerializedEdit.bind(this), normalizer, this.interner));
-                                break;
-                            }
+								this.applyEditInternal(
+									this.encoder_0_1_1.decodeEditOp(
+										sharedTreeOp,
+										this.encodeSemiSerializedEdit.bind(this),
+										normalizer,
+										this.interner
+									)
+								);
+								break;
+							}
 							default:
 								fail('Unknown version');
 						}
@@ -1610,17 +1623,17 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 	}
 
-    protected reSubmitCore(op: any, localOpMetadata: unknown): void {
+	protected reSubmitCore(op: any, localOpMetadata: unknown): void {
 		const sharedTreeOp = op as SharedTreeOp | SharedTreeOp_0_0_2;
-        switch (sharedTreeOp.type) {
+		switch (sharedTreeOp.type) {
 			case SharedTreeOpType.Edit:
-                switch (this.writeFormat) {
+				switch (this.writeFormat) {
 					case WriteFormat.v0_0_2:
 						switch (sharedTreeOp.version) {
 							case WriteFormat.v0_0_2:
-                                break;
+								break;
 							case WriteFormat.v0_1_1:
-                                fail('Attempted to resubmit op of version newer than current version');
+								fail('Attempted to resubmit op of version newer than current version');
 							default:
 								fail('Unknown version');
 						}
@@ -1628,29 +1641,33 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					case WriteFormat.v0_1_1:
 						switch (sharedTreeOp.version) {
 							case WriteFormat.v0_0_2:
-                                super.reSubmitCore(convertEditIds(sharedTreeOp.edit, (id) => this.generateNodeId(id)), localOpMetadata);
-                                return;
+								super.reSubmitCore(
+									convertEditIds(sharedTreeOp.edit, (id) => this.generateNodeId(id)),
+									localOpMetadata
+								);
+								return;
 							case WriteFormat.v0_1_1: {
-                                assert(sharedTreeOp.version === WriteFormat.v0_1_1);
-                                if (sharedTreeOp.idRange.sessionId !== this.idCompressor.localSessionId) {
-                                    return; // Already submitted an equivalent op in `applyStashedOp`
-                                }
-                                break;
-                            }
+								assert(sharedTreeOp.version === WriteFormat.v0_1_1);
+								if (sharedTreeOp.idRange.sessionId !== this.idCompressor.localSessionId) {
+									return; // Already submitted an equivalent op in `applyStashedOp`
+								}
+								break;
+							}
 							default:
 								fail('Unknown version');
 						}
-                        break;
+						break;
 					default:
 						fail('Unknown version');
 				}
 				break;
-            default: // TODO: other op types
-                break;
-        }
+			default:
+				// TODO: other op types
+				break;
+		}
 
-        super.reSubmitCore(op, localOpMetadata);
-    }
+		super.reSubmitCore(op, localOpMetadata);
+	}
 
 	private changeWriteFormat(newFormat: WriteFormat): void {
 		this.writeFormat = newFormat;

@@ -859,6 +859,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     protected processCore(message: unknown, local: boolean): void;
     // (undocumented)
     protected registerCore(): void;
+    // (undocumented)
+    protected reSubmitCore(op: any, localOpMetadata: unknown): void;
     revert(editId: EditId): EditId | undefined;
     // @internal
     revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined;
