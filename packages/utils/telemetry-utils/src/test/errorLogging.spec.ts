@@ -511,7 +511,7 @@ describe("normalizeError", () => {
             message,
             stack: stackHint,
         }).withExpectedTelemetryProps({ untrustedOrigin: 1 });
-        const untrustedInputs: { [label: string]: () => { input: any, expectedOutput: TestFluidError } } = {
+        const untrustedInputs: { [label: string]: () => { input: any; expectedOutput: TestFluidError; }; } = {
             "Fluid Error minus errorType": () => ({
                 input: sampleFluidError().withoutProperty("errorType"),
                 expectedOutput: typicalOutput("Hello", "<<stack from input>>"),

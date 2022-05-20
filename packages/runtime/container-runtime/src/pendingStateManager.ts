@@ -56,22 +56,22 @@ export interface IPendingLocalState {
 }
 
 export interface IRuntimeStateHandler{
-    connected(): boolean,
-    clientId(): string | undefined,
-    flushMode(): FlushMode,
-    setFlushMode(mode: FlushMode): void,
-    close(error?: ICriticalContainerError): void,
-    applyStashedOp: (type: ContainerMessageType, content: ISequencedDocumentMessage) => Promise<unknown>,
-    flush(): void,
+    connected(): boolean;
+    clientId(): string | undefined;
+    flushMode(): FlushMode;
+    setFlushMode(mode: FlushMode): void;
+    close(error?: ICriticalContainerError): void;
+    applyStashedOp: (type: ContainerMessageType, content: ISequencedDocumentMessage) => Promise<unknown>;
+    flush(): void;
     reSubmit(
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown,
-        opMetadata: Record<string, unknown> | undefined): void,
+        opMetadata: Record<string, unknown> | undefined): void;
     rollback(
         type: ContainerMessageType,
         content: any,
-        localOpMetadata: unknown): void
+        localOpMetadata: unknown): void;
 }
 
 /**

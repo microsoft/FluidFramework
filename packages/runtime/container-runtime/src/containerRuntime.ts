@@ -1979,7 +1979,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private trackOrderSequentiallyCalls(callback: () => void): void {
-        let checkpoint: { rollback: () => void } | undefined;
+        let checkpoint: { rollback: () => void; } | undefined;
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
             checkpoint = this.pendingStateManager.checkpoint();
         }
@@ -2256,17 +2256,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async summarize(options: {
         /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-        fullTree?: boolean,
+        fullTree?: boolean;
         /** True to track the state for this summary in the SummarizerNodes; defaults to true */
-        trackState?: boolean,
+        trackState?: boolean;
         /** Logger to use for correlated summary events */
-        summaryLogger?: ITelemetryLogger,
+        summaryLogger?: ITelemetryLogger;
         /** True to run garbage collection before summarizing; defaults to true */
-        runGC?: boolean,
+        runGC?: boolean;
         /** True to generate full GC data */
-        fullGC?: boolean,
+        fullGC?: boolean;
         /** True to run GC sweep phase after the mark phase */
-        runSweep?: boolean,
+        runSweep?: boolean;
     }): Promise<IRootSummaryTreeWithStats> {
         this.verifyNotClosed();
 
@@ -2416,11 +2416,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async collectGarbage(
         options: {
             /** Logger to use for logging GC events */
-            logger?: ITelemetryLogger,
+            logger?: ITelemetryLogger;
             /** True to run GC sweep phase after the mark phase */
-            runSweep?: boolean,
+            runSweep?: boolean;
             /** True to generate full GC data */
-            fullGC?: boolean,
+            fullGC?: boolean;
         },
     ): Promise<IGCStats> {
         return this.garbageCollector.collectGarbage(options);
@@ -2496,7 +2496,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
 
             // Helper function to check whether we should still continue between each async step.
-            const checkContinue = (): { continue: true; } | { continue: false; error: string } => {
+            const checkContinue = (): { continue: true; } | { continue: false; error: string; } => {
                 // Do not check for loss of connectivity directly! Instead leave it up to
                 // RunWhileConnectedCoordinator to control policy in a single place.
                 // This will allow easier change of design if we chose to. For example, we may chose to allow
@@ -3016,7 +3016,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     getVersionDuration?: number | undefined;
                     getSnapshotDuration?: number | undefined;
                 }) => void; }) => {
-                    const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+                    const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
                     const trace = Trace.start();
 
                     const versions = await this.storage.getVersions(versionId, 1);

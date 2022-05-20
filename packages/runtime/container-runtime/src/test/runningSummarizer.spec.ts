@@ -104,7 +104,7 @@ describe("Runtime", () => {
                 const summaryProposal: ISummaryProposal = {
                     summarySequenceNumber: lastSummarySeq,
                 };
-                const contents: ISummaryNack & { retryAfter?: number } = {
+                const contents: ISummaryNack & { retryAfter?: number; } = {
                     summaryProposal,
                     retryAfter: retryAfterSeconds,
                     message: "test-nack",

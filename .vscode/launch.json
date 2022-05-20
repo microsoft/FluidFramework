@@ -14,7 +14,6 @@
             "args": [
                 "--verbose"
             ],
-            "cwd": "${workspaceFolder}",
             "type": "node"
         },
         {
@@ -311,7 +310,9 @@
                 "--no-cache",
                 "${file}"
             ],
-            "runtimeArgs": ["--unhandled-rejections=strict"],
+            "runtimeArgs": [
+                "--unhandled-rejections=strict"
+            ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
         }

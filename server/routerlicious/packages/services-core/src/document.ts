@@ -25,7 +25,7 @@ export interface IDocumentStorage {
 
     getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit>;
 
-    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }>;
+    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string; }>;
 
     createDocument(
         tenantId: string,
