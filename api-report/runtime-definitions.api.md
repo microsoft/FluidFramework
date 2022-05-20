@@ -34,6 +34,9 @@ import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
 
 // @public (undocumented)
+export const blobCountPropertyName = "BlobCount";
+
+// @public (undocumented)
 export const channelsTreeName = ".channels";
 
 // @public (undocumented)
@@ -391,6 +394,9 @@ export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRe
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;
+
+// @public (undocumented)
+export const totalBlobSizePropertyName = "TotalBlobSize";
 
 // @public
 const VisibilityState_2: {
