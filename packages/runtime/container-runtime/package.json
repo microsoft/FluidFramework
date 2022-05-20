@@ -143,6 +143,7 @@
       "InterfaceDeclaration_ISubmitSummaryOpResult": {"backCompat": false},
       "InterfaceDeclaration_IUploadSummaryResult": {"backCompat": false},
       "TypeAliasDeclaration_SubmitSummaryResult": {"backCompat": false}
+
     }
   }
 }
