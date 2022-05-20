@@ -93,7 +93,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 };
 
 async function loadOffline(provider: ITestObjectProvider, request: IRequest, pendingLocalState: string):
-    Promise<{ container: IContainer, connect: () => void }> {
+    Promise<{ container: IContainer; connect: () => void; }> {
     const p = new Deferred();
     const documentServiceFactory = provider.driver.createDocumentServiceFactory();
 

@@ -169,7 +169,7 @@ export function interleave<T, TState>(
     // to know to stop as well. We accomplish this by spying on the output of both given generators.
     // Alternatively, it's possible to implement this correctly by wrapping the provided generators into one that
     // supports `peek()` like so:
-    /**
+    /*
      * const withPeek = (g: Generator<T, TState>): Generator<T, TState> & { peek(state: TState): T | typeof done } => {
      *     let currentGenerator: Generator<T, TState> = g;
      *     const derived = (state) => currentGenerator(state);

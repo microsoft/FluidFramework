@@ -15,7 +15,7 @@ export class AppendOnlySortedMap<K, V> {
 	protected readonly elements: (K | V)[] = [];
 
 	/**
-	 * @param comparator a comparator for keys
+	 * @param comparator - a comparator for keys
 	 */
 	public constructor(protected readonly comparator: (a: K, b: K) => number) {}
 
@@ -132,9 +132,9 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * Adds a new key/value pair to the map. `key` must be > to all keys in the map.
-	 * @param key the key to add.
-	 * @param value the value to add.
+	 * Adds a new key/value pair to the map. `key` must be \> to all keys in the map.
+	 * @param key - the key to add.
+	 * @param value - the value to add.
 	 */
 	public append(key: K, value: V): void {
 		const { elements } = this;
@@ -147,7 +147,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @param key the key to lookup.
+	 * @param key - the key to lookup.
 	 * @returns the value associated with `key` if such an entry exists, and undefined otherwise.
 	 */
 	public get(key: K): V | undefined {
@@ -159,7 +159,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @param key the key to lookup.
+	 * @param key - the key to lookup.
 	 * @returns the entry associated with `key` if such an entry exists, the entry associated with the next lower key if such an entry
 	 * exists, and undefined otherwise.
 	 */
@@ -168,7 +168,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @param key the key to lookup.
+	 * @param key - the key to lookup.
 	 * @returns the entry associated with `key` if such an entry exists, the entry associated with the next higher key if such an entry
 	 * exists, and undefined otherwise.
 	 */
@@ -206,8 +206,8 @@ export class AppendOnlySortedMap<K, V> {
 
 	/**
 	 * Queries a range of entries.
-	 * @param from the key to start the range query at, inclusive.
-	 * @param to the key to end the range query at, inclusive.
+	 * @param from - the key to start the range query at, inclusive.
+	 * @param to - the key to end the range query at, inclusive.
 	 * @returns the range of entries.
 	 */
 	public *getRange(from: K, to: K): IterableIterator<readonly [K, V]> {
@@ -296,8 +296,8 @@ export class AppendOnlySortedMap<K, V> {
 
 	/**
 	 * Performs a binary search on the sorted array.
-	 * @returns the index of the key for `search`, or (if not present) the index it would have been inserted into xor'd with `failureXor`. Note that
-	 * negating is not an adequate solution as that could result in -0.
+	 * @returns the index of the key for `search`, or (if not present) the index it would have been inserted into xor'd
+	 * with `failureXor`. Note that negating is not an adequate solution as that could result in -0.
 	 */
 	public static keyIndexOf<T, K, V>(
 		elements: readonly (K | V)[],
@@ -354,7 +354,7 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
 	};
 
 	/**
-	 * @param value the value to lookup.
+	 * @param value - the value to lookup.
 	 * @returns the key associated with `value` if such an entry exists, and undefined otherwise.
 	 */
 	public getByValue(value: S): K | undefined {
@@ -363,17 +363,17 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
 	}
 
 	/**
-	 * @param searchValue the search value to lookup.
-	 * @returns the entry who's value, when run through the extractor provided to the constructor, matches `searchValue`. If no such entry
-	 * exists, this method returns the next lower entry as determined by the value comparator provided to the constructor. If no such entry
-	 * exists, this method returns undefined.
+	 * @param searchValue - the search value to lookup.
+	 * @returns the entry who's value, when run through the extractor provided to the constructor, matches
+	 * `searchValue`. If no such entry exists, this method returns the next lower entry as determined by the value
+	 * comparator provided to the constructor. If no such entry exists, this method returns undefined.
 	 */
 	public getPairOrNextLowerByValue(searchValue: S): readonly [K, V] | undefined {
 		return this.getPairOrNextLowerBy(searchValue, this.compareValues);
 	}
 
 	/**
-	 * @param searchValue the search value to lookup.
+	 * @param searchValue - the search value to lookup.
 	 * @returns the entry who's value, when run through the extractor provided to the constructor, matches `searchValue`. If no such entry
 	 * exists, this method returns the next higher entry as determined by the value comparator provided to the constructor. If no such entry
 	 * exists, this method returns undefined.

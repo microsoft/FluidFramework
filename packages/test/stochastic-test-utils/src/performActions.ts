@@ -24,7 +24,7 @@ import { AsyncGenerator, AsyncReducer, BaseFuzzTestState, done, Generator, Reduc
  * Files can also be saved on failure.
  */
 export async function performFuzzActionsAsync<
-    TOperation extends { type: string | number },
+    TOperation extends { type: string | number; },
     TState extends BaseFuzzTestState,
 >(
     generator: AsyncGenerator<TOperation, TState>,
@@ -61,22 +61,22 @@ export async function performFuzzActionsAsync<
  * Files can also be saved on failure.
  */
 export async function performFuzzActionsAsync<
-    TOperation extends { type: string | number },
+    TOperation extends { type: string | number; },
     TState extends BaseFuzzTestState,
 >(
     generator: AsyncGenerator<TOperation, TState>,
-    reducerMap: { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
+    reducerMap: { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K; }>, TState> },
     initialState: TState,
     saveInfo?: SaveInfo
 ): Promise<TState>;
 export async function performFuzzActionsAsync<
-    TOperation extends { type: string | number },
+    TOperation extends { type: string | number; },
     TState extends BaseFuzzTestState,
 >(
     generator: AsyncGenerator<TOperation, TState>,
     reducerOrMap:
         | AsyncReducer<TOperation, TState>
-        | { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
+        | { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K; }>, TState> },
     initialState: TState,
     saveInfo?: SaveInfo,
 ): Promise<TState> {
@@ -128,7 +128,7 @@ export async function performFuzzActionsAsync<
  * This can be useful for debugging why a fuzz test may have failed.
  * Files can also be saved on failure.
  */
-export function performFuzzActions<TOperation extends { type: string | number }, TState extends BaseFuzzTestState>(
+export function performFuzzActions<TOperation extends { type: string | number; }, TState extends BaseFuzzTestState>(
     generator: Generator<TOperation, TState>,
     reducer: Reducer<TOperation, TState>,
     initialState: TState,
@@ -162,17 +162,17 @@ export function performFuzzActions<TOperation extends { type: string | number },
  * This can be useful for debugging why a fuzz test may have failed.
  * Files can also be saved on failure.
  */
-export function performFuzzActions<TOperation extends { type: string | number }, TState extends BaseFuzzTestState>(
+export function performFuzzActions<TOperation extends { type: string | number; }, TState extends BaseFuzzTestState>(
     generator: Generator<TOperation, TState>,
-    reducerMap: { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState> },
+    reducerMap: { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K; }>, TState> },
     initialState: TState,
     saveInfo?: SaveInfo
 ): TState;
-export function performFuzzActions<TOperation extends { type: string | number }, TState extends BaseFuzzTestState>(
+export function performFuzzActions<TOperation extends { type: string | number; }, TState extends BaseFuzzTestState>(
     generator: Generator<TOperation, TState>,
     reducerOrMap:
         | Reducer<TOperation, TState>
-        | { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState> },
+        | { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K; }>, TState> },
     initialState: TState,
     saveInfo?: SaveInfo,
 ): TState {
