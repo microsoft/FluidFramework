@@ -31,7 +31,7 @@ import {
 	AttributionId,
 } from '../Identifiers';
 import { assertIsStableId, assertIsUuidString, isStableId } from '../UuidUtilities';
-import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from './AppendOnlySortedMap';
+import { AppendOnlySortedMap } from './AppendOnlySortedMap';
 import { getIds } from './IdRange';
 import {
 	numericUuidEquals,
