@@ -74,7 +74,7 @@ function decodeAzureUrl(urlString: string): {
     ordererUrl: string;
     storageUrl: string;
     tenantId: string;
-    containerId?: string,
+    containerId?: string;
 } {
     const url = new URL(urlString);
     const ordererUrl = url.origin;

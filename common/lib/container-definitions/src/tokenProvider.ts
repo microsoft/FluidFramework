@@ -10,5 +10,5 @@ export interface IProvideFluidTokenProvider {
 }
 
 export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
-    intelligence: { [service: string]: any };
+    intelligence: { [service: string]: any; };
 }

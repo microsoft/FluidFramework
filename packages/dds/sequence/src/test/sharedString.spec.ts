@@ -28,7 +28,7 @@ import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalC
 const assertIntervals = (
     sharedString: SharedString,
     intervalCollection: IntervalCollection<SequenceInterval>,
-    expected: readonly { start: number; end: number }[],
+    expected: readonly { start: number; end: number; }[],
 ) => {
     const actual = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
     assert.strictEqual(actual.length, expected.length,
@@ -392,6 +392,26 @@ describe("SharedString", () => {
             ]);
             assertIntervals(sharedString2, collection2, [
                 { start: sharedString2.getLength() - 1, end: sharedString2.getLength() - 1 },
+            ]);
+        });
+
+        it("can slide intervals on create conflict with remove range", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.removeRange(1, 3);
+
+            collection2.add(1, 3, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 1 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 1 },
             ]);
         });
 

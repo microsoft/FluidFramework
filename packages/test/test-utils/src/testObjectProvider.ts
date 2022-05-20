@@ -47,25 +47,25 @@ export interface ITestObjectProvider {
      * Used to create a test Container. The Loader/ContainerRuntime/DataRuntime might be different versioned.
      * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader,
-    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>,
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     /**
      *
      * @param url - Resolved container URL
      */
-    updateDocumentId(url: IResolvedUrl | undefined): void,
+    updateDocumentId(url: IResolvedUrl | undefined): void;
 
-    logger: ITelemetryBaseLogger,
-    documentServiceFactory: IDocumentServiceFactory,
-    urlResolver: IUrlResolver,
-    defaultCodeDetails: IFluidCodeDetails,
-    opProcessingController: IOpProcessingController,
+    logger: ITelemetryBaseLogger;
+    documentServiceFactory: IDocumentServiceFactory;
+    urlResolver: IUrlResolver;
+    defaultCodeDetails: IFluidCodeDetails;
+    opProcessingController: IOpProcessingController;
 
     ensureSynchronized(): Promise<void>;
-    reset(): void,
+    reset(): void;
 
-    documentId: string,
+    documentId: string;
     driver: ITestDriver;
 }
 
@@ -76,16 +76,16 @@ export enum DataObjectFactoryType {
 
 export interface ITestContainerConfig {
     /** TestFluidDataObject instead of PrimedDataStore */
-    fluidDataObjectType?: DataObjectFactoryType,
+    fluidDataObjectType?: DataObjectFactoryType;
 
     /** An array of channel name and DDS factory pair to create on container creation time */
-    registry?: ChannelFactoryRegistry,
+    registry?: ChannelFactoryRegistry;
 
     /** Container runtime options for the container instance */
-    runtimeOptions?: IContainerRuntimeOptions,
+    runtimeOptions?: IContainerRuntimeOptions;
 
     /** Loader options for the loader used to create containers */
-    loaderProps?: Partial<ILoaderProps>,
+    loaderProps?: Partial<ILoaderProps>;
 }
 
 export const createDocumentId = (): string => uuid();
@@ -133,7 +133,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
         super();
     }
 
-    private readonly expectedEvents: ({ index: number, event: ITelemetryGenericEvent | undefined } | undefined)[] = [];
+    private readonly expectedEvents: ({ index: number; event: ITelemetryGenericEvent | undefined; } | undefined)[] = [];
     private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
     public registerExpectedEvent(... orderedExpectedEvents: ITelemetryGenericEvent[]) {

@@ -342,10 +342,6 @@ export class RunningSummarizer implements IDisposable {
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed
             this.tryWhileSummarizing = true;
-            this.logger.sendTelemetryEvent({
-                eventName: "SummarizingNotCaughtUp",
-                reason,
-            });
             return;
         }
 
@@ -360,7 +356,7 @@ export class RunningSummarizer implements IDisposable {
             let summaryAttempts = 0;
             let summaryAttemptsPerPhase = 0;
 
-            let lastResult: { message: string; error: any; } | undefined;
+            let lastResult: { message: string; error: any } | undefined;
 
             for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length;) {
                 if (this.cancellationToken.cancelled) {

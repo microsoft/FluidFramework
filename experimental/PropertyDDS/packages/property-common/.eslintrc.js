@@ -12,5 +12,6 @@ module.exports = {
     },
     "rules": {
         "prefer-arrow-callback": "off",
+        "tsdoc/syntax": "off",
     }
 }

@@ -5,6 +5,7 @@
 
 import { expect } from 'chai';
 import { v4, v5 } from 'uuid';
+import { take } from '@fluid-internal/stochastic-test-utils';
 import {
 	IdCompressor,
 	isFinalId,
@@ -44,7 +45,6 @@ import {
 	attributionIds,
 } from './utilities/IdCompressorTestUtilities';
 import { expectDefined } from './utilities/TestCommon';
-import { take } from './stochastic-test-utilities';
 
 describe('IdCompressor', () => {
 	it('detects invalid cluster sizes', () => {

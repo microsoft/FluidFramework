@@ -72,6 +72,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-tools": "^0.2.65117",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/mocha-test-setup": "^0.60.1000",
     "@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@^0.59.0",
@@ -104,7 +105,8 @@
     "broken": {
       "EnumDeclaration_TelemetryDataTag": {
         "backCompat": false
-      }
+      },
+      "ClassDeclaration_MockLogger": {"forwardCompat": false}
     }
   }
 }
