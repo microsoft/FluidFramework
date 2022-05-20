@@ -17,8 +17,10 @@
  *      The computed version output to the console.
  */
 
-import fs from "fs";
+import { strict as assert } from "assert";
 import child_process from "child_process";
+import fs from "fs";
+import * as semver from "semver";
 import { test } from "./buildVersionTests";
 
 function getFileVersion() {
@@ -88,6 +90,41 @@ export function getSimpleVersion(file_version: string, arg_build_num: string, ar
     const build_suffix = build_id ? "" : getBuildSuffix(arg_release, arg_build_num);
     const fullVersion = generateSimpleVersion(release_version, prerelease_version, build_suffix);
     return fullVersion;
+}
+
+type TagPrefix = string | undefined | "client" | "server";
+
+/**
+ *
+ * @param prefix - the tag prefix to filter the tags by (client, server, etc.)
+ * @param input_tags - a list of tags. This function will execute `git tags -l` to get the list if this parameter is undefined.
+ * @returns an array of versions extracted from the provided tags
+ */
+export function getTaggedVersions(prefix: TagPrefix, input_tags?: string[]) {
+    const input = child_process.execSync(`git tag -l`, { encoding: "utf8" });
+    const tags = input_tags ?? input.split(/\s+/g).map(t => t.trim());
+    const filtered = tags.filter(v => v.startsWith(`${prefix}_v`));
+
+    let versions = filtered.map((tag) => {
+        const split = tag.split(`${prefix}_v`);
+        assert(split.length > 1);
+        return split[1];
+    });
+
+    semver.sort(versions);
+    return versions;
+}
+
+export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[]) {
+    const versions = getTaggedVersions(prefix, input_tags);
+
+    // The last item in the array is the latest because the array is already sorted.
+    const latestTaggedRelease = versions.slice(-1)[0];
+
+    console.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
+    const currentIsGreater = semver.gt(current_version, latestTaggedRelease);
+    const currentIsPrerelease = semver.prerelease(current_version) !== null;
+    return currentIsGreater && !currentIsPrerelease;
 }
 
 function main() {
@@ -181,19 +218,8 @@ function main() {
     console.log(`version=${version}`);
     console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
     if (arg_release) {
-        let isLatest = true;
-        if (arg_tag) {
-            const split = version.split(".");
-            if (split.length !== 3) {
-                console.error(`ERROR: Invalid format for release version ${version}`);
-                process.exit(8);
-            }
-            const tagName = `${arg_tag}_v${split[0]}.${parseInt(split[1]) + 1}.*`;
-            const out = child_process.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
-            if (out.trim()) {
-                isLatest = false;
-            }
-        }
+        let isLatest = getIsLatest(arg_tag, version);
+
         console.log(`isLatest=${isLatest}`);
         console.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
     }
