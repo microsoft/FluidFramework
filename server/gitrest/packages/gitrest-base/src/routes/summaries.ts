@@ -69,7 +69,7 @@ async function getSummary(
         }
     }
 
-    // If we get to this point, it's because of:
+    // If we get to this point, it's because one of the options below:
     // 1) we did not want to read the latest full summary from storage
     // 2) we wanted to read the latest full summary, but it did not exist in the storage
     // 3) the summary being requestd is not the latest
@@ -84,6 +84,10 @@ async function getSummary(
     // Now that we computed the summary from scratch, we can persist it to storage if
     // the following conditions are met.
     if (persistLatestFullSummary && sha === latestSummarySha && fullSummary) {
+        // We persist the full summary in a fire-and-forget way because we don't want it
+        // to impact getSummary latency. So upon computing the full summary above, we should
+        // return as soon as possible. Also, we don't care about failures much, since the
+        // next getSummary or a createSummary request may trigger persisting to storage.
         persistLatestFullSummaryInStorage(
             fileSystemManager,
             getDocumentStorageDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
