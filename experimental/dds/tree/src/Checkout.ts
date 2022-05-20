@@ -361,7 +361,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * release all unmanaged resources
 	 * e.g. unregister event listeners
 	 */
-	public dispose(error?: Error): void {
+	public dispose(): void {
 		if (this.disposed) {
 			return;
 		}

@@ -19,7 +19,7 @@ export class EagerCheckout extends Checkout {
 	 * @param tree - the tree
 	 */
 	public constructor(tree: SharedTree) {
-		super(tree, tree.currentView, (args: EditCommittedEventArguments) => {
+		super(tree, tree.currentView, () => {
 			this.emitChange();
 		});
 	}

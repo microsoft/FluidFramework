@@ -22,11 +22,7 @@ interface FieldInfo {
 	isList?: boolean;
 }
 
-export const plugin: PluginFunction<unknown> = (
-	schema: GraphQLSchema,
-	documents: Types.DocumentFile[],
-	config: unknown
-) => {
+export const plugin: PluginFunction<unknown> = (schema: GraphQLSchema) => {
 	const printedSchema = printSchema(schema);
 	const astNode = parse(printedSchema);
 	const result = visit(astNode, {
