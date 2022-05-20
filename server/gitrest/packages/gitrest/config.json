@@ -19,6 +19,6 @@
         "lib": {
             "name": "nodegit"
         },
-        "persistLatestFullSummary": false
+        "persistLatestFullSummary": true
     }
 }

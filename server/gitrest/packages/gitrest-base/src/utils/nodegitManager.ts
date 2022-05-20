@@ -26,12 +26,13 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         private readonly repoOwner: string,
         private readonly repoName: string,
         private readonly repo: nodegit.Repository,
+        private readonly directory: string,
         private readonly externalStorageManager: IExternalStorageManager,
         private readonly lumberjackBaseProperties: Record<string, any>,
     ) {}
 
     public get path(): string {
-        return this.repo.path();
+        return this.directory;
     }
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
@@ -379,6 +380,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             params.repoOwner,
             params.repoName,
             repository,
+            directoryPath,
             this.externalStorageManager,
             lumberjackBaseProperties);
         Lumberjack.info(
@@ -396,26 +398,25 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             params.repoName,
             this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
         const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
+        const directoryPath = helpers.getGitDirectory(
+            repoPath,
+            this.storageDirectoryConfig.baseDir);
 
         if (!(repoPath in this.repositoryPCache)) {
-            const directory = helpers.getGitDirectory(
-                repoPath,
-                this.storageDirectoryConfig.baseDir);
-
             const repoExists = await helpers.exists(
-                this.fileSystemManagerFactory.create(params.fileSystemManagerParams), directory);
+                this.fileSystemManagerFactory.create(params.fileSystemManagerParams), directoryPath);
             if (!repoExists) {
                 Lumberjack.error(
-                    `Repo does not exist ${directory}`,
+                    `Repo does not exist ${directoryPath}`,
                     {
                         ...lumberjackBaseProperties,
-                        [BaseGitRestTelemetryProperties.directoryPath]: directory,
+                        [BaseGitRestTelemetryProperties.directoryPath]: directoryPath,
                     });
                 // services-client/getOrCreateRepository depends on a 400 response code
-                throw new NetworkError(400, `Repo does not exist ${directory}`);
+                throw new NetworkError(400, `Repo does not exist ${directoryPath}`);
             }
 
-            this.repositoryPCache[repoPath] = nodegit.Repository.open(directory);
+            this.repositoryPCache[repoPath] = nodegit.Repository.open(directoryPath);
         }
 
         const repository = await this.repositoryPCache[repoPath];
@@ -423,6 +424,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             params.repoOwner,
             params.repoName,
             repository,
+            directoryPath,
             this.externalStorageManager,
             lumberjackBaseProperties);
         return repoManager;
