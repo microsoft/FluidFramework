@@ -30,7 +30,6 @@ const handleKeyDown: HandleKeyDownType = (event, props) => {
 
 export const NumberView: React.FunctionComponent<NumberProps> = (props) => {
   const {
-    iconRenderer,
     followReferences,
     TextFieldProps: textFieldProps,
     rowData,

@@ -324,7 +324,7 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query the special identifier field', async () => {
-		const { querier, tree } = init(fourPizzasTreeFactory);
+		const { querier } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			pizzas {
 				id
