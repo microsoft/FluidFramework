@@ -471,7 +471,7 @@ export class MapKernel {
             });
 
             const lastPendingClearId = this.pendingClearMessageIds.pop();
-            if (!lastPendingClearId || lastPendingClearId !== metadata.pendingMessageId) {
+            if (lastPendingClearId !== metadata.pendingMessageId) {
                 throw new Error("Rollback op does match last clear");
             }
         } else if (op.type === "delete" || op.type === "set") {
@@ -486,7 +486,7 @@ export class MapKernel {
 
             const pendingMessageIds = this.pendingKeys.get(op.key);
             const lastPendingMessageId = pendingMessageIds?.pop();
-            if (!pendingMessageIds || !lastPendingMessageId || lastPendingMessageId !== metadata.pendingMessageId) {
+            if (!pendingMessageIds || lastPendingMessageId !== metadata.pendingMessageId) {
                 throw new Error("Rollback op does not match last pending");
             }
             if (pendingMessageIds.length === 0) {
