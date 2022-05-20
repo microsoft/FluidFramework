@@ -327,18 +327,23 @@ describe("Quorum", () => {
 
         describe("Behavior transitioning to disconnect", () => {
             it("Can do something", async () => {
+                // Have an outstanding local proposal and remote proposal, transition to disconnect
+                // Both where the local client is the lone holdout and also where there are other holdouts
                 assert.strict(true);
             });
         });
 
         describe("Behavior while disconnected", () => {
             it("Can do something", async () => {
+                // Try proposing while disconnected
                 assert.strict(true);
             });
         });
 
         describe("Behavior transitioning to connected", () => {
             it("Can do something", async () => {
+                // Remote holdout approved/disconnected in the meantime
+                // Holdout is still around
                 assert.strict(true);
             });
         });
