@@ -121,7 +121,9 @@ module.exports = {
         "@typescript-eslint/member-ordering": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-parameter-properties": "off",
-        "@typescript-eslint/no-unused-vars": "error",
+        // Disallow unused variables except those named explicitly to be ignored.
+        // Allows patterns like `const [_, foo] = bar();`
+        "@typescript-eslint/no-unused-vars": ["error", { args: "none", varsIgnorePattern: "^_$" }],
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/typedef": "off",
         "func-call-spacing": "off", // Off because it conflicts with typescript-formatter
