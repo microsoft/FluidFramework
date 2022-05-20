@@ -12,16 +12,14 @@
             "faultInjectionMaxMs": 150000,
             "optionOverrides":{
                 "odsp":{
-                    "loader":{
-                        "summarizeProtocolTree": [false]
+                    "configurations":{
+                        "Fluid.Container.summarizeProtocolTree": [false]
                     }
                 },
                 "odsp-odsp-df":{
-                    "loader":{
-                        "summarizeProtocolTree": [false]
-                    },
                     "configurations":{
-                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [0, 1]
+                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [0, 1],
+                        "Fluid.Container.summarizeProtocolTree": [true]
                     }
                 }
             }
@@ -45,8 +43,8 @@
             "faultInjectionMaxMs": 50000,
             "optionOverrides":{
                 "odsp":{
-                    "loader":{
-                        "summarizeProtocolTree": [false]
+                    "configurations":{
+                        "Fluid.Container.summarizeProtocolTree": [false]
                     }
                 }
             }
@@ -118,10 +116,8 @@
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
-                        "Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload": [true]
-                    },
-                    "loader":{
-                        "summarizeProtocolTree": [true]
+                        "Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload": [true],
+                        "Fluid.Container.summarizeProtocolTree": [true]
                     }
                 }
             }
