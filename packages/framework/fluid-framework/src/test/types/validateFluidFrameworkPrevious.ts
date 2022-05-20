@@ -181,6 +181,7 @@ declare function get_current_ClassDeclaration_FluidContainer():
 declare function use_old_ClassDeclaration_FluidContainer(
     use: TypeOnly<old.FluidContainer>);
 use_old_ClassDeclaration_FluidContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FluidContainer());
 
 /*
@@ -374,6 +375,7 @@ declare function get_current_InterfaceDeclaration_IFluidContainer():
 declare function use_old_InterfaceDeclaration_IFluidContainer(
     use: TypeOnly<old.IFluidContainer>);
 use_old_InterfaceDeclaration_IFluidContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidContainer());
 
 /*

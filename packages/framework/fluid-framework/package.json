@@ -82,7 +82,8 @@
       "ClassDeclaration_SubSequence": {"forwardCompat": false},
       "ClassDeclaration_SharedSegmentSequence": {"forwardCompat": false},
       "ClassDeclaration_SharedString": {"forwardCompat": false},
-      "ClassDeclaration_FluidContainer": {"forwardCompat": false}
+      "ClassDeclaration_FluidContainer": {"forwardCompat": false, "backCompat": false},
+      "InterfaceDeclaration_IFluidContainer": {"backCompat": false}
     },
     "disabled": true
   }
