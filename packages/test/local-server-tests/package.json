@@ -68,7 +68,7 @@
     "@fluidframework/datastore": "^0.59.4000",
     "@fluidframework/datastore-definitions": "^0.59.4000",
     "@fluidframework/driver-base": "^0.59.4000",
-    "@fluidframework/driver-definitions": "^0.46.1000",
+    "@fluidframework/driver-definitions": "^0.46.2000-0",
     "@fluidframework/driver-utils": "^0.59.4000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/ink": "^0.59.4000",
