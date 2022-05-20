@@ -40,6 +40,8 @@ module.exports = {
         "eslint-plugin-promise",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-tsdoc
         "eslint-plugin-tsdoc",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unused-imports
+        "unused-imports",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
         "react",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
@@ -95,6 +97,8 @@ module.exports = {
                 "ignoreEOLComments": true
             }
         ],
+
+        "unused-imports/no-unused-imports": "error",
 
         // Catches a common coding mistake where "resolve" and "reject" are confused.
         "promise/param-names": "warn",
