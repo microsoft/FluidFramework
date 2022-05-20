@@ -11,13 +11,7 @@ import { copy as cloneDeep } from "fastest-json-copy";
 import { Packr } from "msgpackr";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	ISequencedDocumentMessage,
-	MessageType,
-	FileMode,
-	TreeEntry,
-	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -25,7 +19,7 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 
-import { bufferToString, stringToBuffer, assert } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -45,9 +39,6 @@ import { PropertyTreeFactory } from "./propertyTreeFactory";
 export type SerializedChangeSet = any;
 
 export type Metadata = any;
-
-type FetchUnrebasedChangeFn = (guid: string) => IRemotePropertyTreeMessage;
-type FetchRebasedChangesFn = (startGuid: string, endGuid?: string) => IPropertyTreeMessage[];
 
 export const enum OpKind {
 	// eslint-disable-next-line @typescript-eslint/no-shadow
@@ -428,7 +419,6 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const runtime = this.runtime;
 		const handleTableChunk = await storage.readBlob("properties");
 		const utf8 = bufferToString(handleTableChunk, "utf8");
 

@@ -130,7 +130,7 @@ describe("PropertyDDS", () => {
 					try {
 						const numOperations = random.irandom(maxOperations);
 						const maxCount = operationCumSums[operationCumSums.length - 1];
-						for (const j of _.range(numOperations)) {
+						for (const _j of _.range(numOperations)) {
 							const operationId = 1 + random.irandom(maxCount);
 							const selectedOperation = _.sortedIndex(operationCumSums, operationId);
 
@@ -185,7 +185,7 @@ describe("PropertyDDS", () => {
             }
 
             // Attach error handlers to make debugging easier and ensure that internal failures cause the test to fail
-            errorHandler = (err) => { }; // This enables the create random tests function to register its own handler
+            errorHandler = () => { }; // This enables the create random tests function to register its own handler
             container1.on("closed", (err: any) => {
                 if (err !== undefined) {
                     errorHandler(err);
@@ -379,7 +379,7 @@ describe("PropertyDDS", () => {
                             let testString = "";
 
                             const numOperations = random.irandom(30);
-                            for (const j of _.range(numOperations)) {
+                            for (const _j of _.range(numOperations)) {
                                 const operation = random.irandom(6);
                                 switch (operation) {
                                     case 0:
@@ -432,6 +432,7 @@ describe("PropertyDDS", () => {
                                 testString +=
                                     "await opProcessingController.ensureSynchronized();\n";
                             }
+                            console.log(testString);
                         });
                     }
                 });

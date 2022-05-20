@@ -274,7 +274,7 @@ export async function fluidFetchMessages(documentService?: IDocumentService, sav
             dumpMessages,
             messageTypeFilter);
     } else {
-        let item;
-        for await (item of generator) { }
+        let _item;
+        for await (_item of generator) { }
     }
 }

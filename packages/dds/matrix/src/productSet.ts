@@ -346,8 +346,8 @@ const tryUnionSubspaces = (() => {
             }
             if (newDim === dense) {
                 // we are actually deleting the `differentDimension`, so the variable
-                // `deleted` must be there. Hence disabling the rule here.
-                const { [differentDimension]: deleted, ...leftBoundsWithoutDifferentDimension } = left.bounds;
+                // `_` must be there.
+                const { [differentDimension]: _, ...leftBoundsWithoutDifferentDimension } = left.bounds;
                 return (cache.res = subspace<unknown>(leftBoundsWithoutDifferentDimension));
             }
 
@@ -704,8 +704,8 @@ function tryExceptSubspaces<T>(
         }
         if (newDim === dense) {
             // we are actually deleting the `differentDimension`, so the variable
-            // `deleted` must be there. Hence disabling the rule here.
-            const { [notContainedDimension]: deleted, ...leftBoundsWithoutDifferentDimension } = left.bounds;
+            // `_` must be there.
+            const { [notContainedDimension]: _, ...leftBoundsWithoutDifferentDimension } = left.bounds;
             return subspace<unknown>(leftBoundsWithoutDifferentDimension);
         }
         const newBounds: UntypedProduct<T> = {

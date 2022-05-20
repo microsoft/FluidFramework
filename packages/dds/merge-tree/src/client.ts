@@ -270,7 +270,7 @@ export class Client {
 
     public walkSegments<TClientData>(handler: ISegmentAction<TClientData>,
         start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
-    public walkSegments<undefined>(handler: ISegmentAction<undefined>,
+    public walkSegments(handler: ISegmentAction<undefined>,
         start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
     public walkSegments<TClientData>(
         handler: ISegmentAction<TClientData>,

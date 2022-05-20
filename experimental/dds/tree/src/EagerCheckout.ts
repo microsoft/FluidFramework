@@ -5,7 +5,7 @@
 
 import { Checkout } from './Checkout';
 import { RevisionView } from './RevisionView';
-import { EditCommittedEventArguments, SharedTree } from './SharedTree';
+import { SharedTree } from './SharedTree';
 
 /**
  * Checkout that always stays up to date with the SharedTree.

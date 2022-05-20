@@ -7,8 +7,12 @@ import fs from "fs";
 import { assert, bufferToString } from "@fluidframework/common-utils";
 import {
     IDocumentStorageService,
-    IDocumentStorageServicePolicies,    // these are needed for api-extractor
-    ISummaryContext,                    // these are needed for api-extractor
+
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    // these are needed for api-extractor
+    IDocumentStorageServicePolicies,
+    ISummaryContext,
+    /* eslint-enable @typescript-eslint/no-unused-vars */
 } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
@@ -72,7 +76,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
      * @param versionId - version ID.
      * @param count - Number of versions to be returned.
      */
-    public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
+    public async getVersions(versionId: string | null): Promise<api.IVersion[]> {
         if (versionId === FileStorageDocumentName || versionId === null) {
             if (this.docTree || this.versionName !== undefined) {
                 return [{ id: "latest", treeId: FileStorageVersionTreeId }];
@@ -120,7 +124,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             this.docId = undefined;
         }
 
-        public onSnapshotHandler(snapshot: IFileSnapshot): void {
+        public onSnapshotHandler(_snapshot: IFileSnapshot): void {
             throw new Error("onSnapshotHandler is not setup! Please provide your handler!");
         }
 
@@ -156,7 +160,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
             return super.getSnapshotTree(version);
         }
 
-        public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
+        public async uploadSummaryWithContext(summary: api.ISummaryTree): Promise<string> {
             const tree = convertSummaryTreeToSnapshotITree(summary);
 
             // Remove tree IDs for easier comparison of snapshots

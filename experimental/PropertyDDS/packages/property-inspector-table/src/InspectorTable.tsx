@@ -28,9 +28,15 @@ import { ExpiryModal } from "./ExpiryModal";
 import { getDefaultInspectorTableIcons } from "./icons";
 import { InspectorTableFooter } from "./InspectorTableFooter";
 import { InspectorTableHeader } from "./InspectorTableHeader";
-import { IColumns, IDataGetterParameter, IInspectorRow, IInspectorSearchCallback,
-  IInspectorSearchMatch, IInspectorSearchMatchMap, IInspectorTableProps,
-  IInspectorTableState } from "./InspectorTableTypes";
+import {
+    IColumns,
+    IInspectorRow,
+    IInspectorSearchCallback,
+    IInspectorSearchMatch,
+    IInspectorSearchMatchMap,
+    IInspectorTableProps,
+    IInspectorTableState,
+} from "./InspectorTableTypes";
 import { ModalConsumer } from "./ModalManager";
 import { NameCell } from "./NameCell";
 import { NewDataForm } from "./NewDataForm";
@@ -206,7 +212,7 @@ export const defaultInspectorTableNameGetter = (name: string): any => name;
  * The default implementation of the `dataGetter` callback for the Inspector table
  * @param params function handle
  */
-export const defaultInspectorTableDataGetter = (params: IDataGetterParameter): React.ReactNode | null => null;
+export const defaultInspectorTableDataGetter = (): React.ReactNode | null => null;
 
 /**
  * A component for inspecting the workspace data. It supports displaying the name, context, typeid and value of
@@ -405,24 +411,18 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
 
     public render() {
       const {
-        childGetter,
         classes,
-        columns,
         currentUrn,
         data,
         deleteRepo,
         expired,
-        followReferences,
         getRepoExpiry,
         height,
         isV1Urn,
-        nameGetter,
         repositoryUrn,
-        rowIconRenderer,
         searchBoxProps,
         setRepoExpiry,
         width,
-        activeRepositoryGuid,
         ...restProps } = this.props;
 
       const {

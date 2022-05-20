@@ -69,9 +69,7 @@ const EditableValueCell: React.FunctionComponent<WithStyles<typeof styles> & IEd
   const {
     classes,
     className,
-    followReferences,
     rowData,
-    iconRenderer,
     ...restProps // tslint:disable-line
   } = props;
 

@@ -7,6 +7,7 @@ export type Maybe<T> = T | null;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
 	ID: string;
@@ -52,11 +53,6 @@ export enum Drink {
 	Lemonade = 'LEMONADE',
 }
 
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 import {
 	getString,
 	getFloat,
@@ -64,14 +60,7 @@ import {
 	getBoolean,
 	getID,
 	getNodeID,
-	getScalar,
 	getStringList,
-	getFloatList,
-	getIntList,
-	getBooleanList,
-	getIDList,
-	getTrait,
-	getNonNullTrait,
 	getListTrait,
 } from '../graphql-plugins/SharedTreePlugin';
 

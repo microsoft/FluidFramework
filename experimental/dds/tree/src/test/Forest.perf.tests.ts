@@ -108,7 +108,7 @@ describe('Forest Perf', () => {
 function walk(s: RevisionView, id: NodeId): number {
 	let count = 1;
 	const n = s.getViewNode(id);
-	for (const [_label, v] of n.traits.entries()) {
+	for (const [_, v] of n.traits.entries()) {
 		for (const child of v) {
 			count += walk(s, child);
 		}

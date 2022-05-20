@@ -65,8 +65,6 @@ describe("PropertyTree", () => {
 	}
 
 	describe("Local state", () => {
-		let propertyTree: SharedPropertyTree;
-
 		beforeEach(async () => {
 			opProcessingController = new LoaderContainerTracker();
 			deltaConnectionServer = LocalDeltaConnectionServer.create();

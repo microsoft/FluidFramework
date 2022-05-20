@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Types, PluginFunction } from '@graphql-codegen/plugin-helpers';
+import { PluginFunction } from '@graphql-codegen/plugin-helpers';
 import { NodeId, RevisionView, SharedTree, StableNodeId, TraitLabel, TreeViewNode } from '@fluid-experimental/tree';
 import {
 	FieldDefinitionNode,
