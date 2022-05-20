@@ -137,7 +137,12 @@
         "backCompat": false
       },
       "InterfaceDeclaration_IConnectableRuntime": {"backCompat": false},
-      "InterfaceDeclaration_ISummarizerRuntime": {"backCompat": false}
+      "InterfaceDeclaration_ISummarizerRuntime": {"backCompat": false},
+      "InterfaceDeclaration_IGeneratedSummaryStats": {"backCompat": false},
+      "InterfaceDeclaration_IGenerateSummaryTreeResult": {"backCompat": false},
+      "InterfaceDeclaration_ISubmitSummaryOpResult": {"backCompat": false},
+      "InterfaceDeclaration_IUploadSummaryResult": {"backCompat": false},
+      "TypeAliasDeclaration_SubmitSummaryResult": {"backCompat": false}
 
     }
   }
