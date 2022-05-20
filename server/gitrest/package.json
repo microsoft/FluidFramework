@@ -71,6 +71,7 @@
     "eslint-plugin-import": "~2.25.4",
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0",
     "lerna": "^4.0.0",
     "lorem-ipsum": "^1.0.6",
     "mocha": "^10.0.0",
