@@ -60,7 +60,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     }
 
     /**
-     * {@inheritDoc IDocumentServiceFactory.createContainer}
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentServiceFactory.createContainer}
      *
      * @throws {@link DocumentPostCreateError}
      * If an exception is thrown while invoking the provided {@link ITokenProvider.documentPostCreateCallback}.
@@ -172,7 +172,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     }
 
     /**
-     * {@inheritDoc IDocumentServiceFactory.createContainer}
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentServiceFactory.createContainer}
      *
      * @returns Routerlicious document service.
      */
@@ -258,14 +258,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         super(DocumentPostCreateError.createMessage(innerError));
     }
 
-    /**
-     * {@inheritDoc Error.name}
-     */
     public readonly name = "DocumentPostCreateError";
 
-    /**
-     * {@inheritDoc Error.stack}
-     */
     public get stack() { return this.innerError.stack; }
 
     private static createMessage(innerError: Error): string {

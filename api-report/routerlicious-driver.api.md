@@ -56,12 +56,8 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 export class DocumentPostCreateError extends Error {
     constructor(
     innerError: Error);
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/routerlicious-driver" does not have an export "Error"
-    //
     // (undocumented)
     readonly name = "DocumentPostCreateError";
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/routerlicious-driver" does not have an export "Error"
-    //
     // (undocumented)
     get stack(): string | undefined;
 }
@@ -158,12 +154,8 @@ export class NullBlobStorageService implements IDocumentStorageService {
 // @public
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/routerlicious-driver" does not have an export "IDocumentServiceFactory"
-    //
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/routerlicious-driver" does not have an export "IDocumentServiceFactory"
-    //
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, isCreateContainer?: boolean): Promise<IDocumentService>;
     // (undocumented)
