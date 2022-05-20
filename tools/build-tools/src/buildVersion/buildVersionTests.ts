@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { getSimpleVersion, getTaggedVersions, getIsLatest } from "./buildVersion";
+import { getSimpleVersion, getVersionsFromStrings, getIsLatest } from "./buildVersion";
 
 export function test() {
     // Test version with id, no prerelease
@@ -41,7 +41,7 @@ export function test() {
         "client_v0.59.2000",
         "client_v0.59.1001",
     ];
-    const versions = getTaggedVersions("client", test_tags);
+    const versions = getVersionsFromStrings("client", test_tags);
 
     // Highest version should be 0.59.3000
     assert.equal(versions.slice(-1)[0], "0.59.3000");

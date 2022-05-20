@@ -95,18 +95,28 @@ export function getSimpleVersion(file_version: string, arg_build_num: string, ar
 type TagPrefix = string | undefined | "client" | "server";
 
 /**
- * Extracts versions from a list of strings, sorts them according to semver rules, and returns the sorted array.
+ * Extracts versions from the output of `git tag -l` in the working directory. The returned array will be sorted
+ * ascending by semver version rules.
  *
- * @param prefix - the tag prefix to filter the tags by (client, server, etc.)
- * @param input_tags - a list of tags. This function will execute `git tags -l` to get the list if this parameter is undefined.
- * @returns an array of versions extracted from the provided tags
+ * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
+ * @returns an array of versions extracted from the output of `git tag -l`.
  */
-export function getTaggedVersions(prefix: TagPrefix, input_tags?: string[]) {
-    const input = child_process.execSync(`git tag -l`, { encoding: "utf8" });
-    const tags = input_tags ?? input.split(/\s+/g).map(t => t.trim());
+function getVersions(prefix: TagPrefix) {
+    const raw_tags = child_process.execSync(`git tag -l`, { encoding: "utf8" });
+    const tags = raw_tags.split(/\s+/g).map(t => t.trim());
     const filtered = tags.filter(v => v.startsWith(`${prefix}_v`));
+    return getVersionsFromStrings(prefix, filtered);
+}
 
-    let versions = filtered.map((tag) => {
+/**
+ * Extracts versions from an array of strings, sorts them according to semver rules, and returns the sorted array.
+ *
+ * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
+ * @param tags - an array of strings.
+ * @returns an array of versions extracted from the provided tags.
+ */
+export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
+    let versions = tags.map((tag) => {
         const split = tag.split(`${prefix}_v`);
         assert(split.length > 1);
         return split[1];
@@ -116,8 +126,14 @@ export function getTaggedVersions(prefix: TagPrefix, input_tags?: string[]) {
     return versions;
 }
 
+/**
+ * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
+ * @param current_version  - the version to test; that is, the version to check for being the latest build.
+ * @returns true if the current version is to be considered the latest (higher than the tagged releases _and NOT_ a
+ * pre-release version).
+ */
 export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[]) {
-    const versions = getTaggedVersions(prefix, input_tags);
+    const versions = input_tags !== undefined ? getVersionsFromStrings(prefix, input_tags) : getVersions(prefix);
 
     // The last item in the array is the latest because the array is already sorted.
     const latestTaggedRelease = versions.slice(-1)[0];
