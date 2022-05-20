@@ -67,6 +67,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-tools": "^0.2.65117",
     "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/mocha-test-setup": "^0.60.1000",
     "@fluidframework/test-runtime-utils": "^0.60.1000",
@@ -99,6 +100,6 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": { }
   }
 }

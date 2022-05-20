@@ -26,8 +26,8 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
-    version: number,
-    schema: number,
+    version: number;
+    schema: number;
 }
 
 function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackage {

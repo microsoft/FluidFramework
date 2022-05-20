@@ -105,7 +105,7 @@ export const codeToBytesMap = {
     36: 8,
 };
 
-export function getValueSafely(map: { [index: number]: number }, key: number) {
+export function getValueSafely(map: { [index: number]: number; }, key: number) {
     const val = map[key];
     assert(val !== undefined, 0x287 /* `key= ${key} must exist in the map` */);
     return val;
@@ -148,7 +148,7 @@ export function iteratePairs<T>(it: IterableIterator<T>) {
  * Helper function that returns iterator from an object
  * @param obj - object that supports iteration
  */
-export function iterate<T>(obj: { [Symbol.iterator]: () => IterableIterator<T> }) {
+export function iterate<T>(obj: { [Symbol.iterator]: () => IterableIterator<T>; }) {
     return obj[Symbol.iterator]();
 }
 

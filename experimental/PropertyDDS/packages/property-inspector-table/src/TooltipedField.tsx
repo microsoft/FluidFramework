@@ -9,8 +9,8 @@ import { IEditableValueCellProps } from "./EditableValueCell";
 import { Field } from "./Field";
 
 export const TooltipedField: React.FunctionComponent<IEditableValueCellProps & {
-  message: string,
-  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>,
+  message: string;
+  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>;
 }> = ({ message, ...props }) => {
   const { classes } = props;
 

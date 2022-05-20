@@ -193,7 +193,11 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             throw new NetworkError(400, "Invalid input");
         }
 
-        const signature = nodegit.Signature.create(commit.author.name, commit.author.email, Math.floor(date), 0);
+        const signature = nodegit.Signature.create(
+            commit.author.name,
+            commit.author.email,
+            Math.floor(date / 1000), // date represents time in milliseconds. NodeGit expects a timestamp in seconds.
+            0);
         const parents = commit.parents && commit.parents.length > 0 ? commit.parents : null;
         const commitOid = await this.repo.createCommit(
             null,
@@ -323,7 +327,11 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             throw new NetworkError(400, "Invalid input");
         }
 
-        const signature = nodegit.Signature.create(tagParams.tagger.name, tagParams.tagger.email, Math.floor(date), 0);
+        const signature = nodegit.Signature.create(
+            tagParams.tagger.name,
+            tagParams.tagger.email,
+            Math.floor(date / 1000), // date represents time in milliseconds. NodeGit expects a timestamp in seconds.
+            0);
         const object = await nodegit.Object.lookup(
             this.repo,
             nodegit.Oid.fromString(tagParams.object),

@@ -56,9 +56,9 @@ type PendingQuorumValue = {
  * Internal format of the values stored in the Quorum.
  */
 type QuorumValue =
-    { accepted: AcceptedQuorumValue; pending: undefined; }
-    | { accepted: undefined; pending: PendingQuorumValue; }
-    | { accepted: AcceptedQuorumValue; pending: PendingQuorumValue; };
+    { accepted: AcceptedQuorumValue; pending: undefined }
+    | { accepted: undefined; pending: PendingQuorumValue }
+    | { accepted: AcceptedQuorumValue; pending: PendingQuorumValue };
 
 /**
  * Quorum operation formats
