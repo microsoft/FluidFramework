@@ -243,6 +243,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
  * in {@link ITokenProvider.documentPostCreateCallback}.
  * It is the consumer's responsibility to ensure that any state related to container creation is appropriately
  * cleaned up in the event of failure.
+ * This includes the document itself, which will have been created by the time this error was thrown.
  * E.g. TODO
  */
  export class DocumentPostCreateError extends Error {
