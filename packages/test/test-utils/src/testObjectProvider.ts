@@ -5,7 +5,7 @@
 
 import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -367,7 +367,7 @@ export class TestObjectProvider implements ITestObjectProvider {
             url: await this.driver.createContainerUrl(this.documentId),
             headers: requestHeader,
         });
-        await waitContainerToCatchUp(container);
+        await this.ensureSynchronized();
         return container;
     }
 
