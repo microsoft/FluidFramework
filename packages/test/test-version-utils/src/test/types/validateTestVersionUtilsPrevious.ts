@@ -168,7 +168,6 @@ declare function get_old_TypeAliasDeclaration_ExpectedEvents():
 declare function use_current_TypeAliasDeclaration_ExpectedEvents(
     use: TypeOnly<current.ExpectedEvents>);
 use_current_TypeAliasDeclaration_ExpectedEvents(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_ExpectedEvents());
 
 /*
@@ -181,7 +180,6 @@ declare function get_current_TypeAliasDeclaration_ExpectedEvents():
 declare function use_old_TypeAliasDeclaration_ExpectedEvents(
     use: TypeOnly<old.ExpectedEvents>);
 use_old_TypeAliasDeclaration_ExpectedEvents(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_ExpectedEvents());
 
 /*
