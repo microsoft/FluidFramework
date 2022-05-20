@@ -79,7 +79,7 @@ See also: [Contributing](#Contributing)
 
 - Building [server/Routerlicious](./server/routerlicious/README.md)
     - Refer to that package's README for additional requirements.
-    - Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server` (e.g. TODO).
+    - Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server` (e.g. `fluid-build --symlink:full`).
 
 #### On Windows
 
