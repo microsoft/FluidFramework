@@ -80,7 +80,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     IEventProvider<IDeltaManagerInternalEvents> {
     public readonly connectionManager: TConnectionManager;
 
-    public get active(): boolean { return this.connectionManager.connectionMode === "write"; }
+    public get active(): boolean { return this._active() && this.connectionManager.connectionMode === "write"; }
 
     public get disposed() { return this.closed; }
 

@@ -12,7 +12,6 @@ import {
     ISequencedDocumentSystemMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager";
 // eslint-disable-next-line import/no-internal-modules
@@ -247,9 +246,10 @@ describe("Container Runtime", () => {
         it("reconnects after receiving a leave op", async () => {
             const service = new MockDocumentService(
                 undefined,
-                (newClient: IClient) => {
+                (newClient?: IClient) => {
                     const connection = new MockDocumentDeltaConnection("test");
-                    connection.mode = newClient.mode;
+                    connection.mode = newClient?.mode ?? "write";
+                    return connection;
                 },
             );
 

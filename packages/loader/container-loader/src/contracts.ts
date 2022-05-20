@@ -102,7 +102,7 @@ export interface IConnectionManager {
      */
     dispose(error?: ICriticalContainerError): void;
 
-    connectionMode(): ConnectionMode;
+    get connectionMode(): ConnectionMode;
 }
 
 /**
