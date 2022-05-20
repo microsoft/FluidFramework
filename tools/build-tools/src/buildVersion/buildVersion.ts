@@ -95,6 +95,7 @@ export function getSimpleVersion(file_version: string, arg_build_num: string, ar
 type TagPrefix = string | undefined | "client" | "server";
 
 /**
+ * Extracts versions from a list of strings, sorts them according to semver rules, and returns the sorted array.
  *
  * @param prefix - the tag prefix to filter the tags by (client, server, etc.)
  * @param input_tags - a list of tags. This function will execute `git tags -l` to get the list if this parameter is undefined.
