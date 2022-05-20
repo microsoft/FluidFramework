@@ -111,14 +111,19 @@ export interface IMapDataObjectSerialized {
     [key: string]: ISerializedValue;
 }
 
+type PreviousMap = Map<string, ILocalValue> | undefined;
+
 interface IMapClearLocalOpMetadata {
     pendingMessageId: number;
-    previousMap: Map<string, ILocalValue>;
+    previousMap: PreviousMap;
 }
+
+// "none" means the key was not set before the edit. undefined means the previous value is unknown.
+type PreviousKeyValue = ILocalValue | "none" | undefined;
 
 interface IMapKeyLocalOpMetadata {
     pendingMessageId: number;
-    previousValue: ILocalValue | undefined;
+    previousValue: PreviousKeyValue;
 }
 
 /**
@@ -145,7 +150,7 @@ export class MapKernel {
     /**
      * Keys that have been modified locally but not yet ack'd from the server.
      */
-    private readonly pendingKeys: Map<string, IMapKeyLocalOpMetadata[]> = new Map();
+    private readonly pendingKeys: Map<string, number[]> = new Map();
 
     /**
      * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
@@ -310,7 +315,7 @@ export class MapKernel {
             type: "set",
             value: serializableValue,
         };
-        this.submitMapKeyMessage(op, previousValue);
+        this.submitMapKeyMessage(op, previousValue ? previousValue : "none");
     }
 
     /**
@@ -331,7 +336,7 @@ export class MapKernel {
             key,
             type: "delete",
         };
-        this.submitMapKeyMessage(op, previousValue);
+        this.submitMapKeyMessage(op, previousValue ? previousValue : "none");
 
         return previousValue !== undefined;
     }
@@ -353,8 +358,7 @@ export class MapKernel {
         const op: IMapClearOperation = {
             type: "clear",
         };
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.submitMapClearMessage(op, copy!);
+        this.submitMapClearMessage(op, copy);
     }
 
     /**
@@ -459,6 +463,9 @@ export class MapKernel {
     public rollback(op: any, localOpMetadata: unknown) {
         if (op.type === "clear") {
             const metadata = localOpMetadata as IMapClearLocalOpMetadata;
+            if (metadata.previousMap === undefined) {
+                throw new Error("Cannot rollback without previous map");
+            }
             metadata.previousMap.forEach((localValue, key) => {
                 this.data.set(key, localValue);
             });
@@ -470,17 +477,19 @@ export class MapKernel {
         } else if (op.type === "delete" || op.type === "set") {
             const metadata = localOpMetadata as IMapKeyLocalOpMetadata;
             if (metadata.previousValue === undefined) {
+                throw new Error("Cannot rollback without previous value");
+            } else if (metadata.previousValue === "none") {
                 this.deleteCore(op.key, true);
             } else {
                 this.setCore(op.key, metadata.previousValue, true);
             }
 
-            const pendingMetadata = this.pendingKeys.get(op.key);
-            const lastPending = pendingMetadata?.pop();
-            if (!pendingMetadata || !lastPending || lastPending.pendingMessageId !== metadata.pendingMessageId) {
+            const pendingMessageIds = this.pendingKeys.get(op.key);
+            const lastPendingMessageId = pendingMessageIds?.pop();
+            if (!pendingMessageIds || !lastPendingMessageId || lastPendingMessageId !== metadata.pendingMessageId) {
                 throw new Error("Rollback op does not match last pending");
             }
-            if (pendingMetadata.length === 0) {
+            if (pendingMessageIds.length === 0) {
                 this.pendingKeys.delete(op.key);
             }
         } else {
@@ -596,16 +605,16 @@ export class MapKernel {
                 assert(localOpMetadata !== undefined,
                     0x014 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
                 const pendingMessage = localOpMetadata as IMapKeyLocalOpMetadata;
-                const pendingMetadata = this.pendingKeys.get(op.key);
-                if (pendingMetadata !== undefined) {
-                    const index = pendingMetadata.findIndex(
-                        (value) => value.pendingMessageId === pendingMessage.pendingMessageId);
-                    if (index === pendingMetadata.length - 1) {
+                const pendingMessageIds = this.pendingKeys.get(op.key);
+                if (pendingMessageIds !== undefined) {
+                    const index = pendingMessageIds.findIndex(
+                        (value) => value === pendingMessage.pendingMessageId);
+                    if (index === pendingMessageIds.length - 1) {
                         // Remove the key if it was the latest pending message for the key
                         this.pendingKeys.delete(op.key);
                     } else if (index !== -1) {
                         // Keep only the pending messages set after the op
-                        this.pendingKeys.set(op.key, pendingMetadata.slice(index + 1));
+                        this.pendingKeys.set(op.key, pendingMessageIds.slice(index + 1));
                     }
                 }
             }
@@ -648,8 +657,7 @@ export class MapKernel {
                 },
                 getStashedOpLocalMetadata: (op: IMapClearOperation) => {
                     // We don't reuse the metadata pendingMessageId but send a new one on each submit.
-                    // BUGBUG: the local metadata is wrong
-                    return this.getMapClearMessageLocalMetadata(op, new Map<string, ILocalValue>());
+                    return this.getMapClearMessageLocalMetadata(undefined);
                 },
             });
         messageHandlers.set(
@@ -663,11 +671,11 @@ export class MapKernel {
                 },
                 submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata pendingMessageId but send a new one on each submit.
-                    this.submitMapKeyMessage(op, (localOpMetadata as IMapKeyLocalOpMetadata)?.previousValue);
+                    this.submitMapKeyMessage(op, (localOpMetadata as IMapKeyLocalOpMetadata).previousValue);
                 },
                 getStashedOpLocalMetadata: (op: IMapDeleteOperation) => {
                     // We don't reuse the metadata pendingMessageId but send a new one on each submit.
-                    return this.getMapKeyMessageLocalMetadataWithPendingValue(op);
+                    return this.getMapKeyMessageLocalMetadata(op, undefined);
                 },
             });
         messageHandlers.set(
@@ -684,19 +692,18 @@ export class MapKernel {
                 },
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
                     // We don't reuse the metadata pendingMessageId but send a new one on each submit.
-                    this.submitMapKeyMessage(op, (localOpMetadata as IMapKeyLocalOpMetadata)?.previousValue);
+                    this.submitMapKeyMessage(op, (localOpMetadata as IMapKeyLocalOpMetadata).previousValue);
                 },
                 getStashedOpLocalMetadata: (op: IMapSetOperation) => {
                     // We don't reuse the metadata pendingMessageId but send a new one on each submit.
-                    return this.getMapKeyMessageLocalMetadataWithPendingValue(op);
+                    return this.getMapKeyMessageLocalMetadata(op, undefined);
                 },
             });
 
         return messageHandlers;
     }
 
-    private getMapClearMessageLocalMetadata(op: IMapClearOperation, previousMap: Map<string, ILocalValue>):
-        IMapClearLocalOpMetadata {
+    private getMapClearMessageLocalMetadata(previousMap: PreviousMap): IMapClearLocalOpMetadata {
         const pendingMessageId = ++this.pendingMessageId;
         this.pendingClearMessageIds.push(pendingMessageId);
         return { pendingMessageId, previousMap };
@@ -706,25 +713,19 @@ export class MapKernel {
      * Submit a clear message to remote clients.
      * @param op - The clear message
      */
-    private submitMapClearMessage(op: IMapClearOperation, previousMap: Map<string, ILocalValue>): void {
-        const metadata = this.getMapClearMessageLocalMetadata(op, previousMap);
+    private submitMapClearMessage(op: IMapClearOperation, previousMap: PreviousMap): void {
+        const metadata = this.getMapClearMessageLocalMetadata(previousMap);
         this.submitMessage(op, metadata);
     }
 
-    private getMapKeyMessageLocalMetadataWithPendingValue(op: IMapKeyOperation): unknown {
-        const previous = this.pendingKeys.get(op.key);
-        return this.getMapKeyMessageLocalMetadata(op,
-            previous ? previous[previous.length - 1].previousValue : undefined);
-    }
-
-    private getMapKeyMessageLocalMetadata(op: IMapKeyOperation, previousValue: ILocalValue | undefined): unknown {
+    private getMapKeyMessageLocalMetadata(op: IMapKeyOperation, previousValue: PreviousKeyValue): unknown {
         const pendingMessageId = ++this.pendingMessageId;
         const localMetadata = { pendingMessageId, previousValue };
-        const pendingMetadata = this.pendingKeys.get(op.key);
-        if (pendingMetadata !== undefined) {
-            pendingMetadata.push(localMetadata);
+        const pendingMessageIds = this.pendingKeys.get(op.key);
+        if (pendingMessageIds !== undefined) {
+            pendingMessageIds.push(pendingMessageId);
         } else {
-            this.pendingKeys.set(op.key, [localMetadata]);
+            this.pendingKeys.set(op.key, [pendingMessageId]);
         }
         return localMetadata;
     }
@@ -733,7 +734,7 @@ export class MapKernel {
      * Submit a map key message to remote clients.
      * @param op - The map key message
      */
-    private submitMapKeyMessage(op: IMapKeyOperation, previousValue: ILocalValue | undefined): void {
+    private submitMapKeyMessage(op: IMapKeyOperation, previousValue: PreviousKeyValue): void {
         const localMetadata = this.getMapKeyMessageLocalMetadata(op, previousValue);
         this.submitMessage(op, localMetadata);
     }
