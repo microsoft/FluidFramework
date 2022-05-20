@@ -75,13 +75,11 @@ npm run build:fast
 
 See also: [Contributing](#Contributing)
 
-### Other First-Time Build Requirements
+### Other Build Requirements
 
-- [node-gyp](https://github.com/nodejs/node-gyp) Requirements
-  - Ensure that the requirements listed [here](https://github.com/nodejs/node-gyp#installation) are satisfied for your environment.
-  - (Note for Windows users, **not** using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)): The version of `node-gyp` pulled in by our current version of `Node.js` (14.x.x) **is not** compatible with Visual Studio 2022.
-    This has been fixed on more recent versions of `node-gyp`, but until we update to a more recent version of `Node.js`, we recommend using an earlier version of Visual Studio / its build tools.
-    Version 17 seems to be stable.
+- Building [server/Routerlicious](./server/routerlicious/README.md)
+    - Refer to that package's README for additional requirements.
+    - Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server` (e.g. TODO).
 
 #### On Windows
 
