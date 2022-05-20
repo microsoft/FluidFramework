@@ -4,9 +4,52 @@
 
 ```ts
 
-// @public (undocumented)
-export const _ = "Force index.d.ts generation from ApiExtractor.";
+import { Serializable } from '@fluidframework/datastore-definitions';
 
+// @public (undocumented)
+export interface INodeReader {
+    // (undocumented)
+    keys: Iterable<TreeKey>;
+    // (undocumented)
+    length(key: TreeKey): number;
+    // (undocumented)
+    type: TreeType;
+    // (undocumented)
+    value: undefined | Serializable;
+}
+
+// @public (undocumented)
+export interface ITreeReader extends INodeReader {
+    // (undocumented)
+    pop(): TreeReadResult;
+    // (undocumented)
+    push(key: TreeKey, index: number): TreeReadResult;
+}
+
+// @public (undocumented)
+export type TreeId = number | string & {
+    readonly TreeId: symbol;
+};
+
+// @public (undocumented)
+export type TreeKey = number | string & {
+    readonly TreeKey: symbol;
+};
+
+// @public (undocumented)
+export const enum TreeReadResult {
+    // (undocumented)
+    NotFound = -1,
+    // (undocumented)
+    Ok = 1,
+    // (undocumented)
+    Pending = 0
+}
+
+// @public (undocumented)
+export type TreeType = number | string & {
+    readonly TreeType: symbol;
+};
 
 // (No @packageDocumentation comment for this package)
 
