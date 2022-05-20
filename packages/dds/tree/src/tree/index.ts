@@ -7,10 +7,4 @@ export {
     TreeId,
     TreeKey,
     TreeType,
-} from "./tree";
-
-export {
-    INodeReader,
-    ITreeReader,
-    TreeReadResult,
-} from "./forest";
+} from "./types";
