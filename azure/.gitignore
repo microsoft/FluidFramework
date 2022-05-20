@@ -10,3 +10,6 @@ npm-debug.log
 
 # Code coverage
 nyc/
+
+# c8 code coverage temporary files
+coverage/

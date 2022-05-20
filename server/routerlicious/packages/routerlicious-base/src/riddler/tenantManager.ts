@@ -153,7 +153,7 @@ export class TenantManager {
         storage: ITenantStorage,
         orderer: ITenantOrderer,
         customData: ITenantCustomData,
-    ): Promise<ITenantConfig & { key: string }> {
+    ): Promise<ITenantConfig & { key: string; }> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
@@ -409,8 +409,8 @@ export class TenantManager {
 
     /**
      * Deletes a tenant
-     * @param tenantId: Id of the tenant to delete.
-     * @param scheduledDeletionTimeTime: If present, indicates when to hard-delete the tenant.
+     * @param tenantId - Id of the tenant to delete.
+     * @param scheduledDeletionTime - If present, indicates when to hard-delete the tenant.
      * If no scheduledDeletionTime is provided the tenant is only soft-deleted.
      */
     public async deleteTenant(tenantId: string, scheduledDeletionTime?: Date): Promise<void> {

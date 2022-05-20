@@ -115,7 +115,7 @@ async function loadOuterLogDiv(
 
 /**
  * Verify that the iframe container may be loaded in a regular, non-iframe environment
- * @param dataStoreDivId
+ * @param dataStoreDivId - the ID of the data store div
  */
 async function loadOuterDataStoreDiv(
     dataStoreDivId: string,

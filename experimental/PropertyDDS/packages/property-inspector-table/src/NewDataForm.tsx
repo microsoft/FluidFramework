@@ -243,7 +243,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
     </Button>
   );
 
-  const isSiblingFound = siblingIds.indexOf(inputName) >= 0;
+  const isSiblingFound = siblingIds.includes(inputName);
   const createBtn = (
     <Button
       id="createDataButton"
