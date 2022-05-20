@@ -1225,7 +1225,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             true, // existing
             codeDetails,
             snapshot,
-            pendingLocalState,
+            pendingLocalState?.pendingRuntimeState,
         );
 
         // Propagate current connection state through the system.
@@ -1823,7 +1823,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async instantiateContextDetached(
         existing: boolean,
         snapshot?: ISnapshotTree,
-        pendingLocalState?: IPendingContainerState,
     ) {
         const codeDetails = this.getCodeDetailsFromQuorum();
         if (codeDetails === undefined) {
@@ -1834,7 +1833,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             existing,
             codeDetails,
             snapshot,
-            pendingLocalState?.pendingRuntimeState,
         );
     }
 
