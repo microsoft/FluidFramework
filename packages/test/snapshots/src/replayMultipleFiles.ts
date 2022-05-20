@@ -145,6 +145,8 @@ export async function processOneNode(args: IWorkerArgs) {
 export async function processContent(mode: Mode, concurrently = true) {
     const limiter = new ConcurrencyLimiter(numberOfThreads);
 
+    ensureTestCollateralPath();
+
     for (const node of fs.readdirSync(fileLocation, { withFileTypes: true })) {
         if (!node.isDirectory()) {
             continue;
@@ -412,4 +414,16 @@ function cleanFailedSnapshots(dir: string) {
     }
 
     fs.rmdirSync(failedSnapshotsDir);
+}
+
+let collateralPathValidated: boolean;
+
+/**
+ * Validates that the required external files exist.
+ */
+function ensureTestCollateralPath() {
+    if (!collateralPathValidated) {
+        assert(fs.existsSync(fileLocation), `Cannot find test collateral path: ${fileLocation}`);
+        collateralPathValidated = true;
+    }
 }
