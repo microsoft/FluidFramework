@@ -164,6 +164,7 @@ export interface ILoaderProps {
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
+    // @deprecated
     readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
     readonly scope?: FluidObject;
     readonly urlResolver: IUrlResolver;
@@ -175,6 +176,7 @@ export interface ILoaderServices {
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
+    // @deprecated
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
     readonly scope: FluidObject;
     readonly subLogger: ITelemetryLogger;

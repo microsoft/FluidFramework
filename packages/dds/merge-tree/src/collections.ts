@@ -38,11 +38,9 @@ export class Stack<T> {
 function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
     if (entry === undefined) {
         return undefined;
-    }
-    else if (entry.isHead) {
+    } else if (entry.isHead) {
         return undefined;
-    }
-    else {
+    } else {
         entry.next.prev = entry.prev;
         entry.prev.next = entry.next;
     }
@@ -287,11 +285,9 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
             const cmp = this.compareKeys(key, _node.key);
             if (cmp < 0) {
                 _node = _node.left;
-            }
-            else if (cmp > 0) {
+            } else if (cmp > 0) {
                 _node = _node.right;
-            }
-            else {
+            } else {
                 return _node;
             }
         }
@@ -388,8 +384,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         if (key !== undefined) {
             if (data === undefined) {
                 this.remove(key);
-            }
-            else {
+            } else {
                 this.root = this.nodePut(this.root, key, data, conflict);
                 this.root.color = RBColor.BLACK;
             }
@@ -404,16 +399,13 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         let _node = node;
         if (!_node) {
             return this.makeNode(key, data, RBColor.RED, 1);
-        }
-        else {
+        } else {
             const cmp = this.compareKeys(key, _node.key);
             if (cmp < 0) {
                 _node.left = this.nodePut(_node.left, key, data, conflict);
-            }
-            else if (cmp > 0) {
+            } else if (cmp > 0) {
                 _node.right = this.nodePut(_node.right, key, data, conflict);
-            }
-            else {
+            } else {
                 if (conflict) {
                     const kd = conflict(key, _node.key, data, _node.data);
                     if (kd.key) {
@@ -424,8 +416,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
                     } else {
                         _node.data = data;
                     }
-                }
-                else {
+                } else {
                     _node.data = data;
                 }
             }
@@ -505,8 +496,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
             }
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             _node.left = this.nodeRemove(_node.left!, key);
-        }
-        else {
+        } else {
             if (this.isRed(_node.left)) {
                 _node = this.rotateRight(_node);
             }
@@ -524,8 +514,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
                 _node.data = subtreeMin.data;
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 _node.right = this.nodeRemoveMin(_node.right!);
-            }
-            else {
+            } else {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 _node.right = this.nodeRemove(_node.right!, key);
             }
@@ -544,16 +533,13 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
             const cmp = this.compareKeys(key, node.key);
             if (cmp === 0) {
                 return node;
-            }
-            else if (cmp < 0) {
+            } else if (cmp < 0) {
                 return this.nodeFloor(node.left, key);
-            }
-            else {
+            } else {
                 const rightFloor = this.nodeFloor(node.right, key);
                 if (rightFloor) {
                     return rightFloor;
-                }
-                else {
+                } else {
                     return node;
                 }
             }
@@ -571,16 +557,13 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
             const cmp = this.compareKeys(key, node.key);
             if (cmp === 0) {
                 return node;
-            }
-            else if (cmp > 0) {
+            } else if (cmp > 0) {
                 return this.nodeCeil(node.right, key);
-            }
-            else {
+            } else {
                 const leftCeil = this.nodeCeil(node.left, key);
                 if (leftCeil) {
                     return leftCeil;
-                }
-                else {
+                } else {
                     return node;
                 }
             }
@@ -596,8 +579,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     private nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
         if (!node.left) {
             return node;
-        }
-        else {
+        } else {
             return this.nodeMin(node.left);
         }
     }
@@ -611,8 +593,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     private nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
         if (!node.right) {
             return node;
-        }
-        else {
+        } else {
             return this.nodeMax(node.right);
         }
     }
@@ -986,14 +967,11 @@ export class TST<T> {
         const c = key.charAt(d);
         if (c < x.c) {
             return this.nodeGet(x.left, key, d);
-        }
-        else if (c > x.c) {
+        } else if (c > x.c) {
             return this.nodeGet(x.right, key, d);
-        }
-        else if (d < (key.length - 1)) {
+        } else if (d < (key.length - 1)) {
             return this.nodeGet(x.mid, key, d + 1);
-        }
-        else { return x; }
+        } else { return x; }
     }
 
     public put(key: string, val: T) {
@@ -1011,14 +989,11 @@ export class TST<T> {
         }
         if (c < _x.c) {
             _x.left = this.nodePut(_x.left, key, val, d);
-        }
-        else if (c > _x.c) {
+        } else if (c > _x.c) {
             _x.right = this.nodePut(_x.right, key, val, d);
-        }
-        else if (d < (key.length - 1)) {
+        } else if (d < (key.length - 1)) {
             _x.mid = this.nodePut(_x.mid, key, val, d + 1);
-        }
-        else {
+        } else {
             _x.val = val;
         }
         return _x;
@@ -1125,8 +1100,7 @@ export class TST<T> {
         const recurD = (d < (pattern.length - 1)) ? d + 1 : d;
         if (c === x.c) {
             this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance, q);
-        }
-        else {
+        } else {
             this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance - 1, q);
         }
         if ((distance > 0) || (c > x.c)) {

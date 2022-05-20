@@ -6,10 +6,15 @@
 import {
     ICreateRefParamsExternal,
     IPatchRefParamsExternal } from "@fluidframework/server-services-client";
+import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";
-import { getExternalWriterParams, getRepoManagerParamsFromRequest, IRepositoryManagerFactory } from "../../utils";
-import { handleResponse } from "../utils";
+import {
+    getExternalWriterParams,
+    getRepoManagerParamsFromRequest,
+    IRepositoryManagerFactory,
+    logAndThrowApiError,
+} from "../../utils";
 
 /**
  * Simple method to convert from a path id to the git reference ID
@@ -27,45 +32,52 @@ export function create(
     // https://developer.github.com/v3/git/refs/
 
     router.get("/repos/:owner/:repo/git/refs", async (request, response, next) => {
-        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
-            .then(async (repoManager) => repoManager.getRefs());
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        const resultP = repoManagerFactory.open(repoManagerParams)
+            .then(async (repoManager) => repoManager.getRefs())
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response);
     });
 
     router.get("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
-        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.getRef(
                 getRefId(request.params[0]),
                 getExternalWriterParams(request.query?.config as string),
-            ));
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 
     router.post("/repos/:owner/:repo/git/refs", async (request, response, next) => {
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const createRefParams = request.body as ICreateRefParamsExternal;
-        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+        const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.createRef(
                 createRefParams,
                 createRefParams.config,
-            ));
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
     router.patch("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const patchRefParams = request.body as IPatchRefParamsExternal;
-        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+        const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.patchRef(
                 getRefId(request.params[0]),
                 patchRefParams,
                 patchRefParams.config,
-            ));
+            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 
     router.delete("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
-        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
-            .then(async (repoManager) => repoManager.deleteRef(getRefId(request.params[0])));
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        const resultP = repoManagerFactory.open(repoManagerParams)
+            .then(async (repoManager) => repoManager.deleteRef(getRefId(request.params[0])))
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response, undefined, undefined, 204);
     });

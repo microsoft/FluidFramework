@@ -72,7 +72,7 @@ export interface IShareModalState {
   /**
    * A list of user ids with their permissions on this item.
    */
-  sharedWith: { [userId: string]: string[] };
+  sharedWith: { [userId: string]: string[]; };
   toolTipsIsOpen: {
     copy: boolean;
   };
@@ -91,7 +91,7 @@ export interface IShareOptions {
   /**
    * A list of user ids with their permissions on this item.
    */
-  sharedWith: { [userId: string]: string[] };
+  sharedWith: { [userId: string]: string[]; };
 }
 
 export interface IShareModalProps {
@@ -139,14 +139,14 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
           <div className={classes.spacer} />
           <div className={classes!.horizontalContainer}>
             <FloatingLabelTextField
-              id='shareModalUrnTextField'
+              id="shareModalUrnTextField"
               label={"Link"}
               value={urn}
               className={classes.floatingLabelTextField}
             />
             <Tooltip
-              title='Link Copied'
-              placement='top'
+              title="Link Copied"
+              placement="top"
               open={this.state.toolTipsIsOpen.copy}
               onClose={() => {
                 this.setState({ toolTipsIsOpen: { copy: false } });
@@ -157,7 +157,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
               }}
             >
               <Button
-                color='primary'
+                color="primary"
                 className={classes.copyLinkButton}
                 onClick={this.onCopyLink}
               >
@@ -193,7 +193,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
     if (this.isPublic) {
       return (
         <Button
-          color='primary'
+          color="primary"
           className={classes.shareButton}
           onClick={this.disablePublicSharing}
           disabled={this.state.progress}
@@ -204,7 +204,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
     } else {
       return (
         <Button
-          color='primary'
+          color="primary"
           className={classes.shareButton}
           onClick={this.enablePublicSharing}
           disabled={this.state.progress || this.isPublic}

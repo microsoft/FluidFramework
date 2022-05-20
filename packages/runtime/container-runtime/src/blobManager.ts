@@ -52,8 +52,8 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
  * Information from a snapshot needed to load BlobManager
  */
 export interface IBlobManagerLoadInfo {
-    ids?: string[],
-    redirectTable?: [string, string][],
+    ids?: string[];
+    redirectTable?: [string, string][];
 }
 
 export class BlobManager {
@@ -100,7 +100,7 @@ export class BlobManager {
                 return this.getStorage().readBlob(storageId).catch((error) => {
                     this.logger.sendErrorEvent(
                         {
-                            eventName:"AttachmentReadBlobError",
+                            eventName: "AttachmentReadBlobError",
                             id: storageId,
                         },
                         error,

@@ -173,6 +173,7 @@ export interface IContainerContext extends IDisposable {
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
+    readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
     // (undocumented)
@@ -480,9 +481,11 @@ export interface IProvideRuntimeFactory {
     readonly IRuntimeFactory: IRuntimeFactory;
 }
 
-// @public
+// @public @deprecated
 export interface IProxyLoaderFactory {
+    // @deprecated
     createProxyLoader(id: string, options: ILoaderOptions, resolved: IFluidResolvedUrl, fromSequenceNumber: number): Promise<ILoader>;
+    // @deprecated
     environment: string;
 }
 

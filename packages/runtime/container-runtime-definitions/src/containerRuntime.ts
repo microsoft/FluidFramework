@@ -35,7 +35,7 @@ import {
  * @deprecated - This will be removed once https://github.com/microsoft/FluidFramework/issues/9127 is fixed.
  */
 export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-    fluidDataStoreChannel?: { bindToContext?(): void; };
+    fluidDataStoreChannel?: { bindToContext?(): void };
 }
 
 /**

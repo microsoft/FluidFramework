@@ -104,7 +104,7 @@ function fetchBlobs(prefix: string,
 
 function createTreeBlob(tree: ISnapshotTree, prefix: string, patched: boolean): IFetchedTree {
     const id = tree.id ?? "original";
-    const blob = stringToBuffer(JSON.stringify(tree),"utf8");
+    const blob = stringToBuffer(JSON.stringify(tree), "utf8");
     const filename = patched ? "tree" : `tree-${id}`;
     const treePath = `${prefix}${filename}`;
     return { treePath, blobId: "original tree $id", filename, blob, patched, reused: false };
@@ -172,7 +172,7 @@ async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]
         if (buffer === undefined) {
             continue;
         }
-        const blob = bufferToString(buffer,"utf8");
+        const blob = bufferToString(buffer, "utf8");
         // eslint-disable-next-line max-len
         console.log(`${item.treePath.padEnd(nameLength)} |    ${item.reused ? "X" : " "}   | ${formatNumber(blob.length).padStart(10)}`);
         size += blob.length;
@@ -222,7 +222,7 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
 
             // we assume that the buffer is utf8 here, which currently is true for
             // all of our snapshot blobs.  It doesn't necessary be true in the future
-            let decoded = bufferToString(buffer,"utf8");
+            let decoded = bufferToString(buffer, "utf8");
             try {
                 if (!paramActualFormatting) {
                     decoded = JSON.stringify(JSON.parse(decoded), undefined, 2);
@@ -233,7 +233,7 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
                 `${outDir}/decoded/${item.filename}.json`, decoded);
         } else {
             // Write out same data for tree decoded or not, except for formatting
-            const treeString = bufferToString(buffer,"utf8");
+            const treeString = bufferToString(buffer, "utf8");
             fs.writeFileSync(`${outDir}/${item.filename}.json`, treeString);
             fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`,
                 paramActualFormatting ? treeString : JSON.stringify(JSON.parse(treeString), undefined, 2));

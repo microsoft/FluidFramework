@@ -51,12 +51,7 @@ describe('SharedTree history virtualization', () => {
 		for (let i = 0; i < edits.length; i++) {
 			editLog.addSequencedEdit(edits[i], { sequenceNumber: i + 1, referenceSequenceNumber: i });
 		}
-		const logViewer = new CachingLogViewer(
-			editLog,
-			RevisionView.fromTree(initialTree, context, true),
-			undefined,
-			true
-		);
+		const logViewer = new CachingLogViewer(editLog, RevisionView.fromTree(initialTree, context, true));
 
 		const internedStrings = [
 			SimpleTestTree.definition,

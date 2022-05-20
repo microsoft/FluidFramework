@@ -26,7 +26,7 @@ describe("Pending State Manager Rollback", () => {
             close: () => closeCalled = true,
             connected: () => true,
             flush: () => {},
-            flushMode: ()=> FlushMode.Immediate,
+            flushMode: () => FlushMode.Immediate,
             reSubmit: () => {},
             rollback: (type, content, metadata) => {
                 rollbackCalled = true;

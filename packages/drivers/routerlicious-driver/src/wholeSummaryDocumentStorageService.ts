@@ -145,7 +145,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         return summaryHandle;
     }
 
-    public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
+    public async downloadSummary(summaryHandle: ISummaryHandle): Promise<ISummaryTree> {
         throw new Error("NOT IMPLEMENTED!");
     }
 

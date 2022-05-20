@@ -99,7 +99,7 @@ async function loadOuterLogDiv(
     const logDiv = document.getElementById(logDivId) as HTMLDivElement;
 
     const log =
-        (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
+        (emitter: { on(event: string, listener: (...args: any[]) => void); }, name: string, ...events: string[]) => {
             events.forEach((event) =>
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 emitter.on(event, (...args) => {

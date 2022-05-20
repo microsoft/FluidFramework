@@ -9,10 +9,10 @@ import { IEditableValueCellProps } from "./EditableValueCell";
 import { Field } from "./Field";
 
 export const TooltipedField: React.FunctionComponent<IEditableValueCellProps & {
-  message: string,
-  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>,
-}> = ({message, ...props}) => {
-  const {classes} = props;
+  message: string;
+  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>;
+}> = ({ message, ...props }) => {
+  const { classes } = props;
 
   return (
     <Tooltip
@@ -20,10 +20,10 @@ export const TooltipedField: React.FunctionComponent<IEditableValueCellProps & {
       classes={{
         tooltip: classes.tooltip,
       }}
-      placement='left'
+      placement="left"
       title={message}
     >
-      <span style={{width: "100%"}}>
+      <span style={{ width: "100%" }}>
         <Field {...props} />
       </span>
     </Tooltip>

@@ -24,17 +24,17 @@ export interface IProposal {
 /**
  * Similar to IProposal except includes the sequence number when it was made in addition to the fields on IProposal
  */
-export type ISequencedProposal = { sequenceNumber: number } & IProposal;
+export type ISequencedProposal = { sequenceNumber: number; } & IProposal;
 
 /**
  * Adds the sequence number at which the message was approved to an ISequencedProposal
  */
-export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
+export type IApprovedProposal = { approvalSequenceNumber: number; } & ISequencedProposal;
 
 /**
  * Adds the sequence number at which the message was committed to an IApprovedProposal
  */
-export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
+export type ICommittedProposal = { commitSequenceNumber: number; } & IApprovedProposal;
 
 /**
  * Events fired by a Quorum in response to client tracking.

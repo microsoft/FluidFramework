@@ -64,7 +64,7 @@ const useStyles = makeStyles({
     backgroundImage: "linear-gradient(to right, white,#0696d7, white);",
   },
   progressBarRoot: {
-    borderRadius: "0px 0px 9px 9px" ,
+    borderRadius: "0px 0px 9px 9px",
     bottom: "0px",
     marginLeft: "2px",
     marginRight: "2px",
@@ -143,7 +143,7 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
               </div>
               <div className={classNames(classes.alignedItem, classes.navigationGroup)}>
                 <div
-                  key='previous'
+                  key="previous"
                   className={classNames(classes.alignedItem,
                     { [classes.backGroundToggle]: totalResults && !searchInProgress },
                     { [classes.hoverableItem]: totalResults && !searchInProgress })}
@@ -151,12 +151,12 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
                 >
                   <SvgIcon
                     className={classNames({ [classes.navigationIcon]: totalResults })}
-                    height='9px'
+                    height="9px"
                     svgId={"up"}
                   />
                 </div>
                 <div
-                  key='next'
+                  key="next"
                   className={classNames(classes.alignedItem,
                     { [classes.backGroundToggle]: totalResults && !searchInProgress },
                     { [classes.hoverableItem]: totalResults && !searchInProgress })}
@@ -164,14 +164,14 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
                 >
                   <SvgIcon
                     className={classNames({ [classes.navigationIcon]: totalResults })}
-                    height='9px'
+                    height="9px"
                     svgId={"down"}
                   />
                 </div>
               </div>
             </div>
             <div
-              key='close'
+              key="close"
               className={classNames(classes.alignedItem, classes.hoverableItem)}
               onClick={() => {
                 handleOnClear();
@@ -192,10 +192,10 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
           onChange={onChange as any}
           onKeyDown={handleKeyDown}
           value={searchExpression}
-          placeholder='Search'
-          margin='none'
+          placeholder="Search"
+          margin="none"
           classes={{ root: classes.root }}
-          variant='outlined'
+          variant="outlined"
           inputRef={inputReference}
           InputProps={{
             className: classes.input,
@@ -209,8 +209,8 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> =
               width={iconWidth}
               height={iconHeight}
             />
-            <div style={{ position: "absolute", left: "0px", bottom: "1px", width: "100%"}}>
-              <Fade in={searchInProgress} style={{ transitionDelay: "800ms"}}>
+            <div style={{ position: "absolute", left: "0px", bottom: "1px", width: "100%" }}>
+              <Fade in={searchInProgress} style={{ transitionDelay: "800ms" }}>
                 <LinearProgress
                   classes={{
                     barColorPrimary: classes.progressBarColorPrimary,

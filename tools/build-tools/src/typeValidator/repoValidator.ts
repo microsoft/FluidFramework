@@ -9,9 +9,9 @@ import { IFluidRepoPackageEntry } from "../common/fluidRepo";
 import { getPackageManifest } from "../common/fluidUtils";
 import { FluidRepoBuild } from "../fluidBuild/fluidRepoBuild"
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { getPackageDetailsOrThrow } from "./packageJson";
 import { BrokenTypes, validatePackage } from "./packageValidator";
 import { BreakingIncrement, log } from "./validatorUtils";
+import { getPackageDetails } from "./packageJson";
 
 /**
  * Groupings of packages that should be versioned in lockstep
@@ -149,7 +149,7 @@ export async function validateRepo(options?: IValidationOptions): Promise<RepoVa
     for (let i = 0; packages.size > 0; i++) {
         packages.forEach(async (buildPkg, pkgName) => {
             if (buildPkg.level === i) {
-                const packageData = await getPackageDetailsOrThrow(buildPkg.pkg.directory);
+                const packageData = await getPackageDetails(buildPkg.pkg.directory);
                 const pkgJsonPath = path.join(buildPkg.pkg.directory, "package.json");
                 const pkgJsonRelativePath = path.relative(repoRoot, pkgJsonPath);
                 if (packageData.oldVersions.length > 0) {
@@ -163,11 +163,11 @@ export async function validateRepo(options?: IValidationOptions): Promise<RepoVa
                     const groupName = setPackageGroupIncrement(
                         pkgJsonRelativePath, increment, packageGroups, groupBreaks);
 
-                    if (breakResult.has(packageData.name)) {
+                    if (breakResult.has(packageData.pkg.name)) {
                         throw new Error("Encountered duplicated package name");
                     }
 
-                    breakResult.set(packageData.name, { level: increment, group: groupName });
+                    breakResult.set(packageData.pkg.name, { level: increment, group: groupName });
                 }
 
                 packages.delete(pkgName);

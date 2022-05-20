@@ -56,9 +56,9 @@ type PendingQuorumValue = {
  * Internal format of the values stored in the Quorum.
  */
 type QuorumValue =
-    { accepted: AcceptedQuorumValue; pending: undefined; }
-    | { accepted: undefined; pending: PendingQuorumValue; }
-    | { accepted: AcceptedQuorumValue; pending: PendingQuorumValue; };
+    { accepted: AcceptedQuorumValue; pending: undefined }
+    | { accepted: undefined; pending: PendingQuorumValue }
+    | { accepted: AcceptedQuorumValue; pending: PendingQuorumValue };
 
 /**
  * Quorum operation formats
@@ -187,7 +187,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         this.incomingOp.on("set", this.handleIncomingSet);
         this.incomingOp.on("delete", this.handleIncomingDelete);
-        this.incomingOp.on("accept", this.handleIncomingAcceptOp);
+        this.incomingOp.on("accept", this.handleIncomingAccept);
 
         this.runtime.getQuorum().on("removeMember", this.handleQuorumRemoveMember);
 
@@ -229,7 +229,29 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     public set(key: string, value: any): void {
-        // TODO: handle detached scenario, just auto accept basically
+        const currentValue = this.values.get(key);
+        // Early-exit if we can't submit a valid proposal (there's already a pending proposal)
+        if (currentValue !== undefined && currentValue.pending !== undefined) {
+            return;
+        }
+
+        // If not attached, we basically pretend we got an ack immediately.
+        // TODO: Should we just directly store the value rather than the full simulation?
+        if (!this.isAttached()) {
+            // Queueing as a microtask to permit callers to complete their callstacks before the result of the set
+            // takes effect.  This more closely resembles the pattern in the attached state, where the ack will not
+            // be received synchronously.
+            queueMicrotask(() => {
+                this.handleIncomingSet(
+                    key,
+                    value,
+                    0 /* refSeq */,
+                    0 /* setSequenceNumber */,
+                    "detachedClient" /* clientId */,
+                );
+            });
+            return;
+        }
 
         const setOp: IQuorumSetOperation = {
             type: "set",
@@ -246,7 +268,28 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * {@inheritDoc IQuorum.delete}
      */
     public delete(key: string): void {
-        // TODO: handle detached scenario, just auto accept basically
+        const currentValue = this.values.get(key);
+        // Early-exit if we can't submit a valid proposal (there's nothing to delete or already a pending proposal).
+        if (currentValue === undefined || currentValue.pending !== undefined) {
+            return;
+        }
+
+        // If not attached, we basically pretend we got an ack immediately.
+        // TODO: Should we just directly store the value rather than the full simulation?
+        if (!this.isAttached()) {
+            // Queueing as a microtask to permit callers to complete their callstacks before the result of the delete
+            // takes effect.  This more closely resembles the pattern in the attached state, where the ack will not
+            // be received synchronously.
+            queueMicrotask(() => {
+                this.handleIncomingDelete(
+                    key,
+                    0 /* refSeq */,
+                    0 /* setSequenceNumber */,
+                    "detachedClient" /* clientId */,
+                );
+            });
+            return;
+        }
 
         const deleteOp: IQuorumDeleteOperation = {
             type: "delete",
@@ -257,6 +300,19 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.submitLocalMessage(deleteOp);
     }
 
+    /**
+     * Get a point-in-time list of clients who must sign off on values coming in for them to move from "pending" to
+     * "accepted" state.  This list is finalized for a value at the moment it goes pending (i.e. if more clients
+     * join later, they are not added to the list of signoffs).
+     * @returns The list of clientIds for clients who must sign off to accept the incoming pending value
+     */
+    private getSignoffClients(): string[] {
+        // If detached, we don't need anyone to sign off.  Otherwise, we need all currently connected clients.
+        return this.isAttached()
+            ? [...this.runtime.getQuorum().getMembers().keys()]
+            : [];
+    }
+
     private readonly handleIncomingSet = (
         key: string,
         value: any,
@@ -265,8 +321,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         clientId: string,
     ): void => {
         const currentValue = this.values.get(key);
-        // A proposal is valid if the value is unknown or if it was made with knowledge of the most recently accepted
-        // value.  We'll drop invalid proposals on the ground.
+        // We use a consensus-like approach here, so a proposal is valid if the value is unset or if there is no
+        // pending change and it was made with knowledge of the most recently accepted value.  We'll drop invalid
+        // proposals on the ground.
         const proposalValid =
             currentValue === undefined
             || (currentValue.pending === undefined && currentValue.accepted.sequenceNumber <= refSeq);
@@ -279,8 +336,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         // We expect signoffs from all connected clients at the time the set was sequenced, except for the client
         // who issued the set (that client implicitly signs off).
-        const connectedClientIds = [...this.runtime.getQuorum().getMembers().keys()];
-        const expectedSignoffs = connectedClientIds.filter((quorumMemberId) => quorumMemberId !== clientId);
+        const expectedSignoffs = this.getSignoffClients().filter((quorumMemberId) => quorumMemberId !== clientId);
 
         const newQuorumValue: QuorumValue = {
             accepted,
@@ -323,11 +379,14 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         clientId: string,
     ): void => {
         const currentValue = this.values.get(key);
-        // A proposal is valid if the value is unknown or if it was made with knowledge of the most recently accepted
-        // value.  We'll drop invalid proposals on the ground.
+        // We use a consensus-like approach here, so a proposal is valid if there's a value to delete, there's no
+        // other pending change, and the delete was made with knowledge of the most recently accepted value.  Note
+        // this differs slightly from set because delete of an unset value is a no-op - these no-ops should also
+        // be prevented on the sending side but we'll guard here too.  We'll drop invalid proposals on the ground.
         const proposalValid =
-            currentValue === undefined
-            || (currentValue.pending === undefined && currentValue.accepted.sequenceNumber <= refSeq);
+            currentValue !== undefined
+            && currentValue.pending === undefined
+            && currentValue.accepted.sequenceNumber <= refSeq;
         if (!proposalValid) {
             // TODO: If delete() returns a promise we will need to resolve it false for invalid proposals.
             return;
@@ -337,8 +396,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         // We expect signoffs from all connected clients at the time the delete was sequenced, except for the client
         // who issued the delete (that client implicitly signs off).
-        const connectedClientIds = [...this.runtime.getQuorum().getMembers().keys()];
-        const expectedSignoffs = connectedClientIds.filter((quorumMemberId) => quorumMemberId !== clientId);
+        const expectedSignoffs = this.getSignoffClients().filter((quorumMemberId) => quorumMemberId !== clientId);
 
         const newQuorumValue: QuorumValue = {
             accepted,
@@ -368,7 +426,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         }
     };
 
-    private readonly handleIncomingAcceptOp = (
+    private readonly handleIncomingAccept = (
         key: string,
         pendingSeq: number,
         clientId: string,
@@ -380,6 +438,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             || !pending.expectedSignoffs.includes(clientId)) {
             // Drop unexpected accepts on the ground.  This can happen normally in resubmit on reconnect cases, and
             // is benign since the client implicitly accepts on disconnect.
+            // TODO: We could filter out just the accept ops when resubmitting on reconnect to avoid this - the
+            // proposals could still be resubmitted.
             return;
         }
 

@@ -17,6 +17,11 @@ There are a few steps you can take to write a good change note and avoid needing
 # 0.60
 
 ## 0.60 Upcoming changes
+- [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
+
+### Summarize heuristic changes based on telemetry
+Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
+- Change `minOpsForLastSummaryAttempt` from `50` -> `10`
 
 ## 0.60 Breaking changes
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
@@ -96,12 +101,20 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
 ## 0.59 Upcoming changes
 - [Remove ICodeLoader interface](#Remove-ICodeLoader-interface)
 - [IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release](#ifluidcontainer-connect-and-ifluidcontainer-disconnect-will-be-made-mandatory-in-future-major-release)
+- [proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-to-be-removed-from-ILoaderProps-and-ILoaderServices)
+- [routerlicious-host package and ContainerUrlResolver to be removed](#routerlicious-host-package-and-ContainerUrlResolver-to-be-removed)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
 
 ### IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release
 In major release 1.0, the optional functions `IFluidContainer.connect()` and `IFluidContainer.disconnect()` will be made mandatory functions.
+
+### proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices
+The `proxyLoaderFactories` member on `ILoaderProps` and `ILoaderServices` has been deprecated in 0.59 and will be removed in an upcoming release.
+
+### routerlicious-host package and ContainerUrlResolver to be removed
+The `@fluidframework/routerlicious-host` package and its `ContainerUrlResolver` have been deprecated in 0.59 and will be removed in an upcoming release.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)

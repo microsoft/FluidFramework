@@ -11,10 +11,10 @@ import { IInspectorRow } from "../InspectorTableTypes";
 import { getPropertyValue } from "../utils";
 
 type NumberProps = (IEditableValueCellProps & {
-  onSubmit: (val: number, props: IEditableValueCellProps) => void,
-  rowData: IInspectorRow & { value: number },
-  TextFieldProps: TextFieldProps,
-  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>,
+  onSubmit: (val: number, props: IEditableValueCellProps) => void;
+  rowData: IInspectorRow & { value: number; };
+  TextFieldProps: TextFieldProps;
+  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>;
 });
 
 type HandleKeyDownType = (
@@ -50,7 +50,7 @@ export const NumberView: React.FunctionComponent<NumberProps> = (props) => {
     // @ts-ignore
     <TextField
       {...restProps}
-      type='number'
+      type="number"
       key={`${rowData.id}${value}`}
       onBlur={onBlur}
       defaultValue={value}

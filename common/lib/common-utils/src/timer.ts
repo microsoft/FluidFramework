@@ -178,7 +178,7 @@ export class Timer implements ITimer {
                 () => this.handler(),
                 duration,
                 (timer: number) => {
-                    if(this.runningState !== undefined) {
+                    if (this.runningState !== undefined) {
                         this.runningState.timeout = timer;
                     }
                 },

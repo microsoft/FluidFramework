@@ -65,7 +65,9 @@ const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
-const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
+const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
+// Feature gate key to disable expiring session after a set period of time, even if expiry value is present
+const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to log error messages if GC reference validation fails.
 const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 
@@ -152,7 +154,7 @@ export interface IGarbageCollector {
     readonly writeDataAtRoot: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
-        options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
+        options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(): ISummaryTreeWithStats | undefined;
@@ -231,15 +233,15 @@ class UnreferencedStateTracker {
  * its state across summaries.
  *
  * Node - represented as nodeId, it's a node on the GC graph
- * Outbound Route - a path from one node to another node, think `nodeA` -> `nodeB`
+ * Outbound Route - a path from one node to another node, think `nodeA` -\> `nodeB`
  * Graph - all nodes with their respective routes
  *             GC Graph
  *
  *               Node
  *        NodeId = "datastore1"
- *           /             \
+ *           /             \\
  *    OutboundRoute   OutboundRoute
- *         /                 \
+ *         /                 \\
  *       Node               Node
  *  NodeId = "dds1"     NodeId = "dds2"
  */
@@ -390,13 +392,21 @@ export class GarbageCollector implements IGarbageCollector {
             // For new documents, GC has to be explicitly enabled via the gcAllowed flag in GC options.
             this.gcEnabled = gcOptions.gcAllowed === true;
             // Set the Session Expiry only if the flag is enabled or the test option is set.
-            if (this.mc.config.getBoolean(runSessionExpiry) && this.gcEnabled) {
+            if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = defaultSessionExpiryDurationMs;
             }
         }
 
         // If session expiry is enabled, we need to close the container when the timeout expires
-        if (this.sessionExpiryTimeoutMs !== undefined) {
+        if (this.sessionExpiryTimeoutMs !== undefined
+            && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
+            // If Test Override config is set, override Session Expiry timeout
+            const overrideSessionExpiryTimeoutMs =
+                this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
+            if (overrideSessionExpiryTimeoutMs !== undefined) {
+                this.sessionExpiryTimeoutMs = overrideSessionExpiryTimeoutMs;
+            }
+
             const timeoutMs = this.sessionExpiryTimeoutMs;
             setLongTimeout(timeoutMs,
                 () => {
@@ -548,7 +558,7 @@ export class GarbageCollector implements IGarbageCollector {
             // each node in the summary.
             const usedRoutes = runGarbageCollection(
                 gcNodes,
-                [ "/" ],
+                ["/"],
                 this.mc.logger,
             ).referencedNodeIds;
 
@@ -593,11 +603,11 @@ export class GarbageCollector implements IGarbageCollector {
     public async collectGarbage(
         options: {
             /** Logger to use for logging GC events */
-            logger?: ITelemetryLogger,
+            logger?: ITelemetryLogger;
             /** True to run GC sweep phase after the mark phase */
-            runSweep?: boolean,
+            runSweep?: boolean;
             /** True to generate full GC data */
-            fullGC?: boolean,
+            fullGC?: boolean;
         },
     ): Promise<IGCStats> {
         const {
@@ -616,7 +626,7 @@ export class GarbageCollector implements IGarbageCollector {
             const gcData = await this.runtime.getGCData(fullGC);
             const gcResult = runGarbageCollection(
                 gcData.gcNodes,
-                [ "/" ],
+                ["/"],
                 logger,
             );
             const gcStats = this.generateStatsAndLogEvents(gcResult);
@@ -855,7 +865,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // The following log will be enabled once this issue is resolved:
         // https://github.com/microsoft/FluidFramework/issues/8878.
-        if(this.mc.config.getBoolean(logUnknownOutboundReferencesKey) === true
+        if (this.mc.config.getBoolean(logUnknownOutboundReferencesKey) === true
             && missingExplicitReferences.length > 0) {
             missingExplicitReferences.forEach((missingExplicitReference) => {
                 const event: ITelemetryPerformanceEvent = {

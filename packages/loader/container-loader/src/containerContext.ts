@@ -92,7 +92,9 @@ export class ContainerContext implements IContainerContext {
         return this.container.clientId;
     }
 
-    /** @deprecated Added back to unblock 0.56 integration */
+    /**
+     * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
+     */
     public get id(): string {
         const resolvedUrl = this.container.resolvedUrl;
         if (isFluidResolvedUrl(resolvedUrl)) {
@@ -317,7 +319,7 @@ export class ContainerContext implements IContainerContext {
         });
     }
 
-    private async loadCodeModule(codeDetails: IFluidCodeDetails) {
+    private async loadCodeModule(codeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
         const loadCodeResult = await PerformanceEvent.timedExecAsync(
             this.taggedLogger,
             { eventName: "CodeLoad" },
@@ -334,7 +336,7 @@ export class ContainerContext implements IContainerContext {
             // If "module" is not in the result, we are using a legacy ICodeLoader.  Fix the result up with details.
             // Once usage drops to 0 we can remove this compat path.
             this.taggedLogger.sendTelemetryEvent({ eventName: "LegacyCodeLoader" });
-            return { module: loadCodeResult, details: codeDetails };
+            return loadCodeResult;
         }
     }
     // #endregion

@@ -1,4 +1,4 @@
-# @fluid-experimental/bubblebench-sharedtree
+# @fluid-example/bubblebench-sharedtree
 
 ## Getting Started
 
@@ -6,7 +6,7 @@ You can run this example using the following steps:
 
 1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
    a. For an even faster build, you can add the package name to the build command, like this:
-      `npm run build:fast -- --nolint @fluid-experimental/bubblebench`
+      `npm run build:fast -- --nolint @fluid-example/bubblebench`
 1. Run `npm run start` from this directory (experimental/examples/bubblebench/sharedtree) and open <http://localhost:8080> in a web browser to see the app running.
 <!-- AUTO-GENERATED-CONTENT:END -->
 

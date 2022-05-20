@@ -10,7 +10,8 @@ import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime";
 
-function setNavigator(navigator: Partial<Navigator & {deviceMemory?: number}> | undefined | null) {
+// eslint-disable-next-line @rushstack/no-new-null
+function setNavigator(navigator: Partial<Navigator & { deviceMemory?: number }> | undefined | null) {
     global.navigator = navigator as Navigator;
 }
 

@@ -44,16 +44,16 @@ const enum SnapshotPath {
 }
 
 interface ISetOp<T> {
-    type: MatrixOp.set,
-    row: number,
-    col: number,
-    value: MatrixItem<T>,
+    type: MatrixOp.set;
+    row: number;
+    col: number;
+    value: MatrixItem<T>;
 }
 
 interface ISetOpMetadata {
-    rowHandle: Handle,
-    colHandle: Handle,
-    localSeq: number,
+    rowHandle: Handle;
+    colHandle: Handle;
+    localSeq: number;
 }
 
 /**
@@ -78,8 +78,7 @@ export class SharedMatrix<T = any>
     extends SharedObject
     implements IMatrixProducer<MatrixItem<T>>,
     IMatrixReader<MatrixItem<T>>,
-    IMatrixWriter<MatrixItem<T>>
-{
+    IMatrixWriter<MatrixItem<T>> {
     private readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
 
     public static getFactory() { return new SharedMatrixFactory(); }
