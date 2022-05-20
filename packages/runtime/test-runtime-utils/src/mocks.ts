@@ -96,9 +96,9 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
 export interface IMockContainerRuntimePendingMessage {
-    content: any,
-    clientSequenceNumber: number,
-    localOpMetadata: unknown,
+    content: any;
+    clientSequenceNumber: number;
+    localOpMetadata: unknown;
 }
 
 /**

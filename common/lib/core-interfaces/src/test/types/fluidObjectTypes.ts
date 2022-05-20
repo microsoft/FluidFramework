@@ -106,7 +106,7 @@ declare function getIFluidObject(): IFluidObject;
 // validate nested property is FluidObject too
 {
     interface IFoo {
-        z: { z: { z: boolean } };
+        z: { z: { z: boolean; }; };
       }
 
     const foo: FluidObject<IFoo> = getFluidObject();
@@ -117,7 +117,7 @@ declare function getIFluidObject(): IFluidObject;
 // validate provider inheritance
 {
     interface IProvideFooParent{
-        IFooParent: IFooParent
+        IFooParent: IFooParent;
     }
 
     interface IFooParent extends Partial<IProvideFooParent>{
@@ -125,7 +125,7 @@ declare function getIFluidObject(): IFluidObject;
     }
 
     interface IFooProvideChild {
-        IFooChild: IFooChild
+        IFooChild: IFooChild;
     }
 
     interface IFooChild extends IFooParent, Partial<IFooProvideChild>{

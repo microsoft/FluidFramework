@@ -106,7 +106,7 @@
       "EnumDeclaration_TelemetryDataTag": {
         "backCompat": false
       },
-      "ClassDeclaration_MockLogger": {"backCompat": false}
+      "ClassDeclaration_MockLogger": {"forwardCompat": false}
     }
   }
 }

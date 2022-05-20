@@ -60,7 +60,7 @@ export interface ISummaryTree {
     type: SummaryType.Tree;
 
     // TODO type I can infer from SummaryObject. File mode I may want to directly specify so have symlink+exec access
-    tree: { [path: string]: SummaryObject };
+    tree: { [path: string]: SummaryObject; };
 
     // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
     unreferenced?: true;

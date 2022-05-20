@@ -12,7 +12,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
-import { IDb, MongoManager } from "@fluidframework/server-services-core";
+import { IDb, IDeliCheckpointHeuristicsServerConfiguration, MongoManager } from "@fluidframework/server-services-core";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
@@ -39,6 +39,12 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     // Database connection for global db if enabled
     const factory = await services.getDbFactory(config);
+
+    const checkpointHeuristics = config.get("deli:checkpointHeuristics") as
+                            IDeliCheckpointHeuristicsServerConfiguration;
+    if (checkpointHeuristics && checkpointHeuristics.enable) {
+        core.DefaultServiceConfiguration.deli.checkpointHeuristics = checkpointHeuristics;
+    }
 
     let globalDb;
     let globalDbManager;
