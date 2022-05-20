@@ -16,7 +16,7 @@ export interface ICollaborativeInputProps {
     spellCheck?: boolean;
     className?: string;
     style?: React.CSSProperties;
-    onInput?: (sharedString: SharedString) => void
+    onInput?: (sharedString: SharedString) => void;
 }
 
 export interface ICollaborativeInputState {

@@ -99,7 +99,7 @@ async function runTestNoTimer(
     batchSize: number,
     initialSeq: number,
     mockData: MyDataInput[],
-    expected: { [key: number]: (MyDataInput | undefined)[] },
+    expected: { [key: number]: (MyDataInput | undefined)[]; },
     initialWritesExpected: number) {
     const mockCache = new MockCache();
 
@@ -137,7 +137,7 @@ export async function runTestWithTimer(
     batchSize: number,
     initialSeq: number,
     mockData: MyDataInput[],
-    expected: { [key: number]: (MyDataInput | undefined)[] },
+    expected: { [key: number]: (MyDataInput | undefined)[]; },
     initialWritesExpected: number,
     totalWritesExpected: number) {
     const mockCache = new MockCache();
@@ -166,7 +166,7 @@ export async function runTest(
     batchSize: number,
     initialSeq: number,
     mockData: MyDataInput[],
-    expected: { [key: string]: (MyDataInput | undefined)[] },
+    expected: { [key: string]: (MyDataInput | undefined)[]; },
     initialWritesExpected: number,
     totalWritesExpected: number) {
     await runTestNoTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected);

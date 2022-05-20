@@ -58,8 +58,8 @@ export interface ITenantCustomData {
 }
 
 export interface ITenantKeys {
-    key1: string,
-    key2: string,
+    key1: string;
+    key2: string;
 }
 
 export enum KeyName {

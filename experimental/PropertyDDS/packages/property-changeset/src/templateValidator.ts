@@ -48,13 +48,13 @@ ajvKeywords(ajvFactory, "typeof");
 
 const _syntaxValidator = ajvFactory.compile(TemplateSchema);
 
-type ValuesType = { [key: string]: ValuesType };
+type ValuesType = { [key: string]: ValuesType; };
 
 type PropertyType = {
     id: string;
     context: string;
     typeid: string;
-    values: ValuesType
+    values: ValuesType;
 };
 
 type PropertiesType = PropertyType[];
@@ -63,10 +63,10 @@ export interface PropertySchema {
     constants?: any[];
     context: string;
     inherits?: string[];
-    annotation?: { [key: string]: string };
+    annotation?: { [key: string]: string; };
     properties: PropertiesType;
     typeid: string;
-    values: ValuesType
+    values: ValuesType;
 }
 
 type SchemaEntityType = PropertySchema | string[] | PropertiesType;
@@ -919,27 +919,27 @@ export interface TemplateValidatorOptions {
      * When set to true, {@link #validate} only checks the supplied templates' content
      * and fails the validation if they're not identical. Defaults to false.
      */
-    skipSemver?: boolean,
+    skipSemver?: boolean;
     /**
      * When set to true, the typeid of any schema can have '-draft' as a version. Defaults to false.
      */
-    allowDraft?: boolean,
+    allowDraft?: boolean;
     /**
      * Function that checks if a template inherits from another.
      */
-    inheritsFrom?: (source: PropertySchema, target: PropertySchema) => boolean,
+    inheritsFrom?: (source: PropertySchema, target: PropertySchema) => boolean;
     /**
      * Function that checks if we have a template matching a typeid.
      */
-    hasSchema?: (schema: PropertySchema, typeid: string) => boolean,
+    hasSchema?: (schema: PropertySchema, typeid: string) => boolean;
     /**
      * Function that checks if a template inherits from another asynchronously.
      */
-    inheritsFromAsync?: (source: PropertySchema, target: PropertySchema) => Promise<boolean>,
+    inheritsFromAsync?: (source: PropertySchema, target: PropertySchema) => Promise<boolean>;
     /**
      * Function that checks if we have a template matching a typeid asynchronously.
      */
-    hasSchemaAsync?: (schema: PropertySchema, typeid: string) => Promise<boolean>,
+    hasSchemaAsync?: (schema: PropertySchema, typeid: string) => Promise<boolean>;
 
 }
 

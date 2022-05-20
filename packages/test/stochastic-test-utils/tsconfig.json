@@ -4,13 +4,12 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
-        "esModuleInterop": true,
         "rootDir": "./src",
         "outDir": "./dist",
         "composite": true,
         "types": [
             "node"
-        ],
+        ]
     },
     "include": [
         "src/**/*"
