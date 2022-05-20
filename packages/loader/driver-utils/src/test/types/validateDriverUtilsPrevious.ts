@@ -187,6 +187,18 @@ use_old_FunctionDeclaration_configurableUrlResolver(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_convertSummaryTreeToSnapshotITree": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_convertSummaryTreeToSnapshotITree():
@@ -620,6 +632,18 @@ use_old_FunctionDeclaration_isOnline(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_logNetworkFailure": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_logNetworkFailure():
@@ -1025,6 +1049,18 @@ declare function use_old_FunctionDeclaration_streamObserver(
     use: TypeOnly<typeof old.streamObserver>);
 use_old_FunctionDeclaration_streamObserver(
     get_current_FunctionDeclaration_streamObserver());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedClassDeclaration_SummaryTreeAssembler": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedClassDeclaration_SummaryTreeAssembler": {"backCompat": false}
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
