@@ -39,7 +39,7 @@
     "@fluidframework/odsp-driver": "^0.59.4000",
     "@fluidframework/odsp-driver-definitions": "^0.59.4000",
     "@fluidframework/odsp-urlresolver": "^0.59.4000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
     "@fluidframework/routerlicious-driver": "^0.59.4000",
     "@fluidframework/routerlicious-urlresolver": "^0.59.4000",
     "@fluidframework/runtime-definitions": "^0.59.4000",

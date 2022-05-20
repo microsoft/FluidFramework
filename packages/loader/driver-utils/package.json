@@ -66,7 +66,7 @@
     "@fluidframework/driver-definitions": "^0.46.1000",
     "@fluidframework/gitresources": "^0.1036.3000",
     "@fluidframework/protocol-base": "^0.1036.3000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
     "@fluidframework/telemetry-utils": "^0.59.4000",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
