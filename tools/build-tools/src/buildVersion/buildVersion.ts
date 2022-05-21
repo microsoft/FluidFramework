@@ -134,7 +134,7 @@ export function getIsLatest(prefix: TagPrefix, current_version: string, input_ta
     const versions = input_tags !== undefined ? getVersionsFromStrings(prefix, input_tags) : getVersions(prefix);
 
     // The last item in the array is the latest because the array is already sorted.
-    const latestTaggedRelease = versions.slice(-1)[0];
+    const latestTaggedRelease = versions.slice(-1)[0] ?? "0.0.0";
 
     console.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
     const currentIsGreater = gt_semver(current_version, latestTaggedRelease);
