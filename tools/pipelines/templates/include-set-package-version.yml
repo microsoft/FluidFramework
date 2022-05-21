@@ -19,7 +19,7 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      npm install --global @fluidframework/build-tools@latest
+      npm install "$(Build.SourcesDirectory)/tools/build-tools" --global
 
 - task: Bash@3
   name: SetVersion
