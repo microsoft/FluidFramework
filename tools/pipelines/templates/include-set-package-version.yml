@@ -13,6 +13,15 @@ parameters:
 # Set version
 steps:
 - task: Bash@3
+  name: InstallBuildTools
+  displayName: Install Fluid Build Tools
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      npm install "$(Build.SourcesDirectory)/tools/build-tools" --global
+
+- task: Bash@3
   name: SetVersion
   displayName: Set Package Version
   env:
@@ -32,7 +41,7 @@ steps:
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
 
-      node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js
+      fluid-build-version
 - task: Bash@3
   displayName: Update Package Version
   env:
