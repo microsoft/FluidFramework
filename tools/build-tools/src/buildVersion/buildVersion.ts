@@ -34,10 +34,10 @@ function getFileVersion() {
 }
 
 function parseFileVersion(file_version: string, build_id?: number) {
-    let split = file_version.split("-");
+    const split = file_version.split("-");
     let release_version = split[0];
     split.shift();
-    let prerelease_version = split.join("-");
+    const prerelease_version = split.join("-");
 
     /**
      * Use the build id for patch number if given
@@ -256,10 +256,9 @@ function main() {
         console.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
     }
 
-    if (arg_release) {
-        let isLatest = getIsLatest(arg_tag, version);
-
-        console.log(`isLatest=${isLatest}`);
+    const isLatest = getIsLatest(arg_tag, version);
+    console.log(`isLatest=${isLatest}`);
+    if (arg_release && isLatest) {
         console.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
     }
 }
