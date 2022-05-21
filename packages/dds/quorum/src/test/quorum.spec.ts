@@ -325,25 +325,36 @@ describe("Quorum", () => {
             quorum2.connect(services2);
         });
 
-        describe("Behavior transitioning to disconnect", () => {
-            it("Can do something", async () => {
-                // Have an outstanding local proposal and remote proposal, transition to disconnect
-                // Both where the local client is the lone holdout and also where there are other holdouts
-                assert.strict(true);
-            });
-        });
+        // Nothing should really happen on transition to disconnect.  Pending remote proposals will
+        // eventually resolve but we don't know when yet.  Unack'd local proposals might get an ack
+        // or be dropped but we don't know which yet.  Pending local proposals will eventually resolve
+        // but we don't know when yet.
 
-        describe("Behavior while disconnected", () => {
-            it("Can do something", async () => {
-                // Try proposing while disconnected
-                assert.strict(true);
-            });
-        });
+        // Nothing special happens during disconnected state.  We can still issue proposals against
+        // the latest state of the Quorum just like we were in connected state -- these will be
+        // resubmitted when we reconnect but nothing will resolve while we're still offline.
 
+        // Upon transitioning back to connected state we should verify:
+        // 1.  We don't resubmit accept ops.
+        // 2.  We don't resubmit now-futile set ops (?).
+        // 3.  Proposals submitted while offline that encountered no conflict upon reconnect go pending.
+        // 4.  Proposals submitted while offline that encountered conflict get dropped.
+        // 5.  Pending remote proposals that resolved while we were offline get resolved.
+        // 6.  Pending remote proposals that remained pending while we were offline remain pending
+        //     and resolve later after the remaining accepts come in.
+        // 7.  Unack'd local proposals that weren't sequenced fail in a reasonable way (e.g. correctly
+        //     resolve the promise if we have a promise-based API).
+        // 8.  Unack'd local proposals that were sequenced and were resolved while we were offline
+        //     get resolved
+        // 9.  Unack'd local proposals that were sequenced and remained pending while we were offline
+        //     remain pending and resolve later after the remaining accepts come in.
+        // 10. Pending local proposals that resolved while we were offline get resolved.
+        // 11. Pending local proposals that remained pending while we were offline remain pending
+        //     and resolve later after the remaining accepts come in.
+        // Potentially also verify all the above for the case that the proposal was accepted via
+        // accept ops vs. being accepted because our client leaving triggered the acceptance?
         describe("Behavior transitioning to connected", () => {
             it("Can do something", async () => {
-                // Remote holdout approved/disconnected in the meantime
-                // Holdout is still around
                 assert.strict(true);
             });
         });
