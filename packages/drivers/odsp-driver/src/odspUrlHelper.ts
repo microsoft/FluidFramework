@@ -69,7 +69,7 @@ export function isOdcUrl(url: string | URL): boolean {
     // Format: /v2.1/drives('ABC123')/items('ABC123!123')
     const odcODataRegex = /\/v2.1\/drives\('[^/]+'\)\/items\('[\da-z]+!\d+'\)/;
 
-    return !!(odcRegex.exec(path) || odcODataRegex.exec(path));
+    return !!(odcRegex.exec(path) ?? odcODataRegex.exec(path));
 }
 
 /**
