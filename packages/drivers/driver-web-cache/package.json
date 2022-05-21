@@ -65,7 +65,6 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
-    "eslint-plugin-unused-imports": "~2.0.0",
     "fake-indexeddb": "3.1.4",
     "jest": "^26.6.3",
     "rimraf": "^2.6.2",
