@@ -19,7 +19,9 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      npm install "$(Build.SourcesDirectory)/tools/build-tools" --global
+      npm link "$(Build.SourcesDirectory)/tools/build-tools"
+      cd "$(Build.SourcesDirectory)/tools/build-tools"
+      npm run build
 
 - task: Bash@3
   name: SetVersion
