@@ -148,7 +148,7 @@ export class Field {
     validate(value) {
         if (!value && this.options.required) { return "Required field"; }
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.validateType(value) || this.options.validate?.(value);
+        return this.validateType(value) ?? this.options.validate?.(value);
     }
 
     clean(value) {

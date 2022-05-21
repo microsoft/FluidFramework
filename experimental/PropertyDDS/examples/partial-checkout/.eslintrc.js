@@ -13,6 +13,7 @@ module.exports = {
         "import/no-internal-modules": "off",
         "unicorn/filename-case": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/unbound-method": "off"
+        "@typescript-eslint/unbound-method": "off",
+        "@typescript-eslint/prefer-nullish-coalescing": "off",
 	},
 };
