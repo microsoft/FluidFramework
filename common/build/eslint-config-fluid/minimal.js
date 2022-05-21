@@ -190,6 +190,7 @@ module.exports = {
         "tsdoc/syntax": "error",
 
         "@typescript-eslint/prefer-includes": "error",
+        "@typescript-eslint/prefer-nullish-coalescing": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
     },
     "overrides": [
