@@ -46,7 +46,7 @@ export function jsonMorganLoggerMiddleware(
             }
             const properties = {
                 [HttpProperties.method]: tokens.method(req, res),
-                [HttpProperties.pathCategory]: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
+                [HttpProperties.pathCategory]: `${req.baseUrl}${req.route?.path ?? "PATH_UNAVAILABLE"}`,
                 [HttpProperties.url]: tokens.url(req, res),
                 [HttpProperties.status]: tokens.status(req, res),
                 [HttpProperties.contentLength]: tokens.res(req, res, "content-length"),

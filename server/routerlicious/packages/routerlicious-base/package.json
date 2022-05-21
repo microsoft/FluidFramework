@@ -52,7 +52,7 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1036.4000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
     "@fluidframework/server-kafka-orderer": "^0.1036.4000",
     "@fluidframework/server-lambdas": "^0.1036.4000",
     "@fluidframework/server-lambdas-driver": "^0.1036.4000",
@@ -98,7 +98,6 @@
     "@types/jsonwebtoken": "^8.3.0",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^9.1.1",
-    "@types/morgan": "^1.7.35",
     "@types/nconf": "^0.10.2",
     "@types/request": "^2.47.1",
     "@types/split": "^0.3.28",
