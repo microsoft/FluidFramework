@@ -10,8 +10,8 @@ describe("ToDo", () => {
     const getItemUrl = async (index: number) =>
         retryWithEventualValue(
             () => page.evaluate((i: number) => {
-                const subComponentButton = document.getElementsByName("OpenSubComponent");
-                const button = subComponentButton[i] as HTMLDivElement;
+                const openInNewTabButtons = document.querySelectorAll("button[name=OpenInNewTab]");
+                const button = openInNewTabButtons[i] as HTMLDivElement;
                 if (button) {
                     // TODO: Something better here
                     return `${window.location.href}/${button.id}`;
@@ -54,7 +54,7 @@ describe("ToDo", () => {
         await expect(page).toClick("button[name=createItem]");
 
         // Expand details
-        await expect(page).toClick("button[name=toggleInnerVisible]");
+        await expect(page).toClick("button[name=toggleDetailsVisible]");
 
         // Check details exist
         const foundDetails = await page.evaluate(() => {
@@ -64,7 +64,7 @@ describe("ToDo", () => {
         expect(foundDetails).toBeTruthy();
 
         // Hide details and check they disappear
-        await expect(page).toClick("button[name=toggleInnerVisible]");
+        await expect(page).toClick("button[name=toggleDetailsVisible]");
         const hiddenDetails = await page.evaluate(() => {
             const details = document.querySelector("textarea");
             return details === null || details === undefined;

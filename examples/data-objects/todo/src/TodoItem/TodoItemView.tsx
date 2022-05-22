@@ -43,11 +43,11 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
                 <input
                     type="checkbox"
                     className="todo-item-checkbox"
-                    name={todoItemModel.handle.absolutePath}
                     checked={checked}
                     onChange={checkChangedHandler} />
                 <button
                     className="todo-item-expand-button"
+                    name="toggleDetailsVisible"
                     onClick={ () => { setDetailsVisible(!detailsVisible); } }
                 >{detailsVisible ? "▲" : "▼"}</button>
                 <CollaborativeInput

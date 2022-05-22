@@ -63,7 +63,7 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
         <div className="item-wrap" key={id}>
             <TodoItemView todoItemModel={todoItem} className="todo-item-view" />
             <button
-                name="OpenSubComponent"
+                name="OpenInNewTab"
                 id={id}
                 className="action-button"
                 onClick={() => window.open(getDirectLink(id), "_blank")}
