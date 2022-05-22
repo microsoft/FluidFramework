@@ -274,7 +274,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         //    loads all blobs at once and partitioning schema has no impact on that process.
         for (const key of Object.keys(data)) {
             const value = data[key];
-            if (value.value !== undefined && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
                 const blobName = `blob${counter}`;
                 counter++;
                 blobs.push(blobName);
@@ -287,7 +288,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
                 builder.addBlob(blobName, JSON.stringify(content));
             } else {
                 currentSize += value.type.length + 21; // Approximation cost of property header
-                if (value.value !== undefined) {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                if (value.value) {
                     currentSize += value.value.length;
                 }
 
@@ -338,7 +340,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      * @internal
      */
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}

@@ -49,7 +49,8 @@ export function makeSerializable(
     const value = localValue.makeSerialized(serializer, bind);
     return {
         type: value.type,
-        value: value.value !== undefined && JSON.parse(value.value),
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        value: value.value && JSON.parse(value.value),
     };
 }
 
