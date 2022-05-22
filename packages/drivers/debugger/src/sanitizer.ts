@@ -265,6 +265,7 @@ export class Sanitizer {
 
     readonly replaceRandomTextFn = (match: string): string => {
         if (this.replacementMap.has(match)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             return this.replacementMap.get(match)!;
         }
 
@@ -284,6 +285,7 @@ export class Sanitizer {
 
         if (type === TextType.FluidObject) {
             if (this.replacementMap.has(input)) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 return this.replacementMap.get(input)!;
             }
 
