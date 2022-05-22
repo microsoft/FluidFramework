@@ -224,8 +224,8 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
             }
             const result: ISerializableValue = {
                 type: value.type,
-                // eslint-disable-next-line @typescript-eslint/ban-types
-                value: value.value !== undefined && JSON.parse(value.value) as object,
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                value: value.value && JSON.parse(value.value) as object,
             };
             if (value.value !== undefined && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
                 const extraContent: IDirectoryDataObject = {};
@@ -637,7 +637,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             if (currentSubDirObject.subdirectories) {
                 for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
                     let newSubDir = currentSubDir.getSubDirectory(subdirName) as SubDirectory;
-                    if (newSubDir !== undefined) {
+                    if (newSubDir === undefined) {
                         newSubDir = new SubDirectory(
                             this,
                             this.runtime,
