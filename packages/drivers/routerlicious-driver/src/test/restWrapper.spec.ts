@@ -23,7 +23,7 @@ describe("RouterliciousDriverRestWrapper", () => {
     const token3 = "abc-auth-token-123";
     let tokenQueue: string[] = [];
     // Pop a token off tokenQueue to generate an auth header
-    const getAuthHeader = async () => `Bearer ${tokenQueue.shift() || ""}`;
+    const getAuthHeader = async () => `Bearer ${tokenQueue.shift() ?? ""}`;
 
     // Set up mock throttling
     let throttleDurationInMs: number;

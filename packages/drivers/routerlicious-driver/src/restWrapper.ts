@@ -71,7 +71,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
                     isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error));
             }));
 
-        const responseBody: any = response.headers.get("content-type")?.includes("application/json")
+        const responseBody: any = response.headers.get("content-type")?.includes("application/json") === true
             ? await response.json()
             : await response.text();
 
@@ -106,7 +106,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
     }
 
     private generateHeaders(requestHeaders?: AxiosRequestHeaders | undefined): Record<string, string> {
-        const correlationId = requestHeaders?.["x-correlation-id"] || uuid();
+        const correlationId = requestHeaders?.["x-correlation-id"] ?? uuid();
 
         return {
             ...requestHeaders,

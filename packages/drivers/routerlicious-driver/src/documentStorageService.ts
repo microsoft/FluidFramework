@@ -8,7 +8,7 @@ import {
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     LoaderCachingPolicy,
- } from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     ISnapshotTree,
     IVersion,
@@ -39,8 +39,8 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         blobCache?: ICache<ArrayBufferLike>,
         snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
         noCacheGitManager?: GitManager): IDocumentStorageService {
-        const storageService = driverPolicies?.enableWholeSummaryUpload ?
-            new WholeSummaryDocumentStorageService(
+        const storageService = driverPolicies?.enableWholeSummaryUpload !== undefined
+            ? new WholeSummaryDocumentStorageService(
                 id,
                 manager,
                 logger,
@@ -49,8 +49,8 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
                 blobCache,
                 snapshotTreeCache,
                 noCacheGitManager,
-            ) :
-            new ShreddedSummaryDocumentStorageService(
+            )
+            : new ShreddedSummaryDocumentStorageService(
                 id,
                 manager,
                 logger,
@@ -60,7 +60,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
                 snapshotTreeCache,
             );
         // TODO: worth prefetching latest summary making version + snapshot call with WholeSummary storage?
-        if (!driverPolicies?.enableWholeSummaryUpload && policies.caching === LoaderCachingPolicy.Prefetch) {
+        if (driverPolicies?.enableWholeSummaryUpload === true && policies.caching === LoaderCachingPolicy.Prefetch) {
             return new PrefetchDocumentStorageService(storageService);
         }
         return storageService;

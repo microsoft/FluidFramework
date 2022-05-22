@@ -21,7 +21,7 @@ export const replaceDocumentIdInPath = (urlPath: string, documentId: string): st
     urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
 
 export const getDiscoveredFluidResolvedUrl = (resolvedUrl: IFluidResolvedUrl, session: ISession): IFluidResolvedUrl => {
-    if (session) {
+    if (session !== undefined) {
         const discoveredOrdererUrl = new URLParse(session.ordererUrl);
         const deltaStorageUrl = new URLParse(resolvedUrl.endpoints.deltaStorageUrl);
         deltaStorageUrl.set("host", discoveredOrdererUrl.host);

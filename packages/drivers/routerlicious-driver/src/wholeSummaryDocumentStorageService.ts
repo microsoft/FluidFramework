@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     convertSnapshotAndBlobsToSummaryTree,
- } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils";
 import {
     ICreateBlobResponse,
     ISnapshotTree,
@@ -70,9 +70,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         // Fetch latest summary, cache it, and return its id.
         if (this.firstVersionsCall && count === 1) {
             this.firstVersionsCall = false;
-            const { id: _id, snapshotTree } = !this.driverPolicies?.enableDiscovery ?
-                await this.fetchAndCacheSnapshotTree(latestSnapshotId, false) :
-                await this.fetchAndCacheSnapshotTree(latestSnapshotId, true);
+            const { id: _id, snapshotTree } = this.driverPolicies?.enableDiscovery ?? false
+                ? await this.fetchAndCacheSnapshotTree(latestSnapshotId, false)
+                : await this.fetchAndCacheSnapshotTree(latestSnapshotId, true);
             return [{
                 id: _id,
                 treeId: snapshotTree.id!,
@@ -80,7 +80,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         }
 
         // Otherwise, get the latest version of the document as normal.
-        const id = versionId ? versionId : this.id;
+        const id = versionId !== null ? versionId : this.id;
         const commits = await PerformanceEvent.timedExecAsync(
             this.logger,
             {
@@ -207,7 +207,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
                 treeId: versionId,
             },
             async (event) => {
-                const response = disableCache && this.noCacheGitManager !== undefined ?
+                const response = disableCache === true && this.noCacheGitManager !== undefined ?
                     await this.noCacheGitManager.getSummary(versionId) :
                     await this.manager.getSummary(versionId);
                 event.end({

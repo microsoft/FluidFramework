@@ -78,7 +78,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-        if (!(protocolSummary && appSummary)) {
+        if (protocolSummary === undefined || appSummary === undefined) {
             throw new Error("Protocol and App Summary required in the full summary");
         }
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
@@ -123,7 +123,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             token = res.token;
             session = res.session;
         }
-        if (session && this.driverPolicies.enableDiscovery) {
+        if (session && this.driverPolicies.enableDiscovery === true) {
             fluidResolvedUrl = getDiscoveredFluidResolvedUrl(resolvedUrl, session);
         } else {
             fluidResolvedUrl = resolvedUrl;
@@ -132,7 +132,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
         // is sufficient to determine if the token will be undefined or not.
-        if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
+        if (token !== undefined && this.tokenProvider.documentPostCreateCallback !== undefined) {
             await this.tokenProvider.documentPostCreateCallback(documentId, token);
         }
 
@@ -184,7 +184,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion } });
 
         let fluidResolvedUrl: IResolvedUrl;
-        if (!isCreateContainer && this.driverPolicies.enableDiscovery) {
+        if (isCreateContainer !== true && this.driverPolicies.enableDiscovery === true) {
             const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
             const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
                 tenantId,

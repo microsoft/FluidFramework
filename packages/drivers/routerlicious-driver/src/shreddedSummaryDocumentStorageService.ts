@@ -72,7 +72,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
     }
 
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
-        const id = versionId ? versionId : this.id;
+        const id = versionId !== null ? versionId : this.id;
         const commits = await PerformanceEvent.timedExecAsync(
             this.logger,
             {
