@@ -169,7 +169,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
         Promise<T | undefined> {
         const handleMaybe = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
         const handle = handleMaybe?.IFluidHandle;
-        if (handle) {
+        if (handle !== undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return handle.get();
         }

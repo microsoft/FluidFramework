@@ -23,7 +23,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     private readonly parents: IFluidDependencySynthesizer[];
     public get IFluidDependencySynthesizer() { return this; }
 
-    public constructor(... parents: (IFluidDependencySynthesizer | undefined)[]) {
+    public constructor(...parents: (IFluidDependencySynthesizer | undefined)[]) {
         this.parents = parents.filter((v): v is IFluidDependencySynthesizer => v !== undefined);
     }
 
@@ -87,15 +87,18 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         // this is just for back compat until those are removed
         if (this.has(provider)) {
             if (this.providers.has(provider)) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return this.providers.get(provider);
             }
             for (const parent of this.parents) {
                 if (parent instanceof DependencyContainer) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return parent.getProvider(provider);
                 } else {
                     // older implementations of the IFluidDependencySynthesizer exposed getProvider
                     const maybeGetProvider: { getProvider?(provider: string & keyof TMap); } = parent as any;
                     if (maybeGetProvider?.getProvider !== undefined) {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         return maybeGetProvider.getProvider(provider);
                     }
                 }
@@ -161,24 +164,27 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         if (typeof provider === "function") {
             return {
                 get() {
-                    if (provider && typeof provider === "function") {
+                    if (provider !== undefined && typeof provider === "function") {
                         return Promise.resolve(this[IFluidDependencySynthesizer])
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                             .then(async (fds): Promise<any> => provider(fds))
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                             .then((p) => p?.[t]);
                     }
                 },
             };
         }
         return {
-                get() {
-                    if (provider) {
-                        return Promise.resolve(provider).then((p) => {
-                            if (p) {
-                                return p[t];
-                            }
-                        });
-                    }
-                },
-            };
+            get() {
+                if (provider !== undefined) {
+                    return Promise.resolve(provider).then((p) => {
+                        if (p !== undefined) {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            return p[t];
+                        }
+                    });
+                }
+            },
+        };
     }
 }

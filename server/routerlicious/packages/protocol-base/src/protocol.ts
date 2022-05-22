@@ -84,6 +84,7 @@ export class ProtocolOpHandler {
 
         let immediateNoOp = false;
 
+        /* eslint-disable no-case-declarations */
         switch (message.type) {
             case MessageType.ClientJoin:
                 const systemJoinMessage = message as ISequencedDocumentSystemMessage;
@@ -119,6 +120,7 @@ export class ProtocolOpHandler {
 
             default:
         }
+        /* eslint-enable no-case-declarations */
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.

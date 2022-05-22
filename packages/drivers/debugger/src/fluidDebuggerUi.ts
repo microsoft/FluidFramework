@@ -197,6 +197,7 @@ export class DebuggerUI {
 
         const buttonVers = doc.getElementById("buttonVers") as HTMLDivElement;
         buttonVers.onclick = () => {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const index = this.selector!.selectedIndex;
             controller.onVersionSelection(this.versions[index]);
         };
@@ -292,6 +293,7 @@ export class DebuggerUI {
     }
 
     public updateNextOpText(ops: ISequencedDocumentMessage[]) {
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         if (ops.length === 0) {
             this.text1!.textContent = "";
             this.text2!.textContent = "";
@@ -304,6 +306,7 @@ export class DebuggerUI {
             this.text2!.textContent = `Type: ${op.type}`;
             this.text3!.textContent = `${date}`;
         }
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
     }
 
     public updateVersionText(versionCount: number) {
@@ -323,6 +326,7 @@ export class DebuggerUI {
         } else {
             text = `Document's last op seq#: ${lastKnownOp}`;
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.lastOpText!.textContent = text;
     }
 

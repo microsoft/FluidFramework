@@ -405,7 +405,7 @@ export class Sanitizer {
                     const data = JSON.parse(message.contents);
                     if (this.fullScrub) {
                         const pkg = data.value?.package;
-                        if (pkg?.name) {
+                        if (pkg?.name !== undefined) {
                             pkg.name = this.replaceText(pkg.name, TextType.FluidObject);
                         }
                         if (Array.isArray(pkg?.fluid?.browser?.umd?.files)) {
@@ -426,7 +426,7 @@ export class Sanitizer {
     fixAttachEntries(entries: any[]) {
         entries.forEach((element) => {
             // Tree type
-            if (element.value.entries) {
+            if (element.value.entries !== undefined) {
                 this.fixAttachEntries(element.value.entries);
             } else {
             // Blob (leaf) type

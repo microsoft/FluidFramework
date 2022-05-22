@@ -21,12 +21,11 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         const server = reqUrl.hostname.toLowerCase();
         let contents: IOdspUrlParts | undefined;
         if (fluidOfficeAndOneNoteServers.includes(server)) {
-            // eslint-disable-next-line @typescript-eslint/no-use-before-define
             contents = await initializeFluidOfficeOrOneNote(reqUrl);
         } else if (server === "www.office.com") {
             const getRequiredParam = (name: string): string => {
                 const value = reqUrl.searchParams.get(name);
-                assert(!!value, 0x097 /* `Missing ${name} from office.com URL parameter` */);
+                assert(value !== null, 0x097 /* `Missing ${name} from office.com URL parameter` */);
                 return value;
             };
             contents = {

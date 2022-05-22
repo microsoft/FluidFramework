@@ -54,14 +54,14 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         const pathArr = pathName.split("/");
         const tenantId = pathArr[pathArr.length - 2];
         const id = pathArr[pathArr.length - 1];
-        if (!this.localDeltaConnectionServer) {
+        if (this.localDeltaConnectionServer !== undefined) {
             throw new Error("Provide the localDeltaConnectionServer!!");
         }
         const documentStorage = (this.localDeltaConnectionServer as LocalDeltaConnectionServer).documentStorage;
 
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-        if (!(protocolSummary && appSummary)) {
+        if (protocolSummary === undefined || appSummary === undefined) {
             throw new Error("Protocol and App Summary required in the full summary");
         }
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
@@ -95,7 +95,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const parsedUrl = parse(resolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.path ? parsedUrl.path.split("/") : [];
+        const [, tenantId, documentId] = parsedUrl.path !== null ? parsedUrl.path.split("/") : [];
         if (!documentId || !tenantId) {
             throw new Error(`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`);
         }

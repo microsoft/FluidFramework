@@ -21,7 +21,7 @@ describe("Local Driver Resolver", () => {
         });
 
         it("should successfully create a creatNewRequest", async () => {
-            assert(!!request.headers?.[DriverHeader.createNew],
+            assert(request.headers?.[DriverHeader.createNew] !== undefined,
                 "Request should contain create new header");
             const expectedUrl = `http://localhost:3000/${documentId}`;
             assert.equal(request.url, expectedUrl, "The url in createNewRequest should match");

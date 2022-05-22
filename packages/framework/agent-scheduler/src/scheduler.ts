@@ -81,7 +81,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
-        assert(!!clientId, 0x117 /* "Trying to get missing clientId!" */);
+        assert(clientId !== undefined, 0x117 /* "Trying to get missing clientId!" */);
         return clientId;
     }
 
@@ -347,6 +347,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
         const tasks: Promise<any>[] = [];
 
         for (const [taskUrl] of this.locallyRunnableTasks) {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!this.getTaskClientId(taskUrl)) {
                 tasks.push(this.writeCore(taskUrl, this.clientId));
             }
@@ -354,6 +355,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
 
         for (const taskUrl of this.consensusRegisterCollection.keys()) {
             const currentClient = this.getTaskClientId(taskUrl);
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (currentClient && this.runtime.getQuorum().getMember(currentClient) === undefined) {
                 clearCandidates.push(taskUrl);
             }

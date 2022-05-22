@@ -55,7 +55,7 @@ export class CollaborativeCheckbox
                 aria-checked={this.state.checked}
                 name={this.props.id}
                 checked={this.state.checked}
-                onChange={this.updateCheckbox} />
+                onChange={this.updateCheckbox.bind(this)} />
         );
     }
 

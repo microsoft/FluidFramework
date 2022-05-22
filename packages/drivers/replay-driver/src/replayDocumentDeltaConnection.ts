@@ -299,7 +299,7 @@ export class ReplayDocumentDeltaConnection
         documentStorageService: IDocumentDeltaStorageService,
         controller: ReplayController,
     ): Promise<void> {
-        let done;
+        let done: boolean;
         let replayPromiseChain = Promise.resolve();
 
         let currentOp = await controller.getStartingOpSequence();

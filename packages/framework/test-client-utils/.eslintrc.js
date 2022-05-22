@@ -11,7 +11,6 @@ module.exports = {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "rules": {
-        "@typescript-eslint/strict-boolean-expressions": "off",
-        "import/no-extraneous-dependencies": "off"
+        // "import/no-extraneous-dependencies": "off"
     }
 }

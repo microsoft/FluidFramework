@@ -132,9 +132,9 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         resolvedUrl: IResolvedUrl,
         outerProxyLogger: ITelemetryLogger,
     ): Promise<string> {
-        const clientDetails: IClient = this.options?.client ?
-            (this.options.client as IClient) :
-            {
+        const clientDetails: IClient = this.options?.client !== undefined
+            ? (this.options.client as IClient)
+            : {
                 details: {
                     capabilities: { interactive: true },
                 },

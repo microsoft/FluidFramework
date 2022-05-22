@@ -71,13 +71,13 @@ export class CollaborativeInput
             <input
                 className={this.props.className}
                 style={this.props.style}
-                spellCheck={this.props.spellCheck ? this.props.spellCheck : true}
+                spellCheck={this.props.spellCheck ?? true}
                 ref={this.inputElementRef}
-                onBeforeInput={this.updateSelection}
-                onKeyDown={this.updateSelection}
-                onClick={this.updateSelection}
-                onContextMenu={this.updateSelection}
-                onInput={this.handleInput} />
+                onBeforeInput={this.updateSelection.bind(this)}
+                onKeyDown={this.updateSelection.bind(this)}
+                onClick={this.updateSelection.bind(this)}
+                onContextMenu={this.updateSelection.bind(this)}
+                onInput={this.handleInput.bind(this)} />
         );
     }
 
@@ -93,7 +93,7 @@ export class CollaborativeInput
         const newText = ev.currentTarget.value;
 
         // Get the new caret position and use that to get the text that was inserted
-        const newPosition = ev.currentTarget.selectionStart ? ev.currentTarget.selectionStart : 0;
+        const newPosition = ev.currentTarget.selectionStart !== null ? ev.currentTarget.selectionStart : 0;
         const isTextInserted = newPosition - this.state.selectionStart > 0;
         if (isTextInserted) {
             const insertedText = newText.substring(this.state.selectionStart, newPosition);
@@ -119,9 +119,13 @@ export class CollaborativeInput
             return;
         }
 
-        const selectionEnd = this.inputElementRef.current.selectionEnd ? this.inputElementRef.current.selectionEnd : 0;
-        // eslint-disable-next-line max-len
-        const selectionStart = this.inputElementRef.current.selectionStart ? this.inputElementRef.current.selectionStart : 0;
+        const selectionEnd = this.inputElementRef.current.selectionEnd !== null
+            ? this.inputElementRef.current.selectionEnd
+            : 0;
+
+        const selectionStart = this.inputElementRef.current.selectionStart !== null
+            ? this.inputElementRef.current.selectionStart
+            : 0;
         this.setState({ selectionEnd, selectionStart });
     }
 }

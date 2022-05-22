@@ -11,7 +11,5 @@ module.exports = {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "rules": {
-        "@typescript-eslint/no-unsafe-return": "off",
-        "@typescript-eslint/strict-boolean-expressions": "off",
     }
 }

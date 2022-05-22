@@ -51,7 +51,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         const queryKeys = Object.keys(query);
         let filteredCollection = this.getAllInternal();
         queryKeys.forEach((key) => {
-            if (!query[key]) {
+            if (query?.[key] === undefined) {
                 return;
             }
             if (query[key].$gt > 0 || query[key].$lt > 0) {
@@ -69,7 +69,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
             }
         });
 
-        if (sort && Object.keys(sort).length === 1) {
+        if (sort !== undefined && Object.keys(sort).length === 1) {
             // eslint-disable-next-line no-inner-declarations
             function compare(a, b) {
                 const sortKey = Object.keys(sort)[0];
@@ -113,7 +113,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      */
     public async update(query: any, set: any, addToSet: any): Promise<void> {
         const value = this.findOneInternal(query);
-        if (!value) {
+        if (value === undefined) {
             throw new Error("Not found");
         } else {
             for (const key of Object.keys(set)) {
@@ -131,7 +131,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      */
     public async upsert(query: any, set: any, addToSet: any): Promise<void> {
         const value = this.findOneInternal(query);
-        if (!value) {
+        if (value === undefined) {
             this.insertInternal(set);
         } else {
             for (const key of Object.keys(set)) {
@@ -150,7 +150,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
     public async insertOne(value: any): Promise<any> {
         const presentVal = this.findOneInternal(value);
         // Only raise error when the object is present and the value is not equal.
-        if (presentVal) {
+        if (presentVal !== undefined) {
             if (JSON.stringify(presentVal) === JSON.stringify(value)) {
                 return;
             }
@@ -168,7 +168,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      */
     public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean; }> {
         const existing = this.findOneInternal(query);
-        if (existing) {
+        if (existing !== undefined) {
             return { value: existing, existing: true };
         }
         this.insertInternal(value);
@@ -230,8 +230,8 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      */
     private insertInternal(...values: any[]) {
         for (const value of values) {
-            if (value) {
-                if (!value._id) {
+            if (value !== undefined) {
+                if (value._id === undefined) {
                     value._id = uuid();
                 }
                 sessionStorage.setItem(`${this.collectionName}-${value._id}`, JSON.stringify(value));
@@ -247,10 +247,9 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      * @param query - what to find in the database
      */
     private findOneInternal(query: any): any {
-        if (query._id) {
+        if (query._id !== undefined) {
             const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);
-            if (json) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            if (json !== null) {
                 return JSON.parse(json);
             }
         } else {

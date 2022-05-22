@@ -34,7 +34,9 @@ export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI
 export class DebugReplayController extends ReplayController implements IDebuggerController {
     public static create(
         createUi: debuggerUIFactory): DebugReplayController | null {
-                if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidDebugger) {
+        if (typeof localStorage === "object"
+            && localStorage !== null
+            && localStorage.FluidDebugger !== undefined) {
             const controller = new DebugReplayController();
             const ui = createUi(controller);
             if (ui) {
@@ -207,7 +209,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
             return this.shouldUseController;
         }
 
-        assert(!!documentService, 0x080 /* "Invalid document service!" */);
+        assert(documentService !== undefined, 0x080 /* "Invalid document service!" */);
         assert(!this.documentService, 0x081 /* "Document service already set!" */);
         assert(!this.documentStorageService, 0x082 /* "Document storage service already set!" */);
         this.documentService = documentService;
@@ -335,7 +337,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         storage: ReadDocumentStorageServiceBase,
         version: IVersion | string) {
         assert(!this.isSelectionMade(), 0x084 /* "On storage resolve, user selection already made!" */);
-        assert(!!storage, 0x085 /* "On storage resolve, missing storage!" */);
+        assert(storage !== undefined, 0x085 /* "On storage resolve, missing storage!" */);
         this.storage = storage;
         assert(this.isSelectionMade(), 0x086 /* "After storage resolve, user selection status still false!" */);
 

@@ -111,7 +111,7 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
         this.emitter.on("error", (error) => {
             this.emit("error", error);
         });
-        this.managerId = managerId ? `#${managerId}` : undefined;
+        this.managerId = managerId !== undefined ? `#${managerId}` : undefined;
         this.signaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             const clientId = message.clientId;
             // Only call listeners when the runtime is connected and if the signal has an
@@ -124,7 +124,7 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
     }
 
     private getManagerSignalName(signalName: string): string {
-        return this.managerId ? `${signalName}${this.managerId}` : signalName;
+        return this.managerId !== undefined ? `${signalName}${this.managerId}` : signalName;
     }
 
     private getBroadcastSignalName(signalName: string): string {

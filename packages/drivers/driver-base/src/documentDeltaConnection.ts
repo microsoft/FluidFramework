@@ -363,7 +363,7 @@ export class DocumentDeltaConnection
                 let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
-                    if (description && typeof description === "object") {
+                    if (description !== undefined && typeof description === "object") {
                         if (error.type === "TransportError") {
                             isWebSocketTransportError = true;
                         }
