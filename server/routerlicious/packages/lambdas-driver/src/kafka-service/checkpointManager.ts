@@ -31,7 +31,7 @@ export class CheckpointManager {
         }
 
         // No recovery once entering an error state
-        if (this.error) {
+        if (this.error !== undefined) {
             return Promise.reject(this.error);
         }
 

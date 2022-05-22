@@ -8,6 +8,7 @@ module.exports = {
         "@fluidframework/eslint-config-fluid"
     ],
     "rules": {
-        "@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+        // Requires strictNullChecks=true in tsconfig. https://github.com/microsoft/FluidFramework/issues/9500
+        "@typescript-eslint/strict-boolean-expressions": "off",
     }
 }

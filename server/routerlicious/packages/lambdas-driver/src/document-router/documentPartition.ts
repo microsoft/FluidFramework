@@ -131,8 +131,10 @@ export class DocumentPartition {
         }
     }
 
-    public isInactive(now: number = Date.now()) {
-        return !this.context.hasPendingWork() && this.activityTimeoutTime && now > this.activityTimeoutTime;
+    public isInactive(now: number = Date.now()): boolean {
+        return !this.context.hasPendingWork()
+            && this.activityTimeoutTime !== undefined
+            && now > this.activityTimeoutTime;
     }
 
     /**

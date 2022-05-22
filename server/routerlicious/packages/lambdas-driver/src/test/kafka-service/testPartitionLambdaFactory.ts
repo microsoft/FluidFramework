@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/server-services-core";
 
 export class TestLambda implements IPartitionLambda {
-    private lastOffset: number;
+    private lastOffset: number | undefined;
 
     constructor(
         private readonly factory: TestPartitionLambdaFactory,

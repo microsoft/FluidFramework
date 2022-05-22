@@ -9,6 +9,7 @@ module.exports = {
     ],
     "rules": {
         "@typescript-eslint/restrict-template-expressions": "off",
+        // Requires strictNullChecks=true in tsconfig. https://github.com/microsoft/FluidFramework/issues/9500
         "@typescript-eslint/strict-boolean-expressions": "off",
     }
 }
