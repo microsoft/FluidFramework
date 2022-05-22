@@ -79,12 +79,12 @@ export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState; 
 
     // start public API surface for the TodoItem model, used by the view
 
-    // Would prefer not to hand this out, and instead give back a component?
+    // Would prefer not to hand this out, and instead give back an object?
     public getText() {
         return this.text;
     }
 
-    // Would prefer not to hand this out, and instead give back a component?
+    // Would prefer not to hand this out, and instead give back an object?
     public getDetailedText(): SharedString {
         return this.detailedText;
     }

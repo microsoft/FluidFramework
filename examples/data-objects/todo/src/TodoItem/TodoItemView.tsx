@@ -56,7 +56,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
                 />
             </h2>
             {
-                // If the content is visible we will show a button or a component
+                // The details can be shown or hidden
                 detailsVisible &&
                 <CollaborativeTextArea
                     className="todo-item-details"

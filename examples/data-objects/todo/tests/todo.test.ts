@@ -13,7 +13,8 @@ describe("ToDo", () => {
                 const openInNewTabButtons = document.querySelectorAll("button[name=OpenInNewTab]");
                 const button = openInNewTabButtons[i] as HTMLDivElement;
                 if (button) {
-                    // TODO: Something better here
+                    // TODO: Would be better to actually click the button and verify it opens in a
+                    // new tab correctly.
                     return `${window.location.href}/${button.id}`;
                 }
 
@@ -33,10 +34,10 @@ describe("ToDo", () => {
         await page.waitFor(() => window["fluidStarted"]);
     });
 
-    test("todo items can be added", async () => {
-        await expect(page).toFill("input[name=itemName]", "ToDoItem1");
+    test("TodoItems can be added", async () => {
+        await expect(page).toFill("input[name=itemName]", "TodoItem1");
         await expect(page).toClick("button[name=createItem]");
-        await expect(page).toFill("input[name=itemName]", "ToDoItem2");
+        await expect(page).toFill("input[name=itemName]", "TodoItem2");
         await expect(page).toClick("button[name=createItem]");
 
         const result = await page.evaluate(() => {
@@ -48,7 +49,7 @@ describe("ToDo", () => {
         expect(result).toBeTruthy();
     });
 
-    test("todo item has detailed text", async () => {
+    test("TodoItem has detailed text", async () => {
         // Add item
         await expect(page).toFill("input[name=itemName]", "ToDoDetails");
         await expect(page).toClick("button[name=createItem]");
@@ -72,7 +73,7 @@ describe("ToDo", () => {
         expect(hiddenDetails).toBeTruthy();
     });
 
-    test("todo sub components routing", async () => {
+    test("TodoItem routing", async () => {
         await expect(page).toFill("input[name=itemName]", "ToDoItem1");
         await expect(page).toClick("button[name=createItem]");
         await expect(page).toFill("input[name=itemName]", "ToDoItem2");

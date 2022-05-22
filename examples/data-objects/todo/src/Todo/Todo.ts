@@ -58,7 +58,7 @@ export class Todo extends DataObject {
 
     // start public API surface for the Todo model, used by the view
 
-    // Would prefer not to hand this out, and instead give back a title component?
+    // Would prefer not to hand this out, and instead give back a title object?
     public async getTodoTitleString() {
         const todoTitleHandle = this.root.get<IFluidHandle<SharedString>>(todoTitleKey);
         if (todoTitleHandle === undefined) {

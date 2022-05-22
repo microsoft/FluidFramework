@@ -58,7 +58,7 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
         newItemTextInputRef.current.value = "";
     };
 
-    // Using the list of TodoItem components, make a list of TodoItemViews.
+    // Using the list of TodoItem objects, make a list of TodoItemViews.
     const todoItemViews = todoItems.map(([id, todoItem]) => (
         <div className="item-wrap" key={id}>
             <TodoItemView todoItemModel={todoItem} className="todo-item-view" />
