@@ -17,15 +17,18 @@ import { TodoItem, TodoItemView } from "./TodoItem";
 
 const todoId = "todo";
 
-// NOTE: Normally url logic should belong to the app (not the container code).  This way the app retains control
-// over its url format (e.g. here, the /doc/containerName path is actually determined by webpack-fluid-loader).
-// It's entirely possible that an app may choose not to permit direct linking even.
-// It is, however, appropriate for the container code to define the in-container routing (e.g. /itemId).
 const getDirectLink = (itemId: string) => {
     const pathParts = window.location.pathname.split("/");
     const containerName = pathParts[2];
 
-    return `/doc/${containerName}/${itemId}`;
+    // NOTE: Normally the logic getting from the url to the container should belong to the app (not the container code).
+    // This way the app retains control over its url format (e.g. here, the /doc/containerName path is actually
+    // determined by webpack-fluid-loader).  It's entirely possible that an app may even choose not to permit direct
+    // linking.
+    const urlToContainer = `/doc/${containerName}`;
+
+    // It is, however, appropriate for the container code to define the in-container routing (e.g. /itemId).
+    return `${urlToContainer}/${itemId}`;
 };
 
 // The todoRequestHandler provides a TodoView for an empty request, or a TodoItemView for a request with the item id.
