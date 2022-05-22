@@ -12,7 +12,7 @@ import {
     isNetworkError,
     NetworkError,
 } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, HttpProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
     BaseGitRestTelemetryProperties,
     Constants,
@@ -166,8 +166,8 @@ export function logAndThrowApiError(error: any, request: Request, params: IRepoM
     const pathCategory = getRequestPathCategory(request);
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(params),
-        [BaseGitRestTelemetryProperties.method]: request.method,
-        [BaseGitRestTelemetryProperties.pathCategory]: pathCategory,
+        [HttpProperties.method]: request.method,
+        [HttpProperties.pathCategory]: pathCategory,
     };
     Lumberjack.error(`${request.method} request to ${pathCategory} failed`, lumberjackProperties, error);
 

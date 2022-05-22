@@ -18,6 +18,15 @@ export function getCorrelationId(altAsyncLocalStorage?: AsyncLocalStorage<string
     }
 }
 
+export function getCorrelationIdWithHttpFallback(
+    req: Request,
+    res: Response,
+    altAsyncLocalStorage?: AsyncLocalStorage<string>): string | undefined {
+    return getCorrelationId(altAsyncLocalStorage) ??
+           req.get(CorrelationIdHeaderName) ??
+           res.get(CorrelationIdHeaderName);
+}
+
 export const bindCorrelationId =
     (altAsyncLocalStorage?: AsyncLocalStorage<string>, headerName: string = CorrelationIdHeaderName) =>
         ((req: Request, res: Response, next: NextFunction): void => {

@@ -7,49 +7,43 @@ import { strict as assert } from "assert";
 import path from "path";
 import webpack from "webpack";
 
-// This config exists in order to test that webpack can fluid-lambdas-test (and thus its dependencies).
+// This config exists in order to test that webpack can pack local server.
 // To test actual use in a browser context integrate this package into a consumer that uses it in a browser context
 // or add browser based tests to this package.
 
 const config: webpack.Configuration = {
     entry: {
-        'fluid-lambdas-test': path.resolve(__dirname, '../index.js'),
+        main: "./src/index.ts",
     },
-    mode: 'development',
-    devtool: 'inline-source-map',
+    mode: "production",
+    devtool: "source-map",
     module: {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: require.resolve('ts-loader'),
+                use: require.resolve("ts-loader"),
                 exclude: /node_modules/,
-            },
-            {
-                test: /\.js$/,
-                use: [require.resolve("source-map-loader")],
-                enforce: "pre"
             },
         ],
     },
     resolve: {
-        extensions: ['.js'],
+        extensions: [".tsx", ".ts", ".js"],
         fallback: {
-            // Since this config is just used to test that code webpacks, and is not otherwise used,
+            // Since this config is just used to test that local-server webpacks, and is not otherwise used,
             // minimize the dependencies/polyfills used.
             buffer: false,
             util: false,
         },
     },
     output: {
-        filename: '[name].bundle.js',
-        path: path.resolve(__dirname, '../'),
-        library: 'FluidLambdasTest',
-        libraryTarget: 'umd',
+        filename: "[name].bundle.js",
+        path: path.resolve(__dirname, "dist"),
+        library: "[name]",
+        libraryTarget: "umd",
     },
 };
 
-
-describe("Routerlicious.Lambdas", () => {
+describe("Local server", () => {
     it("Webpack build", async () => {
         await new Promise<void>((resolve, reject) => {
             webpack(config, (err, stats) => {
@@ -62,5 +56,5 @@ describe("Routerlicious.Lambdas", () => {
                 }
             });
         });
-    }).timeout(5000);
+    }).timeout(20000);
 });
