@@ -65,7 +65,7 @@ async function safeRequestCore(requestCallback: () => Promise<Response>): Promis
     try {
         response = await requestCallback();
     } catch (error: any) {
-        if (error?.response?.status) {
+        if (error?.response?.status !== undefined) {
             response = error.response;
         } else {
             throw error;

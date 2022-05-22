@@ -60,7 +60,7 @@ export function getAadTenant(server: string) {
 
 export function getServer(tenantId: string): string {
     const server = odspTenants.get(tenantId);
-    if (!server) {
+    if (server === undefined) {
         throw Error(`Invalid SPO tenantId ${tenantId}.`);
     }
     return server;

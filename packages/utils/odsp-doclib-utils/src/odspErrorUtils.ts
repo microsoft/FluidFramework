@@ -258,7 +258,7 @@ export function enrichOdspError(
 
     if (response) {
         props.responseType = response.type;
-        if (response.headers) {
+        if (response.headers !== undefined) {
             const headers = getSPOAndGraphRequestIdsFromResponse(response.headers);
             for (const key of Object.keys(headers)) {
                 props[key] = headers[key];

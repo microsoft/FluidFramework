@@ -94,7 +94,7 @@ export async function getDriveItemByServerRelativePath(
     }
 
     const library = pathParts.shift();
-    if (!library) {
+    if (library !== undefined) {
         // Default drive/library
         return getDriveItemByRootFileName(server, account, "/", authRequestInfo, create);
     }
@@ -229,13 +229,14 @@ async function getDriveResponse(
 }
 
 function toIODSPDriveItem(parsedDriveItemBody: any): IOdspDriveItem {
-    const path = parsedDriveItemBody.parentReference.path ?
-        parsedDriveItemBody.parentReference.path.split("root:")[1] : "/";
+    const path = parsedDriveItemBody.parentReference.path !== undefined
+        ? parsedDriveItemBody.parentReference.path.split("root:")[1]
+        : "/";
     return {
         path,
         name: parsedDriveItemBody.name,
         driveId: parsedDriveItemBody.parentReference.driveId,
         itemId: parsedDriveItemBody.id,
-        isFolder: !!parsedDriveItemBody.folder,
+        isFolder: parsedDriveItemBody.folder !== undefined,
     };
 }

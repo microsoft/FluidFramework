@@ -23,7 +23,7 @@ const oAuthBearerScheme = "Bearer";
  */
 export function parseAuthErrorTenant(responseHeader: Headers): string | undefined {
     const authHeaderData = responseHeader.get("www-authenticate");
-    if (!authHeaderData) {
+    if (authHeaderData === null) {
         return undefined;
     }
 
@@ -38,7 +38,7 @@ export function parseAuthErrorTenant(responseHeader: Headers): string | undefine
         .substring(indexOfBearerInfo + oAuthBearerScheme.length)
         .split(",")
         .map((section) => {
-            if (!tenantId) {
+            if (tenantId === undefined) {
                 const nameValuePair = section.split("=");
                 // values can be encoded and contain '=' symbol inside so it is possible to have more than one
                 if (nameValuePair.length >= 2) {
