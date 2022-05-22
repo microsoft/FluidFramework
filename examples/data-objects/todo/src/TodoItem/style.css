@@ -3,7 +3,7 @@
     display: flex;
 }
 
-.expand-button {
+.todo-item-expand-button {
     box-sizing: border-box;
     width: 30px;
     height: 50px;
@@ -21,7 +21,7 @@
     margin: 10px 0 10px 10px;
 }
 
-.collaborative-input {
+.todo-item-input {
     box-sizing: border-box;
     border: none;
     width: 100%;
@@ -30,4 +30,8 @@
     padding: 0;
     font-size: 20px;
     outline: none;
+}
+
+.todo-item-details {
+    width: 100%;
 }

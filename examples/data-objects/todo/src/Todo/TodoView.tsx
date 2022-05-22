@@ -83,7 +83,7 @@ export const TodoView: React.FC<TodoViewProps> = (props: TodoViewProps) => {
                 className="todo-title"
                 sharedString={titleString}
             />
-            <form onSubmit={handleCreateClick}>
+            <form className="new-item-form" onSubmit={handleCreateClick}>
                 <input
                     className="new-item-text"
                     type="text"

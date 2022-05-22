@@ -13,11 +13,14 @@
     outline: none;
 }
 
+.new-item-form {
+    margin: 20px 0;
+}
+
 .new-item-text {
     box-sizing: border-box;
     width: calc(100% - 50px);
     height: 50px;
-    padding: 0;
     border: 1px solid #666;
     vertical-align: middle;
     font-size: 30px;
@@ -33,7 +36,7 @@
 }
 
 .item-wrap {
-    border: 1px solid #666;
+    display: flex;
 }
 
 .todo-item-view {
@@ -42,9 +45,15 @@
 }
 
 .action-button {
-    height: 25px;
-    margin-left: 2px;
-    margin-right: 2px;
-    width: 35px;
+    box-sizing: border-box;
+    width: 50px;
+    height: 50px;
+    margin: 10px 0 10px 10px;
     border: 1px solid #666;
+    padding: 0;
+    font-size: 30px;
+}
+
+.action-button:last-child {
+    margin: 10px;
 }

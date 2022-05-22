@@ -47,18 +47,19 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
                     checked={checked}
                     onChange={checkChangedHandler} />
                 <button
-                    className="expand-button"
+                    className="todo-item-expand-button"
                     onClick={ () => { setDetailsVisible(!detailsVisible); } }
                 >{detailsVisible ? "▲" : "▼"}</button>
                 <CollaborativeInput
                     sharedString={itemText}
-                    className="collaborative-input"
+                    className="todo-item-input"
                 />
             </h2>
             {
                 // If the content is visible we will show a button or a component
                 detailsVisible &&
                 <CollaborativeTextArea
+                    className="todo-item-details"
                     sharedStringHelper={new SharedStringHelper(todoItemModel.getDetailedText())}
                 />
             }
