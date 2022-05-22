@@ -35,6 +35,7 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummarizeInternalFn } from '@fluidframework/runtime-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
+import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 
 // @public (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
@@ -203,11 +204,11 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 // @public (undocumented)
 export class TelemetryContext implements ITelemetryContext {
     // (undocumented)
-    get(prefix: string, property: string): any | undefined;
+    get(prefix: string, property: string): TelemetryEventPropertyType;
     // (undocumented)
     serialize(): string;
     // (undocumented)
-    set(prefix: string, property: string, value: any): void;
+    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
 }
 
 // @public (undocumented)
