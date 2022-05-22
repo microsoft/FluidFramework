@@ -225,9 +225,9 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
             const result: ISerializableValue = {
                 type: value.type,
                 // eslint-disable-next-line @typescript-eslint/ban-types
-                value: value.value && JSON.parse(value.value) as object,
+                value: value.value !== undefined && JSON.parse(value.value) as object,
             };
-            if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+            if (value.value !== undefined && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
                 const extraContent: IDirectoryDataObject = {};
                 let largeContent = extraContent;
                 if (currentSubDir.absolutePath !== posix.sep) {
@@ -560,7 +560,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         const subdirs = absolutePath.substr(1).split(posix.sep);
         for (const subdir of subdirs) {
             currentSubDir = currentSubDir.getSubDirectory(subdir) as SubDirectory;
-            if (!currentSubDir) {
+            if (currentSubDir === undefined) {
                 return undefined;
             }
         }
@@ -637,7 +637,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             if (currentSubDirObject.subdirectories) {
                 for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
                     let newSubDir = currentSubDir.getSubDirectory(subdirName) as SubDirectory;
-                    if (!newSubDir) {
+                    if (newSubDir !== undefined) {
                         newSubDir = new SubDirectory(
                             this,
                             this.runtime,
@@ -1118,7 +1118,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         const iterator = {
             next(): IteratorResult<[string, any]> {
                 const nextVal = localEntriesIterator.next();
-                if (nextVal.done) {
+                if (nextVal.done ?? false) {
                     return { value: undefined, done: true };
                 } else {
                     // Unpack the stored value
@@ -1151,7 +1151,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         const iterator = {
             next(): IteratorResult<any> {
                 const nextVal = localValuesIterator.next();
-                if (nextVal.done) {
+                if (nextVal.done ?? false) {
                     return { value: undefined, done: true };
                 } else {
                     // Unpack the stored value

@@ -11,10 +11,7 @@ module.exports = {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "rules": {
-        "@typescript-eslint/no-use-before-define": "off",
+        // Requires strictNullChecks=true in tsconfig. https://github.com/microsoft/FluidFramework/issues/9500
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "keyword-spacing": "off", // Off because it conflicts with typescript-formatter
-        "no-case-declarations": "off",
-        "prefer-arrow/prefer-arrow-functions": "off"
     }
 }

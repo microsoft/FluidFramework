@@ -49,7 +49,7 @@ export function makeSerializable(
     const value = localValue.makeSerialized(serializer, bind);
     return {
         type: value.type,
-        value: value.value && JSON.parse(value.value),
+        value: value.value !== undefined && JSON.parse(value.value),
     };
 }
 

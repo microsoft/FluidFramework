@@ -102,7 +102,9 @@ export function serializeAsMinSupportedVersion(
             break;
 
         case "1":
+            // eslint-disable-next-line no-case-declarations
             const chunkV1 = chunk as MergeTreeChunkV1;
+            // eslint-disable-next-line no-case-declarations
             const headerMetadata = path === SnapshotLegacy.header ? chunkV1.headerMetadata : undefined;
             targetChuck = {
                 version: undefined,

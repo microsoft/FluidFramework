@@ -555,6 +555,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
             case MergeTreeDeltaType.REMOVE:
 
+                // eslint-disable-next-line no-case-declarations
                 const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
                 assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
                 this.localRemovedSeq = undefined;

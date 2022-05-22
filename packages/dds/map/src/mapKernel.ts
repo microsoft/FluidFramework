@@ -191,7 +191,7 @@ export class MapKernel {
         const iterator = {
             next(): IteratorResult<[string, any]> {
                 const nextVal = localEntriesIterator.next();
-                if (nextVal.done) {
+                if (nextVal.done ?? false) {
                     return { value: undefined, done: true };
                 } else {
                     // Unpack the stored value
@@ -214,7 +214,7 @@ export class MapKernel {
         const iterator = {
             next(): IteratorResult<any> {
                 const nextVal = localValuesIterator.next();
-                if (nextVal.done) {
+                if (nextVal.done ?? false) {
                     return { value: undefined, done: true };
                 } else {
                     // Unpack the stored value
