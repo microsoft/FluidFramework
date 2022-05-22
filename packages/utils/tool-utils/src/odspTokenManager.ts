@@ -26,13 +26,13 @@ const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).hr
 
 export const getMicrosoftConfiguration = (): IClientConfig => ({
     get clientId() {
-        if (!process.env.login__microsoft__clientId) {
+        if (process.env.login__microsoft__clientId === undefined) {
             throw new Error("Client ID environment variable not set: login__microsoft__clientId.");
         }
         return process.env.login__microsoft__clientId;
     },
     get clientSecret() {
-        if (!process.env.login__microsoft__secret) {
+        if (process.env.login__microsoft__secret === undefined) {
             throw new Error("Client Secret environment variable not set: login__microsoft__secret.");
         }
         return process.env.login__microsoft__secret;
@@ -196,8 +196,8 @@ export class OdspTokenManager {
         server: string,
         clientConfig: IClientConfig,
         tokenConfig: OdspTokenConfig,
-        forceRefresh,
-        forceReauth,
+        forceRefresh: boolean,
+        forceReauth: boolean,
     ): Promise<IOdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig, server);
@@ -320,7 +320,7 @@ export class OdspTokenManager {
         }
         const parsedUrl = new URL(relativeUrl, odspAuthRedirectOrigin);
         const code = parsedUrl.searchParams.get("code");
-        if (!code) {
+        if (code == null) {
             throw Error("Failed to get authorization");
         }
         return code;
@@ -351,7 +351,7 @@ export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens
             };
         }
         let prevTokens = rc.tokens.data[key.userOrServer];
-        if (!prevTokens) {
+        if (prevTokens !== undefined) {
             prevTokens = {};
             rc.tokens.data[key.userOrServer] = prevTokens;
         }
