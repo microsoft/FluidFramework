@@ -513,7 +513,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
                 if (typeof (interval.getIntervalId) === "function") {
                     const id = interval.getIntervalId();
                     assert.strictEqual(typeof (id), "string");
-                    if (id) {
+                    if (id !== undefined) {
                         assert.notStrictEqual(intervalsAfter.getIntervalById(id), undefined,
                             "Interval not present after rehydration");
                         intervalsAfter.removeIntervalById(id);

@@ -96,6 +96,7 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
     tempArray[0] = intervalArray[3];
     tempArray[1] = intervalArray[4];
     tempArray[2] = intervalArray[5];
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
         interval = result.value;
         assert.strictEqual(interval, tempArray[i], "Mismatch in forward iteration with start position");
@@ -107,6 +108,7 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
     tempArray[0] = intervalArray[2];
     tempArray[1] = intervalArray[5];
     tempArray[2] = intervalArray[8];
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
         interval = result.value;
         assert.strictEqual(interval, tempArray[i], "Mismatch in forward iteration with start position");
@@ -118,6 +120,7 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
     tempArray[0] = intervalArray[2];
     tempArray[1] = intervalArray[1];
     tempArray[2] = intervalArray[0];
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
         interval = result.value;
         assert.strictEqual(interval, tempArray[i], "Mismatch in backward iteration with start position");
@@ -129,6 +132,7 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
     tempArray[0] = intervalArray[2];
     tempArray[1] = intervalArray[5];
     tempArray[2] = intervalArray[8];
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
         interval = result.value;
         assert.strictEqual(interval, tempArray[i], "Mismatch in forward iteration with end position");
@@ -140,6 +144,7 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
     tempArray[0] = intervalArray[7];
     tempArray[1] = intervalArray[4];
     tempArray[2] = intervalArray[1];
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
         interval = result.value;
         assert.strictEqual(interval, tempArray[i], "Mismatch in backward iteration with end position");
@@ -147,21 +152,25 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
     assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with end position");
 
     iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
         assert(false, "Iterator with OOB position should not produce a result");
     }
 
     iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
         assert(false, "Iterator with OOB position should not produce a result");
     }
 
     iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
         assert(false, "Iterator with OOB position should not produce a result");
     }
 
     iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
         assert(false, "Iterator with OOB position should not produce a result");
     }
@@ -415,6 +424,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             tempArray[0] = intervalArray[3];
             tempArray[1] = intervalArray[4];
             tempArray[2] = intervalArray[5];
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
                 checkIdEquals(result.value, tempArray[i], "Mismatch in forward iteration with start position");
             }
@@ -425,6 +435,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             tempArray[0] = intervalArray[2];
             tempArray[1] = intervalArray[1];
             tempArray[2] = intervalArray[0];
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
                 checkIdEquals(result.value, tempArray[i], "Mismatch in backward iteration with start position");
             }
@@ -435,6 +446,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             tempArray[0] = intervalArray[7];
             tempArray[1] = intervalArray[4];
             tempArray[2] = intervalArray[1];
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
                 checkIdEquals(result.value, tempArray[i], "Mismatch in backward iteration with end position");
             }
@@ -454,7 +466,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
 
             await provider.ensureSynchronized();
 
-            if (intervals1[Symbol.iterator]) {
+            if (intervals1[Symbol.iterator] !== undefined) {
                 for (interval of intervals1) {
                     assert(false, "intervals1 should be empty after emptying invervals2");
                 }

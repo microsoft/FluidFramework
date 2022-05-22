@@ -7,11 +7,18 @@ module.exports = {
     "extends": [
         "@fluidframework/eslint-config-fluid"
     ],
-    "rules": {
-        "prefer-arrow-callback": "off",
-        "@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
-    },
     "parserOptions": {
-        "project": [ "./src/test/tsconfig.json" ]
-    }
+        "project": ["./src/test/tsconfig.json"]
+    },
+    "rules": {
+    },
+    "overrides": [
+        {
+            // Rules only for test files
+            "files": ["*.spec.ts", "src/test/**"],
+            "rules": {
+                "prefer-arrow-callback": "off",
+            }
+        },
+    ],
 }

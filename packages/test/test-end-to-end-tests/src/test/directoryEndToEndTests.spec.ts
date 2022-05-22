@@ -70,9 +70,9 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
     }
 
     function expectAllSize(size: number, path?: string) {
-        const dir1 = path ? sharedDirectory1.getWorkingDirectory(path) : sharedDirectory1;
-        const dir2 = path ? sharedDirectory2.getWorkingDirectory(path) : sharedDirectory2;
-        const dir3 = path ? sharedDirectory3.getWorkingDirectory(path) : sharedDirectory3;
+        const dir1 = path !== undefined ? sharedDirectory1.getWorkingDirectory(path) : sharedDirectory1;
+        const dir2 = path !== undefined ? sharedDirectory2.getWorkingDirectory(path) : sharedDirectory2;
+        const dir3 = path !== undefined ? sharedDirectory3.getWorkingDirectory(path) : sharedDirectory3;
 
         assert(dir1);
         assert(dir2);

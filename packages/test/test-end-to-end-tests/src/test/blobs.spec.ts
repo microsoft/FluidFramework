@@ -81,7 +81,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const blobOpP = new Promise<void>((resolve, reject) => container.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+                op.metadata?.blobId !== undefined ? resolve() : reject(new Error("no op metadata"));
             }
         }));
 
@@ -172,6 +172,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
 
         const blobOpP = new Promise<void>((resolve) => container.deltaManager.on("submitOp", (op) => {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (op.contents.includes("blobAttach")) {
                 (container.deltaManager as any)._inbound.pause();
                 resolve();
@@ -189,7 +190,7 @@ const getUrlFromItemId = (itemId: string, provider: ITestObjectProvider): string
     assert(provider.driver.type === "odsp");
     assert(itemId);
     const url = (provider.driver as any).getUrlFromItemId(itemId);
-    assert(url && typeof url === "string");
+    assert(url !== undefined && typeof url === "string");
     return url;
 };
 
@@ -217,7 +218,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const attachOpP = new Promise<void>((resolve, reject) => container1.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+                op.metadata?.blobId !== undefined ? resolve() : reject(new Error("no op metadata"));
             }
         }));
 
@@ -463,7 +464,9 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             const nodeTimestamps: Map<string, "referenced" | "unreferenced"> = new Map();
             for (const [nodePath, nodeData] of Object.entries(gcState.gcNodes)) {
                 // Unreferenced nodes have unreferenced timestamp associated with them.
-                nodeTimestamps.set(nodePath, nodeData.unreferencedTimestampMs ? "unreferenced" : "referenced");
+                nodeTimestamps.set(nodePath, nodeData.unreferencedTimestampMs !== undefined
+                    ? "unreferenced"
+                    : "referenced");
             }
             return nodeTimestamps;
         }

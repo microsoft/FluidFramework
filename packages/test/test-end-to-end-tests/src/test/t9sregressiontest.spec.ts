@@ -47,6 +47,7 @@ describeNoCompat("t9s issue regression test", (getTestObjectProvider) => {
         const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!(container2 as any).connected) {
             await new Promise((resolve) => container2.on("connected", resolve));
         }
@@ -64,6 +65,7 @@ describeNoCompat("t9s issue regression test", (getTestObjectProvider) => {
         // use a new loader so we don't get a cached container
         const loader2 = provider.makeTestLoader(testContainerConfig);
         const container3 = await loader2.resolve({ url });
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!(container3 as any).connected) {
             console.log("waiting");
             await new Promise((resolve) => container3.on("connected", resolve));

@@ -79,7 +79,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
      * synchronizes all containers and waits for a summary that contains the last processed sequence number.
      * @returns the sequence number of the summary
      */
-     async function waitForSummary(): Promise<number> {
+    async function waitForSummary(): Promise<number> {
         await provider.ensureSynchronized();
         const sequenceNumber = mainContainer.deltaManager.lastSequenceNumber;
         await summaryCollection.waitSummaryAck(sequenceNumber);
@@ -89,7 +89,10 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     function getGenerateSummaryEvent(sequenceNumber: number): ITelemetryBaseEvent | undefined {
         for (const event of mockLogger.events) {
             if (event.eventName === "fluid:telemetry:Summarizer:Running:Summarize_generate" &&
-                event.referenceSequenceNumber ? event.referenceSequenceNumber >= sequenceNumber : false) {
+                event.referenceSequenceNumber !== undefined
+                ? event.referenceSequenceNumber >= sequenceNumber
+                : false
+            ) {
                 return event;
             }
         }
