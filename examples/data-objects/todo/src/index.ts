@@ -13,7 +13,7 @@ import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils
 import { MountableView } from "@fluidframework/view-adapters";
 import React from "react";
 import { Todo, TodoFactory, TodoView } from "./Todo";
-import { TodoItemView } from "./TodoItem";
+import { TodoItem, TodoItemView } from "./TodoItem";
 
 const todoId = "todo";
 
@@ -55,11 +55,25 @@ const todoRequestHandler = async (request: RequestParser, runtime: IContainerRun
         // The downside of this approach is that we must realize the Todo to get at its TodoItems (rather than
         // accessing them directly).  But the positive is that we can use encapsulated handles rather than making
         // assumptions about the ids or making the TodoItems roots.
-        const todoItem = await todo.getTodoItem(request.pathParts[0]);
-        if (todoItem !== undefined) {
-            const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem });
-            return { status: 200, mimeType: "fluid/object", value: viewResponse };
+        const todoItemId = request.pathParts[0];
+
+        // This retry logic really shouldn't be necessary -- we should be able to get the TodoItem straightaway.
+        // This is working around a bug (?) where we are starting before reaching connected state so we might not
+        // have seen the op setting the handle in the map yet.
+        let todoItem: TodoItem | undefined;
+        while (todoItem === undefined) {
+            const todoItemsChangedP = new Promise<void>((resolve) => {
+                todo.once("todoItemsChanged", () => {
+                    resolve();
+                });
+            });
+            todoItem = await todo.getTodoItem(todoItemId);
+            if (todoItem === undefined) {
+                await todoItemsChangedP;
+            }
         }
+        const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem });
+        return { status: 200, mimeType: "fluid/object", value: viewResponse };
     }
 };
 
