@@ -57,12 +57,14 @@ class ReplayProcessArgs extends ReplayArgs {
                     break;
                 case "--from":
                     i += 1;
+                    /* eslint-disable no-case-declarations */
                     const from = this.parseStrArg(i);
 
                     // Both methods have limitations - first ignores non-number chars at the end.
                     // Second parses floats.
                     const paramNumber = parseInt(from, 10);
                     const paramNumber2 = Number(from);
+                    /* eslint-enable no-case-declarations */
 
                     this.fromVersion = undefined;
                     this.from = 0;

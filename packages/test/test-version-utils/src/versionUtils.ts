@@ -93,8 +93,8 @@ async function removeInstalled(version: string) {
 
 export function resolveVersion(requested: string, installed: boolean) {
     const cachedVersion = resolutionCache.get(requested);
-    if (cachedVersion) { return cachedVersion; }
-    if (semver.valid(requested)) {
+    if (cachedVersion !== undefined) { return cachedVersion; }
+    if (semver.valid(requested) !== null) {
         // If it is a valid semver already instead of a range, just use it
         resolutionCache.set(requested, requested);
         return requested;
@@ -105,13 +105,15 @@ export function resolveVersion(requested: string, installed: boolean) {
         const files = readdirSync(baseModulePath, { withFileTypes: true });
         let found: string | undefined;
         files.map((dirent) => {
-            if (dirent.isDirectory() && semver.valid(dirent.name) && semver.satisfies(dirent.name, requested)) {
-                if (!found || semver.lt(found, dirent.name)) {
+            if (dirent.isDirectory()
+                && semver.valid(dirent.name) !== null
+                && semver.satisfies(dirent.name, requested)) {
+                if (found === undefined || semver.lt(found, dirent.name)) {
                     found = dirent.name;
                 }
             }
         });
-        if (found) {
+        if (found !== undefined) {
             return found;
         }
         throw new Error(`No matching version found in ${baseModulePath}`);

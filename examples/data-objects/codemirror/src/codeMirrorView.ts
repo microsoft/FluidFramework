@@ -45,7 +45,7 @@ export class CodeMirrorView implements IFluidHTMLView {
         // Text area being removed will dispose of CM
         // https://stackoverflow.com/questions/18828658/how-to-kill-a-codemirror-instance
 
-        if (this.sequenceDeltaCb) {
+        if (this.sequenceDeltaCb !== undefined) {
             this.text.removeListener("sequenceDelta", this.sequenceDeltaCb);
             this.sequenceDeltaCb = undefined;
         }

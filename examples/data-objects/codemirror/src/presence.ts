@@ -37,7 +37,7 @@ export class PresenceManager extends EventEmitter {
 
         runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             // Only process presence keys that are not local while we are connected and have a non-null clientId
-            if (message.type === this.presenceKey && !local && runtime.connected && message.clientId) {
+            if (message.type === this.presenceKey && !local && runtime.connected && message.clientId !== null) {
                 console.log(`received new presence signal: ${JSON.stringify(message)}`);
                 const presenceInfo = {
                     userId: message.clientId,

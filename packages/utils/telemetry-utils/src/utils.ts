@@ -20,7 +20,7 @@ export function logIfFalse(
     logger: ITelemetryBaseLogger,
     event: string | ITelemetryGenericEvent,
 ): condition is true {
-    if (condition) {
+    if (condition !== undefined) {
         return true;
     }
     const newEvent: ITelemetryBaseEvent =

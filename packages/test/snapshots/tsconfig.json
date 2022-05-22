@@ -5,6 +5,7 @@
     ],
     "compilerOptions": {
         "strict": false,
+        "strictNullChecks": false,
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [

@@ -97,7 +97,7 @@ export class DebugLogger extends TelemetryLogger {
         tick = `tick=${TelemetryLogger.formatTick(performance.now())}`;
 
         // Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
-        const stack = newEvent.stack ? newEvent.stack : "";
+        const stack = newEvent.stack !== undefined ? newEvent.stack : "";
         newEvent.stack = undefined;
 
         // Watch out for circular references - they can come from two sources

@@ -1,4 +1,4 @@
-{    
+{
     "extends": "@fluidframework/build-common/ts-common-config.json",
     "exclude": [
         "dist",
@@ -6,6 +6,7 @@
     ],
     "compilerOptions": {
         "strict": false,
+        "strictNullChecks": false,
         "rootDir": "./src",
         "outDir": "./dist",
         "types": ["node"]

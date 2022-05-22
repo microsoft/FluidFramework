@@ -191,6 +191,7 @@ export async function mochaGlobalSetup() {
             error = e;
         }
     }
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (error) {
         throw error;
     }

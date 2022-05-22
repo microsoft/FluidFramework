@@ -8,7 +8,7 @@ module.exports = {
         "@fluidframework/eslint-config-fluid"
     ],
     "rules": {
-        "@typescript-eslint/no-use-before-define": "off",
+        // Requires strictNullChecks=true in tsconfig. https://github.com/microsoft/FluidFramework/issues/9500
         "@typescript-eslint/strict-boolean-expressions": "off",
         "import/no-internal-modules": "off",
         "max-len": "off",

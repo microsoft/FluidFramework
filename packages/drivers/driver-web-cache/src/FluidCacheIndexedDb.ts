@@ -40,7 +40,7 @@ export function getFluidCacheIndexedDbInstance(
                         // We changed the format of the object store, so we must
                         // delete the old stores to create a new one in V3
                         const cacheToDelete = oldVersionNameMapping[oldVersion];
-                        if (cacheToDelete) {
+                        if (cacheToDelete !== undefined) {
                             // We don't include the old object stores in the schema, so we need to
                             // use a typecast here to prevent IDB from complaining
                             db.deleteObjectStore(cacheToDelete as any);

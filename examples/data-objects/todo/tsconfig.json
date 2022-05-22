@@ -7,6 +7,7 @@
     "compilerOptions": {
         "target": "es6",
         "strict": false,
+        "strictNullChecks": false,
         "alwaysStrict": false,
         "module": "esnext",
         "outDir": "dist",
