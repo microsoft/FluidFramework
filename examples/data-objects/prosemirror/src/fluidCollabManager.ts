@@ -104,18 +104,21 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                 switch (segment.refType) {
                     case ReferenceType.NestBegin:
                         // Create the new node, add it to the top's content, and push it on the stack
+                        // eslint-disable-next-line no-case-declarations
                         const newNode = { type: nodeType, content: [] };
                         top.content!.push(newNode);
                         nodeStack.push(newNode);
                         break;
 
                     case ReferenceType.NestEnd:
+                        // eslint-disable-next-line no-case-declarations
                         const popped = nodeStack.pop();
                         assert(popped!.type === nodeType, "NestEnd top-node type has wrong type");
                         break;
 
                     case ReferenceType.Simple:
                         // TODO consolidate the text segment and simple references
+                        // eslint-disable-next-line no-case-declarations
                         const nodeJson: IProseMirrorNode = {
                             type: segment.properties!.type,
                             attrs: segment.properties!.attrs,
@@ -163,7 +166,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                         title: new TextField({ label: "Title", value: nodeAttrs?.title }),
                         alt: new TextField({
                             label: "Description",
-                            value: nodeAttrs ? nodeAttrs.alt : state.doc.textBetween(from, to, " "),
+                            value: nodeAttrs !== undefined ? nodeAttrs.alt : state.doc.textBetween(from, to, " "),
                         }),
                     },
                     callback(attrs) {
@@ -181,7 +184,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             run(state, dispatch) {
                 const { empty, $from, $to } = state.selection;
                 let content = Fragment.empty;
-                if (!empty && $from.sameParent($to) && $from.parent.inlineContent) {
+                if (Boolean(empty) && Boolean($from.sameParent($to)) && Boolean($from.parent.inlineContent)) {
                     content = $from.parent.content.cut($from.parentOffset, $to.parentOffset);
                 }
                 dispatch(state.tr.replaceSelectionWith(fluidSchema.nodes.footnote.create(null, content)));
@@ -314,6 +317,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
     }
 
     private applyTransaction(tr: Transaction) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (tr.getMeta("fluid-local")) {
             return;
         }
@@ -335,7 +339,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                         operations.push(removeOp);
                     }
 
-                    if (stepAsJson.slice) {
+                    if (stepAsJson.slice !== undefined) {
                         const sliceOperations = sliceToGroupOps(
                             from,
                             stepAsJson.slice,
@@ -396,12 +400,13 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                         operations.push(removeOp);
                     }
 
-                    if (stepAsJson.slice) {
+                    if (stepAsJson.slice !== undefined) {
                         const sliceOperations = sliceToGroupOps(
                             from,
                             stepAsJson.slice,
                             this.schema,
-                            insert ? from + insert : insert,
+                            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+                            insert !== undefined ? from + insert : insert,
                             gapTo - gapFrom);
                         operations = operations.concat(sliceOperations);
                     }
@@ -413,7 +418,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                 }
 
                 case "addMark": {
-                    const attrs = stepAsJson.mark.attrs || true;
+                    const attrs = stepAsJson.mark.attrs ?? true;
 
                     this.text.annotateRange(
                         stepAsJson.from,

@@ -4,6 +4,7 @@
  */
 
 import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
+// eslint-disable-next-line import/no-unresolved
 import { CodeMirrorComponent, CodeMirrorView, SmdeFactory } from "@fluid-example/codemirror";
 import { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "@fluid-example/prosemirror";
 import { Spaces, SpacesView } from "@fluid-example/spaces";

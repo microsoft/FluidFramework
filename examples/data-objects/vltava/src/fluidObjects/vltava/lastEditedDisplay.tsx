@@ -8,6 +8,7 @@ import {
     IFacepileProps,
     Facepile,
     IFacepilePersona,
+// eslint-disable-next-line import/no-internal-modules
 } from "office-ui-fabric-react/lib/Facepile";
 import { PersonaInitialsColor } from "office-ui-fabric-react";
 import { IVltavaLastEditedState } from "./dataModel";

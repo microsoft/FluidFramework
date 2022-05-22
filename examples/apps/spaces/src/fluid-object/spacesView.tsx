@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+// eslint-disable-next-line import/no-internal-modules,import/no-unassigned-import
 import "react-grid-layout/css/styles.css";
 import { spacesItemMap, templateDefinitions } from "./spacesItemMap";
 import { SpacesStorageView } from "./storage";

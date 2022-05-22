@@ -238,7 +238,7 @@ export class ProseMirrorTransactionBuilder {
 
         for (const thing of this.things) {
             if (thing.type === "ether") {
-                if (thing.annotations) {
+                if (thing.annotations !== undefined) {
                     annotations.push({
                         from: position,
                         to: position + thing.length,
@@ -332,7 +332,7 @@ export class ProseMirrorTransactionBuilder {
             for (const prop of Object.keys(annotation.propertyDeltas)) {
                 const value = segment.properties![prop];
 
-                if (value) {
+                if (value !== undefined) {
                     this.transaction.addMark(
                         annotation.from,
                         annotation.to,
@@ -350,21 +350,21 @@ export class ProseMirrorTransactionBuilder {
     }
 
     private getOpenStart(node: IProseMirrorNode[]): number {
-        if (!node || node.length === 0) {
+        if (node === undefined || node.length === 0) {
             return 0;
         }
 
         const start = node[0];
-        return !start._open || !start.content ? 0 : 1 + this.getOpenStart(start.content);
+        return !(start._open ?? false) || !start.content ? 0 : 1 + this.getOpenStart(start.content);
     }
 
     private getOpenEnd(node: IProseMirrorNode[]): number {
-        if (!node || node.length === 0) {
+        if (node === undefined || node.length === 0) {
             return 0;
         }
 
         const end = node[node.length - 1];
-        return !end._open || !end.content ? 0 : 1 + this.getOpenEnd(end.content);
+        return end._open === false || !end.content ? 0 : 1 + this.getOpenEnd(end.content);
     }
 }
 
@@ -377,8 +377,9 @@ export function sliceToGroupOps(
 ): IMergeTreeDeltaOp[] {
     const ops = new Array<IMergeTreeDeltaOp>();
 
-    const sliceOpenStart = slice.openStart || 0;
-    const sliceOpenEnd = slice.openEnd || 0;
+    const sliceOpenStart = slice.openStart ?? 0;
+    const sliceOpenEnd = slice.openEnd ?? 0;
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
     let offset = from + adjustOffset(from, 0, 0, insert, gapDistance);
 
     slice.content.forEach((value, index) => {
@@ -393,8 +394,9 @@ export function sliceToGroupOps(
 
 // Likely a cleaner way to detect the gap than checking every offset adjust - but brute forcing for now
 function adjustOffset(from, offset, value, insert, gapDistance) {
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
     const newFrom = from + offset + value;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/restrict-plus-operands
     return newFrom === insert ? offset + value + gapDistance : offset + value;
 }
 
@@ -414,7 +416,7 @@ function sliceToGroupOpsInternal(
     if (value.marks) {
         props = {};
         for (const mark of value.marks) {
-            props[mark.type] = mark.attrs || true;
+            props[mark.type] = mark.attrs !== undefined || true;
         }
     }
 
@@ -422,7 +424,7 @@ function sliceToGroupOpsInternal(
     if (node.isInline) {
         if (value.type === "text") {
             const segment = new TextSegment(value.text);
-            if (props) {
+            if (props !== undefined) {
                 segment.addProperties(props);
             }
             ops.push(createInsertSegmentOp(from + offset, segment));
@@ -533,6 +535,7 @@ function generateFragment(segments: ISegment[]) {
                         openTop = undefined;
                     }
                     // Create the new node, add it to the top's content, and push it on the stack
+                    // eslint-disable-next-line no-case-declarations
                     const newNode = { type: nodeType, content: [] as IProseMirrorNode[], _open: true };
                     top.content!.push(newNode);
                     nodeStack.push(newNode);
@@ -557,6 +560,7 @@ function generateFragment(segments: ISegment[]) {
 
                 case ReferenceType.Simple:
                     // TODO consolidate the text segment and simple references
+                    // eslint-disable-next-line no-case-declarations
                     const nodeJson: IProseMirrorNode = {
                         type: segment.properties!.type,
                         attrs: segment.properties!.attrs,

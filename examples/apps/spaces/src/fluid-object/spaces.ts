@@ -129,6 +129,7 @@ export class Spaces extends DataObject {
 
     public async setTemplate(): Promise<void> {
         const templateString = localStorage.getItem("spacesTemplate");
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (templateString) {
             const templateItems = JSON.parse(templateString) as ISpacesStoredItem<ISpacesItem>[];
             const promises = templateItems.map(async (templateItem) => {

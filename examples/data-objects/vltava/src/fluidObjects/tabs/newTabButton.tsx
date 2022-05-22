@@ -14,6 +14,7 @@ import {
     IIconProps,
     IContextualMenuItem,
 } from "office-ui-fabric-react";
+// eslint-disable-next-line import/no-internal-modules
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 
 import { ITabsTypes } from "./dataModel";

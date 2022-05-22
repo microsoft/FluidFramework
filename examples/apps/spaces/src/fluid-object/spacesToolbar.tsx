@@ -12,6 +12,7 @@ import {
 import {
     ISpacesItemEntry,
 } from "./spacesItemMap";
+// eslint-disable-next-line import/no-unassigned-import
 import "./spacesToolbarStyle.css";
 
 initializeIcons();
@@ -142,7 +143,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                 <SpacesToolbarAddItemPicker
                     key="items"
                     itemMap={props.itemMap}
-                    addItem={props.addItem}
+                    addItem={props.addItem.bind(this)}
                 />,
             );
 
@@ -151,7 +152,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                     <SpacesToolbarAddTemplatePicker
                         key="templates"
                         templates={props.templates}
-                        applyTemplate={props.applyTemplate}
+                        applyTemplate={props.applyTemplate.bind(this)}
                     />,
                 );
             }

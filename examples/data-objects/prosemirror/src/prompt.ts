@@ -37,7 +37,7 @@ export function openPrompt(options) {
     cancelButton.addEventListener("click", close);
 
     const form = wrapper.appendChild(document.createElement("form"));
-    if (options.title) { form.appendChild(document.createElement("h5")).textContent = options.title; }
+    if (options.title !== undefined) { form.appendChild(document.createElement("h5")).textContent = options.title; }
     domFields.forEach((field) => {
         form.appendChild(document.createElement("div")).appendChild(field);
     });
@@ -53,7 +53,7 @@ export function openPrompt(options) {
 
     const submit = () => {
         const params = getValues(options.fields, domFields);
-        if (params) {
+        if (params !== undefined) {
             close();
             options.callback(params);
         }
@@ -79,7 +79,7 @@ export function openPrompt(options) {
     });
 
     const input = form.elements[0] as HTMLDivElement;
-    if (input) { input.focus(); }
+    if (input !== undefined) { input.focus(); }
 }
 
 function getValues(fields, domFields) {
@@ -89,7 +89,7 @@ function getValues(fields, domFields) {
     for (const name in fields) {
         const field = fields[name]; const dom = domFields[i++];
         const value = field.read(dom); const bad = field.validate(value);
-        if (bad) {
+        if (bad !== undefined) {
             reportInvalid(dom, bad);
             return null;
         }
@@ -103,6 +103,7 @@ function reportInvalid(dom, message) {
     // FIXME this is awful and needs a lot more work
     const parent = dom.parentNode;
     const msg = parent.appendChild(document.createElement("div"));
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
     msg.style.left = `${dom.offsetLeft + dom.offsetWidth + 2}px`;
     msg.style.top = `${dom.offsetTop - 5}px`;
     msg.className = "ProseMirror-invalid";
@@ -146,13 +147,14 @@ export class Field {
     validateType(_value): string | undefined { return; }
 
     validate(value) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!value && this.options.required) { return "Required field"; }
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.validateType(value) || this.options.validate?.(value);
+        return Boolean(this.validateType(value)) || this.options.validate?.(value);
     }
 
     clean(value) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions,@typescript-eslint/no-unsafe-return
         return this.options.clean ? this.options.clean(value) : value;
     }
 }
@@ -163,7 +165,7 @@ export class TextField extends Field {
         const input = document.createElement("input");
         input.type = "text";
         input.placeholder = this.options.label;
-        input.value = this.options.value || "";
+        input.value = this.options.value ?? "";
         input.autocomplete = "off";
         return input;
     }

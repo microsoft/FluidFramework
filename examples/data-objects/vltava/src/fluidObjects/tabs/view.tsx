@@ -11,6 +11,7 @@ import { EmbeddedFluidObjectWrapper } from "../library";
 import { ITabsDataModel } from "./dataModel";
 import { NewTabButton } from "./newTabButton";
 
+// eslint-disable-next-line import/no-internal-modules,import/no-unassigned-import
 import "react-tabs/style/react-tabs.css";
 
 export interface ITabsViewProps {
@@ -33,7 +34,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
         };
 
         props.dataModel.on("newTab", (local) => {
-            if (local) {
+            if (local !== undefined) {
                 this.setState({
                     ids: props.dataModel.getTabIds(),
                     tabIndex: this.state.ids.length,
@@ -73,7 +74,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                     {tabs}
                     <li className="react-tabs__tab">
                         <NewTabButton
-                            createTab={this.createNewTab}
+                            createTab={this.createNewTab.bind(this)}
                             fluidObjects={this.props.dataModel.getNewTabTypes()} />
                     </li>
                 </TabList>

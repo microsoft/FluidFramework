@@ -93,7 +93,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     }
 
     public async getFluidObjectTab(id: string): Promise<FluidObject | undefined> {
-        return this.getFluidObjectFromDirectory(id, this.tabs, this.getObjectFromDirectory);
+        return this.getFluidObjectFromDirectory(id, this.tabs, this.getObjectFromDirectory.bind(this));
     }
 
     public async getFluidObjectTabView(id: string): Promise<JSX.Element> {

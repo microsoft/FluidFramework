@@ -7,9 +7,11 @@ import { Serializable } from "@fluidframework/datastore-definitions";
 
 import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
+// eslint-disable-next-line import/no-internal-modules,import/no-unassigned-import
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesStoredItem, ISpacesStorage } from "./spacesStorage";
+// eslint-disable-next-line import/no-unassigned-import
 import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
@@ -21,7 +23,7 @@ const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
     (props: React.PropsWithChildren<ISpacesEditButtonProps>) =>
         <button
             className="spaces-edit-button"
-            onClick={props.clickCallback}
+            onClick={props.clickCallback.bind(this)}
             onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                 event.stopPropagation();
             }}
@@ -39,7 +41,7 @@ const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
     (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
         return (
             <div className="spaces-edit-pane">
-                <SpacesEditButton title="Delete" clickCallback={props.removeItem}>❌</SpacesEditButton>
+                <SpacesEditButton title="Delete" clickCallback={props.removeItem.bind(this)}>❌</SpacesEditButton>
                 <SpacesEditButton
                     title="Copy to clipboard"
                     clickCallback={() => {
@@ -73,13 +75,13 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
             props.getItemView()
                 .then(setItemView)
                 .catch((error) => console.error(`Error in getting item`, error));
-        }, [props.getItemView]);
+        }, [props.getItemView.bind(this)]);
 
         return (
             <div className="spaces-item-view">
                 {
                     props.editable &&
-                    <SpacesEditPane url={props.url} removeItem={props.removeItem} />
+                    <SpacesEditPane url={props.url} removeItem={props.removeItem.bind(this)} />
                 }
                 <div className="spaces-embedded-item-wrapper">
                     {itemView}

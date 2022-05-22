@@ -32,12 +32,12 @@ export class FootnoteView {
 
     selectNode() {
         this.dom.classList.add("ProseMirror-selectednode");
-        if (!this.innerView) { this.open(); }
+        if (this.innerView === undefined) { this.open(); }
     }
 
     deselectNode() {
         this.dom.classList.remove("ProseMirror-selectednode");
-        if (this.innerView) { this.close(); }
+        if (this.innerView !== undefined) { this.close(); }
     }
 
     open() {
@@ -66,6 +66,7 @@ export class FootnoteView {
                     // Kludge to prevent issues due to the fact that the whole
                     // footnote is node-selected (and thus DOM-selected) when
                     // the parent editor is focused.
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (this.outerView.hasFocus()) { this.innerView.focus(); }
                     return true;
                 },
@@ -83,7 +84,9 @@ export class FootnoteView {
         const { state, transactions } = this.innerView.state.applyTransaction(tr);
         this.innerView.updateState(state);
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!tr.getMeta("fromOutside")) {
+            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
             const outerTr = this.outerView.state.tr; const offsetMap = StepMap.offset(this.getPos() + 1);
 
             for (const transaction of transactions) {
@@ -92,6 +95,7 @@ export class FootnoteView {
                 }
             }
 
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (outerTr.docChanged) {
                 this.outerView.dispatch(outerTr);
             }
@@ -99,9 +103,10 @@ export class FootnoteView {
     }
 
     update(node) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!node.sameMarkup(this.node)) { return false; }
         this.node = node;
-        if (this.innerView) {
+        if (this.innerView !== undefined) {
             const state = this.innerView.state;
             const start = node.content.findDiffStart(state.doc.content);
             if (start != null) {
@@ -118,7 +123,7 @@ export class FootnoteView {
     }
 
     destroy() {
-        if (this.innerView) { this.close(); }
+        if (this.innerView !== undefined) { this.close(); }
     }
 
     stopEvent(event) {
