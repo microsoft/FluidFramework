@@ -122,11 +122,17 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
     constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]);
+    // @internal (undocumented)
+    ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
+    // @internal (undocumented)
+    ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
+    // @internal (undocumented)
+    ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     // (undocumented)
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
     // (undocumented)
     addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     addInternal(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
     // (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
@@ -136,7 +142,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     attachGraph(client: Client, label: string): void;
     // (undocumented)
     change(id: string, start?: number, end?: number): TInterval | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     changeInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     // (undocumented)
     changeProperties(id: string, props: PropertySet): void;
@@ -148,7 +154,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     CreateForwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval>;
     // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval>;
-    // (undocumented)
+    // @deprecated (undocumented)
     deleteInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     // (undocumented)
     findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
@@ -410,17 +416,17 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
-// @public (undocumented)
-export class SharedIntervalCollection<TInterval extends ISerializableInterval = Interval> extends SharedObject implements ISharedIntervalCollection<TInterval> {
+// @public @deprecated (undocumented)
+export class SharedIntervalCollection extends SharedObject implements ISharedIntervalCollection<Interval> {
     // (undocumented)
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     protected applyStashedOp(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedIntervalCollection<Interval>;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedIntervalCollection;
     static getFactory(): IChannelFactory;
     // (undocumented)
-    getIntervalCollection(label: string): IntervalCollection<TInterval>;
+    getIntervalCollection(label: string): IntervalCollection<Interval>;
     protected getIntervalCollectionPath(label: string): string;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
@@ -432,11 +438,11 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    // (undocumented)
-    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
+    // @deprecated (undocumented)
+    waitIntervalCollection(label: string): Promise<IntervalCollection<Interval>>;
 }
 
-// @public
+// @public @deprecated
 export class SharedIntervalCollectionFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -596,7 +602,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     submitSequenceMessage(message: IMergeTreeOp): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    // (undocumented)
+    // @deprecated (undocumented)
     waitIntervalCollection(label: string): Promise<IntervalCollection<SequenceInterval>>;
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
 }

@@ -186,6 +186,12 @@ export interface IDeliLambdaEvents extends IEvent {
     (event: "updatedDurableSequenceNumber", listener: (durableSequenceNumber: number) => void);
 
     /**
+     * Emitted when the lambda is updating a nack message
+     */
+    (event: "updatedNackMessages",
+        listener: (type: NackMessagesType, contents: INackMessagesControlMessageContents | undefined) => void);
+
+    /**
      * Emitted when the lambda recieves a custom control message.
      */
     (event: "controlMessage", listener: (controlMessage: IControlMessage) => void);
@@ -419,7 +425,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         if (opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
                             // this op brings us over the limit
                             // start nacking non-system ops and ops that are submitted by non-summarizers
-                            this.nackMessages.set(NackMessagesType.SummaryMaxOps, {
+                            this.updateNackMessages(NackMessagesType.SummaryMaxOps, {
                                 identifier: NackMessagesType.SummaryMaxOps,
                                 content: this.serviceConfiguration.deli.summaryNackMessages.nackContent,
                                 allowSystemMessages: true,
@@ -919,11 +925,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         const controlContents: INackMessagesControlMessageContents |
                             IDisableNackMessagesControlMessageContents = controlMessage.contents;
 
-                        if (controlContents.content !== undefined) {
-                            this.nackMessages.set(controlContents.identifier, controlContents);
-                        } else {
-                            this.nackMessages.delete(controlContents.identifier);
-                        }
+                        this.updateNackMessages(
+                            controlContents.identifier,
+                            controlContents.content !== undefined ? controlContents : undefined);
 
                         break;
                     }
@@ -1408,7 +1412,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      */
     private getIdleClient(timestamp: number): IClientSequenceNumber | undefined {
         const client = this.clientSeqManager.peek();
-        if (client && client.canEvict &&
+        if (client?.canEvict &&
             (timestamp - client.lastUpdate > this.serviceConfiguration.deli.clientTimeout)) {
             return client;
         }
@@ -1543,7 +1547,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
             if (opsSinceLastSummary <= this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
                 // stop nacking future messages
-                this.nackMessages.delete(NackMessagesType.SummaryMaxOps);
+                this.updateNackMessages(NackMessagesType.SummaryMaxOps, undefined);
             }
         }
     }
@@ -1663,5 +1667,20 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             // that will make the MaxTime & MaxOps op events accurate
             this.emitOpEvent(OpEventType.UpdatedDurableSequenceNumber, true);
         }
+    }
+
+    /**
+     * Adds/updates/removes a nack message
+     * @param type - Nack message type
+     * @param contents - Nack messages contents or undefined to delete the nack message
+     */
+    private updateNackMessages(type: NackMessagesType, contents: INackMessagesControlMessageContents | undefined) {
+        if (contents !== undefined) {
+            this.nackMessages.set(type, contents);
+        } else {
+            this.nackMessages.delete(type);
+        }
+
+        this.emit("updatedNackMessages", type, contents);
     }
 }

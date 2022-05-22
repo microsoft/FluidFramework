@@ -66,8 +66,6 @@ export class DocumentDeltaConnection
 
     private _details: IConnected | undefined;
 
-    private reconnectAttempts: number = 0;
-
     // Listeners only needed while the connection is in progress
     private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
     // Listeners used throughout the lifetime of the DocumentDeltaConnection
@@ -344,6 +342,15 @@ export class DocumentDeltaConnection
         this.socket.on("signal", this.earlySignalHandler);
         this.earlyOpHandlerAttached = true;
 
+        // Socket.io's reconnect_attempt event is unreliable, so we track connect_error count instead.
+        let internalSocketConnectionFailureCount: number = 0;
+        const isInternalSocketReconnectionEnabled = (): boolean => this.socket.io.reconnection();
+        const getMaxInternalSocketReconnectionAttempts = (): number => isInternalSocketReconnectionEnabled()
+            ? this.socket.io.reconnectionAttempts()
+            : 0;
+        const getMaxAllowedInternalSocketConnectionFailures = (): number =>
+            getMaxInternalSocketReconnectionAttempts() + 1;
+
         this._details = await new Promise<IConnected>((resolve, reject) => {
             const fail = (socketProtocolError: boolean, err: IAnyDriverError) => {
                 this.disposeCore(socketProtocolError, err);
@@ -352,6 +359,7 @@ export class DocumentDeltaConnection
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                internalSocketConnectionFailureCount++;
                 let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
@@ -362,16 +370,17 @@ export class DocumentDeltaConnection
                         // That's a WebSocket. Clear it as we can't log it.
                         description.target = undefined;
                     }
-                } catch (_e) {}
+                } catch (_e) { }
 
-                // Handle socket transport downgrading.
-                if (isWebSocketTransportError &&
+                // Handle socket transport downgrading when not offline.
+                if (
+                    isWebSocketTransportError &&
                     this.enableLongPollingDowngrades &&
                     this.socket.io.opts.transports?.[0] !== "polling") {
                     // Downgrade transports to polling upgrade mechanism.
                     this.socket.io.opts.transports = ["polling", "websocket"];
                     // Don't alter reconnection behavior if already enabled.
-                    if (!this.socket.io.reconnection()) {
+                    if (!isInternalSocketReconnectionEnabled()) {
                         // Allow single reconnection attempt using polling upgrade mechanism.
                         this.socket.io.reconnection(true);
                         this.socket.io.reconnectionAttempts(1);
@@ -379,17 +388,13 @@ export class DocumentDeltaConnection
                 }
 
                 // Allow built-in socket.io reconnection handling.
-                if (this.socket.io.reconnection() &&
-                    this.reconnectAttempts < this.socket.io.reconnectionAttempts()) {
+                if (isInternalSocketReconnectionEnabled() &&
+                    internalSocketConnectionFailureCount < getMaxAllowedInternalSocketConnectionFailures()) {
                     // Reconnection is enabled and maximum reconnect attempts have not been reached.
                     return;
                 }
 
                 fail(true, this.createErrorObject("connect_error", error));
-            });
-
-            this.addConnectionListener("reconnect_attempt", () => {
-                this.reconnectAttempts++;
             });
 
             // Listen for timeouts

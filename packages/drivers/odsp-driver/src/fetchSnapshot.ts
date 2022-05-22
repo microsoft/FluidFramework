@@ -354,8 +354,6 @@ async function fetchLatestSnapshotCore(
         ).catch((error) => {
             // We hit these errors in stress tests, under load
             // It's useful to try one more time in such case.
-            // We might want to add DriverErrorType.offlineError in the future if we see evidence it happens
-            // (not in "real" offline) and it actually helps.
             if (typeof error === "object" && error !== null && (error.errorType === DriverErrorType.fetchFailure ||
                 error.errorType === OdspErrorType.fetchTimeout)) {
                 error[getWithRetryForTokenRefreshRepeat] = true;
