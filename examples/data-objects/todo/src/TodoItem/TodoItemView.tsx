@@ -38,27 +38,22 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
     };
 
     return (
-        <div className={`todo-item ${className}`}>
-            <h2>
+        <div className={`todo-item${ className !== undefined ? ` ${ className }` : ""}`}>
+            <h2 className="todo-item-header">
                 <input
                     type="checkbox"
                     className="todo-item-checkbox"
                     name={todoItemModel.handle.absolutePath}
                     checked={checked}
                     onChange={checkChangedHandler} />
-                <span>{detailsVisible ? "▲" : "▼"}</span>
+                <button
+                    className="expand-button"
+                    onClick={ () => { setDetailsVisible(!detailsVisible); } }
+                >{detailsVisible ? "▲" : "▼"}</button>
                 <CollaborativeInput
                     sharedString={itemText}
                     className="collaborative-input"
                 />
-                <button
-                    name="toggleDetailsVisible"
-                    className="action-button"
-                    onClick={() => {
-                        setDetailsVisible(!detailsVisible);
-                    }}>
-                    {detailsVisible ? "▲" : "▼"}
-                </button>
             </h2>
             {
                 // If the content is visible we will show a button or a component
