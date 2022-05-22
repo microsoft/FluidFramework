@@ -60,7 +60,7 @@ export class DeltaScheduler {
     }
 
     public batchBegin(message: ISequencedDocumentMessage) {
-        if (!this.processingStartTime) {
+        if (this.processingStartTime === undefined) {
             this.processingStartTime = performance.now();
         }
         if (this.schedulingLog === undefined && this.schedulingCount % 500 === 0) {

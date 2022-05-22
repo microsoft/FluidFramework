@@ -268,8 +268,8 @@ export class BlobManager {
 
             // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
             // corresponding storageId may still be used either directly or via other localIds.
-            if (this.redirectTable?.has(blobId)) {
-                this.redirectTable.delete(blobId);
+            if (this.redirectTable?.has(blobId) ?? false) {
+                this.redirectTable?.delete(blobId);
                 continue;
             }
             this.blobIds.delete(blobId);

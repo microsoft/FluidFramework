@@ -113,7 +113,7 @@ describe("Runtime", () => {
                 expectedRefreshLatestAckRunCount: number,
                 errorMessage?: string,
             ) {
-                const errorPrefix = errorMessage ? `${errorMessage}: ` : "";
+                const errorPrefix = errorMessage !== undefined ? `${errorMessage}: ` : "";
                 assert.strictEqual(runCount, expectedTotalRunCount, `${errorPrefix}unexpected total run count`);
                 assert.strictEqual(
                     fullTreeRunCount,

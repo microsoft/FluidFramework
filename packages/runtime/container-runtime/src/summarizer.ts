@@ -318,7 +318,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
         try {
-            if (this._disposed || this.runningSummarizer?.disposed) {
+            if (this._disposed || (this.runningSummarizer?.disposed ?? false)) {
                 throw new UsageError("Summarizer is already disposed.");
             }
             if (this.runtime.summarizerClientId !== undefined &&

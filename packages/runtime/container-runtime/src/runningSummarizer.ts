@@ -230,7 +230,7 @@ export class RunningSummarizer implements IDisposable {
         this.disposeEnqueuedSummary();
 
         // This will try to run lastSummary if needed.
-        if (allowLastSummary && this.heuristicRunner?.shouldRunLastSummary()) {
+        if (allowLastSummary && this.heuristicRunner?.shouldRunLastSummary() !== undefined) {
             if (this.summarizingLock === undefined) {
                 this.trySummarizeOnce(
                     // summarizeProps

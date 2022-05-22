@@ -128,6 +128,7 @@ export class PendingStateManager implements IDisposable {
         this.initialStates = new Deque<IPendingState>(initialLocalState?.pendingStates ?? []);
 
         if (initialLocalState) {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (initialLocalState?.clientId) {
                 this.previousClientIds.add(initialLocalState.clientId);
             }

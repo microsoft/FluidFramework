@@ -429,13 +429,13 @@ class ScheduleManagerCore {
 
             // First message will have the batch flag set to true if doing a batched send
             const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
-            if (!firstMessageMetadata?.batch) {
+            if (!((firstMessageMetadata?.batch) ?? false)) {
                 return;
             }
 
             // If the batch contains only a single op, clear the batch flag.
             if (messages.length === 1) {
-                delete firstMessageMetadata.batch;
+                delete firstMessageMetadata?.batch;
                 return;
             }
 
@@ -469,7 +469,7 @@ class ScheduleManagerCore {
      * The only public function in this class - called when we processed an op,
      * to make decision if op processing should be paused or not afer that.
      */
-     public afterOpProcessing(sequenceNumber: number) {
+    public afterOpProcessing(sequenceNumber: number) {
         assert(!this.localPaused, 0x294 /* "can't have op processing paused if we are processing an op" */);
 
         // If the inbound queue is ever empty, nothing to do!
@@ -588,6 +588,7 @@ class ScheduleManagerCore {
         //    - here (batchMetadata == false below), when queue was empty and start of batch showed up.
         // 2. resumed when batch end comes in (batchMetadata === true case below)
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (batchMetadata) {
             assert(this.currentBatchClientId === undefined, 0x29e /* "there can't be active batch" */);
             assert(!this.localPaused, 0x29f /* "we should be processing ops when there is no active batch" */);
@@ -645,7 +646,7 @@ export class ScheduleManager {
             this.emitter.emit("batchBegin", message);
             this.deltaScheduler.batchBegin(message);
 
-            const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
+            const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch ?? false;
             if (batch) {
                 this.batchClientId = message.clientId;
             } else {
@@ -658,7 +659,7 @@ export class ScheduleManager {
         // If this is no longer true, we need to revisit what we do where we set this.hitError.
         assert(!this.hitError, 0x2a3 /* "container should be closed on any error" */);
 
-        if (error) {
+        if (error !== undefined) {
             // We assume here that loader will close container and stop processing all future ops.
             // This is implicit dependency. If this flow changes, this code might no longer be correct.
             this.hitError = true;
@@ -707,11 +708,11 @@ export function getDeviceSpec() {
  */
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements
-        IContainerRuntime,
-        IGarbageCollectionRuntime,
-        IRuntime,
-        ISummarizerRuntime,
-        ISummarizerInternalsProvider {
+    IContainerRuntime,
+    IGarbageCollectionRuntime,
+    IRuntime,
+    ISummarizerRuntime,
+    ISummarizerInternalsProvider {
     public get IContainerRuntime() { return this; }
     public get IFluidRouter() { return this; }
 
@@ -756,7 +757,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = context.baseSnapshot?.blobs[blobName];
-            if (context.baseSnapshot && blobId) {
+            if (context.baseSnapshot && blobId !== undefined) {
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
                 assert(storage !== undefined, 0x1f5 /* "Attached state should have storage" */);
@@ -925,7 +926,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private get summaryConfiguration() {
         return {
             // the defaults
-            ... DefaultSummaryConfiguration,
+            ...DefaultSummaryConfiguration,
             // the runtime configuration overrides
             ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
         };
@@ -1061,17 +1062,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
-                    summarizeInternal: SummarizeInternalFn,
-                    getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
-                ) => this.summarizerNode.createChild(
-                    summarizeInternal,
-                    id,
-                    createParam,
-                    undefined,
-                    getGCDataFn,
-                    getBaseGCDetailsFn,
-                ),
+                summarizeInternal: SummarizeInternalFn,
+                getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+                getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+            ) => this.summarizerNode.createChild(
+                summarizeInternal,
+                id,
+                createParam,
+                undefined,
+                getGCDataFn,
+                getBaseGCDetailsFn,
+            ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
             async () => this.garbageCollector.getBaseGCDetails(),
@@ -1299,7 +1300,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get IFluidTokenProvider() {
-        if (this.options?.intelligence) {
+        if (this.options?.intelligence !== undefined) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
                 intelligence: this.options.intelligence,
@@ -1352,7 +1353,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
                 const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
-                if (handle) {
+                if (handle !== undefined) {
                     return {
                         status: 200,
                         mimeType: "fluid/object",
@@ -1391,7 +1392,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
          * This is a workaround to handle scenarios where a data store shared with an external app is deleted
          * and marked as unreferenced by GC. Returning an error will fail to load the data store for the app.
          */
-        if (request.headers?.[RuntimeHeaders.externalRequest] && this.garbageCollector.shouldRunGC) {
+        if (request.headers?.[RuntimeHeaders.externalRequest] !== undefined && this.garbageCollector.shouldRunGC) {
             // The data store is referenced if used routes in the base summary has a route to self.
             // Older documents may not have used routes in the summary. They are considered referenced.
             const usedRoutes = (await dataStoreContext.getBaseGCDetails()).usedRoutes;
@@ -1720,7 +1721,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
-        if (!this.deltaSender) {
+        if (this.deltaSender === undefined) {
             return;
         }
 
@@ -1911,7 +1912,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private canSendOps() {
-        return this.connected && !this.deltaManager.readOnlyInfo.readonly;
+        return this.connected && (this.deltaManager.readOnlyInfo.readonly ?? false);
     }
 
     public getQuorum(): IQuorumClients {
@@ -2232,7 +2233,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
-        if (refreshLatestAck) {
+        if (refreshLatestAck ?? false) {
             const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
                 ChildLogger.create(summaryNumberLogger, undefined, { all: { safeSummary: true } }));
 
@@ -2316,7 +2317,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
             try {
                 summarizeResult = await this.summarize({
-                    fullTree: fullTree || forcedFullTree,
+                    fullTree: (fullTree ?? false) || forcedFullTree,
                     trackState: true,
                     summaryLogger: summaryNumberLogger,
                     runGC: this.garbageCollector.shouldRunGC,
@@ -2342,7 +2343,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
-            const gcSummaryTreeStats = summaryTree.tree[gcTreeKey]
+            const gcSummaryTreeStats = summaryTree.tree[gcTreeKey] !== undefined
                 ? calculateStats((summaryTree.tree[gcTreeKey] as ISummaryTree))
                 : undefined;
 
@@ -2374,16 +2375,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
-                ? {
-                    proposalHandle: undefined,
-                    ackHandle: this.context.getLoadedFromVersion()?.id,
-                    referenceSequenceNumber: summaryRefSeqNum,
-                }
-                : {
-                    proposalHandle: lastAck.summaryOp.contents.handle,
-                    ackHandle: lastAck.summaryAck.contents.handle,
-                    referenceSequenceNumber: summaryRefSeqNum,
-                };
+                    ? {
+                        proposalHandle: undefined,
+                        ackHandle: this.context.getLoadedFromVersion()?.id,
+                        referenceSequenceNumber: summaryRefSeqNum,
+                    }
+                    : {
+                        proposalHandle: lastAck.summaryOp.contents.handle,
+                        ackHandle: lastAck.summaryAck.contents.handle,
+                        referenceSequenceNumber: summaryRefSeqNum,
+                    };
 
             let handle: string;
             try {
@@ -2398,7 +2399,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 head: parent!,
                 message,
-                parents: parent ? [parent] : [],
+                parents: parent !== undefined ? [parent] : [],
             };
             const uploadData = {
                 ...generateSummaryData,
@@ -2777,20 +2778,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 end: (arg0: {
                     getVersionDuration?: number | undefined;
                     getSnapshotDuration?: number | undefined;
-                }) => void; }) => {
-                    const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
-                    const trace = Trace.start();
+                }) => void;
+            }) => {
+                const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
+                const trace = Trace.start();
 
-                    const versions = await this.storage.getVersions(versionId, 1);
-                    assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
-                    stats.getVersionDuration = trace.trace().duration;
+                const versions = await this.storage.getVersions(versionId, 1);
+                assert(versions?.[0] !== undefined, 0x137 /* "Failed to get version from storage" */);
+                stats.getVersionDuration = trace.trace().duration;
 
-                    const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-                    assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
-                    stats.getSnapshotDuration = trace.trace().duration;
+                const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
+                assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+                stats.getSnapshotDuration = trace.trace().duration;
 
-                    perfEvent.end(stats);
-                    return maybeSnapshot;
+                perfEvent.end(stats);
+                return maybeSnapshot;
         });
     }
 

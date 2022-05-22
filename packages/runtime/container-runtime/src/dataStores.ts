@@ -506,7 +506,7 @@ export class DataStores implements IDisposable {
                     // and no attach op has been fired for that data store because for loader versions <= 0.24
                     // we set attach state as "attaching" before taking createNew summary.
                     !(this.contexts.isNotBound(key)
-                        || builderTree[key]
+                        || builderTree[key] !== undefined
                         || this.attachOpFiredForDataStore.has(key)),
                 )
                 .map(([key, value]) => {
@@ -640,7 +640,7 @@ export class DataStores implements IDisposable {
         // If the node belongs to a data store, return its package path if the data store is loaded. For DDSs, we return
         // the package path of the data store that contains it.
         const context = this.contexts.get(nodePath.split("/")[1]);
-        return context?.isLoaded ? context.packagePath : undefined;
+        return context?.isLoaded ?? false ? context?.packagePath : undefined;
     }
 
     /**
@@ -672,7 +672,7 @@ export function getSummaryForDatastores(
 
     if (rootHasIsolatedChannels(metadata)) {
         const datastoresSnapshot = snapshot.trees[channelsTreeName];
-        assert(!!datastoresSnapshot, 0x168 /* `expected ${channelsTreeName} tree in snapshot` */);
+        assert(datastoresSnapshot !== undefined, 0x168 /* `expected ${channelsTreeName} tree in snapshot` */);
         return datastoresSnapshot;
     } else {
         // back-compat: strip out all non-datastore paths before giving to DataStores object.

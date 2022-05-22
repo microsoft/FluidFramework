@@ -395,7 +395,7 @@ export class GarbageCollector implements IGarbageCollector {
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
-            if (gcOptions.sweepAllowed && !gcOptions.gcAllowed) {
+            if ((gcOptions.sweepAllowed ?? false) && !(gcOptions.gcAllowed ?? false)) {
                 throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
             }
 
@@ -404,7 +404,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.sweepEnabled = gcOptions.sweepAllowed === true;
 
             // Set the Session Expiry only if the flag is enabled or the test option is set.
-            if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
+            if ((this.mc.config.getBoolean(runSessionExpiryKey) ?? false) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = defaultSessionExpiryDurationMs;
             }
         }
@@ -443,7 +443,7 @@ export class GarbageCollector implements IGarbageCollector {
             // GC must be enabled for the document.
             this.gcEnabled
             // GC must not be disabled via GC options.
-            && !gcOptions.disableGC
+            && !(gcOptions.disableGC ?? false)
         );
 
         /**
@@ -513,7 +513,7 @@ export class GarbageCollector implements IGarbageCollector {
                 const initialSnapshotDetails = await readAndParseBlob<ReadFluidDataStoreAttributes>(
                     dsSnapshotTree.blobs[dataStoreAttributesBlobName],
                 );
-                if (initialSnapshotDetails.isRootDataStore) {
+                if (initialSnapshotDetails.isRootDataStore ?? false) {
                     gcState.gcNodes["/"].outboundRoutes.push(dsRootId);
                 }
 
@@ -1106,7 +1106,7 @@ export class GarbageCollector implements IGarbageCollector {
         // We log a particular event for a given node only once so that it is not too noisy.
         const uniqueEventId = `${nodeId}-${eventName}`;
         const nodeState = this.unreferencedNodesState.get(nodeId);
-        if (nodeState?.inactive && !this.loggedUnreferencedEvents.has(uniqueEventId)) {
+        if (nodeState?.inactive === true && !this.loggedUnreferencedEvents.has(uniqueEventId)) {
             this.loggedUnreferencedEvents.add(uniqueEventId);
             const event: IUnreferencedEvent = {
                 eventName,
