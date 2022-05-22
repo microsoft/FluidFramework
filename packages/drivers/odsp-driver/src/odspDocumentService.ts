@@ -151,7 +151,7 @@ export class OdspDocumentService implements IDocumentService {
             }));
 
         this.hostPolicy = hostPolicy;
-        if (this.clientIsSummarizer) {
+        if (this.clientIsSummarizer ?? false) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
     }
@@ -267,7 +267,7 @@ export class OdspDocumentService implements IDocumentService {
                     this.socketIoClientFactory().catch(annotateAndRethrowConnectionError("socketIoClientFactory")),
                 ]);
 
-            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
+            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken ?? null);
             if (finalWebsocketToken === null) {
                 throw this.annotateConnectionError(
                     new NonRetryableError(
@@ -405,7 +405,7 @@ export class OdspDocumentService implements IDocumentService {
             this.cache.sessionJoinCache.remove(this.joinSessionKey);
             response = await getResponseAndRefreshAfterDeltaMs();
         }
-        if (!disableJoinSessionRefresh) {
+        if (disableJoinSessionRefresh !== true) {
             const props = {
                 entryTime: response.entryTime,
                 refreshSessionDurationSeconds:

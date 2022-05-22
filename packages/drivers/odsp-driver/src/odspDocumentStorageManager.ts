@@ -238,7 +238,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             getStorageToken,
             logger,
             epochTracker,
-            !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+            this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader ?? false,
         );
     }
 
@@ -254,7 +254,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const { url, headers } = getUrlAndHeadersWithAuth(
                 `${this.attachmentPOSTUrl}/content`,
                 storageToken,
-                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader ?? false,
             );
             headers["Content-Type"] = "application/octet-stream";
 
@@ -275,7 +275,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 method: "POST",
                             },
                             "createBlob",
-                    ));
+                        ));
                     event.end({
                         blobId: res.content.id,
                         ...res.propsToLog,
@@ -301,7 +301,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     unAuthedUrl,
                     storageToken,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader ?? false,
                 );
 
                 return PerformanceEvent.timedExecAsync(
@@ -344,14 +344,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
-        if (!this.snapshotUrl) {
+        if (this.snapshotUrl === undefined) {
             return null;
         }
 
         let id: string;
         if (!version || !version.id) {
             const versions = await this.getVersions(null, 1);
-            if (!versions || versions.length === 0) {
+            if (versions === undefined || versions.length === 0) {
                 return null;
             }
             id = versions[0].id;
@@ -364,7 +364,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             return null;
         }
 
-        if (snapshotTree.blobs) {
+        if (snapshotTree.blobs !== undefined) {
             const attributesBlob = snapshotTree.blobs.attributes;
             if (attributesBlob) {
                 this.attributesBlobHandles.add(attributesBlob);
@@ -381,7 +381,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
-        if (blobid !== this.documentId && blobid) {
+        if (blobid !== this.documentId && blobid !== null) {
             // FluidFetch & FluidDebugger tools use empty sting to query for versions
             // In such case we need to make a call against SPO to give full picture to the tool.
             // Otherwise, each commit calls getVersions but odsp doesn't have a history for each commit
@@ -395,7 +395,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         // Can't really make a call if we do not have URL
-        if (!this.snapshotUrl) {
+        if (this.snapshotUrl === undefined) {
             return [];
         }
 
@@ -423,7 +423,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     // if this is the summarizer and we have a cache entry but it is past the defaultSummarizerCacheExpiryTimeout,
                                     // force the network retrieval instead as there might be a more recent snapshot available.
                                     // See: https://github.com/microsoft/FluidFramework/issues/8995 for additional information.
-                                    if (this.hostPolicy.summarizerClient) {
+                                    if (this.hostPolicy.summarizerClient ?? false) {
                                         if (age > defaultSummarizerCacheExpiryTimeout) {
                                             props.cacheSummarizerExpired = true;
                                             return undefined;
@@ -437,13 +437,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 }
 
                                 return snapshotCachedEntry;
-                        });
+                            });
 
                     // Based on the concurrentSnapshotFetch policy:
                     // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
                     // or grab the cache value and then the network value if the cache value returns undefined.
                     let method: string;
-                    if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
+                    if (this.hostPolicy.concurrentSnapshotFetch === true
+                        && this.hostPolicy.summarizerClient === undefined) {
                         const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions);
 
                         // Ensure that failures on both paths are ignored initially.
@@ -496,17 +497,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
             // id should be undefined in case of just ops in snapshot.
             let id: string | undefined;
-            if (snapshotTree) {
+            if (snapshotTree !== undefined) {
                 id = snapshotTree.id;
                 assert(id !== undefined, 0x221 /* "Root tree should contain the id" */);
                 this.setRootTree(id, snapshotTree);
             }
-            if (blobs) {
+            if (blobs !== undefined) {
                 this.initBlobsCache(blobs);
             }
 
             this.ops = ops;
-            return id ? [{ id, treeId: undefined! }] : [];
+            return id !== undefined ? [{ id, treeId: undefined! }] : [];
         }
 
         return getWithRetryForTokenRefresh(async (options) => {
@@ -514,7 +515,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const { url, headers } = getUrlAndHeadersWithAuth(
                 `${this.snapshotUrl}/versions?top=${count}`,
                 storageToken,
-                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader ?? false,
             );
 
             // Fetch the latest snapshot versions for the document
@@ -527,7 +528,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, "versions"),
             );
             const versionsResponse = response.content;
-            if (!versionsResponse) {
+            if (versionsResponse === undefined) {
                 throw new NonRetryableError(
                     "No response from /versions endpoint",
                     DriverErrorType.genericNetworkError,
@@ -566,11 +567,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         const snapshotOptions: ISnapshotOptions = {
             mds: this.maxSnapshotSizeLimit,
             ...hostSnapshotOptions,
-            timeout: hostSnapshotOptions?.timeout ? Math.min(hostSnapshotOptions.timeout, this.maxSnapshotFetchTimeout) : this.maxSnapshotFetchTimeout,
+            timeout: hostSnapshotOptions?.timeout !== undefined
+                ? Math.min(hostSnapshotOptions.timeout, this.maxSnapshotFetchTimeout)
+                : this.maxSnapshotFetchTimeout,
         };
 
         // No limit on size of snapshot or time to fetch, as otherwise we fail all clients to summarize
-        if (this.hostPolicy.summarizerClient) {
+        if (this.hostPolicy.summarizerClient !== undefined) {
             snapshotOptions.mds = undefined;
             snapshotOptions.timeout = undefined;
         }
@@ -604,7 +607,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.odspResolvedUrl,
                 this.getStorageToken,
                 snapshotOptions,
-                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader ?? false,
                 this.logger,
                 snapshotDownloader,
                 putInCache,
@@ -619,7 +622,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 throw error;
             }
             // If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
-            if ((errorType === OdspErrorType.snapshotTooBig || errorType === OdspErrorType.fetchTimeout) && snapshotOptions.blobs) {
+            if ((errorType === OdspErrorType.snapshotTooBig || errorType === OdspErrorType.fetchTimeout)
+                && snapshotOptions.blobs !== undefined) {
                 this.logger.sendErrorEvent({
                     eventName: "TreeLatest_SecondCall",
                     errorType,
@@ -629,7 +633,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     this.odspResolvedUrl,
                     this.getStorageToken,
                     snapshotOptionsWithoutBlobs,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader ?? false,
                     this.logger,
                     snapshotDownloader,
                     putInCache,
@@ -654,7 +658,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
         if (".protocol" in summary.tree && context.ackHandle !== undefined) {
             let retry = 0;
-            for (;;) {
+            for (; ;) {
                 const result = await this.flushCallback();
                 const seq = result.lastPersistedSequenceNumber;
                 if (seq !== undefined && seq >= context.referenceSequenceNumber) {
@@ -700,7 +704,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private checkSnapshotUrl() {
-        if (!this.snapshotUrl) {
+        if (this.snapshotUrl === undefined) {
             throw new NonRetryableError(
                 "Method failed because no snapshot url was available",
                 DriverErrorType.genericError,
@@ -709,7 +713,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private checkAttachmentPOSTUrl() {
-        if (!this.attachmentPOSTUrl) {
+        if (this.attachmentPOSTUrl === undefined) {
             throw new NonRetryableError(
                 "Method failed because no attachment POST url was available",
                 DriverErrorType.genericError,
@@ -718,7 +722,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private checkAttachmentGETUrl() {
-        if (!this.attachmentGETUrl) {
+        if (this.attachmentGETUrl === undefined) {
             throw new NonRetryableError(
                 "Method failed because no attachment GET url was available",
                 DriverErrorType.genericError,
@@ -727,7 +731,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     private async readTree(id: string): Promise<api.ISnapshotTree | null> {
-        if (!this.snapshotUrl) {
+        if (this.snapshotUrl === undefined) {
             return null;
         }
         let tree = this.commitCache.get(id);
@@ -746,17 +750,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     storageToken,
                     id,
                     this.fetchFullSnapshot,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader ?? false,
                     this.logger,
                     snapshotDownloader,
                 );
                 let treeId = "";
-                if (snapshot.snapshotTree) {
+                if (snapshot.snapshotTree !== undefined) {
                     assert(snapshot.snapshotTree.id !== undefined, 0x222 /* "Root tree should contain the id!!" */);
                     treeId = snapshot.snapshotTree.id;
                     this.setRootTree(treeId, snapshot.snapshotTree);
                 }
-                if (snapshot.blobs) {
+                if (snapshot.blobs !== undefined) {
                     this.initBlobsCache(snapshot.blobs);
                 }
                 // If the version id doesn't match with the id of the tree, then use the id of first tree which in that case

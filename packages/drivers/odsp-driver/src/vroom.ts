@@ -48,7 +48,7 @@ export async function fetchJoinSession(
     const token = await getStorageToken(options, "JoinSession");
 
     const tokenRefreshProps = options.refresh
-        ? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
+        ? { hasClaims: Boolean(options.claims), hasTenantId: Boolean(options.tenantId) }
         : {};
     const details: ITelemetryProperties = {
         refreshedToken: options.refresh,
@@ -58,11 +58,11 @@ export async function fetchJoinSession(
 
     return PerformanceEvent.timedExecAsync(
         logger, {
-            eventName: "JoinSession",
-            attempts: options.refresh ? 2 : 1,
-            details: JSON.stringify(details),
-            ...tokenRefreshProps,
-        },
+        eventName: "JoinSession",
+        attempts: options.refresh ? 2 : 1,
+        details: JSON.stringify(details),
+        ...tokenRefreshProps,
+    },
         async (event) => {
             const siteOrigin = getOrigin(urlParts.siteUrl);
             const formBoundary = uuid();
@@ -70,7 +70,7 @@ export async function fetchJoinSession(
             postBody += `Authorization: Bearer ${token}\r\n`;
             postBody += `X-HTTP-Method-Override: POST\r\n`;
             postBody += `Content-Type: application/json\r\n`;
-            if (!disableJoinSessionRefresh) {
+            if (!(disableJoinSessionRefresh ?? false)) {
                 postBody += `prefer: FluidRemoveCheckAccess\r\n`;
             }
             postBody += `_post: 1\r\n`;
@@ -89,8 +89,7 @@ export async function fetchJoinSession(
 
             const response = await runWithRetry(
                 async () => epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-                    `${getApiRoot(siteOrigin)}/drives/${
-                        urlParts.driveId
+                    `${getApiRoot(siteOrigin)}/drives/${urlParts.driveId
                     }/items/${urlParts.itemId}/${path}?ump=1`,
                     { method, headers, body: postBody },
                     "joinSession",
@@ -113,7 +112,7 @@ export async function fetchJoinSession(
                 refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
             });
 
-            if (response.content.runtimeTenantId && !response.content.tenantId) {
+            if (response.content.runtimeTenantId !== undefined && !response.content.tenantId) {
                 response.content.tenantId = response.content.runtimeTenantId;
             }
 

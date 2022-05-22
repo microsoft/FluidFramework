@@ -160,6 +160,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         // storage / cache until it gets ops it needs. This would result in deadlock if fixed range is asked from
         // cache and it's not there.
         // Better implementation would be to return only what we have in cache, but that also breaks API
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         assert(!cachedOnly || toTotal === undefined, 0x1e3);
 
         let opsFromSnapshot = 0;
@@ -197,7 +198,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                 this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
             }
 
-            if (cachedOnly) {
+            if (cachedOnly ?? false) {
                 return { messages: [], partialResult: false };
             }
 

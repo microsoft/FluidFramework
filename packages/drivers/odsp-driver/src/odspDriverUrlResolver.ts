@@ -22,7 +22,7 @@ import { pkgVersion } from "./packageVersion";
 
 function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
     const siteOrigin = new URL(siteUrl).origin;
-    const version = fileVersion ? `versions/${fileVersion}/` : "";
+    const version = fileVersion !== undefined ? `versions/${fileVersion}/` : "";
     return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${version}`;
 }
 
@@ -66,7 +66,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
     constructor() { }
 
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-        if (request.headers?.[DriverHeader.createNew]) {
+        if (request.headers?.[DriverHeader.createNew] !== undefined) {
             const [siteURL, queryString] = request.url.split("?");
 
             const searchParams = new URLSearchParams(queryString);
@@ -75,14 +75,18 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             const filePath = searchParams.get("path");
             const packageName = searchParams.get("containerPackageName");
             const createLinkType = searchParams.get("createLinkType");
-            if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
+            if (!(fileName !== undefined
+                && siteURL !== undefined
+                && driveID !== null
+                && filePath !== null
+                && filePath !== undefined)) {
                 throw new NonRetryableError(
                     "Proper new file params should be there!!",
                     DriverErrorType.genericError,
                     { driverVersion: pkgVersion });
             }
             let shareLinkInfo: ShareLinkInfoType | undefined;
-            if (createLinkType && createLinkType in ShareLinkTypes) {
+            if (createLinkType !== null && createLinkType in ShareLinkTypes) {
                 shareLinkInfo = {
                     createLink: {
                         type: ShareLinkTypes[createLinkType],
@@ -108,7 +112,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 fileName,
                 summarizer: false,
                 codeHint: {
-                    containerPackageName: packageName ? packageName : undefined,
+                    containerPackageName: packageName ?? undefined,
                 },
                 fileVersion: undefined,
                 shareLinkInfo,
@@ -130,7 +134,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             }
         }
 
-        const summarizer = !!request.headers?.[DriverHeader.summarizingClient];
+        const summarizer = request.headers?.[DriverHeader.summarizingClient] !== undefined;
 
         return {
             type: "fluid",
@@ -227,7 +231,7 @@ function decodeOdspUrl(url: string): {
         driveId: decodeURIComponent(driveId),
         itemId: decodeURIComponent(itemId),
         path: decodeURIComponent(path),
-        containerPackageName: containerPackageName ? decodeURIComponent(containerPackageName) : undefined,
-        fileVersion: fileVersion ? decodeURIComponent(fileVersion) : undefined,
+        containerPackageName: containerPackageName !== null ? decodeURIComponent(containerPackageName) : undefined,
+        fileVersion: fileVersion !== null ? decodeURIComponent(fileVersion) : undefined,
     };
 }

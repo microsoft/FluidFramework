@@ -252,7 +252,7 @@ export class EpochTracker implements IPersistedFileCache {
         addInBody: boolean,
         clientCorrelationId: string,
     ) {
-        const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp;
+        const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp ?? false;
         if (addInBody) {
             const headers: { [key: string]: string; } = {};
             headers["X-RequestStats"] = clientCorrelationId;
@@ -356,6 +356,7 @@ export class EpochTracker implements IPersistedFileCache {
         // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
             // This is similar in nature to how fluidEpochMismatchError (409) is handled.
             // Difference - client detected mismatch, instead of server detecting it.

@@ -8,6 +8,7 @@ export function getUrlAndHeadersWithAuth(
     token: string | null,
     forceAccessTokenViaAuthorizationHeader: boolean,
 ): { url: string; headers: { [index: string]: string; }; } {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!token || token.length === 0) {
         return { url, headers: {} };
     }

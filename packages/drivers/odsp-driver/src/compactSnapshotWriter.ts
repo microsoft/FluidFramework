@@ -65,7 +65,7 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) 
         writeTreeSectionCore(childNode, value);
     }
 
-    if (snapshotTree.blobs) {
+    if (snapshotTree.blobs !== undefined) {
         for (const [path, id] of Object.entries(snapshotTree.blobs)) {
             const blobNode = treesNode.addNode();
             addStringProperty(blobNode, "name", path);

@@ -29,6 +29,6 @@ export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
   return {
     codeDetailsHint: locator?.containerPackageName,
     // Add the snapshot endpoint, which has the same domain as the site URL
-    criticalBootDomains: siteOrigin ? [siteOrigin] : undefined,
+      criticalBootDomains: siteOrigin !== undefined ? [siteOrigin] : undefined,
   };
 }

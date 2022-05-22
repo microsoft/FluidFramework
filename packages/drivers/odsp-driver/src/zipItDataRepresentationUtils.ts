@@ -132,7 +132,7 @@ export function iteratePairs<T>(it: IterableIterator<T>) {
     const res: IterableIterator<[T, T]> = {
         next: () => {
             const a = it.next();
-            if (a.done) {
+            if (a.done ?? false) {
                 return { value: undefined, done: true };
             }
             const b = it.next();

@@ -32,14 +32,14 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
     let locatorSerialized = `${fluidSitePathParamName}=${sitePath}&${fluidDriveIdParamName}=${driveId}&${
         fluidItemIdParamName}=${itemId}&${fluidDataStorePathParamName}=${dataStorePath}&${
         fluidSignatureParamName}=${fluidSignature}`;
-    if (locator.appName) {
+    if (locator.appName !== undefined) {
         locatorSerialized += `&${fluidAppNameParamName}=${encodeURIComponent(locator.appName)}`;
     }
-    if (locator.containerPackageName) {
+    if (locator.containerPackageName !== undefined) {
         locatorSerialized += `&${fluidContainerPackageNameParamName}=${
             encodeURIComponent(locator.containerPackageName)}`;
     }
-    if (locator.fileVersion) {
+    if (locator.fileVersion !== undefined) {
         locatorSerialized += `&${fluidFileVersionParamName}=${
             encodeURIComponent(locator.fileVersion)}`;
     }
@@ -74,7 +74,7 @@ function decodeOdspFluidDataStoreLocator(
     const fileVersion = locatorInfo.get(fluidFileVersionParamName) ?? undefined;
     // "" is a valid value for dataStorePath so simply check for absence of the param;
     // the rest of params must be present and non-empty
-    if (!sitePath || !driveId || !itemId || dataStorePath === null) {
+    if (sitePath === null || driveId === null || itemId === null || dataStorePath === null) {
         return undefined;
     }
 
@@ -125,7 +125,7 @@ export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocat
 export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | undefined {
     // NOTE: No need to apply decodeURIComponent when accessing query params via URLSearchParams class.
     const encodedLocatorValue = url.searchParams.get(locatorQueryParamName);
-    if (!encodedLocatorValue) {
+    if (encodedLocatorValue === null) {
         return undefined;
     }
 

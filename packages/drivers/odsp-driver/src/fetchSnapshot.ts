@@ -104,7 +104,7 @@ export async function fetchSnapshotWithRedeem(
 ): Promise<ISnapshotContents> {
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
-    if (sharingLinkToRedeem) {
+    if (sharingLinkToRedeem !== undefined) {
         odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
@@ -117,7 +117,7 @@ export async function fetchSnapshotWithRedeem(
         putInCache,
         enableRedeemFallback,
     ).catch(async (error) => {
-        if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
+        if ((enableRedeemFallback ?? false) && isRedeemSharingLinkError(odspResolvedUrl, error)) {
             // Execute the redeem fallback
             logger.sendErrorEvent({
                 eventName: "RedeemFallback",
@@ -168,7 +168,7 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                assert(!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
+            assert(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
                     0x1ed /* "Share link should be present" */);
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
                 const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem);
@@ -293,9 +293,9 @@ async function fetchLatestSnapshotCore(
                 const canCache =
                     response.odspSnapshotResponse.headers.get("disablebrowsercachingofusercontent") !== "true";
                 const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
-                const seqNumberFromOps = snapshot.ops && snapshot.ops.length > 0 ?
-                    snapshot.ops[0].sequenceNumber - 1 :
-                    undefined;
+                const seqNumberFromOps = snapshot.ops !== undefined && snapshot.ops.length > 0
+                    ? snapshot.ops[0].sequenceNumber - 1
+                    : undefined;
 
                 if (!Number.isInteger(sequenceNumber)
                     || seqNumberFromOps !== undefined && seqNumberFromOps !== sequenceNumber) {
@@ -394,7 +394,7 @@ function getFormBodyAndHeaders(
             }
         });
     }
-    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined) {
         formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem}`);
     }
     formParams.push(`_post: 1`);
@@ -451,7 +451,7 @@ export async function downloadSnapshot(
 ): Promise<ISnapshotRequestAndResponseOptions> {
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
-    if (sharingLinkToRedeem) {
+    if (sharingLinkToRedeem !== undefined) {
         odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 

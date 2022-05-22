@@ -58,7 +58,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         const socketReference = SocketReference.socketIoSockets.get(key);
 
         // Verify the socket is healthy before reusing it
-        if (socketReference?.disconnected) {
+        if (socketReference?.disconnected !== undefined) {
             // The socket is in a bad state. fully remove the reference
             socketReference.closeSocket();
             return undefined;
@@ -214,7 +214,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
         // do not include the specific tenant/doc id in the ref key when multiplexing
         // this will allow multiple documents to share the same websocket connection
-        const key = socketReferenceKeyPrefix ? `${socketReferenceKeyPrefix},${url}` : url;
+        const key = socketReferenceKeyPrefix !== undefined ? `${socketReferenceKeyPrefix},${url}` : url;
         const socketReferenceKey = enableMultiplexing ? key : `${key},${tenantId},${documentId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
@@ -444,7 +444,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     };
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
-        if (this.enableMultiplexing) {
+        if (this.enableMultiplexing ?? false) {
             // multiplex compatible early handlers
             this.earlyOpHandler = (messageDocumentId: string, msgs: ISequencedDocumentMessage[]) => {
                 if (this.documentId === messageDocumentId) {
@@ -534,6 +534,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             case "op":
                 // per document op handling
                 super.addTrackedListener(event, (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!this.enableMultiplexing || this.documentId === documentId) {
                         listener(documentId, msgs);
                     }
@@ -543,6 +544,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             case "signal":
                 // per document signal handling
                 super.addTrackedListener(event, (msg: ISignalMessage, documentId?: string) => {
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!this.enableMultiplexing || !documentId || documentId === this.documentId) {
                         listener(msg, documentId);
                     }

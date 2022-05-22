@@ -91,8 +91,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             filename: odspResolvedUrl.fileName,
             // set createLinkType to undefined if enableShareLinkWithCreate is set to false,
             // so that share link creation with create file can be enabled
-            createLinkType: this.hostPolicy.enableShareLinkWithCreate ?
-            odspResolvedUrl.shareLinkInfo?.createLink?.type : undefined,
+            createLinkType: this.hostPolicy.enableShareLinkWithCreate === true
+                ? odspResolvedUrl.shareLinkInfo?.createLink?.type
+                : undefined,
         };
 
         const odspLogger = createOdspLogger(logger);
@@ -124,7 +125,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     cacheAndTracker.epochTracker,
                     fileEntry,
                     this.hostPolicy.cacheCreateNewSummary ?? true,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader !== undefined,
                 );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
                     cacheAndTracker, clientIsSummarizer);

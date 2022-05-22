@@ -104,7 +104,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
             }
         }
 
-        const driveId = joinSessionMatch[3] || joinSessionMatch[5];
+        const driveId = joinSessionMatch[3] ?? joinSessionMatch[5];
         const itemId = joinSessionMatch[4];
 
         return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };

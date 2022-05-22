@@ -93,7 +93,7 @@ export async function createNewFluidFile(
     fileEntry.docId = odspResolvedUrl.hashedDocumentId;
     fileEntry.resolvedUrl = odspResolvedUrl;
 
-    if (sharingLink || sharingLinkErrorReason) {
+    if ((Boolean(sharingLink)) || (Boolean(sharingLinkErrorReason))) {
         odspResolvedUrl.shareLinkInfo = {
             createLink: {
                 type: newFileInfo.createLinkType,
@@ -153,7 +153,7 @@ export async function createNewEmptyFluidFile(
                 );
 
                 const content = fetchResponse.content;
-                if (!content || !content.id) {
+                if (content === undefined || !content.id) {
                     throw new NonRetryableError(
                         // pre-0.58 error message: ODSP CreateFile call returned no item ID
                         "ODSP CreateFile call returned no item ID (for empty file)",
@@ -214,7 +214,7 @@ export async function createNewFluidFileFromSummary(
                 );
 
                 const content = fetchResponse.content;
-                if (!content || !content.itemId) {
+                if (content === undefined || !content.itemId) {
                     throw new NonRetryableError(
                         "ODSP CreateFile call returned no item ID",
                         DriverErrorType.incorrectServerResponse,
@@ -234,7 +234,7 @@ export async function createNewFluidFileFromSummary(
 function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
     const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
     const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-    if (!(appSummary && protocolSummary)) {
+    if (appSummary === undefined || protocolSummary === undefined) {
         throw new Error("App and protocol summary required for create new path!!");
     }
     const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);

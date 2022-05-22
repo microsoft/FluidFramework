@@ -19,10 +19,10 @@ export function createOdspUrl(
     let odspUrl = `${l.siteUrl}?driveId=${encodeURIComponent(l.driveId)}&itemId=${encodeURIComponent(
         l.itemId,
     )}&path=${encodeURIComponent(l.dataStorePath)}`;
-    if (l.containerPackageName) {
+    if (l.containerPackageName !== undefined) {
         odspUrl += `&containerPackageName=${encodeURIComponent(l.containerPackageName)}`;
     }
-    if (l.fileVersion) {
+    if (l.fileVersion !== undefined) {
         odspUrl += `&fileVersion=${encodeURIComponent(l.fileVersion)}`;
     }
 

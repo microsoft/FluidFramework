@@ -108,7 +108,7 @@ export async function fetchHelper(
     return fetch(requestInfo, requestInit).then(async (fetchResponse) => {
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
-        if (!response) {
+        if (response === undefined) {
             throw new NonRetryableError(
                 // pre-0.58 error message: No response from fetch call
                 "No response from ODSP fetch call",
@@ -288,8 +288,8 @@ export function toInstrumentedOdspTokenFetcher(
             {
                 eventName: `${name}_GetToken`,
                 attempts: options.refresh ? 2 : 1,
-                hasClaims: !!options.claims,
-                hasTenantId: !!options.tenantId,
+                hasClaims: Boolean(options.claims),
+                hasTenantId: Boolean(options.tenantId),
             },
             async (event) => tokenFetcher({
                 ...options,

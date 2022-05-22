@@ -56,8 +56,8 @@ export class OdspSummaryUploadManager {
             });
         }
         const result = await this.writeSummaryTreeCore(context.ackHandle, context.referenceSequenceNumber, tree);
-        const id = result ? result.id : undefined;
-        if (!result || !id) {
+        const id = result !== undefined ? result.id : undefined;
+        if (result === undefined || id === undefined) {
             throw new Error(`Failed to write summary tree`);
         }
         this.lastSummaryProposalHandle = id;
@@ -70,7 +70,7 @@ export class OdspSummaryUploadManager {
         tree: api.ISummaryTree,
     ): Promise<IWriteSummaryResponse> {
         const enableContainerTypeSummaryUpload = this.mc.config.getBoolean("Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload");
-        const containsProtocolTree = enableContainerTypeSummaryUpload &&
+        const containsProtocolTree = enableContainerTypeSummaryUpload === true &&
             Object.keys(tree.tree).includes(".protocol");
         const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
@@ -95,7 +95,7 @@ export class OdspSummaryUploadManager {
                 this.forceAccessTokenViaAuthorizationHeader,
             );
             headers["Content-Type"] = "application/json";
-            if (parentHandle) {
+            if (parentHandle !== undefined) {
                 headers["If-Match"] = `fluid:containerid=${parentHandle}`;
             }
 
@@ -105,8 +105,8 @@ export class OdspSummaryUploadManager {
                 {
                     eventName: "uploadSummary",
                     attempt: options.refresh ? 2 : 1,
-                    hasClaims: !!options.claims,
-                    hasTenantId: !!options.tenantId,
+                    hasClaims: Boolean(options.claims),
+                    hasTenantId: Boolean(options.tenantId),
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                     blobs,
                     size: postBody.length,
@@ -189,7 +189,7 @@ export class OdspSummaryUploadManager {
                     break;
                 }
                 case api.SummaryType.Handle: {
-                    if (!parentHandle) {
+                    if (parentHandle === undefined) {
                         throw Error("Parent summary does not exist to reference by handle.");
                     }
                     let handlePath = summaryObject.handle;
@@ -223,7 +223,7 @@ export class OdspSummaryUploadManager {
                     ...baseEntry,
                     unreferenced,
                 };
-            } else if (id) {
+            } else if (id !== undefined) {
                 entry = {
                     ...baseEntry,
                     id,
