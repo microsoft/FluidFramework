@@ -15,6 +15,7 @@ interface ISpacesViewProps {
     model: Spaces;
 }
 
+// export const SpacesView = (props: ISpacesViewProps): JSX.Element => {
 export const SpacesView: React.FC<ISpacesViewProps> = (props: ISpacesViewProps) => {
     const { model } = props;
     const [baseUrl, setBaseUrl] = React.useState<string | undefined>("");

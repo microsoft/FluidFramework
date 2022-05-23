@@ -117,6 +117,8 @@ interface ISpacesToolbarProps {
     applyTemplate?(template: string): void;
 }
 
+// export const SpacesToolbar =
+//     (props: React.PropsWithChildren<ISpacesToolbarProps>): JSX.Element => {
 export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
     (props: React.PropsWithChildren<ISpacesToolbarProps>) => {
         const toolbarItems: JSX.Element[] = [];
