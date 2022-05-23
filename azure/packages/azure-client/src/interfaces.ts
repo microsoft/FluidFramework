@@ -58,7 +58,7 @@ export interface AzureGetVersionsOptions {
 
 /**
  * The type of connection.
- * - "local" for local connections to a fluid relay instance running on the localhost
+ * - "local" for local connections to a Fluid relay instance running on the localhost
  * - "remote" for client connections to the Azure Fluid Relay service
  */
 export type AzureConnectionConfigType = "local" | "remote";
