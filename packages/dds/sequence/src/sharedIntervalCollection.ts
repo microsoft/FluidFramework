@@ -24,13 +24,14 @@ import {
     IntervalCollectionValueType,
     ISerializableInterval,
 } from "./intervalCollection";
-import { MapKernel } from "./mapKernel";
+import { IMapMessageLocalMetadata, DefaultMap } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
 
 /**
  * The factory that defines the SharedIntervalCollection
+ * @deprecated - SharedIntervalCollection is not maintained and is planned to be removed.
  */
 export class SharedIntervalCollectionFactory implements IChannelFactory {
     public static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
@@ -79,8 +80,11 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
     getIntervalCollection(label: string): IntervalCollection<TInterval>;
 }
 
-export class SharedIntervalCollection<TInterval extends ISerializableInterval = Interval>
-    extends SharedObject implements ISharedIntervalCollection<TInterval> {
+/**
+ * @deprecated - SharedIntervalCollection is not maintained and is planned to be removed.
+ */
+export class SharedIntervalCollection
+    extends SharedObject implements ISharedIntervalCollection<Interval> {
     /**
      * Create a SharedIntervalCollection
      *
@@ -102,7 +106,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     public readonly [Symbol.toStringTag]: string = "SharedIntervalCollection";
-    private readonly intervalMapKernel: MapKernel;
+    private readonly intervalCollections: DefaultMap<IntervalCollection<Interval>>;
 
     /**
      * Constructs a new shared SharedIntervalCollection. If the object is non-local an id and service interfaces will
@@ -114,43 +118,36 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
-        this.intervalMapKernel = new MapKernel(
+        this.intervalCollections = new DefaultMap(
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isAttached(),
-            [new IntervalCollectionValueType()],
+            new IntervalCollectionValueType(),
         );
     }
 
+    /**
+     * @deprecated - IntervalCollections are created on a first-write wins basis, and concurrent creates
+     * are supported. Use `getIntervalCollection` instead.
+     */
     public async waitIntervalCollection(
         label: string,
-    ): Promise<IntervalCollection<TInterval>> {
-        return this.intervalMapKernel.wait<IntervalCollection<TInterval>>(
-            this.getIntervalCollectionPath(label));
+    ): Promise<IntervalCollection<Interval>> {
+        return this.intervalCollections.get(this.getIntervalCollectionPath(label));
     }
 
-    // TODO: fix race condition on creation by putting type on every operation
-    public getIntervalCollection(label: string): IntervalCollection<TInterval> {
+    public getIntervalCollection(label: string): IntervalCollection<Interval> {
         const realLabel = this.getIntervalCollectionPath(label);
-        if (!this.intervalMapKernel.has(realLabel)) {
-            this.intervalMapKernel.createValueType(
-                label,
-                IntervalCollectionValueType.Name,
-                undefined);
-        }
-
-        const sharedCollection =
-            this.intervalMapKernel.get<IntervalCollection<TInterval>>(realLabel);
+        const sharedCollection = this.intervalCollections.get(realLabel);
         return sharedCollection;
     }
 
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-        return createSingleBlobSummary(snapshotFileName, this.intervalMapKernel.serialize(serializer));
+        return createSingleBlobSummary(snapshotFileName, this.intervalCollections.serialize(serializer));
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
+        this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata);
     }
 
     protected onDisconnect() { }
@@ -161,12 +158,12 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected async loadCore(storage: IChannelStorageService) {
         const blob = await storage.readBlob(snapshotFileName);
         const header = bufferToString(blob, "utf8");
-        this.intervalMapKernel.populate(header);
+        this.intervalCollections.populate(header);
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
+            this.intervalCollections.tryProcessMessage(message.contents, local, message, localOpMetadata);
         }
     }
 

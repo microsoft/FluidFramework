@@ -17,9 +17,9 @@ import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
 export interface DriverApiType {
-    LocalDriverApi: LocalDriverApiType,
-    OdspDriverApi: OdspDriverApiType,
-    RouterliciousDriverApi: RouterliciousDriverApiType,
+    LocalDriverApi: LocalDriverApiType;
+    OdspDriverApi: OdspDriverApiType;
+    RouterliciousDriverApi: RouterliciousDriverApiType;
 }
 
 export const DriverApi: DriverApiType = {
@@ -54,8 +54,8 @@ export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => an
     T extends (config: infer P, ...args: any) => any ? P : never;
 
 export interface FluidTestDriverConfig {
-    odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>,
-    r11s?: CreateFromEnvConfigParam<typeof RouterliciousTestDriver.createFromEnv>,
+    odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>;
+    r11s?: CreateFromEnvConfigParam<typeof RouterliciousTestDriver.createFromEnv>;
 }
 
 export async function createFluidTestDriver(

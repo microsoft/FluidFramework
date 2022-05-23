@@ -42,7 +42,7 @@ export function isOnline(): OnlineStatus {
 }
 
 /** Telemetry props with driver-specific required properties */
-export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string | undefined };
+export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string | undefined; };
 
 /**
  * Generic network error class.
@@ -143,7 +143,7 @@ export const createWriteError = (message: string, props: DriverErrorTelemetryPro
 
 export function createGenericNetworkError(
     message: string,
-    retryInfo: { canRetry: boolean, retryAfterMs?: number },
+    retryInfo: { canRetry: boolean; retryAfterMs?: number; },
     props: DriverErrorTelemetryProps,
 ): ThrottlingError | GenericNetworkError {
     if (retryInfo.retryAfterMs !== undefined && retryInfo.canRetry) {

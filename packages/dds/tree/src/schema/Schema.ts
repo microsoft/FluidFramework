@@ -168,7 +168,7 @@ export interface TreeSchema {
      * Schema for fields with keys scoped to this TreeSchema.
      *
      * This refers to the FieldSchema directly
-     * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -> FieldSchema map).
+     * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldSchema map).
      * This allows os short friendly field keys which can ergonomically used as field names in code.
      * It also interoperates well with extraLocalFields being used as a map with arbitrary data as keys.
      */
@@ -194,7 +194,7 @@ export interface TreeSchema {
      * Usually `FieldKind.Value` should NOT be used here
      * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
      * (that would require infinite children).
-     * This pattern, which produces a schema which can never be met, is used by @link neverTree},
+     * This pattern, which produces a schema which can never be met, is used by {@link neverTree},
      * and can be useful in special cases (like a default stored schema when none is specified).
      */
     readonly extraLocalFields: FieldSchema;

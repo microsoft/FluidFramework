@@ -56,7 +56,7 @@ const defaultExtraGlobalFields = false;
  * See {@link TreeSchema} for details.
  */
 interface TreeSchemaBuilder {
-    readonly localFields?: { [key: string]: FieldSchema },
+    readonly localFields?: { [key: string]: FieldSchema; };
     readonly globalFields?: Iterable<GlobalFieldKey>;
     readonly extraLocalFields?: FieldSchema;
     readonly extraGlobalFields?: boolean;

@@ -36,8 +36,12 @@ module.exports = {
         "@rushstack/eslint-plugin-security",
         // Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
         "@typescript-eslint/eslint-plugin",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-jsdoc
+        "eslint-plugin-jsdoc",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-promise
         "eslint-plugin-promise",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-tsdoc
+        "eslint-plugin-tsdoc",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
         "react",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
@@ -140,9 +144,27 @@ module.exports = {
         "@typescript-eslint/comma-spacing": "error",
         "@typescript-eslint/func-call-spacing": "error",
         "@typescript-eslint/keyword-spacing": "error",
+        "@typescript-eslint/member-delimiter-style": [
+            "error",
+            {
+                "multiline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "singleline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "multilineDetection": "brackets"
+            },
+        ],
         "@typescript-eslint/object-curly-spacing": [
             "error",
             "always",
+        ],
+        "@typescript-eslint/semi": [
+            "error",
+            "always"
         ],
         "@typescript-eslint/space-before-function-paren": [
             "error",
@@ -163,6 +185,14 @@ module.exports = {
         ],
         "jsx-quotes": "error",
         "key-spacing": "error",
+        "space-unary-ops": "error",
+        "switch-colon-spacing": "error",
+
+        // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
+        "tsdoc/syntax": "error",
+
+        "@typescript-eslint/prefer-includes": "error",
+        "@typescript-eslint/prefer-optional-chain": "error",
     },
     "overrides": [
         {

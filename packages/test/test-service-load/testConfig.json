@@ -13,7 +13,15 @@
             "optionOverrides":{
                 "odsp":{
                     "loader":{
-                        "summarizeProtocolTree": [true,false]
+                        "summarizeProtocolTree": [false]
+                    }
+                },
+                "odsp-odsp-df":{
+                    "loader":{
+                        "summarizeProtocolTree": [false]
+                    },
+                    "configurations":{
+                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [0, 1]
                     }
                 }
             }
@@ -38,7 +46,7 @@
             "optionOverrides":{
                 "odsp":{
                     "loader":{
-                        "summarizeProtocolTree": [true,false]
+                        "summarizeProtocolTree": [false]
                     }
                 }
             }

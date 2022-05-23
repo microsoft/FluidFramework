@@ -107,7 +107,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
      * @returns a map of nodePath to its unreferenced timestamp.
      */
     async function getUnreferencedTimestamps(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+        summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
     ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger, true /* fullTree */);
         latestAckedSummary = summaryResult.ackedSummary;
@@ -270,7 +270,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         });
     });
 
-    /**
+    /*
      * These tests validate such scenarios where nodes transition from unreferenced -> referenced -> unreferenced state
      * by verifying that their unreferenced timestamps are updated correctly.
      *
@@ -278,7 +278,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
      * The nodes are data stores / DDSs represented by alphabets A, B, C and so on.
      */
     describe("References between summaries", () => {
-        /**
+        /*
          * Validates that we can detect references that were added and then removed.
          * 1. Summary 1 at t1. V = [A*, B]. E = []. B has unreferenced time t1.
          * 2. Op adds reference from A to B. E = [A -> B].
@@ -313,7 +313,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsBTime2 !== undefined && dsBTime2 > dsBTime1, `B's timestamp should have updated`);
         });
 
-        /**
+        /*
          * Validates that we can detect references that were added transitively and then removed.
          * 1. Summary 1 at t1. V = [A*, B, C]. E = [B -> C]. B and C have unreferenced time t2.
          * 2. Op adds reference from A to B. E = [A -> B, B -> C].
@@ -359,7 +359,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
         });
 
-        /**
+        /*
          * Validates that we can detect chain of references in which the first reference was added and then removed.
          * 1. Summary 1 at t1. V = [A*, B, C, D]. E = [B -> C, C -> D]. B, C and D have unreferenced time t2.
          * 2. Op adds reference from A to B. E = [A -> B, B -> C, C -> D].
@@ -407,7 +407,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsDTime2 !== undefined && dsDTime2 > dsDTime1, `D's timestamp should have updated`);
         });
 
-        /**
+        /*
          * Validates that we can detect references that were added and removed via new data stores.
          * 1. Summary 1 at t1. V = [A*, C]. E = []. C has unreferenced time t1.
          * 2. Data store B is created. E = [].
@@ -450,7 +450,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
         });
 
-        /**
+        /*
          * Validates that we can detect references that were added and removed via new root data stores.
          * 1. Summary 1 at t1. V = [A*, C]. E = []. C has unreferenced time t1.
          * 2. Root data store B is created. E = [].
@@ -493,7 +493,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
         });
 
-        /**
+        /*
          * Validates that we can detect references that were added via new data stores before they are referenced
          * themselves, and then the reference from the new data store is removed.
          * 1. Summary 1 at t1. V = [A*, C]. E = []. C has unreferenced time t1.
@@ -540,7 +540,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
         });
 
-        /**
+        /*
          * Validates that we can detect references that were added transitively via new data stores before they are
          * references themselves, and then the reference from the new data store is removed.
          * 1. Summary 1 at t1. V = [A*, D]. E = []. D has unreferenced time t1.
@@ -592,7 +592,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsDTime2 !== undefined && dsDTime2 > dsDTime1, `D's timestamp should have updated`);
         });
 
-        /**
+        /*
          * Validates that references added by unreferences nodes do not show up as references.
          * 1. Summary 1 at t1. V = [A*, B, C]. E = []. B and C have unreferenced time t1.
          * 2. Op adds reference from B to C. E = [B -> C].
@@ -630,7 +630,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsCTime2 === dsCTime1, `C's unreferenced timestamp should be unchanged`);
         });
 
-        /**
+        /*
          * Validates that DDSs are referenced even though we don't detect their referenced between summaries. Once we
          * do GC at DDS level, this test will fail - https://github.com/microsoft/FluidFramework/issues/8470.
          * 1. Summary 1 at t1. V = [A*]. E = [].

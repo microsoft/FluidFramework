@@ -106,8 +106,8 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     /**
      * Get the context with the given id, once it exists locally and is attached.
      * e.g. If created locally, it must be bound, or if created remotely then it's fine as soon as it's sync'd in.
-     * @param id The id of the context to get
-     * @param wait If false, return undefined if the context isn't present and ready now. Otherwise, wait for it.
+     * @param id - The id of the context to get
+     * @param wait - If false, return undefined if the context isn't present and ready now. Otherwise, wait for it.
      */
     public async getBoundOrRemoted(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined> {
         const deferredContext = this.ensureDeferred(id);

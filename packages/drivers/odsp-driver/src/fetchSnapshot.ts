@@ -59,7 +59,7 @@ export async function fetchSnapshot(
     fetchFullSnapshot: boolean,
     forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
-    snapshotDownloader: (url: string, fetchOptions: { [index: string]: any }) => Promise<IOdspResponse<unknown>>,
+    snapshotDownloader: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
@@ -354,8 +354,6 @@ async function fetchLatestSnapshotCore(
         ).catch((error) => {
             // We hit these errors in stress tests, under load
             // It's useful to try one more time in such case.
-            // We might want to add DriverErrorType.offlineError in the future if we see evidence it happens
-            // (not in "real" offline) and it actually helps.
             if (typeof error === "object" && error !== null && (error.errorType === DriverErrorType.fetchFailure ||
                 error.errorType === OdspErrorType.fetchTimeout)) {
                 error[getWithRetryForTokenRefreshRepeat] = true;
@@ -366,16 +364,16 @@ async function fetchLatestSnapshotCore(
 }
 
 interface ISnapshotRequestAndResponseOptions {
-    odspSnapshotResponse: IOdspResponse<ISnapshotContents>,
-    requestUrl: string,
-    requestHeaders: { [index: string]: any },
+    odspSnapshotResponse: IOdspResponse<ISnapshotContents>;
+    requestUrl: string;
+    requestHeaders: { [index: string]: any; };
 }
 
 function getFormBodyAndHeaders(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
     snapshotOptions: ISnapshotOptions | undefined,
-    headers?: { [index: string]: string },
+    headers?: { [index: string]: string; },
 ) {
     const formBoundary = uuid();
     const formParams: string[] = [];
@@ -402,7 +400,7 @@ function getFormBodyAndHeaders(
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
     const postBody = formParams.join("\r\n");
-    const header: { [index: string]: any } = {
+    const header: { [index: string]: any; } = {
         "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
     };
     return { body: postBody, headers: header };
