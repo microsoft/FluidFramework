@@ -28,7 +28,7 @@ export const WebflowViewNew: React.FC<IWebflowViewProps> = (props: IWebflowViewP
     const { docP } = props;
 
     const [flowDocument, setFlowDocument] = useState<FlowDocument | undefined>(undefined);
-    const [keyDownHandler, setKeyDownHandler] = useState<KeyboardEventHandler<HTMLDivElement> | undefined>(undefined);
+    const previouslyFocused = useRef<HTMLOrSVGElement | undefined>(undefined);
     const slotElementRef = useRef<HTMLParagraphElement>(null);
     const searchElementRef = useRef<HTMLDivElement>(null);
     const searchMenuRef = useRef<SearchMenuView | undefined>(undefined);
@@ -87,27 +87,6 @@ export const WebflowViewNew: React.FC<IWebflowViewProps> = (props: IWebflowViewP
             slotElementRef.current.toggleAttribute("data-debug");
         };
 
-        let previouslyFocused: HTMLOrSVGElement | undefined;
-        const onKeyDown: KeyboardEventHandler<HTMLDivElement> = (e: React.KeyboardEvent) => {
-            if (e.ctrlKey && e.key === "m") {
-                if (searchMenuRef.current === undefined) {
-                    throw new Error("Undefined search menu view");
-                }
-                previouslyFocused = document.activeElement as unknown as HTMLOrSVGElement;
-                searchMenuRef.current.show();
-            }
-        };
-
-        const onComplete = (command?: ICommand) => {
-            if (command) {
-                debug(`Execute Command: ${command.name}`);
-                command.exec();
-            }
-
-            previouslyFocused.focus();
-            previouslyFocused = undefined;
-        };
-
         if (searchElementRef.current === null) {
             throw new Error("Null search element");
         }
@@ -132,16 +111,34 @@ export const WebflowViewNew: React.FC<IWebflowViewProps> = (props: IWebflowViewP
             onComplete,
         });
 
-        setKeyDownHandler(onKeyDown);
-
         return () => {
             searchMenuRef.current?.detach();
             searchMenuRef.current = undefined;
         };
     }, [flowDocument]);
 
+    const onKeyDown: KeyboardEventHandler<HTMLDivElement> = (e: React.KeyboardEvent) => {
+        if (e.ctrlKey && e.key === "m") {
+            if (searchMenuRef.current === undefined) {
+                throw new Error("Undefined search menu view");
+            }
+            previouslyFocused.current = document.activeElement as unknown as HTMLOrSVGElement;
+            searchMenuRef.current.show();
+        }
+    };
+
+    const onComplete = (command?: ICommand) => {
+        if (command) {
+            debug(`Execute Command: ${command.name}`);
+            command.exec();
+        }
+
+        previouslyFocused.current?.focus();
+        previouslyFocused.current = undefined;
+    };
+
     return (
-        <div className="host" onKeyDown={keyDownHandler}>
+        <div className="host" onKeyDown={ onKeyDown }>
             <div className="viewport">
                 <p className="slot" ref={ slotElementRef }></p>
             </div>
