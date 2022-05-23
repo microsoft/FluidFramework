@@ -51,9 +51,11 @@ export interface ICollection<T> {
      *
      * @param query - data we want to find
      * @param sort - object with property we use to sort on, whose value is 0 for descending order and 1 for ascending
+     * @param limit - optional, if set, query result will set less equal to this number. Our mongo layer internally used 2000.
+     * @param skip - optional, if set, query result will skip the first few numbers based on number and sort values.
      * @returns - sorted results of query
      */
-    find(query: any, sort: any): Promise<T[]>;
+    find(query: any, sort: any, limit?: number, skip?: number): Promise<T[]>;
 
     /**
      * Finds one query in the database
