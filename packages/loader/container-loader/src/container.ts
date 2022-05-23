@@ -16,7 +16,6 @@ import {
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IConnectionDetails,
     IContainer,
@@ -150,20 +149,17 @@ export enum ConnectionState {
     /**
      * The document is no longer connected to the delta server
      */
-    Disconnected = 0,
+    Disconnected,
 
     /**
      * The document has an inbound connection but is still pending for outbound deltas
      */
-    Pending = 1,
-
-    /** @deprecated - Use ConnectionState.Pending */
-    Connecting = 1,
+    Connecting,
 
     /**
      * The document is fully connected
      */
-    Connected = 2,
+    Connected,
 }
 
 /**
@@ -482,10 +478,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager;
     }
 
-    public get connectionState(): Exclude<ConnectionState, ConnectionState.TryingToConnect> {
-        return this.connectionStateHandler.connectionState === ConnectionState.TryingToConnect
-            ? ConnectionState.Disconnected
-            : this.connectionStateHandler.connectionState;
+    public get connectionState(): ConnectionState {
+        return this.connectionStateHandler.connectionState;
     }
 
     public get connected(): boolean {
@@ -641,7 +635,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
-                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Pending],
+                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
                     });
                 },
                 connectionStateChanged: () => {
@@ -1683,7 +1677,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    /** Propagate changes between Connected and Disconnected states (no notification on other states) */
     private propagateConnectionState() {
         const logOpsOnReconnect: boolean =
             this.connectionState === ConnectionState.Connected &&
