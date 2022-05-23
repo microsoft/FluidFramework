@@ -166,7 +166,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                         title: new TextField({ label: "Title", value: nodeAttrs?.title }),
                         alt: new TextField({
                             label: "Description",
-                            value: nodeAttrs !== undefined ? nodeAttrs.alt : state.doc.textBetween(from, to, " "),
+                            value: (nodeAttrs ?? false) ? nodeAttrs.alt : state.doc.textBetween(from, to, " "),
                         }),
                     },
                     callback(attrs) {
