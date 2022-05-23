@@ -102,21 +102,21 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
                 const nodeType = segment.properties![nodeTypeKey];
                 switch (segment.refType) {
-                    case ReferenceType.NestBegin:
+                    case ReferenceType.NestBegin: {
                         // Create the new node, add it to the top's content, and push it on the stack
                         // eslint-disable-next-line no-case-declarations
                         const newNode = { type: nodeType, content: [] };
                         top.content!.push(newNode);
                         nodeStack.push(newNode);
                         break;
-
-                    case ReferenceType.NestEnd:
+                    }
+                    case ReferenceType.NestEnd: {
                         // eslint-disable-next-line no-case-declarations
                         const popped = nodeStack.pop();
                         assert(popped!.type === nodeType, "NestEnd top-node type has wrong type");
                         break;
-
-                    case ReferenceType.Simple:
+                    }
+                    case ReferenceType.Simple: {
                         // TODO consolidate the text segment and simple references
                         // eslint-disable-next-line no-case-declarations
                         const nodeJson: IProseMirrorNode = {

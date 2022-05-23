@@ -559,7 +559,6 @@ function generateFragment(segments: ISegment[]) {
                 }
                 case ReferenceType.Simple: {
                     // TODO consolidate the text segment and simple references
-                    // eslint-disable-next-line no-case-declarations
                     const nodeJson: IProseMirrorNode = {
                         type: segment.properties!.type,
                         attrs: segment.properties!.attrs,
