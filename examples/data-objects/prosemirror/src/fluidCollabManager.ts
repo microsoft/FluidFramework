@@ -19,7 +19,7 @@ import {
 import { SharedString } from "@fluidframework/sequence";
 import { buildMenuItems, exampleSetup } from "prosemirror-example-setup";
 import { MenuItem } from "prosemirror-menu";
-import { DOMSerializer, Fragment, NodeSpec, Schema, Slice } from "prosemirror-model";
+import { DOMSerializer, Fragment, Node, NodeSpec, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { EditorState, NodeSelection, Plugin, Transaction } from "prosemirror-state";
 
@@ -165,11 +165,13 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                         title: new TextField({ label: "Title", value: nodeAttrs?.title }),
                         alt: new TextField({
                             label: "Description",
-                            value: (nodeAttrs ?? false) ? nodeAttrs.alt : state.doc.textBetween(from, to, " "),
+                            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                            value: nodeAttrs ? nodeAttrs.alt : state.doc.textBetween(from, to, " "),
                         }),
                     },
-                    callback(attrs) {
-                        view.dispatch(view.state.tr.replaceSelectionWith(fluidSchema.nodes.fluid.createAndFill(attrs)));
+                    callback(attrs: Node) {
+                        const newNode = fluidSchema.nodes.fluid.createAndFill(attrs);
+                        view.dispatch(view.state.tr.replaceSelectionWith(newNode!));
                         view.focus();
                     },
                 });
@@ -183,7 +185,8 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             run(state, dispatch) {
                 const { empty, $from, $to } = state.selection;
                 let content = Fragment.empty;
-                if (Boolean(empty) && Boolean($from.sameParent($to)) && Boolean($from.parent.inlineContent)) {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                if (!empty && $from.sameParent($to) && $from.parent.inlineContent) {
                     content = $from.parent.content.cut($from.parentOffset, $to.parentOffset);
                 }
                 dispatch(state.tr.replaceSelectionWith(fluidSchema.nodes.footnote.create(null, content)));
@@ -417,7 +420,8 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                 }
 
                 case "addMark": {
-                    const attrs = stepAsJson.mark.attrs ?? true;
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                    const attrs = stepAsJson.mark.attrs || true;
 
                     this.text.annotateRange(
                         stepAsJson.from,
