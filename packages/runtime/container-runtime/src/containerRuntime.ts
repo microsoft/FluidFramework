@@ -1657,7 +1657,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
 
-    private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
+    private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, telemetryContext?: ITelemetryContext) {
         this.addMetadataToSummary(summaryTree);
 
         if (this.chunkMap.size > 0) {
