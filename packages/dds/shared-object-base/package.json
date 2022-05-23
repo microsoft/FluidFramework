@@ -86,8 +86,8 @@
     "@types/benchmark": "^2.1.0",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
-    "@typescript-eslint/eslint-plugin": "~5.9.0",
-    "@typescript-eslint/parser": "~5.9.0",
+
+
     "benchmark": "^2.1.4",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",

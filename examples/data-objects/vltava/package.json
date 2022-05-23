@@ -74,8 +74,8 @@
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
     "@types/uuid": "^8.3.0",
-    "@typescript-eslint/eslint-plugin": "~5.9.0",
-    "@typescript-eslint/parser": "~5.9.0",
+
+
     "concurrently": "^6.2.0",
     "css-loader": "^1.0.0",
     "eslint": "~8.6.0",
