@@ -593,7 +593,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
         const summarizeProtocolTree =
-            this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree");
+            this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree")
+            ?? this.loader.services.options.summarizeProtocolTree;
 
         this.options = {
             ... this.loader.services.options,
