@@ -416,7 +416,7 @@ function sliceToGroupOpsInternal(
     if (value.marks) {
         props = {};
         for (const mark of value.marks) {
-            props[mark.type] = mark.attrs !== undefined || true;
+            props[mark.type] = mark.attrs || true;
         }
     }
 
