@@ -199,7 +199,7 @@ export async function createNewFluidFileFromSummary(
             async (event) => {
                 const snapshotBody = JSON.stringify(containerSnapshot);
                 let url: string;
-                let headers: { [index: string]: string };
+                let headers: { [index: string]: string; };
                 let addInBody = false;
                 const formBoundary = uuid();
                 let postBody = `--${formBoundary}\r\n`;
