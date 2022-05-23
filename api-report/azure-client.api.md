@@ -55,7 +55,7 @@ export interface AzureConnectionConfig {
     type: AzureConnectionConfigType;
 }
 
-// @public (undocumented)
+// @public
 export type AzureConnectionConfigType = "local" | "remote";
 
 // @public

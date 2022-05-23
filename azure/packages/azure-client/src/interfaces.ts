@@ -88,7 +88,7 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     /**
      * The type of connection. Set to a remote connection.
      */
-    type: "remote"
+    type: "remote";
     /**
      * Unique tenant identifier.
      */
@@ -110,7 +110,7 @@ export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
     /**
      * The type of connection. Set to a remote connection.
      */
-    type: "local"
+    type: "local";
 }
 
 /**
