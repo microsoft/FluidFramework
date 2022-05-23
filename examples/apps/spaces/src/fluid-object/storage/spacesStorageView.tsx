@@ -15,7 +15,7 @@ import { ISpacesStoredItem, ISpacesStorage } from "./spacesStorage";
 import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
-    clickCallback(): void;
+    clickCallback(this: void): void;
     title: string;
 }
 
@@ -23,25 +23,25 @@ const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
     (props: React.PropsWithChildren<ISpacesEditButtonProps>) =>
         <button
             className="spaces-edit-button"
-            onClick={props.clickCallback.bind(this)}
-            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                event.stopPropagation();
-            }}
-            title={props.title}
-        >
-            {props.children}
-        </button>;
+        onClick={props.clickCallback}
+        onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+            event.stopPropagation();
+        }}
+        title={props.title}
+    >
+        {props.children}
+    </button>;
 
 interface ISpacesEditPaneProps {
     url: string;
-    removeItem(): void;
+    removeItem(this: void): void;
 }
 
 const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
     (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
         return (
             <div className="spaces-edit-pane">
-                <SpacesEditButton title="Delete" clickCallback={props.removeItem.bind(this)}>❌</SpacesEditButton>
+                <SpacesEditButton title="Delete" clickCallback={props.removeItem}>❌</SpacesEditButton>
                 <SpacesEditButton
                     title="Copy to clipboard"
                     clickCallback={() => {
@@ -63,8 +63,8 @@ const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
 interface ISpacesItemViewProps {
     url: string;
     editable: boolean;
-    getItemView(): Promise<JSX.Element | undefined>;
-    removeItem(): void;
+    getItemView(this: void): Promise<JSX.Element | undefined>;
+    removeItem(this: void): void;
 }
 
 const SpacesItemView: React.FC<ISpacesItemViewProps> =
@@ -75,13 +75,13 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
             props.getItemView()
                 .then(setItemView)
                 .catch((error) => console.error(`Error in getting item`, error));
-        }, [props.getItemView.bind(this)]);
+        }, [props.getItemView]);
 
         return (
             <div className="spaces-item-view">
                 {
                     props.editable &&
-                    <SpacesEditPane url={props.url} removeItem={props.removeItem.bind(this)} />
+                    <SpacesEditPane url={props.url} removeItem={props.removeItem} />
                 }
                 <div className="spaces-embedded-item-wrapper">
                     {itemView}

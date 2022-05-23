@@ -117,8 +117,6 @@ interface ISpacesToolbarProps {
     applyTemplate?(template: string): void;
 }
 
-// export const SpacesToolbar =
-//     (props: React.PropsWithChildren<ISpacesToolbarProps>): JSX.Element => {
 export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
     (props: React.PropsWithChildren<ISpacesToolbarProps>) => {
         const toolbarItems: JSX.Element[] = [];
@@ -145,6 +143,8 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                 <SpacesToolbarAddItemPicker
                     key="items"
                     itemMap={props.itemMap}
+                    // addItem is an arrow function
+                    // eslint-disable-next-line @typescript-eslint/unbound-method
                     addItem={props.addItem}
                 />,
             );
@@ -154,6 +154,8 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                     <SpacesToolbarAddTemplatePicker
                         key="templates"
                         templates={props.templates}
+                        // applyTemplate is an arrow function
+                        // eslint-disable-next-line @typescript-eslint/unbound-method
                         applyTemplate={props.applyTemplate}
                     />,
                 );
