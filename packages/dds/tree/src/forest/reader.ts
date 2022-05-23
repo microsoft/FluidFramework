@@ -4,11 +4,16 @@
  */
 
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { TreeKey, TreeType } from "../..";
+import { TreeKey, TreeType } from "..";
 
 export const enum TreeReadResult {
+    /** Attempt to navigate ITreeReader to a key or index that is outside the client's view. */
     NotFound = -1,
+
+    /** Attempt to navigate ITreeReader to a portion of the tree that has not yet been loaded. */
     Pending = 0,
+
+    /** ITreeReader successfully navigated to the desired node. */
     Ok = 1,
 }
 
@@ -20,6 +25,6 @@ export interface INodeReader {
 }
 
 export interface ITreeReader extends INodeReader {
-    push(key: TreeKey, index: number): TreeReadResult;
-    pop(): TreeReadResult;
+    down(key: TreeKey, index: number): TreeReadResult;
+    up(): TreeReadResult;
 }

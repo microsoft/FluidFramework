@@ -4,7 +4,6 @@
  */
 
 export {
-    TreeId,
     TreeKey,
     TreeType,
 } from "./tree";

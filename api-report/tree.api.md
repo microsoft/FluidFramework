@@ -21,33 +21,25 @@ export interface INodeReader {
 // @public (undocumented)
 export interface ITreeReader extends INodeReader {
     // (undocumented)
-    pop(): TreeReadResult;
+    down(key: TreeKey, index: number): TreeReadResult;
     // (undocumented)
-    push(key: TreeKey, index: number): TreeReadResult;
+    up(): TreeReadResult;
 }
 
 // @public (undocumented)
-export type TreeId = number | string & {
-    readonly TreeId: symbol;
-};
-
-// @public (undocumented)
-export type TreeKey = number | string & {
+export type TreeKey = (number | string) & {
     readonly TreeKey: symbol;
 };
 
 // @public (undocumented)
 export const enum TreeReadResult {
-    // (undocumented)
     NotFound = -1,
-    // (undocumented)
     Ok = 1,
-    // (undocumented)
     Pending = 0
 }
 
 // @public (undocumented)
-export type TreeType = number | string & {
+export type TreeType = (number | string) & {
     readonly TreeType: symbol;
 };
 
