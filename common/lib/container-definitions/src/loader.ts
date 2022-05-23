@@ -136,8 +136,16 @@ export namespace ConnectionState {
     export type Disconnected = 0;
 
     /**
+     * Disconnected but trying to establish a new connection
+     */
+     export type TryingToConnect = 0.5;
+
+     /**
      * The document has an inbound connection but is still pending for outbound deltas
      */
+    export type Pending = 1;
+
+    /** @deprecated - Use ConnectionState.Pending */
     export type Connecting = 1;
 
     /**

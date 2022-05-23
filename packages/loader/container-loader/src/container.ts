@@ -16,6 +16,7 @@ import {
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
+    ConnectionState as ConnectionStateType,
     IAudience,
     IConnectionDetails,
     IContainer,
@@ -149,17 +150,21 @@ export enum ConnectionState {
     /**
      * The document is no longer connected to the delta server
      */
-    Disconnected,
+    Disconnected = 0,
+
+    TryingToConnect = 0.5,
 
     /**
      * The document has an inbound connection but is still pending for outbound deltas
      */
-    Connecting,
+    Pending = 1,
+    /** @deprecated - Use ConnectionState.Pending */
+    Connecting = 1,
 
     /**
      * The document is fully connected
      */
-    Connected,
+    Connected = 2,
 }
 
 /**
@@ -478,8 +483,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager;
     }
 
-    public get connectionState(): ConnectionState {
-        return this.connectionStateHandler.connectionState;
+    public get connectionState(): ConnectionStateType {
+        return this.connectionStateHandler.connectionState as ConnectionStateType; //* Temp until defs checked in
     }
 
     public get connected(): boolean {
@@ -635,7 +640,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
-                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
+                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Pending],
                     });
                 },
                 connectionStateChanged: () => {
@@ -1677,6 +1682,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    /** Propagate changes between Connected and Disconnected states (no notification on other states) */
     private propagateConnectionState() {
         const logOpsOnReconnect: boolean =
             this.connectionState === ConnectionState.Connected &&
