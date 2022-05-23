@@ -34,7 +34,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
         };
 
         props.dataModel.on("newTab", (local) => {
-            if (local !== undefined) {
+            if (local ?? false) {
                 this.setState({
                     ids: props.dataModel.getTabIds(),
                     tabIndex: this.state.ids.length,
