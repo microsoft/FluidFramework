@@ -25,6 +25,8 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     const dataStorePath = "dataStorePath";
     const fileName = "fileName";
     const fileVersion = "173.0";
+    const contextObject = { workspaceId: "id1", linkId: "id2" };
+    const contextStringified = JSON.stringify(contextObject);
     const sharelink = "https://microsoft.sharepoint-df.com/site/SHARELINK";
     const urlsWithNavParams = [
         // Base64 encoded and then URI encoded string: d=driveId&f=fileId&c=dataStorePath&s=siteUrl&fluid=1&v=173.0
@@ -187,13 +189,16 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 
     it("Encode and decode nav param", async () => {
         const encodedUrl = new URL(sharelink);
-        storeLocatorInOdspUrl(encodedUrl, { siteUrl, driveId, itemId, dataStorePath });
+        storeLocatorInOdspUrl(encodedUrl, { siteUrl, driveId, itemId, dataStorePath, context: contextStringified });
 
         const locator = getLocatorFromOdspUrl(encodedUrl);
         assert.strictEqual(locator?.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(locator?.itemId, itemId, "Item id should be equal");
         assert.strictEqual(locator?.dataStorePath, dataStorePath, "DataStore path should be equal");
         assert.strictEqual(locator?.siteUrl, siteUrl, "SiteUrl should be equal");
+        assert.strictEqual(locator?.context, contextStringified, "Context should be equal");
+        const parsedContext = JSON.parse(locator?.context);
+        assert.deepStrictEqual(parsedContext, contextObject, "Context should be de-serializable");
     });
 
     it("Check nav param removal for share link", async () => {
