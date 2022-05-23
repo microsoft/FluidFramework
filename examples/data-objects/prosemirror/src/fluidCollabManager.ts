@@ -138,7 +138,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
                         top.content!.push(nodeJson);
                         break;
-
+                    }
                     default:
                         // Throw for now when encountering something unknown
                         throw new Error("Unknown marker");
