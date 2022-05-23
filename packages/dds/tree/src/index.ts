@@ -9,7 +9,6 @@ export {
 } from "./tree";
 
 export {
-    INodeReader,
-    ITreeReader,
-    TreeReadResult,
+    ITreeCursor,
+    TreeNavigationResult,
 } from "./forest";

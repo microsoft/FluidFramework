@@ -4,7 +4,6 @@
  */
 
 export {
-    INodeReader,
-    ITreeReader,
-    TreeReadResult,
+    ITreeCursor,
+    TreeNavigationResult,
 } from "./reader";

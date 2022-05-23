@@ -6,24 +6,14 @@
 
 import { Serializable } from '@fluidframework/datastore-definitions';
 
-// @public (undocumented)
-export interface INodeReader {
-    // (undocumented)
+// @public
+export interface ITreeCursor {
+    down(key: TreeKey, index: number): TreeNavigationResult;
     keys: Iterable<TreeKey>;
-    // (undocumented)
     length(key: TreeKey): number;
-    // (undocumented)
     type: TreeType;
-    // (undocumented)
+    up(): TreeNavigationResult;
     value: undefined | Serializable;
-}
-
-// @public (undocumented)
-export interface ITreeReader extends INodeReader {
-    // (undocumented)
-    down(key: TreeKey, index: number): TreeReadResult;
-    // (undocumented)
-    up(): TreeReadResult;
 }
 
 // @public (undocumented)
@@ -32,7 +22,7 @@ export type TreeKey = (number | string) & {
 };
 
 // @public (undocumented)
-export const enum TreeReadResult {
+export const enum TreeNavigationResult {
     NotFound = -1,
     Ok = 1,
     Pending = 0
