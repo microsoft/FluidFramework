@@ -10,7 +10,10 @@ import { htmlFormatter } from "../html/formatters";
 import { ICommand, KeyCode, TagName } from "../util";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { debug } from "./debug";
-import * as styles from "./index.css";
+// eslint-disable-next-line import/no-unassigned-import
+import "./index.css";
+// eslint-disable-next-line import/no-unassigned-import
+import "./debug.css";
 import { SearchMenuView } from "./searchmenu";
 
 export class WebflowView implements IFluidHTMLView {
@@ -39,15 +42,15 @@ export class WebflowView implements IFluidHTMLView {
 
     public render(elm: HTMLElement): void {
         this.root = document.createElement("div");
-        this.root.classList.add(styles.host);
+        this.root.classList.add("host");
 
         const viewportDiv = document.createElement("div");
-        viewportDiv.classList.add(styles.viewport);
+        viewportDiv.classList.add("viewport");
 
-        this.slotElement.classList.add(styles.slot);
+        this.slotElement.classList.add("slot");
         viewportDiv.append(this.slotElement);
 
-        this.searchElement.classList.add(styles.search);
+        this.searchElement.classList.add("search");
 
         this.root.append(viewportDiv, this.searchElement);
 
@@ -96,9 +99,9 @@ export class WebflowView implements IFluidHTMLView {
             this.searchMenu.attach(this.searchElement, {
                 commands: [
                     { name: "blockquote", enabled: always, exec: () => { setFormat(TagName.blockquote); } },
-                    { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
+                    { name: "bold", enabled: hasSelection, exec: () => toggleSelection("bold") },
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    { name: "debug", enabled: always, exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); this.slotElement.toggleAttribute("data-debug"); } },
+                    { name: "debug", enabled: always, exec: () => { this.slotElement.toggleAttribute("data-debug"); } },
                     { name: "h1", enabled: always, exec: () => { setFormat(TagName.h1); } },
                     { name: "h2", enabled: always, exec: () => { setFormat(TagName.h2); } },
                     { name: "h3", enabled: always, exec: () => { setFormat(TagName.h3); } },
