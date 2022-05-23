@@ -189,6 +189,9 @@ module.exports = {
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",
 
+        // eslint-plugin-jsdoc rules
+        "jsdoc/check-access": "error", // Ensures that conflicting access tags don't exist in the same comment. See <https://github.com/gajus/eslint-plugin-jsdoc#check-access>.
+
         "@typescript-eslint/prefer-includes": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
     },
