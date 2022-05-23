@@ -8,6 +8,19 @@ import * as api from "@fluidframework/protocol-definitions";
 import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts";
 import { ISnapshotContents } from "./odspUtils";
 
+/** https://portal.microsofticm.com/imp/v3/incidents/details/308931013/home
+ * The commits property was removed from protocol-definitions but in order to support back compat, we will
+ * temporarily add back in this local structure in order to upload the snapshot to support rolling back to 0.58.
+ * Notice this entire interface will be removed once the backward compatibility is not required anymore.
+*/
+ interface ISnapshotTree {
+    id?: string;
+    blobs: { [path: string]: string };
+    commits: { [path: string]: string };
+    trees: { [path: string]: api.ISnapshotTree };
+    unreferenced?: true;
+}
+
 /**
  * Build a tree hierarchy base on a flat tree
  *
@@ -18,7 +31,7 @@ import { ISnapshotContents } from "./odspUtils";
 function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
     const lookup: { [path: string]: api.ISnapshotTree } = {};
     // id is required for root tree as it will be used to determine the version we loaded from.
-    const root: api.ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
+    const root: ISnapshotTree = { id: flatTree.id, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.entries) {
@@ -31,9 +44,10 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
 
         // Add in either the blob or tree
         if (entry.type === "tree") {
-            const newTree: api.ISnapshotTree = {
+            const newTree: ISnapshotTree = {
                 blobs: {},
                 trees: {},
+                commits: {},
                 unreferenced: entry.unreferenced,
             };
             node.trees[decodeURIComponent(entryPathBase)] = newTree;
