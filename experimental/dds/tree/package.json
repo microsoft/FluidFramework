@@ -70,15 +70,12 @@
     "@types/lru-cache": "^5.1.0",
     "@types/mocha": "^9.1.1",
     "@types/random-js": "^1.0.31",
-
-
     "chai": "^4.2.0",
     "concurrently": "^6.2.0",
     "cross-env": "^7.0.2",
     "easy-table": "^1.1.1",
     "env-cmd": "^10.1.0",
     "eslint": "~8.6.0",
-
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
     "prettier": "^2.3.1",

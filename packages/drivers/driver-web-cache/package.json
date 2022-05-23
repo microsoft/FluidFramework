@@ -51,12 +51,9 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jest": "22.2.3",
     "@types/node": "^14.18.0",
-
-
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "eslint": "~8.6.0",
-
     "fake-indexeddb": "3.1.4",
     "jest": "^26.6.3",
     "rimraf": "^2.6.2",

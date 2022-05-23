@@ -50,11 +50,8 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/react": "^16.9.15",
     "@types/semver": "^7.3.6",
-
-
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
-
     "rimraf": "^2.6.2",
     "source-map-loader": "^2.0.0",
     "ts-loader": "^9.3.0",

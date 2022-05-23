@@ -71,11 +71,8 @@
     "@types/node": "^14.18.0",
     "@types/sinon": "^9.0.9",
     "@types/string-hash": "^1.1.1",
-
-
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
-
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",

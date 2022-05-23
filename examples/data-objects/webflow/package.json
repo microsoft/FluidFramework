@@ -99,14 +99,11 @@
     "@types/debug": "^4.1.5",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
-
-
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "css-loader": "^1.0.0",
     "eslint": "~8.6.0",
-
     "file-loader": "^3.0.1",
     "html-loader": "^3.1.0",
     "ignore-styles": "^5.0.1",

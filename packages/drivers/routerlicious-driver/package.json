@@ -89,14 +89,11 @@
     "@types/nock": "^9.3.0",
     "@types/url-parse": "1.4.4",
     "@types/uuid": "^8.3.0",
-
-
     "axios": "^0.26.0",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
-
     "mocha": "^10.0.0",
     "nock": "^10.0.1",
     "nyc": "^15.0.0",

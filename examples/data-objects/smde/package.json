@@ -64,12 +64,9 @@
     "@types/marked": "^2.0.2",
     "@types/node": "^14.18.0",
     "@types/simplemde": "^1.11.7",
-
-
     "concurrently": "^6.2.0",
     "css-loader": "^1.0.0",
     "eslint": "~8.6.0",
-
     "rimraf": "^2.6.2",
     "style-loader": "^1.0.0",
     "ts-loader": "^9.3.0",

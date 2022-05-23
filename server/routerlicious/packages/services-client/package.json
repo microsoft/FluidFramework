@@ -81,13 +81,10 @@
     "@types/jwt-decode": "^2.2.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
-
-
     "axios-mock-adapter": "^1.19.0",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "eslint": "~8.6.0",
-
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
