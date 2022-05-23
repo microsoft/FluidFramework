@@ -81,9 +81,9 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
             props.getItemView()
                 .then(setItemView)
                 .catch((error) => console.error(`Error in getting item`, error));
-                // props.getItemView is an arrow function
-                // eslint-disable-next-line @typescript-eslint/unbound-method
-                }, [props.getItemView]);
+            // props.getItemView is an arrow function
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+        }, [props.getItemView]);
 
         return (
             <div className="spaces-item-view">
