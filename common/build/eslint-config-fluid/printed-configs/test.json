@@ -25,6 +25,7 @@
         "unused-imports",
         "tsdoc",
         "promise",
+        "jsdoc",
         "@typescript-eslint",
         "@rushstack/security",
         "@rushstack"
