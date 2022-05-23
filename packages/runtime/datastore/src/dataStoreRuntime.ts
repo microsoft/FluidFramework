@@ -50,6 +50,7 @@ import {
     IInboundSignalMessage,
     ISummaryTreeWithStats,
     VisibilityState,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
@@ -694,8 +695,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to summarize
@@ -714,14 +720,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // and any virtual blobs that stayed (for unchanged DDSs) will need aggregate blob in previous summary
                 // that is no longer present in this summary.
                 // This is temporal limitation that can be lifted in future once BlobAggregationStorage becomes smarter.
-                const contextSummary = await context.summarize(true /* fullTree */, trackState);
+                const contextSummary = await context.summarize(true /* fullTree */, trackState, telemetryContext);
                 summaryBuilder.addWithStats(contextId, contextSummary);
             }));
 
         return summaryBuilder.getSummaryTree();
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         /**
          * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
          * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
@@ -753,7 +759,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             if (!this.notBoundedChannelContextSet.has(contextId)) {
                 let summaryTree: ISummaryTreeWithStats;
                 if (context.isLoaded) {
-                    const contextSummary = context.getAttachSummary();
+                    const contextSummary = context.getAttachSummary(telemetryContext);
                     assert(
                         contextSummary.summary.type === SummaryType.Tree,
                         0x180 /* "getAttachSummary should always return a tree" */);

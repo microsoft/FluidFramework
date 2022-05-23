@@ -107,7 +107,7 @@ export class ConsensusOrderedCollection<T = any>
         attributes: IChannelAttributes,
         private readonly data: IOrderedCollection<T>,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_consensusOrderedCollection_");
 
         // We can't simply call this.removeClient(this.runtime.clientId) in on runtime disconnected,
         // because other clients may disconnect concurrently.

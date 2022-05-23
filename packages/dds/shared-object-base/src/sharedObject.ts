@@ -18,6 +18,9 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
+    ITelemetryContext,
+    blobCountPropertyName,
+    totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -201,12 +204,20 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
      */
-    public abstract getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    public abstract getAttachSummary(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
 
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
      */
-    public abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    public abstract summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats>;
 
     /**
      * {@inheritDoc (ISharedObject:interface).getGCData}
@@ -470,7 +481,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
-        attributes: IChannelAttributes) {
+        attributes: IChannelAttributes,
+        private readonly telemetryContextPrefix: string,
+    ) {
         super(id, runtime, attributes);
 
         this._serializer = new FluidSerializer(
@@ -482,15 +495,29 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
      */
-    public getAttachSummary(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
-        return this.summarizeCore(this.serializer);
+    public getAttachSummary(
+        fullTree: boolean = false,
+        trackState: boolean = false,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
+        const result = this.summarizeCore(this.serializer, telemetryContext);
+        this.incrementTelemetryMetric(blobCountPropertyName, result.stats.blobNodeCount, telemetryContext);
+        this.incrementTelemetryMetric(totalBlobSizePropertyName, result.stats.totalBlobSize, telemetryContext);
+        return result;
     }
 
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummaryTreeWithStats> {
-        return this.summarizeCore(this.serializer);
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = false,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
+        const result = this.summarizeCore(this.serializer, telemetryContext);
+        this.incrementTelemetryMetric(blobCountPropertyName, result.stats.blobNodeCount, telemetryContext);
+        this.incrementTelemetryMetric(totalBlobSizePropertyName, result.stats.totalBlobSize, telemetryContext);
+        return result;
     }
 
     /**
@@ -535,5 +562,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object.
      */
-    protected abstract summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected abstract summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
+
+    private incrementTelemetryMetric(propertyName: string, incrementBy: number, telemetryContext?: ITelemetryContext) {
+        const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, propertyName) ?? 0) as number;
+        telemetryContext?.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
+    }
 }

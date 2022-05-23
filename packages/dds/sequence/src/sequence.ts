@@ -48,7 +48,7 @@ import {
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
 import {
     IntervalCollection,
@@ -173,7 +173,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
     ) {
-        super(id, dataStoreRuntime, attributes);
+        super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
         this.loadedDeferred.promise.catch((error) => {
             this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
@@ -441,13 +441,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.intervalMapKernel.keys();
     }
 
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
 
         // conditionally write the interval collection blob
         // only if it has entries
         if (this.intervalMapKernel.size > 0) {
-            builder.addBlob(snapshotFileName, this.intervalMapKernel.serialize(serializer));
+            const content = this.intervalMapKernel.serialize(serializer);
+            builder.addBlob(snapshotFileName, content);
         }
 
         builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
