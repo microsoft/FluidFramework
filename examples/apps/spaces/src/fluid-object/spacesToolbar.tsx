@@ -143,7 +143,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                 <SpacesToolbarAddItemPicker
                     key="items"
                     itemMap={props.itemMap}
-                    addItem={props.addItem.bind(this)}
+                    addItem={props.addItem}
                 />,
             );
 
@@ -152,7 +152,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                     <SpacesToolbarAddTemplatePicker
                         key="templates"
                         templates={props.templates}
-                        applyTemplate={props.applyTemplate.bind(this)}
+                        applyTemplate={props.applyTemplate}
                     />,
                 );
             }

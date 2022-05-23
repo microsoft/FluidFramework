@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
- /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert } from "@fluidframework/common-utils";
 import {
@@ -238,7 +238,7 @@ export class ProseMirrorTransactionBuilder {
 
         for (const thing of this.things) {
             if (thing.type === "ether") {
-                if (thing.annotations !== undefined) {
+                if (thing.annotations ?? false) {
                     annotations.push({
                         from: position,
                         to: position + thing.length,
@@ -332,7 +332,7 @@ export class ProseMirrorTransactionBuilder {
             for (const prop of Object.keys(annotation.propertyDeltas)) {
                 const value = segment.properties![prop];
 
-                if (value !== undefined) {
+                if (value ?? false) {
                     this.transaction.addMark(
                         annotation.from,
                         annotation.to,
@@ -355,16 +355,16 @@ export class ProseMirrorTransactionBuilder {
         }
 
         const start = node[0];
-        return !(start._open ?? false) || !start.content ? 0 : 1 + this.getOpenStart(start.content);
+        return !(start._open ?? false) || !(start.content ?? false) ? 0 : 1 + this.getOpenStart(start.content);
     }
 
     private getOpenEnd(node: IProseMirrorNode[]): number {
-        if (node === undefined || node.length === 0) {
+        if (!(node ?? false) || node.length === 0) {
             return 0;
         }
 
         const end = node[node.length - 1];
-        return end._open === false || !end.content ? 0 : 1 + this.getOpenEnd(end.content);
+        return !(end._open ?? false) || !(end.content ?? false) ? 0 : 1 + this.getOpenEnd(end.content);
     }
 }
 
@@ -528,20 +528,19 @@ function generateFragment(segments: ISegment[]) {
         } else if (Marker.is(segment)) {
             const nodeType = segment.properties![nodeTypeKey];
             switch (segment.refType) {
-                case ReferenceType.NestBegin:
+                case ReferenceType.NestBegin: {
                     // Special case the open top
                     if (openTop) {
                         top.content!.push(openTop);
                         openTop = undefined;
                     }
                     // Create the new node, add it to the top's content, and push it on the stack
-                    // eslint-disable-next-line no-case-declarations
                     const newNode = { type: nodeType, content: [] as IProseMirrorNode[], _open: true };
                     top.content!.push(newNode);
                     nodeStack.push(newNode);
                     break;
-
-                case ReferenceType.NestEnd:
+                }
+                case ReferenceType.NestEnd: {
                     if (top.type === nodeType) {
                         top._open = false;
                         // Matching open
@@ -557,8 +556,8 @@ function generateFragment(segments: ISegment[]) {
                     }
 
                     break;
-
-                case ReferenceType.Simple:
+                }
+                case ReferenceType.Simple: {
                     // TODO consolidate the text segment and simple references
                     // eslint-disable-next-line no-case-declarations
                     const nodeJson: IProseMirrorNode = {
@@ -580,7 +579,7 @@ function generateFragment(segments: ISegment[]) {
 
                     top.content!.push(nodeJson);
                     break;
-
+                }
                 default:
                     // Throw for now when encountering something unknown
                     throw new Error("Unknown marker");
