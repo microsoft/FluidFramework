@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
-import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { ConnectionMode, IQuorumClients, ILocalSequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState } from "./container";
@@ -21,10 +21,6 @@ export interface IConnectionStateHandler {
     maxClientLeaveWaitTime: number | undefined;
     logConnectionIssue: (eventName: string) => void;
     connectionStateChanged: () => void;
-}
-
-export interface ILocalSequencedClient extends ISequencedClient {
-    shouldHaveLeft?: boolean;
 }
 
 const JoinOpTimer = 45000;

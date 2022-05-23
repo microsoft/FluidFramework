@@ -4,17 +4,20 @@
  */
 
 import {
+    IDocumentAttributes,
     IClientJoin,
     ICommittedProposal,
     IProcessMessageResult,
     IProposal,
+    IQuorum,
+    ILocalSequencedClient,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { Quorum } from "./quorum";
+import { IQuorumSnapshot, Quorum } from "./quorum";
 
 export interface IScribeProtocolState {
     sequenceNumber: number;
@@ -41,11 +44,46 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
     }
 }
 
+export interface IProtocolHandler {
+    readonly quorum: IQuorum;
+    readonly attributes: IDocumentAttributes;
+
+    setConnectionState(connected: boolean, clientId: string | undefined);
+    snapshot(): IQuorumSnapshot;
+
+    close(): void;
+    processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+}
+
+export type ProtocolHandlerBuilder = (
+    attributes: IDocumentAttributes,
+    snapshot: IQuorumSnapshot,
+    sendProposal: (key: string, value: any) => number,
+) => IProtocolHandler;
+
+export const MakeProtocolHandler: ProtocolHandlerBuilder = (
+    attributes: IDocumentAttributes,
+    snapshot: IQuorumSnapshot,
+    sendProposal: (key: string, value: any) => number,
+) => new ProtocolOpHandler(
+    attributes.minimumSequenceNumber,
+    attributes.sequenceNumber,
+    attributes.term,
+    snapshot.members,
+    snapshot.proposals,
+    snapshot.values,
+    sendProposal,
+);
+
 /**
  * Handles protocol specific ops.
  */
-export class ProtocolOpHandler {
-    public readonly quorum: Quorum;
+export class ProtocolOpHandler implements IProtocolHandler {
+    public readonly _quorum: Quorum;
+    public get quorum(): IQuorum {
+        return this._quorum;
+    }
+
     public readonly term: number;
 
     constructor(
@@ -58,7 +96,7 @@ export class ProtocolOpHandler {
         sendProposal: (key: string, value: any) => number,
     ) {
         this.term = term ?? 1;
-        this.quorum = new Quorum(
+        this._quorum = new Quorum(
             members,
             proposals,
             values,
@@ -66,17 +104,55 @@ export class ProtocolOpHandler {
         );
     }
 
-    public close() {
-        this.quorum.close();
+    public get attributes(): IDocumentAttributes {
+        return {
+            minimumSequenceNumber: this.minimumSequenceNumber,
+            sequenceNumber: this.sequenceNumber,
+            term: this.term,
+        };
     }
 
-    public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
+    setConnectionState(connected: boolean, clientId: string | undefined) {
+        this._quorum.setConnectionState(connected, clientId);
+    }
+
+    snapshot(): IQuorumSnapshot {
+        return this._quorum.snapshot();
+    }
+
+    public close() {
+        this._quorum.close();
+    }
+
+    private validateClientMessage(message: ISequencedDocumentMessage) {
+        const client: ILocalSequencedClient | undefined = this._quorum.getMember(message.clientId);
+
+        // Check and report if we're getting messages from a clientId that we previously
+        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
+        if (message.clientId != null) {
+            if (client === undefined && message.type !== MessageType.ClientJoin) {
+                // pre-0.58 error message: messageClientIdMissingFromQuorum
+                // TODO check if the message data propagates properly,
+                // like a data corruption error.
+                throw new Error("Remote message's clientId is missing from the quorum");
+            }
+
+            if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
+                // pre-0.58 error message: messageClientIdShouldHaveLeft
+                throw new Error("Remote message's clientId already should have left");
+            }
+        }
+
         // verify it's moving sequentially
         if (message.sequenceNumber !== this.sequenceNumber + 1) {
             throw new Error(
                 `Protocol state is not moving sequentially. ` +
                 `Current is ${this.sequenceNumber}. Next is ${message.sequenceNumber}`);
         }
+    }
+
+    public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
+        this.validateClientMessage(message);
 
         // Update tracked sequence numbers
         this.sequenceNumber = message.sequenceNumber;
@@ -92,18 +168,18 @@ export class ProtocolOpHandler {
                     client: join.detail,
                     sequenceNumber: systemJoinMessage.sequenceNumber,
                 };
-                this.quorum.addMember(join.clientId, member);
+                this._quorum.addMember(join.clientId, member);
                 break;
 
             case MessageType.ClientLeave:
                 const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
                 const clientId = JSON.parse(systemLeaveMessage.data) as string;
-                this.quorum.removeMember(clientId);
+                this._quorum.removeMember(clientId);
                 break;
 
             case MessageType.Propose:
                 const proposal = message.contents as IProposal;
-                this.quorum.addProposal(
+                this._quorum.addProposal(
                     proposal.key,
                     proposal.value,
                     message.sequenceNumber,
@@ -122,7 +198,7 @@ export class ProtocolOpHandler {
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
-        this.quorum.updateMinimumSequenceNumber(message);
+        this._quorum.updateMinimumSequenceNumber(message);
 
         return { immediateNoOp };
     }
@@ -136,7 +212,7 @@ export class ProtocolOpHandler {
         return {
             sequenceNumber: this.sequenceNumber,
             minimumSequenceNumber: this.minimumSequenceNumber,
-            ...this.quorum.snapshot(),
+            ...this._quorum.snapshot(),
         };
     }
 }
