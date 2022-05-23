@@ -94,9 +94,6 @@
     "@types/split": "^0.3.28",
     "@types/uuid": "^8.3.1",
     "@types/ws": "^6.0.4",
-
-    "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",
-
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "eslint": "~8.6.0",
