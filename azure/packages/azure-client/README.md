@@ -16,7 +16,7 @@ Fluid requires a backing service to enable collaborative communication. The `Azu
 
 NOTE: You can use one instance of the `AzureClient` to create/fetch multiple containers from the same Azure Fluid Relay service instance.
 
-In the example below we will walk through both connecting to a a live Azure Fluid Relay service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as an exampling of running our application against the local service. We make use of `AzureFunctionTokenProvider` for token generation while running against a live Azure Fluid Relay instance and `InsecureTokenProvider`, from the `@fluidframework/test-client-utils` package, to authenticate a given user for access to the service locally. The `AzureFunctionTokenProvider` is an implementation that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
+In the example below we will walk through both connecting to a a live Azure Fluid Relay service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as an example of running our application against the local service. We make use of `AzureFunctionTokenProvider` for token generation while running against a live Azure Fluid Relay instance and `InsecureTokenProvider`, from the `@fluidframework/test-client-utils` package, to authenticate a given user for access to the service locally. The `AzureFunctionTokenProvider` is an implementation that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
 
 ### Backed Locally
 
