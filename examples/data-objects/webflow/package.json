@@ -84,7 +84,6 @@
     "@fluidframework/merge-tree": "^0.59.4000",
     "@fluidframework/runtime-definitions": "^0.59.4000",
     "@fluidframework/sequence": "^0.59.4000",
-    "@fluidframework/view-interfaces": "^0.59.4000",
     "debug": "^4.1.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
