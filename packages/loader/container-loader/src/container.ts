@@ -16,7 +16,7 @@ import {
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
-    ConnectionState as ConnectionStateType,
+    ConnectionState,
     IAudience,
     IConnectionDetails,
     IContainer,
@@ -152,12 +152,11 @@ export enum ConnectionState {
      */
     Disconnected = 0,
 
-    TryingToConnect = 0.5,
-
     /**
      * The document has an inbound connection but is still pending for outbound deltas
      */
     Pending = 1,
+
     /** @deprecated - Use ConnectionState.Pending */
     Connecting = 1,
 
@@ -483,8 +482,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager;
     }
 
-    public get connectionState(): ConnectionStateType {
-        return this.connectionStateHandler.connectionState as ConnectionStateType; //* Temp until defs checked in
+    public get connectionState(): Exclude<ConnectionState, ConnectionState.TryingToConnect> {
+        return this.connectionStateHandler.connectionState === ConnectionState.TryingToConnect
+            ? ConnectionState.Disconnected
+            : this.connectionStateHandler.connectionState;
     }
 
     public get connected(): boolean {

@@ -136,6 +136,7 @@ export namespace ConnectionState {
     export type Disconnected = 0;
 
     /**
+     * @deprecated - Not yet in use
      * Disconnected but trying to establish a new connection
      */
      export type TryingToConnect = 0.5;
@@ -157,7 +158,12 @@ export namespace ConnectionState {
 /**
  * Type defining the different states of connectivity a container can be in
  */
-export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
+export type ConnectionState =
+    | ConnectionState.Disconnected
+    | ConnectionState.TryingToConnect
+    | ConnectionState.Pending
+    | ConnectionState.Connecting
+    | ConnectionState.Connected;
 
 /**
  * The Host's view of the Container and its connection to storage
@@ -259,7 +265,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     /**
      * Provides the current connected state of the container
      */
-    readonly connectionState: ConnectionState;
+    readonly connectionState: Exclude<ConnectionState, ConnectionState.TryingToConnect>;
 
     /**
      * Boolean indicating whether the container is currently connected or not
