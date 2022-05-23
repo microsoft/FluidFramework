@@ -19,10 +19,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
-    public find(query: object, sort: any, limit?: number, skip?: number): Promise<T[]> {
-        if (!limit) {
-            limit = MaxFetchSize;
-        }
+    public find(query: object, sort: any, limit = MaxFetchSize, skip?: number): Promise<T[]> {
         let queryCursor = this.collection
             .find(query)
             .sort(sort)
