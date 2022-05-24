@@ -60,7 +60,6 @@ export namespace ConnectionState {
     export type Connecting = 1;
     export type Disconnected = 0;
     export type Pending = 1;
-    // @deprecated (undocumented)
     export type TryingToConnect = 0.5;
 }
 

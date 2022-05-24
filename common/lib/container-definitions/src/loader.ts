@@ -136,7 +136,6 @@ export namespace ConnectionState {
     export type Disconnected = 0;
 
     /**
-     * @deprecated - Not yet in use
      * Disconnected but trying to establish a new connection
      */
      export type TryingToConnect = 0.5;
