@@ -88,6 +88,9 @@
       },
       "InterfaceDeclaration_IDeltaManager": {
         "backCompat": false
+      },
+      "TypeAliasDeclaration_ConnectionState": {
+        "backCompat": false
       }
     }
   }

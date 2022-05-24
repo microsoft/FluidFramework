@@ -56,12 +56,16 @@ export enum BindState {
 // @public
 export namespace ConnectionState {
     export type Connected = 2;
+    // @deprecated (undocumented)
     export type Connecting = 1;
     export type Disconnected = 0;
+    export type Pending = 1;
+    // @deprecated (undocumented)
+    export type TryingToConnect = 0.5;
 }
 
 // @public
-export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
+export type ConnectionState = ConnectionState.Disconnected | ConnectionState.TryingToConnect | ConnectionState.Pending | ConnectionState.Connecting | ConnectionState.Connected;
 
 // @public
 export enum ContainerErrorType {
@@ -134,7 +138,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     connect(): void;
     // @deprecated
     readonly connected: boolean;
-    readonly connectionState: ConnectionState;
+    readonly connectionState: Exclude<ConnectionState, ConnectionState.TryingToConnect>;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     // @alpha

@@ -4,6 +4,16 @@
 ### IProxyLoader interface to be removed
 The `IProxyLoader` interface has been deprecated in 0.48 and will be removed in an upcoming release.
 
+## 0.49.1000 Breaking changes
+- [New values and labels added to ConnectionState types](#new-values-and-labels-added-to-connectionstate-types)
+
+### New values and labels added to ConnectionState types
+The new values are `ConnectionState.Pending` (has the same value as `ConnectionState.Connecting`, which is being deprecated)
+and `ConnectionState.TryingToConnect`.
+
+Note: The existing `IContainer` API surface that uses `ConnectionState` is NOT breaking in this release,
+since the new value `TryingToConnect` is excluded where the `ConnectionState` type is used (one place).
+
 ## 0.45 Breaking changes
 - [ContainerErrorType.clientSessionExpiredError added](#ContainerErrorType.clientSessionExpiredError-added)
 
