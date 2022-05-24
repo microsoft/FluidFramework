@@ -105,12 +105,6 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
-// @public
-export function isAzureLocalConnectionConfig(connectionConfig: AzureConnectionConfig): connectionConfig is AzureLocalConnectionConfig;
-
-// @public
-export function isAzureRemoteConnectionConfig(connectionConfig: AzureConnectionConfig): connectionConfig is AzureRemoteConnectionConfig;
-
 export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
