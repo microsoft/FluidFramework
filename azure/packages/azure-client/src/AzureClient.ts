@@ -30,11 +30,11 @@ import {
 import {
     AzureClientProps,
     AzureConnectionConfig,
-    isAzureRemoteConnectionConfig,
     AzureContainerServices,
     AzureContainerVersion,
     AzureGetVersionsOptions,
 } from "./interfaces";
+import { isAzureRemoteConnectionConfig } from "./utils";
 import { AzureAudience } from "./AzureAudience";
 import {
     AzureUrlResolver,
