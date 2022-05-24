@@ -22,6 +22,7 @@
         "import",
         "react",
         "promise",
+        "jsdoc",
         "@typescript-eslint",
         "@rushstack/security",
         "@rushstack",
@@ -114,7 +115,18 @@
             "off"
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "off"
+            "error",
+            {
+                "multiline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "multilineDetection": "brackets",
+                "singleline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                }
+            }
         ],
         "@typescript-eslint/member-ordering": [
             "off"
@@ -272,7 +284,13 @@
         "@typescript-eslint/prefer-function-type": [
             "error"
         ],
+        "@typescript-eslint/prefer-includes": [
+            "error"
+        ],
         "@typescript-eslint/prefer-namespace-keyword": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-optional-chain": [
             "error"
         ],
         "@typescript-eslint/prefer-readonly": [
@@ -881,6 +899,9 @@
         "space-infix-ops": [
             "off"
         ],
+        "space-unary-ops": [
+            "error"
+        ],
         "spaced-comment": [
             "error",
             "always",
@@ -892,6 +913,9 @@
                     ]
                 }
             }
+        ],
+        "switch-colon-spacing": [
+            "error"
         ],
         "tsdoc/syntax": [
             "error"
