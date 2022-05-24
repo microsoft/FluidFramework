@@ -243,7 +243,7 @@ describe("Container Runtime", () => {
             assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
         });
 
-        it("reconnects after receiving a leave op", async () => {
+        it("Reconnects after receiving a leave op", async () => {
             let deltaConnection2 = new MockDocumentDeltaConnection("test");
             const service2 = new MockDocumentService(
                 undefined,
@@ -278,7 +278,7 @@ describe("Container Runtime", () => {
                 deltaManager2.on("connect", resolve);
                 deltaManager2.connect({ reason: "test" });
             });
-            assert(deltaManager2.active, "deltaManager should be active");
+
             assert.strictEqual(deltaManager2.connectionManager.connectionMode, "write",
                 "connection mode should be write");
 
@@ -296,16 +296,12 @@ describe("Container Runtime", () => {
             };
 
             deltaConnection2.emitOp(docId, [leaveMessage]);
-            // Yield the event loop because the inbound op will be processed asynchronously.
-            await yieldEventLoop();
             await new Promise((resolve) => {
                 deltaManager2.on("connect", resolve);
-                deltaManager2.connect({ reason: "test" });
             });
 
             assert.strictEqual(deltaManager2.connectionManager.connectionMode, "read",
                 "new connection should be in read mode");
-            assert(deltaManager2.active, "deltaManager should be in read mode");
         });
     });
 });
