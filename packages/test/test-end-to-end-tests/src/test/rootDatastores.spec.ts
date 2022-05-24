@@ -353,10 +353,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal((aliasResult as Error).message, "malformedDataStoreAliasMessage");
         });
 
-        itExpects("Receiving a bad alias message breaks the container", [
+        // GitHub issue: #9534
+        const events = [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
-        ], async function() {
+        ];
+        const eventsWithoutT9s = { r11s: events, odsp: events, local: events };
+        itExpects("Receiving a bad alias message breaks the container", eventsWithoutT9s, async function() {
             // GitHub issue: #9534
             if (provider.driver.type === "tinylicious") {
                 this.skip();
