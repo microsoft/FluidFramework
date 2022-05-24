@@ -629,8 +629,7 @@ export class Client {
     getLongClientId(shortClientId: number) {
         if (shortClientId >= 0) {
             return this.shortClientIdMap[shortClientId];
-        }
-        else {
+        } else {
             return "original";
         }
     }
@@ -816,8 +815,7 @@ export class Client {
             };
             if (opArgs.sequencedMessage?.clientId === this.longClientId || local) {
                 this.ackPendingSegment(opArgs);
-            }
-            else {
+            } else {
                 this.applyRemoteOp(opArgs);
             }
         }
@@ -922,7 +920,7 @@ export class Client {
             assert(
                 catchUpMsgs === undefined || catchUpMsgs.length === 0,
                 0x03f /* "New format should not emit catchup ops" */);
-            const snap = new SnapshotV1(this.mergeTree, this.logger, (id)=>this.getLongClientId(id));
+            const snap = new SnapshotV1(this.mergeTree, this.logger, (id) => this.getLongClientId(id));
             snap.extractSync();
             return snap.emit(serializer, handle);
         } else {
@@ -950,8 +948,7 @@ export class Client {
         const segWindow = this.getCollabWindow();
         if (segWindow.collaborating) {
             return UnassignedSequenceNumber;
-        }
-        else {
+        } else {
             return UniversalSequenceNumber;
         }
     }
@@ -1005,9 +1002,8 @@ export class Client {
         let clientId: number;
         if (op) {
             clientId = this.getOrAddShortClientId(op.clientId);
-            seq = op.sequenceNumber;
-        }
-        else {
+            seq = op.referenceSequenceNumber;
+        } else {
             const segWindow = this.mergeTree.getCollabWindow();
             seq = segWindow.currentSeq;
             clientId = segWindow.clientId;

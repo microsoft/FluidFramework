@@ -395,6 +395,26 @@ describe("SharedString", () => {
             ]);
         });
 
+        it("can slide intervals on create conflict with remove range", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.removeRange(1, 3);
+
+            collection2.add(1, 3, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 1 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 1 },
+            ]);
+        });
+
         it("can maintain consistency of LocalReference's when segments are packed", async () => {
             // sharedString.insertMarker(0, ReferenceType.Tile, { nodeType: "Paragraph" });
 
@@ -669,13 +689,13 @@ describe("SharedString", () => {
             };
             verifyCreateEvents(sharedString, createInfo1, [
                 { label: "intervalCollections/test1", local: true },
-                { label: "intervalCollections/test2", local: false},
-                { label: "intervalCollections/test3", local: false},
+                { label: "intervalCollections/test2", local: false },
+                { label: "intervalCollections/test3", local: false },
             ]);
             verifyCreateEvents(sharedString2, createInfo2, [
                 { label: "intervalCollections/test2", local: true },
                 { label: "intervalCollections/test3", local: true },
-                { label: "intervalCollections/test1", local: false},
+                { label: "intervalCollections/test1", local: false },
             ]);
         });
     });

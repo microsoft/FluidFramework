@@ -44,7 +44,7 @@ export type ExtendEventProvider<
     TBaseEvent extends IEvent,
     TBase extends IEventProvider<TBaseEvent>,
     TEvent extends TBaseEvent> =
-        Omit<Omit<Omit<TBase,"on">,"once">,"off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
+        Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
 // These types handle replaceing IEventThisPlaceHolder with this, so we can
 // support polymorphic this. For instance if an event wanted to be:

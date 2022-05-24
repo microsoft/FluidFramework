@@ -41,9 +41,9 @@ spec:
           containerPort: 3000
         env:
         - name: NODE_ENV
-          value: production
+          value: "production"
         - name: IS_FLUID_SERVER
-          value: true
+          value: "true"
         volumeMounts:
         - name: data
           mountPath: /home/node/documents

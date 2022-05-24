@@ -61,7 +61,7 @@ export async function generateTests(packageDetails: PackageDetails) {
             };
             const broken = currentProjectData.packageDetails.broken;
             // look for settings not under version, then fall back to version for back compat
-            const brokenData = broken?.[getFullTypeName(currentType)] ?? broken?.[oldProjectData.packageDetails.version]?.[getFullTypeName(currentType)];
+            const brokenData = broken?.[getFullTypeName(currentType)];
 
             testString.push(`/*`)
             testString.push(`* Validate forward compat by using old type in place of current type`);
@@ -107,23 +107,22 @@ interface TestCaseTypeData extends TypeData{
 }
 
 function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData, isCompatible: boolean){
+
+    if(!isCompatible && (getAsType.removed || useType.removed)){
+        return "";
+    }
+
     const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType).replace(".","_")}`;
     const useSig =`use_${useType.prefix}_${getFullTypeName(useType).replace(".","_")}`;
     const expectErrorString = "    // @ts-expect-error compatibility expected to be broken";
     const testString: string[] =[];
 
     testString.push(`declare function ${getSig}():`);
-    if (!isCompatible && getAsType.removed) {
-        testString.push(expectErrorString);
-    }
     testString.push(`    ${toTypeString(getAsType.prefix, getAsType)};`);
     testString.push(`declare function ${useSig}(`);
-    if (!isCompatible && useType.removed) {
-        testString.push(expectErrorString);
-    }
     testString.push(`    use: ${toTypeString(useType.prefix, useType)});`);
     testString.push(`${useSig}(`);
-    if(!isCompatible && !getAsType.removed && !useType.removed) {
+    if(!isCompatible) {
         testString.push(expectErrorString);
     }
     testString.push(`    ${getSig}());`);

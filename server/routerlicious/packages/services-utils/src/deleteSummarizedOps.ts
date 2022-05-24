@@ -22,7 +22,7 @@ export async function deleteSummarizedOps(
         }
 
         const uniqueDocuments = await documentsCollection.aggregate(
-            { _id: { documentId: "$documentId", tenantId: "$tenantId"}},
+            { _id: { documentId: "$documentId", tenantId: "$tenantId" } },
         ).toArray();
 
         const currentEpochTime = new Date().getTime();
@@ -53,7 +53,7 @@ export async function deleteSummarizedOps(
                         {
                             scheduledDeletionTime: { $exists: false },
                         },
-                    ]},
+                    ] },
                     { scheduledDeletionTime: scheduledDeletionEpochTime },
                     undefined);
 

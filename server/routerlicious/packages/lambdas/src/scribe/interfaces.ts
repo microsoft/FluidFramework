@@ -56,8 +56,8 @@ export interface ISummaryWriter {
 export interface IPendingMessageReader {
     /**
      * Read pending messages
-     * @param from Starting sequence number (inclusive)
-     * @param to End sequence number (inclusive)
+     * @param from - Starting sequence number (inclusive)
+     * @param to - End sequence number (inclusive)
      */
     readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]>;
 }

@@ -16,7 +16,7 @@ export function randomColor() {
 
 export function normal() {
     // Produce normal distribution from uniform distribution using polar Box-Muller transform.
-    for(;;) {
+    for (;;) {
         const u = 2 * rnd.float64() - 1;
         const v = 2 * rnd.float64() - 1;
         const r = u * u + v * v;

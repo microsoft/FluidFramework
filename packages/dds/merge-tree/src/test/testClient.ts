@@ -232,7 +232,7 @@ export class TestClient extends Client {
         refSeq: number = this.getCurrentSeq(),
         longClientId?: string,
         minSeqNumber = 0) {
-        if(op === undefined) {
+        if (op === undefined) {
             throw new Error("op cannot be undefined");
         }
         const msg: ISequencedDocumentMessage = {

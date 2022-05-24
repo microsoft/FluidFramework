@@ -140,8 +140,7 @@ export class LocalReferenceCollection {
             assert(seg1.localRefs.refsByOffset.length === seg1.cachedLength,
                 0x2be /* "LocalReferences array contains a gap" */);
             seg1.localRefs.append(seg2.localRefs);
-        }
-        else if (seg1.localRefs) {
+        } else if (seg1.localRefs) {
             // Since creating the LocalReferenceCollection, we may have appended
             // segments that had no local references. Account for them now by padding the array.
             seg1.localRefs.refsByOffset.length += seg2.cachedLength;

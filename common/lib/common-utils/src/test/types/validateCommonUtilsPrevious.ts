@@ -67,26 +67,12 @@ use_old_ClassDeclaration_BaseTelemetryNullLogger(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedClassDeclaration_BatchManager": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_BatchManager():
-    TypeOnly<old.BatchManager<any>>;
-declare function use_current_RemovedClassDeclaration_BatchManager(
-    // @ts-expect-error compatibility expected to be broken
-    use: TypeOnly<current.BatchManager<any>>);
-use_current_RemovedClassDeclaration_BatchManager(
-    get_old_ClassDeclaration_BatchManager());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedClassDeclaration_BatchManager": {"backCompat": false}
 */
-declare function get_current_RemovedClassDeclaration_BatchManager():
-    // @ts-expect-error compatibility expected to be broken
-    TypeOnly<current.BatchManager<any>>;
-declare function use_old_ClassDeclaration_BatchManager(
-    use: TypeOnly<old.BatchManager<any>>);
-use_old_ClassDeclaration_BatchManager(
-    get_current_RemovedClassDeclaration_BatchManager());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -261,26 +247,12 @@ use_old_ClassDeclaration_EventForwarder(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_extractLogSafeErrorProperties():
-    TypeOnly<typeof old.extractLogSafeErrorProperties>;
-declare function use_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties(
-    // @ts-expect-error compatibility expected to be broken
-    use: TypeOnly<typeof current.extractLogSafeErrorProperties>);
-use_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties(
-    get_old_FunctionDeclaration_extractLogSafeErrorProperties());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {"backCompat": false}
 */
-declare function get_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties():
-    // @ts-expect-error compatibility expected to be broken
-    TypeOnly<typeof current.extractLogSafeErrorProperties>;
-declare function use_old_FunctionDeclaration_extractLogSafeErrorProperties(
-    use: TypeOnly<typeof old.extractLogSafeErrorProperties>);
-use_old_FunctionDeclaration_extractLogSafeErrorProperties(
-    get_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties());
 
 /*
 * Validate forward compat by using old type in place of current type

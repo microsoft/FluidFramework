@@ -24,7 +24,7 @@ import includes from "lodash/includes";
 import map from "lodash/map";
 import find from "lodash/find";
 import isEmpty from "lodash/isEmpty";
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 
 import { gt, diff, major, valid, compare } from "semver";
 import traverse from "traverse";
@@ -962,7 +962,7 @@ export class TemplateValidator {
     public _hasSchemaAsync: (schema: PropertySchema, typeid: string) => Promise<boolean>;
     private readonly _allowDraft: boolean;
     private readonly _skipSemver: boolean;
-    constructor(in_params: TemplateValidatorOptions = { skipSemver: false, allowDraft: false}) {
+    constructor(in_params: TemplateValidatorOptions = { skipSemver: false, allowDraft: false }) {
         this._skipSemver = in_params ? !!in_params.skipSemver : false;
         this._allowDraft = in_params ? !!in_params.allowDraft : false;
         // Used by validate()

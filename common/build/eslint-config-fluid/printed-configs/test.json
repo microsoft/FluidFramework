@@ -22,6 +22,7 @@
         "import",
         "unicorn",
         "react",
+        "tsdoc",
         "promise",
         "@typescript-eslint",
         "@rushstack/security",
@@ -51,23 +52,18 @@
             "error"
         ],
         "@typescript-eslint/brace-style": [
-            "off"
+            "error",
+            "1tbs",
+            {
+                "allowSingleLine": true
+            }
         ],
         "@typescript-eslint/comma-dangle": [
             "error",
-            {
-                "arrays": "always-multiline",
-                "enums": "always-multiline",
-                "exports": "always-multiline",
-                "functions": "always-multiline",
-                "generics": "never",
-                "imports": "always-multiline",
-                "objects": "always-multiline",
-                "tuples": "always-multiline"
-            }
+            "always-multiline"
         ],
         "@typescript-eslint/comma-spacing": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/consistent-type-assertions": [
             "error",
@@ -92,7 +88,7 @@
             "off"
         ],
         "@typescript-eslint/func-call-spacing": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/indent": [
             "off"
@@ -101,7 +97,7 @@
             "off"
         ],
         "@typescript-eslint/keyword-spacing": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/member-delimiter-style": [
             "off"
@@ -247,7 +243,8 @@
             "error"
         ],
         "@typescript-eslint/object-curly-spacing": [
-            "off"
+            "error",
+            "always"
         ],
         "@typescript-eslint/prefer-as-const": [
             "error"
@@ -320,12 +317,21 @@
         "@typescript-eslint/unified-signatures": [
             "error"
         ],
+        "array-bracket-spacing": [
+            "error"
+        ],
         "arrow-body-style": [
             "off"
         ],
         "arrow-parens": [
             "error",
             "always"
+        ],
+        "arrow-spacing": [
+            "error"
+        ],
+        "block-spacing": [
+            "error"
         ],
         "brace-style": [
             "off"
@@ -353,6 +359,10 @@
         ],
         "default-case": [
             "error"
+        ],
+        "dot-location": [
+            "error",
+            "property"
         ],
         "dot-notation": [
             "off"
@@ -450,6 +460,12 @@
             "error"
         ],
         "import/order": [
+            "error"
+        ],
+        "jsx-quotes": [
+            "error"
+        ],
+        "key-spacing": [
             "error"
         ],
         "keyword-spacing": [
@@ -838,6 +854,9 @@
                     ]
                 }
             }
+        ],
+        "tsdoc/syntax": [
+            "error"
         ],
         "unicorn/better-regex": [
             "error"

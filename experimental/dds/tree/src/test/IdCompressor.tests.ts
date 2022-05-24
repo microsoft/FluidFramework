@@ -5,6 +5,7 @@
 
 import { expect } from 'chai';
 import { v4, v5 } from 'uuid';
+import { take } from '@fluid-internal/stochastic-test-utils';
 import {
 	IdCompressor,
 	isFinalId,
@@ -21,15 +22,14 @@ import {
 } from '../Identifiers';
 import { assert, assertNotUndefined, fail } from '../Common';
 import {
-	assertIsStableId,
-	createSessionId as createSessionId,
+	createSessionId,
 	incrementUuid,
-	isStableId,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid';
 import { getIds } from '../id-compressor/IdRange';
 import type { UnackedLocalId } from '../id-compressor';
+import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities';
 import {
 	createCompressor,
 	performFuzzActions,
@@ -41,6 +41,8 @@ import {
 	expectSerializes,
 	roundtrip,
 	sessionNumericUuids,
+	makeOpGenerator,
+	attributionIds,
 } from './utilities/IdCompressorTestUtilities';
 import { expectDefined } from './utilities/TestCommon';
 
@@ -241,12 +243,59 @@ describe('IdCompressor', () => {
 		});
 	});
 
-	it('only sends attribution info on the first range from each session', () => {
-		const compressor = createCompressor(Client.Client1, 5, 'attribution');
+	it('has default attribution ID', () => {
+		const compressor = createCompressor(Client.Client1);
+		expectDefined(compressor.attributionId);
+	});
+
+	it('correctly uses explicit attribution ID', () => {
+		const attributionId = generateStableId();
+		const compressor = createCompressor(Client.Client1, 5, attributionId);
+		expect(compressor.attributionId).to.equal(attributionId);
 		const range1 = compressor.takeNextCreationRange();
-		expectDefined(range1.attributionInfo);
-		const range2 = compressor.takeNextCreationRange();
-		expect(range2.attributionInfo).to.be.undefined;
+		expect(compressor.attributionId).to.equal(attributionId);
+		expect(range1.attributionId).to.equal(attributionId);
+	});
+
+	it('only sends attribution ID until the first ID is allocated', () => {
+		const compressor = createCompressor(Client.Client1, 5, generateStableId());
+		let range = compressor.takeNextCreationRange();
+		expectDefined(range.attributionId);
+		range = compressor.takeNextCreationRange();
+		expectDefined(range.attributionId);
+		compressor.generateCompressedId();
+		range = compressor.takeNextCreationRange();
+		expectDefined(range.attributionId);
+		range = compressor.takeNextCreationRange();
+		expect(range.attributionId).to.be.undefined;
+	});
+
+	it('does not send default attribution ID', () => {
+		const compressor = createCompressor(Client.Client1);
+		const range = compressor.takeNextCreationRange();
+		expect(range.attributionId).to.be.undefined;
+	});
+
+	it('attributes correctly after unification', () => {
+		const compressor1 = createCompressor(Client.Client1, undefined, attributionIds.get(Client.Client1));
+		const compressor2 = createCompressor(Client.Client2, undefined, attributionIds.get(Client.Client2));
+		const id1 = compressor1.generateCompressedId('override');
+		const id2 = compressor2.generateCompressedId('override');
+		const range1 = compressor1.takeNextCreationRange();
+		const range2 = compressor2.takeNextCreationRange();
+		compressor1.finalizeCreationRange(range2); // 2 gets sequenced first
+		compressor2.finalizeCreationRange(range2);
+		compressor1.finalizeCreationRange(range1);
+		compressor2.finalizeCreationRange(range1);
+		expect(compressor1.normalizeToOpSpace(id1)).to.equal(compressor2.normalizeToOpSpace(id2));
+		expect(compressor1.attributeId(id1)).to.equal(attributionIds.get(Client.Client2));
+		expect(compressor1.attributeId(compressor1.recompress(compressor2.decompress(id2)))).to.equal(
+			attributionIds.get(Client.Client2)
+		);
+		expect(compressor2.attributeId(compressor2.recompress(compressor1.decompress(id1)))).to.equal(
+			attributionIds.get(Client.Client2)
+		);
+		expect(compressor2.attributeId(id2)).to.equal(attributionIds.get(Client.Client2));
 	});
 
 	describe('can produce a creation range', () => {
@@ -584,8 +633,8 @@ describe('IdCompressor', () => {
 		});
 
 		it('correctly deserializes and resumes a session', () => {
-			const compressor1 = createCompressor(Client.Client1, undefined, Client.Client1);
-			const compressor2 = createCompressor(Client.Client2, undefined, Client.Client2);
+			const compressor1 = createCompressor(Client.Client1, undefined, attributionIds.get(Client.Client1));
+			const compressor2 = createCompressor(Client.Client2, undefined, attributionIds.get(Client.Client2));
 			compressor1.generateCompressedId();
 			const creationRange = compressor1.takeNextCreationRange();
 			compressor1.finalizeCreationRange(creationRange);
@@ -602,6 +651,17 @@ describe('IdCompressor', () => {
 					false // don't compare local state
 				)
 			).to.be.true;
+		});
+
+		it('can serialize local state with attribution but no IDs', () => {
+			// This is a regression test for the scenario in which an ID compressor sends its first range, which
+			// includes its attribution ID, but has made no IDs. An incorrect optimization when serializing had
+			// omitted local state if no IDs had been allocated, but then also dropped the `sentAttribution` flag
+			const compressor = createCompressor(Client.Client1, undefined, attributionIds.get(Client.Client1));
+			const range = compressor.takeNextCreationRange();
+			expect(range.ids).to.be.undefined;
+			expect(range.attributionId).to.equal(attributionIds.get(Client.Client1));
+			expectSerializes(compressor);
 		});
 	});
 
@@ -665,9 +725,9 @@ describe('IdCompressor', () => {
 				const compressor = network.getCompressor(Client.Client1);
 				network.allocateAndSendIds(Client.Client1, 1);
 				const id = network.getIdLog(Client.Client1)[0].id;
-				expect(compressor.attributeId(id)).to.equal(Client.Client1);
+				expect(compressor.attributeId(id)).to.equal(attributionIds.get(Client.Client1));
 				network.deliverOperations(Client.Client1);
-				expect(compressor.attributeId(id)).to.equal(Client.Client1);
+				expect(compressor.attributeId(id)).to.equal(attributionIds.get(Client.Client1));
 			});
 
 			itNetwork('final IDs from a remote session', (network) => {
@@ -675,7 +735,7 @@ describe('IdCompressor', () => {
 				network.allocateAndSendIds(Client.Client2, 1);
 				network.deliverOperations(DestinationClient.All);
 				const id = network.getSequencedIdLog(Client.Client1)[0].id;
-				expect(compressor.attributeId(id)).to.equal(Client.Client2);
+				expect(compressor.attributeId(id)).to.equal(attributionIds.get(Client.Client2));
 			});
 
 			itNetwork('final IDs from multiple remote sessions', 1, (network) => {
@@ -689,12 +749,12 @@ describe('IdCompressor', () => {
 				network.allocateAndSendIds(Client.Client3, compressor.clusterCapacity);
 				network.deliverOperations(DestinationClient.All);
 				const log = network.getSequencedIdLog(Client.Client1);
-				expect(compressor.attributeId(log[0].id)).to.equal(Client.Client1);
-				expect(compressor.attributeId(log[1].id)).to.equal(Client.Client2);
-				expect(compressor.attributeId(log[2].id)).to.equal(Client.Client3);
-				expect(compressor.attributeId(log[3].id)).to.equal(Client.Client1);
-				expect(compressor.attributeId(log[4].id)).to.equal(Client.Client2);
-				expect(compressor.attributeId(log[5].id)).to.equal(Client.Client3);
+				expect(compressor.attributeId(log[0].id)).to.equal(attributionIds.get(Client.Client1));
+				expect(compressor.attributeId(log[1].id)).to.equal(attributionIds.get(Client.Client2));
+				expect(compressor.attributeId(log[2].id)).to.equal(attributionIds.get(Client.Client3));
+				expect(compressor.attributeId(log[3].id)).to.equal(attributionIds.get(Client.Client1));
+				expect(compressor.attributeId(log[4].id)).to.equal(attributionIds.get(Client.Client2));
+				expect(compressor.attributeId(log[5].id)).to.equal(attributionIds.get(Client.Client3));
 			});
 
 			itNetwork('unified IDs', (network) => {
@@ -703,14 +763,14 @@ describe('IdCompressor', () => {
 				for (const [client, compressor] of allTargets) {
 					network.allocateAndSendIds(client, 1, { 0: override });
 					for (const { id } of network.getIdLog(client)) {
-						expect(compressor.attributeId(id)).to.equal(client);
+						expect(compressor.attributeId(id)).to.equal(attributionIds.get(client));
 					}
 				}
 				network.deliverOperations(DestinationClient.All);
 				const firstTarget = allTargets[0][0];
 				for (const [client, compressor] of allTargets) {
 					for (const { id } of network.getIdLog(client)) {
-						expect(compressor.attributeId(id)).to.equal(firstTarget);
+						expect(compressor.attributeId(id)).to.equal(attributionIds.get(firstTarget));
 					}
 				}
 			});
@@ -963,9 +1023,8 @@ describe('IdCompressor', () => {
 		});
 
 		itNetwork('produces consistent IDs with large fuzz input', (network) => {
-			performFuzzActions(network, 1984, true, undefined, true, 1000, 25, (network) =>
-				network.assertNetworkState()
-			);
+			const generator = take(1000, makeOpGenerator({ includeOverrides: true }));
+			performFuzzActions(generator, network, 1984, undefined, true, (network) => network.assertNetworkState());
 			network.deliverOperations(DestinationClient.All);
 		});
 
@@ -1269,7 +1328,8 @@ describe('IdCompressor', () => {
 			});
 
 			itNetwork('can serialize after a large fuzz input', 3, (network) => {
-				performFuzzActions(network, Math.PI, true, undefined, true, 1000, 25, (network) => {
+				const generator = take(1000, makeOpGenerator({ includeOverrides: true }));
+				performFuzzActions(generator, network, Math.PI, undefined, true, (network) => {
 					// Periodically check that everyone in the network has the same serialized state
 					network.deliverOperations(DestinationClient.All);
 					const compressors = network.getTargetCompressors(DestinationClient.All);
@@ -1315,12 +1375,8 @@ function createNetworkTestFunction(validateAfter: boolean): NetworkTestFunction 
 		it(title, () => {
 			const hasCapacity = typeof testOrCapacity === 'number';
 			const capacity = hasCapacity ? testOrCapacity : undefined;
-			// TODO: This cast can be removed on typescript 4.6
-			const network = new IdCompressorTestNetwork(capacity as number);
-			// TODO: This cast can be removed on typescript 4.6
-			((hasCapacity ? assertNotUndefined(test) : testOrCapacity) as (network: IdCompressorTestNetwork) => void)(
-				network
-			);
+			const network = new IdCompressorTestNetwork(capacity);
+			(hasCapacity ? assertNotUndefined(test) : testOrCapacity)(network);
 			if (validateAfter) {
 				network.deliverOperations(DestinationClient.All);
 				network.assertNetworkState();
