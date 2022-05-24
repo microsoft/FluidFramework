@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -19,7 +18,8 @@ import {
     DefaultSummaryConfiguration,
     IAckedSummary,
     IContainerRuntimeOptions,
-    SummaryCollection } from "@fluidframework/container-runtime";
+    SummaryCollection,
+    ISummaryConfiguration } from "@fluidframework/container-runtime";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
