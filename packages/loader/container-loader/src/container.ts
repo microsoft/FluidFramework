@@ -1761,14 +1761,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * available configuration from the loader options.
      */
     private getNoopConfig(): [number | undefined, number | undefined] {
-        const serviceConfiguration = this.serviceConfiguration as any;
-        assert(serviceConfiguration !== undefined, "there should be service config for active connection");
+        assert(this.serviceConfiguration !== undefined, "there should be service config for active connection");
 
-        if (serviceConfiguration.noopTimeFrequency !== undefined ||
-            serviceConfiguration.noopCountFrequency !== undefined) {
+        if (this.serviceConfiguration.noopTimeFrequency !== undefined ||
+            this.serviceConfiguration.noopCountFrequency !== undefined) {
             return [
-                serviceConfiguration.noopTimeFrequency as number,
-                serviceConfiguration.noopCountFrequency as number,
+                this.serviceConfiguration.noopTimeFrequency as number,
+                this.serviceConfiguration.noopCountFrequency as number,
             ];
         }
 

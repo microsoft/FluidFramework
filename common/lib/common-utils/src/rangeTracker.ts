@@ -103,6 +103,7 @@ export class RangeTracker {
         // Get quicker references to the head of the range
         const head = this.ranges[this.ranges.length - 1];
         const primaryHead = head.primary + head.length;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const secondaryHead = head.secondary! + head.length;
 
         // Same secondary indicates this is not a true inflection point - we can ignore it
@@ -156,6 +157,7 @@ export class RangeTracker {
         // If the difference is within the stored range use it - otherwise add in the length - 1 as the highest
         // stored secondary value to use.
         const closestRange = this.ranges[index - 1];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return Math.min(primary - closestRange.primary, closestRange.length) + closestRange.secondary!;
     }
 
@@ -182,6 +184,7 @@ export class RangeTracker {
         // Update the last range values
         const range = this.ranges[index - 1];
         const delta = primary - range.primary;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         range.secondary = range.secondary! + Math.min(delta, range.length);
         range.length = Math.max(range.length - delta, 0);
         range.primary = primary;
