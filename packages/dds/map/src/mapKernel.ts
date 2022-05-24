@@ -549,9 +549,9 @@ export class MapKernel {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             temp.set(key, this.data.get(key)!);
         });
-        this.data.clear();
+        this.clearCore(false);
         temp.forEach((value, key) => {
-            this.data.set(key, value);
+            this.setCore(key, value, true);
         });
     }
 

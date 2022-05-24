@@ -13,6 +13,7 @@ import {
     MockSharedObjectServices,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { IValueChanged } from "../interfaces";
 import { MapFactory, SharedMap } from "../map";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory) {
@@ -417,6 +418,45 @@ describe("Map", () => {
                     assert.equal(retrievedSubMap, subMap, "could not get nested map 1");
                     const retrievedSubMap2 = await retrieved.nestedObj.subMap2Handle.get();
                     assert.equal(retrievedSubMap2, subMap2, "could not get nested map 2");
+                });
+
+                it("Shouldn't clear value if there is pending set", () => {
+                    const valuesChanged: IValueChanged[] = [];
+                    let clearCount = 0;
+
+                    map1.on("valueChanged", (changed, local, target) => {
+                        valuesChanged.push(changed);
+                    });
+                    map1.on("clear", (local, target) => {
+                        clearCount++;
+                    });
+
+                    map2.set("map2key", "value2");
+                    map2.clear();
+                    map1.set("map1Key", "value1");
+                    map2.clear();
+
+                    if (containerRuntimeFactory.processSomeMessages === undefined) {
+                        return;
+                    }
+                    containerRuntimeFactory.processSomeMessages(2);
+
+                    assert.equal(valuesChanged.length, 3);
+                    assert.equal(valuesChanged[0].key, "map1Key");
+                    assert.equal(valuesChanged[0].previousValue, undefined);
+                    assert.equal(valuesChanged[1].key, "map2key");
+                    assert.equal(valuesChanged[1].previousValue, undefined);
+                    assert.equal(valuesChanged[2].key, "map1Key");
+                    assert.equal(valuesChanged[2].previousValue, undefined);
+                    assert.equal(clearCount, 1);
+                    assert.equal(map1.size, 1);
+                    assert.equal(map1.get("map1Key"), "value1");
+
+                    containerRuntimeFactory.processSomeMessages(2);
+
+                    assert.equal(valuesChanged.length, 3);
+                    assert.equal(clearCount, 2);
+                    assert.equal(map1.size, 0);
                 });
 
                 it("Shouldn't overwrite value if there is pending set", () => {
