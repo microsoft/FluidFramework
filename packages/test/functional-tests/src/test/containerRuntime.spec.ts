@@ -297,13 +297,6 @@ describe("Container Runtime", () => {
             deltaConnection.emitOp(docId, [leaveMessage]);
             // Yield the event loop because the inbound op will be processed asynchronously.
             await yieldEventLoop();
-            await deltaManager2.attachOpHandler(0, 0, 1, {
-                process(message: ISequencedDocumentMessage) {
-                    processOp(message);
-                    return {};
-                },
-                processSignal() { },
-            });
             await new Promise((resolve) => {
                 deltaManager2.on("connect", resolve);
                 deltaManager2.connect({ reason: "test" });
