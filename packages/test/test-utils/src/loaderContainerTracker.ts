@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { ConnectionState, Container } from "@fluidframework/container-loader";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
@@ -207,6 +207,71 @@ export class LoaderContainerTracker implements IOpProcessingController {
         }
 
         debugWait("Synchronized");
+    }
+
+    /**
+     * Port of {@link @fluidframework/container-loader#waitContainerToCatchUp} for compatibility with old containers.
+     * Waits until container connects to delta storage and gets up-to-date
+     * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
+     * up to date. Host may chose to wait in such case and retry resolving URI.
+     * Warning: Will wait infinitely for connection to establish if there is no connection.
+     * May result in deadlock if Container.disconnect() is called and never switched back to auto-reconnect.
+     * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
+     *          false: storage does not provide indication of how far the client is. Container processed
+     *          all the ops known to it, but it maybe still behind.
+     * @throws an error beginning with if the container is closed before it catches up.
+     */
+    public async waitContainerToCatchUp(container: IContainer): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            // Make sure we stop waiting if container is closed.
+            if (container.closed) {
+                reject(new Error("Container is closed"));
+            }
+            const deltaManager = container.deltaManager;
+
+            const closedCallback = (err?: Error | undefined) => {
+                (container as Container).off("closed", closedCallback);
+                reject(new Error("Container is closed"));
+            };
+            (container as Container).on("closed", closedCallback);
+
+            const waitForOps = () => {
+                assert(container.connectionState !== ConnectionState.Disconnected,
+                    0x0cd /* "Container disconnected while waiting for ops!" */);
+                const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
+
+                const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
+                assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
+                    0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
+                if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
+                    (container as Container).off("closed", closedCallback);
+                    resolve(hasCheckpointSequenceNumber);
+                    return;
+                }
+                const callbackOps = (message: ISequencedDocumentMessage) => {
+                    if (connectionOpSeqNumber <= message.sequenceNumber) {
+                        (container as Container).off("closed", closedCallback);
+                        resolve(hasCheckpointSequenceNumber);
+                        deltaManager.off("op", callbackOps);
+                    }
+                };
+                deltaManager.on("op", callbackOps);
+            };
+
+            // We can leverage DeltaManager's "connect" event here and test for ConnectionState.Disconnected
+            // But that works only if service provides us checkPointSequenceNumber
+            // Our internal testing is based on R11S that does not, but almost all tests connect as "write" and
+            // use this function to catch up, so leveraging our own join op as a fence/barrier
+            if (container.connectionState === ConnectionState.Connected) {
+                waitForOps();
+            } else {
+                const callback = () => {
+                    container.off("connected", callback);
+                    waitForOps();
+                };
+                container.on("connected", callback);
+            }
+        });
     }
 
     /**

@@ -112,6 +112,9 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": { }
+    "broken": {
+      "ClassDeclaration_LoaderContainerTracker": {"forwardCompat": false},
+      "ClassDeclaration_TestObjectProvider": {"forwardCompat": false}
+    }
   }
 }

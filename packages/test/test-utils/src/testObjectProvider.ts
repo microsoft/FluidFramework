@@ -367,7 +367,8 @@ export class TestObjectProvider implements ITestObjectProvider {
             url: await this.driver.createContainerUrl(this.documentId),
             headers: requestHeader,
         });
-        await this.ensureSynchronized();
+        await this.waitContainerToCatchUp(container);
+
         return container;
     }
 
@@ -386,6 +387,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 
     public async ensureSynchronized() {
         return this._loaderContainerTracker.ensureSynchronized();
+    }
+
+    public async waitContainerToCatchUp(container: IContainer) {
+        return this._loaderContainerTracker.waitContainerToCatchUp(container);
     }
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
