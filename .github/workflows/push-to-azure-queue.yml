@@ -14,15 +14,14 @@ jobs:
         with:
           script: |
             const connectionString = ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }};
-            const queueName = ${{ secrets.AZURE_QUEUE_NAME }}
+            const queueName = ${{ secrets.AZURE_QUEUE_NAME }};
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
-            const queueClient = queueServiceClient.getQueueClient("main-next-commits");
+            const queueClient = queueServiceClient.getQueueClient(queueName);
             const message = {
               sha: ${{ github.event.pull_request.head.sha }},
               author: ${{ github.author }},
               label: queued,
             };
-            console.log("Adding message to the queue: ", message);
             await queueClient.sendMessage(JSON.stringify(message));
   add-comment:
     runs-on: ubuntu-latest
