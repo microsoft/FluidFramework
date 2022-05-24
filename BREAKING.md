@@ -36,7 +36,6 @@ Changes will be made in the way heuristic summaries are run based on observed te
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
 
 ### Changed AzureConnectionConfig API
-- `AzureConnectionConfig` format was changed
 - Added a `type` field that's used to differentiate between remote and local connections.
 - Defined 2 subtypes of `AzureConnectionConfig`: `AzureLocalConnectionConfig` and `AzureRemoteConnectionConfig` with their `type` set to `"local"` and `"remote"` respectively
 - Previously we supplied `orderer` and `storage` fields, now replaced with `endpoint` url.
