@@ -238,7 +238,7 @@ export class ProseMirrorTransactionBuilder {
 
         for (const thing of this.things) {
             if (thing.type === "ether") {
-                if (thing.annotations ?? false) {
+                if ((thing.annotations ?? false) === true) {
                     annotations.push({
                         from: position,
                         to: position + thing.length,
@@ -332,7 +332,7 @@ export class ProseMirrorTransactionBuilder {
             for (const prop of Object.keys(annotation.propertyDeltas)) {
                 const value = segment.properties![prop];
 
-                if (value ?? false) {
+                if ((value ?? false) === true) {
                     this.transaction.addMark(
                         annotation.from,
                         annotation.to,
@@ -355,16 +355,17 @@ export class ProseMirrorTransactionBuilder {
         }
 
         const start = node[0];
-        return !(start._open ?? false) || !(start.content ?? false) ? 0 : 1 + this.getOpenStart(start.content);
+        // return !start._open || !start.content ? 0 : 1 + this.getOpenStart(start.content);
+        return !(start._open ?? false) || !start.content ? 0 : 1 + this.getOpenStart(start.content);
     }
 
     private getOpenEnd(node: IProseMirrorNode[]): number {
-        if (!(node ?? false) || node.length === 0) {
+        if (node === undefined || node.length === 0) {
             return 0;
         }
 
         const end = node[node.length - 1];
-        return !(end._open ?? false) || !(end.content ?? false) ? 0 : 1 + this.getOpenEnd(end.content);
+        return !(end._open ?? false) || !end.content ? 0 : 1 + this.getOpenEnd(end.content);
     }
 }
 
@@ -416,6 +417,8 @@ function sliceToGroupOpsInternal(
     if (value.marks) {
         props = {};
         for (const mark of value.marks) {
+            // The `|| true` condition is suspicious.
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             props[mark.type] = mark.attrs || true;
         }
     }

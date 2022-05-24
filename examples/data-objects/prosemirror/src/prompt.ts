@@ -150,7 +150,7 @@ export class Field {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!value && this.options.required) { return "Required field"; }
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return Boolean(this.validateType(value)) || this.options.validate?.(value);
+        return this.options.validate?.(value);
     }
 
     clean(value) {
