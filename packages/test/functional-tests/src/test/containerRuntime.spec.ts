@@ -244,23 +244,24 @@ describe("Container Runtime", () => {
         });
 
         it("reconnects after receiving a leave op", async () => {
-            const service = new MockDocumentService(
+            let deltaConnection2 = new MockDocumentDeltaConnection("test");
+            const service2 = new MockDocumentService(
                 undefined,
                 (newClient?: IClient) => {
-                    const connection = new MockDocumentDeltaConnection("test");
-                    connection.mode = newClient?.mode ?? "write";
-                    return connection;
+                    deltaConnection2 = new MockDocumentDeltaConnection("test");
+                    deltaConnection2.mode = newClient?.mode ?? "write";
+                    return deltaConnection2;
                 },
             );
 
             const client = { mode: "write", details: { capabilities: { interactive: true } } };
 
             const deltaManager2 = new DeltaManager<ConnectionManager>(
-                () => service,
+                () => service2,
                 DebugLogger.create("fluid:testDeltaManager"),
                 () => true,
                 (props: IConnectionManagerFactoryArgs) => new ConnectionManager(
-                    () => service,
+                    () => service2,
                     client as IClient,
                     true,
                     DebugLogger.create("fluid:testConnectionManager"),
@@ -294,7 +295,7 @@ describe("Container Runtime", () => {
                 timestamp: 1,
             };
 
-            deltaConnection.emitOp(docId, [leaveMessage]);
+            deltaConnection2.emitOp(docId, [leaveMessage]);
             // Yield the event loop because the inbound op will be processed asynchronously.
             await yieldEventLoop();
             await new Promise((resolve) => {
