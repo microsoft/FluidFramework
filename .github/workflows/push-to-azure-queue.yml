@@ -19,10 +19,8 @@ jobs:
             const queueClient = queueServiceClient.getQueueClient("main-next-commits");
             const message = {
               sha: ${{ github.event.pull_request.head.sha }},
-              url: ${{ github.event.url }}
-              assignee: ${{ github.author }},
+              author: ${{ github.author }},
               label: queued,
-              run_id: ${{ github.run_id }}
             };
             console.log("Adding message to the queue: ", message);
             await queueClient.sendMessage(JSON.stringify(message));
