@@ -315,7 +315,7 @@ export class MapKernel {
             type: "set",
             value: serializableValue,
         };
-        this.submitMapKeyMessage(op, previousValue ? previousValue : "none");
+        this.submitMapKeyMessage(op, previousValue ?? "none");
     }
 
     /**
@@ -336,7 +336,7 @@ export class MapKernel {
             key,
             type: "delete",
         };
-        this.submitMapKeyMessage(op, previousValue ? previousValue : "none");
+        this.submitMapKeyMessage(op, previousValue ?? "none");
 
         return previousValue !== undefined;
     }
@@ -467,11 +467,11 @@ export class MapKernel {
                 throw new Error("Cannot rollback without previous map");
             }
             metadata.previousMap.forEach((localValue, key) => {
-                this.data.set(key, localValue);
+                this.setCore(key, localValue, true);
             });
 
             const lastPendingClearId = this.pendingClearMessageIds.pop();
-            if (lastPendingClearId !== metadata.pendingMessageId) {
+            if (lastPendingClearId === undefined || lastPendingClearId !== metadata.pendingMessageId) {
                 throw new Error("Rollback op does match last clear");
             }
         } else if (op.type === "delete" || op.type === "set") {
