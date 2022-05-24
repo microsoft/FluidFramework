@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Container } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
@@ -328,6 +328,8 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     let dataObject: ITestFluidObject;
     let sharedMap: SharedMap;
     let containerRuntime: ContainerRuntime;
+    let clearEventCount: number;
+    let changedEventData: IValueChanged[];
 
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
         getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -345,6 +347,14 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
         containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+        clearEventCount = 0;
+        changedEventData = [];
+        sharedMap.on("valueChanged", (changed, local, target) => {
+            changedEventData.push(changed);
+        });
+        sharedMap.on("clear", (local, target) => {
+            clearEventCount++;
+        });
     });
 
     it("Should rollback set", async () => {
@@ -363,6 +373,13 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         assert.equal(containerRuntime.disposed, false);
         assert.equal(sharedMap.size, 0);
         assert.equal(sharedMap.has("key"), false);
+        assert.equal(clearEventCount, 0);
+        assert.equal(changedEventData.length, 2);
+        assert.equal(changedEventData[0].key, "key");
+        assert.equal(changedEventData[0].previousValue, undefined);
+        // rollback
+        assert.equal(changedEventData[1].key, "key");
+        assert.equal(changedEventData[1].previousValue, 0);
     });
 
     it("Should rollback set to prior value", async () => {
@@ -383,6 +400,19 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         assert.equal(containerRuntime.disposed, false);
         assert.equal(sharedMap.size, 1);
         assert.equal(sharedMap.get("key"), "old", `Unexpected value ${sharedMap.get("key")}`);
+        assert.equal(clearEventCount, 0);
+        assert.equal(changedEventData.length, 5);
+        assert.equal(changedEventData[0].key, "key");
+        assert.equal(changedEventData[0].previousValue, undefined);
+        assert.equal(changedEventData[1].key, "key");
+        assert.equal(changedEventData[1].previousValue, "old");
+        assert.equal(changedEventData[2].key, "key");
+        assert.equal(changedEventData[2].previousValue, "new");
+        // rollback
+        assert.equal(changedEventData[3].key, "key");
+        assert.equal(changedEventData[3].previousValue, "last");
+        assert.equal(changedEventData[4].key, "key");
+        assert.equal(changedEventData[4].previousValue, "new");
     });
 
     it("Should rollback delete", async () => {
@@ -402,6 +432,15 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         assert.equal(containerRuntime.disposed, false);
         assert.equal(sharedMap.size, 1);
         assert.equal(sharedMap.get("key"), "old", `Unexpected value ${sharedMap.get("key")}`);
+        assert.equal(clearEventCount, 0);
+        assert.equal(changedEventData.length, 3);
+        assert.equal(changedEventData[0].key, "key");
+        assert.equal(changedEventData[0].previousValue, undefined);
+        assert.equal(changedEventData[1].key, "key");
+        assert.equal(changedEventData[1].previousValue, "old");
+        // rollback
+        assert.equal(changedEventData[2].key, "key");
+        assert.equal(changedEventData[2].previousValue, undefined);
     });
 
     it("Should rollback clear", async () => {
@@ -423,5 +462,16 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         assert.equal(sharedMap.size, 2);
         assert.equal(sharedMap.get("key1"), "old1", `Unexpected value ${sharedMap.get("key1")}`);
         assert.equal(sharedMap.get("key2"), "old2", `Unexpected value ${sharedMap.get("key2")}`);
+        assert.equal(changedEventData.length, 4);
+        assert.equal(changedEventData[0].key, "key1");
+        assert.equal(changedEventData[0].previousValue, undefined);
+        assert.equal(changedEventData[1].key, "key2");
+        assert.equal(changedEventData[1].previousValue, undefined);
+        assert.equal(clearEventCount, 1);
+        // rollback
+        assert.equal(changedEventData[2].key, "key1");
+        assert.equal(changedEventData[2].previousValue, undefined);
+        assert.equal(changedEventData[3].key, "key2");
+        assert.equal(changedEventData[3].previousValue, undefined);
     });
 });
