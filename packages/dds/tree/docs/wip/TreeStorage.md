@@ -30,6 +30,23 @@ Other data can be stored separately (possibly using simar approaches, or extendi
 For the rest of this document we will just consider the "tree" as the actual document tree plus anything that is stored inline with it.
 Any data stored some other way is out of scope for this document.
 
+## Spacial Indexes
+
+Note that this document (other than this section) assumes the data being logically stored is a tree (which may or may not contain local/distributed history information).
+There is an alternative perspective that can be takes to store this: the storage could be a clustered 2-d index over location and revision.
+For example the data storage could reside in an R-Tree (or alternative spacial index).
+
+## Glossary
+
+-   blob: immutable binary data (ex: Fluid blob).
+    Often a b-tree node referencing other blobs, or a collection of chunks (separating out and deduplicating the "shape" information) optionally referencing other blobs.
+-   Chunk: A binary encoded compact form for a sequence nodes including some (possibly empty) connected subset of child nodes.
+    Children not included directly are referenced from other chunks, which may or may not be in the same blob, and the reference may or may not be indirect.
+    Used in memory, as well as within blobs.
+    Chunks typically contain a reference to common "shape" data which is deduplicate across a collection of chunks, as well as the actual "content" which can be parsed using the shape information.
+-   deep tree: a tree with N nodes and depth O(N).
+-   handle: a serializable reference to a blob. In the case of Fluid handles, currently cannot be created until a blob is uploaded.
+
 ## Storage Approaches
 
 ### Logical Node Tree
@@ -53,10 +70,11 @@ Some useful performance trade-offs that could be made to improve this:
 -   Inline some nodes instead of storing them in separate blobs.
     Choice of which nodes to do this with impacts performance a lot and depends on usage.
     Could include choice with schema and/or usage information (both hard coded heuristics and dynamically).
--   Could indirect some (or all) blob references through an indirection table (PageTable B-Tree mapping page id to blob) to avoid having to update the blobs containing the ancestors up to the root. This instead requires updating the indirection table pages (which means updating pages through the PageTable B-Tree to the root).
-    -   Choice of when to do this could be heuristic tuned to balance read costs, page table memory use, and write costs.
+-   Could indirect some (or all) blob references through an indirection table (effectively a page table like B-Tree mapping short arbitrary "indirection ids" to handle, where which blobs it points to changes over time) to avoid having to update the blobs containing the ancestors up to the root.
+    This instead requires updating the indirection table blobs (which means updating blobs through the indirection table's B-Tree to the root).
+    -   Choice of when to do this could be heuristic tuned to balance read costs, indirection table memory use, and write costs.
     -   Can be used where depth (by number of blobs) since last indirection is high, and/or right above blobs that keep getting updated (ex: add an indirection when updating multiple parent blobs for the sole purpose of updating a specific child tht keeps changing).
-    -   Page ids for indirect references can be allocated such that nearby pages tend to sort near each other improving efficiency of caching nodes in indirection B tree.
+    -   indirection ids can be allocated such that nearby blobs tend to sort near each other improving efficiency of caching nodes in indirection B tree.
     -   Can rewrite parts of the tree removing or changing indirection (and possibly re-chunking). Doing this occasionally for parts of the tree that were loaded but not modified can ensure read-heavy parts of the tree have a chance to get optimally re-encoded for reading.
 -   Chunk sequences: when listing the children in a sequence, allow referring to a "Chunk" which can contain multiple nodes (potentially via sub-chunks) instead of just directly to nodes.
     This allows splitting up large sequences for more efficient editing and avoiding bloated blobs due to large sequences.
@@ -70,30 +88,35 @@ Some useful performance trade-offs that could be made to improve this:
 These optimizations interact: for example if inlining to optimize breadth first traversal,
 the depth of the tree of blobs will tend to be as high as the logical tree's depth, so indirection on blob handles will be more useful.
 
-For N nodes, if 1 in 20 blobs' handles were randomly indirect, and we fit an average of 100 nodes in a blob, and the indirection b-tree is of branching factor 200 (4KB pages, 20 byte handle) we get:
+For N nodes, if 1 in 20 blobs' handles were randomly indirect, and we fit an average of 100 nodes in a blob, and the indirection b-tree is of branching factor 200 (4KB blobs, 20 byte handle) we get:
 
 -   N / 100 blobs
 -   N / 2000 indirect blob references
--   log(200, N / 2000) deep indirection table. (First page gets us to 400k nodes, 4 deep covers 3.2 trillion nodes)
+-   log(200, N / 2000) deep indirection table. (First blob gets us to 400k nodes, 4 deep covers 3.2 trillion nodes)
 -   on average traversing an edge between nodes does 1 / 100 + log(200, N / 2000) / 2000 handle dereferences (assuming nothing is cached). (For 1M nodes, thats ~0.01)
 -   40 bytes per node in main tree
 -   ~0.01 bytes of indirection table per node
--   average pages updated on single change: ~20 (This might be acceptable if we batch updates, only writing batches when summarizing, since that would deduplicate a lot of intermediate updates.
+-   average blobs updated on single change: ~20 (This might be acceptable if we batch updates, only writing batches when summarizing, since that would deduplicate a lot of intermediate updates.
     Also optimizing where indirection is used (instead of random) would also help a lot here).
 
 Same stats with every handle indirect:
 
 -   N / 100 blobs
 -   N / 100 indirect blob references
--   log(200, N / 100) deep indirection table. (First page gets us to 20k nodes, 4 deep covers 160 million nodes)
+-   log(200, N / 100) deep indirection table. (First blob gets us to 20k nodes, 4 deep covers 160 million nodes)
 -   on average traversing an edge between nodes does 1 / 100 + log(200, N / 100) / 100 handle dereferences (assuming nothing is cached). (For 1M nodes, thats ~0.027)
 -   40 bytes per node in main tree
 -   ~0.2 bytes of indirection table per node
--   average pages updated on single change: 1 + ceil(log(200, N / 100)). Thats 2 upt to 20k nodes, 5 for 160 million.
+-   average blobs updated on single change: 1 + ceil(log(200, N / 100)). Thats 2 upt to 20k nodes, 5 for 160 million.
 
-If using a key value store instead of an immutable blob store, all pages references can be indirect and the indirection table effectively becomes an implementation detail of the key value store.
-This removes the extra log(N) network round trips indirection adds to pages (and replaces it with log(N) disk accesses on the server).
-There are also additional options to update blobs in place for the actual edits (ex: appending deltas or overwriting with new content if it fits).
+#### key value store vs. immutable blob store
+
+If using a mutable key value store (ex: IndexedDB), instead of an immutable blob store, it becomes possible to update blobs instead of just creating new ones.
+This ability can be used for all blobs instead of having to manually implement it with the indirection table.
+This removes the extra log(N) network round trips indirection adds to blobs (and replaces it with log(N) disk accesses on the server).
+There is however a downside: if the ability to reference old versions of the tree is desired, the key value store must provide this itself.
+There are some also ways to benefit from key value store that supports updating values that don't have this downside
+(ex: appending deltas to blobs when they fit instead of making new versions, and determining if such deltas should be applied when reading the tree).
 
 ### Path B-Tree
 
@@ -106,12 +129,26 @@ This means a move only has to update three paths through the B-Tree: before and 
 Some possible optimizations:
 
 -   Omit the common parts of the paths in the node (as described above).
--   Model sequence indexes such that inserts usually don't have to change the indexes of other nodes in the sequence (ex: allow inserting at 2.5, instead of moving everything above 3 over one and inserting at 3). As long as the keys still sort in the right order, it should work fine, but can result in keys getting longer. May involve occasionally normalizing the indexes in a sequence to shorten indexes where inserts keep happening.
+-   Compress repeated prefixes withing the nodes.
+    This is distinct from the above because its about compressing prefixes shared by some but not all entries in the b-tree node.
+-   Store large keys/paths out of line.
+    Very deep trees can result portions of keys being store in a node that are larger than the target blob size.
+    These can be chunked and stored out of line.
+    This can increase blob fetches when navigating in deep subtrees trees, but mitigates the cost of having such deep trees when navigating to their siblings and the upper parts of them.
+    This effectively makes the B-Tree more like the logical tree, adding extra depth to the portions of the B-Tree that are storing very deep trees.
+    This has the same issues (the update cost when stored in an immutable blobs store being proportional to the depth), and could be mitigated with the same approach (an indirection table use to break up particularly long paths).
+-   Model sequence indexes such that inserts usually don't have to change the indexes of other nodes in the sequence (ex: allow inserting at 2.5, instead of moving everything above 3 over one and inserting at 3).
+    As long as the keys still sort in the right order, it should work fine, but can result in keys getting longer.
+    May involve occasionally normalizing the indexes in a sequence to shorten indexes where inserts keep happening.
 -   Subtrees could be used as values in the tree instead of just the leaf values, allowing any of the Logical Node Tree optimizations in the section above to be applied to leaf subtrees.
+-   Heuristically inline trees into interior nodes.
+    This benefits cases like breadth first traversal when the inlined trees have lower depth (in the logical tree) than large subtrees between them.
 
 Limitations:
 
--   Does not handle super deep trees very well. For a tree with depth greater than O(log(N)), the size of the keys stored in the B-Tree nodes is larger than O(1) and thus can lead to oversized blobs or require some extra splitting of blobs. Every update pays at least the O(depth where change was made) cost as that path is stored at least once in the path from it to the root of the B-Tree which needs new blobs.
+-   Does not handle super deep trees very well.
+    For a tree with depth greater than O(log(N)), the size of the keys stored in the B-Tree nodes is larger than O(1) and thus can lead to oversized blobs or require some extra splitting of blobs.
+    Every update pays at least the O(depth where change was made) cost as that path is stored at least once in the path from it to the root of the B-Tree which needs new blobs.
 -   Traversal of sequences high in the tree reading small amounts of data for each item (ex: listing the file names in a directory near the root of a large file system) produces worst case access patterns,
     resulting in performance which is as bad as the Node Identifier B-Tree: O(log(N)) dependent blob fetches per property accessed.
 
@@ -128,13 +165,27 @@ This approach does poorly for sequences that have been reordered since that forc
 This chunking approach can avoid a lot of the indirection costs, and sequential id allocation can help keep access in the B tree using nearby keys a lot of the time,
 but in general it can end up pulling down lots of B-nodes when trees fail to have well clustered IDs, which can happen due to editing.
 Due to this overhead, this design isn't considered in the scenarios below, and is mainly included for comparison.
-This design works decently for in memory storage, but doesn't page in/out data very well since a lot of the data in the pages will be data thats not needed for the part of the tree thats being used.
+This design works decently for in memory storage, but doesn't page in/out data very well since a lot of the data in the blobs will be data thats not needed for the part of the tree thats being used.
 
 ### Hybrid
 
-It's possible to use the Path B-Tree at the root, and at some point in each subtree, switch over to the Logical Node Tree approach.
+The various optimizations to the Path B-Tree make it more like the Logical Node Tree.
+If the inlining optimization is permitted to inline subtrees that are split up over multiple blobs,
+a hybrid is produced where Path B-Tree is used at the root, and at some point in each subtree, switch over to the Logical Node Tree approach.
 
-It's unclear what benefits this would offer, but if we do implement both for some reason, we could easily have a hybrid as well to balance the tradeoffs.
+This seems a lot like using the Path B-Tree as a replacement for the indirection table from the Logical Node Tree, but this doesn't really work out.
+For deep trees, which is the only case where the indirection table is really critical, the Path B-Tree struggles (due to large keys).
+
+If the Path B-Tree also used out of line/chunked storage for large keys combined with an indirection table,
+then it would handle deep trees ok, but thats using the same approach that the logical node tree does, so the hybrid approach is not offering a major improvement.
+
+It's possible to have a logical node tree where some of its leaves are actually Path B-Trees,
+as well as Path B-Trees there is leaves are Logical Node Trees.
+These could be arbitrarily mixed, switching between these approaches (and possibly others as well) heuristically on the subtree level.
+This can be thought of as a reference to a Path B-Tree being a kind of chunk supported in the logical node tree.
+
+It's unclear what benefits these hybrid approaches would have a heavily optimized version of either,
+but it does seem like there is a clear path to evolve either optimized approach into a hybrid if desired.
 
 ## Example Scenarios
 
@@ -163,7 +214,7 @@ There are many scenarios that would do this:
 -   etc.
 
 This could hit most of the interior nodes in a Path B-Tree because it would be reading data thats spread out pretty uniformly though the key-space.
-This seems like a worst case access pattern for Path B-Tree, but at least its in order so the occasional dependent reads when traversing down multiple levels in the B-Tree can be efficiently amortized, and older pages can be freed from memory without getting re-downloaded later in the traversal.
+This seems like a worst case access pattern for Path B-Tree, but at least its in order so the occasional dependent reads when traversing down multiple levels in the B-Tree can be efficiently amortized, and older blobs can be freed from memory without getting re-downloaded later in the traversal.
 
 The Logical Tree approach could theoretically chunk the data to handle this case nearly optimally.
 The question is how close to that would be expect it to get in practice since it needs to optimize for many usage patterns, not just this one.
@@ -192,7 +243,7 @@ In both cases, you use a path to a node to find it so its parents are found on t
 
 However if we add an index that allows finding nodes by some other query path (ex: an index by node identifiers for nodes which have an identifier), there are a few ways that can work.
 If the index maps identifier to path, then the index is expensive to update for large subtree moves.
-If the index maps identifier to blob (or page id indirectly pointing to blob), this can avoids large update costs for moves, but needs another index (page to parent) to be able to discover parentage of nodes looked up this way.
+If the index maps identifier to handle (or indirection id), this can avoids large update costs for moves, but needs another index (handle to parent) to be able to discover parentage of nodes looked up this way.
 
 ### Conclusions
 
