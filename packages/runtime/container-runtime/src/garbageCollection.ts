@@ -23,6 +23,7 @@ import {
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
     ISummaryTreeWithStats,
+    IGarbageCollectionNodeData,
 } from "@fluidframework/runtime-definitions";
 import {
     ReadAndParseBlob,
@@ -73,7 +74,7 @@ const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to log error messages if GC reference validation fails.
 const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 // Feature gate key to write the gc blob as a handle if the data is the same.
-const trackGCStateKey = "Fluid.GarbageCollection.trackGCStateKey";
+const trackGCStateKey = "Fluid.GarbageCollection.TrackGCStateKey";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -344,11 +345,11 @@ export class GarbageCollector implements IGarbageCollector {
 
     // Keeps track of the GC state from the last run.
     private previousGCDataFromLastRun: IGarbageCollectionData | undefined;
+    // Keeps track of the serialized GC blob from the last run.
+    private previousSerializedGCBlob: string | undefined;
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
     private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
-
-    private gcDataHasNotChangedFromLastRun: boolean;
 
     // Promise when resolved initializes the base state of the nodes from the base summary state.
     private readonly initializeBaseStateP: Promise<void>;
@@ -384,7 +385,6 @@ export class GarbageCollector implements IGarbageCollector {
             ChildLogger.create(baseLogger, "GarbageCollector"));
 
         this.deleteTimeoutMs = this.gcOptions.deleteTimeoutMs ?? defaultDeleteTimeoutMs;
-        this.gcDataHasNotChangedFromLastRun = false;
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -495,7 +495,10 @@ export class GarbageCollector implements IGarbageCollector {
             if (gcSnapshotTree !== undefined) {
                 // If the GC tree is written at root, we should also do the same.
                 this._writeDataAtRoot = true;
-                return getGCStateFromSnapshot(gcSnapshotTree, readAndParseBlob);
+                const newGCState = await getGCStateFromSnapshot(gcSnapshotTree, readAndParseBlob);
+                const sortedGCState = generateSortedGCState(newGCState);
+                this.previousSerializedGCBlob = JSON.stringify(sortedGCState);
+                return sortedGCState;
             }
 
             // back-compat - Older documents will have the GC blobs in each data store's summary tree. Get them and
@@ -663,14 +666,6 @@ export class GarbageCollector implements IGarbageCollector {
             const gcStats = this.generateStatsAndLogEvents(gcResult, logger);
             const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
 
-            this.gcDataHasNotChangedFromLastRun = isMatchingGCData(
-                gcData,
-                this.previousGCDataFromLastRun,
-                this.newReferencesSinceLastRun,
-                this.unreferencedNodesState,
-                currentReferenceTimestampMs,
-            );
-
             // Update the state since the last GC run. There can be nodes that were referenced between the last and
             // the current run. We need to identify than and update their unreferenced state if needed.
             this.updateStateSinceLastRun(gcData, logger);
@@ -705,10 +700,20 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
+        const gcState: IGarbageCollectionState = { gcNodes: {} };
+        for (const [nodeId, outboundRoutes] of Object.entries(this.previousGCDataFromLastRun.gcNodes)) {
+            gcState.gcNodes[nodeId] = {
+                outboundRoutes,
+                unreferencedTimestampMs: this.unreferencedNodesState.get(nodeId)?.unreferencedTimestampMs,
+            };
+        }
+
         const builder = new SummaryTreeBuilder();
+        const sortedGCState: IGarbageCollectionState = generateSortedGCState(gcState);
+        const newBlob = JSON.stringify(sortedGCState);
 
         if (
-            this.gcDataHasNotChangedFromLastRun &&
+            this.previousSerializedGCBlob === newBlob &&
             this.mc.config.getBoolean(trackGCStateKey) &&
             !fullTree &&
             trackState
@@ -718,15 +723,8 @@ export class GarbageCollector implements IGarbageCollector {
             return builder.getSummaryTree();
         }
 
-        const gcState: IGarbageCollectionState = { gcNodes: {} };
-        for (const [nodeId, outboundRoutes] of Object.entries(this.previousGCDataFromLastRun.gcNodes)) {
-            gcState.gcNodes[nodeId] = {
-                outboundRoutes,
-                unreferencedTimestampMs: this.unreferencedNodesState.get(nodeId)?.unreferencedTimestampMs,
-            };
-        }
-
-        builder.addBlob(gcBlobRootKey, JSON.stringify(gcState));
+        this.previousSerializedGCBlob = newBlob;
+        builder.addBlob(gcBlobRootKey, newBlob);
         return builder.getSummaryTree();
     }
 
@@ -1190,54 +1188,17 @@ async function getGCStateFromSnapshot(
     return rootGCState;
 }
 
-function isMatchingGCData(
-    oldGCData?: IGarbageCollectionData,
-    newGCData?: IGarbageCollectionData,
-    newReferences?: Map<string, string[]>,
-    unreferencedTracker?: Map<string, UnreferencedStateTracker>,
-    currentReferenceTimestampMs?: number,
-): boolean {
-    // If we have any new references, gc data is not matching
-    if (oldGCData === undefined || newGCData === undefined) {
-        return false;
+function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollectionState {
+    const sortableArray: [string, IGarbageCollectionNodeData][] = Object.entries(gcState.gcNodes);
+    sortableArray.sort(([a], [b]) => a.localeCompare(b));
+    sortableArray.forEach(([, nodeData]) => {
+        nodeData.outboundRoutes.sort();
+    });
+    const sortedGCState: IGarbageCollectionState = { gcNodes: {} };
+    for (const [nodeId, state] of sortableArray) {
+        sortedGCState.gcNodes[nodeId] = state;
     }
-
-    if (newReferences !== undefined) {
-        for (const [_, routes] of newReferences) {
-            for (const route of routes) {
-                if (newGCData.gcNodes[route] === undefined || oldGCData.gcNodes[route] === undefined) {
-                    return false;
-                }
-            }
-        }
-    }
-
-    // If we need to sweep any nodes, gc data is not matching
-    if (unreferencedTracker !== undefined && currentReferenceTimestampMs !== undefined) {
-        const unreferencedNodes = unreferencedTracker.entries();
-        for (const [_, nodeTracker] of unreferencedNodes) {
-            if (nodeTracker.shouldSweep) {
-                return false;
-            }
-        }
-    }
-
-    // Compare oldGCData and newGCData
-    const gcDataEntries1: [string, string[]][] = Object.entries(oldGCData.gcNodes);
-    for (const [nodeId1, routes1] of gcDataEntries1) {
-        const routes2: string[] | undefined = newGCData.gcNodes[nodeId1];
-        if (routes2 === undefined || routes1.length !== routes2.length) {
-            return false;
-        }
-
-        for (const route of routes1) {
-            if (!routes2.includes(route)) {
-                return false;
-            }
-        }
-    }
-
-    return true;
+    return sortedGCState;
 }
 
 /**

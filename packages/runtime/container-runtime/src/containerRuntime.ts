@@ -2001,9 +2001,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
-        const fullTree = true;
-        const trackState = false;
-        this.addContainerStateToSummary(summarizeResult, fullTree, trackState);
+        this.addContainerStateToSummary(
+            summarizeResult,
+            true, // fullTree
+            false); // trackState
         return summarizeResult.summary;
     }
 

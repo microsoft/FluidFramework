@@ -892,7 +892,7 @@ describe("Garbage Collection Tests", () => {
         const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
         beforeEach(() => {
             closeCalled = false;
-            const settings = { "Fluid.GarbageCollection.trackGCStateKey": "true" };
+            const settings = { "Fluid.GarbageCollection.TrackGCStateKey": "true" };
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
             defaultGCData.gcNodes = {};

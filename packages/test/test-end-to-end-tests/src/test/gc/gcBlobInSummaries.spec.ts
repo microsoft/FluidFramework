@@ -22,8 +22,13 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { SharedMap } from "@fluidframework/map";
-import { loadSummarizer, TestDataObject, submitAndAckSummary } from "../mockSummarizerClient";
+import {
+    loadSummarizer,
+    TestDataObject,
+    submitAndAckSummary,
+    SubmitSummaryStage,
+    submitFailingSummary,
+} from "../mockSummarizerClient";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { mockConfigProvider } from "./mockConfigProivder";
 
@@ -62,10 +67,16 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
     let latestAckedSummary: IAckedSummary | undefined;
 
     let mainContainer: IContainer;
+    let summarizerClient1: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; };
     let dataStoreA: TestDataObject;
+    let dataStoreB: TestDataObject;
+    let dataStoreC: TestDataObject;
+
+    const isBlobHandle = true;
+    const isBlob = false;
 
     const settings = {
-        "Fluid.GarbageCollection.trackGCStateKey": "true",
+        "Fluid.GarbageCollection.TrackGCStateKey": "true",
     };
     const configProvider = mockConfigProvider(settings);
 
@@ -106,11 +117,15 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
      * Submits a summary and validates that the data stores with ids in `changedDataStoreIds` are resummarized. All
      * other data stores are not resummarized and a handle is sent for them in the summary.
      */
-    async function validateResummaryState(
+    async function submitSummaryAndValidateState(
         summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
         isHandle: boolean,
     ) {
-        const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger, false /* fullTree */);
+        const summaryResult = await submitAndAckSummary(provider,
+            summarizerClient,
+            logger,
+            false, // fullTree
+        );
         latestAckedSummary = summaryResult.ackedSummary;
         assert(
             latestSummaryContext && latestSummaryContext.referenceSequenceNumber >= summaryResult.summarySequenceNumber,
@@ -126,7 +141,7 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
         if (isHandle) {
             assert(gcTree.tree[gcDataBlobKey].type === SummaryType.Handle, "Expected a gc handle!");
         } else {
-            assert(gcTree.tree[gcDataBlobKey].type === SummaryType.Blob, "Expected a gc tree!");
+            assert(gcTree.tree[gcDataBlobKey].type === SummaryType.Blob, "Expected a gc blob!");
         }
     }
 
@@ -142,7 +157,18 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
         mainContainer = await createContainer();
         dataStoreA = await requestFluidObject<TestDataObject>(mainContainer, "default");
 
+        summarizerClient1 = await getNewSummarizer();
+
+        // Create data stores B and C, and mark them as referenced.
+        dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
+        dataStoreA._root.set("dataStoreB", dataStoreB.handle);
+        dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
+        dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+
         await provider.ensureSynchronized();
+
+        // A gc blob should be submitted as this is the first summary
+        await submitSummaryAndValidateState(summarizerClient1, isBlob);
     });
 
     afterEach(() => {
@@ -152,23 +178,7 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
     });
 
     describe("Stores handle in summary when GC state does not change", () => {
-        const isBlobHandle = true;
-        const isBlob = false;
-
         it("Stores handle when data store changes, but no handles are modified", async () => {
-            const summarizerClient1 = await getNewSummarizer();
-            const dds = SharedMap.create(dataStoreA.dataStoreRuntime);
-            dataStoreA._root.set("dds", dds.handle);
-
-            // Create data stores B and C, and mark them as referenced.
-            const dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-            dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            const dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-            dataStoreA._root.set("dataStoreC", dataStoreC.handle);
-
-            // Summarize and validate that a full GC tree is generated.
-            await validateResummaryState(summarizerClient1, isBlob);
-
             // Load a new summarizerClient from the full GC tree
             const summarizerClient2 = await getNewSummarizer();
 
@@ -176,13 +186,13 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             dataStoreA._root.set("key", "value");
 
             // Summarize and validate that a GC blob handle is generated.
-            await validateResummaryState(summarizerClient1, isBlobHandle);
+            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
 
             // Load a new summarizerClient
             const summarizerClient3 = await getNewSummarizer();
 
             // Summarize on a new summarizer client and validate that a GC blob handle is generated.
-            await validateResummaryState(summarizerClient3, isBlobHandle);
+            await submitSummaryAndValidateState(summarizerClient3, isBlobHandle);
             const snapshot1 = await summarizerClient1.containerRuntime.storage.getSnapshotTree();
             const snapshot2 = await summarizerClient2.containerRuntime.storage.getSnapshotTree();
             const snapshot3 = await summarizerClient3.containerRuntime.storage.getSnapshotTree();
@@ -191,36 +201,51 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
         });
 
         it("New gc blobs are submitted when handles are added and deleted", async () => {
-            const summarizerClient1 = await getNewSummarizer();
-
-            // Create data stores B and C, and mark them as referenced.
-            const dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-            dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            const dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-            dataStoreA._root.set("dataStoreC", dataStoreC.handle);
-
-            // A gc blob should be submitted as this is the first summary
-            await validateResummaryState(summarizerClient1, isBlob);
-
             // Make a change in dataStoreA.
             dataStoreA._root.set("key", "value");
 
             // A gc blob handle should be submitted as there are no gc changes
-            await validateResummaryState(summarizerClient1, isBlobHandle);
+            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
 
             // A new gc blob should be submitted as there is a deleted gc reference
             dataStoreA._root.delete("dataStoreC");
 
             // Summarize and validate that all data store entries are trees since a datastore reference has changed.
-            await validateResummaryState(summarizerClient1, isBlob);
+            await submitSummaryAndValidateState(summarizerClient1, isBlob);
 
             // A gc blob handle should be submitted as there are no gc changes
-            await validateResummaryState(summarizerClient1, isBlobHandle);
+            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
 
             // Add a handle reference to dataStore C
             dataStoreA._root.set("dataStoreC", dataStoreC.handle);
             // A new gc blob should be submitted as there is a new gc reference
-            await validateResummaryState(summarizerClient1, isBlob);
+            await submitSummaryAndValidateState(summarizerClient1, isBlob);
+        });
+
+        it("GC blob handle written when summary fails", async () => {
+            // Make a change in dataStoreA.
+            dataStoreA._root.set("key", "value");
+
+            // A gc blob handle should be submitted as there are no gc changes
+            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
+
+            await submitFailingSummary(provider, summarizerClient1, logger, SubmitSummaryStage.Generate);
+
+            // GC blob handle expected
+            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
+        });
+
+        // TODO - fix this failing test
+        it("GC blob written when summary fails", async () => {
+            // Make a reference change by deleting a handle
+            dataStoreA._root.delete("dataStoreB");
+
+            await provider.ensureSynchronized();
+
+            await submitFailingSummary(provider, summarizerClient1, logger, SubmitSummaryStage.Generate);
+
+            // GC blob expected as the summary had changed
+            await submitSummaryAndValidateState(summarizerClient1, isBlob);
         });
     });
 });
