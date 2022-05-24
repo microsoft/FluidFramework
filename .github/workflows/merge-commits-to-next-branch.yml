@@ -17,6 +17,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+              const { QueueClient, QueueServiceClient } = require("@azure/storage-queue");
               const connectionString = ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
               const queueName = ${{ secrets.AZURE_QUEUE_NAME }}
               const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
@@ -62,6 +63,7 @@ jobs:
             uses: actions/github-script@v6
             with:
               script: |
+                const { QueueClient, QueueServiceClient } = require("@azure/storage-queue");
                 var receivedMessages = await queueClient.receiveMessages();
                 const firstMessage = receivedMessages.receivedMessageItems[0];
                 await queueClient.updateMessage(
@@ -77,6 +79,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const { QueueClient, QueueServiceClient } = require("@azure/storage-queue");
             const connectionString = ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }};
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueName = ${{ secrets.AZURE_QUEUE_NAME }};
