@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// This config exists in order to test local-server in a browser context, vs Node.js.
+// This config exists in order to test that webpack can pack local server.
+// To test actual use in a browser context integrate this package into a consumer that uses it in a browser context
+// or add browser based tests to this package.
 
 const path = require('path');
 

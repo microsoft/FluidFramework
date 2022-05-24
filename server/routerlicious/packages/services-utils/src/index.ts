@@ -12,6 +12,7 @@ export * from "./errorUtils";
 export * from "./executeOnInterval";
 export * from "./generateNames";
 export * from "./logger";
+export * from "./morganLoggerMiddleware";
 export * from "./port";
 export * from "./redisUtils";
 export * from "./throttlerMiddleware";
