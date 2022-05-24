@@ -15,7 +15,11 @@ import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
+import {
+    DefaultSummaryConfiguration,
+    IAckedSummary,
+    IContainerRuntimeOptions,
+    SummaryCollection } from "@fluidframework/container-runtime";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
