@@ -109,6 +109,9 @@ Same stats with every handle indirect:
 -   ~0.2 bytes of indirection table per node
 -   average blobs updated on single change: 1 + ceil(log(200, N / 100)). Thats 2 upt to 20k nodes, 5 for 160 million.
 
+Another interesting approach to tuning indirection is to set the probability indirection to O(1 / log(N)).
+This makes the amortized read overhead cost O(1) without changing the asymptotic update cost (which was already O(log(N))).
+
 #### key value store vs. immutable blob store
 
 If using a mutable key value store (ex: IndexedDB), instead of an immutable blob store, it becomes possible to update blobs instead of just creating new ones.
@@ -202,6 +205,98 @@ The update costs are also O(N).
 In the logical tree case, its O(N) space, and assuming use of some indirection, O(N \* log(N)) time to visit the whole tree.
 Inlining can be used to get good sizes for the blobs, and indirection can be used occasionally to lower its costs by a constant factor.
 Updating the tree depends on how much indirection is used, but assuming some is used the update time and space costs are O(log(N)) due to needing to update the indirection table.
+
+
+Example Deep Tree. In this example all children are under a "child" field for simplicity,
+but in the general case they could all be different field (making paths incompressable).
+
+```mermaid
+graph TD;
+    1-.child.->2-.child.->3-.child.-> d["..."] -.child.->N;
+    1-.data.->data1;
+    2-.data.->data2;
+    3-.data.->data3;
+    d-.data.->dataX["data..."];
+    N-.data.->dataN;
+```
+
+B-Tree with branching factor of 4 using the common prefix elision optimization.
+Note how all interior nodes in the upper part of this tree has to store O(N) sized keys for all but the right most child.
+This is the worst at the root, but still O(N) for the nodes O(1) levels below it.
+This gets slightly worse at the root as branching factor increases, but the lower nodes are impacted less.
+
+```mermaid
+graph TD;
+    root["B-Tree Root"]
+    root-.child/.../child: 3N / 4 copies of child.->B1
+
+    B1-.child/.../child: 3N / 16 copies of child.->B11
+    B1-.child/.../child: 2N / 16 copies of child.->B12...
+    B1-.child/.../child: N / 16 copies of child.->B13...
+    B1-.empty string.->B14...
+
+    B11-."log(4,N) levels".->B1N["B11...1"]
+
+    B1N-.child/child/child/data.->DataN
+    B1N-.child/child/data.->DataN-1
+    B1N-.child/data.->DataN-2
+    B1N-.data.->DataN-3
+
+    root-.child/.../child: 2N / 4 copies of child.->B2...
+    root-.child/.../child: N / 4 copies of child.->B3...
+
+    root-.empty string.->B4
+
+    B4-."log(4,N) levels".->B4N["B4...4"]
+    B4N-.child/child/child/data.->Data4
+    B4N-.child/child/data.->Data3
+    B4N-.child/data.->Data2
+    B4N-.data.->Data1
+```
+
+Logical Node Tree, with inlining ~8 nodes into a blob without indirection:
+
+```mermaid
+graph TD;
+    1["1: Stores 1-4 and data1 - data4"]-.child.->dots
+
+    dots["...: N/4 levels"]-.child.->N/4-1;
+
+    N/4-1["N-7: Stores N-7 through N-4 (and their data)"]-.child.->N/4;
+
+    N/4["N-3: Stores N-3 through N (and their data)"];
+```
+
+Logical Node Tree, with inlining ~8 nodes into a blob with indirection every level (B-Tree branching factor of 4):
+
+```mermaid
+graph TD;
+    B["Indirection Table: B-Tree depth log(4, N / 4)"]
+    B-.id0.->1["1: Stores 1-4 and data1 - data4"]-.id1.->B
+
+    B-.ids.->dots["..."]-.ids.->B;
+
+    B-.idN/4-1.->N/4-1["N-7: Stores N-7 through N-4 (and their data)"]-.idN/4.->B;
+
+    B-.idN/4.->N/4["N-3: Stores N-3 through N (and their data)"];
+```
+
+Logical Node Tree, with inlining ~8 nodes into a blob with indirection every log(4, N) levels (B-Tree branching factor of 4).
+Note that indirection table has depth log(4, (N / 4) / log(4, N / 4)).
+For simplicity ids are omitted.
+In this case amortized access cost is O(1), since the cost of an indirection is less than O(log(N)), and its paid ever O(log(N)) chunks.
+If older data (from when N ands thus log(N) was smaller) is not rewritten, it will have more indirections, but that will make little difference since it will be a small amount of data compared to N.
+
+```mermaid
+graph TD;
+    B["Indirection Table"]
+    B-->1["1: Stores 1-4 and data1 - data4"]-->l1["~ log(4,n) more data blobs chained together"]-->B
+
+    B-->dots["..."]-->l2["~ log(4,n) more data blobs chained together"]-->B;
+
+    B-->l4["~ log(4,n) data blobs chained together"]-->N/4["N-3: Stores N-3 through N (and their data)"];
+```
+
 
 ### Walking a long sequence high up in a large tree
 
