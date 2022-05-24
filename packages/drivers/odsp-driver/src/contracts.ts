@@ -12,8 +12,13 @@ import { ISnapshotContents } from "./odspUtils";
  * temporarily add back in this local structure in order to upload the snapshot to support rolling back to 0.58.
  * Notice this entire interface will be removed once the backward compatibility is not required anymore.
 */
-export interface ISnapshotTreeEx extends api.ISnapshotTree{
+export interface ISnapshotTreeEx {
+    id?: string;
+    blobs: { [path: string]: string };
     commits: { [path: string]: string };
+    trees: { [path: string]: ISnapshotTreeEx };
+    // Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
+    unreferenced?: true;
 }
 
 /**
