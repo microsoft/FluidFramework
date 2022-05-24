@@ -18,9 +18,9 @@ jobs:
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueClient = queueServiceClient.getQueueClient(queueName);
             const message = {
-              sha: ${{ github.event.pull_request.head.sha }},
-              author: ${{ github.author }},
-              label: queued,
+              sha: `${{ github.event.pull_request.head.sha }}`,
+              author: `${{ github.author }}`,
+              label: `queued`,
             };
             await queueClient.sendMessage(JSON.stringify(message));
   add-comment:
