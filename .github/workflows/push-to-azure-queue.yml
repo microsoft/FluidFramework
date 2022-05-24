@@ -13,8 +13,8 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const connectionString = ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }};
-            const queueName = ${{ secrets.AZURE_QUEUE_NAME }};
+            const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
+            const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueClient = queueServiceClient.getQueueClient(queueName);
             const message = {
