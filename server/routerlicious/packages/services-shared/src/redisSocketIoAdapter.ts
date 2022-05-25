@@ -343,7 +343,8 @@ export class RedisSocketIoAdapter extends Adapter {
                 // clientSequenceNumber: element.clientSequenceNumber,
                 // sequenceNumber: element.sequenceNumber,
             };
-            Lumberjack.info(`Message received by RedisSocketAdapter. msg count in packet=${packet.data[2].length}. packet=${JSON.stringify(packet).substring(0,600)}`, lumberjackProperties);
+            Lumberjack.info(`Message received by RedisSocketAdapter. msg count in packet=
+            ${packet.data[2].length}. packet=${JSON.stringify(packet).substring(0, 600)}`, lumberjackProperties);
             // if (packet.data && packet.data.length > 1) {
             //     if (packet.data[2] && packet.data[2].length > 0) {
             //         packet.data[2].forEach((element) => {
