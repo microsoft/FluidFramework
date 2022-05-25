@@ -33,5 +33,5 @@ jobs:
       - name:  add-conflict-comment
         uses: thollander/actions-comment-pull-request@v1
         with:
-          message: 'Commit queued for merging with the next branch! Please ignore the comment for now.'
+          message: 'Commit queued for merging with the test_next branch! Please ignore the comment for now.'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
