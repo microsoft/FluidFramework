@@ -47,7 +47,7 @@ const memberCombineInstructions = [
     },
     {
         package: "@fluidframework/container-definitions",
-        cleanOrgMembers: true,
+        cleanOrigMembers: true,
         sourceImports: new Map([
             ["@fluidframework/container-definitions", ["AttachState"]],
         ])
