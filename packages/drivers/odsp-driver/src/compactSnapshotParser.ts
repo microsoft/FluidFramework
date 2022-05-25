@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISnapshotContents } from "./odspUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
+import { ISnapshotTreeEx } from "./contracts";
 import {
     assertBlobCoreInstance,
     assertBoolInstance,
@@ -66,8 +67,9 @@ function readOpsSection(node: NodeTypes) {
  * @param node - tree node to de-serialize from
  */
 function readTreeSection(node: NodeCore) {
-    const snapshotTree: ISnapshotTree = {
+    const snapshotTree: ISnapshotTreeEx = {
         blobs: {},
+        commits: {},
         trees: {},
     };
     for (let count = 0; count < node.length; count++) {
