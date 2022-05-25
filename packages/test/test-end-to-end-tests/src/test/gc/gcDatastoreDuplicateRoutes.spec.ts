@@ -19,8 +19,8 @@ import {
     IAckedSummary,
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { IContainerRuntimeBase, IGarbageCollectionState } from "@fluidframework/runtime-definitions";
-import { ISummaryBlob, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -91,7 +91,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 
     const logger = new TelemetryNullLogger();
 
-    async function summarizeOnNewContainerAndGetGCState(summaryVersion?: string): Promise<IGarbageCollectionState> {
+    async function summarizeOnNewContainerAndGetGCState(summaryVersion?: string): Promise<SummaryObject> {
         await provider.ensureSynchronized();
         const summarizerClient = await loadSummarizer(
             provider,
@@ -105,20 +105,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
 
         const gcTree: ISummaryTree = latestUploadedSummary.tree[gcTreeKey] as ISummaryTree;
-        const gcBlob = gcTree.tree[`${gcBlobPrefix}_root`] as ISummaryBlob;
-        const content = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;
-        return content;
-    }
-
-    // TODO: potentially use this as a check for duplicate routes on all tests
-    function validateGCStateHasNoDuplicateRoutes(gcState: IGarbageCollectionState) {
-        for (const [_, gcData] of Object.entries(gcState.gcNodes)) {
-            const seenRoutes = new Set<string>();
-            gcData.outboundRoutes.forEach((route) => {
-                assert(!seenRoutes.has(route), `There should be no duplicate routes! Duplicate Route: ${route}`);
-                seenRoutes.add(route);
-            });
-        }
+        return gcTree.tree[`${gcBlobPrefix}_root`];
     }
 
     const createContainer = async (): Promise<IContainer> => {
@@ -150,8 +137,9 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         dds.set("change", "change1");
 
         assert(latestAckedSummary !== undefined, "Ack'd summary isn't available as expected");
-        const gcTree = await summarizeOnNewContainerAndGetGCState(latestAckedSummary.summaryAck.contents.handle);
-        assert(gcTree !== undefined, "Expected a gc tree!");
-        validateGCStateHasNoDuplicateRoutes(gcTree);
+        const gcBlob = await summarizeOnNewContainerAndGetGCState(latestAckedSummary.summaryAck.contents.handle);
+        assert(gcBlob !== undefined, "Expected a gc blob!");
+        assert(gcBlob.type === SummaryType.Handle, "Expected a handle!");
+        assert(gcBlob.handleType === SummaryType.Blob, "Expected a gc blob handle!");
     });
 });

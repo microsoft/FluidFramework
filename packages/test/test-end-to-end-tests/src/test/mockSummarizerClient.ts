@@ -81,7 +81,7 @@ export async function loadSummarizer(
     };
 }
 
-export namespace SubmitSummaryStage {
+export namespace FailingSubmitSummaryStage {
     export type Base = 1;
     export type Generate = 2;
     export type Upload = 3;
@@ -90,10 +90,10 @@ export namespace SubmitSummaryStage {
     export const Generate: Generate = 2 as const;
     export const Upload: Upload = 3 as const;
 }
-export type SubmitSummaryStage =
-    SubmitSummaryStage.Base |
-    SubmitSummaryStage.Generate |
-    SubmitSummaryStage.Upload;
+export type FailingSubmitSummaryStage =
+    FailingSubmitSummaryStage.Base |
+    FailingSubmitSummaryStage.Generate |
+    FailingSubmitSummaryStage.Upload;
 
 export class ControlledCancellationToken implements ISummaryCancellationToken {
     count: number = 0;
@@ -103,7 +103,7 @@ export class ControlledCancellationToken implements ISummaryCancellationToken {
     }
 
     constructor(
-        private readonly whenToCancel: SubmitSummaryStage,
+        private readonly whenToCancel: FailingSubmitSummaryStage,
         public readonly waitCancelled: Promise<SummarizerStopReason> = new Promise(() => {}),
     ) {}
 }
@@ -112,7 +112,7 @@ export async function submitFailingSummary(
     provider: ITestObjectProvider,
     summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
     logger: ITelemetryLogger,
-    failingStage: SubmitSummaryStage,
+    failingStage: FailingSubmitSummaryStage,
     fullTree: boolean = false,
 ) {
     await provider.ensureSynchronized();
@@ -124,10 +124,10 @@ export async function submitFailingSummary(
         cancellationToken: new ControlledCancellationToken(failingStage),
     });
 
-    const stageMap = new Map<SubmitSummaryStage, string>();
-    stageMap.set(SubmitSummaryStage.Base, "base");
-    stageMap.set(SubmitSummaryStage.Generate, "generate");
-    stageMap.set(SubmitSummaryStage.Upload, "upload");
+    const stageMap = new Map<FailingSubmitSummaryStage, string>();
+    stageMap.set(FailingSubmitSummaryStage.Base, "base");
+    stageMap.set(FailingSubmitSummaryStage.Generate, "generate");
+    stageMap.set(FailingSubmitSummaryStage.Upload, "upload");
 
     const failingStageString = stageMap.get(failingStage);
     assert(result.stage === failingStageString, `Expected a failure on ${failingStageString}`);

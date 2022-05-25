@@ -186,10 +186,6 @@ class UnreferencedStateTracker {
         return this._inactive;
     }
 
-    public get shouldSweep(): boolean {
-        return false;
-    }
-
     private timer: Timer | undefined;
 
     constructor(
@@ -346,7 +342,8 @@ export class GarbageCollector implements IGarbageCollector {
     // Keeps track of the GC state from the last run.
     private previousGCDataFromLastRun: IGarbageCollectionData | undefined;
     // Keeps track of the serialized GC blob from the last run.
-    private previousSerializedGCBlob: string | undefined;
+    private latestSerializedGCBlob: string | undefined;
+    private pendingSerializedGCBlob: string | undefined;
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
     private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
@@ -497,7 +494,7 @@ export class GarbageCollector implements IGarbageCollector {
                 this._writeDataAtRoot = true;
                 const newGCState = await getGCStateFromSnapshot(gcSnapshotTree, readAndParseBlob);
                 const sortedGCState = generateSortedGCState(newGCState);
-                this.previousSerializedGCBlob = JSON.stringify(sortedGCState);
+                this.latestSerializedGCBlob = JSON.stringify(sortedGCState);
                 return sortedGCState;
             }
 
@@ -713,7 +710,7 @@ export class GarbageCollector implements IGarbageCollector {
         const newBlob = JSON.stringify(sortedGCState);
 
         if (
-            this.previousSerializedGCBlob === newBlob &&
+            this.latestSerializedGCBlob === newBlob &&
             this.mc.config.getBoolean(trackGCStateKey) &&
             !fullTree &&
             trackState
@@ -723,7 +720,7 @@ export class GarbageCollector implements IGarbageCollector {
             return builder.getSummaryTree();
         }
 
-        this.previousSerializedGCBlob = newBlob;
+        this.pendingSerializedGCBlob = newBlob;
         builder.addBlob(gcBlobRootKey, newBlob);
         return builder.getSummaryTree();
     }
@@ -768,11 +765,23 @@ export class GarbageCollector implements IGarbageCollector {
         // Basically, it was written in the current GC version.
         if (result.wasSummaryTracked) {
             this.latestSummaryGCVersion = this.currentGCVersion;
+            this.latestSerializedGCBlob = this.pendingSerializedGCBlob;
             return;
         }
-        // If the summary was not tracked by this client, update latest GC version from the snapshot in the result as
-        // that is now the latest summary.
-        await this.updateSummaryGCVersionFromSnapshot(result.snapshot, readAndParseBlob);
+        // If the summary was not tracked by this client, update latest GC version and blob from the snapshot in the
+        // result as that is now the latest summary.
+        const snapshot = result.snapshot;
+        const metadataBlobId = snapshot.blobs[metadataBlobName];
+        if (metadataBlobId) {
+            const metadata = await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId);
+            this.latestSummaryGCVersion = getGCVersion(metadata);
+        }
+
+        const gcBlobId = snapshot.trees[gcTreeKey]?.blobs[gcBlobRootKey];
+        if (gcBlobId) {
+            const gcBlob = await readAndParseBlob<IGarbageCollectionState>(gcBlobId);
+            this.latestSerializedGCBlob = JSON.stringify(generateSortedGCState(gcBlob));
+        }
     }
 
     /**
@@ -830,17 +839,6 @@ export class GarbageCollector implements IGarbageCollector {
         if (this.sessionExpiryTimer !== undefined) {
             clearTimeout(this.sessionExpiryTimer);
             this.sessionExpiryTimer = undefined;
-        }
-    }
-
-    /**
-     * Update the latest summary GC version from the metadata blob in the given snapshot.
-     */
-    private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree, readAndParseBlob: ReadAndParseBlob) {
-        const metadataBlobId = snapshot.blobs[metadataBlobName];
-        if (metadataBlobId) {
-            const metadata = await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId);
-            this.latestSummaryGCVersion = getGCVersion(metadata);
         }
     }
 
