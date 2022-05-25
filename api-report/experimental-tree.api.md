@@ -822,7 +822,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     applyEdit(changes: Change[]): Edit<InternalizedChange>;
     // @internal
     applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
-    protected applyStashedOp(op: unknown): void;
+    // Warning: (ae-forgotten-export) The symbol "StashedLocalOpMetadata" needs to be exported by the entry point index.d.ts
+    protected applyStashedOp(op: unknown): StashedLocalOpMetadata;
     attributeNodeId(id: NodeId): AttributionId;
     get attributionId(): AttributionId;
     convertToNodeId(id: StableNodeId): NodeId;
@@ -859,8 +860,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     protected processCore(message: unknown, local: boolean): void;
     // (undocumented)
     protected registerCore(): void;
+    // Warning: (ae-forgotten-export) The symbol "SharedTreeOp" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "SharedTreeOp_0_0_2" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    protected reSubmitCore(op: any, localOpMetadata: unknown): void;
+    protected reSubmitCore(op: SharedTreeOp | SharedTreeOp_0_0_2, localOpMetadata?: StashedLocalOpMetadata): void;
     revert(editId: EditId): EditId | undefined;
     // @internal
     revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined;

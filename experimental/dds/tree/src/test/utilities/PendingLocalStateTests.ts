@@ -96,10 +96,9 @@ export function runPendingLocalStateTests(
 			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_0_2));
 		it('applies and submits ops from 0.0.2 in 0.1.1', async () =>
 			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_1_1));
-		it('fails to apply ops from 0.1.1 in 0.0.2', async () =>
-			expect(applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_0_2)).to.be.rejectedWith(
-				'Attempted to resubmit op of version newer than current version'
-			));
+		it('applies and submits ops from 0.1.1 in 0.0.2 (via upgrade)', async () =>
+			applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_0_2));
+
 		it('applies and submits ops from 0.1.1 in 0.1.1', async () =>
 			applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_1_1));
 
@@ -144,6 +143,7 @@ export function runPendingLocalStateTests(
 			expect((stashingTree2.edits as unknown as EditLog<ChangeInternal>).isLocalEdit(edit.id)).to.be.true; // Kludge
 
 			await testObjectProvider.ensureSynchronized();
+			await testObjectProvider.ensureSynchronized(); // Synchronize twice in case stashed ops caused an upgrade round-trip
 
 			expect(observerLeftTraitAfterStash.length).to.equal(
 				1,

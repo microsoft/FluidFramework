@@ -852,16 +852,14 @@ export class IdCompressor {
 					numericOverride = numericUuidFromStableId(stableOverride);
 					const delta = getPositiveDelta(numericOverride, cluster.baseUuid, cluster.capacity - 1);
 					if (delta !== undefined) {
-						if (isFinalOverride) {
-							IdCompressor.failWithCollidingOverride(inversionKey);
-						} else {
-							if (delta < cluster.count) {
-								return this.normalizeToSessionSpace(
-									(compressionMapping.clusterBase + delta) as FinalCompressedId
-								);
-							} else {
-								IdCompressor.failWithCollidingOverride(inversionKey);
+						if (!isFinalOverride) {
+							if (delta >= cluster.count) {
+								// TODO:#283: Properly implement unification
+								return undefined;
 							}
+							return this.normalizeToSessionSpace(
+								(compressionMapping.clusterBase + delta) as FinalCompressedId
+							);
 						}
 					}
 				}

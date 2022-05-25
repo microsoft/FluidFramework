@@ -344,6 +344,10 @@ export type SequencedEditAppliedHandler = (args: SequencedEditAppliedEventArgume
 
 const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = { all: { isSharedTreeEvent: true } };
 
+interface StashedLocalOpMetadata {
+	stashedEdit?: Edit<ChangeInternal>;
+}
+
 /**
  * A [distributed tree](../Readme.md).
  * @public
@@ -1548,22 +1552,21 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 *
 	 * @param content - op to apply locally.
 	 */
-	protected applyStashedOp(op: unknown): void {
+	protected applyStashedOp(op: unknown): StashedLocalOpMetadata {
 		// In addition to updating the state of the tree as each stashed op is applied, we actually need to change the content of
 		// the ops themselves to preserve ID compatibility across sessions. Thus, we actually prevent the framework from submitting
 		// the stashed ops on our behalf (see override of `resubmitCore`) and submit them ourselves in the body of this method.
 
 		// - TODO non edit stached ops ??
-
 		const sharedTreeOp = op as SharedTreeOp | SharedTreeOp_0_0_2;
 		switch (sharedTreeOp.type) {
 			case SharedTreeOpType.Edit: {
+				let stashedEdit: Edit<ChangeInternal> | undefined;
 				switch (this.writeFormat) {
 					case WriteFormat.v0_0_2:
 						switch (sharedTreeOp.version) {
 							case WriteFormat.v0_0_2: {
-								const edit = this.parseSequencedEdit(sharedTreeOp);
-								this.applyEditLocally(edit, undefined);
+								stashedEdit = this.parseSequencedEdit(sharedTreeOp);
 								break;
 							}
 							case WriteFormat.v0_1_1:
@@ -1574,13 +1577,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 						break;
 					case WriteFormat.v0_1_1:
 						switch (sharedTreeOp.version) {
-							case WriteFormat.v0_0_2:
+							case WriteFormat.v0_0_2: {
 								// Use the IDs from the stashed ops as overrides for the equivalent new ops
-								this.applyEditLocally(
-									convertEditIds(sharedTreeOp.edit, (id) => this.generateNodeId(id)),
-									undefined
-								);
+								stashedEdit = convertEditIds(sharedTreeOp.edit, (id) => this.generateNodeId(id));
 								break;
+							}
 							case WriteFormat.v0_1_1: {
 								// Interpret the IDs from the stashed ops as stable IDs, and use those as overrides for the equivalent new ops
 								const normalizer: NodeIdNormalizer<OpSpaceNodeId> = {
@@ -1595,78 +1596,53 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 									normalizeToOpSpace: (id) => this.idNormalizer.normalizeToOpSpace(id),
 								};
 
-								this.applyEditInternal(
-									this.encoder_0_1_1.decodeEditOp(
-										sharedTreeOp,
-										this.encodeSemiSerializedEdit.bind(this),
-										normalizer,
-										this.interner
-									)
+								stashedEdit = this.encoder_0_1_1.decodeEditOp(
+									sharedTreeOp,
+									this.encodeSemiSerializedEdit.bind(this),
+									normalizer,
+									this.interner
 								);
 								break;
 							}
 							default:
 								fail('Unknown version');
 						}
+						break;
 					default:
 						fail('Unknown version');
 				}
-				break;
+				this.applyEditLocally(stashedEdit, undefined);
+				return { stashedEdit };
 			}
 			// Handle and update ops are only acknowledged by the client that generated them upon sequencing--no local changes necessary.
 			case SharedTreeOpType.Handle:
 			case SharedTreeOpType.Update:
 			case SharedTreeOpType.NoOp:
-				break;
+				return {};
 			default:
 				fail('Unrecognized op');
 		}
 	}
 
-	protected reSubmitCore(op: any, localOpMetadata: unknown): void {
-		const sharedTreeOp = op as SharedTreeOp | SharedTreeOp_0_0_2;
-		switch (sharedTreeOp.type) {
+	protected reSubmitCore(op: SharedTreeOp | SharedTreeOp_0_0_2, localOpMetadata?: StashedLocalOpMetadata): void {
+		switch (op.type) {
 			case SharedTreeOpType.Edit:
-				switch (this.writeFormat) {
-					case WriteFormat.v0_0_2:
-						switch (sharedTreeOp.version) {
-							case WriteFormat.v0_0_2:
-								break;
-							case WriteFormat.v0_1_1:
-								fail('Attempted to resubmit op of version newer than current version');
-							default:
-								fail('Unknown version');
-						}
-						break;
-					case WriteFormat.v0_1_1:
-						switch (sharedTreeOp.version) {
-							case WriteFormat.v0_0_2:
-								super.reSubmitCore(
-									convertEditIds(sharedTreeOp.edit, (id) => this.generateNodeId(id)),
-									localOpMetadata
-								);
-								return;
-							case WriteFormat.v0_1_1: {
-								assert(sharedTreeOp.version === WriteFormat.v0_1_1);
-								if (sharedTreeOp.idRange.sessionId !== this.idCompressor.localSessionId) {
-									return; // Already submitted an equivalent op in `applyStashedOp`
-								}
-								break;
-							}
-							default:
-								fail('Unknown version');
-						}
-						break;
-					default:
-						fail('Unknown version');
+				if (compareSummaryFormatVersions(op.version, this.writeFormat) > 0) {
+					fail('Attempted to resubmit op of version newer than current version');
+				} else if (localOpMetadata?.stashedEdit !== undefined) {
+					if (this.writeFormat === WriteFormat.v0_0_2 && op.version === WriteFormat.v0_0_2) {
+						// Optimization: stashed 0.0.2 ops require no transformation in 0.0.2, so just resubmit original op
+						super.reSubmitCore(op, localOpMetadata);
+					} else {
+						this.submitEditOp(localOpMetadata.stashedEdit);
+					}
 				}
 				break;
 			default:
 				// TODO: other op types
+				super.reSubmitCore(op, localOpMetadata);
 				break;
 		}
-
-		super.reSubmitCore(op, localOpMetadata);
 	}
 
 	private changeWriteFormat(newFormat: WriteFormat): void {
