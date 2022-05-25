@@ -153,7 +153,8 @@ This assumes that replacing a direct references with an indirect one can be done
 If it's too small, there are a couple of options:
 
 1. If it has islands below it, pick one and merge with it. This either results with an island that is fine, or on that is too deep. If it is too deep, it must be possible to split it and get two acceptable islands, so do that.
-2. If it has a parent, merge with that. Handle this the same as above, though it requires having a parentage index to find the parent.
+2. If it has a parent, merge with that. Handle this the same as above, though it requires having a parentage information to find the parent.
+   Typically an edit is specified with a path, so the parent can be recovered from that.
 
 If neither of those can be used, the document fits in one island, so leave it as is.
 
@@ -177,30 +178,44 @@ This means a move only has to update three paths through the B-Tree: before and 
 Some possible optimizations:
 
 -   Omit the common parts of the paths in the node (as described above).
--   Compress repeated prefixes withing the nodes.
+-   Deduplicate repeated prefixes withing the nodes.
     This is distinct from the above because its about compressing prefixes shared by some but not all entries in the b-tree node.
+    This can be done with a prefix tree.
 -   Store large keys/paths out of line.
     Very deep trees can result portions of keys being store in a node that are larger than the target blob size.
-    These can be chunked and stored out of line.
-    This can increase blob fetches when navigating in deep subtrees trees, but mitigates the cost of having such deep trees when navigating to their siblings and the upper parts of them.
-    This effectively makes the B-Tree more like the logical tree, adding extra depth to the portions of the B-Tree that are storing very deep trees.
-    This has the same issues (the update cost when stored in an immutable blobs store being proportional to the depth), and could be mitigated with the same approach (an indirection table use to break up particularly long paths).
+    These can be chunked and stored out of line by replacing any segments in the prefix tree longer than a constant threshold with a length, hash of the segment, and reference to a separate blob containing the full segment's data.
+    The allows fetching of nodes at any path with O(log(N)) download, even paths that are O(N) in length.
+    The out of line chunks are only needed when enumerating tree content.
+-   When searching the prefix tree, for nodes requiring hashes, check the hashes in increasing length order to avoid hashing large portions of the path many times if short parts keep matching. This allows node lookup with O(path length) compute.
+-   Out of line path segments can be chunked. Using [a stable chunking scheme](https://www.tarsnap.com/deduplication-explanation) to split them into a tree, and hashing them [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree) style could minimize update costs (reduce hashing time, and get better blob reuse).
 -   Model sequence indexes such that inserts usually don't have to change the indexes of other nodes in the sequence (ex: allow inserting at 2.5, instead of moving everything above 3 over one and inserting at 3).
     As long as the keys still sort in the right order, it should work fine, but can result in keys getting longer.
     May involve occasionally normalizing the indexes in a sequence to shorten indexes where inserts keep happening.
--   Subtrees could be used as values in the tree instead of just the leaf values, allowing any of the Logical Node Tree optimizations in the section above to be applied to leaf subtrees.
--   Heuristically inline trees into interior nodes.
-    This benefits cases like breadth first traversal when the inlined trees have lower depth (in the logical tree) than large subtrees between them.
+-   Heuristically inline logical trees into B-Tree nodes.
+    This allows many of the optimizations from the logical tree nodes section to be applied to leaf subtrees.
+    This could be done only at the leaves of the B-Tree,
+    but allowing it anywhere benefits cases like breadth first traversal when the inlined trees have lower depth (in the logical tree) than large subtrees between them.
+-   Compression of field keys.
+    Field keys (and sequence indexes) occur a lot in the tree.
+    Unlike in the logical tree, these are scattered in a way thats hard to do shape/schema based compression, but there are two approaches that can still work:
+    -   Have a global (or type specific) table assigning short aliases for field keys (likely part of the stored schema).
+        This works well for keys from schema, but map style usage might not work well with it.
+        Fortunately we can pick a strategy is local to the specific type/schema, and handle nodes with map style usage differently (maybe with an escape?).
+        Storing short integers in the stores schema, or using hashes of the file names (full names can be looked dup in the schema) are valid options.
+        This could share code with path compression for edit representations.
+    -   Do compression on the blob level, for example deflate. Note that this might not need to be explicitly done if the network and storage layers already do compression.
 
 Limitations:
 
--   Does not handle super deep trees very well.
-    For a tree with depth greater than O(log(N)), the size of the keys stored in the B-Tree nodes is larger than O(1) and thus can lead to oversized blobs or require some extra splitting of blobs.
-    Every update pays at least the O(depth where change was made) cost as that path is stored at least once in the path from it to the root of the B-Tree which needs new blobs.
+-   Field keys and indexes take up space in the tree, occurring in the paths within the B-Tree. Not only are these not deduplicate based on shape/schema (like in the logical node tree's chunk encodings), but can actually be duplicated (worst case O(log(n)) times) when a subtree is split across multiple branches in the B-Tree.
 -   Traversal of sequences high in the tree reading small amounts of data for each item (ex: listing the file names in a directory near the root of a large file system) produces worst case access patterns,
     resulting in performance which is as bad as the Node Identifier B-Tree: O(log(N)) dependent blob fetches per property accessed.
+    Inlining can help with this, but is more limited in what can be done heuristically than in the logical node tree, and does not change the worst case asymptotic complexity.
+-   Logical tree encoding/compression tricks (ex: shape based chunk compression), can't be applied to nodes which have a large subtree under them since they can't be inlined.
+    Once case hurt by is nodes with bunch of fixed size fields, and one large field. For example a directory entry with lots of metadata (modification time, size, access time, owner, permissions etc, then the actual content field). The B-Tree will sort these fields, likely putting the content in the middle forcing the two haves to the meta-data to compressed independently. If inlining happens at the node/field level, each meta-data file would be compresses separately, and the their field key would explicitly occur in the tree as keys.
+    A separate compression pass could help, but here, but is more limited than the logical node tree's specialized approaches (which can maintain random access while compressed).
 
-If using a key value store instead of an immutable blob store, some edits can avoid paying the O(max(depth, log(N)) update costs by updating nodes in places (either appending delta information or directly editing blobs) as well as not having to update a blob just because its child got updated (same benefit as indirection in the Logical Node Tree).
+Just like with the logical node tree, if using a key value store instead of an immutable blob store, some edits can avoid paying the O(log(N)) update costs by updating nodes in place (either appending delta information or directly editing blobs) as well as not having to update a blob just because its child got updated (same benefit as indirection in the Logical Node Tree).
 
 ### Node Identifier B-Tree
 
@@ -242,14 +257,13 @@ but it does seem like there is a clear path to evolve either optimized approach 
 Consider a tree with N nodes where its depth is O(N).
 
 This makes the path to the leaves, and thus the size of the key in the Path B-Tree O(N).
-Best case this can be optimized by omitting the common prefixes resulting in each node storing O(N / log (N)) portions of the key.
-This not only potentially causes the b-tree nodes to end up oversized (or store keys out of line or chunked),
-but also requires at minimum O(N\*N / log (N)) key data across the whole tree, which ends up being both the size and traversal time bound.
-The update costs are also O(N).
+Using prefix tree within nodes with out of line large chunks optimizations, the Path B-Tree can maintain its proper blob size and access time, though its space due to duplication across B-Tree nodes will result in at worst O(N log(N)) space.
+Stable chunking of out of like path storage could further optimize this if using content addressable blob storage (like FLuid's), deduplicating identical out of line chunks,
+bringing the space back to O(N), though with significant constant factor overheads (ex: storing all the field keys)
 
-In the logical tree case, its O(N) space, and assuming use of some indirection, O(N \* log(N)) time to visit the whole tree.
+In the logical tree case, its O(N) space, and assuming use of indirection of at most O(1/log(N)) blobs, O(N) time to visit the whole tree.
 Inlining can be used to get good sizes for the blobs, and indirection can be used occasionally to lower its costs by a constant factor.
-Updating the tree depends on how much indirection is used, but assuming some is used the update time and space costs are O(log(N)) due to needing to update the indirection table.
+Update time and space costs are O(log(N)) due to needing to update the indirection table and nodes between indirections.
 
 Example Deep Tree. In this example all children are under a "child" field for simplicity,
 but in the general case they could all be different field (making paths incompressable).
@@ -268,6 +282,8 @@ B-Tree with branching factor of 4 using the common prefix elision optimization.
 Note how all interior nodes in the upper part of this tree has to store O(N) sized keys for all but the right most child.
 This is the worst at the root, but still O(N) for the nodes O(1) levels below it.
 This gets slightly worse at the root as branching factor increases, but the lower nodes are impacted less.
+The prefix tree without out of line chunk storage allows looking up paths under long keys O(log(N)) blob downloads,
+though actually walking the whole tree will be O(N \* log(N)).
 
 ```mermaid
 graph TD;
@@ -297,10 +313,6 @@ graph TD;
     B4N-.child/data.->Data2
     B4N-.data.->Data1
 ```
-
-TODO: Path B tree split to maintain O(1) sized internal nodes.
-Note that if the branching factor of this B tree were reduced such that its nodes were O(1) in size instead of O(N), it would have to end up O(N) deep, resulting in O(N) blob updates on edit.
-Its unclear how such a tree would be balanced, or if it would be able to maintain amortized O(1) logical child access.
 
 Logical Node Tree, with inlining ~8 nodes into a blob without indirection:
 
@@ -366,8 +378,6 @@ There are thus two extremes where this could go badly:
 1. Too much inlining, causing each node in the sequence to be in its own chunk. At least these chunks could be prefetched for the upcoming children.
 2. Too little inlining: the information we need from the node is not available in the chunks that make up the sequence, thus for each node we have to fetch its chunk. When reading the content of that chunk, we could even have to fetch another chunk for the position if it also wasn't inlined (ex: lots of other data got inlined filling up the chunk)
 
-on Notes
-
 The Path B-Tree has very simple chunking logic for internal nodes and can easily produce nicely sized blobs for data, but for deep trees the key/path part can become bloated or need special handling.
 
 The Logical Node Tree approach, when applying good chunking heuristics, has much more complex chunking logic (has to handle large numbers of fields, long sequences, inlining etc),
@@ -432,9 +442,10 @@ If the index maps identifier to handle (or indirection id), this can avoids larg
 It seems like the logical tree provides modular way to add tuning/optimization allowing incremental delivery of target optimizations,
 though that comes at the cost of possibly needing more optimizations to reach a good baseline performance.
 
-The Path B-Tree provides a elegant and simple approach, but it complicates moves somewhat, doesn't handle very deep trees particularly well, and is impractical to optimize for specific access patterns, like breadth first traversals of sequences of large subtrees.
+The Path B-Tree provides a elegant and simple approach, but it complicates moves somewhat,
+and is more limited in how it can be optimized for specific access patterns, like breadth first traversals of sequences of large subtrees.
 
-While both approaches could permit optimized formats for the leaf subtrees, this fits more naturally into the logical tree, which can do this for non-leaf subtrees as well.
+Both approaches could permit optimized formats for the leaf subtrees, but this work generalizes to non leaf subtrees the logical node tree.
 
 The Logical Node Tree is optimized for child access and can be tuned for which children can be accesses quickly (via inlining and indirection heuristics).
 The Path B-Tree excels in order at depth first traversals offering almost optimal possible performance for this case.
@@ -442,17 +453,44 @@ High up in large trees breadth first traversal and depth first where the order o
 In these same cases the Logical Node Tree should deliver significantly better constant factors, though if using indirection does still have a worst case of log(n) as well.
 
 The Logical Node Tree also more naturally handles partial checkouts that don't include all the leaves (ex: load all the directories in a folder, but not their contents), getting better locality in these cases,
-and is more comparable with subtree based permissions systems (since all nodes in a chunk always share a an ancestors that in the chunk).
+and is more compatible with subtree based permissions systems (since all nodes in a chunk always share a an ancestor that in the chunk).
 
-Both approaches are similar as far as being able to be specialized to take advantage of a key value store instead of an immutable blob store,
-however its likely slightly easier to support both modes of operation for the Logical Node Tree since doing so basically amounts to tweaking the indirection logic
-(always on, but replace the indirection able with the key value store).
+Both approaches are similar as far as being able to be specialized to take advantage of a key value store instead of an immutable blob store.
+
+For total storage size, the logical tree probably wins due to being able to leverage shape based compression in chunks in more cases,
+resulting in less occurrences of field keys in the encoded data.
+The logical B-Tree also never has to explicitly encode indexes withing fields, while these do occur in the Path B-Tree.
+The Path B-Tree also sometimes duplicates edges in the tree, up to log(N) times, resulting in even more copies of field keys in the tree.
+These difference can be mitigated somewhat with extra compression approaches in the Path B-Tree, but it has more data to compress,
+and it harder due to lacking the context the logical tree can leverage for its compression.
+However, in typical cases, we expect the vast majority of the data size to be in leaf subtrees, with both compress the same, making this difference less important.
+
+The logical node tree can order its fields as a performance optimization (ex: placing frequently use and/or fixed size fields first).
+Similar to the above storage size case, this works for both approaches, except for non-leaf subtrees.
+
+Maintaining proper "balance" when updating is more flexible in the logical tree case, so it can use heuristics to better optimize the tree,
+however it significantly complicated to actually ensure its indirection don't become too frequent over time.
+
+Overall it seems like a well tuned logical node tree should exceed the performance of the Path B-Tree for total storage size,
+and common access patterns (for which it has been tuned: either manually or by it tracking access patterns).
+Editing performance differences is unclear: both approaches cause significant but different editing pattern dependent write amplification.
+
+The Path B-Tree's storage of keys and paths adds some complexity: it needs sortable path representations, and optimizations related to handling these.
+This same logic is needed for edit/changeset representation though, so it shouldn't be counted for much against the Path B-Tree.
 
 ## Decision
 
-These factors, in my (Craig's) subjective opinion, seem to lean toward the Logical Node Tree as being a better choice for Shared-Tree's planned usage patterns.
+The Path B-Tree has better understood performance characteristics around update costs for maintaining its balance, and its optimizations mostly consist of optimizations we will need for edits anyway (compact leaf tree encoding and path encoding and manipulation).
+Basic support for deep trees (out of line prefix tree segments) can easily be added,
+and the later optimizations we might do for that (stable Merkle tree chunking) are easy to separate from the rest of the code and don't interact with the performance of most operations (only impact update of deep trees, not read)
+
+The logical node tree's indirection support is more involved, and harder to add later (it impacts how chunks refer to each-other, and complicates the update code-path quite a lot, and changes performance of reads and updates significantly, even in trees which aren't exceptionally deep).
+
+These factors, in my (Craig's) subjective opinion, seem to lean toward the Path B-Tree, with an initial version supporting inlining (rather than special casing leaves and adding inlining later) and the prefix tree with out of line large segments (this allows for known bounds on blob size), but not the optimized chunked out of line segments (thats easy to add later, and only impacts deep trees).
+
 This still needs consensus.
+
 A conclusion on this front is not needed for M1 (partial checkouts and incremental summaries are not technically necessary for that),
 but this area would be a good one to develop in parallel with other aspects of SharedTree.
 This is a good place leverage decision encapsulation to minimize the impact if we change our approach later
-(ex: we come up with better ideas, find an issue with this analysis, or change our evaluation criteria).
+(ex: we come up with better ideas, find an issue with this analysis, or change our evaluation criteria, or decide to support both as configurable options).
