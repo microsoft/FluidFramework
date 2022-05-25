@@ -4,7 +4,7 @@
  */
 
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { TreeKey, TreeType } from "..";
+import { TreeKey, TreeType } from "../tree";
 
 export const enum TreeNavigationResult {
     /** Attempt to navigate cursor to a key or index that is outside the client's view. */

@@ -6,4 +6,4 @@
 export {
     ITreeCursor,
     TreeNavigationResult,
-} from "./reader";
+} from "./cursor";
