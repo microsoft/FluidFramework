@@ -21,6 +21,9 @@ export interface IChannel extends IFluidLoadable {
 
     /**
      * Generates summary of the channel synchronously.
+     * @param fullTree - flag indicating whether the attempt should generate a full
+     * summary tree without any handles for unchanged subtrees.
+     * @param trackState - This tells whether we should track state from this summary.
      * @returns A tree representing the summary of the channel.
      */
     getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
@@ -28,6 +31,9 @@ export interface IChannel extends IFluidLoadable {
     /**
      * Generates summary of the channel asynchronously.
      * This should not be called where the channel can be modified while summarization is in progress.
+     * @param fullTree - flag indicating whether the attempt should generate a full
+     * summary tree without any handles for unchanged subtrees.
+     * @param trackState - This tells whether we should track state from this summary.
      * @returns A tree representing the summary of the channel.
      */
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;

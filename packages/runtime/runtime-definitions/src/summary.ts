@@ -16,6 +16,9 @@ import {
     IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 
+/**
+ * Contains the aggregation data from a Tree/Subtree.
+ */
 export interface ISummaryStats {
     treeNodeCount: number;
     blobNodeCount: number;
@@ -24,8 +27,19 @@ export interface ISummaryStats {
     unreferencedBlobSize: number;
 }
 
+/**
+ *  The summarization methods are recursively invoked during the summary calculation and will
+ *  compose the Summary Tree. At the same time, each component that is taking part of the summarization
+ *  will populate the tree information aggregation for its subtree through the ISummaryStats interface.
+ *  Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
+ *  will be taking part of the summarization process.
+ */
 export interface ISummaryTreeWithStats {
+    /** Represents an agreggation of node counts and blob sizes associated to the current summary information */
     stats: ISummaryStats;
+    /**  Summary defines a recursive data structure that will be will be converted to a snapshot tree and uploaded
+     * to the backend.
+     */
     summary: ISummaryTree;
 }
 
