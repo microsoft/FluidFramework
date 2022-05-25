@@ -230,7 +230,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
             const deltaManager = container.deltaManager;
             let callbackOps;
 
-            const closedCallback = (err?: Error | undefined) => {
+            const closedCallback = () => {
                 container.off("closed", closedCallback);
                 if (callbackOps !== undefined) {
                     deltaManager.off("op", callbackOps);
