@@ -230,19 +230,37 @@ export class MockContainerRuntimeFactory {
         this.messages.push(msg as ISequencedDocumentMessage);
     }
 
+    public processOneMessage() {
+        if (this.messages.length === 0) {
+            throw new Error("Tried to process a message that did not exist");
+        }
+
+        let msg = this.messages.shift();
+
+        // Explicitly JSON clone the value to match the behavior of going thru the wire.
+        msg = JSON.parse(JSON.stringify(msg));
+
+        this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
+        msg.sequenceNumber = ++this.sequenceNumber;
+        msg.minimumSequenceNumber = this.getMinSeq();
+        for (const runtime of this.runtimes) {
+            runtime.process(msg);
+        }
+    }
+
+    public processSomeMessages(count: number) {
+        if (count > this.messages.length) {
+            throw new Error("Tried to process more messages than exist");
+        }
+
+        for (let i = 0; i < count; i++) {
+            this.processOneMessage();
+        }
+    }
+
     public processAllMessages() {
         while (this.messages.length > 0) {
-            let msg = this.messages.shift();
-
-            // Explicitly JSON clone the value to match the behavior of going thru the wire.
-            msg = JSON.parse(JSON.stringify(msg));
-
-            this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
-            msg.sequenceNumber = ++this.sequenceNumber;
-            msg.minimumSequenceNumber = this.getMinSeq();
-            for (const runtime of this.runtimes) {
-                runtime.process(msg);
-            }
+            this.processOneMessage();
         }
     }
 }
