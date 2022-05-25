@@ -121,6 +121,51 @@ There is however a downside: if the ability to reference old versions of the tre
 There are some also ways to benefit from key value store that supports updating values that don't have this downside
 (ex: appending deltas to blobs when they fit instead of making new versions, and determining if such deltas should be applied when reading the tree).
 
+#### Indirection "Balancing"
+
+Naively is seems like randomly inserting indirections would get a good distribution.
+This is for initial tree construction, but it does not hold up after editing.
+When editing, its trivial to add more indirections, but difficult to remove them.
+
+Other heuristics in practice might result in good spacing of indirections, but if hard asymptotic bounds are desired, this approach can be used.
+
+We enforce two properties:
+
+1. To ensure that update costs are bounded by O(log(n)): there are not chains of chunks deeper than log(n) chunks without an indirection
+   a. The cost of maintaining these invariants during update also has to be kept O(log(n)).
+2. Amortized blob dereference is bounded by O(1) overhead from indirections: there is on average O(n/log(n)) indirections total which are somewhat uniformly distributed.
+
+To reason about this, we will think of the tree of data blobs (blobs containing tree content, not the ones forming the indirection table) as a set of islands,
+where each indirection is the root of an island, and every data-blob reachable from it without going through an indirection is part of that island.
+
+Each data blob can record the number of blobs below it in its island, as well as its maximum depth.
+
+When creating a new island (updating an entry in the indirection table to point to a different blob), we can ensure that:
+
+1. The depth of the island does not exceed our current maximum depth threshold
+2. The number of blobs is not lower than our minimum size threshold
+
+If we set the minimum size threshold to be half of the maximum depth threshold (or lower) this should be practical to maintain.
+
+For the newly created island if its too deep, we can split it. Both haves will have at least half the maximum depth threshold of blobs, and thus exceed the minimum size threshold.
+This assumes that replacing a direct references with an indirect one can be done without wrecking the blob boundaries: the format could ensure this is possible.
+
+If it's too small, there are a couple of options:
+
+1. If it has islands below it, pick one and merge with it. This either results with an island that is fine, or on that is too deep. If it is too deep, it must be possible to split it and get two acceptable islands, so do that.
+2. If it has a parent, merge with that. Handle this the same as above, though it requires having a parentage index to find the parent.
+
+If neither of those can be used, the document fits in one island, so leave it as is.
+
+All these operations should be O(log(n)).
+
+There is one extra detail: if picking an island size bounds that are not constant (ex: O(log(n))), there might be some islands of unexpected sizes around.
+The above approach should work fine, though it might occasionally produce slightly illegal sizes.
+Rather than iterating it until all the sizes are valid, just making a best effort with one iteration should converge toward the data having valid islands.
+Iterating would work, but possibly drive the cost of the balancing above O(log(n)).
+
+Also note that when picking a child (or parent) to merge with, some extra heuristics could be used to pick a good one (maybe pick the smallest, or one that has been detected to have inefficient chunking, or one that has been read a lot compared to how often its written).
+
 ### Path B-Tree
 
 All data in the tree can be stored in a key value store under its full path through the logical tree.
