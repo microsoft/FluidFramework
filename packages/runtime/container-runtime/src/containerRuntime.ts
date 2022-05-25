@@ -48,7 +48,7 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
     GenericError,
@@ -208,29 +208,34 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
 };
 
 export interface IGCRuntimeOptions {
-    /* Flag that will disable garbage collection if set to true. */
-    disableGC?: boolean;
-
     /**
-     * Flag representing the summary's preference for allowing garbage collection.
-     * This is stored in the summary and unchangeable (for now). So this runtime option
-     * only takes affect on new containers.
-     * Currently if this is set to false, it will take priority and any container will
-     * never run GC.
+     * Flag that if true, will enable running garbage collection (GC) in a container. GC has mark phase and sweep phase.
+     * In mark phase, unreferenced objects are identified and marked as such in the summary. This option enables the
+     * mark phase.
+     * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
+     * Sweep phase can be enabled via the "sweepAllowed" option.
+     * Note: This setting becomes part of the container's summary and cannot be changed.
      */
     gcAllowed?: boolean;
 
     /**
-     * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether the node
+     * Flag that if true, enables GC's sweep phase which will eventually delete unreferenced objects from the container.
+     * This flag should only be set to true if "gcAllowed" is true.
+     * Note: This setting becomes part of the container's summary and cannot be changed.
+     */
+    sweepAllowed?: boolean;
+
+    /**
+     * Flag that will disable garbage collection if set to true. Can be used to disable running GC on container where
+     * is allowed via the gcAllowed option.
+     */
+    disableGC?: boolean;
+
+    /**
+     * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
      * changed or not.
      */
     runFullGC?: boolean;
-
-    /**
-     * Flag that if true, will run sweep which may delete unused objects that meet certain criteria. Only takes
-     * effect if GC is enabled.
-     */
-    runSweep?: boolean;
 
     /**
      * Allows additional GC options to be passed.
@@ -745,33 +750,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             flushMode = defaultFlushMode,
         } = runtimeOptions;
 
-        // We pack at data store level only. If isolated channels are disabled,
-        // then there are no .channel layers, we pack at level 1, otherwise we pack at level 2
-        const packingLevel = summaryOptions.disableIsolatedChannels ? 1 : 2;
-
-        let storage = context.storage;
-        if (context.baseSnapshot) {
-            // This will patch snapshot in place!
-            // If storage is provided, it will wrap storage with BlobAggregationStorage that can
-            // pack & unpack aggregated blobs.
-            // Note that if storage is provided later by loader layer, we will wrap storage in this.storage getter.
-            // BlobAggregationStorage is smart enough for double-wrapping to be no-op
-            if (context.attachState === AttachState.Attached) {
-                // IContainerContext storage api return type still has undefined in 0.39 package version.
-                // So once we release 0.40 container-defn package we can remove this check.
-                assert(context.storage !== undefined, 0x1f4 /* "Attached state should have storage" */);
-                const aggrStorage = BlobAggregationStorage.wrap(
-                    context.storage,
-                    logger,
-                    undefined /* allowPacking */,
-                    packingLevel,
-                );
-                await aggrStorage.unpackSnapshot(context.baseSnapshot);
-                storage = aggrStorage;
-            } else {
-                await BlobAggregationStorage.unpackSnapshot(context.baseSnapshot);
-            }
-        }
+        const storage = context.storage;
 
         const registry = new FluidDataStoreRegistry(registryEntries);
 
@@ -845,7 +824,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadExisting,
             blobManagerSnapshot,
             requestHandler,
-            storage,
         );
 
         return runtime;
@@ -868,25 +846,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get storage(): IDocumentStorageService {
-        // This code is plain wrong. It lies that it never returns undefined!!!
-        // All callers should be fixed, as this API is called in detached state of container when we have
-        // no storage and it's passed down the stack without right typing.
-        // back-compat 0.40 NoStorageInDetachedMode. Also, IContainerContext storage api return type still
-        // has undefined in 0.39 package version.
-        // So once we release 0.40 container-defn package we can remove this check.
-        if (!this._storage && this.context.storage) {
-            // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
-            // If isolated channels are disabled, then there are no .channel layers, we pack at level 1,
-            // otherwise we pack at level 2
-            this._storage = BlobAggregationStorage.wrap(
-                this.context.storage,
-                this.logger,
-                undefined /* allowPacking */,
-                this.disableIsolatedChannels ? 1 : 2,
-            );
-        }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._storage!;
+        return this.context.storage;
     }
 
     public get reSubmitFn(): (
@@ -1034,7 +994,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        private _storage?: IDocumentStorageService,
     ) {
         super();
 
@@ -1130,7 +1089,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobId: string) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
             this.logger,
         );
@@ -1339,7 +1299,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get IFluidTokenProvider() {
-        if (this.options && this.options.intelligence) {
+        if (this.options?.intelligence) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
                 intelligence: this.options.intelligence,
@@ -1461,11 +1421,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
-            gcFeature: this.garbageCollector.gcSummaryFeatureVersion,
+            ...this.garbageCollector.getMetadata(),
             // The last message processed at the time of summary. If there are no new messages, use the message from the
             // last summary.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.messageAtLastSummary,
-            sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
@@ -2188,18 +2147,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Returns the type of the GC node. Currently, there are nodes that belong to data store and nodes that belong
-     * to the blob manager.
+     * Returns the type of the GC node. Currently, there are nodes that belong to the root ("/"), data stores or
+     * blob manager.
      */
     public getNodeType(nodePath: string): GCNodeType {
         if (this.isBlobPath(nodePath)) {
             return GCNodeType.Blob;
         }
-        if (this.dataStores.isDataStoreNode(nodePath)) {
-            return GCNodeType.DataStore;
-        }
-        // Root node ("/") and DDS nodes belong to "Other" node types.
-        return GCNodeType.Other;
+        return this.dataStores.getGCNodeType(nodePath) ?? GCNodeType.Other;
     }
 
     /**
@@ -2207,13 +2162,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * data store or an attachment blob.
      */
     public getGCNodePackagePath(nodePath: string): readonly string[] | undefined {
-        // If the node is a blob, return "_blobs" as the package path.
-        if (this.isBlobPath(nodePath)) {
-            return ["_blobs"];
+        switch (this.getNodeType(nodePath)) {
+            case GCNodeType.Blob:
+                return ["_blobs"];
+            case GCNodeType.DataStore:
+            case GCNodeType.SubDataStore:
+                return this.dataStores.getDataStorePackagePath(nodePath);
+            default:
+                assert(false, 0x2de /* "Package path requested for unsupported node type." */);
         }
-        const dataStorePkgPath = this.dataStores.getDataStorePackagePath(nodePath);
-        assert(dataStorePkgPath !== undefined, 0x2d6 /* "Package path requested for unknown node type." */);
-        return dataStorePkgPath;
     }
 
     /**

@@ -60,7 +60,7 @@ export class HTTPError extends Error {
         const isFirefox = typeof window !== "undefined" &&
             typeof window.navigator !== "undefined" &&
             typeof window.navigator.userAgent !== "undefined" &&
-            window.navigator.userAgent.toLowerCase().indexOf("firefox") > -1;
+            window.navigator.userAgent.toLowerCase().includes("firefox");
 
         return isFirefox ? `${this.message}, stack:${stack}` : `stack:${stack}`;
     }

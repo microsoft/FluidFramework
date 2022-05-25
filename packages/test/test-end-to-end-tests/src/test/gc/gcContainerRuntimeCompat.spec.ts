@@ -30,7 +30,8 @@ import { mockConfigProvider } from "./mockConfigProivder";
  * versions. A version of container runtime generates the summary and then we validate that another version can
  * read and process it successfully.
  */
-describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => {
+// Issue #10053
+describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider) => {
     const currentVersionNumber = 0;
     const oldVersionNumbers = [-1, -2];
 

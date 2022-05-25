@@ -35,7 +35,7 @@ export class Stack<T> {
     }
 }
 
-function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
+export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
     if (entry === undefined) {
         return undefined;
     } else if (entry.isHead) {
@@ -59,7 +59,7 @@ export class List<T> {
     public next: List<T>;
     public prev: List<T>;
 
-    constructor(public isHead: boolean, private data: T | undefined) {
+    constructor(public isHead: boolean, public data: T | undefined) {
         this.prev = this;
         this.next = this;
     }
@@ -144,7 +144,14 @@ export class List<T> {
         return (this.next === this);
     }
 
+    /**
+     * @deprecated - use unshift
+     */
     public push(data: T): void {
+        this.unshift(data);
+    }
+
+    public unshift(data: T): void {
         const entry = ListMakeEntry(data);
         entry.data = data;
         entry.isHead = false;
@@ -152,6 +159,26 @@ export class List<T> {
         entry.prev = this;
         this.next = entry;
         entry.next.prev = entry;
+    }
+
+    public [Symbol.iterator]() {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        let node: List<T> | undefined = this;
+        const iterator: IterableIterator<T> = {
+            next(): IteratorResult<T> {
+                while (node && node.next.isHead === false) {
+                    node = node.next;
+                    if (node.data !== undefined) {
+                        return { value: node.data, done: false };
+                    }
+                }
+                return { value: undefined, done: true };
+            },
+            [Symbol.iterator]() {
+                return this;
+            },
+        };
+        return iterator;
     }
 }
 
