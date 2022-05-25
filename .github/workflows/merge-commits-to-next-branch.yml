@@ -35,8 +35,7 @@ jobs:
           script: |
             git fetch origin
             git checkout next
-            git branch $COMMIT_INFO.sha
-            git checkout $COMMIT_INFO.sha
+            git checkout -b main-next-$COMMIT_INFO.sha
             git cherry-pick $COMMIT_INFO.sha
   createPullRequest:
     runs-on: ubuntu-latest
@@ -47,7 +46,7 @@ jobs:
         with:
           script: |
             const { repo, owner } = context.repo;
-            const result = await github.rest.pulls.create({
+            const newPr = await github.rest.pulls.create({
               title: '[Main:Next] Integrate $COMMIT_INFO.sha',
               $COMMIT_INFO.author,
               repo,
@@ -61,7 +60,7 @@ jobs:
             github.rest.issues.addLabels({
               owner,
               repo,
-              issue_number: result.data.number,
+              issue_number: newPr.data.number,
               labels: ['merge-with-next', 'automated pr']
             });
   update-commit-status:
