@@ -51,9 +51,9 @@ import {
     combineAppAndProtocolSummary,
     runWithRetry,
     isFluidResolvedUrl,
+    isRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
-    isSystemMessage,
     ProtocolOpHandler,
 } from "@fluidframework/protocol-base";
 import {
@@ -1722,7 +1722,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const local = this.clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
-        if (!isSystemMessage(message)) {
+        if (isRuntimeMessage(message)) {
             this.context.process(message, local, undefined);
         }
 

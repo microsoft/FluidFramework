@@ -16,7 +16,7 @@ import {
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
+import { isClientMessage } from "@fluidframework/driver-utils";
 import { IOdspSnapshot, ISnapshotCachedEntry, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -323,7 +323,7 @@ async function fetchLatestSnapshotCore(
                     encodedBlobsSize,
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
-                    nonSysOps: snapshot.ops?.filter((op) => !isSystemMessage(op)).length ?? 0,
+                    nonSysOps: snapshot.ops?.filter((op) => isClientMessage(op)).length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
                     // Interval between the first fetch until the last byte of the last redirect.
                     redirectTime,
