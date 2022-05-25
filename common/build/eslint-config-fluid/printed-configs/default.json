@@ -24,6 +24,7 @@
         "react",
         "tsdoc",
         "promise",
+        "jsdoc",
         "@typescript-eslint",
         "@rushstack/security",
         "@rushstack"

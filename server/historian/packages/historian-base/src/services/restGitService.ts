@@ -49,7 +49,7 @@ function endsWith(value: string, endings: string[]): boolean {
 
 export class RestGitService {
     private readonly restWrapper: RestWrapper;
-    private readonly lumberProperties: Record<BaseTelemetryProperties, any>;
+    private readonly lumberProperties: Record<string, any>;
 
     constructor(
         private readonly storage: ITenantStorage,

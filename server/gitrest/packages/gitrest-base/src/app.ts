@@ -7,26 +7,26 @@ import { AsyncLocalStorage } from "async_hooks";
 import { json, urlencoded } from "body-parser";
 import cors from "cors";
 import express, { Express } from "express";
-import morgan from "morgan";
 import nconf from "nconf";
-import split from "split";
+import { ICreateRepoParams } from "@fluidframework/gitresources";
 import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
-import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { bindCorrelationId } from "@fluidframework/server-services-utils";
+import { BaseTelemetryProperties, HttpProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+    alternativeMorganLoggerMiddleware,
+    bindCorrelationId,
+    jsonMorganLoggerMiddleware,
+} from "@fluidframework/server-services-utils";
 import * as routes from "./routes";
 import {
     getRepoManagerParamsFromRequest,
-    getRequestPathCategory,
     IFileSystemManagerFactory,
+    IRepoManagerParams,
     IRepositoryManagerFactory,
 } from "./utils";
 
-/**
- * Basic stream logging interface for libraries that require a stream to pipe output to
- */
-const stream = split().on("data", (message) => {
-    Lumberjack.info(message);
-});
+function getTenantIdForGitRestRequest(params: IRepoManagerParams, request: express.Request) {
+    return params.storageRoutingId?.tenantId ?? (request.body as ICreateRepoParams)?.name;
+}
 
 export function create(
     store: nconf.Provider,
@@ -39,26 +39,18 @@ export function create(
 
     const loggerFormat = store.get("logger:morganFormat");
     if (loggerFormat === "json") {
-        app.use(morgan((tokens, req, res) => {
-            const params = getRepoManagerParamsFromRequest(req);
-            const messageMetaData = {
-                method: tokens.method(req, res),
-                pathCategory: getRequestPathCategory(req),
-                driverVersion: tokens.req(req, res, DriverVersionHeaderName),
-                url: tokens.url(req, res),
-                status: tokens.status(req, res),
-                contentLength: tokens.res(req, res, "content-length"),
-                responseTime: tokens["response-time"](req, res),
-                tenantId: params.storageRoutingId?.tenantId ?? params.repoName,
-                documentId: params.storageRoutingId?.documentId,
-                serviceName: "gitrest",
-                eventName: "http_requests",
-             };
-             logRequestMetric(messageMetaData);
-             return undefined;
-        }, { stream }));
+        app.use(jsonMorganLoggerMiddleware(
+            "gitrest",
+            (tokens, req, res) => {
+                const params = getRepoManagerParamsFromRequest(req);
+                return {
+                    [HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
+                    [BaseTelemetryProperties.tenantId]: getTenantIdForGitRestRequest(params, req),
+                    [BaseTelemetryProperties.documentId]: params.storageRoutingId?.documentId,
+                };
+            }));
     } else {
-        app.use(morgan(loggerFormat, { stream }));
+        app.use(alternativeMorganLoggerMiddleware(loggerFormat));
     }
 
     const requestSize = store.get("requestSizeLimit");
