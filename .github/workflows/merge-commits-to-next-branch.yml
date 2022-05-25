@@ -36,10 +36,7 @@ jobs:
             git fetch origin
             git checkout test_next
             git checkout -b main-next-$COMMIT_INFO.sha
-            git cherry-pick $COMMIT_INFO.sha
-            git add .
-            git commit --allow-empty
-            git push --set-upstream origin main-next-$COMMIT_INFO.sha
+            git merge $COMMIT_INFO.sha --no-ff
   createPullRequest:
     runs-on: ubuntu-latest
     if: ( $COMMIT_INFO.label == 'queued' )
