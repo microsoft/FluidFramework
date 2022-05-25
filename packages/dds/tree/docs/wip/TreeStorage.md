@@ -206,7 +206,6 @@ In the logical tree case, its O(N) space, and assuming use of some indirection, 
 Inlining can be used to get good sizes for the blobs, and indirection can be used occasionally to lower its costs by a constant factor.
 Updating the tree depends on how much indirection is used, but assuming some is used the update time and space costs are O(log(N)) due to needing to update the indirection table.
 
-
 Example Deep Tree. In this example all children are under a "child" field for simplicity,
 but in the general case they could all be different field (making paths incompressable).
 
@@ -254,6 +253,10 @@ graph TD;
     B4N-.data.->Data1
 ```
 
+TODO: Path B tree split to maintain O(1) sized internal nodes.
+Note that if the branching factor of this B tree were reduced such that its nodes were O(1) in size instead of O(N), it would have to end up O(N) deep, resulting in O(N) blob updates on edit.
+Its unclear how such a tree would be balanced, or if it would be able to maintain amortized O(1) logical child access.
+
 Logical Node Tree, with inlining ~8 nodes into a blob without indirection:
 
 ```mermaid
@@ -297,7 +300,6 @@ graph TD;
     B-->l4["~ log(4,n) data blobs chained together"]-->N/4["N-3: Stores N-3 through N (and their data)"];
 ```
 
-
 ### Walking a long sequence high up in a large tree
 
 Read a small amount of data out of many large subtrees.
@@ -332,7 +334,47 @@ The logical tree approach is well suited to applying contextual optimizations, f
 Such specialized approaches and tuning of heuristics can optionally consume schema data, as well as usage patterns to have blob boundaries converge where edits happen, reducing redundant storage and updates over time.
 It would be relatively easy to produce a minimal version of the logical tree approach and add optimizations incrementally in the future, even maintaining document compatibility.
 
-#### Finding parents and identifier indexes
+### Fetching a Subtree
+
+In this scenario, a path to a node is provided, and all nodes within that subtree are visited in an arbitrary order (for example to copy or search the subtree).
+
+Note that if you perform this, but have a rule for skipping visiting subtrees, it can end up containing the "Walking a long sequence high up in a large tree" scenario from above: for this section we are assuming no such skipping option.
+
+To keep things simple, we are assuming no really large nodes.
+To include larger nodes in this model, split them up into multiple nodes in a tree, and count them as that many nodes.
+
+We define:
+
+-   P: the length of the path
+-   N: total nodes in the document (current revision)
+-   B: size of a blob in nodes or handles (assuming nodes, handles average the same size)
+-   S: number of nodes in the "fetched" subtree
+-   I: when doing indirections, the portion of blobs indirected (between 0 and 1).
+-   R: Average branching factor of logical tree (assumed R << B so nodes have roughly constant side and fit in blobs)
+
+All logs (unless otherwise noted) in this section are base B.
+
+#### Logical Node Tree
+
+With optimal inlining (for this exact scenario) and no indirection is performed, the logical node tree can achieve will need (P+S)/B blobs to be fetched.
+With worst case inlining decisions (but still filling the blobs) the logical node tree would instead need P+S/B blob fetches, since it may need one for each point along the path. Even without usage heuristics average of P/log_base_R(B)+S/B blob fetches should be achievable.
+
+If adding indirection, the depth of the indirection table's B-Tree will the log(number of indirections).
+The number of indirections is given by the number of blobs, times I, so (I \* N / B) giving a depth of log(I)+log(N)-1.
+Since I is at most 1, se can define a conservative overestimate of this depth, ID, to be log(N).
+
+If we then make one out of every K \* log(N) blob references indirect (for arbitrary tuning parameter K), using the depth estimate ID, we get an amortized data blob read cost of 1 + log(N) / K \* log(N), or 1 + 1 / k.
+This allows the overhead from indirection to be a constant factor while keeping O(log(N)) update costs for edits.
+
+#### Path B-Tree
+
+TODO: How do we compute the branching factor high up in the B-Tree? Assuming its B results in oversized blobs due to key/path size?
+
+It's going to to have to be at least (P+S)/B blobs to be fetched since the path and nodes fetch both must be somewhere in the blobs read.
+This is the same as with the logical node tree.
+Additionally we know it will be at least log(N / B) (which is log(N)-1) interior nodes deep, so we can raise that to at least max(log(N)-1, P / B) + S / B.
+
+## Finding parents and identifier indexes
 
 In both cases, you use a path to a node to find it so its parents are found on the way.
 
@@ -340,7 +382,7 @@ However if we add an index that allows finding nodes by some other query path (e
 If the index maps identifier to path, then the index is expensive to update for large subtree moves.
 If the index maps identifier to handle (or indirection id), this can avoids large update costs for moves, but needs another index (handle to parent) to be able to discover parentage of nodes looked up this way.
 
-### Conclusions
+## Conclusions
 
 It seems like the logical tree provides modular way to add tuning/optimization allowing incremental delivery of target optimizations,
 though that comes at the cost of possibly needing more optimizations to reach a good baseline performance.
@@ -361,7 +403,7 @@ Both approaches are similar as far as being able to be specialized to take advan
 however its likely slightly easier to support both modes of operation for the Logical Node Tree since doing so basically amounts to tweaking the indirection logic
 (always on, but replace the indirection able with the key value store).
 
-#### Decision
+## Decision
 
 These factors, in my (Craig's) subjective opinion, seem to lean toward the Logical Node Tree as being a better choice for Shared-Tree's planned usage patterns.
 This still needs consensus.
