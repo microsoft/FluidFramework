@@ -402,4 +402,51 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         value2 = await directory2.get("key");
         assert.strictEqual(value1, value2, "container2 not processing ops after connect()");
     });
+
+    // This test is disabled until the following is resolved - https://github.com/microsoft/FluidFramework/issues/9789
+    it.skip("can cancel in-progress connection with disconnect()", async () => {
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
+        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
+            TestDataObjectType,
+            getDataStoreFactory(),
+            {},
+            [innerRequestHandler]);
+        const localTestObjectProvider = new TestObjectProvider(
+            Loader,
+            provider.driver,
+            runtimeFactory);
+
+        const container = await localTestObjectProvider.makeTestContainer() as Container;
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "container initial connection timeout" },
+        );
+        assert.strictEqual(
+            container.connectionState, ConnectionState.Connected,
+            "container is not connected when loaded",
+        );
+
+        let disconnectedEventFired = false;
+        container.once("disconnected", () => { disconnectedEventFired = true; });
+        container.disconnect();
+        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
+        assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
+
+        container.connect();
+        container.disconnect();
+        const connectPromise = timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "valueChanged timeout (expected error)" },
+        );
+        await assert.rejects(
+            connectPromise,
+            "connected event fired after cancelling with disconnect()",
+        );
+        assert.strictEqual(
+            container.connectionState,
+            ConnectionState.Disconnected,
+            "container connected trying to cancel with disconnect()",
+        );
+    });
 });
