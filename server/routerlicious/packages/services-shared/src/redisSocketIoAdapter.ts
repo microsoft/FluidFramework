@@ -288,7 +288,6 @@ export class RedisSocketIoAdapter extends Adapter {
      * Handles messages from the Redis subscription
      */
     private onRoomMessage(channel: string, messageBuffer: Buffer) {
-        const time = Date.now();
         if (!channel.startsWith(this.channel)) {
             // sent to different channel
             return;
@@ -352,36 +351,24 @@ export class RedisSocketIoAdapter extends Adapter {
             const opts: BroadcastOptions = {
                 rooms: new Set([room]),
             };
-            // console.log(`redisAdapter before= ${JSON.stringify(packet.data)}`);
             const split = JSON.stringify(channel).split("/");
-            const lumberjackProperties = {
-                [BaseTelemetryProperties.tenantId]: split[1].replace("#", ""),
-                [BaseTelemetryProperties.documentId]: split[2].replace("#", "").replace("\"", ""),
-                // Traces: "{}",
-            };
+            const tenantId = split[1].replace("#", "");
+            const documentId = split[2].replace("#", "").replace("\"", "");
+
             if (packet.data && packet.data.length > 1) {
                 if (packet.data[2] && packet.data[2].length > 0) {
                     packet.data[2].forEach((element) => {
-                        if (!element.traces) {
-                            element.traces = [];
-                        }
-                        element.traces.push(
-                            {
-                                action: "start",
-                                service: "redisAdapter",
-                                timestamp: time,
-                            });
-                        // console.log(`redisAdapter after= ${JSON.stringify(element.traces)}
-                        // and packet = ${JSON.stringify(packet.data[2])}`,
-                        // `tenantId=${split[1].replace("#", "")}`,
-                        // `doc=${split[2].replace("#", "").replace("\"", "")}`);
-                        // lumberjackProperties.Traces = element.traces;
-                        // Lumberjack.info(`Traces-${element.type}`, lumberjackProperties);
+                        const lumberjackProperties = {
+                            [BaseTelemetryProperties.tenantId]: tenantId,
+                            [BaseTelemetryProperties.documentId]: documentId,
+                            clientId: element.clientId,
+                            clientSequenceNumber: element.clientSequenceNumber,
+                            sequenceNumber: element.sequenceNumber,
+                        };
+                        Lumberjack.info(`Message received by RedisSocketAdapter.`, lumberjackProperties);
                     });
                 }
             }
-            // lumberjackProperties.Traces = element.traces;
-            Lumberjack.info(`Traces-${JSON.stringify(packet.data[2])}`, lumberjackProperties);
             // only allow room broadcasts
             super.broadcast(packet, opts);
 

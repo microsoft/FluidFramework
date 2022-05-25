@@ -51,6 +51,7 @@ import {
     IClientManager,
 } from "@fluidframework/server-services-core";
 import {
+    BaseTelemetryProperties,
     CommonProperties,
     getLumberBaseProperties,
     Lumber,
@@ -600,15 +601,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         // Update and retrieve the minimum sequence number
         const message = rawMessage as IRawOperationMessage;
-        const timeNow = Date.now();
-         if (message.operation.traces) {
-                 message.operation.traces.push(
-                     {
-                         action: "start",
-                         service: "deli",
-                         timestamp: timeNow,
-                     });
-         }
+        const lumberjackProperties = {
+            [BaseTelemetryProperties.tenantId]: this.tenantId,
+            [BaseTelemetryProperties.documentId]: this.documentId,
+            ClientId: message.clientId,
+            clientSequenceNumber: message.operation.clientSequenceNumber,
+            sequenceNumber: this.sequenceNumber,
+        };
+        Lumberjack.info(`Message received by deli.`, lumberjackProperties);
         const dataContent = this.extractDataContent(message);
 
         // Check if we should nack this message
@@ -1500,8 +1500,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      */
     private getCheckpointReason(): DeliCheckpointReason | undefined {
         const checkpointHeuristics = this.serviceConfiguration.deli.checkpointHeuristics;
-        Lumberjack.info(`checkpointHeuristics: ${JSON.stringify(checkpointHeuristics)}`,
-        getLumberBaseProperties(this.documentId, this.tenantId));
         if (!checkpointHeuristics.enable) {
             // always checkpoint since heuristics are disabled
             return DeliCheckpointReason.EveryMessage;
@@ -1530,8 +1528,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * Checkpoints the current state once the pending kafka messages are produced
      */
     private checkpoint(reason: DeliCheckpointReason) {
-        Lumberjack.info(`Deli is checkpointing: ${reason}.`,
-                getLumberBaseProperties(this.documentId, this.tenantId));
         this.clearCheckpointIdleTimer();
 
         this.checkpointInfo.lastCheckpointTime = Date.now();

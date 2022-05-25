@@ -39,6 +39,7 @@ import {
     createNackMessage,
     createRoomLeaveMessage,
     generateClientId,
+    getRandomInt,
 } from "../utils";
 
 const summarizerClientType = "summarizer";
@@ -81,11 +82,8 @@ const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientI
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     // Trace sampling.
-    if (message && core.DefaultServiceConfiguration.enableTraces) {
-        if (message.traces === undefined) {
-            message.traces = [];
-        }
-        message.traces.push(
+    if (message.operation && message.operation.traces && getRandomInt(100) === 0) {
+        message.operation.traces.push(
             {
                 action: "start",
                 service: "alfred",
@@ -441,12 +439,6 @@ export function configureWebSocketServices(
                     connectMetric.success(`Connect document successful`);
                 },
                 (error) => {
-                    Lumberjack.error(
-                        `Error in connect doc; input=${JSON.stringify(connectionMessage)}`,
-                        getLumberBaseProperties(connectionMessage.id,
-                            connectionMessage.tenantId),
-                        error,
-                    );
                     socket.emit("connect_document_error", error);
                     connectMetric.error(`Connect document failed`, error);
                 });
@@ -494,13 +486,6 @@ export function configureWebSocketServices(
                                     if (message.traces) {
                                         // End of tracking. Write traces.
                                         // TODO: add Lumber metric here?
-                                        const lumberjackProperties = {
-                                            [BaseTelemetryProperties.tenantId]: connection.tenantId,
-                                            [BaseTelemetryProperties.documentId]: connection.documentId,
-                                            Traces: "{}",
-                                        };
-                                        lumberjackProperties.Traces = JSON.stringify(message.traces);
-                                        Lumberjack.info(`Traces-submitOp`, lumberjackProperties);
                                         metricLogger.writeLatencyMetric("latency", message.traces).catch(
                                             (error) => {
                                                 logger.error(error.stack);
@@ -509,6 +494,14 @@ export function configureWebSocketServices(
                                     }
                                     return false;
                                 } else {
+                                    const lumberjackProperties = {
+                                        [BaseTelemetryProperties.tenantId]: connection.tenantId,
+                                        [BaseTelemetryProperties.documentId]: connection.documentId,
+                                        clientId,
+                                        clientSequenceNumber: message.clientSequenceNumber,
+                                        sequenceNumber: "",
+                                    };
+                                    Lumberjack.info(`Message received by alfred.`, lumberjackProperties);
                                     return true;
                                 }
                             })

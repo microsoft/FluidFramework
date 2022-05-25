@@ -369,7 +369,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private processMessage(message: kafkaTypes.Message) {
 		const partition = message.partition;
         Lumberjack.info(
-            `Consumer processing message from kafka with size= ${message.size}`,
+            `rdkafka consumer message size = ${message.size}`,
         );
 		if (!this.assignedPartitions.has(partition)) {
 			/*

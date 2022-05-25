@@ -42,7 +42,6 @@ import { containsPathTraversal, parseToken } from "../utils";
             response.status(successStatus).json(result);
         },
         (error) => {
-            // response.status(200).json(`avoid error during stress test=${error}`);
             if (error instanceof Error && error?.name === "NetworkError") {
                 const networkError = error as NetworkError;
                 response
