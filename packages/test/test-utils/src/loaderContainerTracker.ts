@@ -265,11 +265,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
             if (container.connectionState === ConnectionState.Connected) {
                 waitForOps();
             } else {
-                const callback = () => {
-                    container.off("connected", callback);
-                    waitForOps();
-                };
-                container.on("connected", callback);
+                container.once("connected", () => { waitForOps(); });
             }
         });
     }
