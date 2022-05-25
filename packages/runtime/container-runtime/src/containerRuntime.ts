@@ -1067,7 +1067,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly defaultMaxConsecutiveReconnects = 15;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode;
+    private readonly _flushMode: FlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -1355,7 +1355,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 flushMode: () => this.flushMode,
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
-                setFlushMode: (mode) => this.setFlushMode(mode),
+                setFlushMode: (mode) => {},
             },
             this._flushMode,
             pendingRuntimeState?.pending);
@@ -1893,28 +1893,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return context.realize();
     }
 
-    public setFlushMode(mode: FlushMode): void {
-        if (mode === this._flushMode) {
-            return;
-        }
-
-        this.mc.logger.sendTelemetryEvent({
-            eventName: "FlushMode Updated",
-            old: this._flushMode,
-            new: mode,
-        });
-
-        // Flush any pending batches if switching to immediate
-        if (mode === FlushMode.Immediate) {
-            this.flush();
-        }
-
-        this._flushMode = mode;
-
-        // Let the PendingStateManager know that FlushMode has been updated.
-        this.pendingStateManager.onFlushModeUpdated(mode);
-    }
-
     public flush(): void {
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
@@ -1951,19 +1929,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // the app is flushing manually, in which
         // case this invocation doesn't own
         // flushing.
-        if (this.flushMode === FlushMode.TurnBased) {
-            this.trackOrderSequentiallyCalls(callback);
-            return;
-        }
-
-        const savedFlushMode = this.flushMode;
-        this.setFlushMode(FlushMode.TurnBased);
-
-        try {
-            this.trackOrderSequentiallyCalls(callback);
+        this.trackOrderSequentiallyCalls(callback);
+        if (this.flushMode === FlushMode.Immediate) {
             this.flush();
-        } finally {
-            this.setFlushMode(savedFlushMode);
         }
     }
 
