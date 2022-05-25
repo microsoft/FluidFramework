@@ -219,38 +219,42 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
      *          false: storage does not provide indication of how far the client is. Container processed
      *          all the ops known to it, but it maybe still behind.
-     * @throws an error beginning with if the container is closed before it catches up.
+     * @throws an error if the container is closed before it catches up.
      */
     public async waitContainerToCatchUp(container: IContainer): Promise<boolean> {
+        // Make sure we stop waiting if container is closed.
+        if (container.closed) {
+            throw new Error("waitContainerToCatchUp: Container closed");
+        }
         return new Promise<boolean>((resolve, reject) => {
-            // Make sure we stop waiting if container is closed.
-            if (container.closed) {
-                reject(new Error("Container is closed"));
-            }
             const deltaManager = container.deltaManager;
+            let callbackOps;
 
             const closedCallback = (err?: Error | undefined) => {
-                (container as Container).off("closed", closedCallback);
-                reject(new Error("Container is closed"));
+                container.off("closed", closedCallback);
+                if (callbackOps !== undefined) {
+                    deltaManager.off("op", callbackOps);
+                }
+                reject(new Error("Container closed while waiting to catch up"));
             };
-            (container as Container).on("closed", closedCallback);
+            container.on("closed", closedCallback);
 
             const waitForOps = () => {
                 assert(container.connectionState !== ConnectionState.Disconnected,
-                    0x0cd /* "Container disconnected while waiting for ops!" */);
+                    "Container disconnected while waiting for ops!");
                 const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
                 const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
                 assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
-                    0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
+                    "lastKnownSeqNumber should never be below last processed sequence number");
                 if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
-                    (container as Container).off("closed", closedCallback);
+                    container.off("closed", closedCallback);
                     resolve(hasCheckpointSequenceNumber);
                     return;
                 }
-                const callbackOps = (message: ISequencedDocumentMessage) => {
+                callbackOps = (message: ISequencedDocumentMessage) => {
                     if (connectionOpSeqNumber <= message.sequenceNumber) {
-                        (container as Container).off("closed", closedCallback);
+                        container.off("closed", closedCallback);
                         resolve(hasCheckpointSequenceNumber);
                         deltaManager.off("op", callbackOps);
                     }
