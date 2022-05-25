@@ -333,24 +333,24 @@ export class RedisSocketIoAdapter extends Adapter {
             const opts: BroadcastOptions = {
                 rooms: new Set([room]),
             };
-            const split = JSON.stringify(channel).split("/");
-            const tenantId = split[1].replace("#", "");
-            const documentId = split[2].replace("#", "").replace("\"", "");
+            // const split = JSON.stringify(channel).split("/");
+            // const tenantId = split[1].replace("#", "");
+            // const documentId = split[2].replace("#", "").replace("\"", "");
 
-            if (packet.data && packet.data.length > 1) {
-                if (packet.data[2] && packet.data[2].length > 0) {
-                    packet.data[2].forEach((element) => {
-                        const lumberjackProperties = {
-                            [BaseTelemetryProperties.tenantId]: tenantId,
-                            [BaseTelemetryProperties.documentId]: documentId,
-                            clientId: element.clientId,
-                            clientSequenceNumber: element.clientSequenceNumber,
-                            sequenceNumber: element.sequenceNumber,
-                        };
-                        Lumberjack.info(`Message received by RedisSocketAdapter.`, lumberjackProperties);
-                    });
-                }
-            }
+            // if (packet.data && packet.data.length > 1) {
+            //     if (packet.data[2] && packet.data[2].length > 0) {
+            //         packet.data[2].forEach((element) => {
+            //             const lumberjackProperties = {
+            //                 [BaseTelemetryProperties.tenantId]: tenantId,
+            //                 [BaseTelemetryProperties.documentId]: documentId,
+            //                 clientId: element.clientId,
+            //                 clientSequenceNumber: element.clientSequenceNumber,
+            //                 sequenceNumber: element.sequenceNumber,
+            //             };
+            //             Lumberjack.info(`Message received by RedisSocketAdapter.`, lumberjackProperties);
+            //         });
+            //     }
+            // }
             // only allow room broadcasts
             super.broadcast(packet, opts);
 
