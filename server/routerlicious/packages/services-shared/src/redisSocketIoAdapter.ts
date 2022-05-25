@@ -10,7 +10,7 @@ import { PacketType } from "socket.io-parser";
 import * as uuid from "uuid";
 
 import { promiseTimeout } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+// import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export interface ISocketIoRedisConnection {
     publish(channel: string, message: string): Promise<void>;
