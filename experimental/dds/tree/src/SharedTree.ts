@@ -1630,19 +1630,18 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				if (compareSummaryFormatVersions(op.version, this.writeFormat) > 0) {
 					fail('Attempted to resubmit op of version newer than current version');
 				} else if (localOpMetadata?.stashedEdit !== undefined) {
-					if (this.writeFormat === WriteFormat.v0_0_2 && op.version === WriteFormat.v0_0_2) {
-						// Optimization: stashed 0.0.2 ops require no transformation in 0.0.2, so just resubmit original op
-						super.reSubmitCore(op, localOpMetadata);
-					} else {
+					// Optimization: stashed 0.0.2 ops require no transformation in 0.0.2, so just resubmit original op
+					if (this.writeFormat !== WriteFormat.v0_0_2 || op.version !== WriteFormat.v0_0_2) {
 						this.submitEditOp(localOpMetadata.stashedEdit);
+						return;
 					}
 				}
 				break;
 			default:
 				// TODO: other op types
-				super.reSubmitCore(op, localOpMetadata);
 				break;
 		}
+		super.reSubmitCore(op, localOpMetadata);
 	}
 
 	private changeWriteFormat(newFormat: WriteFormat): void {
