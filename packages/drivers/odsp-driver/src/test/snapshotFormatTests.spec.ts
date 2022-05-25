@@ -46,7 +46,7 @@ const snapshotTree: ISnapshotTreeEx = {
                                             blobs: {},
                                             commits: {},
                                             trees: {
-                                                root: { blobs: {}, commits:{}, trees: {} },
+                                            root: { blobs: {}, commits: {}, trees: {} },
                                             },
                                         },
                                     },

@@ -14,9 +14,9 @@ import { ISnapshotContents } from "./odspUtils";
 */
 export interface ISnapshotTreeEx {
     id?: string;
-    blobs: { [path: string]: string };
-    commits: { [path: string]: string };
-    trees: { [path: string]: ISnapshotTreeEx };
+    blobs: { [path: string]: string; };
+    commits: { [path: string]: string; };
+    trees: { [path: string]: ISnapshotTreeEx; };
     // Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
     unreferenced?: true;
 }
