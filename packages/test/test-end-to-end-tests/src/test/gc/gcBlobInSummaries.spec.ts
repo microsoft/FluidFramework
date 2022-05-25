@@ -120,7 +120,7 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
     async function submitSummaryAndValidateState(
         summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
         isHandle: boolean,
-    ) {
+    ): Promise<string> {
         const summaryResult = await submitAndAckSummary(provider,
             summarizerClient,
             logger,
@@ -144,7 +144,7 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             assert(gcTree.tree[gcDataBlobKey].type === SummaryType.Blob, "Expected a gc blob!");
         }
 
-        return gcTree.tree[gcDataBlobKey];
+        return latestAckedSummary.summaryAck.contents.handle;
     }
 
     beforeEach(async () => {
@@ -260,32 +260,12 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             await submitFailingSummary(provider, summarizerClient1, logger, FailingSubmitSummaryStage.Generate);
 
             // GC blob expected as the summary had changed
-            await submitSummaryAndValidateState(summarizerClient1, isBlob);
+            const summaryVersion: string = await submitSummaryAndValidateState(summarizerClient1, isBlob);
 
-            const summarizerClient2 = await getNewSummarizer();
+            const summarizerClient2 = await getNewSummarizer(summaryVersion);
 
             // GC blob expected to be the same as the summary has not changed
             await submitSummaryAndValidateState(summarizerClient2, isBlobHandle);
-        });
-
-        it("GC blob handle written when new summarizer loaded from older summary summarizes", async () => {
-            const summarizerClient2 = await getNewSummarizer();
-            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
-
-            await provider.ensureSynchronized();
-
-            // Make a reference change by deleting a handle
-            dataStoreA._root.delete("dataStoreB");
-
-            await submitFailingSummary(provider, summarizerClient1, logger, FailingSubmitSummaryStage.Generate);
-
-            // GC blob expected as the summary had changed
-            const blob1 = await submitSummaryAndValidateState(summarizerClient1, isBlob);
-
-            // GC blob expected to be the same as the summary has not changed
-            const blob2 = await submitSummaryAndValidateState(summarizerClient2, isBlob);
-
-            assert.deepEqual(blob1, blob2, `Expected blobs to be equal!`);
         });
     });
 });
