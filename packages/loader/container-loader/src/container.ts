@@ -191,7 +191,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
         // This sets the target op to be last known op as of now.
         const catchUpMonitor = new CatchUpMonitor(container);
 
-        // Depend on config, transition to "connected" state may include the guarantee
+        // Depending on config, transition to "connected" state may include the guarantee
         // that all known ops have been processed.  If so, we may introduce additional wait here.
         // Waiting for "connected" state in either case gets us at least to our own Join op
         // which is a reasonable approximation of "caught up"

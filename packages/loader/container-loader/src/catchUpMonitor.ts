@@ -9,14 +9,21 @@ import { IContainer, IDeltaManager } from "@fluidframework/container-definitions
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ConnectionState } from "./container";
 
+/** @see ICatchUpMonitor for usage */
 type CaughtUpListener = (hasCheckpointSequenceNumber: boolean) => void;
 
+/** @see ICatchUpMonitor for usage */
 export interface ICatchUpMonitorEvents extends IEvent {
     (event: "caughtUp", listener: CaughtUpListener): void;
 }
 
+/** Monitor that emits an event when a Container has caught up to a given point in the op stream */
 export interface ICatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents>, IDisposable { }
 
+/**
+ * Monitors the given Container and notifies listeners when the Container has processed all ops
+ * known at the time the monitor was created.
+ */
 export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> implements ICatchUpMonitor {
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly hasCheckpointSequenceNumber: boolean;
@@ -31,8 +38,7 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
     };
 
     /**
-     * Create the CatchUpMonitor, setting the targetSeqNumber to wait for based on DeltaManager's current state.
-     * Note that the listener won't be invoked until after (or while) beginWaiting is called
+     * Create the CatchUpMonitor, setting the target sequence number to wait for based on DeltaManager's current state.
      */
     constructor(
         container: IContainer,
@@ -54,6 +60,7 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
         // Simulate the last processed op
         this.opHandler({ sequenceNumber: this.deltaManager.lastSequenceNumber });
 
+        // If a listener is added but before that point we caught up, notify that new listener immediately
         this.on("newListener", (event: string, listener) => {
             if (event === "caughtUp") {
                 const caughtUpListener = listener as CaughtUpListener;
@@ -76,16 +83,25 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
     }
 }
 
+/** Monitor that always notifies listeners immediately, passing false for hasCheckpointSequenceNumber arg */
 export class ImmediateCatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> implements ICatchUpMonitor {
-    disposed = false;
-    dispose() { }
-    constructor(hasCheckpointSequenceNumber: boolean) {
+    constructor() {
         super();
         this.on("newListener", (event: string, listener) => {
             if (event === "caughtUp") {
                 const caughtUpListener = listener as CaughtUpListener;
-                caughtUpListener(hasCheckpointSequenceNumber);
+                caughtUpListener(false /* hasCheckpointSequenceNumber */);
             }
         });
+    }
+
+    public disposed: boolean = false;
+    public dispose() {
+        if (this.disposed) {
+            return;
+        }
+        this.disposed = true;
+
+        this.removeAllListeners();
     }
 }
