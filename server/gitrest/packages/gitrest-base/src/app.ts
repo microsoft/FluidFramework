@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import { json, urlencoded } from "body-parser";
 import cors from "cors";
 import express, { Express } from "express";
@@ -31,6 +32,7 @@ export function create(
     store: nconf.Provider,
     fileSystemManagerFactory: IFileSystemManagerFactory,
     repositoryManagerFactory: IRepositoryManagerFactory,
+    asyncLocalStorage?: AsyncLocalStorage<string>,
 ) {
     // Express app configuration
     const app: Express = express();
@@ -63,7 +65,7 @@ export function create(
     app.use(json({ limit: requestSize }));
     app.use(urlencoded({ limit: requestSize, extended: false }));
 
-    app.use(bindCorrelationId());
+    app.use(bindCorrelationId(asyncLocalStorage));
 
     app.use(cors());
 

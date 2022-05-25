@@ -138,7 +138,6 @@
       },
       "InterfaceDeclaration_IConnectableRuntime": {"backCompat": false},
       "InterfaceDeclaration_ISummarizerRuntime": {"backCompat": false}
-
     }
   }
 }

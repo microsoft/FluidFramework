@@ -118,7 +118,7 @@ export class ConsensusRegisterCollection<T>
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_consensusRegisterCollection_");
     }
 
     /**
@@ -181,7 +181,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-        const dataObj: { [key: string]: ILocalData<T> } = {};
+        const dataObj: { [key: string]: ILocalData<T>; } = {};
         this.data.forEach((v, k) => { dataObj[k] = v; });
 
         return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));

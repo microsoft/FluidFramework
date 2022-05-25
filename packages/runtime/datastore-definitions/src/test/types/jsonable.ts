@@ -54,7 +54,7 @@ declare const a2: IA2;
 foo(a2);
 
 // text complex indexed interface
-declare const a3: { [key: string]: Jsonable<string> };
+declare const a3: { [key: string]: Jsonable<string>; };
 foo(a3);
 
 // test interface with multiple properties

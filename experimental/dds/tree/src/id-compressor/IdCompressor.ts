@@ -319,7 +319,7 @@ export class IdCompressor {
 	}
 
 	/**
-	 * Session ID -> data about the session's current cluster.
+	 * Session ID -\> data about the session's current cluster.
 	 * Sessions are mutable, and thus should only be created via `createSession`.
 	 */
 	private readonly sessions = new Map<SessionId, Session>();
@@ -353,7 +353,7 @@ export class IdCompressor {
 
 	/**
 	 * Maps local IDs to the cluster they belong to (if any). This can be used to efficiently convert a local ID to a
-	 * final ID by finding an entry <= a given local ID (to find the cluster it is associated with) and checking
+	 * final ID by finding an entry \<= a given local ID (to find the cluster it is associated with) and checking
 	 * it against `numFinalizedLocalIds`.
 	 */
 	private readonly localIdToCluster: AppendOnlyDoublySortedMap<
@@ -391,14 +391,15 @@ export class IdCompressor {
 	}
 
 	/**
-	 * @param localSessionId the `IdCompressor`'s current local session ID.
-	 * @param reservedIdCount the number of IDs that will be known by this compressor without relying on consensus. The reserved ID count
-	 * for a given session must be constant for any compressor that contains IDs from that session (i.e. any DDS that uses the ID
-	 * compressor must have the same reservedIdCount forever). Compressors with different reserved ID counts will fail to synchronize their
-	 * IDs.
-	 * @param attributionId a UUID that identifies the user of this instance of the compressor. IDs created by this compressor will be associated
-	 * with this UUID and can be queried later via `attributeID`. If no UUID is provided, this compressor will generate its own. An `AttributionId`
-	 * is an `UuidString` which may be validated via {@link isUuidString} or generated via {@link generateStableId}.
+	 * @param localSessionId - the `IdCompressor`'s current local session ID.
+	 * @param reservedIdCount - the number of IDs that will be known by this compressor without relying on consensus.
+	 * The reserved ID count for a given session must be constant for any compressor that contains IDs from that session
+	 * (i.e. any DDS that uses the ID compressor must have the same reservedIdCount forever). Compressors with different
+	 * reserved ID counts will fail to synchronize their IDs.
+	 * @param attributionId - a UUID that identifies the user of this instance of the compressor. IDs created by this
+	 * compressor will be associated with this UUID and can be queried later via `attributeID`. If no UUID is provided,
+	 * this compressor will generate its own. An `AttributionId` is an `UuidString` which may be validated via
+	 * {@link isUuidString} or generated via {@link generateStableId}.
 	 */
 	public constructor(
 		public readonly localSessionId: SessionId,
@@ -429,7 +430,7 @@ export class IdCompressor {
 	/**
 	 * Creates a session object for the supplied ID.
 	 * Must only be called once per ID.
-	 * @param sessionId the ID for the session
+	 * @param sessionId - the ID for the session
 	 * @returns the session object for the supplied ID
 	 */
 	private createSession(sessionId: SessionId, attributionId: AttributionId | undefined): Session {
@@ -451,7 +452,7 @@ export class IdCompressor {
 
 	/**
 	 * Return the nth reserved ID.
-	 * @param index the index of the ID to return
+	 * @param index - the index of the ID to return
 	 */
 	public getReservedId(index: number): SessionSpaceCompressedId & FinalCompressedId {
 		if (index < 0 || index >= this.reservedIdCount) {
@@ -613,7 +614,7 @@ export class IdCompressor {
 
 	/**
 	 * Finalizes the supplied range of IDs (which may be from either a remote or local session).
-	 * @param range the range of session-local IDs to finalize.
+	 * @param range - the range of session-local IDs to finalize.
 	 */
 	public finalizeCreationRange(range: IdCreationRange): void {
 		const { sessionId, attributionId } = range;
@@ -936,7 +937,7 @@ export class IdCompressor {
 
 	/**
 	 * Check if `a` might be within `range` of `b`, where both are treated as hex numbers.
-	 * @param range an integer
+	 * @param range - an integer
 	 */
 	private static uuidsMightCollide(a: StableId, b: StableId, range: number): boolean {
 		// Check if any of the UUIDs in the cluster collide (i.e. any in [base, base + capacity)).
@@ -968,7 +969,7 @@ export class IdCompressor {
 	/**
 	 * Generates a new compressed ID or returns an existing one.
 	 * This should ONLY be called to generate IDs for local operations.
-	 * @param override Specifies a specific string to be associated with the returned compressed ID.
+	 * @param override - Specifies a specific string to be associated with the returned compressed ID.
 	 * Performance note: assigning override strings incurs a performance overhead.
 	 * @returns an existing ID if one already exists for `override`, and a new local ID otherwise. The returned ID is in session space.
 	 */
@@ -995,7 +996,7 @@ export class IdCompressor {
 	/**
 	 * Generates a range of compressed IDs.
 	 * This should ONLY be called to generate IDs for local operations.
-	 * @param count the number of IDs to generate, must be > 0.
+	 * @param count - the number of IDs to generate, must be \> 0.
 	 * @returns a persistable descriptor of the ID range.
 	 */
 	public generateCompressedIdRange(count: number): IdRangeDescriptor<LocalCompressedId> {
@@ -1015,7 +1016,7 @@ export class IdCompressor {
 
 	/**
 	 * Decompresses a previously compressed ID into a UUID or override string.
-	 * @param id the compressed ID to be decompressed.
+	 * @param id - the compressed ID to be decompressed.
 	 * @returns the UUID or override string associated with the compressed ID. Fails if the ID was not generated by this compressor.
 	 */
 	public decompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string {
@@ -1024,7 +1025,7 @@ export class IdCompressor {
 
 	/**
 	 * Attempts to decompress a previously compressed ID into a UUID or override string.
-	 * @param id the compressed ID to be decompressed.
+	 * @param id - the compressed ID to be decompressed.
 	 * @returns the UUID or override string associated with the compressed ID, or undefined if the ID was not generated by this compressor.
 	 */
 	public tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined {
@@ -1063,7 +1064,7 @@ export class IdCompressor {
 
 	/**
 	 * Recompresses a decompressed ID, which could be a UUID or an override string.
-	 * @param uncompressed the UUID or override string to recompress.
+	 * @param uncompressed - the UUID or override string to recompress.
 	 * @returns the `CompressedId` associated with `uncompressed`. Fails if it has not been previously compressed by this compressor.
 	 */
 	public recompress(uncompressed: string): SessionSpaceCompressedId {
@@ -1072,7 +1073,7 @@ export class IdCompressor {
 
 	/**
 	 * Attempts to recompresses a decompressed ID, which could be a UUID or an override string.
-	 * @param uncompressed the UUID or override string to recompress,
+	 * @param uncompressed - the UUID or override string to recompress,
 	 * @returns the `CompressedId` associated with `uncompressed` or undefined if it has not been previously compressed by this compressor.
 	 */
 	public tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined {
@@ -1145,7 +1146,7 @@ export class IdCompressor {
 
 	/**
 	 * Normalizes a session space ID into op space.
-	 * @param id the local ID to normalize.
+	 * @param id - the local ID to normalize.
 	 * @returns the ID in op space.
 	 */
 	public normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId {
@@ -1190,9 +1191,9 @@ export class IdCompressor {
 
 	/**
 	 * Normalizes an ID into session space.
-	 * @param id the ID to normalize. If it is a local ID, it is assumed to have been created by the session corresponding
+	 * @param id - the ID to normalize. If it is a local ID, it is assumed to have been created by the session corresponding
 	 * to `sessionId`.
-	 * @param originSessionId the session from which `id` originated
+	 * @param originSessionId - the session from which `id` originated
 	 * @returns the session-space ID corresponding to `id`, which might not have been a final ID if the client that created it had not yet
 	 * finalized it. This can occur when a client references an ID during the window of time in which it is waiting to receive the ordered
 	 * range that contained it from the server.
@@ -1201,7 +1202,7 @@ export class IdCompressor {
 
 	/**
 	 * Normalizes a final ID into session space.
-	 * @param id the final ID to normalize.
+	 * @param id - the final ID to normalize.
 	 * @returns the session-space ID corresponding to `id`.
 	 */
 	public normalizeToSessionSpace(id: FinalCompressedId): SessionSpaceCompressedId;
@@ -1301,7 +1302,7 @@ export class IdCompressor {
 
 	/**
 	 * @returns if `other` is equal to this `IdCompressor`. The equality check includes local session state only if specified.
-	 * @testOnly
+	 * \@testOnly
 	 */
 	public equals(other: IdCompressor, compareLocalState: boolean): boolean {
 		if (compareLocalState) {
@@ -1603,9 +1604,9 @@ export class IdCompressor {
 
 	/**
 	 * Deserialize a serialized IdCompressor with a new session.
-	 * @param serialized the serialized compressor state
-	 * @param newSessionId the session ID for the new compressor.
-	 * @param attributionId information used by other clients to attribute IDs made by this client
+	 * @param serialized - the serialized compressor state
+	 * @param newSessionId - the session ID for the new compressor.
+	 * @param attributionId - information used by other clients to attribute IDs made by this client
 	 */
 	public static deserialize(
 		serialized: SerializedIdCompressorWithNoSession,
@@ -1786,7 +1787,7 @@ export class IdCompressor {
 
 	/**
 	 * Converts the given serialized compressor to the current version.
-	 * @param serializedCompressor the serialized compressor to convert. Must not have been serialized with an ongoing session.
+	 * @param serializedCompressor - the serialized compressor to convert. Must not have been serialized with an ongoing session.
 	 * @returns a serialized compressor with no ongoing session.
 	 */
 	public static convertToCurrentVersion(
@@ -1796,7 +1797,7 @@ export class IdCompressor {
 
 	/**
 	 * Converts the given serialized compressor to the current version.
-	 * @param serializedCompressor the serialized compressor to convert. Must have been serialized with an ongoing session.
+	 * @param serializedCompressor - the serialized compressor to convert. Must have been serialized with an ongoing session.
 	 * @returns a serialized compressor with the same ongoing session.
 	 */
 	public static convertToCurrentVersion(

@@ -56,9 +56,9 @@ type PendingQuorumValue = {
  * Internal format of the values stored in the Quorum.
  */
 type QuorumValue =
-    { accepted: AcceptedQuorumValue; pending: undefined }
-    | { accepted: undefined; pending: PendingQuorumValue }
-    | { accepted: AcceptedQuorumValue; pending: PendingQuorumValue };
+    { accepted: AcceptedQuorumValue; pending: undefined; }
+    | { accepted: undefined; pending: PendingQuorumValue; }
+    | { accepted: AcceptedQuorumValue; pending: PendingQuorumValue; };
 
 /**
  * Quorum operation formats
@@ -183,7 +183,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
     public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_quorum_");
 
         this.incomingOp.on("set", this.handleIncomingSet);
         this.incomingOp.on("delete", this.handleIncomingDelete);

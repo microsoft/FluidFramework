@@ -90,7 +90,7 @@ export class SharedMatrix<T = any>
     private pending = new SparseArray2D<number>();          // Tracks pending writes.
 
     constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_matrix_");
 
         this.rows = new PermutationVector(
             SnapshotPath.rows,
