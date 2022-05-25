@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-web-cache",
-  "version": "0.59.3000",
+  "version": "0.59.4000",
   "description": "Implementation of the driver caching API for a web browser",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -38,15 +38,15 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/odsp-driver-definitions": "^0.59.3000",
-    "@fluidframework/telemetry-utils": "^0.59.3000",
+    "@fluidframework/odsp-driver-definitions": "^0.59.4000",
+    "@fluidframework/telemetry-utils": "^0.59.4000",
     "idb": "^6.1.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66048",
-    "@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@0.59.2000",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
+    "@fluidframework/build-tools": "^0.2.66793",
+    "@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@0.59.3000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jest": "22.2.3",
@@ -60,6 +60,7 @@
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.25.4",
     "eslint-plugin-jest": "~26.1.3",
+    "eslint-plugin-jsdoc": "~39.3.0",
     "eslint-plugin-mocha": "~10.0.3",
     "eslint-plugin-promise": "~6.0.0",
     "eslint-plugin-react": "~7.28.0",
@@ -72,7 +73,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
+    "version": "0.59.4000",
     "broken": {}
   }
 }

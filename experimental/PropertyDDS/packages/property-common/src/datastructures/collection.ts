@@ -175,7 +175,7 @@ export class Collection<T> {
 
         if (_.isArray(in_filterKey)) {
             filterCb = function(in_key, in_item) {
-                if (in_filterKey.indexOf(in_key) >= 0) {
+                if (in_filterKey.includes(in_key)) {
                     rtn.add(in_key, in_item);
                 }
             };

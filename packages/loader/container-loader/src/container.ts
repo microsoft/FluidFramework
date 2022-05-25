@@ -423,12 +423,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private setAutoReconnectTime = performance.now();
 
-    private readonly collabWindowTracker = new CollabWindowTracker(
-        (type, contents) => this.submitMessage(type, contents),
-        () => this.activeConnection(),
-        this.loader.services.options?.noopTimeFrequency,
-        this.loader.services.options?.noopCountFrequency,
-    );
+    private collabWindowTracker: CollabWindowTracker | undefined;
 
     private get connectionMode() { return this._deltaManager.connectionManager.connectionMode; }
 
@@ -1542,7 +1537,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("disconnect", (reason: string) => {
-            this.collabWindowTracker.stopSequenceNumberUpdate();
+            this.collabWindowTracker?.stopSequenceNumberUpdate();
             this.connectionStateHandler.receivedDisconnectEvent(reason);
         });
 
@@ -1698,7 +1693,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.messageCountAfterDisconnection += 1;
-        this.collabWindowTracker.stopSequenceNumberUpdate();
+        this.collabWindowTracker?.stopSequenceNumberUpdate();
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
@@ -1733,11 +1728,50 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
-        this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+        // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
+        if (this.activeConnection()) {
+            if (this.collabWindowTracker === undefined) {
+                // Note that config from first connection will be used for this container's lifetime.
+                // That means that if relay service changes settings, such changes will impact only newly booted
+                // clients.
+                // All existing will continue to use settings they got earlier.
+                const [noopTimeFrequency, noopCountFrequency] = this.getNoopConfig();
+                this.collabWindowTracker = new CollabWindowTracker(
+                    (type, contents) => {
+                        assert(this.activeConnection(),
+                            0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
+                        this.submitMessage(type, contents);
+                    },
+                    noopTimeFrequency,
+                    noopCountFrequency,
+                );
+            }
+            this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+        }
 
         this.emit("op", message);
 
         return result;
+    }
+
+    /**
+     *  #260 (ADO)
+     * back-compat: noopTimeFrequency & noopCountFrequency properties were added to
+     * IClientConfiguration in 0.59.3000. During the integration, we must read the
+     * available configuration from the loader options.
+     */
+    private getNoopConfig(): [number | undefined, number | undefined] {
+        assert(this.serviceConfiguration !== undefined, "there should be service config for active connection");
+
+        if (this.serviceConfiguration.noopTimeFrequency !== undefined ||
+            this.serviceConfiguration.noopCountFrequency !== undefined) {
+            return [
+                this.serviceConfiguration.noopTimeFrequency as number,
+                this.serviceConfiguration.noopCountFrequency as number,
+            ];
+        }
+
+        return [this.loader.services.options?.noopTimeFrequency, this.loader.services.options?.noopCountFrequency];
     }
 
     private submitSignal(message: any) {

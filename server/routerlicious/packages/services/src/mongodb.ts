@@ -15,73 +15,65 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     public aggregate(pipeline: any, options?: any): AggregationCursor<T> {
-        Lumberjack.info(`mongodb-aggregate on ${this.collection} set ${JSON.stringify(options)}`);
         return this.collection.aggregate(pipeline, options);
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
-    public find(query: object, sort: any, limit = MaxFetchSize): Promise<T[]> {
-        Lumberjack.info(`mongodb-find on ${this.collection} set ${JSON.stringify(query)}`);
-        return this.collection
+    public find(query: object, sort: any, limit = MaxFetchSize, skip?: number): Promise<T[]> {
+        let queryCursor = this.collection
             .find(query)
             .sort(sort)
-            .limit(limit)
-            .toArray();
+            .limit(limit);
+
+        if (skip) {
+            queryCursor = queryCursor.skip(skip);
+        }
+        return queryCursor.toArray();
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
     public findOne(query: object): Promise<T> {
-        Lumberjack.info(`mongodb-findOne on ${this.collection} set ${JSON.stringify(query)}`);
         return this.collection.findOne(query);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public findAll(): Promise<T[]> {
-        Lumberjack.info(`mongodb-findAll on ${this.collection} set n/a`);
         return this.collection.find({}).toArray();
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
     public async update(filter: object, set: any, addToSet: any): Promise<void> {
-        Lumberjack.info(`mongodb-update on ${this.collection} set ${JSON.stringify(set)}`);
         return this.updateCore(filter, set, addToSet, false);
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
     public async updateMany(filter: object, set: any, addToSet: any): Promise<void> {
-        Lumberjack.info(`mongodb-updateMany on ${this.collection} set ${JSON.stringify(set)}`);
         return this.updateManyCore(filter, set, addToSet, false);
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
     public async upsert(filter: object, set: any, addToSet: any): Promise<void> {
-        Lumberjack.info(`mongodb-upsert on ${this.collection} set ${JSON.stringify(set)}`);
         return this.updateCore(filter, set, addToSet, true);
     }
 
     public async distinct(key: any, query: any): Promise<any> {
-        Lumberjack.info(`mongodb-distinct on ${this.collection} set ${JSON.stringify(query)}`);
         return this.collection.distinct(key, query);
     }
 
     public async deleteOne(filter: any): Promise<any> {
-        Lumberjack.info(`mongodb-deleteOne on ${this.collection} set ${JSON.stringify(filter)}`);
         return this.collection.deleteOne(filter);
     }
 
     public async deleteMany(filter: any): Promise<any> {
-        Lumberjack.info(`mongodb-deleteMany on ${this.collection} set ${JSON.stringify(filter)}`);
         return this.collection.deleteMany(filter);
     }
 
     public async insertOne(value: T): Promise<any> {
-        Lumberjack.info(`mongodb-insertOne on ${this.collection} set ${JSON.stringify(value)}`);
         const result = await this.collection.insertOne(value);
         return result.insertedId;
     }
 
     public async insertMany(values: T[], ordered: boolean): Promise<void> {
-        Lumberjack.info(`mongodb-insertMany on ${this.collection} set ${JSON.stringify(values[0])}`);
         await this.collection.insertMany(values, { ordered: false });
     }
 
@@ -95,7 +87,6 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     public async createTTLIndex(index: any, expireAfterSeconds?: number): Promise<void> {
-        Lumberjack.info(`mongodb-createTTLIndex on ${this.collection} set ${JSON.stringify(index)}`);
         await this.collection.createIndex(index, { expireAfterSeconds });
     }
 
