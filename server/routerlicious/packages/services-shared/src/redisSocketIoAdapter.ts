@@ -248,24 +248,6 @@ export class RedisSocketIoAdapter extends Adapter {
             // block full broadcasts and multi room broadcasts
             return;
         }
-        // console.log(`redisAdapter before= ${JSON.stringify(packet.data)}`);
-        const time = Date.now();
-         if (packet.data && packet.data.length > 1) {
-             if (packet.data[2] && packet.data[2].length > 0) {
-                 packet.data[2].forEach((element) => {
-                     if (!element.traces) {
-                        element.traces = [];
-                     }
-                     element.traces.push(
-                         {
-                             action: "start",
-                             service: "redisAdapter",
-                             timestamp: time,
-                         });
-                 });
-             }
-         }
-        // console.log(`redisAdapter after= ${JSON.stringify(packet.data)}`);
         super.broadcast(packet, opts);
 
         this.publish(packet, opts);
