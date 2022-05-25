@@ -446,7 +446,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(
             container.connectionState,
             ConnectionState.Disconnected,
-            "container connected trying to cancel with disconnect()",
+            "container connected after trying to cancel with disconnect()",
         );
     });
 });
