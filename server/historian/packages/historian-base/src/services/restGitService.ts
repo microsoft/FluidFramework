@@ -240,16 +240,31 @@ export class RestGitService {
     }
 
     public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
-        return this.resolve(
-            // Currently, only "container" type summaries are retrieved from storage.
-            // In the future, we might want to also retrieve "channels". When that happens,
-            // our APIs will change so we specify what type we want to retrieve during
-            // the request.
-            this.getSummaryCacheKey("container"),
-            async () => this.get<IWholeFlatSummary>(
-                `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`),
-            sha === latestSummarySha ? useCache : false,
-            sha === latestSummarySha);
+        const summaryFetch = async () => this.get<IWholeFlatSummary>(
+            `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`);
+
+        if (sha !== latestSummarySha) {
+            // Never cache specific summary versions.
+            return summaryFetch();
+        }
+
+        // Currently, only "container" type summaries are retrieved from storage.
+        // In the future, we might want to also retrieve "channels". When that happens,
+        // our APIs will change so we specify what type we want to retrieve during
+        // the request.
+        const summaryCacheKey = this.getSummaryCacheKey("container");
+
+        if (!useCache) {
+            // We set the useCache flag as false when we fetch the initial latest summary for a document.
+            // In that scenario, useCache as false means that we need to get the summary from storage and bypass the
+            // cache, since the cached data might be obsolete due to a cluster change. After fetching the value from
+            // storage, we add it to the cache so it can be up-to-date. As a result, subsequent requests that use
+            // the cache can read the correct value.
+            return this.fetchAndCache(summaryCacheKey, summaryFetch);
+        }
+
+        // If we get to this point, we want to obtain the latest summary, and we want to try reading it from the cache.
+        return this.resolve(summaryCacheKey, summaryFetch, true);
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
@@ -464,8 +479,7 @@ export class RestGitService {
 
     private async resolve<T>(key: string,
                              fetch: () => Promise<T>,
-                             useCache: boolean,
-                             resolvingLatestSummary: boolean = false): Promise<T> {
+                             useCache: boolean): Promise<T> {
         if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
@@ -482,18 +496,6 @@ export class RestGitService {
 
             // Value is not cached - fetch it with the provided function and then cache the value
             return this.fetchAndCache(key, fetch);
-        }
-
-        if (resolvingLatestSummary) {
-            /**
-             * We set the useCache flag (used above) as false when we fetch the initial latest summary for a document.
-             * In that scenario, we need to get the summary from storage and bypass the cache, since the cached
-             * data might be obsolete due to a cluster change. We also want to add the summary fetched from storage
-             * to the cache, so it can be reused by subsequent requests - which would not disable useCache by default.
-             * For summaries other than the latest (only requested by the summarizer client), we don't need caching,
-             * so resolvingLatestSummary would be false in those cases.
-             */
-             return this.fetchAndCache(key, fetch);
         }
 
         return fetch();
