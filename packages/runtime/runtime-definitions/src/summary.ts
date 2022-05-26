@@ -37,7 +37,8 @@ export interface ISummaryStats {
 export interface ISummaryTreeWithStats {
     /** Represents an agreggation of node counts and blob sizes associated to the current summary information */
     stats: ISummaryStats;
-    /**  Summary defines a recursive data structure that will be will be converted to a snapshot tree and uploaded
+    /**
+     * Summary defines a recursive data structure that will be converted to a snapshot tree and uploaded
      * to the backend.
      */
     summary: ISummaryTree;

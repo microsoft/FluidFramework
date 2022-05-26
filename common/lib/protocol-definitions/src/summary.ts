@@ -22,7 +22,7 @@ export interface ISummaryCommitter {
 }
 
 /**
- *  Represents a leaf node from the Summary Tree.
+ *  Represents a node from the Summary Tree.
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SummaryType {
@@ -32,17 +32,19 @@ export namespace SummaryType {
     export type Attachment = 4;
 
     /**
-     *  Another recursive data structure.
+     *  Represents a sub-tree in the summary.
      */
      export const Tree: Tree = 1 as const;
 
      /**
-      * Binary data to be uploaded to the server. The data is sent to the drivers
-      * and each driver will decide how the blob will be uploaded to the server.
+      * Represents a blob of data that is added to the summary.
+      * Such as the user data that is added to the DDS or metadata added by runtime
+      * such as data store / channel attributes.
       */
      export const Blob: Blob = 2 as const;
+
      /**
-      * Path to an already stored tree that hasn't changed since the last summary.
+      * Path to a summary tree object from the last successful summary.
       */
      export const Handle: Handle = 3 as const;
 
@@ -58,13 +60,11 @@ export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryTyp
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
 /**
- * Path to a summary tree object from the last uploaded summary indicating the summary object hasn't
+ * Path to a summary tree object from the last successful summary indicating the summary object hasn't
  * changed since it was uploaded.
- * To illustrate, if a DataStore did not get any ops since last summary, the framework runtime will use a handle for the
- * entire DataStore instead of re-sending the entire subtree. Same concept will be applied for a DDS.
- * If a DDS did not receive any ops since the last summary, the ISummary tree for that DDS will not have changed and
- * the fluid framework will send that DDS' handle so the server can use that previous handle instead of sending the
- * entire DDS. An example of handle would be: '/<DataStoreId>/<DDSId>'.
+ * To illustrate, if a DataStore did not change since last summary, the framework runtime will use a handle for the
+ * entire DataStore instead of re-sending the entire subtree. The same concept applies for a DDS.
+ * An example of handle would be: '/<DataStoreId>/<DDSId>'.
  * Notice that handles are optimizations from the Fluid Framework Runtime and the DDS is not aware of the handles.
  * Also, the use of Summary Handles is currently restricted to DataStores and DDS.
  */
@@ -72,7 +72,7 @@ export interface ISummaryHandle {
     type: SummaryType.Handle;
 
     /**
-     * Type of Summary Handle all Summary types with the exception of handles (which are NOT supported).
+     * Type of Summary Handle (SummaryType.Handle is not supported).
      */
     handleType: SummaryTypeNoHandle;
 
@@ -101,7 +101,7 @@ export interface ISummaryAttachment {
 }
 
 /**
- * Tree Node  data structure with children that are nodes of SummaryObject type:
+ * Tree Node data structure with children that are nodes of SummaryObject type:
  * Blob, Handle, Attachment or another Tree.
  */
 export interface ISummaryTree {
