@@ -103,9 +103,9 @@ describe("Runtime", () => {
                                         state: "disabled",
                                     },
                                 },
+                                flushMode: flushMode,
                             },
                         );
-                        containerRuntime.setFlushMode(flushMode);
                         containerErrors.length = 0;
                     });
 
@@ -207,9 +207,9 @@ describe("Runtime", () => {
                                 summaryOptions: {
                                     disableSummaries: true,
                                 },
+                                flushMode: flushMode,
                             },
                         );
-                        containerRuntime.setFlushMode(flushMode);
                         containerErrors.length = 0;
                     });
 

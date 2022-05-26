@@ -90,6 +90,12 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
     let dataObject2map2: SharedMap;
 
     beforeEach(async () => {
+        // TODO: look at getVersionedTestObjectProvider in compatUtils.ts
+        // ^ this is the place we need to pass the runtime options to
+        await setupContainers();
+    });
+
+    async function setupContainers(/* runtimeOptions: IContainerRuntimeOptions */) {
         // Create a Container for the first client.
         container1 = await provider.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
@@ -104,7 +110,7 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
 
         await waitForCleanContainers(dataObject1, dataObject2);
         await provider.ensureSynchronized();
-    });
+    }
 
     describe("Batch metadata verification when ops are flushed in batches", () => {
         let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
