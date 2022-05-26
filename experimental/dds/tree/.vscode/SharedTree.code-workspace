@@ -11,6 +11,5 @@
 	],
 	"settings": {
 		"terminal.integrated.cwd": "../../..",
-		"typescript.tsdk": "FluidFramework\\node_modules\\typescript\\lib"
 	}
 }
