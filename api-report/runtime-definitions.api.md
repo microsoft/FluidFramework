@@ -354,7 +354,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryStats {
     // (undocumented)
     blobNodeCount: number;
@@ -368,11 +368,9 @@ export interface ISummaryStats {
     unreferencedBlobSize: number;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryTreeWithStats {
-    // (undocumented)
     stats: ISummaryStats;
-    // (undocumented)
     summary: ISummaryTree;
 }
 
