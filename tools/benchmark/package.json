@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/benchmark",
-  "version": "0.40.0",
+  "version": "0.41.0",
   "description": "Benchmarking tools",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,17 +35,17 @@
     "benchmark": "^2.1.4",
     "chai": "^4.2.0",
     "easy-table": "^1.1.1",
-    "mocha": "^8.1.1"
+    "mocha": "^10.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^0.41.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/benchmark": "^2.1.0",
     "@types/easy-table": "^0.0.32",
-    "@types/mocha": "^8.2.2",
+    "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
@@ -56,6 +56,7 @@
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.25.4",
     "eslint-plugin-jest": "~26.1.3",
+    "eslint-plugin-jsdoc": "~39.3.0",
     "eslint-plugin-mocha": "~10.0.3",
     "eslint-plugin-promise": "~6.0.0",
     "eslint-plugin-react": "~7.28.0",

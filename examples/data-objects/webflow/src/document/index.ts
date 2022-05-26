@@ -352,7 +352,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     public getTags(position: number): Readonly<Marker[]> {
         const tags = this.sharedString.getStackContext(position, [DocSegmentKind.beginTags])[DocSegmentKind.beginTags];
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return (tags && tags.items) || emptyArray;
+        return tags?.items || emptyArray;
     }
 
     public getStart(marker: Marker) {

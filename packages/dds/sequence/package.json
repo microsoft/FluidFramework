@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/sequence",
-  "version": "0.59.3000",
+  "version": "0.59.4000",
   "description": "Distributed sequence",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -65,30 +65,30 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore-definitions": "^0.59.3000",
-    "@fluidframework/merge-tree": "^0.59.3000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/runtime-definitions": "^0.59.3000",
-    "@fluidframework/runtime-utils": "^0.59.3000",
-    "@fluidframework/shared-object-base": "^0.59.3000",
-    "@fluidframework/telemetry-utils": "^0.59.3000",
+    "@fluidframework/datastore-definitions": "^0.59.4000",
+    "@fluidframework/merge-tree": "^0.59.4000",
+    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/runtime-definitions": "^0.59.4000",
+    "@fluidframework/runtime-utils": "^0.59.4000",
+    "@fluidframework/shared-object-base": "^0.59.4000",
+    "@fluidframework/telemetry-utils": "^0.59.4000",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluid-internal/stochastic-test-utils": "^0.59.3000",
-    "@fluid-internal/test-dds-utils": "^0.59.3000",
+    "@fluid-internal/stochastic-test-utils": "^0.59.4000",
+    "@fluid-internal/test-dds-utils": "^0.59.4000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66048",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
-    "@fluidframework/gitresources": "^0.1036.3000-0",
-    "@fluidframework/mocha-test-setup": "^0.59.3000",
-    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@0.59.2000",
-    "@fluidframework/server-services-client": "^0.1036.3000-0",
-    "@fluidframework/test-runtime-utils": "^0.59.3000",
+    "@fluidframework/build-tools": "^0.2.66793",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/gitresources": "^0.1036.4000-0",
+    "@fluidframework/mocha-test-setup": "^0.59.4000",
+    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@0.59.3000",
+    "@fluidframework/server-services-client": "^0.1036.4000-0",
+    "@fluidframework/test-runtime-utils": "^0.59.4000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
-    "@types/mocha": "^8.2.2",
+    "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
     "@types/random-js": "^1.0.31",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
@@ -102,12 +102,13 @@
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.25.4",
     "eslint-plugin-jest": "~26.1.3",
+    "eslint-plugin-jsdoc": "~39.3.0",
     "eslint-plugin-mocha": "~10.0.3",
     "eslint-plugin-promise": "~6.0.0",
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
-    "mocha": "^8.4.0",
+    "mocha": "^10.0.0",
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
@@ -115,24 +116,27 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
+    "version": "0.59.4000",
     "broken": {
-      "InterfaceDeclaration_ISequenceDeltaRange": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_SequenceDeltaEvent": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_SequenceEvent": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_ISharedString": {"forwardCompat": false},
-      "TypeAliasDeclaration_MatrixSegment": {"forwardCompat": false},
-      "ClassDeclaration_PaddingSegment": {"forwardCompat": false},
-      "ClassDeclaration_RunSegment": {"forwardCompat": false},
-      "ClassDeclaration_SharedNumberSequence": {"forwardCompat": false},
-      "ClassDeclaration_SharedObjectSequence": {"forwardCompat": false},
-      "ClassDeclaration_SharedSegmentSequence": {"forwardCompat": false},
-      "ClassDeclaration_SharedSequence": {"forwardCompat": false},
-      "ClassDeclaration_SharedString": {"forwardCompat": false},
-      "TypeAliasDeclaration_SharedStringSegment": {"forwardCompat": false},
-      "ClassDeclaration_SparseMatrix": {"forwardCompat": false},
-      "ClassDeclaration_SubSequence": {"forwardCompat": false}
+      "InterfaceDeclaration_ISequenceDeltaRange": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceDeltaEvent": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceEvent": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceMaintenanceEvent": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ClassDeclaration_IntervalCollection": {
+        "forwardCompat": false
+      }
     }
   }
 }
