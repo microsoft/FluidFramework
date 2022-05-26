@@ -79,7 +79,7 @@ export function assertOdspEndpoint(
 function getCredentials(odspEndpointName: OdspEndpoint, tenantIndex: number, requestedUserName?: string) {
     const creds: { [user: string]: string; } = {};
     const loginTenants = odspEndpointName === "odsp" ?
-        process.env.login__odsp__test__tenants : process.env.login__odsp_df__test__tenants;
+        process.env.login__odsp__test__tenants : process.env.login__odspdf__test__tenants;
     if (loginTenants !== undefined) {
         const tenants: LoginTenants = JSON.parse(loginTenants);
         const tenantNames = Object.keys(tenants);
@@ -97,7 +97,7 @@ function getCredentials(odspEndpointName: OdspEndpoint, tenantIndex: number, req
         }
     } else {
         const loginAccounts = odspEndpointName === "odsp" ?
-            process.env.login__odsp__test__accounts : process.env.login__odsp_df__test__accounts;
+            process.env.login__odsp__test__accounts : process.env.login__odspdf__test__accounts;
         assert(loginAccounts !== undefined, "Missing login__odsp/odspdf__test__accounts");
         // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
         const passwords: { [user: string]: string; } = JSON.parse(loginAccounts);
@@ -190,6 +190,7 @@ export class OdspTestDriver implements ITestDriver {
             options,
             tenantName,
             userIndex,
+            endpointName,
         );
     }
 
@@ -216,6 +217,7 @@ export class OdspTestDriver implements ITestDriver {
         options?: HostStoragePolicy,
         tenantName?: string,
         userIndex?: number,
+        endpointName?: string,
     ) {
         const tokenConfig: TokenConfig = {
             ...loginConfig,
@@ -244,6 +246,7 @@ export class OdspTestDriver implements ITestDriver {
             api,
             tenantName,
             userIndex,
+            endpointName,
         );
     }
 
@@ -290,6 +293,7 @@ export class OdspTestDriver implements ITestDriver {
         private readonly api = OdspDriverApi,
         public readonly tenantName?: string,
         public readonly userIndex?: number,
+        public readonly endpointName?: string,
     ) {
 
     }

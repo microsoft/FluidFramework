@@ -76,7 +76,7 @@ export class EventForwarder<TEvent = IEvent>
         for (const event of events) {
             if (event !== undefined && !EventForwarder.isEmitterEvent(event)) {
                 const sources = this.forwardingEvents.get(event);
-                if (sources?.has(source)) {
+                if ((sources?.has(source)) === true) {
                     if (this.listenerCount(event) === 0) {
                         const listenerRemover = sources.get(source);
                         if (listenerRemover !== undefined) {
