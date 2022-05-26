@@ -741,24 +741,21 @@ describe('IdCompressor', () => {
 
 	// No validation, as these leave the network in a broken state
 	describeNetworkNoValidation('detects UUID collision', (itNetwork) => {
-		// TODO:#283: Rewrite this test alongside override unification
-		describe.skip('unification', () => {
-			itNetwork(
-				'when a client requests an override that is an UUID reserved for later allocation by a cluster',
-				2,
-				(network) => {
-					network.allocateAndSendIds(Client.Client2, 1);
-					network.deliverOperations(Client.Client1);
-					const compressor2 = network.getCompressor(Client.Client2);
-					const id = network.getIdLog(Client.Client2)[0].id;
-					const uuid = assertIsStableId(compressor2.decompress(id));
-					const nextUuid = stableIdFromNumericUuid(numericUuidFromStableId(uuid), 1);
-					expect(() => network.allocateAndSendIds(Client.Client1, 1, { 0: nextUuid })).to.throw(
-						`Override '${nextUuid}' collides with another allocated UUID.`
-					);
-				}
-			);
-		});
+		itNetwork(
+			'when a client requests an override that is an UUID reserved for later allocation by a cluster',
+			2,
+			(network) => {
+				network.allocateAndSendIds(Client.Client2, 1);
+				network.deliverOperations(Client.Client1);
+				const compressor2 = network.getCompressor(Client.Client2);
+				const id = network.getIdLog(Client.Client2)[0].id;
+				const uuid = assertIsStableId(compressor2.decompress(id));
+				const nextUuid = stableIdFromNumericUuid(numericUuidFromStableId(uuid), 1);
+				expect(() => network.allocateAndSendIds(Client.Client1, 1, { 0: nextUuid })).to.throw(
+					`Override '${nextUuid}' collides with another allocated UUID.`
+				);
+			}
+		);
 
 		itNetwork(
 			'when a new cluster is allocated whose base UUID collides with an existing override',
