@@ -5,7 +5,11 @@
 
 import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader";
+import {
+    ILoaderProps,
+    Loader,
+    waitContainerToCatchUp as waitContainerToCatchUp_original,
+} from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -390,7 +394,11 @@ export class TestObjectProvider implements ITestObjectProvider {
     }
 
     public async waitContainerToCatchUp(container: IContainer) {
-        return this._loaderContainerTracker.waitContainerToCatchUp(container);
+        if ((container as any).connect === undefined) {
+            (container as any).connect = (container as any).resume;
+        }
+
+        return waitContainerToCatchUp_original(container);
     }
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {

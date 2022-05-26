@@ -192,7 +192,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
     processOutgoing(...containers: IContainer[]): Promise<void>;
     reset(): void;
     resumeProcessing(...containers: IContainer[]): IContainer[];
-    waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 }
 
 // @public
