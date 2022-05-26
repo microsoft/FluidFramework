@@ -25,8 +25,9 @@ Changes will be made in the way heuristic summaries are run based on observed te
 - Change `minOpsForLastSummaryAttempt` from `50` -> `10`
 
 ### bindToContext to be removed from IFluidDataStoreChannel
-`bindToContext` will be removed from `IFluidDataStoreChannel` in the next major release. It was deprecated in 0.50 but due to [this bug](https://github.com/microsoft/FluidFramework/issues/9127) it still had to be called after creating a non-root data store.
-This bug was fixed in 0.59 and the call to `bindToContext` after creating data stores can now be removed from this version onwards.
+`bindToContext` will be removed from `IFluidDataStoreChannel` in the next major release.
+It was deprecated in 0.50 but due to [this bug](https://github.com/microsoft/FluidFramework/issues/9127) it still had to be called after creating a non-root data store. The bug was fixed in 0.59.
+These calls to `bindToContext` should now be removed in this version since N / N-1 compatibility across container runtime and data store runtime boundary will be maintained. Basically, container runtime version 0.60 running with data store runtime version 0.59 will not this bug.
 
 ## 0.60 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
