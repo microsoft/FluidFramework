@@ -6,8 +6,8 @@ import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluid
 
 /**
  *
- * @param message-this is just
- * @returns
+ * @param message-message
+ * @returns whether or not the message type is one listed below
  */
 export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage) {
     if (isRuntimeMessage(message)) {
@@ -23,6 +23,11 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
     }
 }
 
+/**
+ *
+ * @param message-message
+ * @returns whether or not the message type is one listed below
+ */
 export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage) {
     return message.type === MessageType.Operation || message.type === MessageType.Summarize;
 }
