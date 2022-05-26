@@ -850,10 +850,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             enableOfflineLoad = false,
         } = runtimeOptions;
 
-        // We pack at data store level only. If isolated channels are disabled,
-        // then there are no .channel layers, we pack at level 1, otherwise we pack at level 2
-        const packingLevel = summaryOptions.disableIsolatedChannels ? 1 : 2;
-
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
         const storage = !pendingRuntimeState ?
