@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/tinylicious-driver",
-  "version": "0.59.3001",
+  "version": "0.59.3002",
   "description": "Driver for tinylicious",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,9 +34,9 @@
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/driver-definitions": "^0.46.1000",
-    "@fluidframework/driver-utils": "^0.59.3001",
+    "@fluidframework/driver-utils": "^0.59.3002",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/routerlicious-driver": "^0.59.3001",
+    "@fluidframework/routerlicious-driver": "^0.59.3002",
     "@fluidframework/server-services-client": "^0.1036.3000",
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
