@@ -132,26 +132,28 @@ export interface IContainerEvents extends IEvent {
  */
 export namespace ConnectionState {
     /**
-     * The document is no longer connected to the delta server
+     * The container is not connected to the delta server
+     * Note - When in this state the container may be about to reconnect,
+     * or may remain disconnected until explicitly told to connect.
      */
     export type Disconnected = 0;
 
     /**
-     * Disconnected but trying to establish a new connection
+     * The container is disconnected but actively trying to establish a new connection
      * PLEASE NOTE that this numerical value falls out of the order you may expect for this state
      */
      export type EstablishingConnection = 3;
 
      /**
-     * The document has an inbound connection but is still pending for outbound deltas
+     * The container has an inbound connection only, and is catching up to the latest known state from the service.
      */
-    export type Pending = 1;
+    export type CatchingUp = 1;
 
-    /** @deprecated - Use ConnectionState.Pending */
+    /** @deprecated - Use ConnectionState.CatchingUp */
     export type Connecting = 1;
 
     /**
-     * The document is fully connected
+     * The container is fully connected and syncing
      */
      export type Connected = 2;
 }
@@ -162,7 +164,7 @@ export namespace ConnectionState {
 export type ConnectionState =
     | ConnectionState.Disconnected
     | ConnectionState.EstablishingConnection
-    | ConnectionState.Pending
+    | ConnectionState.CatchingUp
     | ConnectionState.Connecting
     | ConnectionState.Connected;
 

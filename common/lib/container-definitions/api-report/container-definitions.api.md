@@ -64,7 +64,7 @@ export namespace ConnectionState {
 }
 
 // @public
-export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.Pending | ConnectionState.Connecting | ConnectionState.Connected;
+export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connecting | ConnectionState.Connected;
 
 // @public
 export enum ContainerErrorType {

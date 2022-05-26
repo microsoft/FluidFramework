@@ -16,7 +16,7 @@ Any logic based on the `Disconnected` state (e.g. checking the value of `IContai
 should be updated depending on how you want to treat this new `EstablishingConnection` state.
 
 Additionally, please note that the `Connecting` state is being renamed to `CatchingUp`.
-`ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.EstablishingConnection` instead.
+`ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
 
 ## 0.45 Breaking changes
 - [ContainerErrorType.clientSessionExpiredError added](#ContainerErrorType.clientSessionExpiredError-added)
