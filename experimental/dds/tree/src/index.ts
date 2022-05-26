@@ -91,10 +91,6 @@ export {
 	TraitLocationInternal,
 } from './persisted-types';
 export {
-	SharedTreeArgs,
-	SharedTreeOptions,
-	SharedTreeOptions_0_0_2,
-	SharedTreeOptions_0_1_1,
 	SharedTreeFactory,
 	SharedTree,
 	EditCommittedHandler,

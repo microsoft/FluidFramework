@@ -113,13 +113,7 @@ export async function performFuzzActions(
 						expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first)).to
 							.be.true;
 
-						for (const node of tree.currentView) {
-							expect(tree.attributeNodeId(node.identifier)).to.equal(
-								first.attributeNodeId(
-									first.convertToNodeId(tree.convertToStableNodeId(node.identifier))
-								)
-							);
-						}
+						// TODO:#461: Compare attribution info of all nodes in currentView to all nodes in `first`
 					}
 				}
 				return state;

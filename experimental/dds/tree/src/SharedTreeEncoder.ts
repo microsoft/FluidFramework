@@ -159,7 +159,7 @@ export class SharedTreeEncoder_0_1_1 {
 			idCompressor: serializedIdCompressor,
 			version,
 		}: SharedTreeSummary,
-		attributionId: AttributionId
+		attributionId?: AttributionId
 	): SummaryContents {
 		assert(version === WriteFormat.v0_1_1, `Invalid summary version to decode: ${version}, expected: 0.1.1`);
 		assert(typeof editHistory === 'object', '0.1.1 summary encountered with non-object edit history.');
