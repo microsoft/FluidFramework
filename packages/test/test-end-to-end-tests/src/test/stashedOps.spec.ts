@@ -560,7 +560,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         });
 
         // wait for the join message so we see connectedStateRejected
-        if (container2.connectionState !== ConnectionState.Connecting) {
+        if (container2.connectionState !== ConnectionState.CatchingUp) {
             await new Promise((resolve) => container2.deltaManager.on("connect", resolve));
         }
 
@@ -669,7 +669,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         });
 
         // wait for the join message so we see connectedStateRejected
-        if (container3.connectionState !== ConnectionState.Connecting) {
+        if (container3.connectionState !== ConnectionState.CatchingUp) {
             await new Promise((resolve) => container3.deltaManager.on("connect", resolve));
         }
 

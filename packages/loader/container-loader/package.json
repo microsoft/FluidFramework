@@ -114,6 +114,9 @@
     "broken": {
       "ClassDeclaration_Container": {
         "backCompat": false
+      },
+      "EnumDeclaration_ConnectionState": {
+        "backCompat": false
       }
     }
   }

@@ -75,7 +75,7 @@ export class ConnectionStateHandler {
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
                 // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
-                if (this.connectionState === ConnectionState.Connecting) {
+                if (this.connectionState === ConnectionState.CatchingUp) {
                     this.handler.logConnectionIssue("NoJoinOp");
                 }
             },
@@ -181,7 +181,7 @@ export class ConnectionStateHandler {
         details: IConnectionDetails,
     ) {
         const oldState = this._connectionState;
-        this._connectionState = ConnectionState.Connecting;
+        this._connectionState = ConnectionState.CatchingUp;
 
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)
@@ -192,7 +192,7 @@ export class ConnectionStateHandler {
         this._pendingClientId = details.clientId;
 
         // Report telemetry after we set client id, but before transitioning to Connected state below!
-        this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
+        this.handler.logConnectionStateChangeTelemetry(ConnectionState.CatchingUp, oldState);
 
         const quorumClients = this.handler.quorumClients();
         // Check if we already processed our own join op through delta storage!
@@ -227,7 +227,7 @@ export class ConnectionStateHandler {
             client = quorumClients?.getMember(this._clientId);
         }
         if (value === ConnectionState.Connected) {
-            assert(oldState === ConnectionState.Connecting,
+            assert(oldState === ConnectionState.CatchingUp,
                 0x1d8 /* "Should only transition from Connecting state" */);
             // Mark our old client should have left in the quorum if it's still there
             if (client !== undefined) {

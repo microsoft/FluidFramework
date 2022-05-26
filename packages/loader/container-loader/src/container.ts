@@ -147,19 +147,33 @@ export interface IContainerConfig {
 
 export enum ConnectionState {
     /**
-     * The document is no longer connected to the delta server
+     * The container is not connected to the ordering service
+     * Note - When in this state the container may be about to reconnect,
+     * or may remain disconnected until explicitly told to connect.
      */
-    Disconnected,
+    Disconnected = 0,
 
     /**
-     * The document has an inbound connection but is still pending for outbound deltas
+     * The container is disconnected but actively trying to establish a new connection
+     * PLEASE NOTE that this numerical value falls out of the order you may expect for this state
      */
-    Connecting,
+    EstablishingConnection = 3,
 
     /**
-     * The document is fully connected
+     * @see ConnectionState.CatchingUp, which is the new name for this state.
+     * @deprecated - This state itself is not gone, just being renamed. Please use ConnectionState.CatchingUp.
      */
-    Connected,
+     Connecting = 1,
+
+    /**
+     * The container has an inbound connection only, and is catching up to the latest known state from the service.
+     */
+    CatchingUp = 1,
+
+    /**
+     * The container is fully connected and syncing
+     */
+    Connected = 2,
 }
 
 /**
@@ -194,7 +208,8 @@ export async function waitContainerToCatchUp(container: IContainer) {
         container.on("closed", closedCallback);
 
         const waitForOps = () => {
-            assert(container.connectionState !== ConnectionState.Disconnected,
+            assert(container.connectionState === ConnectionState.CatchingUp
+                || container.connectionState === ConnectionState.Connected,
                 0x0cd /* "Container disconnected while waiting for ops!" */);
             const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
@@ -635,7 +650,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
-                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
+                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
                     });
                 },
                 connectionStateChanged: () => {
