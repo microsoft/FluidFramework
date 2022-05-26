@@ -746,7 +746,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // All client meesages should have clientId
         // System messages may have no clientId (but some do, like propose, noop, summarize)
         assert(
-            message.clientId !== undefined === isClientMessage(message),
+            message.clientId !== undefined || isClientMessage(message),
             0x0ed /* "non-system message have to have clientId" */,
         );
 
