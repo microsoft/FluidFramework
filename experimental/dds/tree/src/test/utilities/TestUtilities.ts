@@ -162,14 +162,15 @@ export function setUpTestSharedTree(
 
 	// Enable expensiveValidation
 	let factory: SharedTreeFactory;
+	// TODO:#461: Pass attribution ID to factory
 	if (writeFormat === WriteFormat.v0_0_2) {
-		factory = SharedTree.getFactory(writeFormat, { summarizeHistory: summarizeHistory ?? true });
+		factory = SharedTree.getFactory(writeFormat, summarizeHistory ?? true ? { uploadEditChunks: false } : false);
 	} else {
 		const options = {
 			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: true } : false,
 			attributionId,
-		};
-		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
+		} as const;
+		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options.summarizeHistory);
 	}
 	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id);
 
@@ -298,14 +299,15 @@ export async function setUpLocalServerTestSharedTree(
 
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;
+	// TODO:#461: Pass attribution ID to factory
 	if (writeFormat === WriteFormat.v0_0_2) {
-		factory = SharedTree.getFactory(writeFormat, { summarizeHistory: summarizeHistory ?? true });
+		factory = SharedTree.getFactory(writeFormat, summarizeHistory ?? true ? { uploadEditChunks: false } : false);
 	} else {
 		const options = {
 			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: uploadEditChunks ?? true } : false,
 			attributionId,
-		};
-		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
+		} as const;
+		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options.summarizeHistory);
 	}
 	const registry: ChannelFactoryRegistry = [[treeId, factory]];
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
