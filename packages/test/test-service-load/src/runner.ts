@@ -251,7 +251,6 @@ function scheduleFaultInjection(
         const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs)(runConfig.randEng);
         printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0, 4)} min`);
         setTimeout(() => {
-            // TODO: Remove null check after next release #8523
             if (container.connectionState === ConnectionState.Connected && container.resolvedUrl !== undefined) {
                 const deltaConn =
                     ds.documentServices.get(container.resolvedUrl)?.documentDeltaConnection;
@@ -298,11 +297,7 @@ function scheduleContainerClose(
     new Promise<void>((resolve) => {
         // wait for the container to connect write
         container.once("closed", () => resolve);
-        // TODO: Remove null check after next release #8523
-        if (container.connectionState !== undefined
-            && container.connectionState !== ConnectionState.Connected
-            && !container.closed
-        ) {
+        if (container.connectionState !== ConnectionState.Connected && !container.closed) {
             container.once("connected", () => {
                 resolve();
                 container.off("closed", () => resolve);

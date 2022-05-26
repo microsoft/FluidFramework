@@ -167,7 +167,7 @@ export enum ConnectionState {
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
  * up to date. Host may chose to wait in such case and retry resolving URI.
  * Warning: Will wait infinitely for connection to establish if there is no connection.
- * May result in deadlock if Container.disconnect() is called and never switched back to auto-reconnect.
+ * May result in deadlock if Container.disconnect() is called and never followed by a call to Container.connect().
  * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
  *          false: storage does not provide indication of how far the client is. Container processed
  *          all the ops known to it, but it maybe still behind.
@@ -1208,6 +1208,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             switch (loadMode.deltaConnection) {
                 case undefined:
+                    // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
+                    // If there is gap, we will learn about it once connected, but the gap should be small (if any),
+                    // assuming that resumeInternal() is called quickly after initial container boot.
                     this.resumeInternal({ reason: "DocumentLoad", fetchOpsFromStorage: false });
                     break;
                 case "delayed":
