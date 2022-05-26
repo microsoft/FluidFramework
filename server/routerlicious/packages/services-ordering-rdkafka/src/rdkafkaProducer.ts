@@ -14,7 +14,7 @@ import {
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Deferred } from "@fluidframework/common-utils";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+// import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
@@ -297,9 +297,9 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 								});
 							} else {
 								boxcar.deferred.resolve();
-                                Lumberjack.info(
-                                    `rdkafka producer message size = ${message.length}`,
-                                );
+                                // Lumberjack.info(
+                                //     `rdkafka producer message size = ${message.length}`,
+                                // );
 								this.emit("produced", boxcarMessage, offset, message.length);
 							}
 						},

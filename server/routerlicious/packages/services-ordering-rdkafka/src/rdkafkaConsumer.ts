@@ -14,7 +14,7 @@ import {
 	IZookeeperClient,
 	ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+// import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
@@ -369,9 +369,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	 */
 	private processMessage(message: kafkaTypes.Message) {
 		const partition = message.partition;
-        Lumberjack.info(
-            `rdkafka consumer message size = ${message.size}`,
-        );
+        // Lumberjack.info(
+        //     `rdkafka consumer message size = ${message.size}`,
+        // );
 		if (!this.assignedPartitions.has(partition)) {
 			/*
 				It is possible for node-rdkafka to send us messages for old partitions after a rebalance is processed.
