@@ -12,8 +12,11 @@ import { ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
     quorumClients: () => IQuorumClients | undefined;
-    logConnectionStateChangeTelemetry:
-        (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void;
+    logConnectionStateChangeTelemetry: (
+        value: ConnectionState,
+        oldState: ConnectionState,
+        reason?: string | undefined
+    ) => void;
     shouldClientJoinWrite: () => boolean;
     maxClientLeaveWaitTime: number | undefined;
     logConnectionIssue: (eventName: string) => void;
@@ -194,7 +197,7 @@ export class ConnectionStateHandler {
         // Given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         // Note that we might be still initializing quorum - connection is established proactively on load!
-        if ((quorumClients !== undefined && quorumClients.getMember(details.clientId) !== undefined)
+        if (quorumClients?.getMember(details.clientId) !== undefined
             || connectionMode === "read"
         ) {
             assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "there should be no timer for 'read' connections" */);

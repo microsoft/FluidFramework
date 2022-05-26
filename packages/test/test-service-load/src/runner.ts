@@ -4,7 +4,11 @@
  */
 
 import commander from "commander";
-import { ITestDriver, TestDriverTypes, RouterliciousEndpoint } from "@fluidframework/test-driver-definitions";
+import {
+    ITestDriver,
+    TestDriverTypes,
+    DriverEndpoint,
+} from "@fluidframework/test-driver-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import random from "random-js";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -47,7 +51,7 @@ async function main() {
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
-    const endpoint: RouterliciousEndpoint | undefined = commander.driverEndpoint;
+    const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
     const profileArg: string = commander.profile;
     const url: string = commander.url;
     const runId: number = commander.runId;
@@ -127,7 +131,7 @@ function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T
  */
 async function runnerProcess(
     driver: TestDriverTypes,
-    endpoint: RouterliciousEndpoint | undefined,
+    endpoint: DriverEndpoint | undefined,
     runConfig: IRunConfig,
     url: string,
     seed: number,
@@ -137,14 +141,15 @@ async function runnerProcess(
     let metricsCleanup: () => void = () => {};
 
     try {
+        const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
         const loaderOptions = generateLoaderOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.loader);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader);
 
         const containerOptions = generateRuntimeOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.container);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container);
 
         const configurations = generateConfigurations(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.configurations);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations);
         const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,

@@ -7,7 +7,7 @@ import child_process from "child_process";
 import fs from "fs";
 import ps from "ps-node";
 import commander from "commander";
-import { TestDriverTypes, RouterliciousEndpoint } from "@fluidframework/test-driver-definitions";
+import { TestDriverTypes, DriverEndpoint } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
@@ -55,7 +55,7 @@ async function main() {
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
-    const endpoint: RouterliciousEndpoint | undefined = commander.driverEndpoint;
+    const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
     const profileArg: string = commander.profile;
     const testId: string | undefined = commander.testId;
     const debug: true | undefined = commander.debug;
@@ -86,7 +86,7 @@ async function main() {
  */
 async function orchestratorProcess(
     driver: TestDriverTypes,
-    endpoint: RouterliciousEndpoint | undefined,
+    endpoint: DriverEndpoint | undefined,
     profile: ILoadTestConfig & { name: string; testUsers?: ITestUserConfig; },
     args: { testId?: string; debug?: true; verbose?: true; seed?: number; browserAuth?: true;
         enableMetrics?: boolean; },
@@ -133,9 +133,13 @@ async function orchestratorProcess(
             childArgs.push("--enableOpsMetrics");
         }
 
+        if (endpoint) {
+            childArgs.push(`--driverEndpoint`, endpoint);
+        }
+
         runnerArgs.push(childArgs);
     }
-    console.log(runnerArgs.join("\n"));
+    console.log(runnerArgs.map((a) => a.join(" ")).join("\n"));
 
     if (args.enableMetrics === true) {
         setInterval(() => {
@@ -162,7 +166,11 @@ async function orchestratorProcess(
             const password = username !== undefined ? profile.testUsers?.credentials[username] : undefined;
             const envVar = { ...process.env };
             if (username !== undefined && password !== undefined) {
-                envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+                if (endpoint === "odsp") {
+                    envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+                } else if (endpoint === "odsp-df") {
+                    envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
+                }
             }
             const runnerProcess = child_process.spawn(
                 "node",

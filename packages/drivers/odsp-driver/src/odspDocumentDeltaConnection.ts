@@ -58,7 +58,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         const socketReference = SocketReference.socketIoSockets.get(key);
 
         // Verify the socket is healthy before reusing it
-        if (socketReference && socketReference.disconnected) {
+        if (socketReference?.disconnected) {
             // The socket is in a bad state. fully remove the reference
             socketReference.closeSocket();
             return undefined;

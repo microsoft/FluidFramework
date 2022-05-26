@@ -91,8 +91,8 @@ export class DataStores implements IDisposable {
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
         getBaseGCDetails: () => Promise<Map<string, IGarbageCollectionDetailsBase>>,
-        private readonly dataStoreChanged: (
-            dataStorePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
+        private readonly gcNodeUpdated: (
+            nodePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
         private readonly aliasMap: Map<string, string>,
         private readonly writeGCDataAtRoot: boolean,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
@@ -400,8 +400,9 @@ export class DataStores implements IDisposable {
         assert(!!context, 0x162 /* "There should be a store context for the op" */);
         context.process(transformed, local, localMessageMetadata);
 
-        // Notify that a data store changed. This is used to detect if a deleted data store is being used.
-        this.dataStoreChanged(
+        // Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
+        // being used.
+        this.gcNodeUpdated(
             `/${envelope.address}`,
             message.timestamp,
             context.isLoaded ? context.packagePath : undefined,
