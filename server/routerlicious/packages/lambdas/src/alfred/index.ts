@@ -80,7 +80,7 @@ const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocket
 const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
 // Sanitize the received op before sending.
-function sanitizeMessage(message: any, lumberjackProperties: Map<string, any> | Record<string, any>): IDocumentMessage {
+function sanitizeMessage(message: any, lumberjackProperties: any): IDocumentMessage {
     // Trace sampling.
     if (message.operation?.traces && getRandomInt(100) === 0) {
         message.operation.traces.push(
@@ -98,7 +98,7 @@ function sanitizeMessage(message: any, lumberjackProperties: Map<string, any> | 
         traces: message.traces,
         type: message.type,
     };
-    lumberjackProperties.set("clientSequenceNumber", message.clientSequenceNumber);
+    lumberjackProperties.clientSequenceNumber = message.clientSequenceNumber;
     Lumberjack.info(`Message received by alfred.`, lumberjackProperties);
     return sanitizedMessage;
 }
@@ -482,8 +482,8 @@ export function configureWebSocketServices(
                         [BaseTelemetryProperties.tenantId]: connection.tenantId,
                         [BaseTelemetryProperties.documentId]: connection.documentId,
                         clientId,
-                        clientSequenceNumber: "",
-                        sequenceNumber: "",
+                        clientSequenceNumber: -1,
+                        sequenceNumber: -1,
                     };
                     messageBatches.forEach((messageBatch) => {
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
