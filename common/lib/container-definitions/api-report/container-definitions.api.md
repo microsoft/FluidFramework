@@ -55,12 +55,12 @@ export enum BindState {
 
 // @public
 export namespace ConnectionState {
+    export type CatchingUp = 1;
     export type Connected = 2;
     // @deprecated (undocumented)
     export type Connecting = 1;
     export type Disconnected = 0;
     export type EstablishingConnection = 3;
-    export type Pending = 1;
 }
 
 // @public

@@ -17,6 +17,7 @@ should be updated depending on how you want to treat this new `EstablishingConne
 
 Additionally, please note that the `Connecting` state is being renamed to `CatchingUp`.
 `ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
+`ConnectionState.Connecting` will be removed in the following major release.
 
 ## 0.45 Breaking changes
 - [ContainerErrorType.clientSessionExpiredError added](#ContainerErrorType.clientSessionExpiredError-added)

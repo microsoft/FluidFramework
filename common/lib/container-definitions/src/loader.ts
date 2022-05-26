@@ -149,7 +149,10 @@ export namespace ConnectionState {
      */
     export type CatchingUp = 1;
 
-    /** @deprecated - Use ConnectionState.CatchingUp */
+    /**
+     * @see ConnectionState.CatchingUp, which is the new name for this state.
+     * @deprecated - This state itself is not gone, just being renamed. Please use ConnectionState.CatchingUp.
+     */
     export type Connecting = 1;
 
     /**
