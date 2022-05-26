@@ -17,6 +17,30 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedFunctionDeclaration_assertOdspEndpoint": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedFunctionDeclaration_assertOdspEndpoint": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedFunctionDeclaration_assertRouterliciousEndpoint": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedFunctionDeclaration_assertRouterliciousEndpoint": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createFluidTestDriver": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createFluidTestDriver():

@@ -105,8 +105,16 @@
   "typeValidation": {
     "version": "0.60.1000",
     "broken": {
-        "InterfaceDeclaration_FluidTestDriverConfig": {
-          "forwardCompat": false
+      "RemovedFunctionDeclaration_assertOdspEndpoint": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedFunctionDeclaration_assertRouterliciousEndpoint": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_FluidTestDriverConfig": {
+        "forwardCompat": false
       }
     }
   }
