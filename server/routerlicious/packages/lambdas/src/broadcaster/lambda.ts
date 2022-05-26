@@ -27,7 +27,7 @@ import {
     SequencedOperationType,
     SignalOperationType,
 } from "@fluidframework/server-services-core";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+// import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Container for a batch of messages being sent for a specific tenant/document id
@@ -130,16 +130,16 @@ export class BroadcasterLambda implements IPartitionLambda {
 
             const value = baseMessage as INackMessage | ISequencedOperationMessage | ITicketedSignalMessage;
 
-            if (value.type === SequencedOperationType) {
-                const lumberjackProperties = {
-                    [BaseTelemetryProperties.tenantId]: value.tenantId,
-                    [BaseTelemetryProperties.documentId]: value.documentId,
-                    ClientId: value.operation.clientId,
-                    clientSequenceNumber: value.operation.clientSequenceNumber,
-                    sequenceNumber: value.operation.sequenceNumber,
-                };
-                Lumberjack.info(`Message received by broadcaster.`, lumberjackProperties);
-            }
+            // if (value.type === SequencedOperationType) {
+            //     const lumberjackProperties = {
+            //         [BaseTelemetryProperties.tenantId]: value.tenantId,
+            //         [BaseTelemetryProperties.documentId]: value.documentId,
+            //         ClientId: value.operation.clientId,
+            //         clientSequenceNumber: value.operation.clientSequenceNumber,
+            //         sequenceNumber: value.operation.sequenceNumber,
+            //     };
+            //     Lumberjack.info(`Message received by broadcaster.`, lumberjackProperties);
+            // }
 
             if (this.serviceConfiguration.broadcaster.includeEventInMessageBatchName) {
                 topic += event;
