@@ -100,7 +100,7 @@ export class RestLessServer {
 
     private async parseStreamRequestFormBody(request: IncomingMessageEx): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const form = formidable({ multiples: true });
+            const form = formidable();
 
             form.parse(request, (err, fields) => {
                 if (err) {
