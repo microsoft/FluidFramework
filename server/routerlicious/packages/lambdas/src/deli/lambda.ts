@@ -52,6 +52,7 @@ import {
     IClientManager,
 } from "@fluidframework/server-services-core";
 import {
+    BaseTelemetryProperties,
     CommonProperties,
     getLumberBaseProperties,
     Lumber,
@@ -639,14 +640,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         // Update and retrieve the minimum sequence number
         const message = rawMessage as IRawOperationMessage;
-        // const lumberjackProperties = {
-        //     [BaseTelemetryProperties.tenantId]: this.tenantId,
-        //     [BaseTelemetryProperties.documentId]: this.documentId,
-        //     ClientId: message.clientId,
-        //     clientSequenceNumber: message.operation.clientSequenceNumber,
-        //     sequenceNumber: this.sequenceNumber,
-        // };
-        // Lumberjack.info(`Message received by deli.`, lumberjackProperties);
+        const lumberjackProperties = {
+            [BaseTelemetryProperties.tenantId]: this.tenantId,
+            [BaseTelemetryProperties.documentId]: this.documentId,
+            ClientId: message.clientId,
+            clientSequenceNumber: message.operation.clientSequenceNumber,
+            sequenceNumber: this.sequenceNumber,
+        };
+        Lumberjack.info(`Message received by deli.`, lumberjackProperties);
         const dataContent = this.extractDataContent(message);
 
         // Check if we should nack this message
