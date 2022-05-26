@@ -150,7 +150,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcBlobNodeCount?: number;
     /** Sum of the sizes of all op contents since the last summary */
     readonly opsSizesSinceLastSummary: number;
-    /** Number of client ops since the last summary @see isClientMessage */
+    /** Number of non-system ops since the last summary @see isClientMessage */
     readonly nonSystemOpsSinceLastSummary: number;
     /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
     readonly summaryNumber: number;
@@ -426,7 +426,7 @@ type SummaryGeneratorOptionalTelemetryProperties =
     /** Delta in sum of op sizes between the current reference sequence number and the reference
      *  sequence number of the last summary */
     "opsSizesSinceLastSummary" |
-    /** Delta between the number of client ops since the last summary @see isClientMessage */
+    /** Delta between the number of non-system ops since the last summary @see isClientMessage */
     "nonSystemOpsSinceLastSummary" |
     /** Time it took to generate the summary tree and stats. */
     "generateDuration" |
