@@ -98,7 +98,7 @@ function sanitizeMessage(message: any, lumberjackProperties: Map<string, any> | 
         traces: message.traces,
         type: message.type,
     };
-    lumberjackProperties.set('clientSequenceNumber', message.clientSequenceNumber);
+    lumberjackProperties.set("clientSequenceNumber", message.clientSequenceNumber);
     Lumberjack.info(`Message received by alfred.`, lumberjackProperties);
     return sanitizedMessage;
 }
