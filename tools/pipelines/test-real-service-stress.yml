@@ -88,5 +88,5 @@ stages:
         timeoutInMinutes: 120
         testCommand: start:frs
         env:
-          fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
+          fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
