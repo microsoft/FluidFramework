@@ -2353,7 +2353,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
                 gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
                 opsSizesSinceLastSummary: this.opTracker.opsSizeAccumulator,
-                nonSystemOpsSinceLastSummary: this.opTracker.nonSystemOpCount,
+                nonSystemOpsSinceLastSummary: this.opTracker.clientOpCount,
                 summaryNumber,
                 ...partialStats,
             };

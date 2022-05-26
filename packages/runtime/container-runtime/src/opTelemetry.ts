@@ -9,7 +9,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 
 export class OpTracker {
     /**
@@ -17,9 +17,9 @@ export class OpTracker {
      * the message is pushed onto the inbound queue.
      */
     private readonly messageSize = new Map<number, number>();
-    private _nonSystemOpCount: number = 0;
-    public get nonSystemOpCount(): number {
-        return this._nonSystemOpCount;
+    private _clientOpCount: number = 0;
+    public get clientOpCount(): number {
+        return this._clientOpCount;
     }
 
     private _opsSizeAccumulator: number = 0;
@@ -49,7 +49,7 @@ export class OpTracker {
         });
 
         deltaManager.on("op", (message: ISequencedDocumentMessage) => {
-            this._nonSystemOpCount += isSystemMessage(message) ? 0 : 1;
+            this._clientOpCount += !isRuntimeMessage(message) ? 0 : 1;
             const id = OpTracker.messageId(message);
             this._opsSizeAccumulator += this.messageSize[id] ?? 0;
             this.messageSize.delete(id);
@@ -65,7 +65,7 @@ export class OpTracker {
     }
 
     public reset() {
-        this._nonSystemOpCount = 0;
+        this._clientOpCount = 0;
         this._opsSizeAccumulator = 0;
     }
 }
