@@ -40,6 +40,7 @@ import {
 
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
+import { pkgVersion } from "./packageVersion";
 import {
     getGCVersion,
     GCVersion,
@@ -74,7 +75,8 @@ const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to log error messages if GC reference validation fails.
 const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 // Feature gate key to write the gc blob as a handle if the data is the same.
-const trackGCStateKey = "Fluid.GarbageCollection.TrackGCStateKey";
+const trackGCBlobStateKey = "Fluid.GarbageCollection.TrackGCBlobStateKey";
+const trackGCBlobStateVersionKey = "Fluid.GarbageCollection.TrackGCBlobStateVersionKey";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -311,6 +313,8 @@ export class GarbageCollector implements IGarbageCollector {
      */
     private readonly shouldRunSweep: boolean;
 
+    private readonly trackGCBlobState: boolean;
+
     private readonly testMode: boolean;
     private readonly mc: MonitoringContext;
 
@@ -342,8 +346,8 @@ export class GarbageCollector implements IGarbageCollector {
     // Keeps track of the GC state from the last run.
     private previousGCDataFromLastRun: IGarbageCollectionData | undefined;
     // Keeps track of the serialized GC blob from the last run.
-    private latestSerializedGCBlob: string | undefined;
-    private pendingSerializedGCBlob: string | undefined;
+    private latestSerializedGCBlobs: Map<string, string> = new Map();
+    private pendingSerializedGCBlobs: Map<string, string> = new Map();
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
     private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
@@ -453,6 +457,17 @@ export class GarbageCollector implements IGarbageCollector {
             && !gcOptions.disableGC
         );
 
+        const currentVersion = pkgVersion;
+        const oldestTrackGCBlobStateVersion = this.mc.config.getString(trackGCBlobStateVersionKey);
+        const versionIsCompatible =
+            oldestTrackGCBlobStateVersion === undefined ||
+            currentVersionGreaterOrEqualToVersion(currentVersion, oldestTrackGCBlobStateVersion);
+        const trackGCBlobState = this.mc.config.getBoolean(trackGCBlobStateKey) === true;
+        this.trackGCBlobState =
+            this.shouldRunGC &&
+            trackGCBlobState &&
+            versionIsCompatible;
+
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
          * 1. Overall GC or mark phase must be enabled (this.shouldRunGC).
@@ -492,10 +507,15 @@ export class GarbageCollector implements IGarbageCollector {
             if (gcSnapshotTree !== undefined) {
                 // If the GC tree is written at root, we should also do the same.
                 this._writeDataAtRoot = true;
-                const newGCState = await getGCStateFromSnapshot(gcSnapshotTree, readAndParseBlob);
-                const sortedGCState = generateSortedGCState(newGCState);
-                this.latestSerializedGCBlob = JSON.stringify(sortedGCState);
-                return sortedGCState;
+                const [newGCState, latestSerializedGCBlobs] = await getGCStateAndBlobsFromSnapshot(
+                    gcSnapshotTree,
+                    readAndParseBlob,
+                    this.trackGCBlobState,
+                );
+                if (this.trackGCBlobState) {
+                    this.latestSerializedGCBlobs = latestSerializedGCBlobs;
+                }
+                return newGCState;
             }
 
             // back-compat - Older documents will have the GC blobs in each data store's summary tree. Get them and
@@ -710,8 +730,9 @@ export class GarbageCollector implements IGarbageCollector {
         const newBlob = JSON.stringify(sortedGCState);
 
         if (
-            this.latestSerializedGCBlob === newBlob &&
-            this.mc.config.getBoolean(trackGCStateKey) &&
+            this.latestSerializedGCBlobs.get(gcBlobRootKey) === newBlob &&
+            this.latestSerializedGCBlobs.size === 1 &&
+            this.trackGCBlobState &&
             !fullTree &&
             trackState
         ) {
@@ -720,7 +741,8 @@ export class GarbageCollector implements IGarbageCollector {
             return builder.getSummaryTree();
         }
 
-        this.pendingSerializedGCBlob = newBlob;
+        this.pendingSerializedGCBlobs = new Map();
+        this.pendingSerializedGCBlobs.set(gcBlobRootKey, newBlob);
         builder.addBlob(gcBlobRootKey, newBlob);
         return builder.getSummaryTree();
     }
@@ -765,7 +787,7 @@ export class GarbageCollector implements IGarbageCollector {
         // Basically, it was written in the current GC version.
         if (result.wasSummaryTracked) {
             this.latestSummaryGCVersion = this.currentGCVersion;
-            this.latestSerializedGCBlob = this.pendingSerializedGCBlob;
+            this.latestSerializedGCBlobs = this.pendingSerializedGCBlobs;
             return;
         }
         // If the summary was not tracked by this client, update latest GC version and blob from the snapshot in the
@@ -777,10 +799,14 @@ export class GarbageCollector implements IGarbageCollector {
             this.latestSummaryGCVersion = getGCVersion(metadata);
         }
 
-        const gcBlobId = snapshot.trees[gcTreeKey]?.blobs[gcBlobRootKey];
-        if (gcBlobId) {
-            const gcBlob = await readAndParseBlob<IGarbageCollectionState>(gcBlobId);
-            this.latestSerializedGCBlob = JSON.stringify(generateSortedGCState(gcBlob));
+        const gcSnapshotTree = snapshot.trees[gcTreeKey];
+        if (gcSnapshotTree !== undefined && this.trackGCBlobState) {
+            const [, latestSerializedGCBlobs] = await getGCStateAndBlobsFromSnapshot(
+                gcSnapshotTree,
+                readAndParseBlob,
+                this.trackGCBlobState,
+            );
+            this.latestSerializedGCBlobs = latestSerializedGCBlobs;
         }
     }
 
@@ -1163,10 +1189,12 @@ export class GarbageCollector implements IGarbageCollector {
  * Gets the garbage collection state from the given snapshot tree. The GC state may be written into multiple blobs.
  * Merge the GC state from all such blobs and return the merged GC state.
  */
-async function getGCStateFromSnapshot(
+async function getGCStateAndBlobsFromSnapshot(
     gcSnapshotTree: ISnapshotTree,
     readAndParseBlob: ReadAndParseBlob,
-): Promise<IGarbageCollectionState> {
+    trackGCBlobState: boolean,
+): Promise<[IGarbageCollectionState, Map<string, string>]> {
+    const serializedGCBlobs: Map<string, string> = new Map();
     let rootGCState: IGarbageCollectionState = { gcNodes: {} };
     for (const key of Object.keys(gcSnapshotTree.blobs)) {
         // Skip blobs that do not start with the GC prefix.
@@ -1180,10 +1208,14 @@ async function getGCStateFromSnapshot(
         }
         const gcState = await readAndParseBlob<IGarbageCollectionState>(blobId);
         assert(gcState !== undefined, 0x2ad /* "GC blob missing from snapshot" */);
+        // Update latest serialized GC blobs
+        if (trackGCBlobState) {
+            serializedGCBlobs.set(key, JSON.stringify(generateSortedGCState(gcState)));
+        }
         // Merge the GC state of this blob into the root GC state.
         rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
     }
-    return rootGCState;
+    return [rootGCState, serializedGCBlobs];
 }
 
 function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollectionState {
@@ -1197,6 +1229,20 @@ function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollec
         sortedGCState.gcNodes[nodeId] = state;
     }
     return sortedGCState;
+}
+
+// TODO: maybe move this function out of here to a util function.
+export function currentVersionGreaterOrEqualToVersion(currentPackageVersion: string, packageVersion: string) {
+    const current = currentPackageVersion.split(".").map((stringVersion) => Number.parseInt(stringVersion, 10));
+    const version = packageVersion.split(".").map((stringVersion) => Number.parseInt(stringVersion, 10));
+    assert(current.length === version.length && current.length === 3, "Expected semper versions!");
+
+    const currentGreaterOrEqualToVersion =
+        current[0] > version[0] ||
+        current[0] === version[0] && current[1] > version[1] ||
+        current[0] === version[0] && current[1] === version[1] && current[2] >= version[2];
+
+    return currentGreaterOrEqualToVersion;
 }
 
 /**

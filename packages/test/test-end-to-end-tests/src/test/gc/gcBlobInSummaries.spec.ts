@@ -76,7 +76,7 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
     const isBlob = false;
 
     const settings = {
-        "Fluid.GarbageCollection.TrackGCStateKey": "true",
+        "Fluid.GarbageCollection.TrackGCBlobStateKey": "true",
     };
     const configProvider = mockConfigProvider(settings);
 
