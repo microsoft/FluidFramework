@@ -60,7 +60,7 @@
     "@fluidframework/server-services-telemetry": "^0.1036.4000",
     "@socket.io/redis-adapter": "^7.0.0",
     "debug": "^4.1.1",
-    "formidable": "2.0.0-canary.20200504.1",
+    "formidable": "3.2.4",
     "ioredis": "^4.24.2",
     "lodash": "^4.17.21",
     "nconf": "^0.12.0",
