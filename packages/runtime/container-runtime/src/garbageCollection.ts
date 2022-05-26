@@ -394,12 +394,14 @@ export class GarbageCollector implements IGarbageCollector {
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
-            if (gcOptions.sweepAllowed && !gcOptions.gcAllowed) {
+            if (gcOptions.sweepAllowed && gcOptions.gcAllowed === false) {
                 throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
             }
 
-            // For new documents, GC has to be explicitly enabled via the flags in GC options.
-            this.gcEnabled = gcOptions.gcAllowed === true;
+            // For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
+            // flag in GC options to false.
+            this.gcEnabled = gcOptions.gcAllowed !== false;
+            // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
             this.sweepEnabled = gcOptions.sweepAllowed === true;
 
             // Set the Session Expiry only if the flag is enabled or the test option is set.

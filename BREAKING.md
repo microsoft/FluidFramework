@@ -19,6 +19,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.60 Upcoming changes
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
 - [bindToContext to be removed from IFluidDataStoreChannel](#bindToContext-to-be-removed-from-IFluidDataStoreChannel)
+- [Garbage Collection (GC) mark phase turned on by default](#Garbage-Collection-(GC)-mark-phase-turned-on-by-default)
 
 ### Summarize heuristic changes based on telemetry
 Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
@@ -28,6 +29,13 @@ Changes will be made in the way heuristic summaries are run based on observed te
 `bindToContext` will be removed from `IFluidDataStoreChannel` in the next major release.
 It was deprecated in 0.50 but due to [this bug](https://github.com/microsoft/FluidFramework/issues/9127) it still had to be called after creating a non-root data store. The bug was fixed in 0.59.
 To prepare for the removal in the following release, calls to `bindToContext` can and should be removed as soon as this version is consumed. Since the compatibility window between container runtime and data store runtime is N / N-1, all runtime code will have the required bug fix (released in the previous version 0.59) and it can be safely removed.
+
+### Garbage Collection (GC) mark phase turned on by default
+GC mark phase is turned on by default with this version. In mark phase, unreferenced Fluid objects (data stores, DDSes and attachment blobs uploaded via BlobManager) are stamped as such along with the unreferenced timestamp in the summary. Features built on summaries (Fluid file at rest) can filter out these unreferenced content. For example, search and e-discovery will mostly want to filter out these content since they are unused.
+
+For more details on GC and options for controlling its behavior, please see [this document](./packages/runtime/container-runtime/garbageCollection.md).
+
+> Note: GC sweep phase has not been enabled yet so unreferenced content won't be deleted. The work to enable it is in progress and will be ready soon.
 
 ## 0.60 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
