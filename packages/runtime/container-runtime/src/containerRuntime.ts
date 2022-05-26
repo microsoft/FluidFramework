@@ -46,7 +46,7 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
     GenericError,
@@ -856,20 +856,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
-
-        let storage = context.storage;
-
-        if (pendingRuntimeState) {
-            storage = new SerializedSnapshotStorage(() => {
-                // we still want to write aggegrated blobs
-                return BlobAggregationStorage.wrap(
-                    context.storage,
-                    logger,
-                    undefined /* allowPacking */,
-                    packingLevel,
-                );
-            }, pendingRuntimeState.snapshotBlobs);
-        }
+        const storage = !pendingRuntimeState ?
+            context.storage :
+            new SerializedSnapshotStorage(() => { return context.storage; }, pendingRuntimeState.snapshotBlobs);
 
         const registry = new FluidDataStoreRegistry(registryEntries);
 
