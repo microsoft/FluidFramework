@@ -1255,7 +1255,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeSegmentDelta():
 declare function use_current_InterfaceDeclaration_IMergeTreeSegmentDelta(
     use: TypeOnly<current.IMergeTreeSegmentDelta>);
 use_current_InterfaceDeclaration_IMergeTreeSegmentDelta(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeSegmentDelta());
 
 /*
@@ -1643,7 +1642,6 @@ declare function get_old_InterfaceDeclaration_ISegment():
 declare function use_current_InterfaceDeclaration_ISegment(
     use: TypeOnly<current.ISegment>);
 use_current_InterfaceDeclaration_ISegment(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISegment());
 
 /*
@@ -2900,7 +2898,6 @@ declare function get_old_InterfaceDeclaration_SegmentAccumulator():
 declare function use_current_InterfaceDeclaration_SegmentAccumulator(
     use: TypeOnly<current.SegmentAccumulator>);
 use_current_InterfaceDeclaration_SegmentAccumulator(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_SegmentAccumulator());
 
 /*
@@ -2949,7 +2946,6 @@ declare function get_old_InterfaceDeclaration_SegmentGroup():
 declare function use_current_InterfaceDeclaration_SegmentGroup(
     use: TypeOnly<current.SegmentGroup>);
 use_current_InterfaceDeclaration_SegmentGroup(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_SegmentGroup());
 
 /*
@@ -3047,7 +3043,6 @@ declare function get_old_ClassDeclaration_SortedSegmentSet():
 declare function use_current_ClassDeclaration_SortedSegmentSet(
     use: TypeOnly<current.SortedSegmentSet>);
 use_current_ClassDeclaration_SortedSegmentSet(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SortedSegmentSet());
 
 /*
@@ -3121,7 +3116,6 @@ declare function get_old_ClassDeclaration_TrackingGroup():
 declare function use_current_ClassDeclaration_TrackingGroup(
     use: TypeOnly<current.TrackingGroup>);
 use_current_ClassDeclaration_TrackingGroup(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TrackingGroup());
 
 /*
