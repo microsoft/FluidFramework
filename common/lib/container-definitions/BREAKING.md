@@ -5,14 +5,18 @@
 The `IProxyLoader` interface has been deprecated in 0.48 and will be removed in an upcoming release.
 
 ## 0.49.1000 Breaking changes
-- [New values and labels added to ConnectionState types](#new-values-and-labels-added-to-connectionstate-types)
+- [IContainer.connectionState yields finer-grained ConnectionState values](#icontainerconnectionstate-yields-finer-grained-connectionstate-values)
 
-### New values and labels added to ConnectionState types
-The new values are `ConnectionState.Pending` (has the same value as `ConnectionState.Connecting`, which is being deprecated)
-and `ConnectionState.TryingToConnect`.
+### IContainer.connectionState yields finer-grained ConnectionState values
+The `ConnectionState` types have been updated to include a new state which previously was
+encompassed by the `Disconnected` state. The new state is `EstablishingConnection` and indicates that the container is
+attempting to connect to the ordering service, but is not yet connected.
 
-Note: The existing `IContainer` API surface that uses `ConnectionState` is NOT breaking in this release,
-since the new value `TryingToConnect` is excluded where the `ConnectionState` type is used (one place).
+Any logic based on the `Disconnected` state (e.g. checking the value of `IContainer.connectionState`)
+should be updated depending on how you want to treat this new `EstablishingConnection` state.
+
+Additionally, please note that the `Connecting` state is being renamed to `CatchingUp`.
+`ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.EstablishingConnection` instead.
 
 ## 0.45 Breaking changes
 - [ContainerErrorType.clientSessionExpiredError added](#ContainerErrorType.clientSessionExpiredError-added)

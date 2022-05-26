@@ -128,6 +128,7 @@ export interface IContainerEvents extends IEvent {
 
 /**
  * Namespace for the different connection states a container can be in
+ * PLEASE NOTE: The sequence of the numerical values does no correspond to the typical connection state progression
  */
 export namespace ConnectionState {
     /**
@@ -137,8 +138,9 @@ export namespace ConnectionState {
 
     /**
      * Disconnected but trying to establish a new connection
+     * PLEASE NOTE that this numerical value falls out of the order you may expect for this state
      */
-     export type TryingToConnect = 0.5;
+     export type EstablishingConnection = 3;
 
      /**
      * The document has an inbound connection but is still pending for outbound deltas
@@ -159,7 +161,7 @@ export namespace ConnectionState {
  */
 export type ConnectionState =
     | ConnectionState.Disconnected
-    | ConnectionState.TryingToConnect
+    | ConnectionState.EstablishingConnection
     | ConnectionState.Pending
     | ConnectionState.Connecting
     | ConnectionState.Connected;
@@ -262,9 +264,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     request(request: IRequest): Promise<IResponse>;
 
     /**
-     * Provides the current connected state of the container
+     * Provides the current state of the container's connection to the ordering service
      */
-    readonly connectionState: Exclude<ConnectionState, ConnectionState.TryingToConnect>;
+    readonly connectionState: ConnectionState;
 
     /**
      * Boolean indicating whether the container is currently connected or not
