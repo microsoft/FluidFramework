@@ -715,7 +715,7 @@ export class IdCompressor {
 				cluster.overrides ??= new Map();
 
 				const inversionKey = IdCompressor.createInversionKey(override);
-				const existingIds = this.getExistingIdsForNewOverride(inversionKey, true);
+				const existingIds = this.getExistingIdsForNewOverride(inversionKey, true, false);
 				let overrideForCluster: string | FinalCompressedId;
 				let associatedLocal: LocalCompressedId | undefined;
 				if (existingIds !== undefined) {
@@ -928,10 +928,10 @@ export class IdCompressor {
 	 * @returns an existing ID if one already exists for `override`, and a new local ID otherwise. The returned ID is in session space.
 	 */
 	public generateCompressedId(override?: string): SessionSpaceCompressedId {
-		return this.generateCompressedIdI(override, true);
+		return this.getOrCreateCompressedId(override, true);
 	}
 
-	private generateCompressedIdI(
+	private getOrCreateCompressedId(
 		override: string | undefined,
 		checkOverrideCollisions: boolean
 	): SessionSpaceCompressedId {
@@ -994,7 +994,7 @@ export class IdCompressor {
 			remoteSessionId !== this.localSessionId,
 			'Attempted to generate remote ID for local session. Use `generateCompressedId` instead'
 		);
-		return this.generateCompressedIdI(this.decompressRemote(id, remoteSessionId), false);
+		return this.getOrCreateCompressedId(this.decompressRemote(id, remoteSessionId), false);
 	}
 
 	/**
