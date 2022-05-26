@@ -129,17 +129,19 @@ export class BroadcasterLambda implements IPartitionLambda {
             }
 
             const value = baseMessage as INackMessage | ISequencedOperationMessage | ITicketedSignalMessage;
-
-            // if (value.type === SequencedOperationType) {
-            //     const lumberjackProperties = {
-            //         [BaseTelemetryProperties.tenantId]: value.tenantId,
-            //         [BaseTelemetryProperties.documentId]: value.documentId,
-            //         ClientId: value.operation.clientId,
-            //         clientSequenceNumber: value.operation.clientSequenceNumber,
-            //         sequenceNumber: value.operation.sequenceNumber,
-            //     };
-            //     Lumberjack.info(`Message received by broadcaster.`, lumberjackProperties);
-            // }
+            // message received by broadcaster
+            if (value.type === SequencedOperationType) {
+                const timeNow = Date.now();
+                 if (!value.operation.traces) {
+                        value.operation.traces = [];
+                 }
+                 value.operation.traces.push(
+                     {
+                         action: "start",
+                         service: "broadcaster",
+                         timestamp: timeNow,
+                    });
+            }
 
             if (this.serviceConfiguration.broadcaster.includeEventInMessageBatchName) {
                 topic += event;

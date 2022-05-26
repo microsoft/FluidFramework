@@ -10,7 +10,10 @@ import { PacketType } from "socket.io-parser";
 import * as uuid from "uuid";
 
 import { promiseTimeout } from "@fluidframework/server-services-client";
-// import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+
+const getRandomInt = (range: number) =>
+    Math.floor(Math.random() * range);
 
 export interface ISocketIoRedisConnection {
     publish(channel: string, message: string): Promise<void>;
@@ -333,32 +336,37 @@ export class RedisSocketIoAdapter extends Adapter {
             const opts: BroadcastOptions = {
                 rooms: new Set([room]),
             };
-            // const channelMetadata = JSON.stringify(channel).split("/");
-            // const tenantId = channelMetadata[1].replace("#", "");
-            // const documentId = channelMetadata[2].replace("#", "").replace("\"", "");
-            // const lumberjackProperties = {
-            //     [BaseTelemetryProperties.tenantId]: tenantId,
-            //     [BaseTelemetryProperties.documentId]: documentId,
-            //     // clientId: element.clientId,
-            //     // clientSequenceNumber: element.clientSequenceNumber,
-            //     // sequenceNumber: element.sequenceNumber,
-            // };
-            // Lumberjack.info(`Message received by RedisSocketAdapter. msg count in packet=
-            // ${packet.data[2].length}. packet=${JSON.stringify(packet).substring(0, 600)}`, lumberjackProperties);
-            // if (packet.data && packet.data.length > 1) {
-            //     if (packet.data[2] && packet.data[2].length > 0) {
-            //         packet.data[2].forEach((element) => {
-            //             const lumberjackProperties = {
-            //                 [BaseTelemetryProperties.tenantId]: tenantId,
-            //                 [BaseTelemetryProperties.documentId]: documentId,
-            //                 clientId: element.clientId,
-            //                 clientSequenceNumber: element.clientSequenceNumber,
-            //                 sequenceNumber: element.sequenceNumber,
-            //             };
-            //             Lumberjack.info(`Message received by RedisSocketAdapter.`, lumberjackProperties);
-            //         });
-            //     }
-            // }
+            // Message received by RedisSocketAdapter.
+            const time = Date.now();
+            if (packet.data && packet.data.length > 1) {
+                if (packet.data[2] && packet.data[2].length > 0) {
+                    packet.data[2].forEach((element) => {
+                        if (!element.traces) {
+                            element.traces = [];
+                         }
+                         element.traces.push(
+                             {
+                                 action: "start",
+                                 service: "redisAdapter",
+                                 timestamp: time,
+                             });
+                        if (getRandomInt(600) === 0) {
+                            const channelMetadata = JSON.stringify(channel).split("/");
+                            const tenantId = channelMetadata[1].replace("#", "");
+                            const documentId = channelMetadata[2].replace("#", "").replace("\"", "");
+                            const lumberjackProperties = {
+                                [BaseTelemetryProperties.tenantId]: tenantId,
+                                [BaseTelemetryProperties.documentId]: documentId,
+                                clientId: element.clientId,
+                                clientSequenceNumber: element.clientSequenceNumber,
+                                sequenceNumber: element.sequenceNumber,
+                                traces: element.traces,
+                            };
+                            Lumberjack.info(`Message received by RedisSocketAdapter.`, lumberjackProperties);
+                        }
+                    });
+                }
+            }
             // only allow room broadcasts
             super.broadcast(packet, opts);
 
