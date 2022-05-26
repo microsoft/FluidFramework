@@ -34,7 +34,7 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.49.1000-64278",
+    "@fluidframework/container-definitions": "^0.49.1000-69584",
     "@fluidframework/fluid-static": "^0.60.1000",
     "@fluidframework/map": "^0.60.1000",
     "@fluidframework/sequence": "^0.60.1000"
