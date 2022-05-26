@@ -66,7 +66,6 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * entire DataStore instead of re-sending the entire subtree. The same concept applies for a DDS.
  * An example of handle would be: '/<DataStoreId>/<DDSId>'.
  * Notice that handles are optimizations from the Fluid Framework Runtime and the DDS is not aware of the handles.
- * Also, the use of Summary Handles is currently restricted to DataStores and DDS.
  */
 export interface ISummaryHandle {
     type: SummaryType.Handle;
