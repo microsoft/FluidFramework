@@ -325,38 +325,80 @@ describe("Quorum", () => {
             quorum2.connect(services2);
         });
 
-        // Nothing should really happen on transition to disconnect.  Pending remote proposals will
-        // eventually resolve but we don't know when yet.  Unack'd local proposals might get an ack
-        // or be dropped but we don't know which yet.  Pending local proposals will eventually resolve
-        // but we don't know when yet.
+        // TODO: Consider if there's any value in distinctly testing these scenarios for acceptance via
+        // accept ops vs. via the last expected signoff disconnecting.
+        it("Doesn't resubmit accept ops that were sent before offline", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "expected");
+            // This should cause quorum2 to produce an accept op but...
+            containerRuntimeFactory.processSomeMessages(1);
+            // We disconnect before it gets processed.
+            containerRuntime2.connected = false;
+            containerRuntime2.connected = true;
+            // Processing an unexpected accept will error and fail the test
+            containerRuntimeFactory.processAllMessages();
+        });
 
-        // Nothing special happens during disconnected state.  We can still issue proposals against
-        // the latest state of the Quorum just like we were in connected state -- these will be
-        // resubmitted when we reconnect but nothing will resolve while we're still offline.
+        // eslint-disable-next-line max-len
+        it.skip("Doesn't resubmit unsequenced proposals that were sent before offline but are futile after reconnect", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "unexpected");
+            containerRuntime1.connected = false;
+            containerRuntimeFactory.processAllMessages();
+            quorum2.set(targetKey, "expected");
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+            // TODO: This fails because MockContainerRuntimeFactoryForReconnection does not buffer remote ops
+            // while in disconnected state.
+            assert.strictEqual(quorum1.get(targetKey), undefined, "Quorum1 should not see any value");
+            containerRuntime1.connected = true;
+            // TODO: Need to inspect here that no ops are added to the queue.
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+        });
 
-        // Upon transitioning back to connected state we should verify:
-        // 1.  We don't resubmit accept ops.
-        // 2.  We don't resubmit now-futile set ops (?).
-        // 3.  Proposals submitted while offline that encountered no conflict upon reconnect go pending.
-        // 4.  Proposals submitted while offline that encountered conflict get dropped.
-        // 5.  Pending remote proposals that resolved while we were offline get resolved.
-        // 6.  Pending remote proposals that remained pending while we were offline remain pending
-        //     and resolve later after the remaining accepts come in.
-        // 7.  Unack'd local proposals that weren't sequenced fail in a reasonable way (e.g. correctly
-        //     resolve the promise if we have a promise-based API).
-        // 8.  Unack'd local proposals that were sequenced and were resolved while we were offline
-        //     get resolved
-        // 9.  Unack'd local proposals that were sequenced and remained pending while we were offline
-        //     remain pending and resolve later after the remaining accepts come in.
-        // 10. Pending local proposals that resolved while we were offline get resolved.
-        // 11. Pending local proposals that remained pending while we were offline remain pending
-        //     and resolve later after the remaining accepts come in.
-        // Potentially also verify all the above for the case that the proposal was accepted via
-        // accept ops vs. being accepted because our client leaving triggered the acceptance?
-        describe("Behavior transitioning to connected", () => {
-            it("Can do something", async () => {
-                assert.strict(true);
-            });
+        // eslint-disable-next-line max-len
+        it("Unsequenced proposals sent before offline and still valid after reconnect are accepted after reconnect", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "expected");
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+        });
+
+        // eslint-disable-next-line max-len
+        it.skip("Doesn't resubmit unsequenced proposals that were sent during offline but are futile after reconnect", async () => {
+            // TODO: Similar to above, can't really test this without buffering remote ops.
+            assert.strict(true);
+        });
+
+        // eslint-disable-next-line max-len
+        it("Unsequenced proposals sent during offline and still valid after reconnect are accepted after reconnect", async () => {
+            const targetKey = "key";
+            containerRuntime1.connected = false;
+            quorum1.set(targetKey, "expected");
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+        });
+
+        // eslint-disable-next-line max-len
+        it.skip("Sequenced proposals that were accepted during offline have correct state after reconnect", async () => {
+            // TODO: Similar to above, can't really test this without buffering remote ops.
+            // TODO: To test this properly, we need to be able to "go offline" before processing the ack, but
+            // still allow other clients to see and process the op.
+            assert.strict(true);
+        });
+
+        // eslint-disable-next-line max-len
+        it.skip("Sequenced proposals that remained pending during offline have correct state after reconnect", async () => {
+            // TODO: Similar to above, can't really test this without buffering remote ops.
+            // TODO: To test this properly, we need to be able to "go offline" before processing the ack, but
+            // still allow other clients to see and process the op.
+            assert.strict(true);
         });
     });
 });

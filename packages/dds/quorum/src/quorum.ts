@@ -448,11 +448,26 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         const quorumOp: IQuorumOperation = content;
         // Filter out accept messages - if we're coming back from a disconnect, our acceptance is never required
         // because we're implicitly removed from the list of expected accepts.
-        if (quorumOp.type !== "accept") {
-            this.submitLocalMessage(quorumOp, localOpMetadata);
+        if (quorumOp.type === "accept") {
+            return;
         }
-        // TODO: Maybe also filter out futile submissions, i.e. if another proposal was accepted while we were
-        // offline?
+
+        // Filter out set messages that have no chance of being accepted because there's another value pending
+        // or another value was accepted while we were disconnected.
+        const currentValue = this.values.get(quorumOp.key);
+        if (
+            currentValue !== undefined
+            && (
+                currentValue.pending !== undefined
+                || quorumOp.refSeq < currentValue.accepted?.sequenceNumber
+            )
+        ) {
+            // TODO: If set() returns a promise we will need to resolve it false for invalid proposals.
+            return;
+        }
+
+        // Otherwise we can resubmit
+        this.submitLocalMessage(quorumOp, localOpMetadata);
     }
 
     /**
