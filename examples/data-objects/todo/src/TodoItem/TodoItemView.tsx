@@ -3,105 +3,66 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@fluid-experimental/react-inputs";
-import { SharedString } from "@fluidframework/sequence";
-import React from "react";
+import { CollaborativeInput, CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
+import React, { useEffect, useState } from "react";
 import { TodoItem } from "./TodoItem";
-import { TodoItemDetailsView } from "./TodoItemDetailsView";
+
+// eslint-disable-next-line import/no-unassigned-import
+import "./style.css";
 
 interface TodoItemViewProps {
-    todoItemModel: TodoItem;
+    readonly todoItemModel: TodoItem;
+    readonly className?: string;
 }
 
-interface TodoItemViewState {
-    checked: boolean;
-    innerComponentVisible: boolean;
-    absoluteUrl: string | undefined;
-}
+export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
+    const { todoItemModel, className } = props;
+    const itemText = todoItemModel.getText();
+    const [checked, setChecked] = useState<boolean>(todoItemModel.getCheckedState());
+    const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
 
-export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState> {
-    private readonly itemText: SharedString;
-    private readonly buttonStyle = {
-        height: "25px",
-        marginLeft: "2px",
-        marginRight: "2px",
-        width: "35px",
+    useEffect(() => {
+        const refreshCheckedStateFromModel = () => {
+            setChecked(todoItemModel.getCheckedState());
+        };
+        todoItemModel.on("checkedStateChanged", refreshCheckedStateFromModel);
+        refreshCheckedStateFromModel();
+
+        return () => {
+            todoItemModel.off("checkedStateChanged", refreshCheckedStateFromModel);
+        };
+    }, [todoItemModel]);
+
+    const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
+        todoItemModel.setCheckedState(e.target.checked);
     };
 
-    constructor(props: TodoItemViewProps) {
-        super(props);
-
-        this.itemText = this.props.todoItemModel.getTodoItemText();
-
-        this.state = {
-            checked: this.props.todoItemModel.getCheckedState(),
-            innerComponentVisible: false,
-            absoluteUrl: this.props.todoItemModel.absoluteUrl,
-        };
-
-        this.setCheckedState = this.setCheckedState.bind(this);
-    }
-
-    public componentDidMount() {
-        this.props.todoItemModel.on("stateChanged", () => {
-            this.setState({
-                checked: this.props.todoItemModel.getCheckedState(),
-                absoluteUrl: this.props.todoItemModel.absoluteUrl,
-            });
-        });
-    }
-
-    private setCheckedState(e: React.ChangeEvent<HTMLInputElement>): void {
-        this.props.todoItemModel.setCheckedState(e.target.checked);
-    }
-
-    public render() {
-        return (
-            <div className="todo-item">
-                <h2>
-                    <input
-                        type="checkbox"
-                        name={this.props.todoItemModel.handle.absolutePath}
-                        checked={this.state.checked}
-                        onChange={this.setCheckedState} />
-                    <CollaborativeInput
-                        sharedString={this.itemText}
-                        style={{
-                            border: "none",
-                            fontFamily: "inherit",
-                            fontSize: 20,
-                            marginBottom: 5,
-                            marginTop: 5,
-                            outline: "none",
-                            width: "inherit",
-                        }} />
-                    <button
-                        name="toggleInnerVisible"
-                        style={this.buttonStyle}
-                        onClick={() => {
-                            this.setState({ innerComponentVisible: !this.state.innerComponentVisible });
-                        }}>
-                        {this.state.innerComponentVisible ? "▲" : "▼"}
-                    </button>
-                    <button
-                        name="OpenSubComponent"
-                        id={this.state.absoluteUrl}
-                        style={this.buttonStyle}
-                        onClick={() => window.open(this.state.absoluteUrl, "_blank")}
-                        disabled={this.state.absoluteUrl === undefined}>↗
-                    </button>
-                    <button
-                        style={this.buttonStyle}
-                        onClick={() => alert("Implement Delete")}>X</button>
-                </h2>
-                {
-                    // If the content is visible we will show a button or a component
-                    this.state.innerComponentVisible &&
-                    <TodoItemDetailsView
-                        todoItemModel={this.props.todoItemModel}
-                    />
-                }
-            </div>
-        );
-    }
-}
+    return (
+        <div className={`todo-item${ className !== undefined ? ` ${ className }` : ""}`}>
+            <h2 className="todo-item-header">
+                <input
+                    type="checkbox"
+                    className="todo-item-checkbox"
+                    checked={checked}
+                    onChange={checkChangedHandler} />
+                <button
+                    className="todo-item-expand-button"
+                    name="toggleDetailsVisible"
+                    onClick={ () => { setDetailsVisible(!detailsVisible); } }
+                >{detailsVisible ? "▲" : "▼"}</button>
+                <CollaborativeInput
+                    sharedString={itemText}
+                    className="todo-item-input"
+                />
+            </h2>
+            {
+                // The details can be shown or hidden
+                detailsVisible &&
+                <CollaborativeTextArea
+                    className="todo-item-details"
+                    sharedStringHelper={new SharedStringHelper(todoItemModel.getDetailedText())}
+                />
+            }
+        </div>
+    );
+};
