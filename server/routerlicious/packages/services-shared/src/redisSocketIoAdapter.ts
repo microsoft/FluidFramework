@@ -362,6 +362,7 @@ export class RedisSocketIoAdapter extends Adapter {
                                     clientSequenceNumber: element.clientSequenceNumber,
                                     sequenceNumber: element.sequenceNumber,
                                     traces: element.traces,
+                                    opType: element.type,
                                 };
                                 Lumberjack.info(`Message received by RedisSocketAdapter.`, lumberjackProperties);
                         });
