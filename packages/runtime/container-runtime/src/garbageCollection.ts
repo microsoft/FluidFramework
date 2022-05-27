@@ -38,6 +38,7 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 
+import * as semver from "semver";
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
 import { pkgVersion } from "./packageVersion";
@@ -1232,18 +1233,8 @@ function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollec
     return sortedGCState;
 }
 
-// TODO: maybe move this function out of here to a util function.
-export function currentVersionGreaterOrEqualToVersion(currentPackageVersion: string, packageVersion: string) {
-    const current = currentPackageVersion.split(".").map((stringVersion) => Number.parseInt(stringVersion, 10));
-    const version = packageVersion.split(".").map((stringVersion) => Number.parseInt(stringVersion, 10));
-    assert(current.length === version.length && current.length === 3, "Expected semper versions!");
-
-    const currentGreaterOrEqualToVersion =
-        current[0] > version[0] ||
-        current[0] === version[0] && current[1] > version[1] ||
-        current[0] === version[0] && current[1] === version[1] && current[2] >= version[2];
-
-    return currentGreaterOrEqualToVersion;
+function currentVersionGreaterOrEqualToVersion(currentPackageVersion: string, packageVersion: string) {
+    return semver.compare(currentPackageVersion, packageVersion) >= 0;
 }
 
 /**

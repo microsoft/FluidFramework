@@ -19,7 +19,6 @@ import {
 import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
-    currentVersionGreaterOrEqualToVersion,
     defaultSessionExpiryDurationMs,
     GarbageCollector,
     gcBlobPrefix,
@@ -892,33 +891,38 @@ describe("Garbage Collection Tests", () => {
 
     describe("No changes to GC between summaries", () => {
         const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+        const settings = { "Fluid.GarbageCollection.TrackGCBlobStateKey": "true" };
+        const trackStateVersionKey = "Fluid.GarbageCollection.TrackGCBlobStateVersionKey";
+        const fullTree = false;
+        const trackState = true;
+        let garbageCollector: IGarbageCollector;
 
-        afterEach(() => {
-            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
-        });
-
-        it("No changes to GC between summaries creates a blob handle when no version specified", async () => {
-            const settings = { "Fluid.GarbageCollection.TrackGCBlobStateKey": "true" };
+        beforeEach(() => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
             // Initialize nodes A & D.
             defaultGCData.gcNodes = {};
             defaultGCData.gcNodes["/"] = nodes;
-            const fullTree = false;
-            const trackState = true;
-            const garbageCollector = createGarbageCollector();
+        });
+
+        afterEach(() => {
+            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+        });
+
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const parseNothing: ReadAndParseBlob = async <T>() => { const x: T = {} as T; return x; };
+
+        it("No changes to GC between summaries creates a blob handle when no version specified", async () => {
+            garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({ runGC: true });
-            assert(gcBlobRootKey !== undefined, `gcBlobRootKey undefined!`);
             const tree1 = garbageCollector.summarize(fullTree, trackState);
             assert(tree1 !== undefined, "Expected a tree on first summarize");
             const gcBlobType = tree1.summary.tree[gcBlobRootKey].type;
             assert(gcBlobType === SummaryType.Blob, `Expected a SummaryType.Blob on first summarize, got ${gcBlobType}`);
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const parse: ReadAndParseBlob = async <T>() => { const x: T = {} as T; return x; };
             await garbageCollector.latestSummaryStateRefreshed(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parse,
+                parseNothing,
             );
 
             await garbageCollector.collectGarbage({ runGC: true });
@@ -929,30 +933,17 @@ describe("Garbage Collection Tests", () => {
         });
 
         it("No changes to GC between summaries creates a blob handle when greater than minimum version", async () => {
-            const settings = {
-                "Fluid.GarbageCollection.TrackGCBlobStateKey": "true",
-                "Fluid.GarbageCollection.TrackGCBlobStateVersionKey": "0.59.1000",
-            };
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
-            // Initialize nodes A & D.
-            defaultGCData.gcNodes = {};
-            defaultGCData.gcNodes["/"] = nodes;
-            const fullTree = false;
-            const trackState = true;
-            const garbageCollector = createGarbageCollector();
+            settings[trackStateVersionKey] = "0.59.1000";
+            garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({ runGC: true });
-            assert(gcBlobRootKey !== undefined, `gcBlobRootKey undefined!`);
             const tree1 = garbageCollector.summarize(fullTree, trackState);
             assert(tree1 !== undefined, "Expected a tree on first summarize");
             const gcBlobType = tree1.summary.tree[gcBlobRootKey].type;
             assert(gcBlobType === SummaryType.Blob, `Expected a SummaryType.Blob on first summarize, got ${gcBlobType}`);
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const parse: ReadAndParseBlob = async <T>() => { const x: T = {} as T; return x; };
             await garbageCollector.latestSummaryStateRefreshed(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parse,
+                parseNothing,
             );
 
             await garbageCollector.collectGarbage({ runGC: true });
@@ -963,36 +954,19 @@ describe("Garbage Collection Tests", () => {
         });
 
         it("No changes to GC between summaries creates a blob when less than minimum version", async () => {
-            const settings = {
-                "Fluid.GarbageCollection.TrackGCBlobStateKey": "true",
-                "Fluid.GarbageCollection.TrackGCBlobStateVersionKey": `${pkgVersion}1`,
-            };
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
-            const trackVersion = mc.config.getString("Fluid.GarbageCollection.TrackGCBlobStateVersionKey");
-            assert(trackVersion !== undefined, `Expected trackVersion`);
-            const versionCheck = currentVersionGreaterOrEqualToVersion(pkgVersion, trackVersion);
-            assert(versionCheck === false, `Expected version Check To Fail current: ${pkgVersion} - version: ${trackVersion}`);
+            settings[trackStateVersionKey] = `1${pkgVersion}`;
+            garbageCollector = createGarbageCollector();
 
-            // Initialize nodes A & D.
-            defaultGCData.gcNodes = {};
-            defaultGCData.gcNodes["/"] = nodes;
-            const fullTree = false;
-            const trackState = true;
-            const garbageCollector = createGarbageCollector();
             assert(garbageCollector.trackGCBlobState === false, `Expected no tracking! ${garbageCollector.trackGCBlobState}, ${pkgVersion} - ${mc.config.getString("Fluid.GarbageCollection.TrackGCBlobStateVersionKey")}`);
 
             await garbageCollector.collectGarbage({ runGC: true });
-            assert(gcBlobRootKey !== undefined, `gcBlobRootKey undefined!`);
             const tree1 = garbageCollector.summarize(fullTree, trackState);
             assert(tree1 !== undefined, "Expected a tree on first summarize");
             const gcBlobType = tree1.summary.tree[gcBlobRootKey].type;
             assert(gcBlobType === SummaryType.Blob, `Expected a SummaryType.Blob on first summarize, got ${gcBlobType}`);
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const parse: ReadAndParseBlob = async <T>() => { const x: T = {} as T; return x; };
             await garbageCollector.latestSummaryStateRefreshed(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parse,
+                parseNothing,
             );
 
             await garbageCollector.collectGarbage({ runGC: true });
@@ -1004,30 +978,18 @@ describe("Garbage Collection Tests", () => {
         });
 
         it("No changes to GC between summaries creates a blob handle when equal to minimum version", async () => {
-            const settings = {
-                "Fluid.GarbageCollection.TrackGCBlobStateKey": "true",
-                "Fluid.GarbageCollection.TrackGCBlobStateVersionKey": `${pkgVersion}`,
-            };
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
-            // Initialize nodes A & D.
-            defaultGCData.gcNodes = {};
-            defaultGCData.gcNodes["/"] = nodes;
-            const fullTree = false;
-            const trackState = true;
-            const garbageCollector = createGarbageCollector();
+            settings[trackStateVersionKey] = `${pkgVersion}`;
+            garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({ runGC: true });
-            assert(gcBlobRootKey !== undefined, `gcBlobRootKey undefined!`);
             const tree1 = garbageCollector.summarize(fullTree, trackState);
             assert(tree1 !== undefined, "Expected a tree on first summarize");
             const gcBlobType = tree1.summary.tree[gcBlobRootKey].type;
             assert(gcBlobType === SummaryType.Blob, `Expected a SummaryType.Blob on first summarize, got ${gcBlobType}`);
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const parse: ReadAndParseBlob = async <T>() => { const x: T = {} as T; return x; };
+
             await garbageCollector.latestSummaryStateRefreshed(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parse,
+                parseNothing,
             );
 
             await garbageCollector.collectGarbage({ runGC: true });
@@ -1036,28 +998,5 @@ describe("Garbage Collection Tests", () => {
             const gcBlobHandleType = tree2.summary.tree[gcBlobRootKey].type;
             assert(gcBlobHandleType === SummaryType.Handle, `Expected a SummaryType.Handle on second summarize, got ${gcBlobHandleType}`);
         });
-    });
-
-    // TODO: make this a util test.
-    describe("currentVersionGreaterOrEqualToVersion works as expected", () => {
-        const test = (current: string, version: string, greaterOrEqualTo: boolean) => {
-            it(`current: ${current} ${greaterOrEqualTo ? ">=" : "<"} version: ${version}`, () => {
-                assert(
-                    currentVersionGreaterOrEqualToVersion(current, version) === greaterOrEqualTo,
-                    `Current: ${current}, version: ${version}, expected: ${greaterOrEqualTo}`,
-                );
-            });
-        };
-        test("0.0.0", "0.0.0", true);
-        test("0.0.1", "0.0.0", true);
-        test("0.1.0", "0.0.0", true);
-        test("0.1.0", "0.0.1", true);
-        test("1.0.0", "0.0.0", true);
-        test("1.0.0", "0.1.1", true);
-        test("0.0.0", "0.0.1", false);
-        test("0.0.0", "0.1.0", false);
-        test("0.0.1", "0.1.0", false);
-        test("0.0.0", "1.0.0", false);
-        test("0.1.1", "1.0.0", false);
     });
 });
