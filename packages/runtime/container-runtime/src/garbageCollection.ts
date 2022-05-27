@@ -117,6 +117,7 @@ interface IUnreferencedEvent {
     type: GCNodeType;
     age: number;
     timeout: number;
+    gcRunCount: number;
     lastSummaryTime?: number;
     externalRequest?: boolean;
     viaHandle?: boolean;
@@ -253,7 +254,8 @@ export class GarbageCollector implements IGarbageCollector {
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
         existing: boolean,
-        metadata?: IContainerRuntimeMetadata,
+        metadata: IContainerRuntimeMetadata | undefined,
+        summarizerClient: boolean,
     ): IGarbageCollector {
         return new GarbageCollector(
             provider,
@@ -265,6 +267,7 @@ export class GarbageCollector implements IGarbageCollector {
             baseLogger,
             existing,
             metadata,
+            summarizerClient,
         );
     }
 
@@ -301,6 +304,7 @@ export class GarbageCollector implements IGarbageCollector {
      * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
      * disabled via runtime options or feature flags.
      */
+
     public readonly shouldRunGC: boolean;
     /**
      * Tracks if sweep phase should run or not. Even if the sweep phase is enabled for a document (see sweepEnabled), it
@@ -359,6 +363,9 @@ export class GarbageCollector implements IGarbageCollector {
     // Queue for unreferenced events that should be logged the next time GC runs.
     private readonly pendingEventsQueue: IUnreferencedEvent[] = [];
 
+    // The number of times GC has run on this instance of GarbageCollector.
+    private gcRunCount = 0;
+
     protected constructor(
         private readonly runtime: IGarbageCollectionRuntime,
         private readonly gcOptions: IGCRuntimeOptions,
@@ -370,10 +377,12 @@ export class GarbageCollector implements IGarbageCollector {
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
         existing: boolean,
-        metadata?: IContainerRuntimeMetadata,
+        metadata: IContainerRuntimeMetadata | undefined,
+        private readonly summarizerClient: boolean = true,
     ) {
         this.mc = loggerToMonitoringContext(
-            ChildLogger.create(baseLogger, "GarbageCollector"));
+            ChildLogger.create(baseLogger, "GarbageCollector", { all: { gcRunCount: () => this.gcRunCount } }),
+        );
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -602,8 +611,8 @@ export class GarbageCollector implements IGarbageCollector {
             return baseGCDetailsMap;
         });
 
-        // Initialize the base state. The base GC data is used to detect and log when inactive / deleted objects are
-        // used in the container.
+        // Initialize the base state that is used to detect when inactive objects are used. It is explicitly initialized
+        // for non-summarizer clients as they don't run GC. Summarizer clients do this when GC runs first time.
         if (this.shouldRunGC) {
             this.initializeBaseStateP.catch((error) => {
                 const dpe = DataProcessingError.wrapIfUnrecognized(
@@ -637,10 +646,13 @@ export class GarbageCollector implements IGarbageCollector {
         },
     ): Promise<IGCStats> {
         const {
-            logger = this.mc.logger,
             runSweep = this.shouldRunSweep,
             fullGC = this.gcOptions.runFullGC === true || this.summaryStateNeedsReset,
         } = options;
+
+        const logger = options.logger
+            ? ChildLogger.create(options.logger, undefined, { all: { gcRunCount: () => this.gcRunCount } })
+            : this.mc.logger;
 
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
             await this.initializeBaseStateP;
@@ -676,6 +688,9 @@ export class GarbageCollector implements IGarbageCollector {
             if (this.testMode) {
                 this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
             }
+
+            this.gcRunCount++;
+
             event.end({ ...gcStats });
             return gcStats;
         },
@@ -1095,7 +1110,7 @@ export class GarbageCollector implements IGarbageCollector {
      * Logs an event if a node is inactive and is used.
      */
     private logIfInactive(
-        eventSuffix: "Changed" | "Loaded" | "Revived",
+        eventType: "Changed" | "Loaded" | "Revived",
         nodeId: string,
         currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs(),
         packagePath?: readonly string[],
@@ -1114,18 +1129,26 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        const eventName = `inactiveObject_${eventSuffix}`;
+        // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
+        // summarizer clients if they are based off of user actions (such as scrolling to content for these objects).
+        if (!this.summarizerClient && eventType !== "Loaded") {
+            return;
+        }
+
+        const eventName = `inactiveObject_${eventType}`;
         // We log a particular event for a given node only once so that it is not too noisy.
         const uniqueEventId = `${nodeId}-${eventName}`;
         const nodeState = this.unreferencedNodesState.get(nodeId);
         if (nodeState?.inactive && !this.loggedUnreferencedEvents.has(uniqueEventId)) {
             this.loggedUnreferencedEvents.add(uniqueEventId);
+            // Save all the properties at this point in time so that if we log this later, these values are preserved.
             const event: IUnreferencedEvent = {
                 eventName,
                 id: nodeId,
                 type: nodeType,
                 age: currentReferenceTimestampMs - nodeState.unreferencedTimestampMs,
                 timeout: this.inactiveTimeoutMs,
+                gcRunCount: this.gcRunCount,
                 lastSummaryTime: this.getLastSummaryTimestampMs(),
                 externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
                 viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],

@@ -88,6 +88,7 @@ describe("Garbage Collection Tests", () => {
             mockLogger,
             metadata !== undefined /* existing */,
             metadata,
+            true /* summarizerClient */,
         );
     };
 
@@ -544,6 +545,40 @@ describe("Garbage Collection Tests", () => {
                     { eventName: loadedEvent, timeout: inactiveTimeoutOverrideMs, id: nodes[3], pkg: eventPkg },
                 ]),
                 "inactive events not generated as expected",
+            );
+        });
+    });
+
+    describe("GC run count", () => {
+        const gcEndEvent = "GarbageCollector:GarbageCollection_end";
+
+        it("increments GC run count in logged events correctly", async () => {
+            const garbageCollector = createGarbageCollector();
+
+            await garbageCollector.collectGarbage({});
+            assert(
+                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 1 }]),
+                "gcRunCount should be 1 for the first gcEndEvent",
+            );
+
+            await garbageCollector.collectGarbage({});
+            assert(
+                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 2 }]),
+                "gcRunCount should be 2 for the second gcEndEvent",
+            );
+
+            await garbageCollector.collectGarbage({});
+            assert(
+                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 3 }]),
+                "gcRunCount should be 3 for the third gcEndEvent",
+            );
+
+            // The GC run count should reset for new garbage collector.
+            const garbageCollector2 = createGarbageCollector();
+            await garbageCollector2.collectGarbage({});
+            assert(
+                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 1 }]),
+                "gcRunCount should be 1 for the first gcEndEvent in new garbage collector",
             );
         });
     });
