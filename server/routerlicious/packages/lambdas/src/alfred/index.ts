@@ -28,7 +28,7 @@ import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
 import * as core from "@fluidframework/server-services-core";
 import {
-    BaseTelemetryProperties,
+    // BaseTelemetryProperties,
     CommonProperties,
     LumberEventName,
     Lumberjack,
@@ -74,7 +74,7 @@ const handleServerError = async (logger: core.ILogger, errorMessage: string, doc
     throw new NetworkError(500, "Failed to connect client to document.");
 };
 
-const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
+// const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
 
 // const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
@@ -135,36 +135,36 @@ function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string,
 /**
  * @returns ThrottlingError if throttled; undefined if not throttled or no throttler provided.
  */
-function checkThrottle(
-    throttler: core.IThrottler | undefined,
-    throttleId: string,
-    tenantId: string,
-    logger?: core.ILogger): core.ThrottlingError | undefined {
-    if (!throttler) {
-        return;
-    }
+// function checkThrottle(
+//     throttler: core.IThrottler | undefined,
+//     throttleId: string,
+//     tenantId: string,
+//     logger?: core.ILogger): core.ThrottlingError | undefined {
+//     if (!throttler) {
+//         return;
+//     }
 
-    try {
-        throttler.incrementCount(throttleId);
-    } catch (error) {
-        if (error instanceof core.ThrottlingError) {
-            return error;
-        } else {
-            logger?.error(
-                `Throttle increment failed: ${safeStringify(error, undefined, 2)}`,
-                {
-                    messageMetaData: {
-                        key: throttleId,
-                        eventName: "throttling",
-                    },
-                });
-            Lumberjack.error(`Throttle increment failed`, {
-                [CommonProperties.telemetryGroupName]: "throttling",
-                [BaseTelemetryProperties.tenantId]: tenantId,
-            }, error);
-        }
-    }
-}
+//     try {
+//         throttler.incrementCount(throttleId);
+//     } catch (error) {
+//         if (error instanceof core.ThrottlingError) {
+//             return error;
+//         } else {
+//             logger?.error(
+//                 `Throttle increment failed: ${safeStringify(error, undefined, 2)}`,
+//                 {
+//                     messageMetaData: {
+//                         key: throttleId,
+//                         eventName: "throttling",
+//                     },
+//                 });
+//             Lumberjack.error(`Throttle increment failed`, {
+//                 [CommonProperties.telemetryGroupName]: "throttling",
+//                 [BaseTelemetryProperties.tenantId]: tenantId,
+//             }, error);
+//         }
+//     }
+// }
 
 export function configureWebSocketServices(
     webSocketServer: core.IWebSocketServer,
@@ -215,14 +215,14 @@ export function configureWebSocketServices(
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-            const throttleError = checkThrottle(
-                connectThrottler,
-                getSocketConnectThrottleId(message.tenantId),
-                message.tenantId,
-                logger);
-            if (throttleError) {
-                return Promise.reject(throttleError);
-            }
+            // const throttleError = checkThrottle(
+            //     connectThrottler,
+            //     getSocketConnectThrottleId(message.tenantId),
+            //     message.tenantId,
+            //     logger);
+            // if (throttleError) {
+            //     return Promise.reject(throttleError);
+            // }
             if (!message.token) {
                 throw new NetworkError(403, "Must provide an authorization token");
             }
