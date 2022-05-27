@@ -51,7 +51,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
     "@fluidframework/server-services-client": "^0.1037.1000",
     "@fluidframework/server-services-core": "^0.1037.1000",
     "@fluidframework/server-services-telemetry": "^0.1037.1000",
@@ -78,6 +78,7 @@
     "@types/json-stringify-safe": "^5.0.0",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/mocha": "^9.1.1",
+    "@types/morgan": "^1.7.35",
     "@types/nconf": "^0.10.2",
     "@types/node": "^14.18.0",
     "@types/supertest": "^2.0.5",

@@ -43,7 +43,7 @@ Bundle-size-tool's comparisons are implemented using `WebpackStatsProcessors`, w
 
 ```typescript
 export type WebpackStatsProcessor = (
-  stats: Webpack.Stats.ToJsonOutput,
+  stats: Webpack.StatsCompilation,
   config: BundleBuddyConfig | undefined
 ) => BundleMetricSet | undefined;
 ```
