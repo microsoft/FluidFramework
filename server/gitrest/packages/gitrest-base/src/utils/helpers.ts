@@ -19,6 +19,7 @@ import {
     IExternalWriterConfig,
     IFileSystemManager,
     IRepoManagerParams,
+    IRepositoryManagerFactory,
     IStorageRoutingId,
 } from "./definitions";
 
@@ -119,10 +120,14 @@ export async function retrieveLatestFullSummaryFromStorage(
 /**
  * Retrieves the full repository path. Or throws an error if not valid.
  */
-export function getRepoPath(name: string, owner?: string): string {
-    // `name` needs to be always present and valid.
-    if (!name || path.parse(name).dir !== "") {
-        throw new NetworkError(400, `Invalid repo name provided.`);
+export function getRepoPath(
+    repoPerDocEnabled: boolean,
+    tenantId: string,
+    documentId: string,
+    owner?: string): string {
+    // `tenantId` needs to be always present and valid.
+    if (!tenantId || path.parse(tenantId).dir !== "") {
+        throw new NetworkError(400, `Invalid repo name (tenantId) provided.`);
     }
 
     // When `owner` is present, it needs to be valid.
@@ -130,7 +135,15 @@ export function getRepoPath(name: string, owner?: string): string {
         throw new NetworkError(400, `Invalid repo owner provided.`);
     }
 
-    return owner ? `${owner}/${name}` : name;
+    if (repoPerDocEnabled) {
+        // `documentId` needs to be always present and valid.
+        if (!documentId || path.parse(documentId).dir !== "") {
+            throw new NetworkError(400, `Invalid repo name (documentId) provided.`);
+        }
+        return owner ? `${owner}/${tenantId}/${documentId}` : `${tenantId}/${documentId}`;
+    }
+
+    return owner ? `${owner}/${tenantId}` : tenantId;
 }
 
 export function getGitDirectory(repoPath: string, baseDir?: string): string {
@@ -179,4 +192,13 @@ export function logAndThrowApiError(error: any, request: Request, params: IRepoM
     // of that, for now, we use 400 here. But ideally, we would revisit every RepoManager API and make sure that API
     // is actively throwing NetworkErrors with appropriate status codes according to what the protocols expect.
     throw new NetworkError(400, `Error when processing ${request.method} request to ${request.url}`);
+}
+
+export async function getRepoManagerFroWriteAPI(
+    repoManagerFactory: IRepositoryManagerFactory,
+    repoManagerParams: IRepoManagerParams,
+    repoPerDocEnabled: boolean) {
+    return repoPerDocEnabled ?
+        repoManagerFactory.openOrCreate(repoManagerParams) :
+        repoManagerFactory.open(repoManagerParams);
 }

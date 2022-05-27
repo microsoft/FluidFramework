@@ -11,11 +11,16 @@ import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory, logAndThrow
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
+    const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
     /**
      * Creates a new git repository
      */
     router.post("/:owner/repos", (request, response, next) => {
+        if (repoPerDocEnabled) {
+            return response.status(201).send();
+        }
+
         const createParams = request.body as ICreateRepoParams;
         if (!createParams || !createParams.name) {
             return response.status(400).json("Invalid repo name");
@@ -33,9 +38,15 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
      * Retrieves an existing get repository
      */
     router.get("/repos/:owner/:repo", (request, response, next) => {
+        const result = { name: request.params.repo };
+
+        if (repoPerDocEnabled) {
+            return response.status(200).json(result);
+        }
+
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const repoManagerP = repoManagerFactory.open(repoManagerParams)
-            .then(() => ({ name: request.params.repo }))
+            .then(() => (result))
             .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(repoManagerP, response);

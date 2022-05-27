@@ -119,12 +119,24 @@ function normalizeMessage(gitLibrary: testUtils.gitLibType, message: string) {
 
 const testModes: testUtils.ITestMode[] = [
     {
-        name: "Using NodeGit as RepoManager",
+        name: "Using NodeGit as RepoManager with repoPerDoc enabled",
         gitLibrary: "nodegit",
+        repoPerDocEnabled: true,
     },
     {
-        name: "Using isomorphic-git as RepoManager",
+        name: "Using NodeGit as RepoManager with repoPerDoc disabled",
+        gitLibrary: "nodegit",
+        repoPerDocEnabled: false,
+    },
+    {
+        name: "Using isomorphic-git as RepoManager with repoPerDoc enabled",
         gitLibrary: "isomorphic-git",
+        repoPerDocEnabled: true,
+    },
+    {
+        name: "Using isomorphic-git as RepoManager with repoPerDoc disabled",
+        gitLibrary: "isomorphic-git",
+        repoPerDocEnabled: false,
     },
 ];
 
@@ -172,13 +184,14 @@ testModes.forEach((mode) => {
 
         const fileSystemManagerFactory = new NodeFsManagerFactory();
         const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
-        const getRepoManagerFactory = (gitLibrary: testUtils.gitLibType) =>
+        const getRepoManagerFactory = (testMode: testUtils.ITestMode) =>
         {
-            if (gitLibrary === "nodegit") {
+            if (testMode.gitLibrary === "nodegit") {
                 return new NodegitRepositoryManagerFactory(
                     testUtils.defaultProvider.get("storageDir"),
                     fileSystemManagerFactory,
                     externalStorageManager,
+                    testMode.repoPerDocEnabled,
                 );
             }
 
@@ -186,6 +199,7 @@ testModes.forEach((mode) => {
             return new IsomorphicGitManagerFactory(
                 testUtils.defaultProvider.get("storageDir"),
                 fileSystemManagerFactory,
+                testMode.repoPerDocEnabled,
             );
         }
         describe("Routes", () => {
@@ -194,7 +208,8 @@ testModes.forEach((mode) => {
             // Create the git repo before and after each test
             let supertest: request.SuperTest<request.Test>;
             beforeEach(() => {
-                const repoManagerFactory = getRepoManagerFactory(mode.gitLibrary);
+                const repoManagerFactory = getRepoManagerFactory(mode);
+                testUtils.defaultProvider.set("git:repoPerDocEnabled", mode.repoPerDocEnabled);
                 const testApp = app.create(testUtils.defaultProvider, fileSystemManagerFactory, repoManagerFactory);
                 supertest = request(testApp);
             });
@@ -458,7 +473,7 @@ testModes.forEach((mode) => {
                     const MaxParagraphs = 200;
 
                     await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
-                    const repoManagerFactory = getRepoManagerFactory(mode.gitLibrary);
+                    const repoManagerFactory = getRepoManagerFactory(mode);
                     const repoManager = await repoManagerFactory.open({
                         repoOwner: testOwnerName,
                         repoName: testRepoName,

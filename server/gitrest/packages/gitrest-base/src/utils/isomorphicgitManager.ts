@@ -363,16 +363,23 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     constructor(
         private readonly storageDirectoryConfig: IStorageDirectoryConfig,
         private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
+        private readonly repoPerDocEnabled: boolean,
     ) { }
 
     public async create(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
         const repoPath = helpers.getRepoPath(
-            params.repoName,
+            this.repoPerDocEnabled,
+            params.repoName, /* tenantId */
+            params.storageRoutingId?.documentId,
             this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
         const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
         const directoryPath = helpers.getGitDirectory(
             repoPath,
             this.storageDirectoryConfig.baseDir);
+        const repoName =
+            this.repoPerDocEnabled ?
+                `${params.repoName}/${params.storageRoutingId?.documentId}` :
+                params.repoName;
 
         await isomorphicGit.init({
             fs: fileSystemManager,
@@ -385,7 +392,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
         const repoManager = new IsomorphicGitRepositoryManager(
             fileSystemManager,
             params.repoOwner,
-            params.repoName,
+            repoName,
             directoryPath,
             lumberjackBaseProperties);
 
@@ -400,37 +407,61 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     }
 
     public async open(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
-        const repoPath = helpers.getRepoPath(
-            params.repoName,
-            this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
-        const directoryPath = helpers.getGitDirectory(
-            repoPath,
-            this.storageDirectoryConfig.baseDir);
-        const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
-        const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
+        const onRepoNotExists = (args?: any) => {
+            Lumberjack.error(
+                `Repo does not exist ${args?.directoryPath}`,
+                {
+                    ...(args?.lumberjackBaseProperties),
+                    [BaseGitRestTelemetryProperties.directoryPath]: args?.directoryPath,
+                });
+            // services-client/getOrCreateRepository depends on a 400 response code
+            throw new NetworkError(400, `Repo does not exist ${args?.directoryPath}`);
+        };
 
-        if (!(this.repositoryCache.has(repoPath))) {
-            const repoExists = await helpers.exists(fileSystemManager, directoryPath);
-            if (!repoExists || !repoExists.isDirectory()) {
-                Lumberjack.error(
-                    `Repo does not exist ${directoryPath}`,
-                    {
-                        ...lumberjackBaseProperties,
-                        [BaseGitRestTelemetryProperties.directoryPath]: directoryPath,
-                    });
-                // services-client/getOrCreateRepository depends on a 400 response code
-                throw new NetworkError(400, `Repo does not exist ${directoryPath}`);
+        return this.openInternal(params, onRepoNotExists);
+    }
+
+    public async openOrCreate(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
+        const onRepoNotExists = async () => {
+            return this.create(params);
+        };
+
+        return this.openInternal(params, onRepoNotExists);
+    }
+
+    private async openInternal(
+        params: IRepoManagerParams,
+        onRepoNotExists: (args?: any) => Promise<IsomorphicGitRepositoryManager> | never) {
+            const repoPath = helpers.getRepoPath(
+                this.repoPerDocEnabled,
+            params.repoName, /* tenantId */
+            params.storageRoutingId?.documentId,
+                this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
+            const directoryPath = helpers.getGitDirectory(
+                repoPath,
+                this.storageDirectoryConfig.baseDir);
+            const repoName =
+                this.repoPerDocEnabled ?
+                    `${params.repoName}/${params.storageRoutingId?.documentId}` :
+                    params.repoName;
+            const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
+            const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
+
+            if (!(this.repositoryCache.has(repoPath))) {
+                const repoExists = await helpers.exists(fileSystemManager, directoryPath);
+                if (!repoExists || !repoExists.isDirectory()) {
+                    return onRepoNotExists({ repoPath, directoryPath, lumberjackBaseProperties });
+                }
+
+                this.repositoryCache.add(repoPath);
             }
 
-            this.repositoryCache.add(repoPath);
-        }
-
-        const repoManager = new IsomorphicGitRepositoryManager(
-            fileSystemManager,
-            params.repoOwner,
-            params.repoName,
-            directoryPath,
-            lumberjackBaseProperties);
-        return repoManager;
+            const repoManager = new IsomorphicGitRepositoryManager(
+                fileSystemManager,
+                params.repoOwner,
+                repoName,
+                directoryPath,
+                lumberjackBaseProperties);
+            return repoManager;
     }
 }

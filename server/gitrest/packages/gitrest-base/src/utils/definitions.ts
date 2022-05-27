@@ -88,12 +88,19 @@ export interface IRepoManagerParams {
 export interface IRepositoryManagerFactory {
     /**
      * Create a new repository and return its manager instance.
+     * To be used when the config `repoPerDocEnabled` is false.
      */
     create(params: IRepoManagerParams): Promise<IRepositoryManager>;
     /**
      * Open an existing repository and return its manager instance.
      */
     open(params: IRepoManagerParams): Promise<IRepositoryManager>;
+    /**
+     * Tries to open a repository and return its manager instance.
+     * If it does not exist, creates a new repository.
+     * To be used when the config `repoPerDocEnabled` is true.
+     */
+     openOrCreate(params: IRepoManagerParams): Promise<IRepositoryManager>;
 }
 
 // 100644 for file (blob)
