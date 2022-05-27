@@ -394,6 +394,10 @@ export class TestObjectProvider implements ITestObjectProvider {
     }
 
     public async waitContainerToCatchUp(container: IContainer) {
+        // The original waitContainerToCatchUp() from container loader uses either Container.resume()
+        // or Container.connect() as part of its implementation. However, resume() was deprecated
+        // and eventually replaced with connect(). To avoid issues during LTS compatibility testing
+        // with older container versions issues, we use resume() when connect() is unavailable.
         if ((container as any).connect === undefined) {
             (container as any).connect = (container as any).resume;
         }
