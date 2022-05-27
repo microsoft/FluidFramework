@@ -57,6 +57,7 @@ export interface ICollabSessionOptions {
      */
     unauthenticatedUserDisplayName?: string;
     /**
+     * @deprecated - Due to security reasons we will passing the token via Authorization header only.
      * Value indicating session preference to always pass access token via Authorization header.
      * Default behavior is to pass access token via query parameter unless overall href string
      * length exceeds 2048 characters. Using query param is performance optimization which results
