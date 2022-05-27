@@ -25,7 +25,6 @@ import {
     ContainerWarning,
     AttachState,
     IThrottlingWarning,
-    IPendingLocalState,
     ReadOnlyInfo,
     IContainerLoadMode,
     IFluidCodeDetails,
@@ -64,6 +63,7 @@ import {
     IDocumentAttributes,
     IDocumentMessage,
     IProcessMessageResult,
+    IProtocolState,
     IQuorumClients,
     IQuorumProposals,
     ISequencedClient,
@@ -139,6 +139,10 @@ export interface IContainerConfig {
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
+    /**
+     * Serialized state from a previous instance of this container
+     */
+    serializedContainerState?: IPendingContainerState;
 }
 
 export enum ConnectionState {
@@ -163,7 +167,7 @@ export enum ConnectionState {
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
  * up to date. Host may chose to wait in such case and retry resolving URI.
  * Warning: Will wait infinitely for connection to establish if there is no connection.
- * May result in deadlock if Container.setAutoReconnect(false) is called and never switched back to auto-reconnect.
+ * May result in deadlock if Container.disconnect() is called and never followed by a call to Container.connect().
  * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
  *          false: storage does not provide indication of how far the client is. Container processed
  *          all the ops known to it, but it maybe still behind.
@@ -227,15 +231,25 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on(connectedEventName, callback);
 
-        // TODO: Remove null check after next release #8523
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        container.resume!();
+        container.connect();
     });
 }
 
 const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
+
+/**
+ * State saved by a container at close time, to be used to load a new instance
+ * of the container to the same state
+ */
+export interface IPendingContainerState {
+    pendingRuntimeState: unknown;
+    url: string;
+    protocol: IProtocolState;
+    term: number;
+    clientId?: string;
+}
 
 const summarizerClientType = "summarizer";
 
@@ -248,7 +262,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async load(
         loader: Loader,
         loadOptions: IContainerLoadOptions,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<Container> {
         const container = new Container(
             loader,
@@ -256,6 +270,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
+                serializedContainerState: pendingLocalState,
             });
 
         return PerformanceEvent.timedExecAsync(
@@ -265,12 +280,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 container._lifecycleState = "loading";
                 const version = loadOptions.version;
 
-                // always load unpaused with pending ops!
-                // It is also default mode in general.
                 const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
-                assert(pendingLocalState === undefined || loadOptions.loadMode === undefined,
-                    0x1e1 /* "pending state requires immediate connection!" */);
-                const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
+                // if we have pendingLocalState, anything we cached is not useful and we shouldn't wait for connection
+                // to return container, so ignore this value and use undefined for opsBeforeReturn
+                const mode: IContainerLoadMode = pendingLocalState
+                    ? { ...(loadOptions.loadMode ?? defaultMode), opsBeforeReturn: undefined }
+                    : loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // pre-0.58 error message: containerClosedWithoutErrorDuringLoad
@@ -628,6 +643,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
             },
             this.mc.logger,
+            config.serializedContainerState?.clientId,
         );
 
         this.on(savedContainerEvent, () => {
@@ -769,9 +785,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
-        const pendingState: IPendingLocalState = {
+        assert(!!this._protocolHandler, "Must have a valid protocol handler instance");
+        const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
+            protocol: this._protocolHandler.getProtocolState(),
+            term: this._protocolHandler.term,
+            clientId: this.clientId,
         };
 
         this.close();
@@ -829,7 +849,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     // starting to attach the container to storage.
                     // Also, this should only be fired in detached container.
                     this._attachState = AttachState.Attaching;
-                    this.context.notifyAttaching();
+                    this.context.notifyAttaching(getSnapshotTreeFromSerializedContainer(summary));
                 }
 
                 // Actually go and create the resolved document
@@ -881,7 +901,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
                     this._attachState = AttachState.Attaching;
-                    this.context.notifyAttaching();
+                    this.context.notifyAttaching(getSnapshotTreeFromSerializedContainer(summary));
 
                     await this.storageService.uploadSummaryWithContext(summary, {
                         referenceSequenceNumber: 0,
@@ -919,30 +939,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             async () => this.context.request(path),
             { end: true, cancel: "error" },
         );
-    }
-
-    /**
-     * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
-     * after receiving a disconnect event
-     * @param reconnect - Boolean indicating if reconnect should automatically occur
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` and `disconnect()` instead of `setAutoReconnect(true)` and `setAutoReconnect(false)` respectively
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    public setAutoReconnect(reconnect: boolean) {
-        if (this.closed) {
-            throw new Error("Attempting to setAutoReconnect() a closed Container");
-        }
-
-        const mode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
-        this.setAutoReconnectInternal(mode);
-
-        // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
-        // manual reconnection flag to true as we haven't made the initial connection yet.
-        if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
-            // Ensure connection to web socket
-            this.connectToDeltaStream({ reason: "autoReconnect" });
-        }
     }
 
     private setAutoReconnectInternal(mode: ReconnectMode) {
@@ -1008,23 +1004,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.setAutoReconnectInternal(mode);
     }
 
-    /**
-     * Have the container attempt to resume processing ops
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` instead
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    public resume() {
-        if (!this.closed) {
-            // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
-            // If there is gap, we will learn about it once connected, but the gap should be small (if any),
-            // assuming that resume() is called quickly after initial container boot.
-            this.resumeInternal({ reason: "DocumentOpenResume", fetchOpsFromStorage: false });
-        }
-    }
-
     private resumeInternal(args: IConnectionArgs) {
-        assert(!this.closed, 0x0d9 /* "Attempting to setAutoReconnect() a closed DeltaManager" */);
+        assert(!this.closed, 0x0d9 /* "Attempting to connect() a closed DeltaManager" */);
 
         // Resume processing ops
         if (!this.resumedOpProcessingAfterLoad) {
@@ -1116,7 +1097,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async load(
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingContainerState,
     ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
@@ -1144,14 +1125,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectToDeltaStream(connectionArgs);
         }
 
-        await this.connectStorageService();
+        if (!pendingLocalState) {
+            await this.connectStorageService();
+        } else {
+            // if we have pendingLocalState we can load without storage; don't wait for connection
+            this.connectStorageService().catch((error) => this.close(error));
+        }
+
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot.
-        const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
-        assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
+        const { snapshot, versionId } = pendingLocalState === undefined
+            ? await this.fetchSnapshotTree(specifiedVersion)
+            : { snapshot: undefined, versionId: undefined };
+        assert(snapshot !== undefined || pendingLocalState !== undefined, 0x237 /* "Snapshot should exist" */);
 
-        const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
+        const attributes: IDocumentAttributes = pendingLocalState === undefined
+            ? await this.getDocumentAttributes(this.storageService, snapshot)
+            : {
+                sequenceNumber: pendingLocalState.protocol.sequenceNumber,
+                minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
+                term: pendingLocalState.term,
+            };
 
         let opsBeforeReturnP: Promise<void> | undefined;
 
@@ -1175,15 +1170,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // ...load in the existing quorum
         // Initialize the protocol handler
-        this._protocolHandler =
-            await this.initializeProtocolStateFromSnapshot(attributes, this.storageService, snapshot);
+        this._protocolHandler = pendingLocalState === undefined
+            ? await this.initializeProtocolStateFromSnapshot(attributes, this.storageService, snapshot)
+            : await this.initializeProtocolState(
+                attributes,
+                pendingLocalState.protocol.members,
+                pendingLocalState.protocol.proposals,
+                pendingLocalState.protocol.values,
+            );
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
             true, // existing
             codeDetails,
             snapshot,
-            pendingLocalState,
+            pendingLocalState?.pendingRuntimeState,
         );
 
         // Propagate current connection state through the system.
@@ -1207,7 +1208,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             switch (loadMode.deltaConnection) {
                 case undefined:
-                    this.resume();
+                    // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
+                    // If there is gap, we will learn about it once connected, but the gap should be small (if any),
+                    // assuming that resumeInternal() is called quickly after initial container boot.
+                    this.resumeInternal({ reason: "DocumentLoad", fetchOpsFromStorage: false });
                     break;
                 case "delayed":
                     this.resumedOpProcessingAfterLoad = true;
@@ -1400,13 +1404,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         // Track membership changes and update connection state accordingly
-        protocol.quorum.on("addMember", (clientId, details) => {
-            this.connectionStateHandler.receivedAddMemberEvent(clientId);
-        });
-
-        protocol.quorum.on("removeMember", (clientId) => {
-            this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
-        });
+        this.connectionStateHandler.initProtocol(protocol);
 
         protocol.quorum.on("addProposal", (proposal: ISequencedProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
@@ -1632,6 +1630,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
             checkpointSequenceNumber,
+            quorumSize: this._protocolHandler?.quorum.getMembers().size,
             ...this._deltaManager.connectionProps,
         });
 
@@ -1786,7 +1785,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async instantiateContextDetached(
         existing: boolean,
         snapshot?: ISnapshotTree,
-        pendingLocalState?: unknown,
     ) {
         const codeDetails = this.getCodeDetailsFromQuorum();
         if (codeDetails === undefined) {
@@ -1797,7 +1795,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             existing,
             codeDetails,
             snapshot,
-            pendingLocalState,
         );
     }
 

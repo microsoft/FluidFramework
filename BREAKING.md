@@ -14,6 +14,110 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 0.60
+
+## 0.60 Upcoming changes
+- [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
+- [bindToContext to be removed from IFluidDataStoreChannel](#bindToContext-to-be-removed-from-IFluidDataStoreChannel)
+- [Garbage Collection (GC) mark phase turned on by default](#Garbage-Collection-(GC)-mark-phase-turned-on-by-default)
+
+### Summarize heuristic changes based on telemetry
+Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
+- Change `minOpsForLastSummaryAttempt` from `50` -> `10`
+
+### bindToContext to be removed from IFluidDataStoreChannel
+`bindToContext` will be removed from `IFluidDataStoreChannel` in the next major release.
+It was deprecated in 0.50 but due to [this bug](https://github.com/microsoft/FluidFramework/issues/9127) it still had to be called after creating a non-root data store. The bug was fixed in 0.59.
+To prepare for the removal in the following release, calls to `bindToContext` can and should be removed as soon as this version is consumed. Since the compatibility window between container runtime and data store runtime is N / N-1, all runtime code will have the required bug fix (released in the previous version 0.59) and it can be safely removed.
+
+### Garbage Collection (GC) mark phase turned on by default
+GC mark phase is turned on by default with this version. In mark phase, unreferenced Fluid objects (data stores, DDSes and attachment blobs uploaded via BlobManager) are stamped as such along with the unreferenced timestamp in the summary. Features built on summaries (Fluid file at rest) can filter out these unreferenced content. For example, search and e-discovery will mostly want to filter out these content since they are unused.
+
+For more details on GC and options for controlling its behavior, please see [this document](./packages/runtime/container-runtime/garbageCollection.md).
+
+> Note: GC sweep phase has not been enabled yet so unreferenced content won't be deleted. The work to enable it is in progress and will be ready soon.
+
+## 0.60 Breaking changes
+- [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
+- [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
+- [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
+- [Deprecate TelemetryDataTag.PackageData](#Deprecate-TelemetryDataTagPackageData)
+- [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
+- [Remove IDeltaManager.close()](#remove-ideltamanagerclose)
+- [Deprecated Fields from ISummaryRuntimeOptions](#Deprecated-fields-from-ISummaryRuntimeOptions)
+- [`ISummarizerOptions` is deprecated](#isummarizerOptions-is-deprecated)
+- [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
+- [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
+- [Remove Container.setAutoReconnect() and Container.resume()](#Remove-Container-setAutoReconnect-and-resume)
+- [Remove IContainer.connected and IFluidContainer.connected](#Remove-IContainer-connected-and-IFluidContainer-connected)
+
+### Changed AzureConnectionConfig API
+- Added a `type` field that's used to differentiate between remote and local connections.
+- Defined 2 subtypes of `AzureConnectionConfig`: `AzureLocalConnectionConfig` and `AzureRemoteConnectionConfig` with their `type` set to `"local"` and `"remote"` respectively
+- Previously we supplied `orderer` and `storage` fields, now replaced with `endpoint` url.
+- Previously `LOCAL_MODE_TENANT_ID` was supplied for the `tenantId` field when running app locally, now in "local" mode,
+  no tenantId field is `provided` and `LOCAL_MODE_TENANT_ID` is no longer available.
+
+### Remove IFluidSerializer from core-interfaces
+`IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
+
+### Remove IFluidSerializer from IFluidObject
+`IFluidSerializer` in `IFluidObject` was deprecated in 0.52 and is now removed. Use `FluidObject` instead of `IFluidObject`.
+
+### Deprecate TelemetryDataTag.PackageData
+`TelemetryDataTag.PackageData` is deprecated and will be removed in a future release. Use `TelemetryDataTag.CodeArtifact` instead.
+
+### Remove Write Method from IDocumentStorageService
+The `IDocumentStorageService.write(...)` method within the `@fluidframework/driver-definitions` package has been removed. Please remove all usage/implementation of this method if present.
+
+### Remove IDeltaManager.close()
+The method `IDeltaManager.close()` was deprecated in 0.54 and is now removed.
+Use IContainer.close() or IContainerContext.closeFn() instead, and pass an error object if applicable.
+
+### Require enableOfflineLoad to use IContainer.closeAndGetPendingLocalState()
+Offline load functionality has been placed behind a feature flag as part of [ongoing offline work](https://github.com/microsoft/FluidFramework/pull/9557).
+In order to use `IContainer.closeAndGetPendingLocalState`, pass a set of options to the container runtime including `{ enableOfflineLoad: true }`.
+
+### Deprecated Fields from ISummaryRuntimeOptions
+The following fields have been deprecated from `ISummaryRuntimeOptions` and became properties from `ISummaryConfiguration` interface in order to have the Summarizer Heuristics Settings under the same object. See [#9990](https://github.com/microsoft/FluidFramework/issues/9990):
+
+`ISummaryRuntimeOptions.initialSummarizerDelayMs`
+`ISummaryRuntimeOptions.disableSummaries`
+`ISummaryRuntimeOptions.maxOpsSinceLastSummary`
+`ISummaryRuntimeOptions.summarizerClientElection`
+`ISummaryRuntimeOptions.summarizerOptions`
+
+They will be removed in a future release. See [#9990](https://github.com/microsoft/FluidFramework/issues/9990)
+
+- ### `ISummarizerOptions` is deprecated
+`ISummarizerOptions` interface is deprecated and will be removed in a future release. See [#9990](https://github.com/microsoft/FluidFramework/issues/9990)
+Options that control the behavior of a running summarizer will be moved to the `ISummaryConfiguration` interface instead.
+
+### connect() and disconnect() made mandatory on IContainer and IFluidContainer
+The functions `IContainer.connect()`, `IContainer.disconnect()`, `IFluidContainer.connect()`, and `IFluidContainer.disconnect()` have all been changed from optional to mandatory functions.
+
+### Remove Const Enums from Merge Tree, Sequence, and Shared String
+
+The types RBColor, MergeTreeMaintenanceType, and MergeTreeDeltaType are no longer const enums they are now const objects with a union type. In general there should be no change necessary for consumer, unless you are using a specific value as a type. When using a specific value as a type, it is now necessary to prefix with typeof. This scenario is uncommon in consuming code. Example:
+``` diff
+export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
+-    type: MergeTreeDeltaType.INSERT;
++    type: typeof MergeTreeDeltaType.INSERT;
+```
+
+### Remove Container.setAutoReconnect() and Container.resume()
+The functions `Container.setAutoReconnect()` and `Container.resume()` were deprecated in 0.58 and are now removed. To replace their functionality use `Container.connect()` instead of `Container.setAutoReconnect(true)` and `Container.resume()`, and use `Container.disconnect()` instead of `Container.setAutoReconnect(false)`.
+
+### Remove IContainer.connected and IFluidContainer.connected
+The properties `IContainer.connected` and `IFluidContainer.connected` were deprecated in 0.58 and are now removed. To replace their functionality use `IContainer.connectionState` and `IFluidContainer.connectionState` respectively. Example:
+
+``` diff
+- if (container.connected) {
++ if (container.connectionState === ConnectionState.Connected) {
+    console.log("Container is connected");
+}
+```
+
 # 0.59
 
 ## 0.59 Upcoming changes
@@ -55,7 +159,6 @@ To support this change the following methods are deprecated with replacements th
 - [Scope is no longer an IFluidObject](#scope-is-no-longer-an-IFluidObject)
 - [IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject](#IFluidHandle-and-requestFluidObject-generics-default-no-longer-includes-IFluidObject)
 - [LazyLoadedDataObjectFactory.create no longer returns an IFluidObject](#LazyLoadedDataObjectFactory.create-no-longer-returns-an-IFluidObject)
-
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -700,7 +803,7 @@ The `createCreateNewRequest()` is removed and replaced with `createOdspCreateCon
 
 ### Deprecate IFluidObject and introduce FluidObject
 This release deprecates the interface `IFluidObject` and introduces the utility type [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). The primary reason for this change is that the module augmentation used by `IFluidObject` creates excessive type coupling where a small breaking change in any type exposed off `IFluidObject` can lead to type error in all usages of `IFluidObject`.
-On investigation we also found that the uber type `IFluidObject` wasn't genenerally necessary, as consumers generally only used a small number of specific types that they knew in advance.
+On investigation we also found that the uber type `IFluidObject` wasn't generally necessary, as consumers generally only used a small number of specific types that they knew in advance.
 
 Given these points, we've introduced [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). `FluidObject` is a utility type that is used in both its generic and non-generic forms.
 

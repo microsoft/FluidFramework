@@ -24,7 +24,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions } from "./loader";
+import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";
 import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
@@ -102,6 +102,12 @@ export interface IRuntime extends IDisposable {
      * Get pending local state in a serializable format to be given back to a newly loaded container
      */
     getPendingLocalState(): unknown;
+
+    /**
+     * Notify runtime that container is moving to "Attaching" state
+     * @param snapshot - snapshot created at attach time
+     */
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 }
 
 /**
@@ -161,6 +167,12 @@ export interface IContainerContext extends IDisposable {
     getLoadedFromVersion(): IVersion | undefined;
 
     updateDirtyContainerState(dirty: boolean): void;
+    /**
+     * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
+     * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
+     * and scenarios which can change in the future.
+     */
+    readonly id: string;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

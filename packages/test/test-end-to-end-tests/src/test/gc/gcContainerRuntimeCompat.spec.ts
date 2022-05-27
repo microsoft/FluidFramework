@@ -41,7 +41,11 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
         [],
         []);
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+        },
         gcOptions: { gcAllowed: true, writeDataAtRoot: true },
     };
 

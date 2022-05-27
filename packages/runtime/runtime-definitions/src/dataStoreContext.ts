@@ -38,6 +38,7 @@ import {
     CreateChildSummarizerNodeParam,
     ISummarizerNodeWithGC,
     ISummaryTreeWithStats,
+    ITelemetryContext,
     SummarizeInternalFn,
 } from "./summary";
 
@@ -230,7 +231,7 @@ export interface IFluidDataStoreChannel extends
     /**
      * Retrieves the summary used as part of the initial summary message
      */
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
 
     /**
      * Processes the op.
@@ -247,8 +248,13 @@ export interface IFluidDataStoreChannel extends
      * Introduced with summarizerNode - will be required in a future release.
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats>;
 
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
@@ -282,6 +288,14 @@ export interface IFluidDataStoreChannel extends
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 
     applyStashedOp(content: any): Promise<unknown>;
+
+    /**
+     * Revert a local message.
+     * @param type - The type of the original message.
+     * @param content - The content of the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    rollback?(type: string, content: any, localOpMetadata: unknown): void;
 }
 
 export type CreateChildSummarizerNodeFn = (
@@ -291,7 +305,6 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "attaching" | "attached", listener: () => void);
 }
 

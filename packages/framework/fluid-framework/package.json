@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "0.59.4000",
+  "version": "0.60.1000",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,10 +34,10 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.48.1000",
-    "@fluidframework/fluid-static": "^0.59.4000",
-    "@fluidframework/map": "^0.59.4000",
-    "@fluidframework/sequence": "^0.59.4000"
+    "@fluidframework/container-definitions": "^0.49.1000-64278",
+    "@fluidframework/fluid-static": "^0.60.1000",
+    "@fluidframework/map": "^0.60.1000",
+    "@fluidframework/sequence": "^0.60.1000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -67,63 +67,22 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
+    "version": "0.60.1000",
     "broken": {
-      "ClassDeclaration_IntervalCollection": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_ISequenceDeltaRange": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceDeltaEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceMaintenanceEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISharedString": {
-        "forwardCompat": false
-      },
-      "TypeAliasDeclaration_MatrixSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_PaddingSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_RunSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedNumberSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedObjectSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedSequence": {
-        "forwardCompat": false
-      },
-      "TypeAliasDeclaration_SharedStringSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SparseMatrix": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SubSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedSegmentSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedString": {
-        "forwardCompat": false
-      }
+      "ClassDeclaration_SparseMatrix": {"forwardCompat": false},
+      "ClassDeclaration_SharedNumberSequence": {"forwardCompat": false},
+      "ClassDeclaration_SharedObjectSequence": {"forwardCompat": false},
+      "ClassDeclaration_SharedSegmentSequence": {"forwardCompat": false},
+      "ClassDeclaration_SharedSequence": {"forwardCompat": false},
+      "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false},
+      "ClassDeclaration_SequenceDeltaEvent": {"forwardCompat": false},
+      "ClassDeclaration_SharedDirectory": {"forwardCompat": false},
+      "ClassDeclaration_SharedString": {"forwardCompat": false},
+      "ClassDeclaration_FluidContainer": {"forwardCompat": false, "backCompat": false},
+      "InterfaceDeclaration_IFluidContainer": {"forwardCompat": false, "backCompat": false},
+      "ClassDeclaration_SequenceEvent": {"forwardCompat": false},
+      "ClassDeclaration_IntervalCollection": {"forwardCompat": false},
+      "InterfaceDeclaration_ISharedString": {"forwardCompat": false}
     }
   }
 }

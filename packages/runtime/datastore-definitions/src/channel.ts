@@ -5,7 +5,11 @@
 
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    IGarbageCollectionData,
+    ISummaryTreeWithStats,
+    ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -23,14 +27,22 @@ export interface IChannel extends IFluidLoadable {
      * Generates summary of the channel synchronously.
      * @returns A tree representing the summary of the channel.
      */
-    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    getAttachSummary(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
 
     /**
      * Generates summary of the channel asynchronously.
      * This should not be called where the channel can be modified while summarization is in progress.
      * @returns A tree representing the summary of the channel.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats>;
 
     /**
      * Checks if the channel is attached to storage.
@@ -90,6 +102,13 @@ export interface IDeltaHandler {
      * when the op is ACKed or resubmitted, respectively
      */
     applyStashedOp(message: any): unknown;
+
+    /**
+     * Revert a local op.
+     * @param message - The original message that was submitted.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    rollback?(message: any, localOpMetadata: unknown): void;
 }
 
 /**

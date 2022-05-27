@@ -14,6 +14,7 @@ import {
     IQuorumClients,
     ISequencedDocumentMessage,
     ISequencedProposal,
+    ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -127,20 +128,35 @@ export interface IContainerEvents extends IEvent {
 
 /**
  * Namespace for the different connection states a container can be in
+ * PLEASE NOTE: The sequence of the numerical values does no correspond to the typical connection state progression
  */
 export namespace ConnectionState {
     /**
-     * The document is no longer connected to the delta server
+     * The container is not connected to the delta server
+     * Note - When in this state the container may be about to reconnect,
+     * or may remain disconnected until explicitly told to connect.
      */
     export type Disconnected = 0;
 
     /**
-     * The document has an inbound connection but is still pending for outbound deltas
+     * The container is disconnected but actively trying to establish a new connection
+     * PLEASE NOTE that this numerical value falls out of the order you may expect for this state
+     */
+     export type EstablishingConnection = 3;
+
+     /**
+     * The container has an inbound connection only, and is catching up to the latest known state from the service.
+     */
+    export type CatchingUp = 1;
+
+    /**
+     * @see ConnectionState.CatchingUp, which is the new name for this state.
+     * @deprecated - This state itself is not gone, just being renamed. Please use ConnectionState.CatchingUp.
      */
     export type Connecting = 1;
 
     /**
-     * The document is fully connected
+     * The container is fully connected and syncing
      */
      export type Connected = 2;
 }
@@ -148,7 +164,12 @@ export namespace ConnectionState {
 /**
  * Type defining the different states of connectivity a container can be in
  */
-export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
+export type ConnectionState =
+    | ConnectionState.Disconnected
+    | ConnectionState.EstablishingConnection
+    | ConnectionState.CatchingUp
+    | ConnectionState.Connecting
+    | ConnectionState.Connected;
 
 /**
  * The Host's view of the Container and its connection to storage
@@ -248,45 +269,19 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     request(request: IRequest): Promise<IResponse>;
 
     /**
-     * Provides the current connected state of the container
+     * Provides the current state of the container's connection to the ordering service
      */
     readonly connectionState: ConnectionState;
 
     /**
-     * Boolean indicating whether the container is currently connected or not
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Check `connectionState === ConnectionState.Connected` instead
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    readonly connected: boolean;
-
-    /**
      * Attempts to connect the container to the delta stream and process ops
      */
-    connect?(): void;
+    connect(): void;
 
     /**
      * Disconnects the container from the delta stream and stops processing ops
      */
-    disconnect?(): void;
-
-    /**
-     * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
-     * after receiving a disconnect event
-     * @param reconnect - Boolean indicating if reconnect should automatically occur
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` and `disconnect()` instead of `setAutoReconnect(true)` and `setAutoReconnect(false)` respectively
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    setAutoReconnect?(reconnect: boolean): void;
-
-    /**
-     * Have the container attempt to resume processing ops
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` instead
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    resume?(): void;
+    disconnect(): void;
 
     /**
      * The audience information for all clients currently associated with the document in the current session
@@ -295,7 +290,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * The server provided ID of the client.
-     * Set once this.connected is true, otherwise undefined
+     * Set once this.connectionState === ConnectionState.Connected is true, otherwise undefined
      * @alpha
      */
     readonly clientId?: string | undefined;
@@ -445,12 +440,12 @@ export interface IContainerLoadMode {
         | "all";
     deltaConnection?:
         /*
-         * Connection to delta stream is made only when Container.resume() call is made. Op processing
-         * is paused (when container is returned from Loader.resolve()) until Container.resume() call is made.
+         * Connection to delta stream is made only when Container.connect() call is made. Op processing
+         * is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
          */
         | "none"
         /*
-         * Connection to delta stream is made only when Container.resume() call is made.
+         * Connection to delta stream is made only when Container.connect() call is made.
          * Op fetching from storage is performed and ops are applied as they come in.
          * This is useful option if connection to delta stream is expensive and thus it's beneficial to move it
          * out from critical boot sequence, but it's beneficial to allow catch up to happen as fast as possible.
@@ -492,7 +487,22 @@ declare module "@fluidframework/core-interfaces" {
     }
 }
 
+/**
+ * @deprecated 0.48, This API will be removed in 0.50
+ * No replacement since it is not expected anyone will depend on this outside container-loader
+ * See https://github.com/microsoft/FluidFramework/issues/9711 for context
+ */
 export interface IPendingLocalState {
     url: string;
     pendingRuntimeState: unknown;
+}
+
+/**
+ * This is used when we rehydrate a container from the snapshot. Here we put the blob contents
+ * in separate property: blobContents. This is used as the ContainerContext's base snapshot
+ * when attaching.
+ */
+export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+    blobsContents: { [path: string]: ArrayBufferLike },
+    trees: { [path: string]: ISnapshotTreeWithBlobContents },
 }

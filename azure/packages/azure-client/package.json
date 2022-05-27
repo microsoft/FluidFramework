@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/azure-client",
-  "version": "0.59.3000",
+  "version": "0.60.1000",
   "description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -78,10 +78,26 @@
     "typescript": "~4.5.5"
   },
   "peerDependencies": {
-    "fluid-framework": "^0.58.0"
+    "fluid-framework": "^0.60.1000"
   },
   "typeValidation": {
-    "version": "0.59.3000",
-    "broken": {}
+    "version": "0.60.1000",
+    "broken": {
+      "ClassDeclaration_AzureClient": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_AzureClientProps": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_AzureConnectionConfig": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_LOCAL_MODE_TENANT_ID": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
   }
 }

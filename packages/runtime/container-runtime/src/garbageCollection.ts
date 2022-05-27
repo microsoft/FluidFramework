@@ -23,6 +23,7 @@ import {
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
     ISummaryTreeWithStats,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
     ReadAndParseBlob,
@@ -152,7 +153,7 @@ export interface IGarbageCollector {
         options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean; },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
-    summarize(): ISummaryTreeWithStats | undefined;
+    summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats | undefined;
     /** Returns the garbage collector specific metadata to be written into the summary. */
     getMetadata(): IGCMetadata;
     /** Returns a map of each node id to its base GC details in the base summary. */
@@ -395,12 +396,14 @@ export class GarbageCollector implements IGarbageCollector {
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
-            if (gcOptions.sweepAllowed && !gcOptions.gcAllowed) {
+            if (gcOptions.sweepAllowed && gcOptions.gcAllowed === false) {
                 throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
             }
 
-            // For new documents, GC has to be explicitly enabled via the flags in GC options.
-            this.gcEnabled = gcOptions.gcAllowed === true;
+            // For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
+            // flag in GC options to false.
+            this.gcEnabled = gcOptions.gcAllowed !== false;
+            // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
             this.sweepEnabled = gcOptions.sweepAllowed === true;
 
             // Set the Session Expiry only if the flag is enabled or the test option is set.
@@ -682,7 +685,7 @@ export class GarbageCollector implements IGarbageCollector {
      * We current write the entire GC state in a single blob. This can be modified later to write multiple
      * blobs. All the blob keys should start with `gcBlobPrefix`.
      */
-    public summarize(): ISummaryTreeWithStats | undefined {
+    public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats | undefined {
         if (!this.shouldRunGC || this.previousGCDataFromLastRun === undefined) {
             return;
         }

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/core-interfaces",
-  "version": "0.43.2000",
+  "version": "0.44.1000",
   "description": "Fluid object interfaces",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -65,7 +65,24 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.43.2000",
-    "broken": {}
+    "version": "0.44.1000",
+    "broken": {
+      "RemovedVariableDeclaration_IFluidSerializer": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedInterfaceDeclaration_IFluidSerializer": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedInterfaceDeclaration_IProvideFluidSerializer": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedInterfaceDeclaration_ISerializedHandle": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
   }
 }

@@ -9,7 +9,6 @@ import {
 } from "./fluidLoadable";
 import { IFluidRouter } from "./fluidRouter";
 import { IFluidHandle, IFluidHandleContext } from "./handles";
-import { IFluidSerializer } from "./serializer";
 
 /**
  * @deprecated Use `FluidObject` or the interface directly instead
@@ -36,8 +35,4 @@ export interface IFluidObject {
      * @deprecated - use `FluidObject<IFluidHandle>` instead
      */
     readonly IFluidHandle?: IFluidHandle;
-    /**
-     * @deprecated - use `FluidObject<IFluidSerializer>` instead
-     */
-    readonly IFluidSerializer?: IFluidSerializer;
 }
