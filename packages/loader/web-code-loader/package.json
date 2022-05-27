@@ -33,14 +33,14 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.49.1000-64278",
+    "@fluidframework/container-definitions": "^0.49.1000-69955",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
     "@fluidframework/web-code-loader-previous": "npm:@fluidframework/web-code-loader@^0.59.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",

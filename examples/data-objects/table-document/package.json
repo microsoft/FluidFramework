@@ -58,7 +58,7 @@
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.60.1000",
     "@fluidframework/merge-tree": "^0.60.1000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
     "@fluidframework/request-handler": "^0.60.1000",
     "@fluidframework/runtime-definitions": "^0.60.1000",
     "@fluidframework/sequence": "^0.60.1000",
@@ -66,7 +66,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^0.60.1000",
     "@fluidframework/runtime-utils": "^0.60.1000",
     "@fluidframework/test-runtime-utils": "^0.60.1000",

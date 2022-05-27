@@ -277,7 +277,8 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 
 		await new Promise<void>((resolve) => {
-            if (this.consumer?.isConnected()) {
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+			if (this.consumer && this.consumer.isConnected()) {
 				this.consumer.disconnect(resolve);
 			} else {
 				resolve();

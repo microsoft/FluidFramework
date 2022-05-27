@@ -33,9 +33,9 @@
   },
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/driver-definitions": "^0.47.1000-0",
+    "@fluidframework/driver-definitions": "^0.47.1000-69949",
     "@fluidframework/driver-utils": "^0.60.1000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
     "@fluidframework/routerlicious-driver": "^0.60.1000",
     "@fluidframework/server-services-client": "^0.1036.3000-0",
     "jsrsasign": "^10.2.0",

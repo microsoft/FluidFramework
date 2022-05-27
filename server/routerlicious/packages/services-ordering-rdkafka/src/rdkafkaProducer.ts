@@ -163,7 +163,8 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		await new Promise<void>((resolve) => {
 			const producer = this.producer;
 			this.producer = undefined;
-            if (producer?.isConnected()) {
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+			if (producer && producer.isConnected()) {
 				producer.disconnect(resolve);
 			} else {
 				resolve();
