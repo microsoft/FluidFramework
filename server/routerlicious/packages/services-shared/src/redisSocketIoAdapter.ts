@@ -337,34 +337,35 @@ export class RedisSocketIoAdapter extends Adapter {
                 rooms: new Set([room]),
             };
             // Message received by RedisSocketAdapter.
-            const time = Date.now();
-            if (packet.data && packet.data.length > 1) {
-                if (packet.data[2] && packet.data[2].length > 0) {
-                    packet.data[2].forEach((element) => {
-                        if (!element.traces) {
-                            element.traces = [];
-                         }
-                         element.traces.push(
-                             {
-                                 action: "start",
-                                 service: "redisAdapter",
-                                 timestamp: time,
-                             });
-                        if (getRandomInt(1000) === 0) {
-                            const channelMetadata = JSON.stringify(channel).split("/");
-                            const tenantId = channelMetadata[1].replace("#", "");
-                            const documentId = channelMetadata[2].replace("#", "").replace("\"", "");
-                            const lumberjackProperties = {
-                                [BaseTelemetryProperties.tenantId]: tenantId,
-                                [BaseTelemetryProperties.documentId]: documentId,
-                                clientId: element.clientId,
-                                clientSequenceNumber: element.clientSequenceNumber,
-                                sequenceNumber: element.sequenceNumber,
-                                traces: element.traces,
-                            };
-                            Lumberjack.info(`Message received by RedisSocketAdapter.`, lumberjackProperties);
-                        }
-                    });
+            if (getRandomInt(1000) === 0) {
+                const time = Date.now();
+                if (packet.data && packet.data.length > 1) {
+                    if (packet.data[2] && packet.data[2].length > 0) {
+                        packet.data[2].forEach((element) => {
+                            if (!element.traces) {
+                                element.traces = [];
+                            }
+                            element.traces.push(
+                                {
+                                    action: "start",
+                                    service: "redisAdapter",
+                                    timestamp: time,
+                                });
+
+                                const channelMetadata = JSON.stringify(channel).split("/");
+                                const tenantId = channelMetadata[1].replace("#", "");
+                                const documentId = channelMetadata[2].replace("#", "").replace("\"", "");
+                                const lumberjackProperties = {
+                                    [BaseTelemetryProperties.tenantId]: tenantId,
+                                    [BaseTelemetryProperties.documentId]: documentId,
+                                    clientId: element.clientId,
+                                    clientSequenceNumber: element.clientSequenceNumber,
+                                    sequenceNumber: element.sequenceNumber,
+                                    traces: element.traces,
+                                };
+                                Lumberjack.info(`Message received by RedisSocketAdapter.`, lumberjackProperties);
+                        });
+                    }
                 }
             }
             // only allow room broadcasts
