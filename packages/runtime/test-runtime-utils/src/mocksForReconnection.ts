@@ -34,14 +34,14 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
         if (connected) {
             this.clientSequenceNumber = 0;
-            // We should get a new clientId on reconnection.
-            this.clientId = uuid();
-            // Update the clientId in FluidDataStoreRuntime.
-            this.dataStoreRuntime.clientId = this.clientId;
             for (const remoteMessage of this.pendingRemoteMessages) {
                 this.process(remoteMessage);
             }
             this.pendingRemoteMessages.length = 0;
+            // We should get a new clientId on reconnection.
+            this.clientId = uuid();
+            // Update the clientId in FluidDataStoreRuntime.
+            this.dataStoreRuntime.clientId = this.clientId;
             // On reconnection, ask the DDSes to resubmit pending messages.
             this.reSubmitMessages();
         } else {
