@@ -153,6 +153,7 @@ export interface IGarbageCollector {
     readonly summaryStateNeedsReset: boolean;
     /** Tells whether GC data should be written to the root of the summary tree. */
     readonly writeDataAtRoot: boolean;
+    readonly trackGCBlobState: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
         options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean; },
@@ -313,7 +314,7 @@ export class GarbageCollector implements IGarbageCollector {
      */
     private readonly shouldRunSweep: boolean;
 
-    private readonly trackGCBlobState: boolean;
+    public readonly trackGCBlobState: boolean;
 
     private readonly testMode: boolean;
     private readonly mc: MonitoringContext;

@@ -993,7 +993,8 @@ describe("Garbage Collection Tests", () => {
             const tree2 = garbageCollector.summarize(fullTree, trackState);
             assert(tree2 !== undefined, "Expected a tree on second summarize");
             const gcBlobHandleType = tree2.summary.tree[gcBlobRootKey].type;
-            assert(gcBlobHandleType === SummaryType.Blob, `Expected a SummaryType.Blob on second summarize, got ${gcBlobHandleType}`);
+            assert(gcBlobHandleType === SummaryType.Blob,
+                `Expected a SummaryType.Blob on second summarize, got ${gcBlobHandleType}. trackState: ${garbageCollector.trackGCBlobState}, ${pkgVersion} - ${settings["Fluid.GarbageCollection.TrackGCBlobStateVersionKey"]}`);
         });
 
         it("No changes to GC between summaries creates a blob handle when equal to minimum version", async () => {
