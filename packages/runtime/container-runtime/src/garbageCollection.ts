@@ -255,7 +255,7 @@ export class GarbageCollector implements IGarbageCollector {
         baseLogger: ITelemetryLogger,
         existing: boolean,
         metadata: IContainerRuntimeMetadata | undefined,
-        summarizerClient: boolean,
+        isSummarizerClient: boolean,
     ): IGarbageCollector {
         return new GarbageCollector(
             provider,
@@ -267,7 +267,7 @@ export class GarbageCollector implements IGarbageCollector {
             baseLogger,
             existing,
             metadata,
-            summarizerClient,
+            isSummarizerClient,
         );
     }
 
@@ -304,7 +304,6 @@ export class GarbageCollector implements IGarbageCollector {
      * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
      * disabled via runtime options or feature flags.
      */
-
     public readonly shouldRunGC: boolean;
     /**
      * Tracks if sweep phase should run or not. Even if the sweep phase is enabled for a document (see sweepEnabled), it
@@ -378,7 +377,7 @@ export class GarbageCollector implements IGarbageCollector {
         baseLogger: ITelemetryLogger,
         existing: boolean,
         metadata: IContainerRuntimeMetadata | undefined,
-        private readonly summarizerClient: boolean = true,
+        private readonly isSummarizerClient: boolean = true,
     ) {
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(baseLogger, "GarbageCollector", { all: { gcRunCount: () => this.gcRunCount } }),
@@ -1132,7 +1131,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
         // summarizer clients if they are based off of user actions (such as scrolling to content for these objects).
-        if (!this.summarizerClient && eventType !== "Loaded") {
+        if (!this.isSummarizerClient && eventType !== "Loaded") {
             return;
         }
 
