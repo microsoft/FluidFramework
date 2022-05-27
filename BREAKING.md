@@ -18,10 +18,16 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.60 Upcoming changes
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
+- [bindToContext to be removed from IFluidDataStoreChannel](#bindToContext-to-be-removed-from-IFluidDataStoreChannel)
 
 ### Summarize heuristic changes based on telemetry
 Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
 - Change `minOpsForLastSummaryAttempt` from `50` -> `10`
+
+### bindToContext to be removed from IFluidDataStoreChannel
+`bindToContext` will be removed from `IFluidDataStoreChannel` in the next major release.
+It was deprecated in 0.50 but due to [this bug](https://github.com/microsoft/FluidFramework/issues/9127) it still had to be called after creating a non-root data store. The bug was fixed in 0.59.
+To prepare for the removal in the following release, calls to `bindToContext` can and should be removed as soon as this version is consumed. Since the compatibility window between container runtime and data store runtime is N / N-1, all runtime code will have the required bug fix (released in the previous version 0.59) and it can be safely removed.
 
 ## 0.60 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
@@ -111,6 +117,7 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
 - [IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release](#ifluidcontainer-connect-and-ifluidcontainer-disconnect-will-be-made-mandatory-in-future-major-release)
 - [proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-to-be-removed-from-ILoaderProps-and-ILoaderServices)
 - [routerlicious-host package and ContainerUrlResolver to be removed](#routerlicious-host-package-and-ContainerUrlResolver-to-be-removed)
+- [LocalReference class and method deprecations](#LocalReference-class-and-method-deprecations)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
@@ -123,6 +130,16 @@ The `proxyLoaderFactories` member on `ILoaderProps` and `ILoaderServices` has be
 
 ### routerlicious-host package and ContainerUrlResolver to be removed
 The `@fluidframework/routerlicious-host` package and its `ContainerUrlResolver` have been deprecated in 0.59 and will be removed in an upcoming release.
+
+### LocalReference class and method deprecations
+The class LocalReference in the @fluidframework/merge-tree packing is being deprecated. Please transition usage to the ReferencePosition interface from the same package.
+To support this change the following methods are deprecated with replacements that operate on ReferencePosition rather than LocalReference
+ - createPositionReference to createLocalReferencePosition
+ - addLocalReference to createLocalReferencePosition
+ - localRefToPos to localReferencePositionToPosition
+ - removeLocalReference to removeLocalReferencePosition
+
+ The above methods are changes in both the @fluidframework/merge-tree and @fluidframework/sequence packages.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)

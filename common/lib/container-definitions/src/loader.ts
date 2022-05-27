@@ -128,20 +128,35 @@ export interface IContainerEvents extends IEvent {
 
 /**
  * Namespace for the different connection states a container can be in
+ * PLEASE NOTE: The sequence of the numerical values does no correspond to the typical connection state progression
  */
 export namespace ConnectionState {
     /**
-     * The document is no longer connected to the delta server
+     * The container is not connected to the delta server
+     * Note - When in this state the container may be about to reconnect,
+     * or may remain disconnected until explicitly told to connect.
      */
     export type Disconnected = 0;
 
     /**
-     * The document has an inbound connection but is still pending for outbound deltas
+     * The container is disconnected but actively trying to establish a new connection
+     * PLEASE NOTE that this numerical value falls out of the order you may expect for this state
+     */
+     export type EstablishingConnection = 3;
+
+     /**
+     * The container has an inbound connection only, and is catching up to the latest known state from the service.
+     */
+    export type CatchingUp = 1;
+
+    /**
+     * @see ConnectionState.CatchingUp, which is the new name for this state.
+     * @deprecated - This state itself is not gone, just being renamed. Please use ConnectionState.CatchingUp.
      */
     export type Connecting = 1;
 
     /**
-     * The document is fully connected
+     * The container is fully connected and syncing
      */
      export type Connected = 2;
 }
@@ -149,7 +164,12 @@ export namespace ConnectionState {
 /**
  * Type defining the different states of connectivity a container can be in
  */
-export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
+export type ConnectionState =
+    | ConnectionState.Disconnected
+    | ConnectionState.EstablishingConnection
+    | ConnectionState.CatchingUp
+    | ConnectionState.Connecting
+    | ConnectionState.Connected;
 
 /**
  * The Host's view of the Container and its connection to storage
@@ -249,7 +269,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     request(request: IRequest): Promise<IResponse>;
 
     /**
-     * Provides the current connected state of the container
+     * Provides the current state of the container's connection to the ordering service
      */
     readonly connectionState: ConnectionState;
 

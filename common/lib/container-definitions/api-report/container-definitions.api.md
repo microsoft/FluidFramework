@@ -55,13 +55,16 @@ export enum BindState {
 
 // @public
 export namespace ConnectionState {
+    export type CatchingUp = 1;
     export type Connected = 2;
+    // @deprecated (undocumented)
     export type Connecting = 1;
     export type Disconnected = 0;
+    export type EstablishingConnection = 3;
 }
 
 // @public
-export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
+export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connecting | ConnectionState.Connected;
 
 // @public
 export enum ContainerErrorType {

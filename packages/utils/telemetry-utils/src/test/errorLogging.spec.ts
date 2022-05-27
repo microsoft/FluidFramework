@@ -620,7 +620,7 @@ describe("normalizeError", () => {
             assert.equal(actual.message, expected.message, "message should match");
             const actualStack = actual.stack;
             assert(actualStack !== undefined, "stack should be present as a string");
-            if (actualStack.indexOf("at normalizeError") >= 0) { // This indicates the stack was populated naturally by new SimpleFluidError
+            if (actualStack.includes("at normalizeError")) { // This indicates the stack was populated naturally by new SimpleFluidError
                 assert.equal(expected.stack, "<<natural stack>>", "<<natural stack>> hint should be used if not overwritten");
                 expected.withExpectedTelemetryProps({ stack: actualStack });
             } else {
