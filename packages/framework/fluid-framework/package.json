@@ -75,8 +75,8 @@
       "ClassDeclaration_SequenceDeltaEvent": {"forwardCompat": false},
       "ClassDeclaration_SharedDirectory": {"forwardCompat": false},
       "ClassDeclaration_SharedString": {"forwardCompat": false},
-      "ClassDeclaration_FluidContainer": {"forwardCompat": false},
-      "InterfaceDeclaration_IFluidContainer": {"forwardCompat": false},
+      "ClassDeclaration_FluidContainer": {"forwardCompat": false, "backCompat": false},
+      "InterfaceDeclaration_IFluidContainer": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_SequenceEvent": {"forwardCompat": false},
       "ClassDeclaration_IntervalCollection": {"forwardCompat": false},
       "InterfaceDeclaration_ISharedString": {"forwardCompat": false}

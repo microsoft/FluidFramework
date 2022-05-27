@@ -48,6 +48,8 @@ For more details on GC and options for controlling its behavior, please see [thi
 - [`ISummarizerOptions` is deprecated](#isummarizerOptions-is-deprecated)
 - [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
+- [Remove Container.setAutoReconnect() and Container.resume()](#Remove-Container-setAutoReconnect-and-resume)
+- [Remove IContainer.connected and IFluidContainer.connected](#Remove-IContainer-connected-and-IFluidContainer-connected)
 
 ### Changed AzureConnectionConfig API
 - Added a `type` field that's used to differentiate between remote and local connections.
@@ -101,6 +103,19 @@ The types RBColor, MergeTreeMaintenanceType, and MergeTreeDeltaType are no longe
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 -    type: MergeTreeDeltaType.INSERT;
 +    type: typeof MergeTreeDeltaType.INSERT;
+```
+
+### Remove Container.setAutoReconnect() and Container.resume()
+The functions `Container.setAutoReconnect()` and `Container.resume()` were deprecated in 0.58 and are now removed. To replace their functionality use `Container.connect()` instead of `Container.setAutoReconnect(true)` and `Container.resume()`, and use `Container.disconnect()` instead of `Container.setAutoReconnect(false)`.
+
+### Remove IContainer.connected and IFluidContainer.connected
+The properties `IContainer.connected` and `IFluidContainer.connected` were deprecated in 0.58 and are now removed. To replace their functionality use `IContainer.connectionState` and `IFluidContainer.connectionState` respectively. Example:
+
+``` diff
+- if (container.connected) {
++ if (container.connectionState === ConnectionState.Connected) {
+    console.log("Container is connected");
+}
 ```
 
 # 0.59

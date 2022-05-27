@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IContainer } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import {
     IUser,
 } from "@fluidframework/protocol-definitions";
@@ -108,7 +108,7 @@ async function start() {
     }
 
     // Wait for connection so that proposals can be sent.
-    if (container !== undefined && !container.connected) {
+    if (container !== undefined && container.connectionState !== ConnectionState.Connected) {
         await new Promise<void>((resolve, reject) => {
             // the promise resolves when the connected event fires.
             container.once("connected", () => resolve());
