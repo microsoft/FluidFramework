@@ -76,7 +76,7 @@ const handleServerError = async (logger: core.ILogger, errorMessage: string, doc
 
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
 
-const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
+// const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
