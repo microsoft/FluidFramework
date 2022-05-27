@@ -83,6 +83,7 @@ declare function get_current_TypeAliasDeclaration_ConnectionState():
 declare function use_old_TypeAliasDeclaration_ConnectionState(
     use: TypeOnly<old.ConnectionState>);
 use_old_TypeAliasDeclaration_ConnectionState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_ConnectionState());
 
 /*
