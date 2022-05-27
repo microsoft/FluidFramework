@@ -640,7 +640,17 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         // Update and retrieve the minimum sequence number
         const message = rawMessage as IRawOperationMessage;
-
+        // Message received by deli.
+        const timeNow = Date.now();
+        if (!message.operation.traces) {
+            message.operation.traces = [];
+        }
+        message.operation.traces.push(
+            {
+                action: "start",
+                service: "deli",
+                timestamp: timeNow,
+            });
         const dataContent = this.extractDataContent(message);
 
         // Check if we should nack this message
@@ -1028,10 +1038,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         }
 
         // Add traces
-        if (trace && message.operation.traces && message.operation.traces.length > 1) {
-            message.operation.traces.push(trace);
-            message.operation.traces.push(this.createTrace("end"));
-        }
+        // if (trace && message.operation.traces && message.operation.traces.length > 1) {
+        //     message.operation.traces.push(trace);
+        //     message.operation.traces.push(this.createTrace("end"));
+        // }
 
         // craft the output message
         const outputMessage = this.createOutputMessage(message, undefined /* origin */, sequenceNumber, dataContent);
