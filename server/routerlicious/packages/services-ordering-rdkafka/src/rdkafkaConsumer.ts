@@ -277,7 +277,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 
 		await new Promise<void>((resolve) => {
-			if (this.consumer && this.consumer.isConnected()) {
+            if (this.consumer?.isConnected()) {
 				this.consumer.disconnect(resolve);
 			} else {
 				resolve();
