@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-const shortCodeMap: Map<string, string> = require('../data/assertionShortCodesMap.json');
+import fs from "fs";
+
+const shortCodeMap: Map<string, string> = JSON.parse(fs.readFileSync("../data/assertionShortCodesMap.json").toString());
 
 /**
  * Maps short code messages contained in an Error thrown by our assert() function to the
@@ -22,5 +24,5 @@ const shortCodeMap: Map<string, string> = require('../data/assertionShortCodesMa
  *            key. Otherwise it returns the input parameter unchanged.
  */
 export function mapAssertionMessage(errorMessage: string): string {
-    return shortCodeMap.get(errorMessage) || errorMessage;
+    return shortCodeMap.get(errorMessage) ?? errorMessage;
 }
