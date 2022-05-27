@@ -50,7 +50,7 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
  * Converts existing IOdspSnapshot to snapshot tree, blob array and ops
  * @param odspSnapshot - snapshot
  */
-export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
+export function convertOdspSnapshotToSnapshotTreeAndBlobs(
     odspSnapshot: IOdspSnapshot,
 ): ISnapshotContents {
     const blobsWithBufferContent = new Map<string, ArrayBuffer>();
