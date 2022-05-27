@@ -271,5 +271,4 @@ export class AzureClient {
             }
         })(container, rootDataObject);
     }
-    // #endregion
 }
