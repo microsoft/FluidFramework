@@ -77,7 +77,7 @@
     "@fluidframework/routerlicious-driver": "^0.60.1000",
     "@fluidframework/runtime-definitions": "^0.60.1000",
     "@fluidframework/runtime-utils": "^0.60.1000",
-    "@fluidframework/server-local-server": "^0.1036.2000-0",
+    "@fluidframework/server-local-server": "^0.1036.3000-0",
     "@fluidframework/server-services-client": "^0.1036.3000-0",
     "@fluidframework/test-runtime-utils": "^0.60.1000",
     "@fluidframework/tool-utils": "^0.60.1000",

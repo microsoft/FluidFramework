@@ -61,7 +61,7 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
-    "fluid-framework-previous": "npm:fluid-framework@0.59.2000",
+    "fluid-framework-previous": "npm:fluid-framework@0.59.3002",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
@@ -69,20 +69,10 @@
   "typeValidation": {
     "version": "0.60.1000",
     "broken": {
-      "ClassDeclaration_SparseMatrix": {"forwardCompat": false},
-      "ClassDeclaration_SharedNumberSequence": {"forwardCompat": false},
-      "ClassDeclaration_SharedObjectSequence": {"forwardCompat": false},
-      "ClassDeclaration_SharedSegmentSequence": {"forwardCompat": false},
-      "ClassDeclaration_SharedSequence": {"forwardCompat": false},
-      "ClassDeclaration_SequenceMaintenanceEvent": {"forwardCompat": false},
-      "ClassDeclaration_SequenceDeltaEvent": {"forwardCompat": false},
-      "ClassDeclaration_SharedDirectory": {"forwardCompat": false},
-      "ClassDeclaration_SharedString": {"forwardCompat": false},
-      "ClassDeclaration_FluidContainer": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IFluidContainer": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_SequenceEvent": {"forwardCompat": false},
       "ClassDeclaration_IntervalCollection": {"forwardCompat": false},
-      "InterfaceDeclaration_ISharedString": {"forwardCompat": false}
-    }
+      "InterfaceDeclaration_IFluidContainer": {"backCompat": false, "forwardCompat": false},
+      "ClassDeclaration_FluidContainer": {"backCompat": false}
+    },
+    "disabled": false
   }
 }
