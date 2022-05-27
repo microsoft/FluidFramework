@@ -27,7 +27,7 @@ Changes will be made in the way heuristic summaries are run based on observed te
 ### bindToContext to be removed from IFluidDataStoreChannel
 `bindToContext` will be removed from `IFluidDataStoreChannel` in the next major release.
 It was deprecated in 0.50 but due to [this bug](https://github.com/microsoft/FluidFramework/issues/9127) it still had to be called after creating a non-root data store. The bug was fixed in 0.59.
-These calls to `bindToContext` should now be removed in this version since N / N-1 compatibility across container runtime and data store runtime boundary will be maintained. Basically, container runtime version 0.60 running with data store runtime version 0.59 will not this bug.
+To prepare for the removal in the following release, calls to `bindToContext` can and should be removed as soon as this version is consumed. Since the compatibility window between container runtime and data store runtime is N / N-1, all runtime code will have the required bug fix (released in the previous version 0.59) and it can be safely removed.
 
 ## 0.60 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
