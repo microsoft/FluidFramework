@@ -5,7 +5,7 @@
 
 import { debug } from "debug";
 import * as winston from "winston";
-import nconf from "nconf";
+import * as nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import Transport = require("winston-transport");
 import { ILumberjackEngine, ILumberjackSchemaValidator, Lumberjack } from "@fluidframework/server-services-telemetry";

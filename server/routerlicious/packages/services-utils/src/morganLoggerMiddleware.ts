@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import express from "express";
+import * as express from "express";
 import morgan from "morgan";
 import {
     BaseTelemetryProperties,

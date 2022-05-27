@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type nconf from "nconf";
+import * as nconf from "nconf";
 import { ILogger } from "./lambdas";
 
 /**
