@@ -33,11 +33,11 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         this._connected = connected;
 
         if (connected) {
-            this.clientSequenceNumber = 0;
             for (const remoteMessage of this.pendingRemoteMessages) {
                 this.process(remoteMessage);
             }
             this.pendingRemoteMessages.length = 0;
+            this.clientSequenceNumber = 0;
             // We should get a new clientId on reconnection.
             this.clientId = uuid();
             // Update the clientId in FluidDataStoreRuntime.
