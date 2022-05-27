@@ -350,7 +350,7 @@ export class RedisSocketIoAdapter extends Adapter {
                                  service: "redisAdapter",
                                  timestamp: time,
                              });
-                        if (getRandomInt(600) === 0) {
+                        if (getRandomInt(1000) === 0) {
                             const channelMetadata = JSON.stringify(channel).split("/");
                             const tenantId = channelMetadata[1].replace("#", "");
                             const documentId = channelMetadata[2].replace("#", "").replace("\"", "");
