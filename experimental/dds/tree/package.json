@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@fluid-internal/stochastic-test-utils": "^0.60.1000",
-    "@fluid-tools/benchmark": "^0.40.0",
+    "@fluid-tools/benchmark": "^0.41.67945",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/container-loader": "^0.60.1000",
     "@fluidframework/container-runtime": "^0.60.1000",
