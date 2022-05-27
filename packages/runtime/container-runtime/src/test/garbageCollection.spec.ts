@@ -557,28 +557,28 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({});
             assert(
+                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 0 }]),
+                "gcRunCount should be 0 since this event was logged before first GC run completed",
+            );
+
+            await garbageCollector.collectGarbage({});
+            assert(
                 mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 1 }]),
-                "gcRunCount should be 1 for the first gcEndEvent",
+                "gcRunCount should be 1 since this event was logged after first GC run completed",
             );
 
             await garbageCollector.collectGarbage({});
             assert(
                 mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 2 }]),
-                "gcRunCount should be 2 for the second gcEndEvent",
-            );
-
-            await garbageCollector.collectGarbage({});
-            assert(
-                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 3 }]),
-                "gcRunCount should be 3 for the third gcEndEvent",
+                "gcRunCount should be 2 since this event was logged after second GC run completed",
             );
 
             // The GC run count should reset for new garbage collector.
             const garbageCollector2 = createGarbageCollector();
             await garbageCollector2.collectGarbage({});
             assert(
-                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 1 }]),
-                "gcRunCount should be 1 for the first gcEndEvent in new garbage collector",
+                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 0 }]),
+                "gcRunCount should be 0 since this event was logged before first GC run in new garbage collector",
             );
         });
     });

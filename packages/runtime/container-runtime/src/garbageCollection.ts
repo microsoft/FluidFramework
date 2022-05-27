@@ -689,9 +689,10 @@ export class GarbageCollector implements IGarbageCollector {
                 this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
             }
 
+            event.end({ ...gcStats, gcRunCount: this.gcRunCount });
+
             this.gcRunCount++;
 
-            event.end({ ...gcStats });
             return gcStats;
         },
         { end: true, cancel: "error" });
