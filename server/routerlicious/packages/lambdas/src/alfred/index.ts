@@ -464,20 +464,20 @@ export function configureWebSocketServices(
 
                     socket.emit("nack", "", [nackMessage]);
                 } else {
-                    const throttleError = checkThrottle(
-                        submitOpThrottler,
-                        getSubmitOpThrottleId(clientId, connection.tenantId),
-                        connection.tenantId,
-                        logger);
-                    if (throttleError) {
-                        const nackMessage = createNackMessage(
-                            throttleError.code,
-                            NackErrorType.ThrottlingError,
-                            throttleError.message,
-                            throttleError.retryAfter);
-                        socket.emit("nack", "", [nackMessage]);
-                        return;
-                    }
+                    // const throttleError = checkThrottle(
+                    //     submitOpThrottler,
+                    //     getSubmitOpThrottleId(clientId, connection.tenantId),
+                    //     connection.tenantId,
+                    //     logger);
+                    // if (throttleError) {
+                    //     const nackMessage = createNackMessage(
+                    //         throttleError.code,
+                    //         NackErrorType.ThrottlingError,
+                    //         throttleError.message,
+                    //         throttleError.retryAfter);
+                    //     socket.emit("nack", "", [nackMessage]);
+                    //     return;
+                    // }
                     messageBatches.forEach((messageBatch) => {
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
                         const sanitized = messages
