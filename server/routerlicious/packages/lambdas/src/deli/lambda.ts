@@ -365,6 +365,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         for (const message of boxcar.contents) {
             // Ticket current message.
+            // Message received by deli.
             const ticketedMessage = this.ticket(
                 message,
                 this.serviceConfiguration.enableTraces ? this.createTrace("start") : undefined);
@@ -639,17 +640,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         // Update and retrieve the minimum sequence number
         const message = rawMessage as IRawOperationMessage;
-        // Message received by deli.
-        const timeNow = Date.now();
-        if (!message.operation.traces) {
-            message.operation.traces = [];
-        }
-        message.operation.traces.push(
-            {
-                action: "start",
-                service: "deli",
-                timestamp: timeNow,
-            });
 
         const dataContent = this.extractDataContent(message);
 
