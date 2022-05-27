@@ -969,12 +969,18 @@ describe("Garbage Collection Tests", () => {
             };
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
+            const trackVersion = mc.config.getString("Fluid.GarbageCollection.TrackGCBlobStateVersionKey");
+            assert(trackVersion !== undefined, `Expected trackVersion`);
+            const versionCheck = currentVersionGreaterOrEqualToVersion(pkgVersion, trackVersion);
+            assert(versionCheck === false, `Expected version Check To Fail current: ${pkgVersion} - version: ${trackVersion}`);
+
             // Initialize nodes A & D.
             defaultGCData.gcNodes = {};
             defaultGCData.gcNodes["/"] = nodes;
             const fullTree = false;
             const trackState = true;
             const garbageCollector = createGarbageCollector();
+            assert(garbageCollector.trackGCBlobState === false, `Expected no tracking! ${garbageCollector.trackGCBlobState}, ${pkgVersion} - ${mc.config.getString("Fluid.GarbageCollection.TrackGCBlobStateVersionKey")}`);
 
             await garbageCollector.collectGarbage({ runGC: true });
             assert(gcBlobRootKey !== undefined, `gcBlobRootKey undefined!`);
