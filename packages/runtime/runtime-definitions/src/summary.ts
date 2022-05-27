@@ -28,27 +28,40 @@ export interface ISummaryStats {
 }
 
 /**
- *  The summarization methods are recursively invoked during the summary calculation and will
- *  compose the Summary Tree. At the same time, each component that is taking part of the summarization
- *  will populate the tree information aggregation for its subtree through the ISummaryStats interface.
- *  Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
- *  will be taking part of the summarization process.
+ * Represents the summary tree for a node along with the statistics for that tree.
+ * For example, for a given data store, it contains the data for data store along with a subtree for
+ * each of its DDS.
+ * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
+ * will be taking part of the summarization process.
  */
 export interface ISummaryTreeWithStats {
     /** Represents an agreggation of node counts and blob sizes associated to the current summary information */
     stats: ISummaryStats;
     /**
-     * Summary defines a recursive data structure that will be converted to a snapshot tree and uploaded
+     * A recursive data structure that will be converted to a snapshot tree and uploaded
      * to the backend.
      */
     summary: ISummaryTree;
 }
 
+/**
+ * Represents a summary at a current sequence number.
+ */
 export interface ISummarizeResult {
     stats: ISummaryStats;
     summary: SummaryTree;
 }
 
+/**
+ * Contains the same data as ISummaryResult but in order to avoid naming colisions,
+ * the data store summaries are wrapped around an array of labels identified by pathPartsForChildren.
+ * Ex: id:""
+       pathPartsForChildren: ["path1"]
+       stats: ...
+       summary:
+        ...
+            "path1":
+ */
 export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
     /** Additional path parts between this node's ID and its children's IDs. */

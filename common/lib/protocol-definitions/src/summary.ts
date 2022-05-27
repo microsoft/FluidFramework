@@ -22,7 +22,7 @@ export interface ISummaryCommitter {
 }
 
 /**
- *  Represents a node from the Summary Tree.
+ *  Type tag used to distinguish different types of nodes in a {@link ISummaryTree}.
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SummaryType {
@@ -65,7 +65,6 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * To illustrate, if a DataStore did not change since last summary, the framework runtime will use a handle for the
  * entire DataStore instead of re-sending the entire subtree. The same concept applies for a DDS.
  * An example of handle would be: '/<DataStoreId>/<DDSId>'.
- * Notice that handles are optimizations from the Fluid Framework Runtime and the DDS is not aware of the handles.
  */
 export interface ISummaryHandle {
     type: SummaryType.Handle;
@@ -76,13 +75,17 @@ export interface ISummaryHandle {
     handleType: SummaryTypeNoHandle;
 
     /**
-     * Unique path that identifies the stored handle reference.
+     * Unique path that identifies the corresponding sub-tree in a previous summary.
      */
     handle: string;
 }
 
 /**
- * String or Binary data to be uploaded to the server as part of the document's Summary.
+ * String or Binary data to be uploaded to the server as part of the container's Summary.
+ * Note: Already uploaded blobs would be referenced by a ISummaryAttachment.
+ * Additional information can be found here: https://github.com/microsoft/FluidFramework/issues/6568
+ * Ex. "content": "{ \"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",
+ *                    \"summaryFormatVersion\":2,\"isRootDataStore\":false }"
  */
 export interface ISummaryBlob {
     type: SummaryType.Blob;
@@ -90,9 +93,11 @@ export interface ISummaryBlob {
 }
 
 /**
- * Handle to blobs uploaded outside of the summary. Attachment Blobs are uploaded and downloaded separately via
- * http requests and  are not included on the snapshot payload. The ISummaryAttachment are handles to these blobs.
+ * Unique identifier for blobs uploaded outside of the summary. Attachment Blobs are uploaded and
+ * downloaded separately and do not take part of the snapshot payload.
+ * The id gets returned from the backend after the attachment has been uploaded.
  * Additional information can be found here: https://github.com/microsoft/FluidFramework/issues/6374
+ * Ex. "id": "bQAQKARDdMdTgqICmBa_ZB86YXwGP"
  */
 export interface ISummaryAttachment {
     type: SummaryType.Attachment;
