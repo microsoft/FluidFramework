@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import { IAnyDriverError } from "@fluidframework/driver-utils";
-import { IClient, IConnect } from "@fluidframework/protocol-definitions";
+import { IClient, IConnect, IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { errorObjectFromSocketError, IR11sSocketError } from "./errorUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -55,6 +55,20 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
         const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger, enableLongPollingDowngrades);
 
         await deltaConnection.initialize(connectMessage, timeoutMs);
+        const opDurationMap: Record<number, PerformanceEvent> = {};
+        deltaConnection.addTrackedListener("submitOp", (messages: IDocumentMessage[]) => {
+            messages.forEach((message) => {
+                opDurationMap[message.clientSequenceNumber] = PerformanceEvent.start(
+                    logger,
+                    { eventName: "custom_op_log" },
+                );
+            });
+        });
+        deltaConnection.addTrackedListener("op", (messages: ISequencedDocumentMessage[]) => {
+            messages.forEach((message) => {
+                opDurationMap[message.clientSequenceNumber].end();
+            });
+        });
         return deltaConnection;
     }
 
