@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Mutex } from "async-mutex";
 import * as isomorphicGit from "isomorphic-git";
 import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
@@ -359,6 +360,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
 
 export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     private readonly repositoryCache: Set<string> = new Set();
+    private readonly mutex: Mutex = new Mutex();
 
     constructor(
         private readonly storageDirectoryConfig: IStorageDirectoryConfig,
@@ -367,43 +369,22 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     ) { }
 
     public async create(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
-        const repoPath = helpers.getRepoPath(
-            this.repoPerDocEnabled,
-            params.repoName, /* tenantId */
-            params.storageRoutingId?.documentId,
-            this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
-        const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
-        const directoryPath = helpers.getGitDirectory(
-            repoPath,
-            this.storageDirectoryConfig.baseDir);
-        const repoName =
-            this.repoPerDocEnabled ?
-                `${params.repoName}/${params.storageRoutingId?.documentId}` :
-                params.repoName;
-
-        await isomorphicGit.init({
-            fs: fileSystemManager,
-            gitdir: directoryPath,
-            bare: true,
-        });
-
-        this.repositoryCache.add(repoPath);
-        const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
-        const repoManager = new IsomorphicGitRepositoryManager(
-            fileSystemManager,
-            params.repoOwner,
-            repoName,
-            directoryPath,
-            lumberjackBaseProperties);
-
-        Lumberjack.info(
-            "Created a new repo",
-            {
-                ...lumberjackBaseProperties,
-                [BaseGitRestTelemetryProperties.directoryPath]: directoryPath,
+        const onRepoNotExists = async (args?: any) => {
+            await isomorphicGit.init({
+                fs: args?.fileSystemManager,
+                gitdir: args?.directoryPath,
+                bare: true,
             });
+            this.repositoryCache.add(args?.repoPath);
+            Lumberjack.info(
+                "Created a new repo",
+                {
+                    ...(args?.lumberjackBaseProperties),
+                    [BaseGitRestTelemetryProperties.directoryPath]: args?.directoryPath,
+                });
+        };
 
-        return repoManager;
+        return this.repoManagerFactoryInternalHandler(params, onRepoNotExists, true);
     }
 
     public async open(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
@@ -418,20 +399,21 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             throw new NetworkError(400, `Repo does not exist ${args?.directoryPath}`);
         };
 
-        return this.openInternal(params, onRepoNotExists);
+        return this.repoManagerFactoryInternalHandler(params, onRepoNotExists, false);
     }
 
     public async openOrCreate(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
         const onRepoNotExists = async () => {
-            return this.create(params);
+            await this.create(params);
         };
 
-        return this.openInternal(params, onRepoNotExists);
+        return this.repoManagerFactoryInternalHandler(params, onRepoNotExists, false);
     }
 
-    private async openInternal(
+    private async repoManagerFactoryInternalHandler(
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<IsomorphicGitRepositoryManager> | never) {
+        onRepoNotExists: (args?: any) => Promise<void> | void | never,
+        shouldUseMutex: boolean) {
             const repoPath = helpers.getRepoPath(
                 this.repoPerDocEnabled,
             params.repoName, /* tenantId */
@@ -447,21 +429,35 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
             const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
 
-            if (!(this.repositoryCache.has(repoPath))) {
-                const repoExists = await helpers.exists(fileSystemManager, directoryPath);
-                if (!repoExists || !repoExists.isDirectory()) {
-                    return onRepoNotExists({ repoPath, directoryPath, lumberjackBaseProperties });
+            const handlerCore = async () => {
+                if (!(this.repositoryCache.has(repoPath))) {
+                    const repoExists = await helpers.exists(fileSystemManager, directoryPath);
+                    if (!repoExists || !repoExists.isDirectory()) {
+                        await onRepoNotExists({
+                            fileSystemManager,
+                            repoPath,
+                            directoryPath,
+                            lumberjackBaseProperties });
+                    } else {
+                        this.repositoryCache.add(repoPath);
+                    }
                 }
 
-                this.repositoryCache.add(repoPath);
-            }
+                const repoManager = new IsomorphicGitRepositoryManager(
+                    fileSystemManager,
+                    params.repoOwner,
+                    repoName,
+                    directoryPath,
+                    lumberjackBaseProperties);
+                return repoManager;
+            };
 
-            const repoManager = new IsomorphicGitRepositoryManager(
-                fileSystemManager,
-                params.repoOwner,
-                repoName,
-                directoryPath,
-                lumberjackBaseProperties);
-            return repoManager;
+            if (shouldUseMutex) {
+                return this.mutex.runExclusive(async () => {
+                    return handlerCore();
+                });
+            } else {
+                return handlerCore();
+            }
     }
 }

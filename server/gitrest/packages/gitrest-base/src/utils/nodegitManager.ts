@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Mutex } from "async-mutex";
 import nodegit from "nodegit";
 import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
@@ -352,6 +353,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
 export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactory {
     // Cache repositories to allow for reuse
     private repositoryPCache: { [key: string]: Promise<nodegit.Repository> } = {};
+    private readonly mutex: Mutex = new Mutex();
 
     constructor(
         private readonly storageDirectoryConfig: IStorageDirectoryConfig,
@@ -362,42 +364,22 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
     }
 
     public async create(params: IRepoManagerParams): Promise<NodegitRepositoryManager> {
-        // Verify that both inputs are valid folder names
-        const repoPath = helpers.getRepoPath(
-            this.repoPerDocEnabled,
-            params.repoName, /* tenantId */
-            params.storageRoutingId?.documentId,
-            this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
-        const directoryPath = helpers.getGitDirectory(repoPath, this.storageDirectoryConfig.baseDir);
-        const repoName =
-            this.repoPerDocEnabled ?
-                `${params.repoName}/${params.storageRoutingId?.documentId}` :
-                params.repoName;
-        // Create and then cache the repository
-        const isBare = 1;
-
-        const repositoryP = nodegit.Repository.init(
-            directoryPath,
-            isBare);
-        this.repositoryPCache[repoPath] = repositoryP;
-
-        const repository = await this.repositoryPCache[repoPath];
-        const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
-        const repoManager = new NodegitRepositoryManager(
-            params.repoOwner,
-            repoName,
-            repository,
-            directoryPath,
-            this.externalStorageManager,
-            lumberjackBaseProperties);
-        Lumberjack.info(
+        const onRepoNotExists = (args?: any) => {
+            // Create and then cache the repository
+            const isBare = 1;
+            const repositoryP = nodegit.Repository.init(
+                args?.directoryPath,
+                isBare);
+            this.repositoryPCache[args?.repoPath] = repositoryP;
+            Lumberjack.info(
                 "Created a new repo",
                 {
-                    ...lumberjackBaseProperties,
-                    [BaseGitRestTelemetryProperties.directoryPath]: directoryPath,
+                    ...(args?.lumberjackBaseProperties),
+                    [BaseGitRestTelemetryProperties.directoryPath]: args?.directoryPath,
                 });
+        };
 
-        return repoManager;
+        return this.repoManagerFactoryInternalHandler(params, onRepoNotExists, true);
     }
 
     public async open(params: IRepoManagerParams): Promise<NodegitRepositoryManager> {
@@ -412,20 +394,21 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             throw new NetworkError(400, `Repo does not exist ${args?.directoryPath}`);
         };
 
-        return this.openInternal(params, onRepoNotExists);
+        return this.repoManagerFactoryInternalHandler(params, onRepoNotExists, false);
     }
 
     public async openOrCreate(params: IRepoManagerParams): Promise<NodegitRepositoryManager> {
         const onRepoNotExists = async () => {
-            return this.create(params);
+            await this.create(params);
         };
 
-        return this.openInternal(params, onRepoNotExists);
+        return this.repoManagerFactoryInternalHandler(params, onRepoNotExists, false);
     }
 
-    private async openInternal(
+    private async repoManagerFactoryInternalHandler(
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<NodegitRepositoryManager> | never) {
+        onRepoNotExists: (args?: any) => Promise<void> | void | never,
+        shouldUseMutex: boolean) {
         const repoPath = helpers.getRepoPath(
             this.repoPerDocEnabled,
             params.repoName, /* tenantId */
@@ -438,24 +421,34 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
                 `${params.repoName}/${params.storageRoutingId?.documentId}` :
                 params.repoName;
 
-        if (!(repoPath in this.repositoryPCache)) {
-            const repoExists = await helpers.exists(
-                this.fileSystemManagerFactory.create(params.fileSystemManagerParams), directoryPath);
-            if (!repoExists) {
-                return onRepoNotExists({ repoPath, directoryPath, lumberjackBaseProperties });
+        const handlerCore = async () => {
+            if (!(repoPath in this.repositoryPCache)) {
+                const repoExists = await helpers.exists(
+                    this.fileSystemManagerFactory.create(params.fileSystemManagerParams), directoryPath);
+                if (!repoExists || !repoExists.isDirectory()) {
+                    await onRepoNotExists({ repoPath, directoryPath, lumberjackBaseProperties });
+                } else {
+                    this.repositoryPCache[repoPath] = nodegit.Repository.open(directoryPath);
+                }
             }
 
-            this.repositoryPCache[repoPath] = nodegit.Repository.open(directoryPath);
-        }
+            const repository = await this.repositoryPCache[repoPath];
+            const repoManager = new NodegitRepositoryManager(
+                params.repoOwner,
+                repoName,
+                repository,
+                directoryPath,
+                this.externalStorageManager,
+                lumberjackBaseProperties);
+            return repoManager;
+        };
 
-        const repository = await this.repositoryPCache[repoPath];
-        const repoManager = new NodegitRepositoryManager(
-            params.repoOwner,
-            repoName,
-            repository,
-            directoryPath,
-            this.externalStorageManager,
-            lumberjackBaseProperties);
-        return repoManager;
+        if (shouldUseMutex) {
+            return this.mutex.runExclusive(async () => {
+                return handlerCore();
+            });
+        } else {
+            return handlerCore();
+        }
     }
 }
