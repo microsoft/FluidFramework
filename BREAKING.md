@@ -126,6 +126,7 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
 - [proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-to-be-removed-from-ILoaderProps-and-ILoaderServices)
 - [routerlicious-host package and ContainerUrlResolver to be removed](#routerlicious-host-package-and-ContainerUrlResolver-to-be-removed)
 - [LocalReference class and method deprecations](#LocalReference-class-and-method-deprecations)
+- [Deprecated properties from ILoaderOptions](#Deprecated-properties-from-ILoaderOptions)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
@@ -148,6 +149,9 @@ To support this change the following methods are deprecated with replacements th
  - removeLocalReference to removeLocalReferencePosition
 
  The above methods are changes in both the @fluidframework/merge-tree and @fluidframework/sequence packages.
+
+ ### Deprecated properties from ILoaderOptions
+`noopTimeFrequency` and `noopCountFrequency` from `ILoaderOptions` will be deprecated and moved to `IClientConfiguration` in `@fluidframework/protocol-definitions`.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)

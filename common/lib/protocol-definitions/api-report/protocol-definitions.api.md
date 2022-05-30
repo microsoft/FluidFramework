@@ -85,6 +85,8 @@ export interface IClientConfiguration {
     blockSize: number;
     // (undocumented)
     maxMessageSize: number;
+    noopCountFrequency?: number;
+    noopTimeFrequency?: number;
     // (undocumented)
     summary: ISummaryConfiguration;
 }
@@ -697,7 +699,6 @@ export enum TreeEntry {
     // (undocumented)
     Tree = "Tree"
 }
-
 
 // (No @packageDocumentation comment for this package)
 

@@ -142,7 +142,6 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
             const provider = getTestObjectProvider();
             switch (provider.driver.type) {
                 case "local":
-                case "tinylicious":
                     break;
                 default:
                     this.skip();
