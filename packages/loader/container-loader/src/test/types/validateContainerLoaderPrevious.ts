@@ -35,6 +35,7 @@ declare function get_current_EnumDeclaration_ConnectionState():
 declare function use_old_EnumDeclaration_ConnectionState(
     use: TypeOnly<old.ConnectionState>);
 use_old_EnumDeclaration_ConnectionState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_ConnectionState());
 
 /*

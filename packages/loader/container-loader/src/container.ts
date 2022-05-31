@@ -147,19 +147,33 @@ export interface IContainerConfig {
 
 export enum ConnectionState {
     /**
-     * The document is no longer connected to the delta server
+     * The container is not connected to the ordering service
+     * Note - When in this state the container may be about to reconnect,
+     * or may remain disconnected until explicitly told to connect.
      */
-    Disconnected,
+    Disconnected = 0,
 
     /**
-     * The document has an inbound connection but is still pending for outbound deltas
+     * The container is disconnected but actively trying to establish a new connection
+     * PLEASE NOTE that this numerical value falls out of the order you may expect for this state
      */
-    Connecting,
+    EstablishingConnection = 3,
 
     /**
-     * The document is fully connected
+     * @see ConnectionState.CatchingUp, which is the new name for this state.
+     * @deprecated - This state itself is not gone, just being renamed. Please use ConnectionState.CatchingUp.
      */
-    Connected,
+     Connecting = 1,
+
+    /**
+     * The container has an inbound connection only, and is catching up to the latest known state from the service.
+     */
+    CatchingUp = 1,
+
+    /**
+     * The container is fully connected and syncing
+     */
+    Connected = 2,
 }
 
 /**
@@ -194,7 +208,8 @@ export async function waitContainerToCatchUp(container: IContainer) {
         container.on("closed", closedCallback);
 
         const waitForOps = () => {
-            assert(container.connectionState !== ConnectionState.Disconnected,
+            assert(container.connectionState === ConnectionState.CatchingUp
+                || container.connectionState === ConnectionState.Connected,
                 0x0cd /* "Container disconnected while waiting for ops!" */);
             const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
@@ -438,12 +453,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private setAutoReconnectTime = performance.now();
 
-    private readonly collabWindowTracker = new CollabWindowTracker(
-        (type, contents) => this.submitMessage(type, contents),
-        () => this.activeConnection(),
-        this.loader.services.options?.noopTimeFrequency,
-        this.loader.services.options?.noopCountFrequency,
-    );
+    private collabWindowTracker: CollabWindowTracker | undefined;
 
     private get connectionMode() { return this._deltaManager.connectionManager.connectionMode; }
 
@@ -633,7 +643,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
-                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
+                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
                     });
                 },
                 connectionStateChanged: () => {
@@ -1540,7 +1550,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("disconnect", (reason: string) => {
-            this.collabWindowTracker.stopSequenceNumberUpdate();
+            this.collabWindowTracker?.stopSequenceNumberUpdate();
             this.connectionStateHandler.receivedDisconnectEvent(reason);
         });
 
@@ -1697,7 +1707,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.messageCountAfterDisconnection += 1;
-        this.collabWindowTracker.stopSequenceNumberUpdate();
+        this.collabWindowTracker?.stopSequenceNumberUpdate();
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
@@ -1732,11 +1742,50 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
-        this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+        // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
+        if (this.activeConnection()) {
+            if (this.collabWindowTracker === undefined) {
+                // Note that config from first connection will be used for this container's lifetime.
+                // That means that if relay service changes settings, such changes will impact only newly booted
+                // clients.
+                // All existing will continue to use settings they got earlier.
+                const [noopTimeFrequency, noopCountFrequency] = this.getNoopConfig();
+                this.collabWindowTracker = new CollabWindowTracker(
+                    (type, contents) => {
+                        assert(this.activeConnection(),
+                            0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
+                        this.submitMessage(type, contents);
+                    },
+                    noopTimeFrequency,
+                    noopCountFrequency,
+                );
+            }
+            this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+        }
 
         this.emit("op", message);
 
         return result;
+    }
+
+    /**
+     *  #260 (ADO)
+     * back-compat: noopTimeFrequency & noopCountFrequency properties were added to
+     * IClientConfiguration in 0.59.3000. During the integration, we must read the
+     * available configuration from the loader options.
+     */
+    private getNoopConfig(): [number | undefined, number | undefined] {
+        assert(this.serviceConfiguration !== undefined, "there should be service config for active connection");
+
+        if (this.serviceConfiguration.noopTimeFrequency !== undefined ||
+            this.serviceConfiguration.noopCountFrequency !== undefined) {
+            return [
+                this.serviceConfiguration.noopTimeFrequency as number,
+                this.serviceConfiguration.noopCountFrequency as number,
+            ];
+        }
+
+        return [this.loader.services.options?.noopTimeFrequency, this.loader.services.options?.noopCountFrequency];
     }
 
     private submitSignal(message: any) {

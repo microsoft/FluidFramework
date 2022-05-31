@@ -141,14 +141,15 @@ async function runnerProcess(
     let metricsCleanup: () => void = () => {};
 
     try {
+        const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
         const loaderOptions = generateLoaderOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.loader);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader);
 
         const containerOptions = generateRuntimeOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.container);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container);
 
         const configurations = generateConfigurations(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.configurations);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations);
         const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,
