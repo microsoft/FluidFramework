@@ -146,7 +146,7 @@ export const handler: Handler = {
                 fs.mkdirSync(targetFolder, { recursive: true });
             }
 
-            fs.writeFileSync(path.join(targetFolder, "assertionShortCodesMap.json"), JSON.stringify(contents), { encoding: "utf8" });
+            fs.writeFileSync(path.join(targetFolder, "assertionShortCodesMap.json"), JSON.stringify(contents, null, 4), { encoding: "utf8" });
         }
         return result;
     }
