@@ -2003,8 +2003,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
         this.addContainerStateToSummary(
             summarizeResult,
-            true, // fullTree
-            false); // trackState
+            true /* fullTree */,
+            false /* trackState */);
         return summarizeResult.summary;
     }
 
