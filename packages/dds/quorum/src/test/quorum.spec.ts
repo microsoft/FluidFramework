@@ -340,7 +340,7 @@ describe("Quorum", () => {
         });
 
         // eslint-disable-next-line max-len
-        it.skip("Doesn't resubmit unsequenced proposals that were sent before offline but are futile after reconnect", async () => {
+        it("Doesn't resubmit unsequenced proposals that were sent before offline but are futile after reconnect", async () => {
             const targetKey = "key";
             quorum1.set(targetKey, "unexpected");
             containerRuntime1.connected = false;
@@ -348,11 +348,9 @@ describe("Quorum", () => {
             quorum2.set(targetKey, "expected");
             containerRuntimeFactory.processAllMessages();
             assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
-            // TODO: This fails because MockContainerRuntimeFactoryForReconnection does not buffer remote ops
-            // while in disconnected state.
             assert.strictEqual(quorum1.get(targetKey), undefined, "Quorum1 should not see any value");
             containerRuntime1.connected = true;
-            // TODO: Need to inspect here that no ops are added to the queue.
+            assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 0, "Should not have generated an op");
             containerRuntimeFactory.processAllMessages();
             assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
         });
@@ -369,9 +367,18 @@ describe("Quorum", () => {
         });
 
         // eslint-disable-next-line max-len
-        it.skip("Doesn't resubmit unsequenced proposals that were sent during offline but are futile after reconnect", async () => {
-            // TODO: Similar to above, can't really test this without buffering remote ops.
-            assert.strict(true);
+        it("Doesn't resubmit unsequenced proposals that were sent during offline but are futile after reconnect", async () => {
+            const targetKey = "key";
+            containerRuntime1.connected = false;
+            quorum1.set(targetKey, "unexpected");
+            containerRuntimeFactory.processAllMessages();
+            quorum2.set(targetKey, "expected");
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+            assert.strictEqual(quorum1.get(targetKey), undefined, "Quorum1 should not see any value");
+            containerRuntime1.connected = true;
+            assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 0, "Should not have generated an op");
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
         });
 
         // eslint-disable-next-line max-len
@@ -386,19 +393,35 @@ describe("Quorum", () => {
         });
 
         // eslint-disable-next-line max-len
-        it.skip("Sequenced proposals that were accepted during offline have correct state after reconnect", async () => {
-            // TODO: Similar to above, can't really test this without buffering remote ops.
-            // TODO: To test this properly, we need to be able to "go offline" before processing the ack, but
-            // still allow other clients to see and process the op.
-            assert.strict(true);
+        it("Sequenced proposals that were accepted during offline have correct state after reconnect", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "expected");
+            // TODO: In this flow, client 1 processes the set message ack before it disconnects but not the accepts
+            // Consider whether it's interesting for it to disconnect before processing any ops.
+            containerRuntimeFactory.processOneMessage();
+            containerRuntime1.connected = false;
+            containerRuntimeFactory.processAllMessages(); // Process the accept from client 2
+            containerRuntime1.connected = true;
+            assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 0, "Should not have generated an op");
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
         });
 
         // eslint-disable-next-line max-len
-        it.skip("Sequenced proposals that remained pending during offline have correct state after reconnect", async () => {
-            // TODO: Similar to above, can't really test this without buffering remote ops.
-            // TODO: To test this properly, we need to be able to "go offline" before processing the ack, but
-            // still allow other clients to see and process the op.
-            assert.strict(true);
+        it("Sequenced proposals that remained pending during offline have correct state after reconnect", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "expected");
+            // TODO: In this flow, client 1 processes the set message ack before it disconnects but not the accepts
+            // Consider whether it's interesting for it to disconnect before processing any ops.
+            containerRuntimeFactory.processOneMessage();
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+            assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 1, "Should only have client 2 accept");
+            assert.strictEqual(quorum1.get(targetKey), undefined, "Quorum1 should not see the expected value");
+            assert.strictEqual(quorum2.get(targetKey), undefined, "Quorum2 should not see the expected value");
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
         });
     });
 });
