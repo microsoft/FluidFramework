@@ -223,7 +223,7 @@ describe("Create New Utils Tests", () => {
                     fileEntry,
                     true,
                     false,
-                    true,
+                    true /* isClpCompliantApp */,
                 ),
                 { itemId: "itemId1", id: "Summary handle" },
                 { "x-fluid-epoch": "epoch1" },
