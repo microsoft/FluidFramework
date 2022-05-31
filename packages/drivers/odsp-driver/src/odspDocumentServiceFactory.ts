@@ -82,6 +82,6 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
     }
 }
 
-export function sampleFuncName(fluidFile: Uint8Array | string): IDocumentServiceFactory {
+export function createLocalOdspDocumentServiceFactory(fluidFile: Uint8Array | string): IDocumentServiceFactory {
     return new LocalOdspDocumentServiceFactory(fluidFile);
 }
