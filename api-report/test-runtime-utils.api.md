@@ -142,6 +142,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     get connected(): boolean;
     set connected(connected: boolean);
     // (undocumented)
+    process(message: ISequencedDocumentMessage): void;
+    // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 

@@ -111,6 +111,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 isWithSummaryUpload: true,
             },
             async (event) => {
+                this.hostPolicy.sessionOptions = {
+                    forceAccessTokenViaAuthorizationHeader: true,
+                    ...this.hostPolicy.sessionOptions,
+                };
                 odspResolvedUrl = await createNewFluidFile(
                     toInstrumentedOdspTokenFetcher(
                         odspLogger,
@@ -183,6 +187,11 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
             odspLogger);
+
+        this.hostPolicy.sessionOptions = {
+            forceAccessTokenViaAuthorizationHeader: true,
+            ...this.hostPolicy.sessionOptions,
+        };
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,

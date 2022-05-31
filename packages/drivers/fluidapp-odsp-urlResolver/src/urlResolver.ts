@@ -57,7 +57,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
 async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlParts | undefined> {
     const pathname = urlSource.pathname;
     // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-    const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes)\/([^/]*)\/([^/]*)\/([^/]*)/);
+    const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/);
     if (siteDriveItemMatch === null) {
         return undefined;
     }
