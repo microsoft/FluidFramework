@@ -71,7 +71,6 @@
     "@fluidframework/container-utils-previous": "npm:@fluidframework/container-utils@0.59.3000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^0.59.4000",
-    "@fluidframework/test-runtime-utils": "^0.59.4000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
