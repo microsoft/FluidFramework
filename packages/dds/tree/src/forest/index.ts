@@ -4,11 +4,6 @@
  */
 
 export {
-    TreeKey,
-    TreeType,
-} from "./tree";
-
-export {
     ITreeCursor,
     TreeNavigationResult,
-} from "./forest";
+} from "./cursor";
