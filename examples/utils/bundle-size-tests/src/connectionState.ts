@@ -6,8 +6,7 @@
 import { ConnectionState } from "@fluidframework/container-loader";
 
 /**
- * This was added to test the bundle size when ConnectionState is moved to its own file within the
- * container-loader package.
+ * This was added to test the bundle size for cases when ConnectionState is used separately.
  */
 export function apisToBundle() {
     // Pass through dummy parameters, this file is only used for bundle analysis
