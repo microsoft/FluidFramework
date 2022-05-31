@@ -40,7 +40,7 @@ import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts"
 import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
-import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
+import { LocalOdspDocumentStorageService, OdspDocumentStorageService } from "./odspDocumentStorageManager";
 import { getWithRetryForTokenRefresh, getOdspResolvedUrl, TokenFetchOptionsEx } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
@@ -536,5 +536,43 @@ export class OdspDocumentService implements IDocumentService {
         }
 
         this.opsCache?.addOps(ops);
+    }
+}
+
+export class LocalOdspDocumentService implements IDocumentService {
+    policies?: IDocumentServicePolicies | undefined;
+
+    constructor(
+        private readonly odspResolvedUrl: IOdspResolvedUrl,
+        private readonly logger: ITelemetryLogger,
+        private readonly fluidFile: Uint8Array | string,
+    ) {
+        this.policies = { storageOnly: true };
+    }
+
+    public get resolvedUrl(): IResolvedUrl {
+        return this.odspResolvedUrl;
+    }
+
+    public async connectToStorage(): Promise<IDocumentStorageService> {
+        return new LocalOdspDocumentStorageService(
+            this.odspResolvedUrl,
+            this.logger,
+            this.fluidFile,
+        );
+    }
+
+    public connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
+        // TODO: do we expect to call this?
+        throw new Error("Method not implemented.");
+    }
+
+    public connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+        // TODO: do we expect to call this?
+        throw new Error("Method not implemented.");
+    }
+
+    public dispose(error?: any): void {
+        // Do nothing
     }
 }
