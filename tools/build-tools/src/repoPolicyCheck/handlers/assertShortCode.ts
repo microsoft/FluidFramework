@@ -140,7 +140,7 @@ export const handler: Handler = {
         const result = errors.length > 0 ? {error: errors.join("\n")} : undefined;
         if (resolve) {
             var contents = Array.from(codeToMsgMap.entries()).reduce((accum, current) => { accum[current[0]] = current[1]; return accum }, {} as any);
-            const targetFolder = "packages/test/test-utils/data";
+            const targetFolder = "packages/runtime/test-runtime-utils/src";
 
             if (!fs.existsSync(targetFolder)){
                 fs.mkdirSync(targetFolder, { recursive: true });

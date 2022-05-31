@@ -10,9 +10,11 @@
         "types": [
             "node"
         ],
-        "composite": true
+        "composite": true,
+        "resolveJsonModule": true,
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "src/**/*.json",
     ]
 }
