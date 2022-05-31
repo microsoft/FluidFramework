@@ -91,7 +91,14 @@ export function getSimpleVersion(file_version: string, arg_build_num: string, ar
     return fullVersion;
 }
 
-type TagPrefix = string | undefined | "client" | "server";
+type TagPrefix = string | "client" | "server" | "azure";
+
+/**
+ * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
+ * @param tags - an array of tags as strings.
+ * @returns an array of tags that match the prefix.
+ */
+const filterTags = (prefix: TagPrefix, tags: string[]): string[] => tags.filter(v => v.startsWith(`${prefix}_v`));
 
 /**
  * Extracts versions from the output of `git tag -l` in the working directory. The returned array will be sorted
@@ -103,7 +110,7 @@ type TagPrefix = string | undefined | "client" | "server";
 function getVersions(prefix: TagPrefix) {
     const raw_tags = child_process.execSync(`git tag -l`, { encoding: "utf8" });
     const tags = raw_tags.split(/\s+/g).map(t => t.trim());
-    const filtered = tags.filter(v => v.startsWith(`${prefix}_v`));
+    const filtered = filterTags(prefix, tags);
     return getVersionsFromStrings(prefix, filtered);
 }
 
@@ -111,15 +118,12 @@ function getVersions(prefix: TagPrefix) {
  * Extracts versions from an array of strings, sorts them according to semver rules, and returns the sorted array.
  *
  * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
- * @param tags - an array of strings.
+ * @param tags - an array of tags as strings.
  * @returns an array of versions extracted from the provided tags.
  */
 export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
-    let versions = tags.map((tag) => {
-        const split = tag.split(`${prefix}_v`);
-        return split[1];
-    });
-
+    const filtered = filterTags(prefix, tags);
+    let versions = filtered.map((tag) => tag.substring(prefix.length));
     sort_semver(versions);
     return versions;
 }
@@ -256,10 +260,12 @@ function main() {
         console.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
     }
 
-    const isLatest = getIsLatest(arg_tag, version);
-    console.log(`isLatest=${isLatest}`);
-    if (arg_release && isLatest) {
-        console.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
+    if (arg_tag !== undefined) {
+        const isLatest = getIsLatest(arg_tag, version);
+        console.log(`isLatest=${isLatest}`);
+        if (arg_release && isLatest) {
+            console.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
+        }
     }
 }
 
