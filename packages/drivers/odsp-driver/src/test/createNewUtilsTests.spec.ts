@@ -56,12 +56,16 @@ describe("Create New Utils Tests", () => {
     const itemId = "itemId";
     const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
     const filePath = "path";
-    const newFileParams: INewFileInfo = {
-        driveId,
-        siteUrl,
-        filePath,
-        filename: "filename",
-    };
+    let newFileParams: INewFileInfo;
+
+    beforeEach(async () => {
+        newFileParams = {
+            driveId,
+            siteUrl,
+            filePath,
+            filename: "filename",
+        };
+    });
 
     const test = (snapshot: ISnapshotContents) => {
         const snapshotTree = snapshot.snapshotTree;
