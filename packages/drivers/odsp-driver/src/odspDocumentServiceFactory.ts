@@ -9,6 +9,7 @@ import {
     TokenFetcher,
     IPersistedCache,
     HostStoragePolicy,
+    IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
@@ -62,11 +63,7 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
         const odspLogger = createOdspLogger(logger);
 
         return this.createDocumentServiceCore(
-            // TODO: should use the IOdspResolvedUrl interface
-            {
-                type: "web",
-                data: "sampledata",
-            },
+            this.getFakeOdspResolvedUrl(),
             odspLogger,
         );
     }
@@ -77,8 +74,33 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
         _cacheAndTrackerArg?: ICacheAndTracker,
         _clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
-        // TODO: We should potentially provide the implementation for resolvedUrl here
-        return new LocalOdspDocumentService(resolvedUrl, odspLogger, this.fluidFile);
+        return new LocalOdspDocumentService(this.getFakeOdspResolvedUrl(), odspLogger, this.fluidFile);
+    }
+
+    private getFakeOdspResolvedUrl(): IOdspResolvedUrl {
+        return {
+            type: "fluid",
+            odspResolvedUrl: true,
+            id: "1",
+            siteUrl: "fakeUrl",
+            driveId: "1",
+            itemId: "1",
+            // URL to send to fluid, contains the documentId and the path
+            url: "fakeUrl",
+            // A hashed identifier that is unique to this document
+            hashedDocumentId: "1",
+            endpoints: {
+                snapshotStorageUrl: "fakeUrl",
+                attachmentPOSTStorageUrl: "fakeUrl",
+                attachmentGETStorageUrl: "fakeUrl",
+                deltaStorageUrl: "fakeUrl",
+            },
+            // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
+            tokens: {},
+            fileName: "fakeName",
+            summarizer: false,
+            fileVersion: "1",
+        };
     }
 }
 
