@@ -117,7 +117,7 @@ interface IUnreferencedEvent {
     type: GCNodeType;
     age: number;
     timeout: number;
-    gcRunCount: number;
+    completedGCRuns: number;
     lastSummaryTime?: number;
     externalRequest?: boolean;
     viaHandle?: boolean;
@@ -362,8 +362,8 @@ export class GarbageCollector implements IGarbageCollector {
     // Queue for unreferenced events that should be logged the next time GC runs.
     private readonly pendingEventsQueue: IUnreferencedEvent[] = [];
 
-    // The number of times GC has run on this instance of GarbageCollector.
-    private gcRunCount = 0;
+    // The number of times GC has successfully completed on this instance of GarbageCollector.
+    private completedRuns = 0;
 
     protected constructor(
         private readonly runtime: IGarbageCollectionRuntime,
@@ -380,7 +380,7 @@ export class GarbageCollector implements IGarbageCollector {
         private readonly isSummarizerClient: boolean = true,
     ) {
         this.mc = loggerToMonitoringContext(
-            ChildLogger.create(baseLogger, "GarbageCollector", { all: { gcRunCount: () => this.gcRunCount } }),
+            ChildLogger.create(baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } }),
         );
 
         let prevSummaryGCVersion: number | undefined;
@@ -650,7 +650,7 @@ export class GarbageCollector implements IGarbageCollector {
         } = options;
 
         const logger = options.logger
-            ? ChildLogger.create(options.logger, undefined, { all: { gcRunCount: () => this.gcRunCount } })
+            ? ChildLogger.create(options.logger, undefined, { all: { completedGCRuns: () => this.completedRuns } })
             : this.mc.logger;
 
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
@@ -688,9 +688,9 @@ export class GarbageCollector implements IGarbageCollector {
                 this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
             }
 
-            event.end({ ...gcStats, gcRunCount: this.gcRunCount });
+            event.end({ ...gcStats, completedGCRuns: this.completedRuns });
 
-            this.gcRunCount++;
+            this.completedRuns++;
 
             return gcStats;
         },
@@ -1148,7 +1148,7 @@ export class GarbageCollector implements IGarbageCollector {
                 type: nodeType,
                 age: currentReferenceTimestampMs - nodeState.unreferencedTimestampMs,
                 timeout: this.inactiveTimeoutMs,
-                gcRunCount: this.gcRunCount,
+                completedGCRuns: this.completedRuns,
                 lastSummaryTime: this.getLastSummaryTimestampMs(),
                 externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
                 viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
