@@ -297,12 +297,12 @@ export class MockQuorum implements IQuorum, EventEmitter {
 
     addMember(id: string, client: Partial<ISequencedClient>) {
         this.members.set(id, client as ISequencedClient);
-        this.eventEmitter.emit("addMember");
+        this.eventEmitter.emit("addMember", id, client);
     }
 
     removeMember(id: string) {
         if (this.members.delete(id)) {
-            this.eventEmitter.emit("removeMember");
+            this.eventEmitter.emit("removeMember", id);
         }
     }
 
