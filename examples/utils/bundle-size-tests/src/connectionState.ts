@@ -5,9 +5,7 @@
 
 import { ConnectionState } from "@fluidframework/container-loader";
 
-/**
- * This was added to test the bundle size for cases when ConnectionState is used separately.
- */
+// This test was added because we expect ConnectionState to commonly be imported without the rest of the runtime.
 export function apisToBundle() {
     // Pass through dummy parameters, this file is only used for bundle analysis
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
