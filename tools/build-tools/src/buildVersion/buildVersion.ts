@@ -123,7 +123,7 @@ function getVersions(prefix: TagPrefix) {
  */
 export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
     const filtered = filterTags(prefix, tags);
-    let versions = filtered.map((tag) => tag.substring(prefix.length));
+    let versions = filtered.map((tag) => tag.substring(`${prefix}_v`.length));
     sort_semver(versions);
     return versions;
 }
