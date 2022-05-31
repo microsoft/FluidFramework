@@ -549,36 +549,36 @@ describe("Garbage Collection Tests", () => {
         });
     });
 
-    describe("GC run count", () => {
+    describe("GC completed runs", () => {
         const gcEndEvent = "GarbageCollector:GarbageCollection_end";
 
-        it("increments GC run count in logged events correctly", async () => {
+        it("increments GC completed runs in logged events correctly", async () => {
             const garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({});
             assert(
-                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 0 }]),
-                "gcRunCount should be 0 since this event was logged before first GC run completed",
+                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 0 }]),
+                "completedGCRuns should be 0 since this event was logged before first GC run completed",
             );
 
             await garbageCollector.collectGarbage({});
             assert(
-                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 1 }]),
-                "gcRunCount should be 1 since this event was logged after first GC run completed",
+                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 1 }]),
+                "completedGCRuns should be 1 since this event was logged after first GC run completed",
             );
 
             await garbageCollector.collectGarbage({});
             assert(
-                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 2 }]),
-                "gcRunCount should be 2 since this event was logged after second GC run completed",
+                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 2 }]),
+                "completedGCRuns should be 2 since this event was logged after second GC run completed",
             );
 
             // The GC run count should reset for new garbage collector.
             const garbageCollector2 = createGarbageCollector();
             await garbageCollector2.collectGarbage({});
             assert(
-                mockLogger.matchEvents([{ eventName: gcEndEvent, gcRunCount: 0 }]),
-                "gcRunCount should be 0 since this event was logged before first GC run in new garbage collector",
+                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 0 }]),
+                "completedGCRuns should be 0 since this event was logged before first GC run in new garbage collector",
             );
         });
     });

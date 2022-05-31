@@ -610,8 +610,7 @@ export class GarbageCollector implements IGarbageCollector {
             return baseGCDetailsMap;
         });
 
-        // Initialize the base state that is used to detect when inactive objects are used. It is explicitly initialized
-        // for non-summarizer clients as they don't run GC. Summarizer clients do this when GC runs first time.
+        // Initialize the base state that is used to detect when inactive objects are used.
         if (this.shouldRunGC) {
             this.initializeBaseStateP.catch((error) => {
                 const dpe = DataProcessingError.wrapIfUnrecognized(
@@ -688,7 +687,7 @@ export class GarbageCollector implements IGarbageCollector {
                 this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
             }
 
-            event.end({ ...gcStats, completedGCRuns: this.completedRuns });
+            event.end({ ...gcStats });
 
             this.completedRuns++;
 
