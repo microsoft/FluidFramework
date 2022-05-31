@@ -109,6 +109,20 @@
   },
   "typeValidation": {
     "version": "0.59.4000",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_MockContainerRuntimeFactory": {
+        "backCompat": false
+      },
+      "ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_MockQuorum": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_MockFluidDataStoreRuntime": {
+        "backCompat": false
+      }
+    }
   }
 }

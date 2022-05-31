@@ -107,6 +107,7 @@ declare function get_current_ClassDeclaration_MockContainerRuntimeFactory():
 declare function use_old_ClassDeclaration_MockContainerRuntimeFactory(
     use: TypeOnly<old.MockContainerRuntimeFactory>);
 use_old_ClassDeclaration_MockContainerRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockContainerRuntimeFactory());
 
 /*
@@ -131,6 +132,7 @@ declare function get_current_ClassDeclaration_MockContainerRuntimeFactoryForReco
 declare function use_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
     use: TypeOnly<old.MockContainerRuntimeFactoryForReconnection>);
 use_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection());
 
 /*
@@ -299,6 +301,7 @@ declare function get_current_ClassDeclaration_MockFluidDataStoreRuntime():
 declare function use_old_ClassDeclaration_MockFluidDataStoreRuntime(
     use: TypeOnly<old.MockFluidDataStoreRuntime>);
 use_old_ClassDeclaration_MockFluidDataStoreRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockFluidDataStoreRuntime());
 
 /*
@@ -352,26 +355,14 @@ use_old_ClassDeclaration_MockObjectStorageService(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MockQuorum": {"forwardCompat": false}
+* "RemovedClassDeclaration_MockQuorum": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_MockQuorum():
-    TypeOnly<old.MockQuorum>;
-declare function use_current_ClassDeclaration_MockQuorum(
-    use: TypeOnly<current.MockQuorum>);
-use_current_ClassDeclaration_MockQuorum(
-    get_old_ClassDeclaration_MockQuorum());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MockQuorum": {"backCompat": false}
+* "RemovedClassDeclaration_MockQuorum": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_MockQuorum():
-    TypeOnly<current.MockQuorum>;
-declare function use_old_ClassDeclaration_MockQuorum(
-    use: TypeOnly<old.MockQuorum>);
-use_old_ClassDeclaration_MockQuorum(
-    get_current_ClassDeclaration_MockQuorum());
 
 /*
 * Validate forward compat by using old type in place of current type

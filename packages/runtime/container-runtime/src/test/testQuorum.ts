@@ -4,9 +4,13 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICommittedProposal, IQuorum, IQuorumEvents, ISequencedClient } from "@fluidframework/protocol-definitions";
+import {
+    IQuorumClients,
+    IQuorumEvents,
+    ISequencedClient,
+} from "@fluidframework/protocol-definitions";
 
-export class TestQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
+export class TestQuorumClients extends TypedEventEmitter<IQuorumEvents> implements IQuorumClients {
     public disposed = false;
     public dispose() {
         this.disposed = true;
@@ -22,35 +26,6 @@ export class TestQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuo
         return this.members.get(clientId);
     }
 
-    private readonly values = new Map<string, any>();
-
-    public async propose(key: string, value: any): Promise<void> {
-        this.values.set(key, value);
-    }
-
-    public has(key: string): boolean {
-        return this.values.has(key);
-    }
-
-    public get(key: string): any {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.values.get(key);
-    }
-
-    public getApprovalData(key: string): ICommittedProposal | undefined {
-        const value = this.values.get(key);
-        if (value === undefined) {
-            return undefined;
-        }
-        return {
-            key,
-            value,
-            commitSequenceNumber: 0,
-            approvalSequenceNumber: 0,
-            sequenceNumber: 0,
-        };
-    }
-
     public addClient(clientId: string, client: ISequencedClient) {
         this.members.set(clientId, client);
         this.emit("addMember", clientId, client);
@@ -63,7 +38,6 @@ export class TestQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuo
 
     public reset() {
         this.members.clear();
-        this.values.clear();
         this.removeAllListeners();
     }
 }
