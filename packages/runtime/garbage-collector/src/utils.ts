@@ -232,7 +232,8 @@ export class GCDataBuilder implements IGarbageCollectionData {
             let normalizedId = trimLeadingSlashes(id);
             // Prefix the given id to the normalized id.
             normalizedId = `/${prefixId}/${normalizedId}`;
-            // Remove any trailing slashes from the normalized id.
+            // Remove any trailing slashes from the normalized id. Note that the trailing slashes are removed after
+            // adding the prefix for handling the special case where id is "/".
             normalizedId = trimTrailingSlashes(normalizedId);
 
             // Add the outbound routes against the normalized and prefixed id without duplicates.
