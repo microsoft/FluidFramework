@@ -9,7 +9,6 @@ import { LazyLoadedDataObjectFactory, LazyLoadedDataObject } from "@fluidframewo
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { FlowDocument } from "../document";
 import { hostType } from "../package";
-import { importDoc } from "./import";
 
 export class WebFlow extends LazyLoadedDataObject<ISharedDirectory> {
     private static readonly factory = new LazyLoadedDataObjectFactory<WebFlow>(
@@ -28,13 +27,6 @@ export class WebFlow extends LazyLoadedDataObject<ISharedDirectory> {
     public async create() {
         const doc = await FlowDocument.create(this.context) as FlowDocument;
         this.root.set("doc", doc.handle);
-
-        const url = new URL(window.location.href);
-        const template = url.searchParams.get("template");
-        if (template) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            importDoc(doc, template);
-        }
     }
 
     public async load() { }
