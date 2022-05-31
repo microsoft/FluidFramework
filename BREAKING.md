@@ -127,6 +127,7 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
 - [routerlicious-host package and ContainerUrlResolver to be removed](#routerlicious-host-package-and-ContainerUrlResolver-to-be-removed)
 - [LocalReference class and method deprecations](#LocalReference-class-and-method-deprecations)
 - [Deprecated properties from ILoaderOptions](#Deprecated-properties-from-ILoaderOptions)
+- [Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions](#Deprecated-forceAccessTokenViaAuthorizationHeader-from-ICollabSessionOptions)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
@@ -152,6 +153,9 @@ To support this change the following methods are deprecated with replacements th
 
  ### Deprecated properties from ILoaderOptions
 `noopTimeFrequency` and `noopCountFrequency` from `ILoaderOptions` will be deprecated and moved to `IClientConfiguration` in `@fluidframework/protocol-definitions`.
+
+### Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions
+Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions as auth token will be supplied as Header by default due to security reasons.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
