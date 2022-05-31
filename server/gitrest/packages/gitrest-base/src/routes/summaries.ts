@@ -31,7 +31,7 @@ import {
     BaseGitRestTelemetryProperties,
     IRepoManagerParams,
     getLumberjackBasePropertiesFromRepoManagerParams,
-    getRepoManagerFroWriteAPI,
+    getRepoManagerFromWriteAPI,
 } from "../utils";
 
 function getDocumentStorageDirectory(repoManager: IRepositoryManager, documentId: string): string {
@@ -222,7 +222,7 @@ export function create(
             return;
         }
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
-        const resultP = getRepoManagerFroWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
+        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
             .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => createSummary(
                 repoManager,
                 fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),

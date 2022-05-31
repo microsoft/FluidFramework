@@ -8,7 +8,7 @@ import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";
 import {
-    getRepoManagerFroWriteAPI,
+    getRepoManagerFromWriteAPI,
     getRepoManagerParamsFromRequest,
     IRepositoryManagerFactory,
     logAndThrowApiError,
@@ -20,7 +20,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
 
     router.post("/repos/:owner/:repo/git/trees", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        const resultP = getRepoManagerFroWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
+        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
             .then(async (repoManager) => repoManager.createTree(request.body as ICreateTreeParams))
             .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 

@@ -416,8 +416,8 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
         shouldUseMutex: boolean) {
             const repoPath = helpers.getRepoPath(
                 this.repoPerDocEnabled,
-            params.repoName, /* tenantId */
-            params.storageRoutingId?.documentId,
+                params.repoName, /* tenantId */
+                params.storageRoutingId?.documentId,
                 this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
             const directoryPath = helpers.getGitDirectory(
                 repoPath,

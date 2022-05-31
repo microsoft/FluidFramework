@@ -11,7 +11,7 @@ import { Router } from "express";
 import nconf from "nconf";
 import {
     getExternalWriterParams,
-    getRepoManagerFroWriteAPI,
+    getRepoManagerFromWriteAPI,
     getRepoManagerParamsFromRequest,
     IRepositoryManagerFactory,
     logAndThrowApiError,
@@ -55,7 +55,7 @@ export function create(
     router.post("/repos/:owner/:repo/git/refs", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const createRefParams = request.body as ICreateRefParamsExternal;
-        const resultP = getRepoManagerFroWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
+        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
             .then(async (repoManager) => repoManager.createRef(
                 createRefParams,
                 createRefParams.config,
@@ -66,7 +66,7 @@ export function create(
     router.patch("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const patchRefParams = request.body as IPatchRefParamsExternal;
-        const resultP = getRepoManagerFroWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
+        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
             .then(async (repoManager) => repoManager.patchRef(
                 getRefId(request.params[0]),
                 patchRefParams,

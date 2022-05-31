@@ -194,7 +194,7 @@ export function logAndThrowApiError(error: any, request: Request, params: IRepoM
     throw new NetworkError(400, `Error when processing ${request.method} request to ${request.url}`);
 }
 
-export async function getRepoManagerFroWriteAPI(
+export async function getRepoManagerFromWriteAPI(
     repoManagerFactory: IRepositoryManagerFactory,
     repoManagerParams: IRepoManagerParams,
     repoPerDocEnabled: boolean) {

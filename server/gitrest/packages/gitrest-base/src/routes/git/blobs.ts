@@ -8,7 +8,7 @@ import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";
 import {
-    getRepoManagerFroWriteAPI,
+    getRepoManagerFromWriteAPI,
     getRepoManagerParamsFromRequest,
     IRepositoryManagerFactory,
     logAndThrowApiError,
@@ -19,7 +19,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
     router.post("/repos/:owner/:repo/git/blobs", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        const resultP = getRepoManagerFroWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
+        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
             .then(async (repoManager) => repoManager.createBlob(
                 request.body as ICreateBlobParams,
             )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
