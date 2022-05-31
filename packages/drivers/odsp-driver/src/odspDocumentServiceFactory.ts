@@ -11,14 +11,14 @@ import {
     HostStoragePolicy,
     IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
+import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
 import { LocalOdspDocumentService } from "./odspDocumentService";
 import { createOdspLogger } from "./odspUtils";
 import { ICacheAndTracker } from "./epochTracker";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to

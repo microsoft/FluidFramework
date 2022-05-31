@@ -562,12 +562,12 @@ export class LocalOdspDocumentService implements IDocumentService {
         );
     }
 
-    public connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
+    public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         // TODO: do we expect to call this?
         throw new Error("Method not implemented.");
     }
 
-    public connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // TODO: do we expect to call this?
         throw new Error("Method not implemented.");
     }

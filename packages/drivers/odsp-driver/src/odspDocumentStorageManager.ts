@@ -189,7 +189,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
     private _ops: api.ISequencedDocumentMessage[] | undefined;
 
     private _snapshotSequenceNumber: number | undefined;
-    
+
     protected readonly snapshotUrl: string | undefined;
 
     protected readonly blobCache = new BlobCache();
@@ -324,7 +324,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
     protected initializeFromCachedValue(odspSnapshotCacheValue: ISnapshotContents): string | undefined {
         this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
         const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
-        
+
         // id should be undefined in case of just ops in snapshot.
         let id: string | undefined;
         if (snapshotTree) {
@@ -505,7 +505,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
             // Successful call, make network calls only
             this.firstVersionCall = false;
             const id = this.initializeFromCachedValue(odspSnapshotCacheValue);
-            
+
             return id ? [{ id, treeId: undefined! }] : [];
         }
 
@@ -654,7 +654,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                     break;
                 }
 
-                if (retry == 4) {
+                if (retry === 4) {
                     this.logger.sendErrorEvent({
                         eventName: "FlushFailure",
                         ...result,
@@ -831,7 +831,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceBase {
     constructor(
         resolvedUrl: IOdspResolvedUrl,
-        private readonly logger: ITelemetryLogger,
+        _logger: ITelemetryLogger,
         private readonly fluidFile: Uint8Array | string,
     ) {
         super(
@@ -843,11 +843,11 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
         let snapshotContents: ISnapshotContents;
 
         if (typeof this.fluidFile === "string") {
-            const content: IOdspSnapshot = JSON.parse(this.fluidFile as string);
+            const content: IOdspSnapshot = JSON.parse(this.fluidFile);
             snapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
         } else {
             snapshotContents = parseCompactSnapshotResponse(
-                new ReadBuffer(this.fluidFile as Uint8Array));
+                new ReadBuffer(this.fluidFile));
         }
 
         const id = this.initializeFromCachedValue(snapshotContents);
@@ -865,11 +865,11 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
         return new ArrayBuffer(0);
     }
 
-    public uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
+    public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         throw new Error("TODO: should not try to summarize");
     }
 
-    public createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
+    public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
         throw new Error("TODO: should not try to create a blob");
     }
 }
