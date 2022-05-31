@@ -286,14 +286,14 @@ export interface ISignalEnvelope {
     };
 }
 
-// @public (undocumented)
+// @public
 export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
     id: string;
     pathPartsForChildren?: string[];
 }
 
-// @public (undocumented)
+// @public
 export interface ISummarizeResult {
     // (undocumented)
     stats: ISummaryStats;
