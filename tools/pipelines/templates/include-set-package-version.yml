@@ -19,9 +19,11 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      npm link "$(Build.SourcesDirectory)/tools/build-tools"
-      cd "$(Build.SourcesDirectory)/tools/build-tools"
+      pushd "$(Build.SourcesDirectory)/tools/build-tools"
+      npm ci
       npm run build
+      popd
+      npm link "$(Build.SourcesDirectory)/tools/build-tools"
 
 - task: Bash@3
   name: SetVersion
