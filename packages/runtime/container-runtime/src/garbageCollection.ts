@@ -114,6 +114,7 @@ export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 interface IUnreferencedEvent {
     eventName: string;
     id: string;
+    type: GCNodeType;
     age: number;
     timeout: number;
     lastSummaryTime?: number;
@@ -1102,6 +1103,13 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
+        // We only care about data stores and attachment blobs for this telemetry since GC only marks these objects
+        // as unreferenced. Also, if an inactive DDS is used, the corresponding data store store will also be used.
+        const nodeType = this.runtime.getNodeType(nodeId);
+        if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
+            return;
+        }
+
         const eventName = `inactiveObject_${eventSuffix}`;
         // We log a particular event for a given node only once so that it is not too noisy.
         const uniqueEventId = `${nodeId}-${eventName}`;
@@ -1111,6 +1119,7 @@ export class GarbageCollector implements IGarbageCollector {
             const event: IUnreferencedEvent = {
                 eventName,
                 id: nodeId,
+                type: nodeType,
                 age: currentReferenceTimestampMs - nodeState.unreferencedTimestampMs,
                 timeout: this.deleteTimeoutMs,
                 lastSummaryTime: this.getLastSummaryTimestampMs(),
