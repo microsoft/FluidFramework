@@ -14,7 +14,7 @@ import {
     OrderedClientCollection,
     OrderedClientElection,
 } from "../orderedClientElection";
-import { TestQuorumClients } from "./testQuorum";
+import { TestQuorumClients } from "./testQuorumClients";
 
 describe("Ordered Client Collection", () => {
     let orderedClients: IOrderedClientCollection;
