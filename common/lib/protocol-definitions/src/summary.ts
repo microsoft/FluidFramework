@@ -84,8 +84,8 @@ export interface ISummaryHandle {
  * String or Binary data to be uploaded to the server as part of the container's Summary.
  * Note: Already uploaded blobs would be referenced by a ISummaryAttachment.
  * Additional information can be found here: https://github.com/microsoft/FluidFramework/issues/6568
- * Ex. "content": "{ \"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",
- *                    \"summaryFormatVersion\":2,\"isRootDataStore\":false }"
+ * Ex. "content": "\{ \"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",
+ *                    \"summaryFormatVersion\":2,\"isRootDataStore\":false \}"
  */
 export interface ISummaryBlob {
     type: SummaryType.Blob;
