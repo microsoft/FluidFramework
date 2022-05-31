@@ -17,6 +17,7 @@ import {Handler} from "../common";
 
 const shortCodes = new Map<number, Node>();
 const newAssetFiles = new Set<SourceFile>();
+const codeToMsgMap = new Map<string, string>();
 let maxShortCode = -1;
 
 function getCallsiteString(msg: Node){
@@ -90,6 +91,16 @@ export const handler: Handler = {
                         shortCodes.set(numLitValue, numLit);
                         //calculate the maximun short code to ensure we don't duplicate
                         maxShortCode = Math.max(numLitValue, maxShortCode);
+
+                        // If comment already exists, extract it for the mapping file
+                        const comments = msg.getTrailingCommentRanges();
+                        if (comments.length > 0) {
+                            let originalErrorText = comments[0].getText().replace(/\/\*/g,'').replace(/\*\//g,'').trim();
+                            if (originalErrorText.startsWith("\"") || originalErrorText.startsWith("`")) {
+                                originalErrorText = originalErrorText.substring(1, originalErrorText.length - 1)
+                            }
+                            codeToMsgMap.set(numLit.getText(), originalErrorText);
+                        }
                         break;
                     // If it's a simple string literal, track the file for replacements later
                     case SyntaxKind.StringLiteral:
@@ -105,7 +116,6 @@ export const handler: Handler = {
     },
     final: (root, resolve) => {
         const errors: string[]=[];
-        const codeToMsgMap = new Map<string, string>();
         // go through all the newly collected asserts and add short codes
         for(const s of newAssetFiles){
             // another policy may have changed the file, so reload it
