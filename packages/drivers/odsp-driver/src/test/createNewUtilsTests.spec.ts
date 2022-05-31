@@ -200,7 +200,7 @@ describe("Create New Utils Tests", () => {
         await epochTracker.removeEntries().catch(() => {});
     });
 
-    it("Should set the isClpCompliantApp prop on resolved url", async () => {
+    it("Should set the isClpCompliantApp prop on resolved url if already present", async () => {
         const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
         const localCache = createUtLocalCache();
         // use null logger here as we expect errors
@@ -217,7 +217,7 @@ describe("Create New Utils Tests", () => {
             resolvedUrl,
         };
 
-        const odspResolvedUrl = await mockFetchOk(
+        const odspResolvedUrl1 = await mockFetchOk(
                 async () => createNewFluidFile(
                     async (_options) => "token",
                     newFileParams,
@@ -232,6 +232,23 @@ describe("Create New Utils Tests", () => {
                 { itemId: "itemId1", id: "Summary handle" },
                 { "x-fluid-epoch": "epoch1" },
                 );
-        assert(odspResolvedUrl.isClpCompliantApp, "isClpCompliantApp should be set");
+        assert(odspResolvedUrl1.isClpCompliantApp, "isClpCompliantApp should be set");
+
+        const odspResolvedUrl2 = await mockFetchOk(
+            async () => createNewFluidFile(
+                async (_options) => "token",
+                newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                true,
+                false,
+                undefined /* isClpCompliantApp */,
+            ),
+            { itemId: "itemId1", id: "Summary handle" },
+            { "x-fluid-epoch": "epoch1" },
+            );
+    assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should not be set");
     });
 });
