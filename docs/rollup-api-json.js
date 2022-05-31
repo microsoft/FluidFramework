@@ -85,7 +85,7 @@ const extractMembers = (sourceFile, members) => {
  */
 const combineMembers = (sourcePath, targetPath, instructions) => {
     // Iterate through the "instructions."
-    for (const { package, sourceImports } of instructions) {
+    for (const { package, sourceImports, cleanOrigMembers } of instructions) {
         /** The path to the API JSON file. */
         const inputPackagePath = path.join(sourcePath, `${packageName(package)}.api.json`);
 
@@ -104,6 +104,11 @@ const combineMembers = (sourcePath, targetPath, instructions) => {
         console.log(`Parsing ${inputPackagePath}`);
         let jsonStr = fs.readFileSync(inputPackagePath, { encoding: "utf8" });
         const rewrittenApiObj = JSON.parse(jsonStr);
+
+        // Optionally, delete original package members.
+        if (cleanOrigMembers) {
+            rewrittenApiObj.members[0].members = [];
+        }
         console.log(`\t${rewrittenApiObj.members[0].members.length} members, adding ${extractedMembers.length}`);
 
         // Append the members extracted earlier.
