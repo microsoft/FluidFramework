@@ -8,7 +8,7 @@ import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { ConnectionState } from "./container";
+import { ConnectionState } from "./connectionState";
 
 export interface IConnectionStateHandler {
     quorumClients: () => IQuorumClients | undefined;
