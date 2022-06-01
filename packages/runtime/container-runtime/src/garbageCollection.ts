@@ -67,13 +67,13 @@ const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
-const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
+export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 // Feature gate key to disable expiring session after a set period of time, even if expiry value is present
-const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
+export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to log error messages if GC reference validation fails.
-const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
+export const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 
-const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+const defaultInactiveTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */
@@ -115,6 +115,7 @@ export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 interface IUnreferencedEvent {
     eventName: string;
     id: string;
+    type: GCNodeType;
     age: number;
     timeout: number;
     lastSummaryTime?: number;
@@ -346,8 +347,8 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly initializeBaseStateP: Promise<void>;
     // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
     private readonly baseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
-    // The time after which an unreferenced node can be deleted. Currently, we only set the node's state to expired.
-    private readonly deleteTimeoutMs: number;
+    // The time after which an unreferenced node is inactive.
+    private readonly inactiveTimeoutMs: number;
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
     // The timeout responsible for closing the container when the session has expired
@@ -374,8 +375,6 @@ export class GarbageCollector implements IGarbageCollector {
     ) {
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(baseLogger, "GarbageCollector"));
-
-        this.deleteTimeoutMs = this.gcOptions.deleteTimeoutMs ?? defaultDeleteTimeoutMs;
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -458,6 +457,12 @@ export class GarbageCollector implements IGarbageCollector {
         this.shouldRunSweep = this.shouldRunGC && (
             this.mc.config.getBoolean(runSweepKey) ?? (this.sessionExpiryTimeoutMs !== undefined && this.sweepEnabled)
         );
+
+        // Override inactive timeout if test config or gc options to override it is set.
+        this.inactiveTimeoutMs =
+            this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
+            this.gcOptions.inactiveTimeoutMs ??
+            defaultInactiveTimeoutMs;
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
@@ -555,7 +560,7 @@ export class GarbageCollector implements IGarbageCollector {
                         nodeId,
                         new UnreferencedStateTracker(
                             nodeData.unreferencedTimestampMs,
-                            this.deleteTimeoutMs,
+                            this.inactiveTimeoutMs,
                             currentReferenceTimestampMs,
                         ),
                     );
@@ -868,7 +873,7 @@ export class GarbageCollector implements IGarbageCollector {
                     nodeId,
                     new UnreferencedStateTracker(
                         currentReferenceTimestampMs,
-                        this.deleteTimeoutMs,
+                        this.inactiveTimeoutMs,
                         currentReferenceTimestampMs,
                     ),
                 );
@@ -1105,6 +1110,13 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
+        // We only care about data stores and attachment blobs for this telemetry since GC only marks these objects
+        // as unreferenced. Also, if an inactive DDS is used, the corresponding data store store will also be used.
+        const nodeType = this.runtime.getNodeType(nodeId);
+        if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
+            return;
+        }
+
         const eventName = `inactiveObject_${eventSuffix}`;
         // We log a particular event for a given node only once so that it is not too noisy.
         const uniqueEventId = `${nodeId}-${eventName}`;
@@ -1114,8 +1126,9 @@ export class GarbageCollector implements IGarbageCollector {
             const event: IUnreferencedEvent = {
                 eventName,
                 id: nodeId,
+                type: nodeType,
                 age: currentReferenceTimestampMs - nodeState.unreferencedTimestampMs,
-                timeout: this.deleteTimeoutMs,
+                timeout: this.inactiveTimeoutMs,
                 lastSummaryTime: this.getLastSummaryTimestampMs(),
                 externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
                 viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
