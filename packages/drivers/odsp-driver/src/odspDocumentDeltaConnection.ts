@@ -558,9 +558,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                         (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
                         const nackContent = message[0]?.content;
                         if (nackContent !== undefined) {
+                            const { code, type, message, retryAfter } = nackContent;
                             this.logger.sendTelemetryEvent({
                                 eventName: "ServerNack",
-                                nackDetails: JSON.stringify(nackContent),
+                                details: JSON.stringify({ code, type, message }),
+                                retryAfterSeconds: retryAfter,
                             });
                         }
                         this.emit("nack", clientIdOrDocumentId, message);
