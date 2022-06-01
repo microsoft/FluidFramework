@@ -49,7 +49,7 @@ For more information about these types and the differences between them, see [Da
 
 ## Library structure
 
-There are two primary libraries you'll use when building with Fluid. The basic Fluid Framework library and a service-specific client library such as the Tinylicious client library.
+There are two primary libraries you'll use when building with Fluid: the basic Fluid Framework library and a service-specific client library (such as Fluid Azure Relay or Tinylicious).
 
 ### The Fluid Framework library
 
