@@ -54,7 +54,6 @@
     "@fluidframework/routerlicious-driver": "^0.59.2001",
     "@fluidframework/runtime-utils": "^0.59.2000",
     "@fluidframework/server-services-client": "^0.1036.3000",
-    "@fluidframework/test-utils": "^0.59.2001",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },
@@ -66,6 +65,7 @@
     "@fluidframework/build-tools": "^0.2.66793",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-client-utils": "^0.59.2001",
+    "@fluidframework/test-utils": "^0.59.2001",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
