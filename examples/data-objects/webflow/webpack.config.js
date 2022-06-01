@@ -6,6 +6,7 @@
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
+const webpack = require("webpack");
 
 module.exports = env => {
     const isProduction = env && env.production;
@@ -29,48 +30,17 @@ module.exports = env => {
             devtool: 'source-map',
             mode: "production",
             module: {
-                rules: [
-                    {
-                        test: /\.tsx?$/,
-                        use: [{
-                            loader: require.resolve("ts-loader"),
-                            options: {
-                                compilerOptions: {
-                                    module: "esnext"
-                                },
-                            }
-                        }],
-                        exclude: /node_modules/
-                    },
-                    {
-                        test: /\.js$/,
-                        use: [require.resolve("source-map-loader")],
-                        enforce: "pre"
-                    },
-                    {
-                        test: /\.css$/,
-                        use: [
-                            "style-loader", {
-                                loader: require.resolve("css-loader"),
-                                options: {
-                                    modules: true,
-                                    localIdentName: styleLocalIdentName
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                        loader: require.resolve('url-loader'),
-                        options: {
-                            limit: 10000
-                        }
-                    },
-                    {
-                        test: /\.html$/,
-                        loader: require.resolve('html-loader')
-                    }
-                ]
+                rules: [{
+                    test: /\.tsx?$/,
+                    loader: require.resolve("ts-loader")
+                },
+                {
+                    test: /\.css$/,
+                    use: [
+                        require.resolve("style-loader"), // creates style nodes from JS strings
+                        require.resolve("css-loader"), // translates CSS into CommonJS
+                    ]
+                }]
             },
             output: {
                 filename: '[name].bundle.js',
@@ -81,6 +51,11 @@ module.exports = env => {
                 libraryTarget: "umd",
                 globalObject: 'self',
             },
+            plugins: [
+                new webpack.ProvidePlugin({
+                    process: 'process/browser'
+                }),
+            ],
             // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
             // This should be configurable under devServer.static.watch
             // (see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md) but that does not seem to work.
