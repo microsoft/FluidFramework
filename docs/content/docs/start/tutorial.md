@@ -13,10 +13,10 @@ In this walkthrough, you'll learn about using the Fluid Framework by examining t
 
 In the DiceRoller app, users are shown a die with a button to roll it. When the die is rolled, the Fluid Framework syncs the data across clients so everyone sees the same result. To do this, complete the following steps:
 
-1. Set up the application.
-2. Create a Fluid container.
-3. Write the dice view.
-4. Connect the view to Fluid data.
+1. [Set up the application](#set-up-the-application).
+2. [Create a Fluid container](#create-a-fluid-container).
+3. [Write the dice view](#write-the-dice-view).
+4. [Connect the view to Fluid data](#connect-the-view-to-fluid-data).
 
 All of the work in this demo will be done in the [app.js](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.js) file.
 
