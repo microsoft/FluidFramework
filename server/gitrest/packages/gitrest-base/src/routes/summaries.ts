@@ -45,6 +45,11 @@ async function getSummary(
     externalWriterConfig?: IExternalWriterConfig,
     persistLatestFullSummary = false,
 ): Promise<IWholeFlatSummary> {
+    const lumberjackProperties = {
+        ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
+        [BaseGitRestTelemetryProperties.sha]: sha,
+    };
+
     if (persistLatestFullSummary && sha === latestSummarySha) {
         try {
             const latestFullSummaryFromStorage = await retrieveLatestFullSummaryFromStorage(
@@ -54,24 +59,47 @@ async function getSummary(
             if (latestFullSummaryFromStorage !== undefined) {
                 return latestFullSummaryFromStorage;
             }
-        } catch (e) {
+        } catch (error) {
             // This read is for optimization purposes, so on failure
             // we can try to read the summary in typical fashion.
             Lumberjack.error(
                 "Failed to read latest full summary from storage.",
-                {
-                    ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
-                    [BaseGitRestTelemetryProperties.sha]: sha,
-                },
-                e);
+                lumberjackProperties,
+                error);
         }
     }
 
+    // If we get to this point, it's because one of the options below:
+    // 1) we did not want to read the latest full summary from storage
+    // 2) we wanted to read the latest full summary, but it did not exist in the storage
+    // 3) the summary being requestd is not the latest
+    // Therefore, we need to compute the summary from scratch.
     const wholeSummaryManager = new GitWholeSummaryManager(
         repoManagerParams.storageRoutingId.documentId,
         repoManager,
         externalWriterConfig?.enabled ?? false,
     );
+    const fullSummary = await wholeSummaryManager.readSummary(sha);
+
+    // Now that we computed the summary from scratch, we can persist it to storage if
+    // the following conditions are met.
+    if (persistLatestFullSummary && sha === latestSummarySha && fullSummary) {
+        // We persist the full summary in a fire-and-forget way because we don't want it
+        // to impact getSummary latency. So upon computing the full summary above, we should
+        // return as soon as possible. Also, we don't care about failures much, since the
+        // next getSummary or a createSummary request may trigger persisting to storage.
+        persistLatestFullSummaryInStorage(
+            fileSystemManager,
+            getDocumentStorageDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
+            fullSummary,
+        ).catch((error) => {
+            Lumberjack.error(
+                "Failed to persist latest full summary to storage during getSummary",
+                lumberjackProperties,
+                error);
+        });
+    }
+
     return wholeSummaryManager.readSummary(sha);
 }
 
@@ -120,11 +148,13 @@ async function createSummary(
                     );
                 } catch(error) {
                     Lumberjack.error(
-                        "Failed to persist latest full summary to storage",
+                        "Failed to persist latest full summary to storage during createSummary",
                         lumberjackProperties,
                         error);
                     // TODO: Find and add more information about this failure so that Scribe can retry as necessary.
-                    throw new NetworkError(500, "Failed to persist latest full summary to storage");
+                    throw new NetworkError(
+                        500,
+                        "Failed to persist latest full summary to storage during createSummary");
                 }
             }
             return latestFullSummary;
