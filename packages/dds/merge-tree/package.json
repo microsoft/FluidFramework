@@ -180,7 +180,16 @@
       "InterfaceDeclaration_RBNode": {
         "forwardCompat": false,
         "backCompat": false
-      }
+      },
+      "ClassDeclaration_Client": {"forwardCompat": false},
+      "InterfaceDeclaration_IConsensusInfo": {"backCompat": false},
+      "InterfaceDeclaration_IJSONMarkerSegment": {"backCompat": false},
+      "InterfaceDeclaration_IMarkerDef": {"backCompat": false},
+      "ClassDeclaration_LocalReference": {"backCompat": false},
+      "EnumDeclaration_ReferenceType": {"backCompat": false},
+      "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false},
+      "ClassDeclaration_Marker": {"backCompat": false},
+      "ClassDeclaration_MergeTree": {"forwardCompat": false}
     }
   }
 }

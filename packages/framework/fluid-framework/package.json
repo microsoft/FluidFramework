@@ -90,7 +90,9 @@
       },
       "ClassDeclaration_IntervalCollection": {
         "forwardCompat": false
-      }
+      },
+      "ClassDeclaration_SequenceInterval": {"backCompat": false},
+      "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false}
     }
   }
 }
