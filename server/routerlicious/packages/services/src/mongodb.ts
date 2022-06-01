@@ -19,12 +19,16 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
-    public find(query: object, sort: any, limit = MaxFetchSize): Promise<T[]> {
-        return this.collection
+    public find(query: object, sort: any, limit = MaxFetchSize, skip?: number): Promise<T[]> {
+        let queryCursor = this.collection
             .find(query)
             .sort(sort)
-            .limit(limit)
-            .toArray();
+            .limit(limit);
+
+        if (skip) {
+            queryCursor = queryCursor.skip(skip);
+        }
+        return queryCursor.toArray();
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
