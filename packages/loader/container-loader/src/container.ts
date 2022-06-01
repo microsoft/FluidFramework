@@ -1170,6 +1170,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // ...load in the existing quorum
         // Initialize the protocol handler
+        if (pendingLocalState !== undefined) {
+            throw new Error("TEST");
+        }
+
         this._protocolHandler =
             await this.initializeProtocolStateFromSnapshot(attributes, this.storageService, snapshot);
 
