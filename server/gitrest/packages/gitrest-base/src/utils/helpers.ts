@@ -123,27 +123,24 @@ export async function retrieveLatestFullSummaryFromStorage(
 export function getRepoPath(
     repoPerDocEnabled: boolean,
     tenantId: string,
-    documentId: string,
+    documentId?: string,
     owner?: string): string {
     // `tenantId` needs to be always present and valid.
     if (!tenantId || path.parse(tenantId).dir !== "") {
-        throw new NetworkError(400, `Invalid repo name (tenantId) provided.`);
+        throw new NetworkError(400, `Invalid repo name (tenantId) provided: ${tenantId}`);
     }
 
     // When `owner` is present, it needs to be valid.
     if (owner && path.parse(owner).dir !== "") {
-        throw new NetworkError(400, `Invalid repo owner provided.`);
+        throw new NetworkError(400, `Invalid repo owner provided: ${owner}`);
     }
 
-    if (repoPerDocEnabled) {
-        // `documentId` needs to be always present and valid.
-        if (!documentId || path.parse(documentId).dir !== "") {
-            throw new NetworkError(400, `Invalid repo name (documentId) provided.`);
-        }
-        return owner ? `${owner}/${tenantId}/${documentId}` : `${tenantId}/${documentId}`;
+    // When `documentId` is present, it needs to be valid.
+    if (documentId || path.parse(documentId).dir !== "") {
+        throw new NetworkError(400, `Invalid repo name (documentId) provided: ${documentId}`);
     }
 
-    return owner ? `${owner}/${tenantId}` : tenantId;
+    return [owner, tenantId, documentId].filter(x => x !== undefined).join("/");
 }
 
 export function getGitDirectory(repoPath: string, baseDir?: string): string {
