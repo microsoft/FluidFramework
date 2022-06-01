@@ -141,7 +141,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
     // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)
-    get quorum(): IQuorum;
+    get quorum(): Quorum;
     // (undocumented)
     readonly _quorum: Quorum;
     // (undocumented)

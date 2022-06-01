@@ -80,7 +80,7 @@ export const MakeProtocolHandler: ProtocolHandlerBuilder = (
  */
 export class ProtocolOpHandler implements IProtocolHandler {
     public readonly _quorum: Quorum;
-    public get quorum(): IQuorum {
+    public get quorum(): Quorum {
         return this._quorum;
     }
 

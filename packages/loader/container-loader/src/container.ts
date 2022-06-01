@@ -1671,13 +1671,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this.clientId === message.clientId;
 
+        // Allow the protocol handler to process the message
+        const result = this.protocolHandler.processMessage(message, local);
+
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
             this.context.process(message, local, undefined);
         }
 
-        // Allow the protocol handler to process the message
-        const result = this.protocolHandler.processMessage(message, local);
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {
             if (this.collabWindowTracker === undefined) {
