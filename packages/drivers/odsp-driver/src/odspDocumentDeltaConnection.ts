@@ -440,6 +440,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
+        this.logger.sendTelemetryEvent({eventName: "ServerDisconnectOdsp"}, error);
         this.disposeCore(true, error);
     };
 
@@ -555,6 +556,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                     if (clientIdOrDocumentId.length === 0 ||
                         clientIdOrDocumentId === this.documentId ||
                         (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
+                        const nackContent = message[0]?.content;
+                        if (nackContent !== undefined) {
+                            this.logger.sendTelemetryEvent({
+                                eventName: "ServerNackOdsp",
+                                ...nackContent,
+                            });
+                        }
                         this.emit("nack", clientIdOrDocumentId, message);
                     }
                 });
