@@ -17,7 +17,7 @@ import {
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import {
     assert,
     Deferred,
@@ -181,6 +181,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         existing: boolean,
     ) {
         super();
+
+        if (dataStoreContext.id.includes("/")) {
+            throw new UsageError(`Data store context ID cannot contain slashes: ${dataStoreContext.id}`);
+        }
 
         this.logger = ChildLogger.create(
             dataStoreContext.logger,
@@ -350,6 +354,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public createChannel(id: string = uuid(), type: string): IChannel {
+        if (id.includes("/")) {
+            throw new UsageError(`Channel id cannot contain slashes: ${id}`);
+        }
+
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
