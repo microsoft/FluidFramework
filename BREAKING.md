@@ -50,6 +50,7 @@ For more details on GC and options for controlling its behavior, please see [thi
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
 - [Remove Container.setAutoReconnect() and Container.resume()](#Remove-Container-setAutoReconnect-and-resume)
 - [Remove IContainer.connected and IFluidContainer.connected](#Remove-IContainer-connected-and-IFluidContainer-connected)
+- [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
 
 ### Changed AzureConnectionConfig API
 - Added a `type` field that's used to differentiate between remote and local connections.
@@ -117,6 +118,9 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
     console.log("Container is connected");
 }
 ```
+
+### Remove `IContainerRuntimeBase.setFlushMode`
+The `setFlushMode` has been removed from `IContainerRuntimeBase`. Please remove all usage of this method as FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
 
 # 0.59
 

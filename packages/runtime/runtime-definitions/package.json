@@ -74,6 +74,9 @@
       },
       "InterfaceDeclaration_IFluidDataStoreContextDetached": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_IContainerRuntimeBase": {
+        "backCompat": false
       }
     }
   }
