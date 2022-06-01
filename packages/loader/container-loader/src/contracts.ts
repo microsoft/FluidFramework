@@ -101,6 +101,8 @@ export interface IConnectionManager {
      * Disposed connection manager
      */
     dispose(error?: ICriticalContainerError): void;
+
+    get connectionMode(): ConnectionMode;
 }
 
 /**

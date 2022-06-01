@@ -16,6 +16,11 @@ import {
  * Specalized implementation of MockContainerRuntime for testing ops during reconnection.
  */
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
+    /**
+     * Contains messages from other clients that were sequenced while this runtime was marked as disconnected.
+     */
+    private readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -28,6 +33,10 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         this._connected = connected;
 
         if (connected) {
+            for (const remoteMessage of this.pendingRemoteMessages) {
+                this.process(remoteMessage);
+            }
+            this.pendingRemoteMessages.length = 0;
             this.clientSequenceNumber = 0;
             // We should get a new clientId on reconnection.
             this.clientId = uuid();
@@ -53,6 +62,14 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         dataStoreRuntime: MockFluidDataStoreRuntime,
         factory: MockContainerRuntimeFactoryForReconnection) {
         super(dataStoreRuntime, factory);
+    }
+
+    public process(message: ISequencedDocumentMessage) {
+        if (this.connected) {
+            super.process(message);
+        } else {
+            this.pendingRemoteMessages.push(message);
+        }
     }
 
     public submit(messageContent: any, localOpMetadata: unknown) {

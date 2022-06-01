@@ -320,7 +320,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @internal
      */
     protected async loadCore(storage: IChannelStorageService) {
-        // eslint-disable-next-line @typescript-eslint/ban-types
         const json = await readAndParse<object>(storage, snapshotFileName);
         const newFormat = json as IMapSerializationFormat;
         if (Array.isArray(newFormat.blobs)) {
