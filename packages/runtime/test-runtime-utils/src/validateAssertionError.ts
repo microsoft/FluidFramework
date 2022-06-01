@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// import fs from "fs";
-
-// const shortCodeMap: Map<string, string> = JSON.parse(fs.readFileSync("./assertionShortCodesMap.json").toString());
 import { AssertionError } from "assert";
 import * as shortCodeMap from "./assertionShortCodesMap.json";
 
