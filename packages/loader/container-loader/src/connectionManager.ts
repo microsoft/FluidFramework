@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { default as AbortController } from "abort-controller";
 import {
     IDisposable,
     ITelemetryLogger,
@@ -120,6 +121,13 @@ class NoDeltaStream
     public dispose() { this._disposed = true; }
 }
 
+interface IPendingConnection {
+    /**
+     * Used to cancel a pending connection
+     */
+    abortController: AbortController;
+}
+
 /**
  * Implementation of IConnectionManager, used by Container class
  * Implements constant connectivity to relay service, by reconnecting in case of loast connection or error.
@@ -129,7 +137,7 @@ export class ConnectionManager implements IConnectionManager {
     /** Connection mode used when reconnecting on error or disconnect. */
     private readonly defaultReconnectionMode: ConnectionMode;
 
-    private pendingConnection = false;
+    private pendingConnection: IPendingConnection | undefined;
     private connection: IDocumentDeltaConnection | undefined;
 
     /** file ACL - whether user has only read-only access to a file */
@@ -306,7 +314,7 @@ export class ConnectionManager implements IConnectionManager {
         }
         this.closed = true;
 
-        this.pendingConnection = false;
+        this.pendingConnection = undefined;
 
         // Ensure that things like triggerConnect() will short circuit
         this._reconnectMode = ReconnectMode.Never;
@@ -407,15 +415,21 @@ export class ConnectionManager implements IConnectionManager {
         this.connectCore(connectionMode).catch((error) => {
             const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
             this.props.closeHandler(normalizedError);
+            this.pendingConnection = undefined;
         });
     }
 
     private async connectCore(connectionMode?: ConnectionMode): Promise<void> {
-        assert(!this.closed, 0x26a /* "not closed" */);
-
-        if (this.connection !== undefined || this.pendingConnection) {
-            return;
+        if (this.pendingConnection !== undefined || this.connection !== undefined) {
+            this.cancelConnection();
         }
+        this.pendingConnection = {
+            abortController: new AbortController(),
+        };
+        const abortSignal = this.pendingConnection.abortController.signal;
+        assert(!this.closed, 0x26a /* "not closed" */);
+        assert(this.pendingConnection !== undefined, "this.pendingConnection not defined");
+        assert(this.connection === undefined, "this.connection is defined");
 
         let requestedMode = connectionMode ?? this.defaultReconnectionMode;
 
@@ -436,14 +450,10 @@ export class ConnectionManager implements IConnectionManager {
         if (docService.policies?.storageOnly === true) {
             connection = new NoDeltaStream();
             // to keep setupNewSuccessfulConnection happy
-            this.pendingConnection = true;
-            this.setupNewSuccessfulConnection(connection, "read");
-            assert(!this.pendingConnection, 0x2b3 /* "logic error" */);
+            this.setupNewSuccessfulConnection(connection, "read", abortSignal);
+            assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
             return;
         }
-
-        // this.pendingConnection resets to false as soon as we know the outcome of the connection attempt
-        this.pendingConnection = true;
 
         let delayMs = InitialReconnectDelayInMs;
         let connectRepeatCount = 0;
@@ -454,6 +464,9 @@ export class ConnectionManager implements IConnectionManager {
         while (connection === undefined) {
             if (this.closed) {
                 throw new Error("Attempting to connect a closed DeltaManager");
+            }
+            if (abortSignal?.aborted === true) {
+                return;
             }
             connectRepeatCount++;
 
@@ -517,7 +530,7 @@ export class ConnectionManager implements IConnectionManager {
             );
         }
 
-        this.setupNewSuccessfulConnection(connection, requestedMode);
+        this.setupNewSuccessfulConnection(connection, requestedMode, abortSignal);
     }
 
     /**
@@ -540,11 +553,16 @@ export class ConnectionManager implements IConnectionManager {
      private disconnectFromDeltaStream(reason: string): boolean {
         this.pendingReconnect = false;
 
+        if (this.pendingConnection !== undefined) {
+            this.cancelConnection();
+            return true;
+        }
+
         if (this.connection === undefined) {
             return false;
         }
 
-        assert(!this.pendingConnection, 0x27b /* "reentrancy may result in incorrect behavior" */);
+        assert(this.pendingConnection === undefined, 0x27b /* "reentrancy may result in incorrect behavior" */);
 
         const connection = this.connection;
         // Avoid any re-entrancy - clear object reference
@@ -571,17 +589,59 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     /**
+     * Cancel in-progress connection attempt
+     */
+    private cancelConnection() {
+        this.pendingConnection?.abortController.abort();
+        this.pendingConnection = undefined;
+        if (this.connection !== undefined) {
+            const connection = this.connection;
+            this.connection = undefined;
+
+            // Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
+            connection.off("op", this.opHandler);
+            connection.off("signal", this.props.signalHandler);
+            connection.off("nack", this.nackHandler);
+            connection.off("disconnect", this.disconnectHandlerInternal);
+            connection.off("error", this.errorHandler);
+            connection.off("pong", this.props.pongHandler);
+
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this._outbound.pause();
+            this._outbound.clear();
+            this.props.disconnectHandler("Connection attempt cancelled");
+
+            connection.dispose();
+
+            this._connectionVerboseProps = {};
+        }
+    }
+
+    /**
      * Once we've successfully gotten a connection, we need to set up state, attach event listeners, and process
      * initial messages.
      * @param connection - The newly established connection
      */
-     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
+     private setupNewSuccessfulConnection(
+        connection: IDocumentDeltaConnection,
+        requestedMode: ConnectionMode,
+        abortSignal?: AbortSignal,
+     ) {
+        if (this.closed) {
+            // Raise proper events, Log telemetry event and close connection.
+            this.disconnectFromDeltaStream("ConnectionManager already closed");
+            return;
+        }
+        if (abortSignal?.aborted === true) {
+            // Raise proper events, Log telemetry event and close connection.
+            return;
+        }
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
 
-        if (this.pendingConnection) {
-            this.pendingConnection = false;
+        if (this.pendingConnection !== undefined) {
+            this.pendingConnection = undefined;
         } else {
             assert(this.closed, 0x27f /* "reentrancy may result in incorrect behavior" */);
         }
@@ -599,12 +659,6 @@ export class ConnectionManager implements IConnectionManager {
         assert(!readonly || this.connectionMode === "read", 0x0e8 /* "readonly perf with write connection" */);
 
         this.set_readonlyPermissions(readonly);
-
-        if (this.closed) {
-            // Raise proper events, Log telemetry event and close connection.
-            this.disconnectFromDeltaStream("ConnectionManager already closed");
-            return;
-        }
 
         this._outbound.resume();
 
