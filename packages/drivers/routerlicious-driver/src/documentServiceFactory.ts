@@ -263,7 +263,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     public get stack() { return this.innerError.stack; }
 
     private static createMessage(innerError: Error): string {
-        return `An error was thrown in the provided callback provided to "documentPostCreateCallback".\n`
+        return `An error was thrown in the callback provided to "documentPostCreateCallback".\n`
             + "Inner exception:\n"
             + `\t${innerError.message}`;
     }
