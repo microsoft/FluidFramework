@@ -121,9 +121,12 @@ class NoDeltaStream
     public dispose() { this._disposed = true; }
 }
 
+/**
+ * Interface to track the current in-progress connection attempt.
+ */
 interface IPendingConnection {
     /**
-     * Used to cancel a pending connection
+     * Used to cancel an in-progress connection attempt.
      */
     abortController: AbortController;
 }
@@ -421,12 +424,11 @@ export class ConnectionManager implements IConnectionManager {
 
     private async connectCore(connectionMode?: ConnectionMode): Promise<void> {
         if (this.pendingConnection !== undefined || this.connection !== undefined) {
-            this.cancelConnection();
+            this.cancelConnection();  // Throw out in-progress connection attempt in favor of new attempt
         }
-        this.pendingConnection = {
-            abortController: new AbortController(),
-        };
+        this.pendingConnection = { abortController: new AbortController() };
         const abortSignal = this.pendingConnection.abortController.signal;
+
         assert(!this.closed, 0x26a /* "not closed" */);
         assert(this.pendingConnection !== undefined, "this.pendingConnection not defined");
         assert(this.connection === undefined, "this.connection is defined");
@@ -465,7 +467,7 @@ export class ConnectionManager implements IConnectionManager {
             if (this.closed) {
                 throw new Error("Attempting to connect a closed DeltaManager");
             }
-            if (abortSignal?.aborted === true) {
+            if (abortSignal.aborted === true) {
                 return;
             }
             connectRepeatCount++;
@@ -589,11 +591,17 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     /**
-     * Cancel in-progress connection attempt
+     * Cancel in-progress connection attempt.
      */
     private cancelConnection() {
+        assert(this.pendingConnection !== undefined || this.connection !== undefined,
+            "this.pendingConnection and this.connection are undefined when trying to cancel");
+
+        this.logger.sendTelemetryEvent({ eventName: "ConnectionAttemptCancelled" });
+
         this.pendingConnection?.abortController.abort();
         this.pendingConnection = undefined;
+
         if (this.connection !== undefined) {
             const connection = this.connection;
             this.connection = undefined;
@@ -623,28 +631,27 @@ export class ConnectionManager implements IConnectionManager {
      * @param connection - The newly established connection
      */
      private setupNewSuccessfulConnection(
-        connection: IDocumentDeltaConnection,
-        requestedMode: ConnectionMode,
-        abortSignal?: AbortSignal,
-     ) {
-        if (this.closed) {
-            // Raise proper events, Log telemetry event and close connection.
-            this.disconnectFromDeltaStream("ConnectionManager already closed");
-            return;
-        }
-        if (abortSignal?.aborted === true) {
-            // Raise proper events, Log telemetry event and close connection.
-            return;
-        }
+         connection: IDocumentDeltaConnection,
+         requestedMode: ConnectionMode,
+         abortSignal: AbortSignal,
+        ) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
+        assert(this.pendingConnection !== undefined,
+            0x27f /* "pending connection is undefined when setting up succesful conneciton" */);
 
-        if (this.pendingConnection !== undefined) {
-            this.pendingConnection = undefined;
-        } else {
-            assert(this.closed, 0x27f /* "reentrancy may result in incorrect behavior" */);
+        if (this.closed) {
+            // Raise proper events, Log telemetry event and close connection.
+            this.connection = connection;  // Set this.connection to keep disconnectFromDeltaStream happy
+            this.disconnectFromDeltaStream("ConnectionManager already closed");
+            return;
         }
+        if (abortSignal.aborted === true) {
+            return;
+        }
+
+        this.pendingConnection = undefined;
         this.connection = connection;
 
         // Does information in scopes & mode matches?
