@@ -17,7 +17,7 @@ They are exclusive - a reference may be at most one of these types.
 
 The reference will slide to the next farthest segment when the segment is removed and the remove has been acknowledged.
 Sliding will look for the next valid segment.
-A valid segment is one whose creation has been acknowledge and either hasn't been removed
+A valid segment is one whose creation has been acknowledged and either hasn't been removed
 or the remove is pending (not acknowledged).
 If a farther segment is found, then the LocalReference will be changed to refer to that segment and have offset 0.
 This farther slide will not change the numerical position of the reference.
