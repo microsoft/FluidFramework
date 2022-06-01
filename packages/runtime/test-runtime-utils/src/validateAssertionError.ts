@@ -4,7 +4,7 @@
  */
 
 import { AssertionError } from "assert";
-import * as shortCodeMap from "./assertionShortCodesMap.json";
+import { shortCodeMap } from "./assertionShortCodesMap";
 
 /**
  * Validates that an error thrown by our assert() function has the expected message, or a
