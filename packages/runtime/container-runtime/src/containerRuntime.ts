@@ -100,7 +100,7 @@ import {
     seqFromTree,
     calculateStats,
 } from "@fluidframework/runtime-utils";
-import { GCDataBuilder } from "@fluidframework/garbage-collector";
+import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -1029,6 +1029,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.logger,
             existing,
             metadata,
+            this.context.clientDetails.type === summarizerClientType,
         );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1401,8 +1402,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const dataStoreChannel = await dataStoreContext.realize();
+
+        // Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
+        // the same as GC nodes id.
+        const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
         this.garbageCollector.nodeUpdated(
-            `/${id}`,
+            `/${urlWithoutQuery}`,
             "Loaded",
             undefined /* timestampMs */,
             dataStoreContext.packagePath,
