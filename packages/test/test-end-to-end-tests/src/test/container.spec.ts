@@ -295,7 +295,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
     });
 
-    it.only("can call connect() and disconnect() on Container", async () => {
+    it("can call connect() and disconnect() on Container", async () => {
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
             runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
@@ -332,7 +332,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(container.connectionState, ConnectionState.Connected, "container can't connect()");
     });
 
-    it.only("can control op processing with connect() and disconnect()", async () => {
+    it("can control op processing with connect() and disconnect()", async () => {
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
                 runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
@@ -403,7 +403,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(value1, value2, "container2 not processing ops after connect()");
     });
 
-    it.only("can cancel connect() with disconnect()", async () => {
+    it("can cancel connect() with disconnect()", async () => {
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
             runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
@@ -449,7 +449,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         );
     });
 
-    it.only("can cancel call connect() twice", async () => {
+    it("can cancel call connect() twice", async () => {
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
             runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
@@ -490,7 +490,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         );
     });
 
-    it.only("can cancel call connect() twice then cancel with disconnect()", async () => {
+    it("can cancel call connect() twice then cancel with disconnect()", async () => {
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
             runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
@@ -537,7 +537,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         );
     });
 
-    it.only("can rapidly call connect() and disconnect()", async () => {
+    it("can rapidly call connect() and disconnect()", async () => {
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
             runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
