@@ -1463,10 +1463,6 @@ export class MergeTree {
             // Only slide if the segment is removed and acked
             segoff = this.getSlideToSegment(segoff.segment);
         }
-        if (segoff.segment && isRemoved(segoff.segment)) {
-            // All positions on removed segments must have offset 0
-            segoff.offset = 0;
-        }
         return segoff;
     }
 
@@ -1530,7 +1526,6 @@ export class MergeTree {
         segment.localRefs.clear();
         for (const lref of refsToStay) {
             lref.segment = segment;
-            lref.offset = 0;
             segment.localRefs.addLocalRef(lref);
         }
     }
@@ -2554,9 +2549,6 @@ export class MergeTree {
         if (isRemoved(segment)) {
             if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
                 throw new UsageError("Can only create SlideOnRemove local reference position on a removed segment");
-            }
-            if (offset !== 0) {
-                throw new UsageError("Local reference position offset on removed segment must be 0");
             }
         }
         const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);

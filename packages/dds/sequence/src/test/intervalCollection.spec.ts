@@ -532,6 +532,31 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
+        it("can maintain different offsets on removed segment", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABCD");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+            sharedString.insertText(2, "XY");
+            assert.strictEqual(sharedString.getText(), "ABXYCD");
+
+            sharedString2.removeRange(0, 4);
+            assert.strictEqual(sharedString2.getText(), "");
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "XY");
+            assert.strictEqual(sharedString2.getText(), "XY");
+
+            assertIntervals(sharedString, collection1, [
+                { start: 0, end: 1 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 0, end: 1 },
+            ]);
+        });
+
         it("can maintain consistency of LocalReference's when segments are packed", async () => {
             // sharedString.insertMarker(0, ReferenceType.Tile, { nodeType: "Paragraph" });
 
