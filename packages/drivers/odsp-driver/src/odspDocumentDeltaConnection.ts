@@ -561,7 +561,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                             const { code, type, message, retryAfter } = nackContent;
                             this.logger.sendTelemetryEvent({
                                 eventName: "ServerNack",
-                                details: JSON.stringify({ code, type, message }),
+                                code,
+                                type,
+                                message,
                                 retryAfterSeconds: retryAfter,
                             });
                         }
