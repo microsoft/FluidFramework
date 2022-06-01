@@ -9,7 +9,6 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    ISummaryHandle,
 } from "@fluidframework/protocol-definitions";
 import {
     IGarbageCollectionData,
@@ -43,11 +42,6 @@ export interface ISummaryTreeWithStats {
      * to the backend.
      */
     summary: ISummaryTree;
-}
-
-export interface ISummaryTreeHandleWithStats {
-    stats: ISummaryStats;
-    summary: ISummaryHandle;
 }
 
 /**

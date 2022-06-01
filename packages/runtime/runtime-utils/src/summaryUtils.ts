@@ -25,7 +25,6 @@ import {
     ISummaryStats,
     ISummarizeResult,
     ISummaryTreeWithStats,
-    ISummaryTreeHandleWithStats,
 } from "@fluidframework/runtime-definitions";
 
 /**
@@ -119,13 +118,13 @@ export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, su
     summary.stats = mergeStats(summary.stats, summarizeResult.stats);
 }
 
-export function addHandleToSummary(
+export function addSummarizeResultToSummary(
     summary: ISummaryTreeWithStats,
     key: string,
-    handleWithStats: ISummaryTreeHandleWithStats,
+    summarizeResult: ISummarizeResult,
 ): void {
-    summary.summary.tree[key] = handleWithStats.summary;
-    summary.stats = mergeStats(summary.stats, handleWithStats.stats);
+    summary.summary.tree[key] = summarizeResult.summary;
+    summary.stats = mergeStats(summary.stats, summarizeResult.stats);
 }
 
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
@@ -180,25 +179,6 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 
     public addAttachment(id: string) {
         this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
-    }
-
-    public getSummaryTreeHandleWithStats(handle: string): ISummaryTreeHandleWithStats {
-        const stats: ISummaryStats = {
-            treeNodeCount: this.stats.treeNodeCount,
-            blobNodeCount: this.stats.blobNodeCount,
-            handleNodeCount: 1,
-            totalBlobSize: 0,
-            unreferencedBlobSize: 0,
-        };
-
-        return {
-            summary: {
-                handle,
-                handleType: SummaryType.Tree,
-                type: SummaryType.Handle,
-            },
-            stats,
-        };
     }
 
     public getSummaryTree(): ISummaryTreeWithStats {

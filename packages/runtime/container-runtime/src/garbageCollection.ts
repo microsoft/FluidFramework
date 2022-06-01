@@ -16,17 +16,17 @@ import {
     runGarbageCollection,
     unpackChildNodesGCDetails,
 } from "@fluidframework/garbage-collector";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     gcBlobKey,
     IGarbageCollectionData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
-    ISummaryTreeWithStats,
-    ISummaryTreeHandleWithStats,
     IGarbageCollectionNodeData,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
+    mergeStats,
     ReadAndParseBlob,
     RefreshSummaryResult,
     SummaryTreeBuilder,
@@ -164,7 +164,7 @@ export interface IGarbageCollector {
         options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean; },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
-    summarize(fullTree: boolean, trackState: boolean): ISummaryTreeWithStats | ISummaryTreeHandleWithStats | undefined;
+    summarize(fullTree: boolean, trackState: boolean): ISummarizeResult | undefined;
     /** Returns the garbage collector specific metadata to be written into the summary. */
     getMetadata(): IGCMetadata;
     /** Returns a map of each node id to its base GC details in the base summary. */
@@ -739,7 +739,7 @@ export class GarbageCollector implements IGarbageCollector {
     public summarize(
         fullTree: boolean,
         trackState: boolean,
-    ): ISummaryTreeWithStats | ISummaryTreeHandleWithStats | undefined {
+    ): ISummarizeResult | undefined {
         if (!this.shouldRunGC || this.previousGCDataFromLastRun === undefined) {
             return;
         }
@@ -769,7 +769,16 @@ export class GarbageCollector implements IGarbageCollector {
                 trackState
             ) {
                 const gcSummaryPath = `/${gcTreeKey}`;
-                return builder.getSummaryTreeHandleWithStats(gcSummaryPath);
+                const stats = mergeStats();
+                stats.handleNodeCount++;
+                return {
+                    summary: {
+                        type: SummaryType.Handle,
+                        handle: gcSummaryPath,
+                        handleType: SummaryType.Tree,
+                    },
+                    stats,
+                };
             }
         }
 
