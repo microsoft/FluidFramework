@@ -10,6 +10,7 @@ import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
+import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -222,10 +223,16 @@ export interface IProgress {
 }
 
 // @public (undocumented)
+export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+
+// @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
+
+// @public (undocumented)
+export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
 // @public
 export interface ISummaryTreeAssemblerProps {
