@@ -6,15 +6,17 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
 import { ISnapshotContents } from "../odspUtils";
+import { ISnapshotTreeEx } from "../contracts";
 
-const snapshotTree: ISnapshotTree = {
+const snapshotTree: ISnapshotTreeEx = {
     id: "SnapshotId",
     blobs: {},
+    commits: {},
     trees: {
         ".protocol": {
             blobs: {
@@ -22,24 +24,29 @@ const snapshotTree: ISnapshotTree = {
                 quorumMembers: "bARBkx1nses1pHL1vKnmFUfIC",
                 quorumProposals: "bARBkx1nses1pHL1vKnmFUfIC",
             },
+            commits: {},
             trees: {},
         },
         ".app": {
                 blobs: { ".metadata": "bARD4RKvW4LL1KmaUKp6hUMSp" },
+                commits: {},
                 trees: {
                     ".channels": {
                         blobs: {},
+                        commits: {},
                         trees: {
                             default: {
                                     blobs: {
                                         ".component": "bARC6dCXlcrPxQHw3PeROtmKc",
                                         "gc": "bARDNMoBed+nKrsf04id52iUA",
                                     },
+                                    commits: {},
                                     trees: {
                                         ".channels": {
                                             blobs: {},
+                                            commits: {},
                                             trees: {
-                                                root: { blobs: {}, trees: {} },
+                                            root: { blobs: {}, commits: {}, trees: {} },
                                             },
                                         },
                                     },
@@ -47,7 +54,7 @@ const snapshotTree: ISnapshotTree = {
                         },
                         unreferenced: true,
                     },
-                    ".blobs": { blobs: {}, trees: {} },
+                    ".blobs": { blobs: {}, commits: {}, trees: {} },
                 },
                 unreferenced: true,
         },

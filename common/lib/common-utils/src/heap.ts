@@ -76,6 +76,7 @@ export class Heap<T> {
         this.swap(1, this.count());
         const x = this.L.pop();
         this.fixdown(1);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return x!.value;
     }
 
@@ -134,6 +135,7 @@ export class Heap<T> {
     private fixup(pos: number) {
         let k = pos;
         while (this.isGreaterThanParent(k)) {
+            // eslint-disable-next-line no-bitwise
             const parent = k >> 1;
             this.swap(k, parent);
             k = parent;
@@ -141,12 +143,15 @@ export class Heap<T> {
     }
 
     private isGreaterThanParent(k: number): boolean {
+        // eslint-disable-next-line no-bitwise
         return k > 1 && (this.comp.compare(this.L[k >> 1].value, this.L[k].value) > 0);
     }
 
     private fixdown(pos: number) {
         let k = pos;
+        // eslint-disable-next-line no-bitwise
         while ((k << 1) <= this.count()) {
+            // eslint-disable-next-line no-bitwise
             let j = k << 1;
             if ((j < this.count()) && (this.comp.compare(this.L[j].value, this.L[j + 1].value) > 0)) {
                 j++;

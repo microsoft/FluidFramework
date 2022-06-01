@@ -105,6 +105,7 @@ import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from 
 import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
+import { ConnectionState } from "./connectionState";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -138,23 +139,6 @@ export interface IContainerConfig {
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
-}
-
-export enum ConnectionState {
-    /**
-     * The document is no longer connected to the delta server
-     */
-    Disconnected,
-
-    /**
-     * The document has an inbound connection but is still pending for outbound deltas
-     */
-    Connecting,
-
-    /**
-     * The document is fully connected
-     */
-    Connected,
 }
 
 /**

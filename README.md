@@ -75,6 +75,16 @@ npm run build:fast
 
 See also: [Contributing](#Contributing)
 
+### Other Build Requirements
+
+- Building [server/Routerlicious](./server/routerlicious/README.md)
+    - Refer to that package's README for additional requirements.
+    - Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server` (e.g. `fluid-build --symlink:full`).
+
+#### On Windows
+
+- Ensure that you have enabled running Powershell scripts by setting your environment's [Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
+
 ## Testing
 
 You can run all of our tests from the root of the repo, or you can run a scoped set of tests by running the `test`
