@@ -15,6 +15,7 @@ import {
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
+    ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
@@ -27,6 +28,7 @@ import {
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
+    trackGCBlobStateMinimumVersionKey,
 } from "../garbageCollection";
 import { IContainerRuntimeMetadata } from "../summaryFormat";
 import { pkgVersion } from "../packageVersion";
@@ -891,8 +893,7 @@ describe("Garbage Collection Tests", () => {
 
     describe("No changes to GC between summaries", () => {
         const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
-        const settings = { "Fluid.GarbageCollection.TrackGCBlobStateKey": "true" };
-        const trackStateVersionKey = "Fluid.GarbageCollection.TrackGCBlobStateVersionKey";
+        const settings = { "Fluid.GarbageCollection.TrackGCBlobState": "true" };
         const fullTree = false;
         const trackState = true;
         let garbageCollector: IGarbageCollector;
@@ -912,14 +913,20 @@ describe("Garbage Collection Tests", () => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const parseNothing: ReadAndParseBlob = async <T>() => { const x: T = {} as T; return x; };
 
+        const checkGCBlobType = (tree: ISummaryTreeWithStats | undefined, expectedBlobType: SummaryType, summaryNumber: string) => {
+            assert(tree !== undefined, `Expected a tree on ${summaryNumber} summarize`);
+            const gcBlobType = tree.summary.tree[gcBlobRootKey].type;
+            assert(gcBlobType === expectedBlobType, `Expected summary type ${expectedBlobType} on ${summaryNumber} summarize, got ${gcBlobType}`);
+        };
+
         it("No changes to GC between summaries creates a blob handle when no version specified", async () => {
             garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({ runGC: true });
             const tree1 = garbageCollector.summarize(fullTree, trackState);
-            assert(tree1 !== undefined, "Expected a tree on first summarize");
-            const gcBlobType = tree1.summary.tree[gcBlobRootKey].type;
-            assert(gcBlobType === SummaryType.Blob, `Expected a SummaryType.Blob on first summarize, got ${gcBlobType}`);
+
+            checkGCBlobType(tree1, SummaryType.Blob, "first");
+
             await garbageCollector.latestSummaryStateRefreshed(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
                 parseNothing,
@@ -927,20 +934,19 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
             const tree2 = garbageCollector.summarize(fullTree, trackState);
-            assert(tree2 !== undefined, "Expected a tree on second summarize");
-            const gcBlobHandleType = tree2.summary.tree[gcBlobRootKey].type;
-            assert(gcBlobHandleType === SummaryType.Handle, `Expected a SummaryType.Handle on second summarize, got ${gcBlobHandleType}`);
+
+            checkGCBlobType(tree2, SummaryType.Handle, "second");
         });
 
         it("No changes to GC between summaries creates a blob handle when greater than minimum version", async () => {
-            settings[trackStateVersionKey] = "0.59.1000";
+            settings[trackGCBlobStateMinimumVersionKey] = "0.59.1000";
             garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({ runGC: true });
             const tree1 = garbageCollector.summarize(fullTree, trackState);
-            assert(tree1 !== undefined, "Expected a tree on first summarize");
-            const gcBlobType = tree1.summary.tree[gcBlobRootKey].type;
-            assert(gcBlobType === SummaryType.Blob, `Expected a SummaryType.Blob on first summarize, got ${gcBlobType}`);
+
+            checkGCBlobType(tree1, SummaryType.Blob, "first");
+
             await garbageCollector.latestSummaryStateRefreshed(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
                 parseNothing,
@@ -948,22 +954,19 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
             const tree2 = garbageCollector.summarize(fullTree, trackState);
-            assert(tree2 !== undefined, "Expected a tree on second summarize");
-            const gcBlobHandleType = tree2.summary.tree[gcBlobRootKey].type;
-            assert(gcBlobHandleType === SummaryType.Handle, `Expected a SummaryType.Handle on second summarize, got ${gcBlobHandleType}`);
+
+            checkGCBlobType(tree2, SummaryType.Handle, "second");
         });
 
         it("No changes to GC between summaries creates a blob when less than minimum version", async () => {
-            settings[trackStateVersionKey] = `1${pkgVersion}`;
+            settings[trackGCBlobStateMinimumVersionKey] = `1${pkgVersion}`;
             garbageCollector = createGarbageCollector();
-
-            assert(garbageCollector.trackGCBlobState === false, `Expected no tracking! ${garbageCollector.trackGCBlobState}, ${pkgVersion} - ${mc.config.getString("Fluid.GarbageCollection.TrackGCBlobStateVersionKey")}`);
 
             await garbageCollector.collectGarbage({ runGC: true });
             const tree1 = garbageCollector.summarize(fullTree, trackState);
-            assert(tree1 !== undefined, "Expected a tree on first summarize");
-            const gcBlobType = tree1.summary.tree[gcBlobRootKey].type;
-            assert(gcBlobType === SummaryType.Blob, `Expected a SummaryType.Blob on first summarize, got ${gcBlobType}`);
+
+            checkGCBlobType(tree1, SummaryType.Blob, "first");
+
             await garbageCollector.latestSummaryStateRefreshed(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
                 parseNothing,
@@ -971,21 +974,18 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
             const tree2 = garbageCollector.summarize(fullTree, trackState);
-            assert(tree2 !== undefined, "Expected a tree on second summarize");
-            const gcBlobHandleType = tree2.summary.tree[gcBlobRootKey].type;
-            assert(gcBlobHandleType === SummaryType.Blob,
-                `Expected a SummaryType.Blob on second summarize, got ${gcBlobHandleType}. trackState: ${garbageCollector.trackGCBlobState}, ${pkgVersion} - ${settings["Fluid.GarbageCollection.TrackGCBlobStateVersionKey"]}`);
+
+            checkGCBlobType(tree2, SummaryType.Blob, "second");
         });
 
         it("No changes to GC between summaries creates a blob handle when equal to minimum version", async () => {
-            settings[trackStateVersionKey] = `${pkgVersion}`;
+            settings[trackGCBlobStateMinimumVersionKey] = `${pkgVersion}`;
             garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({ runGC: true });
             const tree1 = garbageCollector.summarize(fullTree, trackState);
-            assert(tree1 !== undefined, "Expected a tree on first summarize");
-            const gcBlobType = tree1.summary.tree[gcBlobRootKey].type;
-            assert(gcBlobType === SummaryType.Blob, `Expected a SummaryType.Blob on first summarize, got ${gcBlobType}`);
+
+            checkGCBlobType(tree1, SummaryType.Blob, "first");
 
             await garbageCollector.latestSummaryStateRefreshed(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
@@ -994,9 +994,8 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
             const tree2 = garbageCollector.summarize(fullTree, trackState);
-            assert(tree2 !== undefined, "Expected a tree on second summarize");
-            const gcBlobHandleType = tree2.summary.tree[gcBlobRootKey].type;
-            assert(gcBlobHandleType === SummaryType.Handle, `Expected a SummaryType.Handle on second summarize, got ${gcBlobHandleType}`);
+
+            checkGCBlobType(tree2, SummaryType.Handle, "second");
         });
     });
 });

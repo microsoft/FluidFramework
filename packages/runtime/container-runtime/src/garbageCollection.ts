@@ -76,8 +76,9 @@ const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to log error messages if GC reference validation fails.
 const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 // Feature gate key to write the gc blob as a handle if the data is the same.
-const trackGCBlobStateKey = "Fluid.GarbageCollection.TrackGCBlobStateKey";
-const trackGCBlobStateVersionKey = "Fluid.GarbageCollection.TrackGCBlobStateVersionKey";
+export const trackGCBlobStateKey = "Fluid.GarbageCollection.TrackGCBlobState";
+// Feature gate key to limit which versions can write the gc blob as a handle if the data is the same.
+export const trackGCBlobStateMinimumVersionKey = "Fluid.GarbageCollection.TrackGCBlobState.MinVersion";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -347,9 +348,14 @@ export class GarbageCollector implements IGarbageCollector {
 
     // Keeps track of the GC state from the last run.
     private previousGCDataFromLastRun: IGarbageCollectionData | undefined;
-    // Keeps track of the serialized GC blob from the last run.
-    private latestSerializedGCBlobs: Map<string, string> = new Map();
-    private pendingSerializedGCBlobs: Map<string, string> = new Map();
+    /**
+     * Keeps track of the serialized GC blob from the latest summary successfully submitted to the server.
+     */
+    private latestSerializedSummaryState: string | undefined;
+    /**
+     * Keeps track of the serialized GC blob from the last GC run of the client.
+     */
+    private pendingSerializedSummaryState: string | undefined;
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
     private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
@@ -460,15 +466,12 @@ export class GarbageCollector implements IGarbageCollector {
         );
 
         const currentVersion = pkgVersion;
-        const oldestTrackGCBlobStateVersion = this.mc.config.getString(trackGCBlobStateVersionKey);
-        const versionIsCompatible =
-            oldestTrackGCBlobStateVersion === undefined ||
-            currentVersionGreaterOrEqualToVersion(currentVersion, oldestTrackGCBlobStateVersion);
-        const trackGCBlobState = this.mc.config.getBoolean(trackGCBlobStateKey) === true;
-        this.trackGCBlobState =
-            this.shouldRunGC &&
-            trackGCBlobState &&
-            versionIsCompatible;
+        const minimumVersion = this.mc.config.getString(trackGCBlobStateMinimumVersionKey);
+        const shouldTrackStateForVersion = meetsMinimumVersionRequirement(currentVersion, minimumVersion);
+
+        const trackGCBlobStateEnabled = this.mc.config.getBoolean(trackGCBlobStateKey) === true;
+
+        this.trackGCBlobState = trackGCBlobStateEnabled && shouldTrackStateForVersion;
 
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -509,13 +512,12 @@ export class GarbageCollector implements IGarbageCollector {
             if (gcSnapshotTree !== undefined) {
                 // If the GC tree is written at root, we should also do the same.
                 this._writeDataAtRoot = true;
-                const [newGCState, latestSerializedGCBlobs] = await getGCStateAndBlobsFromSnapshot(
+                const newGCState = await getGCStateFromSnapshot(
                     gcSnapshotTree,
                     readAndParseBlob,
-                    this.trackGCBlobState,
                 );
                 if (this.trackGCBlobState) {
-                    this.latestSerializedGCBlobs = latestSerializedGCBlobs;
+                    this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(newGCState));
                 }
                 return newGCState;
             }
@@ -729,23 +731,21 @@ export class GarbageCollector implements IGarbageCollector {
 
         const builder = new SummaryTreeBuilder();
         const sortedGCState: IGarbageCollectionState = generateSortedGCState(gcState);
-        const newBlob = JSON.stringify(sortedGCState);
-
-        if (
-            this.latestSerializedGCBlobs.get(gcBlobRootKey) === newBlob &&
-            this.latestSerializedGCBlobs.size === 1 &&
-            this.trackGCBlobState &&
-            !fullTree &&
-            trackState
-        ) {
-            const gcSummaryPath = `/${gcTreeKey}/${gcBlobRootKey}`;
-            builder.addHandle(gcBlobRootKey, SummaryType.Blob, gcSummaryPath);
-            return builder.getSummaryTree();
+        const newSerializedSummaryState = JSON.stringify(sortedGCState);
+        if (this.trackGCBlobState) {
+            this.pendingSerializedSummaryState = newSerializedSummaryState;
+            if (
+                this.latestSerializedSummaryState !== undefined &&
+                this.latestSerializedSummaryState === newSerializedSummaryState &&
+                !fullTree &&
+                trackState
+            ) {
+                const gcSummaryPath = `/${gcTreeKey}/${gcBlobRootKey}`;
+                builder.addHandle(gcBlobRootKey, SummaryType.Blob, gcSummaryPath);
+                return builder.getSummaryTree();
+            }
         }
-
-        this.pendingSerializedGCBlobs = new Map();
-        this.pendingSerializedGCBlobs.set(gcBlobRootKey, newBlob);
-        builder.addBlob(gcBlobRootKey, newBlob);
+        builder.addBlob(gcBlobRootKey, newSerializedSummaryState);
         return builder.getSummaryTree();
     }
 
@@ -789,7 +789,10 @@ export class GarbageCollector implements IGarbageCollector {
         // Basically, it was written in the current GC version.
         if (result.wasSummaryTracked) {
             this.latestSummaryGCVersion = this.currentGCVersion;
-            this.latestSerializedGCBlobs = this.pendingSerializedGCBlobs;
+            if (this.trackGCBlobState) {
+                this.latestSerializedSummaryState = this.pendingSerializedSummaryState;
+                this.pendingSerializedSummaryState = undefined;
+            }
             return;
         }
         // If the summary was not tracked by this client, update latest GC version and blob from the snapshot in the
@@ -803,12 +806,11 @@ export class GarbageCollector implements IGarbageCollector {
 
         const gcSnapshotTree = snapshot.trees[gcTreeKey];
         if (gcSnapshotTree !== undefined && this.trackGCBlobState) {
-            const [, latestSerializedGCBlobs] = await getGCStateAndBlobsFromSnapshot(
+            const latestGCState = await getGCStateFromSnapshot(
                 gcSnapshotTree,
                 readAndParseBlob,
-                this.trackGCBlobState,
             );
-            this.latestSerializedGCBlobs = latestSerializedGCBlobs;
+            this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(latestGCState));
         }
     }
 
@@ -1191,12 +1193,10 @@ export class GarbageCollector implements IGarbageCollector {
  * Gets the garbage collection state from the given snapshot tree. The GC state may be written into multiple blobs.
  * Merge the GC state from all such blobs and return the merged GC state.
  */
-async function getGCStateAndBlobsFromSnapshot(
+async function getGCStateFromSnapshot(
     gcSnapshotTree: ISnapshotTree,
     readAndParseBlob: ReadAndParseBlob,
-    trackGCBlobState: boolean,
-): Promise<[IGarbageCollectionState, Map<string, string>]> {
-    const serializedGCBlobs: Map<string, string> = new Map();
+): Promise<IGarbageCollectionState> {
     let rootGCState: IGarbageCollectionState = { gcNodes: {} };
     for (const key of Object.keys(gcSnapshotTree.blobs)) {
         // Skip blobs that do not start with the GC prefix.
@@ -1210,31 +1210,21 @@ async function getGCStateAndBlobsFromSnapshot(
         }
         const gcState = await readAndParseBlob<IGarbageCollectionState>(blobId);
         assert(gcState !== undefined, 0x2ad /* "GC blob missing from snapshot" */);
-        // Update latest serialized GC blobs
-        if (trackGCBlobState) {
-            serializedGCBlobs.set(key, JSON.stringify(generateSortedGCState(gcState)));
-        }
         // Merge the GC state of this blob into the root GC state.
         rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
     }
-    return [rootGCState, serializedGCBlobs];
+    return rootGCState;
 }
 
 function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollectionState {
     const sortableArray: [string, IGarbageCollectionNodeData][] = Object.entries(gcState.gcNodes);
     sortableArray.sort(([a], [b]) => a.localeCompare(b));
-    sortableArray.forEach(([, nodeData]) => {
-        nodeData.outboundRoutes.sort();
-    });
     const sortedGCState: IGarbageCollectionState = { gcNodes: {} };
-    for (const [nodeId, state] of sortableArray) {
-        sortedGCState.gcNodes[nodeId] = state;
+    for (const [nodeId, nodeData] of sortableArray) {
+        nodeData.outboundRoutes.sort();
+        sortedGCState.gcNodes[nodeId] = nodeData;
     }
     return sortedGCState;
-}
-
-function currentVersionGreaterOrEqualToVersion(currentPackageVersion: string, packageVersion: string) {
-    return semver.compare(currentPackageVersion, packageVersion) >= 0;
 }
 
 /**
@@ -1258,4 +1248,16 @@ function setLongTimeout(
         timer = setTimeout(() => timeoutFn(), timeoutMs);
     }
     setTimerFn(timer);
+}
+
+/**
+ * meetsMinimumVersionRequirement is used determining if a feature version should be run. This is similar to feature
+ * flags. The advantage of this is that if we ship a bug in version 0.1.1 and fix it in version 0.2.1. We can keep this
+ * feature disabled for version 0.1.1 and enabled for 0.2.1. Older versions will run without the feature and new
+ * versions will run with the feature.
+ * @param currentVersion - the total time the timeout needs to last in ms
+ * @param minimumVersion - the function to execute when the timer ends
+ */
+function meetsMinimumVersionRequirement(currentVersion: string, minimumVersion: string | undefined) {
+    return minimumVersion === undefined || semver.compare(currentVersion, minimumVersion) >= 0;
 }
