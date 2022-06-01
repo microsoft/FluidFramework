@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
-import { ContainerMessageType, isRuntimeMessage } from "@fluidframework/container-runtime";
+import { ContainerMessageType, IContainerRuntimeOptions, isRuntimeMessage } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -19,7 +19,7 @@ import {
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
@@ -89,21 +89,17 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
     let dataObject2map1: SharedMap;
     let dataObject2map2: SharedMap;
 
-    beforeEach(async () => {
-        // TODO: look at getVersionedTestObjectProvider in compatUtils.ts
-        // ^ this is the place we need to pass the runtime options to
-        await setupContainers();
-    });
+    async function setupContainers(runtimeOptions?: IContainerRuntimeOptions) {
+        const configCopy = { ...testContainerConfig, runtimeOptions };
 
-    async function setupContainers(/* runtimeOptions: IContainerRuntimeOptions */) {
         // Create a Container for the first client.
-        container1 = await provider.makeTestContainer(testContainerConfig) as Container;
+        container1 = await provider.makeTestContainer(configCopy) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
         dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
 
         // Load the Container that was created by the first client.
-        const container2 = await provider.loadTestContainer(testContainerConfig);
+        const container2 = await provider.loadTestContainer(configCopy);
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
         dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
@@ -116,12 +112,13 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
         let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
         let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
-        beforeEach(() => {
-            setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
-            setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
-        });
-
         describe("Flushing of batches via orderSequentially", () => {
+            beforeEach(async () => {
+                await setupContainers();
+                setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
+                setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
+            });
+
             it("can send and receive multiple batch ops correctly", async () => {
                 // Send messages in batch in the first dataStore.
                 dataObject1.context.containerRuntime.orderSequentially(() => {
@@ -245,8 +242,10 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
         });
 
         describe("TurnBased flushing of batches", () => {
-            beforeEach(() => {
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+            beforeEach(async () => {
+                await setupContainers({ flushMode: FlushMode.TurnBased });
+                setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
+                setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
             });
 
             it("can send and receive multiple batch ops that are flushed on JS turn", async () => {
@@ -338,8 +337,10 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
         });
 
         describe("Immediate flushing of ops", () => {
-            beforeEach(() => {
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
+            beforeEach(async () => {
+                await setupContainers({ flushMode: FlushMode.Immediate });
+                setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
+                setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
             });
 
             it("can send and receive ops that are flushed individually", async () => {
@@ -373,6 +374,10 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
         }
 
         describe("Automatic flushing of batches via orderSequentially", () => {
+            beforeEach(async () => {
+                await setupContainers();
+            });
+
             it("should clean document dirty state after a batch with single message is sent", async () => {
                 // Send a batch with a single message.
                 dataObject1.context.containerRuntime.orderSequentially(() => {
@@ -460,8 +465,8 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
         });
 
         describe("TurnBased flushing of batches", () => {
-            beforeEach(() => {
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+            beforeEach(async () => {
+                await setupContainers({ flushMode: FlushMode.TurnBased });
             });
 
             it("should clean document dirty state after a batch with single message is flushed", async () => {
@@ -548,118 +553,5 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
                 verifyDocumentDirtyState(dataObject1, false);
             });
         });
-    });
-});
-
-describeNoCompat("Flushing ops in combination of TurnBased and Immediate", (getTestObjectProvider) => {
-    let provider: ITestObjectProvider;
-    let dataObject1: ITestFluidObject;
-    let dataObject1map1: SharedMap;
-    let dataObject1map2: SharedMap;
-    let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
-
-    beforeEach(async () => {
-        provider = getTestObjectProvider();
-        // Create a Container for the first client.
-        const container1 = await provider.makeTestContainer(testContainerConfig) as Container;
-        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-        dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
-        dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
-
-        await waitForCleanContainers(dataObject1);
-        await provider.ensureSynchronized();
-        setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
-    });
-
-    it("can send ops alternatively with Immediate and TurnBased modes starting with Immediate", async () => {
-        // Send couple of ops in Immediate FlushMode. These ops should not have batch metadata.
-        dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-        dataObject1map1.set("key1", "value1");
-        dataObject1map2.set("key2", "value2");
-
-        // Send couple of ops in TurnBased FlushMode. These ops should be batched together. No need to yield
-        // after sending these ops because setting FlushMode to Immediate will flush these ops.
-        dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-        dataObject1map1.set("key3", "value3");
-        dataObject1map2.set("key4", "value4");
-
-        // Send couple of ops in Immediate FlushMode. These ops should not have batch metadata.
-        dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-        dataObject1map1.set("key5", "value5");
-        dataObject1map2.set("key6", "value6");
-
-        // Send couple of ops in TurnBased FlushMode. These ops should be batched together.
-        dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-        dataObject1map1.set("key3", "value3");
-        dataObject1map2.set("key4", "value4");
-        await yieldJSTurn();
-
-        // Wait for the ops to get processed by both the containers.
-        await provider.ensureSynchronized();
-
-        assert.equal(
-            dataObject1BatchMessages.length, 8, "Incorrect number of messages received on local client");
-
-        // The first couple of ops in Immediate mode should have been sent individually without batch metadata.
-        verifyBatchMetadata(dataObject1BatchMessages.slice(0, 1));
-        verifyBatchMetadata(dataObject1BatchMessages.slice(1, 2));
-
-        // The next couple of ops in TurnBased mode should be in a batch have have batch metadata.
-        verifyBatchMetadata(dataObject1BatchMessages.slice(2, 4));
-
-        // The next couple of ops in Immediate mode should have been sent individually without batch metadata.
-        verifyBatchMetadata(dataObject1BatchMessages.slice(4, 5));
-        verifyBatchMetadata(dataObject1BatchMessages.slice(5, 6));
-
-        // The next couple of ops in TurnBased mode should be in a batch have have batch metadata.
-        verifyBatchMetadata(dataObject1BatchMessages.slice(6, 8));
-    });
-
-    it("can send ops alternatively with Immediate and TurnBased modes starting with TurnBased", async () => {
-        // Send couple of ops in TurnBased FlushMode. These ops should be batched together. No need to yield
-        // after sending these ops because setting FlushMode to Immediate will flush these ops.
-        dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-        dataObject1map1.set("key1", "value1");
-        dataObject1map2.set("key2", "value2");
-
-        // Send couple of ops in Immediate FlushMode. These ops should not have batch metadata.
-        dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-        dataObject1map1.set("key3", "value3");
-        dataObject1map2.set("key4", "value4");
-
-        // Send couple of ops in TurnBased FlushMode. These ops should be batched together. No need to yield
-        // after sending these ops because setting FlushMode to Immediate will flush these ops.
-        dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-        dataObject1map1.set("key5", "value5");
-        dataObject1map2.set("key6", "value6");
-
-        // Send couple of ops in Immediate FlushMode. These ops should not have batch metadata.
-        dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-        dataObject1map1.set("key3", "value3");
-        dataObject1map2.set("key4", "value4");
-
-        // Wait for the ops to get processed by both the containers.
-        await provider.ensureSynchronized();
-
-        assert.equal(
-            dataObject1BatchMessages.length, 8, "Incorrect number of messages received on local client");
-
-        // The first couple of ops in TurnBased mode should be in a batch have have batch metadata.
-        verifyBatchMetadata(dataObject1BatchMessages.slice(0, 2));
-
-        // The next couple of ops in Immediate mode should have been sent individually without batch metadata.
-        verifyBatchMetadata(dataObject1BatchMessages.slice(2, 3));
-        verifyBatchMetadata(dataObject1BatchMessages.slice(3, 4));
-
-        // The next couple of ops in TurnBased mode should be in a batch have have batch metadata.
-        verifyBatchMetadata(dataObject1BatchMessages.slice(4, 6));
-
-        // The next couple of ops in Immediate mode should have been sent individually without batch metadata.
-        verifyBatchMetadata(dataObject1BatchMessages.slice(6, 7));
-        verifyBatchMetadata(dataObject1BatchMessages.slice(7, 8));
-    });
-
-    afterEach(() => {
-        dataObject1BatchMessages = [];
     });
 });
