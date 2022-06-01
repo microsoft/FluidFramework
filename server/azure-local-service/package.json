@@ -55,6 +55,7 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0",
     "forever": "^3.0.4",
     "rimraf": "^2.6.2",
     "ts-node": "^8.6.2",
