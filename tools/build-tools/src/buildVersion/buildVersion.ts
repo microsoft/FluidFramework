@@ -110,8 +110,7 @@ const filterTags = (prefix: TagPrefix, tags: string[]): string[] => tags.filter(
 function getVersions(prefix: TagPrefix) {
     const raw_tags = child_process.execSync(`git tag -l`, { encoding: "utf8" });
     const tags = raw_tags.split(/\s+/g).map(t => t.trim());
-    const filtered = filterTags(prefix, tags);
-    return getVersionsFromStrings(prefix, filtered);
+    return getVersionsFromStrings(prefix, tags);
 }
 
 /**
