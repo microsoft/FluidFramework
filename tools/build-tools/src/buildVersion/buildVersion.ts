@@ -253,7 +253,8 @@ function main() {
     console.log(`version=${version}`);
     console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
 
-    // Output the code version for test build
+    // Output the code version for test builds. This is used in the CI system.
+    // See common/build/build-common/gen_version.js
     if (arg_test_build) {
         const codeVersion = `${simpleVersion}-test`;
         console.log(`codeVersion=${codeVersion}`);
