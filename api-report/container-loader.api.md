@@ -43,9 +43,12 @@ import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
 export enum ConnectionState {
+    CatchingUp = 1,
     Connected = 2,
+    // @deprecated (undocumented)
     Connecting = 1,
-    Disconnected = 0
+    Disconnected = 0,
+    EstablishingConnection = 3
 }
 
 // @public (undocumented)
@@ -101,14 +104,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)
     get resolvedUrl(): IResolvedUrl | undefined;
-    // @deprecated
-    resume(): void;
     get scopes(): string[] | undefined;
     // (undocumented)
     serialize(): string;
     get serviceConfiguration(): IClientConfiguration | undefined;
-    // @deprecated
-    setAutoReconnect(reconnect: boolean): void;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)

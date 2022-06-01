@@ -8,7 +8,7 @@ import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@fl
 // the event emitter polyfill and the node event emitter have different event types:
 // string | symbol vs. string | number
 // this allow us to correctly handle either type
-export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) } ? E : never;
+export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any); } ? E : never;
 
 export type TypedEventTransform<TThis, TEvent> =
     // Event emitter supports some special events for the emitter itself to use

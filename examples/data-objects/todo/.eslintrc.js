@@ -7,9 +7,4 @@ module.exports = {
     "extends": [
         "@fluidframework/eslint-config-fluid"
     ],
-    "rules": {
-        "@typescript-eslint/strict-boolean-expressions": "off",
-        "import/no-internal-modules":"off",
-        "@typescript-eslint/unbound-method":"off"
-    }
 }

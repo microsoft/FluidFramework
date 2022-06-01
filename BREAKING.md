@@ -18,12 +18,27 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.60 Upcoming changes
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
+- [bindToContext to be removed from IFluidDataStoreChannel](#bindToContext-to-be-removed-from-IFluidDataStoreChannel)
+- [Garbage Collection (GC) mark phase turned on by default](#Garbage-Collection-(GC)-mark-phase-turned-on-by-default)
 
 ### Summarize heuristic changes based on telemetry
 Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
 - Change `minOpsForLastSummaryAttempt` from `50` -> `10`
 
+### bindToContext to be removed from IFluidDataStoreChannel
+`bindToContext` will be removed from `IFluidDataStoreChannel` in the next major release.
+It was deprecated in 0.50 but due to [this bug](https://github.com/microsoft/FluidFramework/issues/9127) it still had to be called after creating a non-root data store. The bug was fixed in 0.59.
+To prepare for the removal in the following release, calls to `bindToContext` can and should be removed as soon as this version is consumed. Since the compatibility window between container runtime and data store runtime is N / N-1, all runtime code will have the required bug fix (released in the previous version 0.59) and it can be safely removed.
+
+### Garbage Collection (GC) mark phase turned on by default
+GC mark phase is turned on by default with this version. In mark phase, unreferenced Fluid objects (data stores, DDSes and attachment blobs uploaded via BlobManager) are stamped as such along with the unreferenced timestamp in the summary. Features built on summaries (Fluid file at rest) can filter out these unreferenced content. For example, search and e-discovery will mostly want to filter out these content since they are unused.
+
+For more details on GC and options for controlling its behavior, please see [this document](./packages/runtime/container-runtime/garbageCollection.md).
+
+> Note: GC sweep phase has not been enabled yet so unreferenced content won't be deleted. The work to enable it is in progress and will be ready soon.
+
 ## 0.60 Breaking changes
+- [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 - [Deprecate TelemetryDataTag.PackageData](#Deprecate-TelemetryDataTagPackageData)
@@ -33,6 +48,15 @@ Changes will be made in the way heuristic summaries are run based on observed te
 - [`ISummarizerOptions` is deprecated](#isummarizerOptions-is-deprecated)
 - [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
+- [Remove Container.setAutoReconnect() and Container.resume()](#Remove-Container-setAutoReconnect-and-resume)
+- [Remove IContainer.connected and IFluidContainer.connected](#Remove-IContainer-connected-and-IFluidContainer-connected)
+
+### Changed AzureConnectionConfig API
+- Added a `type` field that's used to differentiate between remote and local connections.
+- Defined 2 subtypes of `AzureConnectionConfig`: `AzureLocalConnectionConfig` and `AzureRemoteConnectionConfig` with their `type` set to `"local"` and `"remote"` respectively
+- Previously we supplied `orderer` and `storage` fields, now replaced with `endpoint` url.
+- Previously `LOCAL_MODE_TENANT_ID` was supplied for the `tenantId` field when running app locally, now in "local" mode,
+  no tenantId field is `provided` and `LOCAL_MODE_TENANT_ID` is no longer available.
 
 ### Remove IFluidSerializer from core-interfaces
 `IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
@@ -81,6 +105,19 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 +    type: typeof MergeTreeDeltaType.INSERT;
 ```
 
+### Remove Container.setAutoReconnect() and Container.resume()
+The functions `Container.setAutoReconnect()` and `Container.resume()` were deprecated in 0.58 and are now removed. To replace their functionality use `Container.connect()` instead of `Container.setAutoReconnect(true)` and `Container.resume()`, and use `Container.disconnect()` instead of `Container.setAutoReconnect(false)`.
+
+### Remove IContainer.connected and IFluidContainer.connected
+The properties `IContainer.connected` and `IFluidContainer.connected` were deprecated in 0.58 and are now removed. To replace their functionality use `IContainer.connectionState` and `IFluidContainer.connectionState` respectively. Example:
+
+``` diff
+- if (container.connected) {
++ if (container.connectionState === ConnectionState.Connected) {
+    console.log("Container is connected");
+}
+```
+
 # 0.59
 
 ## 0.59 Upcoming changes
@@ -88,6 +125,9 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 - [IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release](#ifluidcontainer-connect-and-ifluidcontainer-disconnect-will-be-made-mandatory-in-future-major-release)
 - [proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-to-be-removed-from-ILoaderProps-and-ILoaderServices)
 - [routerlicious-host package and ContainerUrlResolver to be removed](#routerlicious-host-package-and-ContainerUrlResolver-to-be-removed)
+- [LocalReference class and method deprecations](#LocalReference-class-and-method-deprecations)
+- [Deprecated properties from ILoaderOptions](#Deprecated-properties-from-ILoaderOptions)
+- [Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions](#Deprecated-forceAccessTokenViaAuthorizationHeader-from-ICollabSessionOptions)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
@@ -100,6 +140,22 @@ The `proxyLoaderFactories` member on `ILoaderProps` and `ILoaderServices` has be
 
 ### routerlicious-host package and ContainerUrlResolver to be removed
 The `@fluidframework/routerlicious-host` package and its `ContainerUrlResolver` have been deprecated in 0.59 and will be removed in an upcoming release.
+
+### LocalReference class and method deprecations
+The class LocalReference in the @fluidframework/merge-tree packing is being deprecated. Please transition usage to the ReferencePosition interface from the same package.
+To support this change the following methods are deprecated with replacements that operate on ReferencePosition rather than LocalReference
+ - createPositionReference to createLocalReferencePosition
+ - addLocalReference to createLocalReferencePosition
+ - localRefToPos to localReferencePositionToPosition
+ - removeLocalReference to removeLocalReferencePosition
+
+ The above methods are changes in both the @fluidframework/merge-tree and @fluidframework/sequence packages.
+
+ ### Deprecated properties from ILoaderOptions
+`noopTimeFrequency` and `noopCountFrequency` from `ILoaderOptions` will be deprecated and moved to `IClientConfiguration` in `@fluidframework/protocol-definitions`.
+
+### Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions
+Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions as auth token will be supplied as Header by default due to security reasons.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)

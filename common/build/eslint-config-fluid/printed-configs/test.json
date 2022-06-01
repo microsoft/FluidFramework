@@ -22,8 +22,10 @@
         "import",
         "unicorn",
         "react",
+        "unused-imports",
         "tsdoc",
         "promise",
+        "jsdoc",
         "@typescript-eslint",
         "@rushstack/security",
         "@rushstack"
@@ -266,7 +268,13 @@
         "@typescript-eslint/prefer-function-type": [
             "error"
         ],
+        "@typescript-eslint/prefer-includes": [
+            "error"
+        ],
         "@typescript-eslint/prefer-namespace-keyword": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-optional-chain": [
             "error"
         ],
         "@typescript-eslint/prefer-readonly": [
@@ -891,6 +899,9 @@
             "error"
         ],
         "unicorn/no-unsafe-regex": [
+            "error"
+        ],
+        "unused-imports/no-unused-imports": [
             "error"
         ],
         "use-isnan": [

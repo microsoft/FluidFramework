@@ -9,25 +9,18 @@ import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cors from "cors";
 import express from "express";
-import morgan from "morgan";
 import * as nconf from "nconf";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import split = require("split");
-import * as winston from "winston";
-import { bindCorrelationId } from "@fluidframework/server-services-utils";
-import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
+import {
+    alternativeMorganLoggerMiddleware,
+    bindCorrelationId,
+    jsonMorganLoggerMiddleware,
+} from "@fluidframework/server-services-utils";
+import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
 import { getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
-
-/**
- * Basic stream logging interface for libraries that require a stream to pipe output to
- */
-const stream = split().on("data", (message) => {
-    winston.info(message);
-    Lumberjack.info(message);
-});
 
 export function create(
     config: nconf.Provider,
@@ -52,28 +45,18 @@ export function create(
 
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
-        app.use(morgan((tokens, req, res) => {
-            const tenantId = getTenantIdFromRequest(req.params);
-            const messageMetaData = {
-                method: tokens.method(req, res),
-                pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
-                // TODO: replace "x-driver-version" with DriverVersionHeaderName from services-client
-                driverVersion: tokens.req(req, res, "x-driver-version"),
-                url: tokens.url(req, res),
-                status: tokens.status(req, res),
-                contentLength: tokens.res(req, res, "content-length"),
-                responseTime: tokens["response-time"](req, res),
-                tenantId,
-                documentId: getDocumentIdFromRequest(tenantId, req.get("Authorization")),
-                serviceName: "historian",
-                eventName: "http_requests",
-             };
-             winston.info("request log generated", { messageMetaData });
-             logRequestMetric(messageMetaData);
-             return undefined;
-        }, { stream }));
+        app.use(jsonMorganLoggerMiddleware(
+            "historian",
+            (tokens, req, res) => {
+                const tenantId = getTenantIdFromRequest(req.params);
+                return {
+                    [HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
+                    [BaseTelemetryProperties.tenantId]: tenantId,
+                    [BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(tenantId, req.get("Authorization")),
+                };
+            }));
     } else {
-        app.use(morgan(loggerFormat, { stream }));
+        app.use(alternativeMorganLoggerMiddleware(loggerFormat));
     }
 
     const requestSize = config.get("requestSizeLimit");

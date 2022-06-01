@@ -6,7 +6,6 @@
 import { serializeError } from "serialize-error";
 import { Lumber } from "./lumber";
 import { LumberEventName } from "./lumberEventNames";
-import { Lumberjack } from "./lumberjack";
 
 const isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
 const isNode = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
@@ -27,6 +26,7 @@ export enum LumberType {
 export enum BaseTelemetryProperties {
     tenantId = "tenantId",
     documentId = "documentId",
+    correlationId = "correlationId",
 }
 
 // Incoming message properties
@@ -34,6 +34,16 @@ export enum QueuedMessageProperties {
     topic = "topic",
     partition = "partition",
     offset = "offset",
+}
+
+export enum HttpProperties {
+    contentLength = "contentLength",
+    driverVersion = "driverVersion",
+    method = "method",
+    pathCategory = "pathCategory",
+    responseTime = "responseTime",
+    status = "status",
+    url = "url",
 }
 
 export enum CommonProperties {
@@ -67,6 +77,7 @@ export enum CommonProperties {
 
     // Miscellaneous properties
     restart = "restart",
+    serviceName = "serviceName",
     telemetryGroupName = "telemetryGroupName",
 }
 
@@ -145,13 +156,3 @@ export const getLumberBaseProperties = (documentId: string, tenantId: string) =>
     [BaseTelemetryProperties.tenantId]: tenantId,
     [BaseTelemetryProperties.documentId]: documentId,
 });
-
-// Helper method to log HTTP metadata
-export const logRequestMetric = (messageMetaData) => {
-    const restProperties = new Map(Object.entries(messageMetaData));
-    restProperties.set(CommonProperties.telemetryGroupName, messageMetaData.eventName);
-    const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest, restProperties);
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    messageMetaData.status?.startsWith("2") ? httpMetric.success("Request successful")
-        : httpMetric.error("Request failed");
-};

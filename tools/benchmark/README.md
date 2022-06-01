@@ -9,13 +9,13 @@ Includes:
 
 To run benchmarks defined using these tools, invoke mocha normally, but add the following arguments:
 
-> `--expose-gc --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js"`
+> `--expose-gc --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js`
 
 To configure the reporter output directory, you can add `--reporter-options reportDir=./benchmarks`
 
 To filter to a specific `BenchmarkType` such as `Measurement` you can use it as the `--fgrep` instead:
 
-> `--expose-gc --perfMode --fgrep @Measurement --reporter @fluid-tools/benchmark/dist/MochaReporter.js"`
+> `--expose-gc --perfMode --fgrep @Measurement --reporter @fluid-tools/benchmark/dist/MochaReporter.js`
 
 `--expose-gc` allows for explicit garbage collection between tests to help reduce contamination across tests.
 
