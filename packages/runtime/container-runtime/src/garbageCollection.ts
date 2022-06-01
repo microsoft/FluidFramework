@@ -612,7 +612,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Log all the GC options and the state determined by the garbage collector. This is interesting only for the
         // summarizer client since it is the only one that runs GC. It also helps keep the telemetry less noisy.
-        const telemetryProps = {
+        const gcConfigProps = JSON.stringify({
             gcEnabled: this.gcEnabled,
             sweepEnabled: this.sweepEnabled,
             runGC: this.shouldRunGC,
@@ -623,9 +623,12 @@ export class GarbageCollector implements IGarbageCollector {
             inactiveTimeout: this.inactiveTimeoutMs,
             existing,
             ...this.gcOptions,
-        };
+        });
         if (this.isSummarizerClient) {
-            this.mc.logger.sendTelemetryEvent({ eventName: "GarbageCollectorLoaded", ...telemetryProps });
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "GarbageCollectorLoaded",
+                gcConfigs: gcConfigProps,
+            });
         }
 
         // Initialize the base state that is used to detect when inactive objects are used.
@@ -635,7 +638,7 @@ export class GarbageCollector implements IGarbageCollector {
                     error,
                     "FailedToInitializeGC",
                 );
-                dpe.addTelemetryProperties(telemetryProps);
+                dpe.addTelemetryProperties({ gcConfigs: gcConfigProps });
                 throw dpe;
             });
         }
