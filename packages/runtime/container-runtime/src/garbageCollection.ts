@@ -619,10 +619,13 @@ export class GarbageCollector implements IGarbageCollector {
                 );
                 dpe.addTelemetryProperties({
                     gcEnabled: this.gcEnabled,
+                    sweepEnabled: this.sweepEnabled,
+                    runGC: this.shouldRunGC,
                     runSweep: this.shouldRunSweep,
                     writeAtRoot: this._writeDataAtRoot,
                     testMode: this.testMode,
                     sessionExpiry: this.sessionExpiryTimeoutMs,
+                    inactiveTimeout: this.inactiveTimeoutMs,
                 });
                 throw dpe;
             });
