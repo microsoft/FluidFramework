@@ -1460,7 +1460,7 @@ export class MergeTree {
     public getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number) {
         let segoff = this.getContainingSegment(pos, refSeq, clientId);
         if (segoff.segment && isRemovedAndAcked(segoff.segment)) {
-            // Only slide is the segment is removed and acked
+            // Only slide if the segment is removed and acked
             segoff = this.getSlideToSegment(segoff.segment);
         }
         if (segoff.segment && isRemoved(segoff.segment)) {
