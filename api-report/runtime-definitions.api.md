@@ -287,14 +287,14 @@ export interface ISignalEnvelope {
     };
 }
 
-// @public (undocumented)
+// @public
 export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
     id: string;
     pathPartsForChildren?: string[];
 }
 
-// @public (undocumented)
+// @public
 export interface ISummarizeResult {
     // (undocumented)
     stats: ISummaryStats;
@@ -355,7 +355,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryStats {
     // (undocumented)
     blobNodeCount: number;
@@ -377,11 +377,9 @@ export interface ISummaryTreeHandleWithStats {
     summary: ISummaryHandle;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryTreeWithStats {
-    // (undocumented)
     stats: ISummaryStats;
-    // (undocumented)
     summary: ISummaryTree;
 }
 
