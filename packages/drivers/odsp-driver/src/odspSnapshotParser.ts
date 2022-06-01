@@ -57,7 +57,7 @@ export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
     if (odspSnapshot.blobs) {
         odspSnapshot.blobs.forEach((blob) => {
             assert(blob.encoding === "base64" || blob.encoding === undefined,
-                0x0a4 /* `Unexpected blob encoding type: '${blob.encoding}'` */);
+                0x0a4 /* Unexpected blob encoding type */);
             blobsWithBufferContent.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf8"));
         });
     }
