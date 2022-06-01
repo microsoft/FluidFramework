@@ -86,6 +86,7 @@ import {
     channelsTreeName,
     IAttachMessage,
     IDataStore,
+    ISummaryTreeHandleWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -99,6 +100,7 @@ import {
     responseToException,
     seqFromTree,
     calculateStats,
+    addHandleToSummary,
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
@@ -1466,7 +1468,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.garbageCollector.writeDataAtRoot) {
             const gcSummary = this.garbageCollector.summarize(fullTree, trackState);
             if (gcSummary !== undefined) {
-                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+                if (gcSummary.summary.type === SummaryType.Tree) {
+                    addTreeToSummary(summaryTree, gcTreeKey, gcSummary as ISummaryTreeWithStats);
+                } else if (gcSummary.summary.type === SummaryType.Handle) {
+                    addHandleToSummary(summaryTree, gcTreeKey, gcSummary as ISummaryTreeHandleWithStats);
+                }
             }
         }
     }
@@ -2355,8 +2361,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
             const gcSummaryTreeStats = summaryTree.tree[gcTreeKey]
-                ? calculateStats((summaryTree.tree[gcTreeKey] as ISummaryTree))
-                : undefined;
+            ? calculateStats(summaryTree.tree[gcTreeKey])
+            : undefined;
 
             const summaryStats: IGeneratedSummaryStats = {
                 dataStoreCount: this.dataStores.size,

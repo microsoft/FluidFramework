@@ -108,6 +108,8 @@
   },
   "typeValidation": {
     "version": "0.59.4000",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_SummaryTreeBuilder": {"forwardCompat": false}
+    }
   }
 }

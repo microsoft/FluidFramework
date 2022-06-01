@@ -9,7 +9,6 @@ import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
-    gcBlobPrefix,
     gcTreeKey,
     IAckedSummary,
     IContainerRuntimeOptions,
@@ -72,11 +71,11 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
     let dataStoreB: TestDataObject;
     let dataStoreC: TestDataObject;
 
-    const isBlobHandle = true;
-    const isBlob = false;
+    const isTreeHandle = true;
+    const isTree = false;
 
     const settings = {
-        "Fluid.GarbageCollection.TrackGCBlobState": "true",
+        "Fluid.GarbageCollection.TrackGCState": "true",
     };
     const configProvider = mockConfigProvider(settings);
 
@@ -134,72 +133,72 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
         );
 
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
-        const gcTree = (latestUploadedSummary.tree[gcTreeKey] as ISummaryTree);
-        assert(gcTree.tree !== undefined);
-        const gcDataBlobKey = `${gcBlobPrefix}_root`;
+        const gcObject = (latestUploadedSummary.tree[gcTreeKey]);
 
         if (isHandle) {
-            assert(gcTree.tree[gcDataBlobKey].type === SummaryType.Handle, "Expected a gc handle!");
+            assert(gcObject.type === SummaryType.Handle, "Expected a gc handle!");
         } else {
-            assert(gcTree.tree[gcDataBlobKey].type === SummaryType.Blob, "Expected a gc blob!");
+            assert(gcObject.type === SummaryType.Tree, "Expected a gc blob!");
         }
 
         return latestAckedSummary.summaryAck.contents.handle;
     }
 
-    beforeEach(async () => {
-        provider = getTestObjectProvider();
-        // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
-        // time the summarizer client uploads a summary.
-        (provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
-            provider.documentServiceFactory,
-            uploadSummaryCb,
-        );
-
-        mainContainer = await createContainer();
-        dataStoreA = await requestFluidObject<TestDataObject>(mainContainer, "default");
-
-        summarizerClient1 = await getNewSummarizer();
-
-        // Create data stores B and C, and mark them as referenced.
-        dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-        dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-        dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-        dataStoreA._root.set("dataStoreC", dataStoreC.handle);
-
-        await provider.ensureSynchronized();
-
-        // A gc blob should be submitted as this is the first summary
-        await submitSummaryAndValidateState(summarizerClient1, isBlob);
-    });
-
-    afterEach(() => {
-        latestAckedSummary = undefined;
-        latestSummaryContext = undefined;
-        latestUploadedSummary = undefined;
-    });
-
     describe("Stores handle in summary when GC state does not change", () => {
+        beforeEach(async () => {
+            provider = getTestObjectProvider();
+            // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
+            // time the summarizer client uploads a summary.
+            (provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
+                provider.documentServiceFactory,
+                uploadSummaryCb,
+            );
+
+            mainContainer = await createContainer();
+            dataStoreA = await requestFluidObject<TestDataObject>(mainContainer, "default");
+
+            summarizerClient1 = await getNewSummarizer();
+
+            // Create data stores B and C, and mark them as referenced.
+            dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
+            dataStoreA._root.set("dataStoreB", dataStoreB.handle);
+            dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
+            dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+
+            await provider.ensureSynchronized();
+
+            // A gc blob should be submitted as this is the first summary
+            await submitSummaryAndValidateState(summarizerClient1, isTree);
+        });
+
+        afterEach(() => {
+            latestAckedSummary = undefined;
+            latestSummaryContext = undefined;
+            latestUploadedSummary = undefined;
+        });
+
         it("Stores handle when data store changes, but no handles are modified", async () => {
             // Load a new summarizerClient from the full GC tree
             const summarizerClient2 = await getNewSummarizer();
+            const tree1 = await summarizerClient1.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
+            const tree2 = await summarizerClient2.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
+            assert.deepEqual(tree2, tree1, "GC trees between containers should be the same!");
 
             // Make a change in dataStoreA.
             dataStoreA._root.set("key", "value");
 
             // Summarize and validate that a GC blob handle is generated.
-            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
+            const summaryVersion = await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
 
             // Load a new summarizerClient
-            const summarizerClient3 = await getNewSummarizer();
+            const summarizerClient3 = await getNewSummarizer(summaryVersion);
 
             // Summarize on a new summarizer client and validate that a GC blob handle is generated.
-            await submitSummaryAndValidateState(summarizerClient3, isBlobHandle);
-            const snapshot1 = await summarizerClient1.containerRuntime.storage.getSnapshotTree();
-            const snapshot2 = await summarizerClient2.containerRuntime.storage.getSnapshotTree();
-            const snapshot3 = await summarizerClient3.containerRuntime.storage.getSnapshotTree();
-            assert.deepEqual(snapshot1, snapshot2, "Snapshots between containers should be the same!");
-            assert.deepEqual(snapshot2, snapshot3, "Snapshots between containers should be the regardless of handle!");
+            await submitSummaryAndValidateState(summarizerClient3, isTreeHandle);
+            const tree3 = await summarizerClient1.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
+            const tree4 = await summarizerClient3.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
+            assert.deepEqual(tree2, tree3, "GC trees with handles should be the same!");
+            assert.deepEqual(tree3, tree4, "GC trees between containers should be the regardless of handle!");
         });
 
         it("New gc blobs are submitted when handles are added and deleted", async () => {
@@ -207,21 +206,21 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             dataStoreA._root.set("key", "value");
 
             // A gc blob handle should be submitted as there are no gc changes
-            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
+            await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
 
             // A new gc blob should be submitted as there is a deleted gc reference
             dataStoreA._root.delete("dataStoreC");
 
             // Summarize and validate that all data store entries are trees since a datastore reference has changed.
-            await submitSummaryAndValidateState(summarizerClient1, isBlob);
+            await submitSummaryAndValidateState(summarizerClient1, isTree);
 
             // A gc blob handle should be submitted as there are no gc changes
-            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
+            await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
 
             // Add a handle reference to dataStore C
             dataStoreA._root.set("dataStoreC", dataStoreC.handle);
             // A new gc blob should be submitted as there is a new gc reference
-            await submitSummaryAndValidateState(summarizerClient1, isBlob);
+            await submitSummaryAndValidateState(summarizerClient1, isTree);
         });
 
         it("GC blob handle written when summary fails", async () => {
@@ -229,12 +228,12 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             dataStoreA._root.set("key", "value");
 
             // A gc blob handle should be submitted as there are no gc changes
-            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
+            await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
 
             await submitFailingSummary(provider, summarizerClient1, logger, FailingSubmitSummaryStage.Generate);
 
             // GC blob handle expected
-            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
+            await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
         });
 
         it("GC blob written when summary fails", async () => {
@@ -246,11 +245,11 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             await submitFailingSummary(provider, summarizerClient1, logger, FailingSubmitSummaryStage.Upload);
 
             // GC blob expected as the summary had changed
-            await submitSummaryAndValidateState(summarizerClient1, isBlob);
+            await submitSummaryAndValidateState(summarizerClient1, isTree);
         });
 
         it("GC blob handle written when new summarizer loaded from last summary summarizes", async () => {
-            await submitSummaryAndValidateState(summarizerClient1, isBlobHandle);
+            await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
 
             await provider.ensureSynchronized();
 
@@ -260,12 +259,53 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             await submitFailingSummary(provider, summarizerClient1, logger, FailingSubmitSummaryStage.Generate);
 
             // GC blob expected as the summary had changed
-            const summaryVersion: string = await submitSummaryAndValidateState(summarizerClient1, isBlob);
+            const summaryVersion: string = await submitSummaryAndValidateState(summarizerClient1, isTree);
 
             const summarizerClient2 = await getNewSummarizer(summaryVersion);
 
             // GC blob expected to be the same as the summary has not changed
-            await submitSummaryAndValidateState(summarizerClient2, isBlobHandle);
+            await submitSummaryAndValidateState(summarizerClient2, isTreeHandle);
+        });
+    });
+
+    describe("Stores handle in summary when GC state does not change", () => {
+        it("Rewrites blob when data is not at root", async () => {
+            provider = getTestObjectProvider();
+            // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
+            // time the summarizer client uploads a summary.
+            (provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
+                provider.documentServiceFactory,
+                uploadSummaryCb,
+            );
+            mainContainer = await createContainer();
+            dataStoreA = await requestFluidObject<TestDataObject>(mainContainer, "default");
+
+            // Create data stores B and C, and mark them as referenced.
+            dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
+            dataStoreA._root.set("dataStoreB", dataStoreB.handle);
+            dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
+            dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+
+            settings["Fluid.GarbageCollection.WriteDataAtRoot"] = "false";
+            summarizerClient1 = await getNewSummarizer();
+            const summaryResult = await submitAndAckSummary(provider,
+                summarizerClient1,
+                logger,
+                false, // fullTree
+            );
+            assert(latestUploadedSummary !== undefined, "Did not get a summary");
+            assert(latestUploadedSummary.tree[gcTreeKey] === undefined, "Expected gc not to be written at root!");
+
+            // Write data at root
+            settings["Fluid.GarbageCollection.WriteDataAtRoot"] = "true";
+            const summarizerClient2 = await getNewSummarizer(summaryResult.ackedSummary.summaryAck.contents.handle);
+            await submitSummaryAndValidateState(summarizerClient2, isTree);
+        });
+
+        afterEach(() => {
+            latestAckedSummary = undefined;
+            latestSummaryContext = undefined;
+            latestUploadedSummary = undefined;
         });
     });
 });

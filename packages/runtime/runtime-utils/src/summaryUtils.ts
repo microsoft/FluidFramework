@@ -21,7 +21,12 @@ import {
     ITreeEntry,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryStats, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    ISummaryStats,
+    ISummarizeResult,
+    ISummaryTreeWithStats,
+    ISummaryTreeHandleWithStats,
+} from "@fluidframework/runtime-definitions";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -93,7 +98,7 @@ function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats):
     }
 }
 
-export function calculateStats(summary: ISummaryTree): ISummaryStats {
+export function calculateStats(summary: SummaryObject): ISummaryStats {
     const stats = mergeStats();
     calculateStatsCore(summary, stats);
     return stats;
@@ -112,6 +117,15 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
 export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void {
     summary.summary.tree[key] = summarizeResult.summary;
     summary.stats = mergeStats(summary.stats, summarizeResult.stats);
+}
+
+export function addHandleToSummary(
+    summary: ISummaryTreeWithStats,
+    key: string,
+    handleWithStats: ISummaryTreeHandleWithStats,
+): void {
+    summary.summary.tree[key] = handleWithStats.summary;
+    summary.stats = mergeStats(summary.stats, handleWithStats.stats);
 }
 
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
@@ -166,6 +180,25 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 
     public addAttachment(id: string) {
         this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
+    }
+
+    public getSummaryTreeHandleWithStats(handle: string): ISummaryTreeHandleWithStats {
+        const stats: ISummaryStats = {
+            treeNodeCount: this.stats.treeNodeCount,
+            blobNodeCount: this.stats.blobNodeCount,
+            handleNodeCount: 1,
+            totalBlobSize: 0,
+            unreferencedBlobSize: 0,
+        };
+
+        return {
+            summary: {
+                handle,
+                handleType: SummaryType.Tree,
+                type: SummaryType.Handle,
+            },
+            stats,
+        };
     }
 
     public getSummaryTree(): ISummaryTreeWithStats {

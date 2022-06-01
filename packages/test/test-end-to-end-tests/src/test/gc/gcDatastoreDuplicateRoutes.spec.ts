@@ -14,7 +14,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import {
-    gcBlobPrefix,
     gcTreeKey,
     IAckedSummary,
     IContainerRuntimeOptions,
@@ -104,8 +103,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         latestAckedSummary = summaryResult.ackedSummary;
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
 
-        const gcTree: ISummaryTree = latestUploadedSummary.tree[gcTreeKey] as ISummaryTree;
-        return gcTree.tree[`${gcBlobPrefix}_root`];
+        return latestUploadedSummary.tree[gcTreeKey];
     }
 
     const createContainer = async (): Promise<IContainer> => {
@@ -137,9 +135,9 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         dds.set("change", "change1");
 
         assert(latestAckedSummary !== undefined, "Ack'd summary isn't available as expected");
-        const gcBlob = await summarizeOnNewContainerAndGetGCState(latestAckedSummary.summaryAck.contents.handle);
-        assert(gcBlob !== undefined, "Expected a gc blob!");
-        assert(gcBlob.type === SummaryType.Handle, "Expected a handle!");
-        assert(gcBlob.handleType === SummaryType.Blob, "Expected a gc blob handle!");
+        const gcObject = await summarizeOnNewContainerAndGetGCState(latestAckedSummary.summaryAck.contents.handle);
+        assert(gcObject !== undefined, "Expected a gc blob!");
+        assert(gcObject.type === SummaryType.Handle, "Expected a handle!");
+        assert(gcObject.handleType === SummaryType.Tree, "Expected a gc tree handle!");
     });
 });

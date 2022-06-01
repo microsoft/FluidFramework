@@ -16,13 +16,14 @@ import {
     runGarbageCollection,
     unpackChildNodesGCDetails,
 } from "@fluidframework/garbage-collector";
-import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     gcBlobKey,
     IGarbageCollectionData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
     ISummaryTreeWithStats,
+    ISummaryTreeHandleWithStats,
     IGarbageCollectionNodeData,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -76,9 +77,9 @@ export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionEx
 // Feature gate key to log error messages if GC reference validation fails.
 export const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 // Feature gate key to write the gc blob as a handle if the data is the same.
-export const trackGCBlobStateKey = "Fluid.GarbageCollection.TrackGCBlobState";
+export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to limit which versions can write the gc blob as a handle if the data is the same.
-export const trackGCBlobStateMinimumVersionKey = "Fluid.GarbageCollection.TrackGCBlobState.MinVersion";
+export const trackGCStateMinimumVersionKey = "Fluid.GarbageCollection.TrackGCState.MinVersion";
 
 const defaultInactiveTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -157,13 +158,13 @@ export interface IGarbageCollector {
     readonly summaryStateNeedsReset: boolean;
     /** Tells whether GC data should be written to the root of the summary tree. */
     readonly writeDataAtRoot: boolean;
-    readonly trackGCBlobState: boolean;
+    readonly trackGCState: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
         options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean; },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
-    summarize(fullTree: boolean, trackState: boolean): ISummaryTreeWithStats | undefined;
+    summarize(fullTree: boolean, trackState: boolean): ISummaryTreeWithStats | ISummaryTreeHandleWithStats | undefined;
     /** Returns the garbage collector specific metadata to be written into the summary. */
     getMetadata(): IGCMetadata;
     /** Returns a map of each node id to its base GC details in the base summary. */
@@ -320,7 +321,7 @@ export class GarbageCollector implements IGarbageCollector {
      */
     private readonly shouldRunSweep: boolean;
 
-    public readonly trackGCBlobState: boolean;
+    public readonly trackGCState: boolean;
 
     private readonly testMode: boolean;
     private readonly mc: MonitoringContext;
@@ -472,13 +473,10 @@ export class GarbageCollector implements IGarbageCollector {
             && !gcOptions.disableGC
         );
 
-        const currentVersion = pkgVersion;
-        const minimumVersion = this.mc.config.getString(trackGCBlobStateMinimumVersionKey);
-        const shouldTrackStateForVersion = meetsMinimumVersionRequirement(currentVersion, minimumVersion);
+        const minimumVersion = this.mc.config.getString(trackGCStateMinimumVersionKey);
+        const shouldTrackStateForVersion = meetsMinimumVersionRequirement(pkgVersion, minimumVersion);
 
-        const trackGCBlobStateEnabled = this.mc.config.getBoolean(trackGCBlobStateKey) === true;
-
-        this.trackGCBlobState = trackGCBlobStateEnabled && shouldTrackStateForVersion;
+        this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true && shouldTrackStateForVersion;
 
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -525,14 +523,14 @@ export class GarbageCollector implements IGarbageCollector {
             if (gcSnapshotTree !== undefined) {
                 // If the GC tree is written at root, we should also do the same.
                 this._writeDataAtRoot = true;
-                const newGCState = await getGCStateFromSnapshot(
+                const baseGCState = await getGCStateFromSnapshot(
                     gcSnapshotTree,
                     readAndParseBlob,
                 );
-                if (this.trackGCBlobState) {
-                    this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(newGCState));
+                if (this.trackGCState) {
+                    this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(baseGCState));
                 }
-                return newGCState;
+                return baseGCState;
             }
 
             // back-compat - Older documents will have the GC blobs in each data store's summary tree. Get them and
@@ -703,13 +701,13 @@ export class GarbageCollector implements IGarbageCollector {
                 logger,
             );
             const gcStats = this.generateStatsAndLogEvents(gcResult, logger);
-            const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
 
             // Update the state since the last GC run. There can be nodes that were referenced between the last and
             // the current run. We need to identify than and update their unreferenced state if needed.
             this.updateStateSinceLastRun(gcData, logger);
 
             // Update the current state of the system based on the GC run.
+            const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
             this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
 
             this.runtime.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
@@ -738,7 +736,10 @@ export class GarbageCollector implements IGarbageCollector {
      * We current write the entire GC state in a single blob. This can be modified later to write multiple
      * blobs. All the blob keys should start with `gcBlobPrefix`.
      */
-    public summarize(fullTree: boolean, trackState: boolean): ISummaryTreeWithStats | undefined {
+    public summarize(
+        fullTree: boolean,
+        trackState: boolean,
+    ): ISummaryTreeWithStats | ISummaryTreeHandleWithStats | undefined {
         if (!this.shouldRunGC || this.previousGCDataFromLastRun === undefined) {
             return;
         }
@@ -751,10 +752,15 @@ export class GarbageCollector implements IGarbageCollector {
             };
         }
 
+        const newSerializedSummaryState = JSON.stringify(generateSortedGCState(gcState));
         const builder = new SummaryTreeBuilder();
-        const sortedGCState: IGarbageCollectionState = generateSortedGCState(gcState);
-        const newSerializedSummaryState = JSON.stringify(sortedGCState);
-        if (this.trackGCBlobState) {
+        builder.addBlob(gcBlobRootKey, newSerializedSummaryState);
+
+        /**
+         * As an optimization if the GC tree hasn't changed and we're tracking the gc state, return a tree handle
+         * instead of returning the whole GC tree. If there are changes, then we want to return the whole tree.
+        */
+        if (this.trackGCState) {
             this.pendingSerializedSummaryState = newSerializedSummaryState;
             if (
                 this.latestSerializedSummaryState !== undefined &&
@@ -762,12 +768,11 @@ export class GarbageCollector implements IGarbageCollector {
                 !fullTree &&
                 trackState
             ) {
-                const gcSummaryPath = `/${gcTreeKey}/${gcBlobRootKey}`;
-                builder.addHandle(gcBlobRootKey, SummaryType.Blob, gcSummaryPath);
-                return builder.getSummaryTree();
+                const gcSummaryPath = `/${gcTreeKey}`;
+                return builder.getSummaryTreeHandleWithStats(gcSummaryPath);
             }
         }
-        builder.addBlob(gcBlobRootKey, newSerializedSummaryState);
+
         return builder.getSummaryTree();
     }
 
@@ -811,7 +816,7 @@ export class GarbageCollector implements IGarbageCollector {
         // Basically, it was written in the current GC version.
         if (result.wasSummaryTracked) {
             this.latestSummaryGCVersion = this.currentGCVersion;
-            if (this.trackGCBlobState) {
+            if (this.trackGCState) {
                 this.latestSerializedSummaryState = this.pendingSerializedSummaryState;
                 this.pendingSerializedSummaryState = undefined;
             }
@@ -827,13 +832,16 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         const gcSnapshotTree = snapshot.trees[gcTreeKey];
-        if (gcSnapshotTree !== undefined && this.trackGCBlobState) {
+        if (gcSnapshotTree !== undefined && this.trackGCState) {
             const latestGCState = await getGCStateFromSnapshot(
                 gcSnapshotTree,
                 readAndParseBlob,
             );
             this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(latestGCState));
+        } else {
+            this.latestSerializedSummaryState = undefined;
         }
+        this.pendingSerializedSummaryState = undefined;
     }
 
     /**
