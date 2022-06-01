@@ -6,6 +6,8 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { timeoutPromise } from "@fluidframework/test-utils";
 import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
@@ -34,6 +36,7 @@ const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
 describe("AzureClient", () => {
     let client: AzureClient;
     let schema: ContainerSchema;
+    const timeoutMs = 4000;
 
     beforeEach(() => {
         client = createAzureClient();
@@ -79,7 +82,7 @@ describe("AzureClient", () => {
      * Expected behavior: an error should not be thrown nor should a rejected promise
      * be returned.
      */
-    it("can attach a container", async () => {
+    it("can attach and connect a container", async () => {
         const { container } = await client.createContainer(schema);
         const containerId = await container.attach();
         await new Promise<void>((resolve) => {
@@ -95,6 +98,12 @@ describe("AzureClient", () => {
         assert.strictEqual(
             container.attachState, AttachState.Attached,
             "Container is not attached after attach is called",
+        );
+
+        assert.strictEqual(
+            container.connectionState,
+            ConnectionState.Connected,
+            "Container is not connected after attach is called",
         );
     });
 
@@ -148,6 +157,32 @@ describe("AzureClient", () => {
             resources,
             () => true,
             "container cannot be retrieved from Azure Fluid Relay",
+        );
+    });
+
+    /**
+     * Scenario: test if Azure Client can get an existing container and connect
+     *
+     * Expected behavior: an error should not be thrown nor should a rejected promise
+     * be returned.
+     */
+    it("can connect existing Azure Fluid Relay container", async () => {
+        const container = (await client.createContainer(schema)).container;
+        const containerId = await container.attach();
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "new container connect timeout" },
+        );
+
+        const containerGet = (await client.getContainer(containerId, schema)).container;
+        await timeoutPromise(
+            (resolve) => containerGet.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "existing container connect timeout" },
+        );
+        assert.strictEqual(
+            containerGet.connectionState,
+            ConnectionState.Connected,
+            "cannot connect existing Azure Fluid Relay container",
         );
     });
 
