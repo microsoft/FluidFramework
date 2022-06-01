@@ -440,7 +440,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
-        this.logger.sendTelemetryEvent({eventName: "ServerDisconnectOdsp"}, error);
+        this.logger.sendTelemetryEvent({ eventName: "ServerDisconnectOdsp" }, error);
         this.disposeCore(true, error);
     };
 
