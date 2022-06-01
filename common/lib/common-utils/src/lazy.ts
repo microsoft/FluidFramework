@@ -30,6 +30,7 @@ export class Lazy<T> {
             this._evaluated = true;
             this._value = this.valueGenerator();
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this._value!;
     }
 }

@@ -9,7 +9,7 @@ import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ConnectionState } from "../container";
+import { ConnectionState } from "../connectionState";
 import { ConnectionStateHandler } from "../connectionStateHandler";
 
 describe("ConnectionStateHandler Tests", () => {
