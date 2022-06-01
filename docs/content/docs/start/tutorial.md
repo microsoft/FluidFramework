@@ -80,7 +80,10 @@ const loadExistingDice = async (id) => {
 
 ### Switching between loading and creating
 
-The application supports both creating a new container and loading an existing container using its `id`. To control which state the app is in, it stores the container ID in the URL hash. If the URL has a hash, the app will load that existing container, otherwise the app creates a new container, attaches it, and sets the returned `id` as the hash.
+The application supports both creating a new container and loading an existing container using its `id`.
+To control which state the app is in, this sample app stores the container ID in the URL hash.
+If the URL has a hash, the app will load that existing container.
+Otherwise, the app creates a new container, attaches it, and sets the returned `id` as the hash.
 
 Because both the `getContainer` and `createContainer` methods are async, the `start` function needs to be created and then called, catching any errors that are returned.
 
