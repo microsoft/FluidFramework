@@ -26,7 +26,7 @@ import { shortCodeMap } from "./assertionShortCodesMap";
 export function validateAssertionError(error: Error, expectedErrorMsg: string): boolean {
     const mappedMsg = shortCodeMap[error.message] as string ?? error.message;
     if (mappedMsg !== expectedErrorMsg) {
-        throw new AssertionError({ message: `Unexpected assertion thrown: ${error.message}` });
+        throw new AssertionError({ message: `Unexpected assertion thrown: ${error.message} ('${mappedMsg}')` });
     }
     return true;
 }
