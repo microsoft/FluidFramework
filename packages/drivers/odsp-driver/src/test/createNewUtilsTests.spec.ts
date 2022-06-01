@@ -249,6 +249,6 @@ describe("Create New Utils Tests", () => {
             { itemId: "itemId1", id: "Summary handle" },
             { "x-fluid-epoch": "epoch1" },
             );
-    assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should not be set");
+    assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
     });
 });
