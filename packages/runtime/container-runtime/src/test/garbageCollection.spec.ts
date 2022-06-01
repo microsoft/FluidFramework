@@ -88,6 +88,7 @@ describe("Garbage Collection Tests", () => {
             mockLogger,
             metadata !== undefined /* existing */,
             metadata,
+            true /* summarizerClient */,
         );
     };
 
@@ -544,6 +545,40 @@ describe("Garbage Collection Tests", () => {
                     { eventName: loadedEvent, timeout: inactiveTimeoutOverrideMs, id: nodes[3], pkg: eventPkg },
                 ]),
                 "inactive events not generated as expected",
+            );
+        });
+    });
+
+    describe("GC completed runs", () => {
+        const gcEndEvent = "GarbageCollector:GarbageCollection_end";
+
+        it("increments GC completed runs in logged events correctly", async () => {
+            const garbageCollector = createGarbageCollector();
+
+            await garbageCollector.collectGarbage({});
+            assert(
+                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 0 }]),
+                "completedGCRuns should be 0 since this event was logged before first GC run completed",
+            );
+
+            await garbageCollector.collectGarbage({});
+            assert(
+                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 1 }]),
+                "completedGCRuns should be 1 since this event was logged after first GC run completed",
+            );
+
+            await garbageCollector.collectGarbage({});
+            assert(
+                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 2 }]),
+                "completedGCRuns should be 2 since this event was logged after second GC run completed",
+            );
+
+            // The GC run count should reset for new garbage collector.
+            const garbageCollector2 = createGarbageCollector();
+            await garbageCollector2.collectGarbage({});
+            assert(
+                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 0 }]),
+                "completedGCRuns should be 0 since this event was logged before first GC run in new garbage collector",
             );
         });
     });

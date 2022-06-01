@@ -11,12 +11,13 @@ import {
 import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
-import { TestDataObject } from "../mockSummarizerClient";
+import { loadSummarizer, TestDataObject } from "../mockSummarizerClient";
 
 /**
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
@@ -34,13 +35,15 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
         summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true, inactiveTimeoutMs },
     };
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
         [
             [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
         ],
         undefined,
-        undefined,
+        [innerRequestHandler],
         runtimeOptions,
     );
     const summaryLogger = new TelemetryNullLogger();
@@ -98,9 +101,15 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
 
         await provider.ensureSynchronized();
-        const summarizerContainer = await provider.loadContainer(runtimeFactory, { logger: mockLogger }) as Container;
-        summarizerDefaultDataStore = await requestFluidObject<TestDataObject>(summarizerContainer, "/");
-        summarizerRuntime = (await requestFluidObject<TestDataObject>(summarizerContainer, "/")).containerRuntime;
+        const summarizerClient = await loadSummarizer(
+            provider,
+            runtimeFactory,
+            container.deltaManager.lastSequenceNumber,
+            undefined /* summaryVersion */,
+            { logger: mockLogger },
+        );
+        summarizerRuntime = summarizerClient.containerRuntime;
+        summarizerDefaultDataStore = await requestFluidObject<TestDataObject>(summarizerRuntime, "/");
     });
 
     itExpects("can generate events when unreferenced data store is accessed after it's inactive", [

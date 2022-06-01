@@ -118,6 +118,7 @@ interface IUnreferencedEvent {
     type: GCNodeType;
     age: number;
     timeout: number;
+    completedGCRuns: number;
     lastSummaryTime?: number;
     externalRequest?: boolean;
     viaHandle?: boolean;
@@ -254,7 +255,8 @@ export class GarbageCollector implements IGarbageCollector {
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
         existing: boolean,
-        metadata?: IContainerRuntimeMetadata,
+        metadata: IContainerRuntimeMetadata | undefined,
+        isSummarizerClient: boolean,
     ): IGarbageCollector {
         return new GarbageCollector(
             provider,
@@ -266,6 +268,7 @@ export class GarbageCollector implements IGarbageCollector {
             baseLogger,
             existing,
             metadata,
+            isSummarizerClient,
         );
     }
 
@@ -360,6 +363,9 @@ export class GarbageCollector implements IGarbageCollector {
     // Queue for unreferenced events that should be logged the next time GC runs.
     private readonly pendingEventsQueue: IUnreferencedEvent[] = [];
 
+    // The number of times GC has successfully completed on this instance of GarbageCollector.
+    private completedRuns = 0;
+
     protected constructor(
         private readonly runtime: IGarbageCollectionRuntime,
         private readonly gcOptions: IGCRuntimeOptions,
@@ -371,10 +377,12 @@ export class GarbageCollector implements IGarbageCollector {
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
         existing: boolean,
-        metadata?: IContainerRuntimeMetadata,
+        metadata: IContainerRuntimeMetadata | undefined,
+        private readonly isSummarizerClient: boolean = true,
     ) {
         this.mc = loggerToMonitoringContext(
-            ChildLogger.create(baseLogger, "GarbageCollector"));
+            ChildLogger.create(baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } }),
+        );
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -605,8 +613,7 @@ export class GarbageCollector implements IGarbageCollector {
             return baseGCDetailsMap;
         });
 
-        // Initialize the base state. The base GC data is used to detect and log when inactive / deleted objects are
-        // used in the container.
+        // Initialize the base state that is used to detect when inactive objects are used.
         if (this.shouldRunGC) {
             this.initializeBaseStateP.catch((error) => {
                 const dpe = DataProcessingError.wrapIfUnrecognized(
@@ -615,10 +622,13 @@ export class GarbageCollector implements IGarbageCollector {
                 );
                 dpe.addTelemetryProperties({
                     gcEnabled: this.gcEnabled,
+                    sweepEnabled: this.sweepEnabled,
+                    runGC: this.shouldRunGC,
                     runSweep: this.shouldRunSweep,
                     writeAtRoot: this._writeDataAtRoot,
                     testMode: this.testMode,
                     sessionExpiry: this.sessionExpiryTimeoutMs,
+                    inactiveTimeout: this.inactiveTimeoutMs,
                 });
                 throw dpe;
             });
@@ -640,10 +650,13 @@ export class GarbageCollector implements IGarbageCollector {
         },
     ): Promise<IGCStats> {
         const {
-            logger = this.mc.logger,
             runSweep = this.shouldRunSweep,
             fullGC = this.gcOptions.runFullGC === true || this.summaryStateNeedsReset,
         } = options;
+
+        const logger = options.logger
+            ? ChildLogger.create(options.logger, undefined, { all: { completedGCRuns: () => this.completedRuns } })
+            : this.mc.logger;
 
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
             await this.initializeBaseStateP;
@@ -679,7 +692,11 @@ export class GarbageCollector implements IGarbageCollector {
             if (this.testMode) {
                 this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
             }
+
             event.end({ ...gcStats });
+
+            this.completedRuns++;
+
             return gcStats;
         },
         { end: true, cancel: "error" });
@@ -1098,7 +1115,7 @@ export class GarbageCollector implements IGarbageCollector {
      * Logs an event if a node is inactive and is used.
      */
     private logIfInactive(
-        eventSuffix: "Changed" | "Loaded" | "Revived",
+        eventType: "Changed" | "Loaded" | "Revived",
         nodeId: string,
         currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs(),
         packagePath?: readonly string[],
@@ -1117,18 +1134,26 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        const eventName = `inactiveObject_${eventSuffix}`;
+        // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
+        // summarizer clients if they are based off of user actions (such as scrolling to content for these objects).
+        if (!this.isSummarizerClient && eventType !== "Loaded") {
+            return;
+        }
+
+        const eventName = `inactiveObject_${eventType}`;
         // We log a particular event for a given node only once so that it is not too noisy.
         const uniqueEventId = `${nodeId}-${eventName}`;
         const nodeState = this.unreferencedNodesState.get(nodeId);
         if (nodeState?.inactive && !this.loggedUnreferencedEvents.has(uniqueEventId)) {
             this.loggedUnreferencedEvents.add(uniqueEventId);
+            // Save all the properties at this point in time so that if we log this later, these values are preserved.
             const event: IUnreferencedEvent = {
                 eventName,
                 id: nodeId,
                 type: nodeType,
                 age: currentReferenceTimestampMs - nodeState.unreferencedTimestampMs,
                 timeout: this.inactiveTimeoutMs,
+                completedGCRuns: this.completedRuns,
                 lastSummaryTime: this.getLastSummaryTimestampMs(),
                 externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
                 viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
