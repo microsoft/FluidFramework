@@ -111,10 +111,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 isWithSummaryUpload: true,
             },
             async (event) => {
-                this.hostPolicy.sessionOptions = {
-                    forceAccessTokenViaAuthorizationHeader: true,
-                    ...this.hostPolicy.sessionOptions,
-                };
                 odspResolvedUrl = await createNewFluidFile(
                     toInstrumentedOdspTokenFetcher(
                         odspLogger,
@@ -129,6 +125,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     fileEntry,
                     this.hostPolicy.cacheCreateNewSummary ?? true,
                     !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    odspResolvedUrl.isClpCompliantApp,
                 );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
                     cacheAndTracker, clientIsSummarizer);
@@ -160,6 +157,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             // create the key to separate the socket reuse cache
             this.socketReferenceKeyPrefix = uuid();
         }
+        // Set enableRedeemFallback by default as true.
+        this.hostPolicy.enableRedeemFallback = this.hostPolicy.enableRedeemFallback ?? true;
+        this.hostPolicy.sessionOptions = {
+            forceAccessTokenViaAuthorizationHeader: true,
+            ...this.hostPolicy.sessionOptions,
+        };
     }
 
     public async createDocumentService(
@@ -187,11 +190,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
             odspLogger);
-
-        this.hostPolicy.sessionOptions = {
-            forceAccessTokenViaAuthorizationHeader: true,
-            ...this.hostPolicy.sessionOptions,
-        };
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,
