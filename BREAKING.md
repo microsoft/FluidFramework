@@ -50,6 +50,7 @@ For more details on GC and options for controlling its behavior, please see [thi
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
 - [Remove Container.setAutoReconnect() and Container.resume()](#Remove-Container-setAutoReconnect-and-resume)
 - [Remove IContainer.connected and IFluidContainer.connected](#Remove-IContainer-connected-and-IFluidContainer-connected)
+- [All IFluidObject Augmentations Removed](#All-IFluidObject-Augmentations-Removed)
 
 ### Changed AzureConnectionConfig API
 - Added a `type` field that's used to differentiate between remote and local connections.
@@ -117,6 +118,20 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
     console.log("Container is connected");
 }
 ```
+
+### All IFluidObject Augmentations Removed
+ All augmentations to IFluidObject are now removed. IFluidObject is deprecated and being replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject). The interface IFluidObject still exists as an empty interface, to support any pre-existing augmentations. However these should be moved to the [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) pattern, as IFluidObject will
+ be completely removed in an upcoming release.
+
+ The following interfaces still exist independently and can be used via FLuidObject, but no longer exist on IFluidObject.
+ - IRuntimeFactory
+ - ILoader
+ - IFluidLoadable
+ - IFluidRunnable
+ - IFluidRouter
+ - IFluidHandleContext
+ - IFluidHandle
+ - IFluidHTMLView
 
 # 0.59
 

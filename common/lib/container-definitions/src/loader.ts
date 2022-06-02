@@ -480,18 +480,6 @@ export interface IProvideLoader {
     readonly ILoader: ILoader;
 }
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IRequestHeader extends Partial<ILoaderHeader> { }
-
-    export interface IFluidObject {
-        /**
-         * @deprecated - use `FluidObject<ILoader>` instead
-         */
-        readonly ILoader?: ILoader;
-    }
-}
-
 /**
  * @deprecated 0.48, This API will be removed in 0.50
  * No replacement since it is not expected anyone will depend on this outside container-loader

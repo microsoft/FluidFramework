@@ -51,32 +51,10 @@ export interface IDeltaHandlerStrategy {
     processSignal: (message: ISignalMessage) => void;
 }
 
-declare module "@fluidframework/core-interfaces" {
-    interface IFluidObject {
-        /** @deprecated - use `FluidObject<IDeltaSender>` instead */
-        readonly IDeltaSender?: IDeltaSender;
-     }
-}
-
-/**
- * @deprecated - This will be removed in a later release.
- */
-export const IDeltaSender: keyof IProvideDeltaSender = "IDeltaSender";
-
-/**
- * @deprecated - This will be removed in a later release.
- */
-export interface IProvideDeltaSender {
-    /**
-     * @deprecated - This will be removed in a later release.
-     */
-    readonly IDeltaSender: IDeltaSender;
-}
-
 /**
  * Contract supporting delivery of outbound messages to the server
  */
-export interface IDeltaSender extends IProvideDeltaSender {
+export interface IDeltaSender {
     /**
      * Flush all pending messages through the outbound queue
      */
