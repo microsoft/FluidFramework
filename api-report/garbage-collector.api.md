@@ -55,6 +55,15 @@ export function runGarbageCollection(referenceGraph: {
 }, rootIds: string[], logger: ITelemetryLogger): IGCResult;
 
 // @public
+export function trimLeadingAndTrailingSlashes(str: string): string;
+
+// @public
+export function trimLeadingSlashes(str: string): string;
+
+// @public
+export function trimTrailingSlashes(str: string): string;
+
+// @public
 export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBase): Map<string, IGarbageCollectionDetailsBase>;
 
 // @public

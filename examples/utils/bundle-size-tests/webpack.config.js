@@ -12,6 +12,7 @@ const { BannedModulesPlugin } = require('@fluidframework/bundle-size-tools')
 module.exports = {
   entry: {
     'aqueduct': './src/aqueduct',
+    'connectionState': './src/connectionState',
     'containerRuntime': './src/containerRuntime',
     'loader': './src/loader',
     'map': './src/map',
@@ -39,7 +40,8 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
-    path: path.resolve(__dirname, 'dist')
+    path: path.resolve(__dirname, 'dist'),
+    library: 'bundle',
   },
   node: false,
   plugins: [
