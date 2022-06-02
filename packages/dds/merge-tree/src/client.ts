@@ -1047,7 +1047,7 @@ export class Client {
         const args = this.getClientSequenceArgsForMessage(op);
         const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(
             pos, args.referenceSequenceNumber, args.clientId);
-        if (!segoff.segment || segoff.offset === undefined || segoff.offset < 0) {
+        if (segoff.offset === undefined || segoff.offset < 0) {
             throw new Error("Invalid reference location");
         }
         return segoff;

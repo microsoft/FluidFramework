@@ -557,6 +557,19 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
+        it("tolerates creation of an interval with no segment due to concurrent delete", () => {
+            sharedString.insertText(0, "ABCDEF");
+            const collection1 = sharedString.getIntervalCollection("test");
+            const collection2 = sharedString2.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+            sharedString2.removeRange(0, sharedString2.getLength());
+            collection1.add(1, 1, IntervalType.SlideOnRemove);
+            sharedString2.insertText(0, "X");
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [{ start: -1, end: -1 }], false);
+            assertIntervals(sharedString2, collection2, [{ start: -1, end: -1 }], false);
+        });
+
         it("can maintain consistency of LocalReference's when segments are packed", async () => {
             // sharedString.insertMarker(0, ReferenceType.Tile, { nodeType: "Paragraph" });
 

@@ -340,10 +340,10 @@ function createPositionReference(
         const ref = client.createLocalReferencePosition(segoff.segment, segoff.offset, refType, undefined);
         return ref as LocalReference;
     } else {
-        if (!refTypeIncludesFlag(refType, ReferenceType.Transient)) {
+        if (!op && !refTypeIncludesFlag(refType, ReferenceType.Transient)) {
             throw new UsageError("Non-transient references need segment");
         }
-        return new LocalReference(client, undefined);
+        return new LocalReference(client, undefined, 0, refType);
     }
 }
 
