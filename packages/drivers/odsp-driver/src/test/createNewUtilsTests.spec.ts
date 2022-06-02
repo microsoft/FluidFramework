@@ -57,14 +57,39 @@ describe("Create New Utils Tests", () => {
     const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
     const filePath = "path";
     let newFileParams: INewFileInfo;
+    let hashedDocumentId: string;
+    let localCache: LocalPersistentCache;
+    let fileEntry: IFileEntry;
+    let epochTracker: EpochTracker;
+
+    before(async () => {
+        hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+        fileEntry = {
+            docId: hashedDocumentId,
+            resolvedUrl,
+        };
+    });
 
     beforeEach(async () => {
+        localCache = createUtLocalCache();
+        // use null logger here as we expect errors
+        epochTracker = new EpochTracker(
+            localCache,
+            {
+                docId: hashedDocumentId,
+                resolvedUrl,
+            },
+            new TelemetryNullLogger());
         newFileParams = {
             driveId,
             siteUrl,
             filePath,
             filename: "filename",
         };
+    });
+
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
     });
 
     const test = (snapshot: ISnapshotContents) => {
@@ -99,22 +124,6 @@ describe("Create New Utils Tests", () => {
     });
 
     it("Should cache converted summary during createNewFluidFile", async () => {
-        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
-        const localCache = createUtLocalCache();
-        // use null logger here as we expect errors
-        const epochTracker = new EpochTracker(
-            localCache,
-            {
-                docId: hashedDocumentId,
-                resolvedUrl,
-            },
-            new TelemetryNullLogger());
-
-        const fileEntry: IFileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
-        };
-
         const odspResolvedUrl = await mockFetchOk(
                 async () => createNewFluidFile(
                     async (_options) => "token",
@@ -136,23 +145,7 @@ describe("Create New Utils Tests", () => {
 
     it("Should save share link information received during createNewFluidFile", async () => {
         const createLinkType = ShareLinkTypes.csl;
-        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
-
-        // use null logger here as we expect errors
-        const epochTracker = new EpochTracker(
-            createUtLocalCache(),
-            {
-                docId: hashedDocumentId,
-                resolvedUrl,
-            },
-            new TelemetryNullLogger());
-
         newFileParams.createLinkType = createLinkType;
-
-        const fileEntry: IFileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
-        };
 
         // Test that sharing link is set appropriately when it is received in the response from ODSP
         const mockSharingLink = "mockSharingLink";
@@ -201,22 +194,6 @@ describe("Create New Utils Tests", () => {
     });
 
     it("Should set the isClpCompliantApp prop on resolved url if already present", async () => {
-        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
-        const localCache = createUtLocalCache();
-        // use null logger here as we expect errors
-        const epochTracker = new EpochTracker(
-            localCache,
-            {
-                docId: hashedDocumentId,
-                resolvedUrl,
-            },
-            new TelemetryNullLogger());
-
-        const fileEntry: IFileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
-        };
-
         const odspResolvedUrl1 = await mockFetchOk(
                 async () => createNewFluidFile(
                     async (_options) => "token",
