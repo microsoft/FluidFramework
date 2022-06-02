@@ -255,16 +255,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
          */
         private readonly innerError: Error,
     ) {
-        super(DocumentPostCreateError.createMessage(innerError));
+        super(innerError.message);
     }
 
     public readonly name = "DocumentPostCreateError";
 
     public get stack() { return this.innerError.stack; }
-
-    private static createMessage(innerError: Error): string {
-        return `An error was thrown in the callback provided to "documentPostCreateCallback".\n`
-            + "Inner exception:\n"
-            + `\t${innerError.message}`;
-    }
 }
