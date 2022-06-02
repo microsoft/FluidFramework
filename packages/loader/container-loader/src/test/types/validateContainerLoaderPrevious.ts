@@ -253,6 +253,7 @@ declare function get_current_InterfaceDeclaration_ILoaderServices():
 declare function use_old_InterfaceDeclaration_ILoaderServices(
     use: TypeOnly<old.ILoaderServices>);
 use_old_InterfaceDeclaration_ILoaderServices(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoaderServices());
 
 /*
@@ -277,6 +278,7 @@ declare function get_current_ClassDeclaration_Loader():
 declare function use_old_ClassDeclaration_Loader(
     use: TypeOnly<old.Loader>);
 use_old_ClassDeclaration_Loader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Loader());
 
 /*

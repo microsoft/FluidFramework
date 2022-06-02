@@ -91,6 +91,10 @@
       },
       "TypeAliasDeclaration_ConnectionState": {
         "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IProxyLoaderFactory": {
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }
