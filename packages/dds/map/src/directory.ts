@@ -224,7 +224,6 @@ function serializeDirectory(root: SubDirectory, serializer: IFluidSerializer): I
             }
             const result: ISerializableValue = {
                 type: value.type,
-                // eslint-disable-next-line @typescript-eslint/ban-types
                 value: value.value && JSON.parse(value.value) as object,
             };
             if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
@@ -406,6 +405,18 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             "containedValueChanged",
             (changed: IValueChanged, local: boolean) => {
                 this.emit("containedValueChanged", changed, local, this);
+            },
+        );
+        this.root.on(
+            "subDirectoryCreated",
+            (relativePath: string, local: boolean) => {
+                this.emit("subDirectoryCreated", relativePath, local, this);
+            },
+        );
+        this.root.on(
+            "subDirectoryDeleted",
+            (relativePath: string, local: boolean) => {
+                this.emit("subDirectoryDeleted", relativePath, local, this);
             },
         );
     }
@@ -599,7 +610,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
-        assert(handler !== undefined, 0x00d /* `Missing message handler for message type: ${message.type}` */);
+        assert(handler !== undefined, 0x00d /* Missing message handler for message type */);
         handler.submit(message, localOpMetadata);
     }
 
@@ -671,7 +682,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         if (message.type === MessageType.Operation) {
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
             const handler = this.messageHandlers.get(op.type);
-            assert(handler !== undefined, 0x00e /* `Missing message handler for message type: ${message.type}` */);
+            assert(handler !== undefined, 0x00e /* Missing message handler for message type */);
             handler.process(op, local, localOpMetadata);
         }
     }
@@ -1191,7 +1202,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         this.throwIfDisposed();
         if (local) {
             assert(localOpMetadata !== undefined,
-                0x00f /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
+                0x00f /* pendingMessageId is missing from the local client's operation */);
             const pendingMessageId = localOpMetadata as number;
             if (this.pendingClearMessageId === pendingMessageId) {
                 this.pendingClearMessageId = -1;
@@ -1415,7 +1426,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             // match the message's and don't process the op.
             if (local) {
                 assert(localOpMetadata !== undefined,
-                    0x011 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
+                    0x011 /* pendingMessageId is missing from the local client's operation */);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
                 if (pendingKeyMessageId === pendingMessageId) {
@@ -1447,7 +1458,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         if (this.pendingSubDirectories.has(op.subdirName)) {
             if (local) {
                 assert(localOpMetadata !== undefined,
-                    0x012 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
+                    0x012 /* pendingMessageId is missing from the local client's operation */);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
                 if (pendingSubDirectoryMessageId === pendingMessageId) {
@@ -1529,15 +1540,21 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     private createSubDirectoryCore(subdirName: string, local: boolean) {
         if (!this._subdirectories.has(subdirName)) {
-            this._subdirectories.set(
-                subdirName,
-                new SubDirectory(
-                    this.directory,
-                    this.runtime,
-                    this.serializer,
-                    posix.join(this.absolutePath, subdirName)),
-            );
+            const absolutePath = posix.join(this.absolutePath, subdirName);
+            const subDir = new SubDirectory(this.directory, this.runtime, this.serializer, absolutePath);
+            this.registerEventsOnSubDirectory(subDir, subdirName);
+            this._subdirectories.set(subdirName, subDir);
+            this.emit("subDirectoryCreated", subdirName, local, this);
         }
+    }
+
+    private registerEventsOnSubDirectory(subDirectory: SubDirectory, subDirName: string) {
+        subDirectory.on("subDirectoryCreated", (relativePath: string, local: boolean) => {
+            this.emit("subDirectoryCreated", posix.join(subDirName, relativePath), local, this);
+        });
+        subDirectory.on("subDirectoryDeleted", (relativePath: string, local: boolean) => {
+            this.emit("subDirectoryDeleted", posix.join(subDirName, relativePath), local, this);
+        });
     }
 
     /**
@@ -1551,7 +1568,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?
         const successfullyRemoved = this._subdirectories.delete(subdirName);
-        this.disposeSubDirectoryTree(previousValue);
+        if (previousValue !== undefined) {
+            this.disposeSubDirectoryTree(previousValue);
+            this.emit("subDirectoryDeleted", subdirName, local, this);
+        }
         return successfullyRemoved;
     }
 
