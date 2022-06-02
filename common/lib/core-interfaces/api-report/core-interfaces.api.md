@@ -77,16 +77,6 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 
 // @public @deprecated (undocumented)
 export interface IFluidObject {
-    // @deprecated (undocumented)
-    readonly IFluidHandle?: IFluidHandle;
-    // @deprecated (undocumented)
-    readonly IFluidHandleContext?: IFluidHandleContext;
-    // @deprecated (undocumented)
-    readonly IFluidLoadable?: IFluidLoadable;
-    // @deprecated (undocumented)
-    readonly IFluidRouter?: IFluidRouter;
-    // @deprecated (undocumented)
-    readonly IFluidRunnable?: IFluidRunnable;
 }
 
 // @public @deprecated (undocumented)
@@ -197,7 +187,6 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 
 // @public @deprecated (undocumented)
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
-
 
 // (No @packageDocumentation comment for this package)
 
