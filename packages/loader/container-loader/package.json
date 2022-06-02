@@ -122,6 +122,12 @@
       },
       "EnumDeclaration_ConnectionState": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_ILoaderServices": {
+        "backCompat": false
+      },
+      "ClassDeclaration_Loader": {
+        "backCompat": false
       }
     }
   }

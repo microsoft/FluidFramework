@@ -50,6 +50,7 @@ For more details on GC and options for controlling its behavior, please see [thi
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
 - [Remove Container.setAutoReconnect() and Container.resume()](#Remove-Container-setAutoReconnect-and-resume)
 - [Remove IContainer.connected and IFluidContainer.connected](#Remove-IContainer-connected-and-IFluidContainer-connected)
+- [proxyLoaderFactories members removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-removed-from-ILoaderProps-and-ILoaderServices)
 
 ### Changed AzureConnectionConfig API
 - Added a `type` field that's used to differentiate between remote and local connections.
@@ -117,6 +118,9 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
     console.log("Container is connected");
 }
 ```
+
+### proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices
+The `proxyLoaderFactories` member on `ILoaderProps` and `ILoaderServices` was deprecated in 0.59 and has now been removed.
 
 # 0.59
 

@@ -1222,26 +1222,14 @@ use_old_InterfaceDeclaration_IProvideRuntimeFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProxyLoaderFactory": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IProxyLoaderFactory": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IProxyLoaderFactory():
-    TypeOnly<old.IProxyLoaderFactory>;
-declare function use_current_InterfaceDeclaration_IProxyLoaderFactory(
-    use: TypeOnly<current.IProxyLoaderFactory>);
-use_current_InterfaceDeclaration_IProxyLoaderFactory(
-    get_old_InterfaceDeclaration_IProxyLoaderFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProxyLoaderFactory": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IProxyLoaderFactory": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IProxyLoaderFactory():
-    TypeOnly<current.IProxyLoaderFactory>;
-declare function use_old_InterfaceDeclaration_IProxyLoaderFactory(
-    use: TypeOnly<old.IProxyLoaderFactory>);
-use_old_InterfaceDeclaration_IProxyLoaderFactory(
-    get_current_InterfaceDeclaration_IProxyLoaderFactory());
 
 /*
 * Validate forward compat by using old type in place of current type

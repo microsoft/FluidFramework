@@ -18,7 +18,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -482,14 +481,6 @@ export interface IProvideLoader {
 export interface IProvideRuntimeFactory {
     // (undocumented)
     readonly IRuntimeFactory: IRuntimeFactory;
-}
-
-// @public @deprecated
-export interface IProxyLoaderFactory {
-    // @deprecated
-    createProxyLoader(id: string, options: ILoaderOptions, resolved: IFluidResolvedUrl, fromSequenceNumber: number): Promise<ILoader>;
-    // @deprecated
-    environment: string;
 }
 
 // @public
