@@ -289,7 +289,7 @@ describe("MergeTree.insertingWalk", () => {
 
         const textHelper = new MergeTreeTextHelper(mergeTree);
 
-        // Two blocks
+        assert.equal(mergeTree.root.childCount, 2);
         assert.equal(textHelper.getText(0, localClientId), "GFEDCBA0");
         // Remove "DCBA"
         mergeTree.markRangeRemoved(
@@ -299,7 +299,7 @@ describe("MergeTree.insertingWalk", () => {
             localClientId,
             UnassignedSequenceNumber,
             false,
-            undefined as any
+            undefined as any,
         );
         assert.equal(textHelper.getText(0, localClientId), "GFE0");
         // Simulate another client inserting concurrently with the above operations. Because
