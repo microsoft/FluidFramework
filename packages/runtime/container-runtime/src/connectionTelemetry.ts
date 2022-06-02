@@ -174,7 +174,7 @@ class OpPerfTelemetry {
         this.pongCount++;
         this.pingLatency = latency;
         // logging one in every 100 pongs
-        if (this.pongCount === 100) {
+        if (this.pongCount % 100 === 1) {
             this.logger.sendPerformanceEvent({
                 eventName: "DeltaLatency",
                 duration: latency,
