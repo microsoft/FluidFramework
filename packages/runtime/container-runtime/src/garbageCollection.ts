@@ -610,6 +610,27 @@ export class GarbageCollector implements IGarbageCollector {
             return baseGCDetailsMap;
         });
 
+        // Log all the GC options and the state determined by the garbage collector. This is interesting only for the
+        // summarizer client since it is the only one that runs GC. It also helps keep the telemetry less noisy.
+        const gcConfigProps = JSON.stringify({
+            gcEnabled: this.gcEnabled,
+            sweepEnabled: this.sweepEnabled,
+            runGC: this.shouldRunGC,
+            runSweep: this.shouldRunSweep,
+            writeAtRoot: this._writeDataAtRoot,
+            testMode: this.testMode,
+            sessionExpiry: this.sessionExpiryTimeoutMs,
+            inactiveTimeout: this.inactiveTimeoutMs,
+            existing,
+            ...this.gcOptions,
+        });
+        if (this.isSummarizerClient) {
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "GarbageCollectorLoaded",
+                gcConfigs: gcConfigProps,
+            });
+        }
+
         // Initialize the base state that is used to detect when inactive objects are used.
         if (this.shouldRunGC) {
             this.initializeBaseStateP.catch((error) => {
@@ -617,16 +638,7 @@ export class GarbageCollector implements IGarbageCollector {
                     error,
                     "FailedToInitializeGC",
                 );
-                dpe.addTelemetryProperties({
-                    gcEnabled: this.gcEnabled,
-                    sweepEnabled: this.sweepEnabled,
-                    runGC: this.shouldRunGC,
-                    runSweep: this.shouldRunSweep,
-                    writeAtRoot: this._writeDataAtRoot,
-                    testMode: this.testMode,
-                    sessionExpiry: this.sessionExpiryTimeoutMs,
-                    inactiveTimeout: this.inactiveTimeoutMs,
-                });
+                dpe.addTelemetryProperties({ gcConfigs: gcConfigProps });
                 throw dpe;
             });
         }
