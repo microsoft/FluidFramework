@@ -160,7 +160,7 @@ export class BlobManager {
 
                 return handle;
             },
-            { start: true, end: true, cancel: "generic" });
+            { start: true, end: true, cancel: "error" });
     }
 
     public processBlobAttachOp(blobId: string, local: boolean) {

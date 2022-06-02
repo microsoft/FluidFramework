@@ -167,7 +167,11 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         await Promise.all([dataStore._runtime.uploadBlob(blob), dataStore._runtime.uploadBlob(blob)]);
     });
 
-    it("uploadBlob() rejects when runtime is disposed", async () => {
+    itExpects("uploadBlob() rejects when runtime is disposed",
+    [
+        { eventName: "fluid:telemetry:createBlob_cancel", error: "runtime disposed while blobAttach op in flight" },
+    ],
+    async () => {
         const container = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
 
