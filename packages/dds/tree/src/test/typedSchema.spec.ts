@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable import/no-internal-modules */
 
-// TODO: what is the pattern for testing packages which have folders inside src?
-import { FieldKind, ValueSchema } from "../schema/Schema";
+// Allow importing from this specific file which is being tested:
+/* eslint-disable-next-line import/no-internal-modules */
 import { typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo } from "../schema/typedSchema";
+
+import { FieldKind, ValueSchema } from "../schema";
 import { requireTrue } from "../typeCheck";
 
 // These tests currently just cover the type checking, so its all compile time.
