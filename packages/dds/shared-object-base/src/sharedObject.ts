@@ -23,7 +23,7 @@ import {
     totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
-import { DataProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
@@ -84,6 +84,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         protected runtime: IFluidDataStoreRuntime,
         public readonly attributes: IChannelAttributes) {
         super((event: EventEmitterEventType, e: any) => this.eventListenerErrorHandler(event, e));
+
+        if (id.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: ${id}`);
+        }
 
         this.handle = new SharedObjectHandle(
             this,
