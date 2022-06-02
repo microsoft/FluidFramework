@@ -1719,15 +1719,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // That means that if relay service changes settings, such changes will impact only newly booted
                 // clients.
                 // All existing will continue to use settings they got earlier.
-                const [noopTimeFrequency, noopCountFrequency] = this.getNoopConfig();
+                assert(this.serviceConfiguration !== undefined, "there should be service config for active connection");
                 this.collabWindowTracker = new CollabWindowTracker(
                     (type, contents) => {
                         assert(this.activeConnection(),
                             0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
                         this.submitMessage(type, contents);
                     },
-                    noopTimeFrequency,
-                    noopCountFrequency,
+                    this.serviceConfiguration?.noopTimeFrequency,
+                    this.serviceConfiguration?.noopCountFrequency,
                 );
             }
             this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
@@ -1736,26 +1736,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.emit("op", message);
 
         return result;
-    }
-
-    /**
-     *  #260 (ADO)
-     * back-compat: noopTimeFrequency & noopCountFrequency properties were added to
-     * IClientConfiguration in 0.59.3000. During the integration, we must read the
-     * available configuration from the loader options.
-     */
-    private getNoopConfig(): [number | undefined, number | undefined] {
-        assert(this.serviceConfiguration !== undefined, "there should be service config for active connection");
-
-        if (this.serviceConfiguration.noopTimeFrequency !== undefined ||
-            this.serviceConfiguration.noopCountFrequency !== undefined) {
-            return [
-                this.serviceConfiguration.noopTimeFrequency as number,
-                this.serviceConfiguration.noopCountFrequency as number,
-            ];
-        }
-
-        return [this.loader.services.options?.noopTimeFrequency, this.loader.services.options?.noopCountFrequency];
     }
 
     private submitSignal(message: any) {
