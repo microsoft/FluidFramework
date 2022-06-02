@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/view-interfaces",
-  "version": "0.59.4000",
+  "version": "0.60.1000",
   "description": "View interfaces for rendering views",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -37,7 +37,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/view-interfaces-previous": "npm:@fluidframework/view-interfaces@0.59.3000",
+    "@fluidframework/view-interfaces-previous": "npm:@fluidframework/view-interfaces@^0.59.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/react": "^16.9.15",
@@ -56,12 +56,13 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4000",
+    "version": "0.60.1000",
     "broken": {}
   }
 }

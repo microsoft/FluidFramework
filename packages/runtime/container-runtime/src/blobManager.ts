@@ -11,7 +11,11 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    IGarbageCollectionData,
+    ISummaryTreeWithStats,
+    ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 
 /**
  * This class represents blob (long string)
@@ -131,6 +135,13 @@ export class BlobManager {
             // blob upload is not supported in "Attaching" state
             this.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
             await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
+        }
+
+        if (!this.runtime.connected && this.runtime.attachState === AttachState.Attached) {
+            // see https://github.com/microsoft/FluidFramework/issues/8246
+            // Avoid getting storage if we are offline since it might be undefined. In the future we will return
+            // handles immediately while offline
+            await new Promise((resolve) => this.runtime.once("connected", resolve));
         }
 
         const response = await this.getStorage().createBlob(blob);
@@ -276,7 +287,7 @@ export class BlobManager {
         }
     }
 
-    public summarize(): ISummaryTreeWithStats {
+    public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         // If we have a redirect table it means the container is about to transition to "Attaching" state, so we need
         // to return an actual snapshot containing all the real storage IDs we know about.
         const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;

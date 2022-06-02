@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/multiview-coordinate-interface",
-  "version": "0.59.4000",
+  "version": "0.60.1000",
   "private": true,
   "description": "Interface for multiview sample",
   "homepage": "https://fluidframework.com",
@@ -54,6 +54,7 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0",
     "puppeteer": "^1.20.0",
     "rimraf": "^2.6.2",
     "ts-loader": "^9.3.0",
