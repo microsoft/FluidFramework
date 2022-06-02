@@ -14,6 +14,9 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
 /**
  * Utilities for manipulating the typescript typechecker.
  *
+ * Note: much of this library (the variance parts)
+ * will be able to be replaced with Typescript 4.7 explicit variance annotations.
+ *
  * Typescript uses structural typing if there are no private or protected members,
  * and variance of generic type parameters depends on their usages.
  * Thus when trying to constrain code by adding extra type information,
