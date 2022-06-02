@@ -753,8 +753,6 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         const newSerializedSummaryState = JSON.stringify(generateSortedGCState(gcState));
-        const builder = new SummaryTreeBuilder();
-        builder.addBlob(gcBlobRootKey, newSerializedSummaryState);
 
         /**
          * As an optimization if the GC tree hasn't changed and we're tracking the gc state, return a tree handle
@@ -782,6 +780,8 @@ export class GarbageCollector implements IGarbageCollector {
             }
         }
 
+        const builder = new SummaryTreeBuilder();
+        builder.addBlob(gcBlobRootKey, newSerializedSummaryState);
         return builder.getSummaryTree();
     }
 
