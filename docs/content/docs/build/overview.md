@@ -53,9 +53,7 @@ There are two primary libraries you'll use when building with Fluid: the basic F
 
 ### The Fluid Framework library
 
-The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications.
-This library contains all the common type definitions as well as all the built-in shared objects.
-The library is in the package [fluid-framework](https://www.npmjs.com/package/fluid-framework).
+The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications. This library contains all the common type definitions as well as all the built-in shared objects. The library is in the package `fluid-framework`.
 
 ### Service-specific client libraries
 
