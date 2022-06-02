@@ -608,7 +608,7 @@ describe("Runtime", () => {
                         _localOpMetadata: unknown,
                         _opMetadata: Record<string, unknown> | undefined,
                     ) => pendingMessages++,
-                } as any as PendingStateManager;
+                } as unknown as PendingStateManager;
             };
             const getMockDataStores = (): DataStores => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
