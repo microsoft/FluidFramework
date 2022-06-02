@@ -588,7 +588,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 createCatchUpMonitor:
                     this.mc.config.getBoolean("Fluid.Container.catchUpBeforeDeclaringConnected") === true
                         ? () => new CatchUpMonitor(this)
-                        : () => new ImmediateCatchUpMonitor(this._deltaManager.hasCheckpointSequenceNumber),
+                        : () => new ImmediateCatchUpMonitor(),
             },
             this.mc.logger,
         );

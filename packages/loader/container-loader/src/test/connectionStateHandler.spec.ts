@@ -78,7 +78,7 @@ describe("ConnectionStateHandler Tests", () => {
                 shouldClientJoinWrite: () => shouldClientJoinWrite,
                 logConnectionIssue: (eventName: string) => { throw new Error("logConnectionIssue"); },
                 connectionStateChanged: () => {},
-                createCatchUpMonitor: () => new ImmediateCatchUpMonitor(false /* hasCheckpointSequenceNumber */),
+                createCatchUpMonitor: () => new ImmediateCatchUpMonitor(),
             },
             new TelemetryNullLogger(),
         );

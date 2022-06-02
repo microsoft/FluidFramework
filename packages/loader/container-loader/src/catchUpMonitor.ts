@@ -7,7 +7,7 @@ import { IDisposable, IEvent } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainer, IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ConnectionState } from "./container";
+import { ConnectionState } from "./connectionState";
 
 /** @see ICatchUpMonitor for usage */
 type CaughtUpListener = (hasCheckpointSequenceNumber: boolean) => void;

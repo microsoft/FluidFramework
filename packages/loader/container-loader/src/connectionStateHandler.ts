@@ -13,27 +13,27 @@ import { ICatchUpMonitor } from "./catchUpMonitor";
 
 export interface IConnectionStateHandler {
     /** Provides access to the clients currently in the quorum */
-    quorumClients: () => IQuorumClients | undefined,
+    quorumClients: () => IQuorumClients | undefined;
     /** Log to telemetry any change in state, included to Connecting */
     logConnectionStateChangeTelemetry:
-        (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
+        (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void;
     /** Whether to expect the client to join in write mode on next connection */
-    shouldClientJoinWrite: () => boolean,
+    shouldClientJoinWrite: () => boolean;
     /** (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again */
-    maxClientLeaveWaitTime: number | undefined,
+    maxClientLeaveWaitTime: number | undefined;
     /** Log to telemetry an issue encountered while in the Connecting state */
-    logConnectionIssue: (eventName: string) => void,
+    logConnectionIssue: (eventName: string) => void;
     /** Callback whenever the ConnectionState changes between Disconnected and Connected */
-    connectionStateChanged: () => void,
-    /** Creates the monitor which will notify when op processing has caught up to the last known op as of now */
-    createCatchUpMonitor: () => ICatchUpMonitor,
+    connectionStateChanged: () => void;
+    /** Creates the monitor which will notify when op processing has caught up to the last op known when invoked */
+    createCatchUpMonitor: () => ICatchUpMonitor;
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
-const JoinOpTimeout = 45000;
+const JoinOpTimeoutMs = 45000;
 
 /**
  * In the lifetime of a container, the connection will likely disconnect and reconnect periodically.
@@ -96,7 +96,7 @@ export class ConnectionStateHandler {
         // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
         // if retrying fixes the problem, we should not see these events.
         this.joinOpTimer = new Timer(
-            JoinOpTimeout,
+            JoinOpTimeoutMs,
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
                 // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
@@ -248,15 +248,6 @@ export class ConnectionStateHandler {
         if (writeConnection && !pendingClientAlreadyInQuorum) {
             // Previous client left, and we are waiting for our own join op. When it is processed we'll join the quorum
             // and attempt to transition to Connected state via receivedAddMemberEvent.
-// =======
-        // // Note that we might be still initializing quorum - connection is established proactively on load!
-        // if (quorumClients?.getMember(details.clientId) !== undefined
-        //     || connectionMode === "read"
-        // ) {
-        //    assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "there should be no timer for 'read' connections" */);
-        //     this.setConnectionState(ConnectionState.Connected);
-        // } else if (connectionMode === "write") {
-// >>>>>>> origin/main
             this.startJoinOpTimer();
         } else if (this.prevClientLeftTimer.hasTimer) {
             // Nothing to do now - when the previous client is removed from the quorum
