@@ -22,10 +22,17 @@ import {
 export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepositoryManagerFactory {
     // Cache repositories to allow for reuse
     private readonly repositoryCache = new Map<string, TRepo>();
+    // Map each mutex to one repo. We don't want to block concurrent requests on the mutex if
+    // the requests are meant for different repos.
     private readonly mutexes = new Map<string, MutexInterface>();
     private readonly internalHandler: (
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<void> | never,
+        onRepoNotExists: (
+            fileSystemManager: IFileSystemManager,
+            repoPath: string,
+            gitdir: string,
+            lumberjackBaseProperties: Record<string, any>,
+        ) => Promise<void> | never,
         shouldUseMutex: boolean) => Promise<IRepositoryManager>;
     protected abstract initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<TRepo>;
     protected abstract openGitRepo(gitdir: string): Promise<TRepo>;
@@ -52,15 +59,20 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
     }
 
     public async create(params: IRepoManagerParams): Promise<IRepositoryManager> {
-        const onRepoNotExists = async (args?: any) => {
+        const onRepoNotExists = async (
+            fileSystemManager: IFileSystemManager,
+            repoPath: string,
+            gitdir: string,
+            lumberjackBaseProperties: Record<string, any>,
+        ) => {
             // Create and then cache the repository
-            const repository = await this.initGitRepo(args?.fileSystemManager, args?.directoryPath);
-            this.repositoryCache.set(args?.repoPath, repository);
+            const repository = await this.initGitRepo(fileSystemManager, gitdir);
+            this.repositoryCache.set(repoPath, repository);
             Lumberjack.info(
                 "Created a new repo",
                 {
-                    ...(args?.lumberjackBaseProperties),
-                    [BaseGitRestTelemetryProperties.directoryPath]: args?.directoryPath,
+                    ...(lumberjackBaseProperties),
+                    [BaseGitRestTelemetryProperties.directoryPath]: gitdir,
                 });
         };
 
@@ -68,36 +80,33 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
     }
 
     public async open(params: IRepoManagerParams): Promise<IRepositoryManager> {
-        const onRepoNotExists = (args?: any) => {
+        const onRepoNotExists = (
+            fileSystemManager: IFileSystemManager,
+            repoPath: string,
+            gitdir: string,
+            lumberjackBaseProperties: Record<string, any>,
+        ) => {
             Lumberjack.error(
-                `Repo does not exist ${args?.directoryPath}`,
+                `Repo does not exist ${gitdir}`,
                 {
-                    ...(args?.lumberjackBaseProperties),
-                    [BaseGitRestTelemetryProperties.directoryPath]: args?.directoryPath,
+                    ...(lumberjackBaseProperties),
+                    [BaseGitRestTelemetryProperties.directoryPath]: gitdir,
                 });
                 // services-client/getOrCreateRepository depends on a 400 response code
-                throw new NetworkError(400, `Repo does not exist ${args?.directoryPath}`);
+                throw new NetworkError(400, `Repo does not exist ${gitdir}`);
             };
 
         return this.internalHandler(params, onRepoNotExists, false);
     }
 
-    public async openOrCreate(params: IRepoManagerParams): Promise<IRepositoryManager> {
-        try {
-            return await this.open(params);
-        } catch (error: any) {
-            if (error instanceof Error &&
-                error?.name === "NetworkError" &&
-                (error as NetworkError)?.code === 400) {
-                    return this.create(params);
-            }
-            throw error;
-        }
-    }
-
     private async repoPerDocInternalHandler(
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<void> | never,
+        onRepoNotExists: (
+            fileSystemManager: IFileSystemManager,
+            repoPath: string,
+            gitdir: string,
+            lumberjackBaseProperties: Record<string, any>,
+        ) => Promise<void> | never,
         shouldUseMutex: boolean): Promise<IRepositoryManager> {
         if (!params.storageRoutingId?.tenantId || !params.storageRoutingId?.documentId) {
             throw new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`);
@@ -121,7 +130,12 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 
     private async repoPerTenantInternalHandler(
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<void> | never,
+        onRepoNotExists: (
+            fileSystemManager: IFileSystemManager,
+            repoPath: string,
+            gitdir: string,
+            lumberjackBaseProperties: Record<string, any>,
+        ) => Promise<void> | never,
         shouldUseMutex: boolean): Promise<IRepositoryManager> {
         const repoPath = helpers.getRepoPath(
             params.repoName,
@@ -143,7 +157,12 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         repoPath: string,
         directoryPath: string,
         repoName: string,
-        onRepoNotExists: (args?: any) => Promise<void> | never,
+        onRepoNotExists: (
+            fileSystemManager: IFileSystemManager,
+            repoPath: string,
+            gitdir: string,
+            lumberjackBaseProperties: Record<string, any>,
+        ) => Promise<void> | never,
         shouldUseMutex: boolean): Promise<IRepositoryManager> {
         const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
         const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
@@ -153,11 +172,11 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
             if (!this.repositoryCache.has(repoPath)) {
                 const repoExists = await helpers.exists(fileSystemManager, directoryPath);
                 if (!repoExists || !repoExists.isDirectory()) {
-                    await onRepoNotExists({
+                    await onRepoNotExists(
                         fileSystemManager,
                         repoPath,
                         directoryPath,
-                        lumberjackBaseProperties });
+                        lumberjackBaseProperties);
                 } else {
                     const repo = await this.openGitRepo(directoryPath);
                     this.repositoryCache.set(repoPath, repo);
