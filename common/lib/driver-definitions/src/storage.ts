@@ -322,9 +322,6 @@ export interface IDocumentServiceFactory {
     /**
      * Creates a new document with the provided options. Returns the document service.
      *
-     * Note: it is the consumer's responsibility to cleanup any generated resources (e.g. the created document)
-     * in the case of failure.
-     *
      * @param createNewSummary - Summary used to create file. If undefined, an empty file will be created and a summary
      * should be posted later, before connecting to ordering service.
      * @param createNewResolvedUrl - TODO
