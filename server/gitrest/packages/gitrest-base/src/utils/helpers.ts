@@ -121,7 +121,6 @@ export async function retrieveLatestFullSummaryFromStorage(
  * Retrieves the full repository path. Or throws an error if not valid.
  */
 export function getRepoPath(
-    repoPerDocEnabled: boolean,
     tenantId: string,
     documentId?: string,
     owner?: string): string {
@@ -140,7 +139,7 @@ export function getRepoPath(
         throw new NetworkError(400, `Invalid repo name (documentId) provided: ${documentId}`);
     }
 
-    return [owner, tenantId, documentId].filter(x => x !== undefined).join("/");
+    return [owner, tenantId, documentId].filter((x) => x !== undefined).join("/");
 }
 
 export function getGitDirectory(repoPath: string, baseDir?: string): string {

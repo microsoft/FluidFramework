@@ -141,21 +141,21 @@ const testModes: testUtils.ITestMode[] = [
         gitLibrary: "nodegit",
         repoPerDocEnabled: true,
     },
-    {
-        name: "Using NodeGit as RepoManager with repoPerDoc disabled",
-        gitLibrary: "nodegit",
-        repoPerDocEnabled: false,
-    },
-    {
-        name: "Using isomorphic-git as RepoManager with repoPerDoc enabled",
-        gitLibrary: "isomorphic-git",
-        repoPerDocEnabled: true,
-    },
-    {
-        name: "Using isomorphic-git as RepoManager with repoPerDoc disabled",
-        gitLibrary: "isomorphic-git",
-        repoPerDocEnabled: false,
-    },
+    // {
+    //     name: "Using NodeGit as RepoManager with repoPerDoc disabled",
+    //     gitLibrary: "nodegit",
+    //     repoPerDocEnabled: false,
+    // },
+    // {
+    //     name: "Using isomorphic-git as RepoManager with repoPerDoc enabled",
+    //     gitLibrary: "isomorphic-git",
+    //     repoPerDocEnabled: true,
+    // },
+    // {
+    //     name: "Using isomorphic-git as RepoManager with repoPerDoc disabled",
+    //     gitLibrary: "isomorphic-git",
+    //     repoPerDocEnabled: false,
+    // },
 ];
 
 testModes.forEach((mode) => {

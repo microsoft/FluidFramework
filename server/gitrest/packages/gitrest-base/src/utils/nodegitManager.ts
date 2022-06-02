@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Mutex } from "async-mutex";
+import { E_TIMEOUT, Mutex, MutexInterface, withTimeout } from "async-mutex";
 import nodegit from "nodegit";
 import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
@@ -20,6 +20,7 @@ import {
     IRepoManagerParams,
     IStorageDirectoryConfig,
     BaseGitRestTelemetryProperties,
+    Constants,
 } from "./definitions";
 
 export class NodegitRepositoryManager implements IRepositoryManager {
@@ -353,18 +354,27 @@ export class NodegitRepositoryManager implements IRepositoryManager {
 export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactory {
     // Cache repositories to allow for reuse
     private repositoryPCache: { [key: string]: Promise<nodegit.Repository> } = {};
-    private readonly mutex: Mutex = new Mutex();
+    private readonly mutexes = new Map<string, MutexInterface>();
+    private readonly internalHandler: (
+        params: IRepoManagerParams,
+        onRepoNotExists: (args?: any) => Promise<NodegitRepositoryManager> | never,
+        shouldUseMutex: boolean) => Promise<NodegitRepositoryManager>;
 
     constructor(
         private readonly storageDirectoryConfig: IStorageDirectoryConfig,
         private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
         private readonly externalStorageManager: IExternalStorageManager,
-        private readonly repoPerDocEnabled: boolean,
+        repoPerDocEnabled: boolean,
     ) {
+        if (repoPerDocEnabled) {
+            this.internalHandler = this.repoPerDocInternalHandler.bind(this);
+        } else {
+            this.internalHandler = this.repoPerTenantInternalHandler.bind(this);
+        }
     }
 
     public async create(params: IRepoManagerParams): Promise<NodegitRepositoryManager> {
-        const onRepoNotExists = (args?: any) => {
+        const onRepoNotExists = async (args?: any) => {
             // Create and then cache the repository
             const isBare = 1;
             const repositoryP = nodegit.Repository.init(
@@ -377,9 +387,17 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
                     ...(args?.lumberjackBaseProperties),
                     [BaseGitRestTelemetryProperties.directoryPath]: args?.directoryPath,
                 });
+                const repoManager = new NodegitRepositoryManager(
+                    params.repoOwner,
+                    args?.repoName,
+                    await repositoryP,
+                    args?.directoryPath,
+                    this.externalStorageManager,
+                    args?.lumberjackBaseProperties);
+                return repoManager;
         };
 
-        return this.repoManagerFactoryInternalHandler(params, onRepoNotExists, true);
+        return this.internalHandler(params, onRepoNotExists, true);
     }
 
     public async open(params: IRepoManagerParams): Promise<NodegitRepositoryManager> {
@@ -394,39 +412,85 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             throw new NetworkError(400, `Repo does not exist ${args?.directoryPath}`);
         };
 
-        return this.repoManagerFactoryInternalHandler(params, onRepoNotExists, false);
+        return this.internalHandler(params, onRepoNotExists, false);
     }
 
     public async openOrCreate(params: IRepoManagerParams): Promise<NodegitRepositoryManager> {
-        const onRepoNotExists = async () => {
-            await this.create(params);
-        };
-
-        return this.repoManagerFactoryInternalHandler(params, onRepoNotExists, false);
+        try {
+            return this.open(params);
+        } catch (error: any) {
+            if (error instanceof Error &&
+                error?.name === "NetworkError" &&
+                (error as NetworkError)?.code === 400) {
+                    return this.create(params);
+            }
+            throw error;
+        }
     }
 
-    private async repoManagerFactoryInternalHandler(
+    private async repoPerDocInternalHandler(
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<void> | void | never,
-        shouldUseMutex: boolean) {
-        const repoPath = helpers.getRepoPath(
-            this.repoPerDocEnabled,
-            params.repoName, /* tenantId */
-            params.storageRoutingId?.documentId,
-            this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
-        const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
-        const directoryPath = helpers.getGitDirectory(repoPath, this.storageDirectoryConfig.baseDir);
-        const repoName =
-            this.repoPerDocEnabled ?
-                `${params.repoName}/${params.storageRoutingId?.documentId}` :
-                params.repoName;
+        onRepoNotExists: (args?: any) => Promise<NodegitRepositoryManager> | never,
+        shouldUseMutex: boolean): Promise<NodegitRepositoryManager> {
+        if (!params.storageRoutingId?.tenantId || !params.storageRoutingId?.documentId) {
+            throw new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`);
+        }
 
-        const handlerCore = async () => {
+        const repoPath = helpers.getRepoPath(
+            params.storageRoutingId.tenantId,
+            params.storageRoutingId.documentId,
+            this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
+        const directoryPath = helpers.getGitDirectory(repoPath, this.storageDirectoryConfig.baseDir);
+        const repoName = `${params.storageRoutingId.tenantId}/${params.storageRoutingId.documentId}`;
+
+        return this.internalHandlerCore(
+            params,
+            repoPath,
+            directoryPath,
+            repoName,
+            onRepoNotExists,
+            shouldUseMutex);
+    }
+
+    private async repoPerTenantInternalHandler(
+        params: IRepoManagerParams,
+        onRepoNotExists: (args?: any) => Promise<NodegitRepositoryManager> | never,
+        shouldUseMutex: boolean): Promise<NodegitRepositoryManager> {
+        const repoPath = helpers.getRepoPath(
+            params.repoName,
+            undefined,
+            this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
+        const directoryPath = helpers.getGitDirectory(repoPath, this.storageDirectoryConfig.baseDir);
+
+        return this.internalHandlerCore(
+            params,
+            repoPath,
+            directoryPath,
+            params.repoName,
+            onRepoNotExists,
+            shouldUseMutex);
+    }
+
+    private async internalHandlerCore(
+        params: IRepoManagerParams,
+        repoPath: string,
+        directoryPath: string,
+        repoName: string,
+        onRepoNotExists: (args?: any) => Promise<NodegitRepositoryManager> | never,
+        shouldUseMutex: boolean): Promise<NodegitRepositoryManager> {
+        const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
+        const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
+
+        // We define the function below to be able to call it either on its own or within the mutex.
+        const action = async () => {
             if (!(repoPath in this.repositoryPCache)) {
-                const repoExists = await helpers.exists(
-                    this.fileSystemManagerFactory.create(params.fileSystemManagerParams), directoryPath);
+                const repoExists = await helpers.exists(fileSystemManager, directoryPath);
                 if (!repoExists || !repoExists.isDirectory()) {
-                    await onRepoNotExists({ repoPath, directoryPath, lumberjackBaseProperties });
+                    await onRepoNotExists({
+                        fileSystemManager,
+                        repoPath,
+                        directoryPath,
+                        lumberjackBaseProperties });
                 } else {
                     this.repositoryPCache[repoPath] = nodegit.Repository.open(directoryPath);
                 }
@@ -444,11 +508,22 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         };
 
         if (shouldUseMutex) {
-            return this.mutex.runExclusive(async () => {
-                return handlerCore();
-            });
+            if (!this.mutexes.has(repoName)) {
+                this.mutexes.set(repoName, withTimeout(new Mutex(), 10000));
+            }
+            const mutex = this.mutexes.get(repoName);
+            try {
+                return mutex.runExclusive(async () => {
+                    return action();
+                });
+            } catch (e: any) {
+                if (e === E_TIMEOUT) {
+                    throw new NetworkError(500, "Could not complete action due to mutex timeout.");
+                }
+                throw new NetworkError(500, `Unknown error when trying to run action:  ${e?.message}`);
+            }
         } else {
-            return handlerCore();
+            return action();
         }
     }
 }
