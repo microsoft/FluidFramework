@@ -559,10 +559,10 @@ export class ConnectionManager implements IConnectionManager {
 
         if (this.pendingConnection !== undefined) {
             this.cancelConnection();
-            return true;
-        }
-
-        if (this.connection === undefined) {
+            if (this.connection === undefined) {
+                return true;
+            }
+        } else if (this.connection === undefined) {
             return false;
         }
 
@@ -596,35 +596,10 @@ export class ConnectionManager implements IConnectionManager {
      * Cancel in-progress connection attempt.
      */
     private cancelConnection() {
-        assert(this.pendingConnection !== undefined || this.connection !== undefined,
-            "this.pendingConnection and this.connection are undefined when trying to cancel");
-
-        this.logger.sendTelemetryEvent({ eventName: "ConnectionAttemptCancelled" });
-
-        this.pendingConnection?.abortController.abort();
+        assert(this.pendingConnection !== undefined, "this.pendingConnection is undefined when trying to cancel");
+        this.pendingConnection.abortController.abort();
         this.pendingConnection = undefined;
-
-        if (this.connection !== undefined) {
-            const connection = this.connection;
-            this.connection = undefined;
-
-            // Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
-            connection.off("op", this.opHandler);
-            connection.off("signal", this.props.signalHandler);
-            connection.off("nack", this.nackHandler);
-            connection.off("disconnect", this.disconnectHandlerInternal);
-            connection.off("error", this.errorHandler);
-            connection.off("pong", this.props.pongHandler);
-
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this._outbound.pause();
-            this._outbound.clear();
-            this.props.disconnectHandler("Connection attempt cancelled");
-
-            connection.dispose();
-
-            this._connectionVerboseProps = {};
-        }
+        this.logger.sendTelemetryEvent({ eventName: "ConnectionAttemptCancelled" });
     }
 
     /**
