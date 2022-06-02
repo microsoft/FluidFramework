@@ -12,11 +12,11 @@ import { requireTrue } from "../typeCheck";
 
 // These tests currently just cover the type checking, so its all compile time.
 
-const lk1 = "localKey1Name" as const;
+const lk1 = "localKey1Name";
 
-export const lk2 = "localKey2Name" as const;
+export const lk2 = "localKey2Name";
 
-export const testTypeIdentifier = "testType" as const;
+export const testTypeIdentifier = "testType";
 
 const testField = typedFieldSchema({
     types: { testType: 0 as unknown },
@@ -27,8 +27,8 @@ export const testTreeSchema = typedTreeSchema({
     local: { localKey1Name: testField },
     global: {},
     extraLocalFields: testField,
-    extraGlobalFields: true as const,
-    value: ValueSchema.Serializable as const,
+    extraGlobalFields: true,
+    value: ValueSchema.Serializable,
 });
 
 type TestTreeSchema = TypeInfo<typeof testTreeSchema>;
@@ -37,9 +37,10 @@ export type _assert = requireTrue<TestTreeSchema["extraGlobalFields"]>;
 
 export type child = FieldInfo<TestTreeSchema["local"][typeof lk1]>;
 
-// type child2 = FieldInfo<xx["local"][typeof lk2]>;
+// This is an error since this field does not exist:
+// type invalidChildType = FieldInfo<TestTreeSchema["local"][typeof lk2]>;
 
 export const xxxx = testTreeSchema.localFields.get(lk1);
 
 // This is an error since this field does not exist:
-// const xxx2 = testTreeSchema.localFields.get(lk2);
+// const invalidChildSchema = testTreeSchema.localFields.get(lk2);

@@ -192,6 +192,7 @@ export type EnforceTypeCheckTests =
 	| requireFalse<isAny<Nominal1>>
 	| requireFalse<isAny<never>>
 	| requireFalse<isAny<{}>>
+	| requireFalse<isAny<boolean>>
 
 	// test isStrictSubset
 	| requireTrue<isStrictSubset<1, 1 | 2>>
