@@ -88,6 +88,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
+    addSummarizeResultToSummary,
     addTreeToSummary,
     createRootSummarizerNodeWithGC,
     IRootSummarizerNodeWithGC,
@@ -1612,7 +1613,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
 
-    private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, telemetryContext?: ITelemetryContext) {
+    private addContainerStateToSummary(
+        summaryTree: ISummaryTreeWithStats,
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ) {
         this.addMetadataToSummary(summaryTree);
 
         if (this.chunkMap.size > 0) {
@@ -1638,9 +1644,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
-            const gcSummary = this.garbageCollector.summarize(telemetryContext);
+            const gcSummary = this.garbageCollector.summarize(fullTree, trackState, telemetryContext);
             if (gcSummary !== undefined) {
-                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+                addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
             }
         }
     }
@@ -2179,7 +2185,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
-        this.addContainerStateToSummary(summarizeResult, telemetryContext);
+        this.addContainerStateToSummary(
+            summarizeResult,
+            true /* fullTree */,
+            false /* trackState */,
+            telemetryContext,
+        );
         return summarizeResult.summary;
     }
 
@@ -2206,7 +2217,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             wrapSummaryInChannelsTree(summarizeResult);
             pathPartsForChildren = [channelsTreeName];
         }
-        this.addContainerStateToSummary(summarizeResult);
+        this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
         return {
             ...summarizeResult,
             id: "",
@@ -2532,7 +2543,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
             const gcSummaryTreeStats = summaryTree.tree[gcTreeKey]
-                ? calculateStats((summaryTree.tree[gcTreeKey] as ISummaryTree))
+                ? calculateStats(summaryTree.tree[gcTreeKey])
                 : undefined;
 
             const summaryStats: IGeneratedSummaryStats = {
