@@ -60,7 +60,6 @@ const GCVersion = 1;
 export const gcTreeKey = "gc";
 // They prefix for GC blobs in the GC tree in summary.
 export const gcBlobPrefix = "__gc";
-export const gcBlobRootKey = `${gcBlobPrefix}_root`;
 
 // Feature gate key to turn GC on / off.
 const runGCKey = "Fluid.GarbageCollection.RunGC";
@@ -757,7 +756,7 @@ export class GarbageCollector implements IGarbageCollector {
         /**
          * As an optimization if the GC tree hasn't changed and we're tracking the gc state, return a tree handle
          * instead of returning the whole GC tree. If there are changes, then we want to return the whole tree.
-        */
+         */
         if (this.trackGCState) {
             this.pendingSerializedSummaryState = newSerializedSummaryState;
             if (
@@ -766,13 +765,12 @@ export class GarbageCollector implements IGarbageCollector {
                 !fullTree &&
                 trackState
             ) {
-                const gcSummaryPath = `/${gcTreeKey}`;
                 const stats = mergeStats();
                 stats.handleNodeCount++;
                 return {
                     summary: {
                         type: SummaryType.Handle,
-                        handle: gcSummaryPath,
+                        handle: `/${gcTreeKey}`,
                         handleType: SummaryType.Tree,
                     },
                     stats,
@@ -781,7 +779,7 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         const builder = new SummaryTreeBuilder();
-        builder.addBlob(gcBlobRootKey, newSerializedSummaryState);
+        builder.addBlob(`${gcBlobPrefix}_root`, newSerializedSummaryState);
         return builder.getSummaryTree();
     }
 
