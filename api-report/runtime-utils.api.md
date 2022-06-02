@@ -30,7 +30,6 @@ import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions';
 import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeHandleWithStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -41,7 +40,7 @@ import { SummaryType } from '@fluidframework/protocol-definitions';
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
 
 // @public (undocumented)
-export function addHandleToSummary(summary: ISummaryTreeWithStats, key: string, handleWithStats: ISummaryTreeHandleWithStats): void;
+export function addSummarizeResultToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
 
 // @public (undocumented)
 export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
@@ -198,8 +197,6 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     addWithStats(key: string, summarizeResult: ISummarizeResult): void;
     // (undocumented)
     getSummaryTree(): ISummaryTreeWithStats;
-    // (undocumented)
-    getSummaryTreeHandleWithStats(handle: string): ISummaryTreeHandleWithStats;
     // (undocumented)
     get stats(): Readonly<ISummaryStats>;
     // (undocumented)

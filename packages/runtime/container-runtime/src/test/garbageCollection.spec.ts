@@ -15,8 +15,7 @@ import {
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
-    ISummaryTreeWithStats,
-    ISummaryTreeHandleWithStats,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
@@ -978,7 +977,7 @@ describe("Garbage Collection Tests", () => {
         const parseNothing: ReadAndParseBlob = async <T>() => { const x: T = {} as T; return x; };
 
         const checkGCSummaryType = (
-            summary: ISummaryTreeWithStats | ISummaryTreeHandleWithStats | undefined,
+            summary: ISummarizeResult | undefined,
             expectedBlobType: SummaryType,
             summaryNumber: string,
         ) => {

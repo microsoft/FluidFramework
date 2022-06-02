@@ -24,7 +24,6 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -367,14 +366,6 @@ export interface ISummaryStats {
     treeNodeCount: number;
     // (undocumented)
     unreferencedBlobSize: number;
-}
-
-// @public (undocumented)
-export interface ISummaryTreeHandleWithStats {
-    // (undocumented)
-    stats: ISummaryStats;
-    // (undocumented)
-    summary: ISummaryHandle;
 }
 
 // @public
