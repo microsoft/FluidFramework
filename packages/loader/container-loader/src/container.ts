@@ -1745,7 +1745,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * available configuration from the loader options.
      */
     private getNoopConfig(): [number | undefined, number | undefined] {
-        assert(this.serviceConfiguration !== undefined,
+        assert(
+            this.serviceConfiguration !== undefined,
             0x2e2, /* "there should be service config for active connection" */
         );
 
