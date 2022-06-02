@@ -77,7 +77,10 @@ export class PendingStateManager implements IDisposable {
     });
 
     // Maintains the count of messages that are currently unacked.
-    private pendingMessagesCount: number = 0;
+    private _pendingMessagesCount: number = 0;
+    public get pendingMessagesCount(): number {
+        return this._pendingMessagesCount;
+    }
 
     // Indicates whether we are processing a batch.
     private isProcessingBatch: boolean = false;
@@ -172,7 +175,7 @@ export class PendingStateManager implements IDisposable {
 
         this.pendingStates.push(pendingMessage);
 
-        this.pendingMessagesCount++;
+        this._pendingMessagesCount++;
     }
 
     /**
@@ -334,7 +337,7 @@ export class PendingStateManager implements IDisposable {
             return;
         }
 
-        this.pendingMessagesCount--;
+        this._pendingMessagesCount--;
 
         // Post-processing part - If we are processing a batch then this could be the last message in the batch.
         this.maybeProcessBatchEnd(message);
@@ -475,7 +478,7 @@ export class PendingStateManager implements IDisposable {
         }
 
         // Reset the pending message count because all these messages will be removed from the queue.
-        this.pendingMessagesCount = 0;
+        this._pendingMessagesCount = 0;
 
         // Save the current FlushMode so that we can revert it back after replaying the states.
         const savedFlushMode = this.containerRuntime.flushMode;
