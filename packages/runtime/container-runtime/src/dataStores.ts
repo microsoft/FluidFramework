@@ -548,7 +548,7 @@ export class DataStores implements IDisposable {
     public async updateStateBeforeGC(): Promise<void> {
         for (const id of this.dataStoresSinceLastGC) {
             const context = this.contexts.get(id);
-            assert(context !== undefined, 0x2b6 /* `Missing data store context with id ${id}` */);
+            assert(context !== undefined, 0x2b6 /* Missing data store context */);
             if (await context.isRoot()) {
                 // A root data store is basically a reference from the container runtime to the data store.
                 const handle = new FluidObjectHandle(context, id, this.runtime.IFluidHandleContext);
@@ -622,7 +622,7 @@ export class DataStores implements IDisposable {
                 continue;
             }
             const dataStoreId = pathParts[1];
-            assert(this.contexts.has(dataStoreId), 0x2d7 /* `${dataStoreId} is not a data store` */);
+            assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.
@@ -684,7 +684,7 @@ export function getSummaryForDatastores(
 
     if (rootHasIsolatedChannels(metadata)) {
         const datastoresSnapshot = snapshot.trees[channelsTreeName];
-        assert(!!datastoresSnapshot, 0x168 /* `expected ${channelsTreeName} tree in snapshot` */);
+        assert(!!datastoresSnapshot, 0x168 /* Expected tree in snapshot not found */);
         return datastoresSnapshot;
     } else {
         // back-compat: strip out all non-datastore paths before giving to DataStores object.

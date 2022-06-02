@@ -568,6 +568,9 @@ export class MockStorage implements IChannelStorageService {
     protected tree?: ITree;
 }
 
+// @public
+export function validateAssertionError(error: Error, expectedErrorMsg: string): boolean;
+
 // (No @packageDocumentation comment for this package)
 
 ```

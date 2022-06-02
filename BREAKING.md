@@ -151,6 +151,7 @@ The `proxyLoaderFactories` member on `ILoaderProps` and `ILoaderServices` was de
 - [LocalReference class and method deprecations](#LocalReference-class-and-method-deprecations)
 - [Deprecated properties from ILoaderOptions](#Deprecated-properties-from-ILoaderOptions)
 - [Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions](#Deprecated-forceAccessTokenViaAuthorizationHeader-from-ICollabSessionOptions)
+- [Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver](#Deprecated-enableRedeemFallback-from-HostStoragePolicy-in-Odsp-driver)]
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
@@ -179,6 +180,9 @@ To support this change the following methods are deprecated with replacements th
 
 ### Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions
 Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions as auth token will be supplied as Header by default due to security reasons.
+
+### Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver
+Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver as it will be always enabled by default.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
