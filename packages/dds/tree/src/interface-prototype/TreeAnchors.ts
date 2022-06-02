@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { ChangeNode, TreeNode as RawTreeNode } from '../generic';
 // This file uses these as opaque id types:
@@ -189,9 +194,11 @@ interface Query<TChild> extends RawTreeNode<TChild> {
 
 	// Maybe add child access helpers like these for common cases:
 	childFromTrait(label: TraitLabel): TChild | undefined; // returns child if exactly 1.
-	childFromPath(...label: TraitLabel[]): TChild | undefined; // returns child if exactly 1 child along each step of path.
+	// returns child if exactly 1 child along each step of path.
+	childFromPath(...label: TraitLabel[]): TChild | undefined;
 	// Can be generalized to accept a query language/pattern
-	childrenFromPath(...label: TraitLabel[]): SequenceIterator<TChild>; // returns all children matching path (might be scattered over multiple traits).
+	// returns all children matching path (might be scattered over multiple traits).
+	childrenFromPath(...label: TraitLabel[]): SequenceIterator<TChild>;
 }
 
 // Only needed when using TreeNode[Symbol.iterator]

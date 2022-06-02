@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { v4 } from 'uuid';
 import { CheckoutEvent } from '../Checkout';

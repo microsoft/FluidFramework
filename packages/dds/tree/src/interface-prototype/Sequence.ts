@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Sequence generic
 // TODO: These types can be used to traverse mutable types.
 // The exact behavior of traversing while the sequence is mutated needs to be clarified.

@@ -1,17 +1,22 @@
-// Copyright (C) Microsoft Corporation. All rights reserved.
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 /**
  * Utilities for manipulating the typescript typechecker.
  *
  * Typescript uses structural typing if there are no private or protected members,
- * and variance of generic type parameters depends on their usages. Thus when trying to constrain code by adding extra type information,
+ * and variance of generic type parameters depends on their usages.
+ * Thus when trying to constrain code by adding extra type information,
  * it often fails to actually constrain as desired, and these utilities can help with those cases.
  *
  * This library assumes you are compiling with --strictFunctionTypes:
  * (Covariance and Contravariance is explained along with how these helpers cause it in typescript at this link)
  * {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-6.html#strict-function-types}
  *
- * Classes in typescript by default allow all assignments: its only though adding members that any type constraints actually get applied.
+ * Classes in typescript by default allow all assignments:
+ * its only though adding members that any type constraints actually get applied.
  * This library provides types that can be used on a protected member of a class to add the desired constraints.
  *
  * Typical usages (use one field like this at the top of a class):
@@ -25,7 +30,8 @@
  *
  * See tests for examples.
  *
- * Note that all of these cause nominal typing. If constraints on generic type parameter variance are desired, but nominal typing is not,
+ * Note that all of these cause nominal typing.
+ * If constraints on generic type parameter variance are desired, but nominal typing is not,
  * these types can be used on a public field. This case also works with interfaces.
  *
  * Be aware that other members of your type might apply further constraints
@@ -73,7 +79,8 @@ export interface Covariant<T> {
 /**
  * Constrain generic type parameters to Bivariant.
  * Unused Generic type parameters don't constrain a type at all:
- * Adding Bivariant does the most minimal constraint: it only prevents assignment between types when neither of the two Ts extends the
+ * Adding Bivariant does the most minimal constraint:
+ * it only prevents assignment between types when neither of the two Ts extends the
  * other.
  *
  * protected _typeCheck?: Bivariant<T>;

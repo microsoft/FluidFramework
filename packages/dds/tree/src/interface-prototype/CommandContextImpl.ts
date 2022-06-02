@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Change, ConstraintEffect } from '../default-edits';
 import { OrderedEditSet } from '../EditLog';
 import { Definition, NodeId, TraitLabel, EditId } from '../Identifiers';

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ConstraintEffect } from '../default-edits';
 
 // This import is a layering violation. Maybe find a better design.
