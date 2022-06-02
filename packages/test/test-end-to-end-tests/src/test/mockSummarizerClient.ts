@@ -13,6 +13,8 @@ import {
     ISummaryNackMessage,
     SummaryCollection,
     neverCancelledSummaryToken,
+    ISummaryCancellationToken,
+    SummarizerStopReason,
 } from "@fluidframework/container-runtime";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
@@ -79,6 +81,60 @@ export async function loadSummarizer(
     };
 }
 
+export namespace FailingSubmitSummaryStage {
+    export type Base = 1;
+    export type Generate = 2;
+    export type Upload = 3;
+
+    export const Base: Base = 1 as const;
+    export const Generate: Generate = 2 as const;
+    export const Upload: Upload = 3 as const;
+}
+export type FailingSubmitSummaryStage =
+    FailingSubmitSummaryStage.Base |
+    FailingSubmitSummaryStage.Generate |
+    FailingSubmitSummaryStage.Upload;
+
+export class ControlledCancellationToken implements ISummaryCancellationToken {
+    count: number = 0;
+    get cancelled(): boolean {
+        this.count++;
+        return this.count >= this.whenToCancel;
+    }
+
+    constructor(
+        private readonly whenToCancel: FailingSubmitSummaryStage,
+        public readonly waitCancelled: Promise<SummarizerStopReason> = new Promise(() => {}),
+    ) {}
+}
+
+export async function submitFailingSummary(
+    provider: ITestObjectProvider,
+    summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
+    logger: ITelemetryLogger,
+    failingStage: FailingSubmitSummaryStage,
+    fullTree: boolean = false,
+) {
+    await provider.ensureSynchronized();
+    // Submit a summary with a fail token on generate
+    const result = await summarizerClient.containerRuntime.submitSummary({
+        fullTree,
+        refreshLatestAck: false,
+        summaryLogger: logger,
+        cancellationToken: new ControlledCancellationToken(failingStage),
+    });
+
+    const stageMap = new Map<FailingSubmitSummaryStage, string>();
+    stageMap.set(FailingSubmitSummaryStage.Base, "base");
+    stageMap.set(FailingSubmitSummaryStage.Generate, "generate");
+    stageMap.set(FailingSubmitSummaryStage.Upload, "upload");
+
+    const failingStageString = stageMap.get(failingStage);
+    assert(result.stage === failingStageString, `Expected a failure on ${failingStageString}`);
+    assert(result.stage !== "submit", `Expected a failing stage: ${failingStageString}`);
+    assert(result.error !== undefined, `Expected an error on ${failingStageString}`);
+}
+
 /**
  * Generates, uploads, submits a summary on the given container runtime and waits for the summary to be ack'd
  * by the server.
@@ -89,6 +145,7 @@ export async function submitAndAckSummary(
     summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
     logger: ITelemetryLogger,
     fullTree: boolean = false,
+    cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 ) {
     // Wait for all pending ops to be processed by all clients.
     await provider.ensureSynchronized();
@@ -98,7 +155,7 @@ export async function submitAndAckSummary(
         fullTree,
         refreshLatestAck: false,
         summaryLogger: logger,
-        cancellationToken: neverCancelledSummaryToken,
+        cancellationToken,
     });
     assert(result.stage === "submit", "The summary was not submitted");
     // Wait for the above summary to be ack'd.
@@ -114,7 +171,10 @@ export async function submitAndAckSummary(
     return { ackedSummary, summarySequenceNumber };
 }
 
-export function getGCStateFromSummary(summary: ISummaryTree): IGarbageCollectionState | undefined {
+export function getGCStateFromSummary(
+    summary: ISummaryTree,
+    blobHandleExpected?: boolean,
+): IGarbageCollectionState | undefined {
     const rootGCTree = summary.tree[gcTreeKey];
     if (rootGCTree === undefined) {
         return undefined;
@@ -129,6 +189,14 @@ export function getGCStateFromSummary(summary: ISummaryTree): IGarbageCollection
         }
 
         const gcBlob = rootGCTree.tree[key];
+        if (
+            blobHandleExpected === true &&
+            gcBlob?.type === SummaryType.Handle
+        ) {
+            assert(gcBlob?.handleType === SummaryType.Blob, `Expected the handle to be a blob handle`);
+            return undefined;
+        }
+
         assert(gcBlob?.type === SummaryType.Blob, `GC blob not available`);
         const gcState = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;
         // Merge the GC state of this blob into the root GC state.

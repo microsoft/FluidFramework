@@ -99,8 +99,9 @@ import {
     responseToException,
     seqFromTree,
     calculateStats,
+    addSummarizeResultToSummary,
 } from "@fluidframework/runtime-utils";
-import { GCDataBuilder } from "@fluidframework/garbage-collector";
+import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -1029,6 +1030,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.logger,
             existing,
             metadata,
+            this.context.clientDetails.type === summarizerClientType,
         );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1401,8 +1403,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const dataStoreChannel = await dataStoreContext.realize();
+
+        // Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
+        // the same as GC nodes id.
+        const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
         this.garbageCollector.nodeUpdated(
-            `/${id}`,
+            `/${urlWithoutQuery}`,
             "Loaded",
             undefined /* timestampMs */,
             dataStoreContext.packagePath,
@@ -1429,7 +1435,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
 
-    private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
+    private addContainerStateToSummary(
+        summaryTree: ISummaryTreeWithStats,
+        fullTree: boolean,
+        trackState: boolean,
+    ) {
         this.addMetadataToSummary(summaryTree);
 
         if (this.chunkMap.size > 0) {
@@ -1455,9 +1465,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
-            const gcSummary = this.garbageCollector.summarize();
+            const gcSummary = this.garbageCollector.summarize(fullTree, trackState);
             if (gcSummary !== undefined) {
-                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+                addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
             }
         }
     }
@@ -1479,7 +1489,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return true;
         }
 
-        this.consecutiveReconnects++;
         if (this.consecutiveReconnects === Math.floor(this.maxConsecutiveReconnects / 2)) {
             // If we're halfway through the max reconnects, send an event in order
             // to better identify false positives, if any. If the rate of this event
@@ -1573,11 +1582,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // There might be no change of state due to Container calling this API after loading runtime.
         const changeOfState = this._connected !== connected;
+        const reconnection = changeOfState && connected;
         this._connected = connected;
 
-        if (changeOfState) {
-            this.deltaManager.off("op", this.onOp);
-            this.context.pendingLocalState = undefined;
+        if (reconnection) {
+            this.consecutiveReconnects++;
+
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(new GenericError(
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
@@ -1586,7 +1596,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     { attempts: this.consecutiveReconnects }));
                 return;
             }
+        }
 
+        if (changeOfState) {
+            this.deltaManager.off("op", this.onOp);
+            this.context.pendingLocalState = undefined;
             this.replayPendingStates();
         }
 
@@ -1997,7 +2011,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
-        this.addContainerStateToSummary(summarizeResult);
+        this.addContainerStateToSummary(
+            summarizeResult,
+            true /* fullTree */,
+            false /* trackState */);
         return summarizeResult.summary;
     }
 
@@ -2020,7 +2037,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             wrapSummaryInChannelsTree(summarizeResult);
             pathPartsForChildren = [channelsTreeName];
         }
-        this.addContainerStateToSummary(summarizeResult);
+        this.addContainerStateToSummary(summarizeResult, fullTree, trackState);
         return {
             ...summarizeResult,
             id: "",
@@ -2343,7 +2360,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
             const gcSummaryTreeStats = summaryTree.tree[gcTreeKey]
-                ? calculateStats((summaryTree.tree[gcTreeKey] as ISummaryTree))
+                ? calculateStats(summaryTree.tree[gcTreeKey])
                 : undefined;
 
             const summaryStats: IGeneratedSummaryStats = {

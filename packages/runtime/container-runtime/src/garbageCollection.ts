@@ -16,15 +16,17 @@ import {
     runGarbageCollection,
     unpackChildNodesGCDetails,
 } from "@fluidframework/garbage-collector";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     gcBlobKey,
     IGarbageCollectionData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
-    ISummaryTreeWithStats,
+    IGarbageCollectionNodeData,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
+    mergeStats,
     ReadAndParseBlob,
     RefreshSummaryResult,
     SummaryTreeBuilder,
@@ -37,8 +39,10 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 
+import * as semver from "semver";
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
+import { pkgVersion } from "./packageVersion";
 import {
     getGCVersion,
     GCVersion,
@@ -66,13 +70,17 @@ const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
-const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
+export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 // Feature gate key to disable expiring session after a set period of time, even if expiry value is present
-const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
+export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to log error messages if GC reference validation fails.
-const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
+export const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
+// Feature gate key to write the gc blob as a handle if the data is the same.
+export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
+// Feature gate key to limit which versions can write the gc blob as a handle if the data is the same.
+export const trackGCStateMinimumVersionKey = "Fluid.GarbageCollection.TrackGCState.MinVersion";
 
-const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+const defaultInactiveTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */
@@ -114,8 +122,10 @@ export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 interface IUnreferencedEvent {
     eventName: string;
     id: string;
+    type: GCNodeType;
     age: number;
     timeout: number;
+    completedGCRuns: number;
     lastSummaryTime?: number;
     externalRequest?: boolean;
     viaHandle?: boolean;
@@ -147,12 +157,13 @@ export interface IGarbageCollector {
     readonly summaryStateNeedsReset: boolean;
     /** Tells whether GC data should be written to the root of the summary tree. */
     readonly writeDataAtRoot: boolean;
+    readonly trackGCState: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
         options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean; },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
-    summarize(): ISummaryTreeWithStats | undefined;
+    summarize(fullTree: boolean, trackState: boolean): ISummarizeResult | undefined;
     /** Returns the garbage collector specific metadata to be written into the summary. */
     getMetadata(): IGCMetadata;
     /** Returns a map of each node id to its base GC details in the base summary. */
@@ -252,7 +263,8 @@ export class GarbageCollector implements IGarbageCollector {
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
         existing: boolean,
-        metadata?: IContainerRuntimeMetadata,
+        metadata: IContainerRuntimeMetadata | undefined,
+        isSummarizerClient: boolean,
     ): IGarbageCollector {
         return new GarbageCollector(
             provider,
@@ -264,6 +276,7 @@ export class GarbageCollector implements IGarbageCollector {
             baseLogger,
             existing,
             metadata,
+            isSummarizerClient,
         );
     }
 
@@ -307,6 +320,8 @@ export class GarbageCollector implements IGarbageCollector {
      */
     private readonly shouldRunSweep: boolean;
 
+    public readonly trackGCState: boolean;
+
     private readonly testMode: boolean;
     private readonly mc: MonitoringContext;
 
@@ -337,6 +352,14 @@ export class GarbageCollector implements IGarbageCollector {
 
     // Keeps track of the GC state from the last run.
     private previousGCDataFromLastRun: IGarbageCollectionData | undefined;
+    /**
+     * Keeps track of the serialized GC blob from the latest summary successfully submitted to the server.
+     */
+    private latestSerializedSummaryState: string | undefined;
+    /**
+     * Keeps track of the serialized GC blob from the last GC run of the client.
+     */
+    private pendingSerializedSummaryState: string | undefined;
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
     private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
@@ -345,8 +368,8 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly initializeBaseStateP: Promise<void>;
     // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
     private readonly baseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
-    // The time after which an unreferenced node can be deleted. Currently, we only set the node's state to expired.
-    private readonly deleteTimeoutMs: number;
+    // The time after which an unreferenced node is inactive.
+    private readonly inactiveTimeoutMs: number;
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
     // The timeout responsible for closing the container when the session has expired
@@ -357,6 +380,9 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly loggedUnreferencedEvents: Set<string> = new Set();
     // Queue for unreferenced events that should be logged the next time GC runs.
     private readonly pendingEventsQueue: IUnreferencedEvent[] = [];
+
+    // The number of times GC has successfully completed on this instance of GarbageCollector.
+    private completedRuns = 0;
 
     protected constructor(
         private readonly runtime: IGarbageCollectionRuntime,
@@ -369,12 +395,12 @@ export class GarbageCollector implements IGarbageCollector {
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
         existing: boolean,
-        metadata?: IContainerRuntimeMetadata,
+        metadata: IContainerRuntimeMetadata | undefined,
+        private readonly isSummarizerClient: boolean = true,
     ) {
         this.mc = loggerToMonitoringContext(
-            ChildLogger.create(baseLogger, "GarbageCollector"));
-
-        this.deleteTimeoutMs = this.gcOptions.deleteTimeoutMs ?? defaultDeleteTimeoutMs;
+            ChildLogger.create(baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } }),
+        );
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -446,6 +472,11 @@ export class GarbageCollector implements IGarbageCollector {
             && !gcOptions.disableGC
         );
 
+        const minimumVersion = this.mc.config.getString(trackGCStateMinimumVersionKey);
+        const shouldTrackStateForVersion = meetsMinimumVersionRequirement(pkgVersion, minimumVersion);
+
+        this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true && shouldTrackStateForVersion;
+
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
          * 1. Overall GC or mark phase must be enabled (this.shouldRunGC).
@@ -455,6 +486,12 @@ export class GarbageCollector implements IGarbageCollector {
         this.shouldRunSweep = this.shouldRunGC && (
             this.mc.config.getBoolean(runSweepKey) ?? (this.sessionExpiryTimeoutMs !== undefined && this.sweepEnabled)
         );
+
+        // Override inactive timeout if test config or gc options to override it is set.
+        this.inactiveTimeoutMs =
+            this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
+            this.gcOptions.inactiveTimeoutMs ??
+            defaultInactiveTimeoutMs;
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
@@ -485,7 +522,14 @@ export class GarbageCollector implements IGarbageCollector {
             if (gcSnapshotTree !== undefined) {
                 // If the GC tree is written at root, we should also do the same.
                 this._writeDataAtRoot = true;
-                return getGCStateFromSnapshot(gcSnapshotTree, readAndParseBlob);
+                const baseGCState = await getGCStateFromSnapshot(
+                    gcSnapshotTree,
+                    readAndParseBlob,
+                );
+                if (this.trackGCState) {
+                    this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(baseGCState));
+                }
+                return baseGCState;
             }
 
             // back-compat - Older documents will have the GC blobs in each data store's summary tree. Get them and
@@ -524,7 +568,7 @@ export class GarbageCollector implements IGarbageCollector {
                     gcState.gcNodes[rootId] = { outboundRoutes: Array.from(outboundRoutes) };
                 }
                 assert(gcState.gcNodes[dsRootId] !== undefined,
-                    0x2a9 /* `GC nodes for data store ${dsId} not in GC blob` */);
+                    0x2a9 /* GC nodes for data store not in GC blob */);
                 gcState.gcNodes[dsRootId].unreferencedTimestampMs = gcSummaryDetails.unrefTimestamp;
             }
 
@@ -552,7 +596,7 @@ export class GarbageCollector implements IGarbageCollector {
                         nodeId,
                         new UnreferencedStateTracker(
                             nodeData.unreferencedTimestampMs,
-                            this.deleteTimeoutMs,
+                            this.inactiveTimeoutMs,
                             currentReferenceTimestampMs,
                         ),
                     );
@@ -597,21 +641,35 @@ export class GarbageCollector implements IGarbageCollector {
             return baseGCDetailsMap;
         });
 
-        // Initialize the base state. The base GC data is used to detect and log when inactive / deleted objects are
-        // used in the container.
+        // Log all the GC options and the state determined by the garbage collector. This is interesting only for the
+        // summarizer client since it is the only one that runs GC. It also helps keep the telemetry less noisy.
+        const gcConfigProps = JSON.stringify({
+            gcEnabled: this.gcEnabled,
+            sweepEnabled: this.sweepEnabled,
+            runGC: this.shouldRunGC,
+            runSweep: this.shouldRunSweep,
+            writeAtRoot: this._writeDataAtRoot,
+            testMode: this.testMode,
+            sessionExpiry: this.sessionExpiryTimeoutMs,
+            inactiveTimeout: this.inactiveTimeoutMs,
+            existing,
+            ...this.gcOptions,
+        });
+        if (this.isSummarizerClient) {
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "GarbageCollectorLoaded",
+                gcConfigs: gcConfigProps,
+            });
+        }
+
+        // Initialize the base state that is used to detect when inactive objects are used.
         if (this.shouldRunGC) {
             this.initializeBaseStateP.catch((error) => {
                 const dpe = DataProcessingError.wrapIfUnrecognized(
                     error,
                     "FailedToInitializeGC",
                 );
-                dpe.addTelemetryProperties({
-                    gcEnabled: this.gcEnabled,
-                    runSweep: this.shouldRunSweep,
-                    writeAtRoot: this._writeDataAtRoot,
-                    testMode: this.testMode,
-                    sessionExpiry: this.sessionExpiryTimeoutMs,
-                });
+                dpe.addTelemetryProperties({ gcConfigs: gcConfigProps });
                 throw dpe;
             });
         }
@@ -632,10 +690,13 @@ export class GarbageCollector implements IGarbageCollector {
         },
     ): Promise<IGCStats> {
         const {
-            logger = this.mc.logger,
             runSweep = this.shouldRunSweep,
             fullGC = this.gcOptions.runFullGC === true || this.summaryStateNeedsReset,
         } = options;
+
+        const logger = options.logger
+            ? ChildLogger.create(options.logger, undefined, { all: { completedGCRuns: () => this.completedRuns } })
+            : this.mc.logger;
 
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
             await this.initializeBaseStateP;
@@ -671,7 +732,11 @@ export class GarbageCollector implements IGarbageCollector {
             if (this.testMode) {
                 this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
             }
+
             event.end({ ...gcStats });
+
+            this.completedRuns++;
+
             return gcStats;
         },
         { end: true, cancel: "error" });
@@ -682,7 +747,10 @@ export class GarbageCollector implements IGarbageCollector {
      * We current write the entire GC state in a single blob. This can be modified later to write multiple
      * blobs. All the blob keys should start with `gcBlobPrefix`.
      */
-    public summarize(): ISummaryTreeWithStats | undefined {
+    public summarize(
+        fullTree: boolean,
+        trackState: boolean,
+    ): ISummarizeResult | undefined {
         if (!this.shouldRunGC || this.previousGCDataFromLastRun === undefined) {
             return;
         }
@@ -695,8 +763,35 @@ export class GarbageCollector implements IGarbageCollector {
             };
         }
 
+        const newSerializedSummaryState = JSON.stringify(generateSortedGCState(gcState));
+
+        /**
+         * As an optimization if the GC tree hasn't changed and we're tracking the gc state, return a tree handle
+         * instead of returning the whole GC tree. If there are changes, then we want to return the whole tree.
+         */
+        if (this.trackGCState) {
+            this.pendingSerializedSummaryState = newSerializedSummaryState;
+            if (
+                this.latestSerializedSummaryState !== undefined &&
+                this.latestSerializedSummaryState === newSerializedSummaryState &&
+                !fullTree &&
+                trackState
+            ) {
+                const stats = mergeStats();
+                stats.handleNodeCount++;
+                return {
+                    summary: {
+                        type: SummaryType.Handle,
+                        handle: `/${gcTreeKey}`,
+                        handleType: SummaryType.Tree,
+                    },
+                    stats,
+                };
+            }
+        }
+
         const builder = new SummaryTreeBuilder();
-        builder.addBlob(`${gcBlobPrefix}_root`, JSON.stringify(gcState));
+        builder.addBlob(`${gcBlobPrefix}_root`, newSerializedSummaryState);
         return builder.getSummaryTree();
     }
 
@@ -740,11 +835,32 @@ export class GarbageCollector implements IGarbageCollector {
         // Basically, it was written in the current GC version.
         if (result.wasSummaryTracked) {
             this.latestSummaryGCVersion = this.currentGCVersion;
+            if (this.trackGCState) {
+                this.latestSerializedSummaryState = this.pendingSerializedSummaryState;
+                this.pendingSerializedSummaryState = undefined;
+            }
             return;
         }
-        // If the summary was not tracked by this client, update latest GC version from the snapshot in the result as
-        // that is now the latest summary.
-        await this.updateSummaryGCVersionFromSnapshot(result.snapshot, readAndParseBlob);
+        // If the summary was not tracked by this client, update latest GC version and blob from the snapshot in the
+        // result as that is now the latest summary.
+        const snapshot = result.snapshot;
+        const metadataBlobId = snapshot.blobs[metadataBlobName];
+        if (metadataBlobId) {
+            const metadata = await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId);
+            this.latestSummaryGCVersion = getGCVersion(metadata);
+        }
+
+        const gcSnapshotTree = snapshot.trees[gcTreeKey];
+        if (gcSnapshotTree !== undefined && this.trackGCState) {
+            const latestGCState = await getGCStateFromSnapshot(
+                gcSnapshotTree,
+                readAndParseBlob,
+            );
+            this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(latestGCState));
+        } else {
+            this.latestSerializedSummaryState = undefined;
+        }
+        this.pendingSerializedSummaryState = undefined;
     }
 
     /**
@@ -806,17 +922,6 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Update the latest summary GC version from the metadata blob in the given snapshot.
-     */
-    private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree, readAndParseBlob: ReadAndParseBlob) {
-        const metadataBlobId = snapshot.blobs[metadataBlobName];
-        if (metadataBlobId) {
-            const metadata = await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId);
-            this.latestSummaryGCVersion = getGCVersion(metadata);
-        }
-    }
-
-    /**
      * Updates the state of the system as per the current GC run. It does the following:
      * 1. Sets up the current GC state as per the gcData.
      * 2. Starts tracking for nodes that have become unreferenced in this run.
@@ -865,7 +970,7 @@ export class GarbageCollector implements IGarbageCollector {
                     nodeId,
                     new UnreferencedStateTracker(
                         currentReferenceTimestampMs,
-                        this.deleteTimeoutMs,
+                        this.inactiveTimeoutMs,
                         currentReferenceTimestampMs,
                     ),
                 );
@@ -1090,7 +1195,7 @@ export class GarbageCollector implements IGarbageCollector {
      * Logs an event if a node is inactive and is used.
      */
     private logIfInactive(
-        eventSuffix: "Changed" | "Loaded" | "Revived",
+        eventType: "Changed" | "Loaded" | "Revived",
         nodeId: string,
         currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs(),
         packagePath?: readonly string[],
@@ -1102,17 +1207,33 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        const eventName = `inactiveObject_${eventSuffix}`;
+        // We only care about data stores and attachment blobs for this telemetry since GC only marks these objects
+        // as unreferenced. Also, if an inactive DDS is used, the corresponding data store store will also be used.
+        const nodeType = this.runtime.getNodeType(nodeId);
+        if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
+            return;
+        }
+
+        // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
+        // summarizer clients if they are based off of user actions (such as scrolling to content for these objects).
+        if (!this.isSummarizerClient && eventType !== "Loaded") {
+            return;
+        }
+
+        const eventName = `inactiveObject_${eventType}`;
         // We log a particular event for a given node only once so that it is not too noisy.
         const uniqueEventId = `${nodeId}-${eventName}`;
         const nodeState = this.unreferencedNodesState.get(nodeId);
         if (nodeState?.inactive && !this.loggedUnreferencedEvents.has(uniqueEventId)) {
             this.loggedUnreferencedEvents.add(uniqueEventId);
+            // Save all the properties at this point in time so that if we log this later, these values are preserved.
             const event: IUnreferencedEvent = {
                 eventName,
                 id: nodeId,
+                type: nodeType,
                 age: currentReferenceTimestampMs - nodeState.unreferencedTimestampMs,
-                timeout: this.deleteTimeoutMs,
+                timeout: this.inactiveTimeoutMs,
+                completedGCRuns: this.completedRuns,
                 lastSummaryTime: this.getLastSummaryTimestampMs(),
                 externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
                 viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
@@ -1160,6 +1281,17 @@ async function getGCStateFromSnapshot(
     return rootGCState;
 }
 
+function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollectionState {
+    const sortableArray: [string, IGarbageCollectionNodeData][] = Object.entries(gcState.gcNodes);
+    sortableArray.sort(([a], [b]) => a.localeCompare(b));
+    const sortedGCState: IGarbageCollectionState = { gcNodes: {} };
+    for (const [nodeId, nodeData] of sortableArray) {
+        nodeData.outboundRoutes.sort();
+        sortedGCState.gcNodes[nodeId] = nodeData;
+    }
+    return sortedGCState;
+}
+
 /**
  * setLongTimeout is used for timeouts longer than setTimeout's ~24.8 day max
  * @param timeoutMs - the total time the timeout needs to last in ms
@@ -1181,4 +1313,16 @@ function setLongTimeout(
         timer = setTimeout(() => timeoutFn(), timeoutMs);
     }
     setTimerFn(timer);
+}
+
+/**
+ * meetsMinimumVersionRequirement is used determining if a feature version should be run. This is similar to feature
+ * flags. The advantage of this is that if we ship a bug in version 0.1.1 and fix it in version 0.2.1. We can keep this
+ * feature disabled for version 0.1.1 and enabled for 0.2.1. Older versions will run without the feature and new
+ * versions will run with the feature.
+ * @param currentVersion - the total time the timeout needs to last in ms
+ * @param minimumVersion - the function to execute when the timer ends
+ */
+function meetsMinimumVersionRequirement(currentVersion: string, minimumVersion: string | undefined) {
+    return minimumVersion === undefined || semver.compare(currentVersion, minimumVersion) >= 0;
 }

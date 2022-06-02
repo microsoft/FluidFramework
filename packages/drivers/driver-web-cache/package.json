@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-web-cache",
-  "version": "0.59.4000",
+  "version": "0.59.5000",
   "description": "Implementation of the driver caching API for a web browser",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -38,13 +38,13 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/odsp-driver-definitions": "^0.59.4000",
-    "@fluidframework/telemetry-utils": "^0.59.4000",
+    "@fluidframework/odsp-driver-definitions": "^0.59.5000",
+    "@fluidframework/telemetry-utils": "^0.59.5000",
     "idb": "^6.1.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66793",
+    "@fluidframework/build-tools": "^0.2.70857",
     "@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@0.59.3000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@microsoft/api-extractor": "^7.22.2",
@@ -66,6 +66,7 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0",
     "fake-indexeddb": "3.1.4",
     "jest": "^26.6.3",
     "rimraf": "^2.6.2",
