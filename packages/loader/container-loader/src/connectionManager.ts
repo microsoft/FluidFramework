@@ -615,20 +615,13 @@ export class ConnectionManager implements IConnectionManager {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
-        assert(this.pendingConnection !== undefined,
-            0x27f /* "pending connection is undefined when setting up succesful conneciton" */);
-
-        if (this.closed) {
-            // Raise proper events, Log telemetry event and close connection.
-            this.connection = connection;  // Set this.connection to keep disconnectFromDeltaStream happy
-            this.disconnectFromDeltaStream("ConnectionManager already closed");
-            return;
-        }
-        if (abortSignal.aborted === true) {
-            return;
-        }
 
         this.pendingConnection = undefined;
+
+        if (this.closed || abortSignal.aborted === true) {
+            return;
+        }
+
         this.connection = connection;
 
         // Does information in scopes & mode matches?
