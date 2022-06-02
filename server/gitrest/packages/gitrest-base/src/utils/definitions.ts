@@ -118,8 +118,6 @@ export enum GitObjectType {
 
 export enum BaseGitRestTelemetryProperties {
     directoryPath = "directoryPath",
-    method = "method",
-    pathCategory = "pathCategory",
     ref = "ref",
     repoName = "repoName",
     repoOwner = "repoOwner",

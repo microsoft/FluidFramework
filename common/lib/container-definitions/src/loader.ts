@@ -381,11 +381,16 @@ export type ILoaderOptions = {
     /**
      * Set min time(in ms) frequency with which noops would be sent in case of active connection which is
      * not sending any op.
+     * @deprecated - the property will be moved to
+     * {@link @fluidframework/protocol-definitions/config.ts#IClientConfiguration}
      */
     noopTimeFrequency?: number;
 
     /**
      * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
+     *
+     * @deprecated - the property will be moved to
+     * {@link @fluidframework/protocol-definitions/config.ts#IClientConfiguration}
      */
     noopCountFrequency?: number;
 
