@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from '@fluidframework/datastore-definitions';
-import { ChangeNode, TreeNode as RawTreeNode } from '../generic';
+import { Serializable } from "@fluidframework/datastore-definitions";
+import { ChangeNode, TreeNode as RawTreeNode } from "../generic";
 // This file uses these as opaque id types:
-// the user of these APIs should not know or care if they are short IDs or not, other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
+// the user of these APIs should not know or care if they are short IDs or not,
+// other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
-import { Definition, NodeId, TraitLabel } from '../Identifiers';
-import { Side } from '../Snapshot';
-import { Anchor, PlaceData, RangeData, TreeNodeData } from './Anchors';
-import { Sequence, SequenceIterator } from './Sequence';
+import { Definition, NodeId, TraitLabel } from "../Identifiers";
+import { Side } from "../forest";
+import { Anchor, PlaceData, RangeData, TreeNodeData } from "./Anchors";
+import { Sequence, SequenceIterator } from "./Sequence";
 
 /**
  * The anchors in this file are all contextualized (extend `Anchor`/ have a revision they refer to),
@@ -93,7 +94,8 @@ export interface Range extends Anchor, RangeData, TraitSection {
 	/**
 	 * Constraints
 	 *
-	 * TODO: This assumes we change how constraints work in our edits so they are a property of ranges that are checked when the range is used,
+	 * TODO: This assumes we change how constraints work in our edits so they are a property of ranges
+	 * that are checked when the range is used,
 	 * and a Constraint op is just a use of a Range only for its constraint effect.
 	 *
 	 * TODO: is making this return a new range the right API?
@@ -148,7 +150,8 @@ export interface TreeNode extends Anchor, TreeNodeData, Sequence<Trait>, Query<T
 
 	// TODO: add optional anchor policy parameters.
 	// This should probably default to a basic successor/predecessor anchor,
-	// but allow opting into more expensive once when needed (ex: when you know its going into an edit or will need to be used across changes that could otherwise invalidate it)
+	// but allow opting into more expensive once when needed (ex: when you know its going into an edit
+	// or will need to be used across changes that could otherwise invalidate it)
 	//
 	// TODO: Once the API is in a more polished state consider adding short hand versions for predecessor and successor.
 	adjacentPlace(side: Side): Place;
@@ -162,7 +165,8 @@ export interface TreeNode extends Anchor, TreeNodeData, Sequence<Trait>, Query<T
 
 	readonly definition: Definition;
 
-	// TODO: support value that might not have been loaded (maybe just use ensureLoaded for this? maybe have a way to load it separately).
+	// TODO: support value that might not have been loaded
+	// (maybe just use ensureLoaded for this? maybe have a way to load it separately).
 	readonly value: Serializable; // This assumes the Serializable is immutable/copy on write.
 
 	// Overrides version from Query providing more specific output.

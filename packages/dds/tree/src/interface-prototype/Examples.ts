@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from '@fluidframework/datastore-definitions';
-import { v4 } from 'uuid';
-import { CheckoutEvent } from '../Checkout';
-import { fail } from '../Common';
-import { ConstraintEffect } from '../default-edits';
+import { Serializable } from "@fluidframework/datastore-definitions";
+import { v4 } from "uuid";
+import { CheckoutEvent } from "../Checkout";
+import { fail } from "../Common";
+import { ConstraintEffect } from "../default-edits";
 // This file uses these as opaque id types:
-// the user of these APIs should not know or care if they are short IDs or not, other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
+// the user of these APIs should not know or care if they are short IDs or not,
+// other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
-import { Definition, TraitLabel } from '../Identifiers';
-import { Side, Snapshot } from '../Snapshot';
-import { StableId } from './Anchors';
+import { Definition, TraitLabel } from "../Identifiers";
+import { Side, Snapshot } from "../forest";
+import { StableId } from "./Anchors";
 import {
 	anchorDataFromNodeId,
 	Command,
@@ -24,8 +25,8 @@ import {
 	PrefetchFilter,
 	root,
 	SharedTree,
-} from './Checkout';
-import { ContentsConstraint, Place, Trait, Range, TreeNode } from './TreeAnchors';
+} from "./Checkout";
+import { ContentsConstraint, Place, Trait, Range, TreeNode } from "./TreeAnchors";
 
 // ////////////// Command examples //////////////
 
@@ -34,12 +35,13 @@ import { ContentsConstraint, Place, Trait, Range, TreeNode } from './TreeAnchors
 // This is expected to be relatively rare when working with more realistic and/or strongly typed examples,
 // however its worth showing as it demonstrates the how to use StableId in such cases to make sure that
 // options does not contain data which will not work if deserialized on another client.
-// Theoretically Serializable should be made to not admit the various ShortId types, so getting this wrong would be a type error,
+// Theoretically Serializable should be made to not admit the various ShortId types,
+// so getting this wrong would be a type error,
 // But this has not been done in this prototype.
 
 // Inserts a node with the specified Definition and identifier at the specified Place, and return it.
 export const insertExample = {
-	id: 'f73f004c-3b3e-42fe-b7c9-2e5e8793ca45' as CommandId,
+	id: "f73f004c-3b3e-42fe-b7c9-2e5e8793ca45" as CommandId,
 	run: (
 		context: CommandContext,
 		{ definition: def, identifier: id }: { definition: StableId; identifier: StableId },
@@ -59,18 +61,18 @@ function newNodeId(): StableId {
 type Empty = Record<string, never>;
 
 export const doubleInsertExample = {
-	id: '08bac27d-632f-48bb-834a-90af8d67ca60' as CommandId,
+	id: "08bac27d-632f-48bb-834a-90af8d67ca60" as CommandId,
 	run: (context: CommandContext, _: Empty, { parent }: { parent: TreeNode }): TreeNode => {
 		const a = context.runCommand(
 			insertExample,
 			{ definition: context.stabilize(bar), identifier: newNodeId() },
-			{ place: parent.childrenFromTrait(testTrait).start }
+			{ place: parent.childrenFromTrait(testTrait).start },
 		);
 
 		return context.runCommand(
 			insertExample,
 			{ definition: context.stabilize(baz), identifier: newNodeId() },
-			{ place: a.childrenFromTrait(testTrait).start }
+			{ place: a.childrenFromTrait(testTrait).start },
 		);
 	},
 };
@@ -86,11 +88,11 @@ const fetchAll: PrefetchFilter = {
 const commands: CommandRegistry = [insertExample, doubleInsertExample];
 
 // Some dummy schema related data.
-const foo: Definition = 'Foo' as Definition;
-const bar: Definition = 'Bar' as Definition;
-const baz: Definition = 'Baz' as Definition;
+const foo: Definition = "Foo" as Definition;
+const bar: Definition = "Bar" as Definition;
+const baz: Definition = "Baz" as Definition;
 
-const testTrait: TraitLabel = 'testTrait' as TraitLabel;
+const testTrait: TraitLabel = "testTrait" as TraitLabel;
 
 /**
  * Collaborative applications generally do two things:
@@ -98,15 +100,18 @@ const testTrait: TraitLabel = 'testTrait' as TraitLabel;
  * 2. Allow changes to be made to the document.
  *
  * This example is a minimal applications that does both of these.
- * Rather than letting a user trigger changes, it just makes changes in response to incoming edits (this made for a smaller example, but is not very realistic).
- * It shows off how an application can view the tree using Anchors then use those same anchors to make edits using commands.
+ * Rather than letting a user trigger changes,
+ * it just makes changes in response to incoming edits (this made for a smaller example, but is not very realistic).
+ * It shows off how an application can view the tree using Anchors
+ * then use those same anchors to make edits using commands.
  */
 export async function exampleApp(tree: SharedTree): Promise<void> {
 	// Perform a full checkout of all data.
 	const checkout = await tree.checkout(commands, fetchAll);
 
 	// Example app policy: this app just watches the tree, and adds bar(baz) subtree under any new `foo` node.
-	// Normally an App would just hook ViewChange up to its invalidation system, but this example doesn't even have a view to invalidate, so we just put everything in here.
+	// Normally an App would just hook ViewChange up to its invalidation system,
+	// but this example doesn't even have a view to invalidate, so we just put everything in here.
 	// TODO: Make TypedEventEmitter use strong types.
 	checkout.on(CheckoutEvent.ViewChange, (before: Snapshot, after: Snapshot) => {
 		const delta = before.delta(after);
@@ -115,13 +120,17 @@ export async function exampleApp(tree: SharedTree): Promise<void> {
 		// its just a contrived example of responding to changes, observing trees and performing edits.
 		for (const added of delta.added) {
 			// Get an contextualized anchor from the delta.
-			// Theoretically the delta should produce something suable as anchors directly, but this prototype is just reusing the existing delta APIs which don't know about anchors.
+			// Theoretically the delta should produce something suable as anchors directly,
+			// but this prototype is just reusing the existing delta APIs which don't know about anchors.
 			const inserted: TreeNode = checkout.contextualizeAnchor(anchorDataFromNodeId(added));
 			// Here we have an example of using the tree viewing APIs.
-			// In this trivial case the only thing we do with them is check the definition, but real apps would use these APIs to walk the tree and build the document view for the user.
+			// In this trivial case the only thing we do with them is check the definition,
+			// but real apps would use these APIs to walk the tree and build the document view for the user.
 			if (inserted.definition === foo) {
 				// This shows how the application can perform an edit.
-				// Typically this would be done in response to some user action, but this example doesn't have any user interface, so we just perform it in response to an edit instead.
+				// Typically this would be done in response to some user action,
+				// but this example doesn't have any user interface,
+				// so we just perform it in response to an edit instead.
 				checkout.runCommand(doubleInsertExample, {}, { parent: inserted });
 			}
 		}
@@ -129,7 +138,8 @@ export async function exampleApp(tree: SharedTree): Promise<void> {
 
 	const treeRoot: TreeNode = checkout.contextualizeAnchor(root);
 	// Here this example 'app' just prints the tree, demonstrating getting a simple json compatible view of the tree.
-	// A more realistic application would build a real view of the document here, which would be invalided using ViewChange.
+	// A more realistic application would build a real view of the document here,
+	// which would be invalided using ViewChange.
 	console.log(treeRoot.queryJsonSnapshot.subtree);
 	// The app then waits a while (while maybe some other collaborator will perform edits triggering the logic above).
 	await wait(10000);
@@ -137,40 +147,43 @@ export async function exampleApp(tree: SharedTree): Promise<void> {
 	console.log(treeRoot.queryJsonSnapshot.subtree);
 }
 
-async function wait(ms) {
+async function wait(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export const deleteNode = {
-	id: '710e8cce-c7fa-4d4e-ade2-1ed66bd9bdfc' as CommandId,
+	id: "710e8cce-c7fa-4d4e-ade2-1ed66bd9bdfc" as CommandId,
 	run: (context: CommandContext, options: Empty, { target }: { target: TreeNode }): Place => {
 		const before = target.adjacentPlace(Side.Before);
 		const range = before.rangeTo(target.adjacentPlace(Side.After));
 
-		// This particular delete command uses the policy that if the deleted tree was changed from when this command initially ran,
+		// This particular delete command uses the policy that if
+		// the deleted tree was changed from when this command initially ran,
 		// apply it anyway, but mark it for possible application level merge resolution if part of an offline merge.
 		context.useAsConstraint(
 			range.withContentsOrdered(ContentsConstraint.DeepEquality),
-			ConstraintEffect.ValidRetryOffline
+			ConstraintEffect.ValidRetryOffline,
 		);
 
 		context.detach(range);
 		// This requires `before` to use anchoring which is valid despite the delete having occurred.
-		// Meeting this requirement may require anchoring Before (ex: to be a before(target) instead of a predecessor(target)):
+		// Meeting this requirement may require anchoring Before
+		// (ex: to be a before(target) instead of a predecessor(target)):
 		// depends on the default anchoring policy of adjacentPlace.
 		return before;
 	},
 };
 
 export const moveToFront = {
-	id: '64cacbb8-a52c-47ce-bf68-88be3d2cbd80' as CommandId,
+	id: "64cacbb8-a52c-47ce-bf68-88be3d2cbd80" as CommandId,
 	run: (context: CommandContext, options: Empty, { target }: { target: TreeNode }): void => {
 		const before = target.adjacentPlace(Side.Before);
 		// Assuming iteratorFromEnd is anchored based on the end of the trait, not relative to what ever node is last.
 		const end = target.parent.iteratorFromEnd().current();
 
 		// This enforces that the move to front is not changing which trait the target is in.
-		// If target is moved to another trait before moved before this gets applied, this will detect it and make it conflicted.
+		// If target is moved to another trait before moved before this gets applied,
+		// this will detect it and make it conflicted.
 		// The application could then rerun this command to fix it, moving it to the end of its new trait.
 		context.useAsConstraint(before.rangeTo(end), ConstraintEffect.InvalidAndDiscard);
 
@@ -194,23 +207,25 @@ function sort(context: CommandContext, target: Range, cmp: (a: TreeNode, b: Tree
 
 // Example command using sort.
 export const sortNumbers = {
-	id: '7c16bdc0-f772-46a3-acc5-3504ae745880' as CommandId,
+	id: "7c16bdc0-f772-46a3-acc5-3504ae745880" as CommandId,
 	run: (context: CommandContext, options: Empty, { target }: { target: Range }): void => {
 		sort(context, target, (a, b) => requireNumber(a.value) - requireNumber(b.value));
 	},
 };
 
 function requireNumber(n: Serializable): number {
-	return typeof n === 'number' ? n : commandInvalid();
+	return typeof n === "number" ? n : commandInvalid();
 }
 
 // Note: Redo is the same as undoing an undo (at this level).
 // TODO: Maybe allow a kind of anchor to a Revision（and maybe definition and label?)
 export const undo: Command<{ editId: StableId }, Empty, void> = {
-	id: '083ed8c8-9ee3-435f-b949-190a8eb9915c' as CommandId,
+	id: "083ed8c8-9ee3-435f-b949-190a8eb9915c" as CommandId,
 	run: (context: CommandContext, { editId }: { editId: StableId }, anchors: Empty): void => {
-		// TODO: need way to deal with history access being async sometimes, but sometimes require command to be synchronous.
-		// For now just using "in session" methods which are synchronous. (TODO: proper errors when not in session, or support it)
+		// TODO: need way to deal with history access being async sometimes,
+		// but sometimes require command to be synchronous.
+		// For now just using "in session" methods which are synchronous.
+		// (TODO: proper errors when not in session, or support it)
 		// TODO: need way to report failure (including localized strings).
 		// TODO: actually implement.
 

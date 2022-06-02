@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ConstraintEffect } from '../default-edits';
+import { ConstraintEffect } from "./edits";
 
 // This import is a layering violation. Maybe find a better design.
-import type { Tree } from './Checkout';
-import { Covariant } from './TypeCheck';
+import type { Tree } from "./Checkout";
+import { Covariant } from "./TypeCheck";
 
-export type StableId = string & { readonly StableId: 'b1b691dc-9142-4ea2-a1aa-5f04c3808fea' };
+export type StableId = string & { readonly StableId: "b1b691dc-9142-4ea2-a1aa-5f04c3808fea"; };
 
 /**
  * {@link AnchorData} + Context.
@@ -17,23 +17,28 @@ export type StableId = string & { readonly StableId: 'b1b691dc-9142-4ea2-a1aa-5f
  *
  * An Anchor is a way to look up a tree location in a context (ex: a specific revision).
  * They are used in edits to refer to tree locations to allow merge resolution.
- * Thus Anchors include the bulk of merge resolution policy, and need to be able to describe all tree locations that can be used in edits.
- * The different types of anchors for these different types of tree locations are defined in `ViewAnchor` as extensions of Anchor.
+ * Thus Anchors include the bulk of merge resolution policy,
+ * and need to be able to describe all tree locations that can be used in edits.
+ * The different types of anchors for these different
+ * types of tree locations are defined in `ViewAnchor` as extensions of Anchor.
  *
  * These anchor objects may reference a specific `Tree` and thus can only be used in the context of that tree.
  * See the "Data" variants for the API subset which works between different trees.
  *
- * In an actual implementation, we would want these to be opaque nominally typed objects since the API here is insufficient for the actual implementation to work with:
+ * In an actual implementation, we would want these to be opaque
+ * nominally typed objects since the API here is insufficient for the actual implementation to work with:
  * its just enough for the public API surface.
  *
  * An Anchor is a way to look up a tree location in a context (ex: a specific revision).
- * This particular representation of anchor comes with such a context, and thus corresponds to a location in a concrete tree (or is invalid).
+ * This particular representation of anchor comes with such a context,
+ * and thus corresponds to a location in a concrete tree (or is invalid).
  * Note that this context may be change over time, which can cause the anchor to become invalid, and/or move.
  */
 export interface Anchor extends AnchorData {
 	/**
 	 * Get an immutable view of the current state of the Tree.
-	 * This anchor can be contextualized into the returned view to allow using it to walk that this frozen view of the tree,
+	 * This anchor can be contextualized into the returned view to allow using it to walk that this frozen
+	 * view of the tree,
 	 * unaffected by any future edits.
 	 */
 	snapshot(): Tree;
@@ -51,9 +56,11 @@ export interface Anchor extends AnchorData {
 	/**
 	 * await to get `this` after ensuring that its loaded (isLoaded will be true).
 	 *
-	 * TODO: how does this work for iterators? if iterating a trait (on a loaded node), for example to count the nodes in the trait,
+	 * TODO: how does this work for iterators? if iterating a trait (on a loaded node),
+	 * for example to count the nodes in the trait,
 	 * no opportunity to call ensureLoaded is provided, so how to we chunk sequences?
-	 * Maybe this loads an entire range, but range could also have an APi to give a chunk iterator (iterator over ranges),
+	 * Maybe this loads an entire range,
+	 * but range could also have an APi to give a chunk iterator (iterator over ranges),
 	 * which could be used recursively to access sequence tree (and provide parallel loading opportunities)?
 	 *
 	 * TODO: how does this work with the query methods?
@@ -65,7 +72,8 @@ export interface Anchor extends AnchorData {
 	/**
 	 * @returns if this Anchor is currently valid (resolves to a location in its Tree).
 	 *
-	 * TODO: clarify what happens for each API when used on invalid anchors (some can just work, but many need to fail somehow).
+	 * TODO: clarify what happens for each API when used on invalid anchors
+	 * (some can just work, but many need to fail somehow).
 	 */
 	isValid(): ConstraintEffect | Valid;
 }
@@ -98,7 +106,7 @@ export interface AnchorDataSafe<TAnchor = AnchorData> extends AnchorData, Covari
 
 // Type brand for Json support
 export interface JsonCompatible {
-	readonly JsonCompatible: '7619c7cd-2b74-41c8-bc90-702e83360106';
+	readonly JsonCompatible: "7619c7cd-2b74-41c8-bc90-702e83360106";
 }
 
 /**
