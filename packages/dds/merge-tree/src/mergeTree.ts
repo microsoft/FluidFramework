@@ -1501,7 +1501,8 @@ export class MergeTree {
             } else {
                 ref.segment = newSegment;
                 ref.offset = newSegoff.offset;
-                newSegment.localRefs!.addLocalRef(ref);
+                assert(!!newSegment.localRefs, "localRefs must be allocated");
+                newSegment.localRefs.addLocalRef(ref);
             }
         }
         // TODO is it required to update the path lengths?
