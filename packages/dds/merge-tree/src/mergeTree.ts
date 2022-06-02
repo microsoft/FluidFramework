@@ -1470,32 +1470,39 @@ export class MergeTree {
      * @internal - this method should only be called by client
      */
     public slideReference(ref: LocalReference) {
-        const segment = ref.getSegment();
-        assert(!!segment, "slideReference requires a segment");
+        if (ref.segment) {
+            this.slideReferences(ref.segment, [ref]);
+        }
+    }
+
+    private slideReferences(segment: ISegment, refsToSlide: LocalReference[]) {
         if (!isRemovedAndAcked(segment)) {
-            // We only slide the reference if the segment remove has been sequenced by the server
             return;
         }
         assert(!!segment.localRefs, "Ref not in the segment localRefs");
-        const removedRef = segment.localRefs.removeLocalRef(ref);
-        assert(ref === removedRef, "Ref not in the segment localRefs");
         const newSegoff = this.getSlideToSegment(segment);
         const newSegment = newSegoff.segment;
-        if (!newSegment) {
-            // No valid segments (all nodes removed or not yet created)
-            ref.segment = undefined;
-            ref.offset = 0;
-            return;
-        }
-        if (!newSegment.localRefs) {
+        if (newSegment && !newSegment.localRefs) {
             newSegment.localRefs = new LocalReferenceCollection(newSegment);
         }
-        ref.segment = newSegment;
-        ref.offset = newSegoff.offset;
-        newSegment.localRefs.addLocalRef(ref);
+        for (const ref of refsToSlide) {
+            const removedRef = segment.localRefs.removeLocalRef(ref);
+            assert(ref === removedRef, "Ref not in the segment localRefs");
+            if (!newSegment) {
+                // No valid segments (all nodes removed or not yet created)
+                ref.segment = undefined;
+                ref.offset = 0;
+            } else {
+                ref.segment = newSegment;
+                ref.offset = newSegoff.offset;
+                newSegment.localRefs!.addLocalRef(ref);
+            }
+        }
         // TODO is it required to update the path lengths?
-        this.blockUpdatePathLengths(newSegment.parent, TreeMaintenanceSequenceNumber,
-            LocalClientId);
+        if (newSegment) {
+            this.blockUpdatePathLengths(newSegment.parent, TreeMaintenanceSequenceNumber,
+                LocalClientId);
+        }
     }
 
     /**
@@ -1520,9 +1527,7 @@ export class MergeTree {
         }
         // TODO:ransomr rethink implementation of keeping and sliding refs
         // This works but is fragile and possibly slow
-        for (const ref of refsToSlide) {
-            this.slideReference(ref);
-        }
+        this.slideReferences(segment, refsToSlide);
         segment.localRefs.clear();
         for (const lref of refsToStay) {
             lref.segment = segment;
