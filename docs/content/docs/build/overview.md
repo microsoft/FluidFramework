@@ -63,7 +63,7 @@ Fluid works with multiple service implementations. Each service has a correspond
 
 For specifics about each service-specific client implementation see their corresponding documentation.
 
-- The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package [@fluidframework/tinylicious-client](https://www.npmjs.com/package/@fluidframework/tinylicious-client).
-- The client library for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) is in the package [@fluidframework/azure-client](https://www.npmjs.com/package/@fluidframework/azure-client).
+- The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package `@fluidframework/tinylicious-client`.
+- The client library for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) is in the package `@fluidframework/azure-client`.
 
 For more information see [Packages]({{< relref "packages.md" >}}).
