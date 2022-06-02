@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay, performance } from "@fluidframework/common-utils";
+import { delay, performance } from "@fluidframework/common-utils";
 import { canRetryOnError } from "@fluidframework/driver-utils";
 import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { Odsp409Error } from "./epochTracker";
