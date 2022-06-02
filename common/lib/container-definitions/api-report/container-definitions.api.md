@@ -441,8 +441,6 @@ export type ILoaderOptions = {
 } & {
     cache?: boolean;
     provideScopeLoader?: boolean;
-    noopTimeFrequency?: number;
-    noopCountFrequency?: number;
     maxClientLeaveWaitTime?: number;
 };
 
