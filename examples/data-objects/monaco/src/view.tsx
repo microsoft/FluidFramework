@@ -67,6 +67,9 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
     useEffect(() => {
         const codeModel = monaco.editor.createModel(sharedString.getText(), "typescript");
         const outputModel = monaco.editor.createModel("", "javascript");
+        if (viewElementRef.current === null) {
+            throw new Error("View element div is missing!");
+        }
         const codeEditor = monaco.editor.create(
             viewElementRef.current,
             { model: codeModel, automaticLayout: true },
@@ -75,9 +78,9 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
         let ignoreModelContentChanges: boolean = false;
         codeEditor.onDidChangeModelContent((e) => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-                worker(codeModel.uri.toString()).then((client) => {
-                    client.getEmitOutput(codeModel.uri.toString()).then((r) => {
+            monaco.languages.typescript.getTypeScriptWorker().then(async (worker) => {
+                await worker(codeModel.uri).then(async (client) => {
+                    await client.getEmitOutput(codeModel.uri.toString()).then((r) => {
                         outputModel.setValue(r.outputFiles[0].text);
                     });
                 });
@@ -116,8 +119,8 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
                 /**
                  * Translate the offsets used by the MergeTree into a Range that is
                  * interpretable by Monaco.
-                 * @param offset1 Starting offset
-                 * @param offset2 Ending offset
+                 * @param offset1 - Starting offset
+                 * @param offset2 - Ending offset
                  */
                 const offsetsToRange = (offset1: number, offset2?: number): monaco.Range => {
                     const pos1 = codeModel.getPositionAt(offset1);

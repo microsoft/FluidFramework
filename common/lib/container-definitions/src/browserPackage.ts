@@ -45,7 +45,7 @@ export interface IFluidBrowserPackage extends IFluidPackage {
          * {@inheritDoc @fluidframework/core-interfaces#IFluidPackage.fluid.environment}
          */
         [environment: string]: IFluidPackageEnvironment;
-    }
+    };
 }
 
 /**

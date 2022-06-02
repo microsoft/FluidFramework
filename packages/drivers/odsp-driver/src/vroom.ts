@@ -83,7 +83,7 @@ export async function fetchJoinSession(
                 postBody += `\r\n${JSON.stringify(body)}\r\n`;
             }
             postBody += `\r\n--${formBoundary}--`;
-            const headers: { [index: string]: string } = {
+            const headers: { [index: string]: string; } = {
                 "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
             };
 

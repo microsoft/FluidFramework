@@ -41,7 +41,7 @@ export interface IOpsCachingPolicy {
      * Measured in ms.
      * Default: 5000
      */
-    timerGranularity?: number,
+    timerGranularity?: number;
 
     /**
      * Total number of ops to cache. When we reach that number, ops caching stops
@@ -57,6 +57,7 @@ export interface ICollabSessionOptions {
      */
     unauthenticatedUserDisplayName?: string;
     /**
+     * @deprecated - Due to security reasons we will passing the token via Authorization header only.
      * Value indicating session preference to always pass access token via Authorization header.
      * Default behavior is to pass access token via query parameter unless overall href string
      * length exceeds 2048 characters. Using query param is performance optimization which results
@@ -122,5 +123,5 @@ export interface HostStoragePolicy {
      * method, we will request for send the request to ODSP with the same (if the flag is enabled) so
      * that a sharing can be created with the creation of file to save number for round trips made to ODSP.
      */
-     enableShareLinkWithCreate?: boolean
+     enableShareLinkWithCreate?: boolean;
 }

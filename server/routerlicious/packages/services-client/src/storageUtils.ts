@@ -147,7 +147,7 @@ export function convertSummaryTreeToWholeSummaryTree(
     flatTree: IWholeFlatSummaryTree,
     treePrefixToRemove: string,
 ): ISnapshotTree {
-    const lookup: { [path: string]: ISnapshotTree } = {};
+    const lookup: { [path: string]: ISnapshotTree; } = {};
     // Root tree id will be used to determine which version was downloaded.
     const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
     lookup[""] = root;
@@ -194,7 +194,7 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
             blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
         });
     }
-    const flatSummaryTree = flatSummary.trees && flatSummary.trees[0];
+    const flatSummaryTree = flatSummary.trees?.[0];
     const sequenceNumber = flatSummaryTree?.sequenceNumber;
     const snapshotTree = buildHierarchy(
         flatSummaryTree,

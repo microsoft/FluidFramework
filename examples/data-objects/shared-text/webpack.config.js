@@ -6,6 +6,7 @@ const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
 const pkg = require("./package.json");
+const webpack = require("webpack");
 // var Visualizer = require('webpack-visualizer-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 // const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
@@ -17,6 +18,13 @@ module.exports = env => {
             entry: './src/index.ts',
             resolve: {
                 extensions: [".mjs", ".ts", ".tsx", ".js"],
+                fallback: {
+                    dgram: false,
+                    fs: false,
+                    net: false,
+                    tls: false,
+                    child_process: false,
+                }
             },
             devtool: 'source-map',
             mode: "production",
@@ -67,13 +75,6 @@ module.exports = env => {
                     }
                 ]
             },
-            node: {
-                dgram: 'empty',
-                fs: 'empty',
-                net: 'empty',
-                tls: 'empty',
-                child_process: 'empty',
-            },
             devServer: { devMiddleware: { stats: "minimal" }},
             output: {
                 filename: '[name].bundle.js',
@@ -88,6 +89,9 @@ module.exports = env => {
                 globalObject: 'self',
             },
             plugins: [
+                new webpack.ProvidePlugin({
+                    process: 'process/browser'
+                }),
                 // new MonacoWebpackPlugin()
                 // new BundleAnalyzerPlugin()
             ]

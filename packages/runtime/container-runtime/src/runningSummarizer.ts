@@ -343,7 +343,7 @@ export class RunningSummarizer implements IDisposable {
         }
 
         this.lockedSummaryAction(async () => {
-            const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
+            const attempts: (ISummarizeOptions & { delaySeconds?: number; })[] = [
                 { refreshLatestAck: false, fullTree: false },
                 { refreshLatestAck: true, fullTree: false },
                 { refreshLatestAck: true, fullTree: false, delaySeconds: 2 * 60 },

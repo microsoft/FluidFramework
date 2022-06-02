@@ -28,7 +28,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
     }): void;
     addRouteToAllNodes(outboundRoute: string): void;
     // (undocumented)
-    readonly gcNodes: {
+    get gcNodes(): {
         [id: string]: string[];
     };
     // (undocumented)
@@ -53,6 +53,15 @@ export function removeRouteFromAllNodes(gcNodes: {
 export function runGarbageCollection(referenceGraph: {
     [id: string]: string[];
 }, rootIds: string[], logger: ITelemetryLogger): IGCResult;
+
+// @public
+export function trimLeadingAndTrailingSlashes(str: string): string;
+
+// @public
+export function trimLeadingSlashes(str: string): string;
+
+// @public
+export function trimTrailingSlashes(str: string): string;
 
 // @public
 export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBase): Map<string, IGarbageCollectionDetailsBase>;

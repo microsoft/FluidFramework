@@ -128,8 +128,8 @@ function createCachedResolver(resolver: IUrlResolver) {
     return cacheResolver;
 }
 
-export interface ILoaderOptions extends ILoaderOptions1{
-    summarizeProtocolTree?: boolean,
+export interface ILoaderOptions extends ILoaderOptions1 {
+    summarizeProtocolTree?: boolean;
 }
 
 /**
@@ -203,6 +203,7 @@ export interface ILoaderProps {
     /**
      * Proxy loader factories for loading containers via proxy in other contexts,
      * like web workers, or worker threads.
+     * @deprecated Not recommended for general use and will be removed in an upcoming release.
      */
     readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 
@@ -259,6 +260,7 @@ export interface ILoaderServices {
     /**
      * Proxy loader factories for loading containers via proxy in other contexts,
      * like web workers, or worker threads.
+     * @deprecated Not recommended for general use and will be removed in an upcoming release.
      */
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
 
@@ -393,7 +395,7 @@ export class Loader implements IHostLoader {
     private async resolveCore(
         request: IRequest,
         pendingLocalState?: IPendingLocalState,
-    ): Promise<{ container: Container; parsed: IParsedUrl }> {
+    ): Promise<{ container: Container; parsed: IParsedUrl; }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
