@@ -50,6 +50,7 @@ For more details on GC and options for controlling its behavior, please see [thi
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
 - [Remove Container.setAutoReconnect() and Container.resume()](#Remove-Container-setAutoReconnect-and-resume)
 - [Remove IContainer.connected and IFluidContainer.connected](#Remove-IContainer-connected-and-IFluidContainer-connected)
+- [Remove `noopTimeFrequency` and `noopCountFrequency` from ILoaderOptions](#remove-nooptimefrequency-and-noopcountfrequency-from-iloaderoptions)
 - [proxyLoaderFactories members removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-removed-from-ILoaderProps-and-ILoaderServices)
 
 ### Changed AzureConnectionConfig API
@@ -118,6 +119,9 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
     console.log("Container is connected");
 }
 ```
+
+### Remove `noopTimeFrequency` and `noopCountFrequency` from ILoaderOptions
+`noopTimeFrequency` and `noopCountFrequency` are removed from `ILoaderOptions`. Please use `noopTimeFrequency` and `noopCountFrequency` from `IClientConfiguration` in `@fluidframework/protocol-definitions`.
 
 ### proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices
 The `proxyLoaderFactories` member on `ILoaderProps` and `ILoaderServices` was deprecated in 0.59 and has now been removed.
