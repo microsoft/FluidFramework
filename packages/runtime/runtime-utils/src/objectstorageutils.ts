@@ -19,24 +19,23 @@ export function getNormalizedObjectStoragePathParts(path: string) {
     return [];
 }
 
-export async function listBlobsAtTreePath(inputTree: ITree, path: string): Promise<string[]> {
+export async function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]> {
     const pathParts = getNormalizedObjectStoragePathParts(path);
     let tree: ITree | undefined = inputTree;
     while (tree?.entries !== undefined && pathParts.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const part = pathParts.shift()!;
-        const index = tree.entries.findIndex((value) => {
+        const part = pathParts.shift();
+        const treeEntry = tree.entries.find((value) => {
             if (value.type === "Tree" && value.path === part) {
                 return true;
             } else {
                 return false;
             }
         });
-        if (index === -1) {
-            tree = undefined;
-        } else {
-            const treeEntry = tree.entries[index];
+
+        if (treeEntry?.type === "Tree") {
             tree = treeEntry.value;
+        } else {
+            tree = undefined;
         }
     }
     if (tree?.entries === undefined || pathParts.length !== 0) {

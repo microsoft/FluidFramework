@@ -107,7 +107,7 @@ export interface ISummarizerNodeRootContract {
 }
 
 // @public (undocumented)
-export function listBlobsAtTreePath(inputTree: ITree, path: string): Promise<string[]>;
+export function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]>;
 
 // @public
 export function mergeStats(...stats: ISummaryStats[]): ISummaryStats;
@@ -121,7 +121,7 @@ export class ObjectStoragePartition implements IChannelStorageService {
     list(path: string): Promise<string[]>;
     // (undocumented)
     readBlob(path: string): Promise<ArrayBufferLike>;
-    }
+}
 
 // @public
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
@@ -197,11 +197,10 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     get stats(): Readonly<ISummaryStats>;
     // (undocumented)
     get summary(): ISummaryTree;
-    }
+}
 
 // @public (undocumented)
 export function utf8ByteLength(str: string): number;
-
 
 // (No @packageDocumentation comment for this package)
 

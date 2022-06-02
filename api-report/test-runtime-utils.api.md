@@ -553,7 +553,7 @@ export class MockSharedObjectServices implements IChannelServices {
 
 // @public
 export class MockStorage implements IChannelStorageService {
-    constructor(tree: ITree);
+    constructor(tree?: ITree | undefined);
     // (undocumented)
     contains(path: string): Promise<boolean>;
     // (undocumented)
@@ -563,7 +563,7 @@ export class MockStorage implements IChannelStorageService {
     // (undocumented)
     readBlob(path: string): Promise<ArrayBufferLike>;
     // (undocumented)
-    protected tree: ITree;
+    protected tree?: ITree | undefined;
 }
 
 // (No @packageDocumentation comment for this package)
