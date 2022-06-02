@@ -60,7 +60,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     }
 
     /**
-     * {@inheritDoc IDocumentServiceFactory.createContainer}
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentServiceFactory.createContainer}
      *
      * @throws {@link DocumentPostCreateError}
      * If an exception is thrown while invoking the provided {@link ITokenProvider.documentPostCreateCallback}.
@@ -172,9 +172,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     }
 
     /**
-     * Creates the document service after extracting different endpoints URLs from a resolved URL.
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentServiceFactory.createContainer}
      *
-     * @param resolvedUrl - URL containing different endpoint URLs.
      * @returns Routerlicious document service.
      */
     public async createDocumentService(
@@ -243,7 +242,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
  * in {@link ITokenProvider.documentPostCreateCallback}.
  * It is the consumer's responsibility to ensure that any state related to container creation is appropriately
  * cleaned up in the event of failure.
- * E.g. TODO
+ * This includes the document itself, which will have been created by the time this error was thrown.
+ *
+ * TODO: examples of suggested actions for recovery.
+ * - How would a user delete the created document?
+ * - What would a retry pattern look like here?
  */
  export class DocumentPostCreateError extends Error {
     public constructor(
@@ -255,18 +258,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         super(DocumentPostCreateError.createMessage(innerError));
     }
 
-    /**
-     * {@inheritDoc Error.name}
-     */
     public readonly name = "DocumentPostCreateError";
 
-    /**
-     * {@inheritDoc Error.stack}
-     */
     public get stack() { return this.innerError.stack; }
 
     private static createMessage(innerError: Error): string {
-        return `An error was thrown in the provided callback provided to "documentPostCreateCallback".\n`
+        return `An error was thrown in the callback provided to "documentPostCreateCallback".\n`
             + "Inner exception:\n"
             + `\t${innerError.message}`;
     }
