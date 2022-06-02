@@ -299,11 +299,8 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
 
-// @public @deprecated (undocumented)
-export const IDeltaSender: keyof IProvideDeltaSender;
-
 // @public
-export interface IDeltaSender extends IProvideDeltaSender {
+export interface IDeltaSender {
     flush(): void;
 }
 
@@ -388,17 +385,6 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public @deprecated (undocumented)
-export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
-
-// @public @deprecated (undocumented)
-export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
-    // (undocumented)
-    intelligence: {
-        [service: string]: any;
-    };
-}
-
 // @public
 export interface IGenericError extends IErrorBase {
     // (undocumented)
@@ -451,22 +437,10 @@ export interface IPendingLocalState {
     url: string;
 }
 
-// @public @deprecated (undocumented)
-export interface IProvideDeltaSender {
-    // @deprecated (undocumented)
-    readonly IDeltaSender: IDeltaSender;
-}
-
 // @public (undocumented)
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
-// @public @deprecated (undocumented)
-export interface IProvideFluidTokenProvider {
-    // (undocumented)
-    readonly IFluidTokenProvider: IFluidTokenProvider;
 }
 
 // @public (undocumented)
