@@ -51,22 +51,6 @@ describe("Create New Utils Tests", () => {
         return summary;
     };
 
-    const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
-    const driveId = "driveId";
-    const itemId = "itemId";
-    const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
-    const filePath = "path";
-    let newFileParams: INewFileInfo;
-
-    beforeEach(async () => {
-        newFileParams = {
-            driveId,
-            siteUrl,
-            filePath,
-            filename: "filename",
-        };
-    });
-
     const test = (snapshot: ISnapshotContents) => {
         const snapshotTree = snapshot.snapshotTree;
         assert.strictEqual(Object.entries(snapshotTree.trees).length, 2, "app and protocol should be there");
@@ -99,7 +83,11 @@ describe("Create New Utils Tests", () => {
     });
 
     it("Should cache converted summary during createNewFluidFile", async () => {
+        const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
+        const driveId = "driveId";
+        const itemId = "itemId";
         const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+        const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
         const localCache = createUtLocalCache();
         // use null logger here as we expect errors
         const epochTracker = new EpochTracker(
@@ -109,6 +97,14 @@ describe("Create New Utils Tests", () => {
                 resolvedUrl,
             },
             new TelemetryNullLogger());
+
+        const filePath = "path";
+        const newFileParams: INewFileInfo = {
+            driveId,
+            siteUrl: "https://www.localhost.xxx",
+            filePath,
+            filename: "filename",
+        };
 
         const fileEntry: IFileEntry = {
             docId: hashedDocumentId,
@@ -135,9 +131,12 @@ describe("Create New Utils Tests", () => {
     });
 
     it("Should save share link information received during createNewFluidFile", async () => {
+        const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
+        const driveId = "driveId";
+        const itemId = "itemId";
         const createLinkType = ShareLinkTypes.csl;
         const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
-
+        const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
         // use null logger here as we expect errors
         const epochTracker = new EpochTracker(
             createUtLocalCache(),
@@ -147,7 +146,13 @@ describe("Create New Utils Tests", () => {
             },
             new TelemetryNullLogger());
 
-        newFileParams.createLinkType = createLinkType;
+        const newFileParams: INewFileInfo = {
+            driveId,
+            siteUrl: "https://www.localhost.xxx",
+            filePath: "path",
+            filename: "filename",
+            createLinkType,
+        };
 
         const fileEntry: IFileEntry = {
             docId: hashedDocumentId,
@@ -201,7 +206,11 @@ describe("Create New Utils Tests", () => {
     });
 
     it("Should set the isClpCompliantApp prop on resolved url if already present", async () => {
+        const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
+        const driveId = "driveId";
+        const itemId = "itemId";
         const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+        const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
         const localCache = createUtLocalCache();
         // use null logger here as we expect errors
         const epochTracker = new EpochTracker(
@@ -211,6 +220,13 @@ describe("Create New Utils Tests", () => {
                 resolvedUrl,
             },
             new TelemetryNullLogger());
+
+        const newFileParams: INewFileInfo = {
+            driveId,
+            siteUrl: "https://www.localhost.xxx",
+            filePath: "path",
+            filename: "filename",
+        };
 
         const fileEntry: IFileEntry = {
             docId: hashedDocumentId,
@@ -249,6 +265,6 @@ describe("Create New Utils Tests", () => {
             { itemId: "itemId1", id: "Summary handle" },
             { "x-fluid-epoch": "epoch1" },
             );
-    assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
+        assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
     });
 });
