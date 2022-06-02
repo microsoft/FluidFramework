@@ -1447,8 +1447,8 @@ export class MergeTree {
             return true;
         });
         let offset = 0;
-        if (slideToSegment && !foundSegmentPastStart && !isRemoved(slideToSegment)) {
-            // If slid nearer onto a non-removed segment, offset should be at the end of the segment
+        if (slideToSegment && !foundSegmentPastStart) {
+            // If slid nearer then offset should be at the end of the segment
             offset = slideToSegment.cachedLength - 1;
         }
         return { segment: slideToSegment, offset };

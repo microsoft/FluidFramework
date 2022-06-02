@@ -399,6 +399,66 @@ describe("MergeTree.Client", () => {
         assert.equal(client2.localReferencePositionToPosition(c2LocalRef2), 1);
     });
 
+    it("References can have offsets when slid to locally removed segment", () => {
+        const client1 = new TestClient();
+        const client2 = new TestClient();
+
+        client1.startOrUpdateCollaboration("1");
+        client2.startOrUpdateCollaboration("2");
+
+        let seq = 0;
+        const insert1 = client1.makeOpMessage(
+            client1.insertTextLocal(0, "ABCDE"),
+            ++seq);
+        client1.applyMsg(insert1);
+        client2.applyMsg(insert1);
+
+        const segInfo = client1.getContainingSegment(4);
+        const localRef = client1.createLocalReferencePosition(
+            segInfo.segment!, segInfo.offset!, ReferenceType.SlideOnRemove, undefined);
+        const createReference1 = client1.makeOpMessage(
+            { type: MergeTreeDeltaType.INSERT }, ++seq, insert1.sequenceNumber);
+
+        const remove1 =
+            client2.makeOpMessage(
+                client2.removeRangeLocal(4, 5),
+                ++seq);
+
+        const insert2 = client1.makeOpMessage(
+            client1.insertTextLocal(2, "XY"),
+            ++seq);
+
+        const remove2 =
+            client2.makeOpMessage(
+                client2.removeRangeLocal(1, 4),
+                ++seq);
+
+        const segoff = client2.getSlideOnRemoveReferencePosition(4, createReference1);
+        const c2LocalRef = client2.createLocalReferencePosition(
+            segoff.segment!, segoff.offset!, ReferenceType.SlideOnRemove, undefined);
+        assert.equal(client1.localReferencePositionToPosition(localRef), 6);
+        assert.equal(client2.localReferencePositionToPosition(c2LocalRef), 1);
+
+        client1.applyMsg(remove1);
+        client2.applyMsg(remove1);
+
+        assert.equal(client1.localReferencePositionToPosition(localRef), 5);
+        assert.equal(client2.localReferencePositionToPosition(c2LocalRef), 1);
+
+        client1.applyMsg(insert2);
+        client2.applyMsg(insert2);
+
+        assert.equal(client1.localReferencePositionToPosition(localRef), 5);
+        assert.equal(client2.getText(), "AXY");
+        assert.equal(client2.localReferencePositionToPosition(c2LocalRef), 3);
+
+        client1.applyMsg(remove2);
+        client2.applyMsg(remove2);
+
+        assert.equal(client1.localReferencePositionToPosition(localRef), 2);
+        assert.equal(client2.localReferencePositionToPosition(c2LocalRef), 2);
+    });
+
     it("Split segment with no references and append to segment with references", () => {
         const clients = createClientsAtInitialState("", "A", "B");
 
