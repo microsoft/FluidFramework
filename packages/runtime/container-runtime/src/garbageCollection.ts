@@ -568,7 +568,7 @@ export class GarbageCollector implements IGarbageCollector {
                     gcState.gcNodes[rootId] = { outboundRoutes: Array.from(outboundRoutes) };
                 }
                 assert(gcState.gcNodes[dsRootId] !== undefined,
-                    0x2a9 /* `GC nodes for data store ${dsId} not in GC blob` */);
+                    0x2a9 /* GC nodes for data store not in GC blob */);
                 gcState.gcNodes[dsRootId].unreferencedTimestampMs = gcSummaryDetails.unrefTimestamp;
             }
 
