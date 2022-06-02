@@ -423,15 +423,17 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     private async connectCore(connectionMode?: ConnectionMode): Promise<void> {
-        if (this.pendingConnection !== undefined || this.connection !== undefined) {
+        assert(!this.closed, 0x26a /* "not closed" */);
+
+        if (this.connection !== undefined) {
+            return;  // Connection attempt already completed succesfully
+        }
+
+        if (this.pendingConnection !== undefined) {
             this.cancelConnection();  // Throw out in-progress connection attempt in favor of new attempt
         }
         this.pendingConnection = { abortController: new AbortController() };
         const abortSignal = this.pendingConnection.abortController.signal;
-
-        assert(!this.closed, 0x26a /* "not closed" */);
-        assert(this.pendingConnection !== undefined, "this.pendingConnection not defined");
-        assert(this.connection === undefined, "this.connection is defined");
 
         let requestedMode = connectionMode ?? this.defaultReconnectionMode;
 
