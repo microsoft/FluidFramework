@@ -2356,8 +2356,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
             const gcSummaryTreeStats = summaryTree.tree[gcTreeKey]
-            ? calculateStats(summaryTree.tree[gcTreeKey])
-            : undefined;
+                ? calculateStats(summaryTree.tree[gcTreeKey])
+                : undefined;
 
             const summaryStats: IGeneratedSummaryStats = {
                 dataStoreCount: this.dataStores.size,
