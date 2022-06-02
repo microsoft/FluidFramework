@@ -106,7 +106,9 @@ export type EnforceTypeCheckTests =
 	| requireFalse<false>
 
 	// test isAssignableTo for normal types
+	| requireTrue<isAssignableTo<Empty1, Empty1>>
 	| requireTrue<isAssignableTo<Empty1, Empty2>>
+	| requireTrue<isAssignableTo<Nominal1, Nominal1>>
 	| requireFalse<isAssignableTo<Nominal1, Nominal2>>
 	| requireTrue<isAssignableTo<Derived1, Nominal1>>
 	| requireFalse<isAssignableTo<Derived1, Derived2>>

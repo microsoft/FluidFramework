@@ -70,7 +70,9 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
 /**
  * Use this as the type of a protected field to cause a type to use nominal typing instead of structural.
  *
+ * ```
  * protected _typeCheck?: MakeNominal;
+ * ```
  *
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
  *
@@ -81,7 +83,9 @@ export interface MakeNominal { }
 /**
  * Constrain generic type parameters to Contravariant.
  *
+ * ```
  * protected _typeCheck?: Contravariant<T>;
+ * ```
  *
  * @public
  */
@@ -92,7 +96,9 @@ export interface Contravariant<T> {
 /**
  * Constrain generic type parameters to Covariant.
  *
+ * ```
  * protected _typeCheck?: Covariant<T>;
+ * ```
  *
  * @public
  */
@@ -107,7 +113,9 @@ export interface Covariant<T> {
  * it only prevents assignment between types when neither of the two Ts extends the
  * other.
  *
+ * ```
  * protected _typeCheck?: Bivariant<T>;
+ * ```
  *
  * @public
  */
@@ -121,7 +129,9 @@ export interface Bivariant<T> {
 /**
  * Constrain generic type parameters to Invariant.
  *
+ * ```
  * protected _typeCheck?: Invariant<T>;
+ * ```
  *
  * @public
  */
@@ -193,14 +203,3 @@ export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
-
-/**
- * When working with conditional types,
- * Typescript is not very good at tracking things which have been proven along branches.
- * This type function returns its first input only if it extends its second input.
- * The second input should be the `TExt` of the nearest enclosing true branch of a `T extends TExt` condition.
- * Type checking will fail if the assumption does not hold.
- *
- * @public
- */
-export type given<T, TExt> = T extends TExt ? T : never;
