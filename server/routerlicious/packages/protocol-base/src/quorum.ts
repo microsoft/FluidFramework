@@ -92,7 +92,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      * Adds a new client to the quorum
      */
     public addMember(clientId: string, details: ISequencedClient) {
-        assert(!this.members.has(clientId), 0x1ce /* `!this.members.has(${clientId})` */);
+        assert(!this.members.has(clientId), 0x1ce /* clientId not found */);
         this.members.set(clientId, details);
         this.emit("addMember", clientId, details);
 
@@ -104,7 +104,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      * Removes a client from the quorum
      */
     public removeMember(clientId: string) {
-        assert(this.members.has(clientId), 0x1cf /* `this.members.has(${clientId})` */);
+        assert(this.members.has(clientId), 0x1cf /* clientId not found */);
         this.members.delete(clientId);
         this.emit("removeMember", clientId);
 
@@ -299,7 +299,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
         sequenceNumber: number,
         local: boolean,
         clientSequenceNumber: number) {
-        assert(!this.proposals.has(sequenceNumber), 0x1d0 /* `!this.proposals.has(${sequenceNumber})` */);
+        assert(!this.proposals.has(sequenceNumber), 0x1d0 /* sequenceNumber not found */);
 
         const proposal = new PendingProposal(
             sequenceNumber,
