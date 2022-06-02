@@ -171,7 +171,7 @@ export class ConnectionManager implements IConnectionManager {
     /**
      * The current connection mode, initially read.
      */
-     public get connectionMode(): ConnectionMode {
+    public get connectionMode(): ConnectionMode {
         return this.connection?.mode ?? "read";
     }
 

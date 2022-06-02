@@ -10,6 +10,7 @@ import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
+import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -37,6 +38,7 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
+import { SummaryType } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
 export class AuthorizationError extends LoggingError implements IAuthorizationError, IFluidErrorBase {
@@ -112,6 +114,9 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 
 // @public
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
+
+// @public
+export function convertSnapshotAndBlobsToSummaryTree(snapshot: ISnapshotTree, blobs: Map<string, ArrayBuffer>): ISummaryTree;
 
 // @public
 export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree;
@@ -209,7 +214,7 @@ export class InsecureUrlResolver implements IUrlResolver {
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
-    }
+}
 
 // @public
 export interface IProgress {
@@ -218,10 +223,21 @@ export interface IProgress {
 }
 
 // @public (undocumented)
+export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+
+// @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
+
+// @public (undocumented)
+export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+
+// @public
+export interface ISummaryTreeAssemblerProps {
+    unreferenced?: true;
+}
 
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
@@ -237,7 +253,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "none:";
-    }
+}
 
 // @public (undocumented)
 export class MultiUrlResolver implements IUrlResolver {
@@ -247,7 +263,7 @@ export class MultiUrlResolver implements IUrlResolver {
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
-    }
+}
 
 // @public (undocumented)
 export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
@@ -288,7 +304,7 @@ export class ParallelRequests<T> {
     get canceled(): boolean;
     // (undocumented)
     run(concurrency: number): Promise<void>;
-    }
+}
 
 // @public (undocumented)
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
@@ -374,6 +390,16 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
 
 // @public
+export class SummaryTreeAssembler {
+    constructor(props?: ISummaryTreeAssemblerProps | undefined);
+    addAttachment(id: string): void;
+    addBlob(key: string, content: string | Uint8Array): void;
+    addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
+    addTree(key: string, summary: ISummaryTree): void;
+    get summary(): ISummaryTree;
+}
+
+// @public
 export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
     constructor(message: string, retryAfterSeconds: number, props: DriverErrorTelemetryProps);
     // (undocumented)
@@ -386,7 +412,6 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
 
 // @public
 export function waitForConnectedState(minDelay: number): Promise<void>;
-
 
 // (No @packageDocumentation comment for this package)
 

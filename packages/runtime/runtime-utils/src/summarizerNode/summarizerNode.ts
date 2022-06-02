@@ -64,7 +64,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     protected readonly pendingSummaries = new Map<string, SummaryNode>();
     private readonly outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
-    private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
+    private wipLocalPaths: { localPath: EscapedPath; additionalPath?: EscapedPath; } | undefined;
     private wipSkipRecursion = false;
 
     public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
@@ -297,8 +297,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         } else {
             assert(
                 referenceSequenceNumber === summaryNode.referenceSequenceNumber,
-                // eslint-disable-next-line max-len
-                0x1a7 /* `Pending summary reference sequence number should be consistent: ${summaryNode.referenceSequenceNumber} != ${referenceSequenceNumber}` */,
+                0x1a7 /* Pending summary reference sequence number should be consistent */,
             );
 
             // Clear earlier pending summaries
@@ -394,7 +393,7 @@ export class SummarizerNode implements IRootSummarizerNode {
     public async loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: ReadAndParseBlob,
-    ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }> {
+    ): Promise<{ baseSummary: ISnapshotTree; outstandingOps: ISequencedDocumentMessage[]; }> {
         const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
@@ -428,7 +427,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         if (lastOp !== undefined) {
             assert(
                 lastOp.sequenceNumber < op.sequenceNumber,
-                0x1aa /* `Out of order change recorded: ${lastOp.sequenceNumber} > ${op.sequenceNumber}` */,
+                0x1aa /* Out of order change recorded */,
             );
         }
         this.invalidate(op.sequenceNumber);

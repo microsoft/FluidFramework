@@ -71,5 +71,5 @@ export interface ICheckpointManager {
         protocolHead: number,
         pendingCheckpointMessages: ISequencedOperationMessage[]): Promise<void>;
 
-    delete(sequenceNumber: number, lte: boolean): Promise<void>
+    delete(sequenceNumber: number, lte: boolean): Promise<void>;
 }

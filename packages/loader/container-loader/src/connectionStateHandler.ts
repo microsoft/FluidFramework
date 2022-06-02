@@ -8,7 +8,7 @@ import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { ConnectionState } from "./container";
+import { ConnectionState } from "./connectionState";
 import { ICatchUpMonitor } from "./catchUpMonitor";
 
 export interface IConnectionStateHandler {
@@ -238,6 +238,7 @@ export class ConnectionStateHandler {
         // We are fetching ops from storage in parallel to connecting to Relay Service,
         // and given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
+// <<<<<<< HEAD
         const pendingClientAlreadyInQuorum = quorumClients?.getMember(this._pendingClientId) !== undefined;
 
         // IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
@@ -247,6 +248,15 @@ export class ConnectionStateHandler {
         if (writeConnection && !pendingClientAlreadyInQuorum) {
             // Previous client left, and we are waiting for our own join op. When it is processed we'll join the quorum
             // and attempt to transition to Connected state via receivedAddMemberEvent.
+// =======
+        // // Note that we might be still initializing quorum - connection is established proactively on load!
+        // if (quorumClients?.getMember(details.clientId) !== undefined
+        //     || connectionMode === "read"
+        // ) {
+        //    assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "there should be no timer for 'read' connections" */);
+        //     this.setConnectionState(ConnectionState.Connected);
+        // } else if (connectionMode === "write") {
+// >>>>>>> origin/main
             this.startJoinOpTimer();
         } else if (this.prevClientLeftTimer.hasTimer) {
             // Nothing to do now - when the previous client is removed from the quorum

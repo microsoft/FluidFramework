@@ -49,11 +49,11 @@ export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchema
     }
 
     private isNumber(propValue: any): propValue is number {
-        return typeof(propValue) === "number";
+        return typeof (propValue) === "number";
     }
 
     private isString(propValue: any): propValue is string {
-        return typeof(propValue) === "string";
+        return typeof (propValue) === "string";
     }
 }
 

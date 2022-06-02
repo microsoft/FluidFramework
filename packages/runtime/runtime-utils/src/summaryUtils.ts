@@ -21,7 +21,11 @@ import {
     ITreeEntry,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryStats, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    ISummaryStats,
+    ISummarizeResult,
+    ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -93,7 +97,7 @@ function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats):
     }
 }
 
-export function calculateStats(summary: ISummaryTree): ISummaryStats {
+export function calculateStats(summary: SummaryObject): ISummaryStats {
     const stats = mergeStats();
     calculateStatsCore(summary, stats);
     return stats;
@@ -110,6 +114,15 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
 }
 
 export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void {
+    summary.summary.tree[key] = summarizeResult.summary;
+    summary.stats = mergeStats(summary.stats, summarizeResult.stats);
+}
+
+export function addSummarizeResultToSummary(
+    summary: ISummaryTreeWithStats,
+    key: string,
+    summarizeResult: ISummarizeResult,
+): void {
     summary.summary.tree[key] = summarizeResult.summary;
     summary.stats = mergeStats(summary.stats, summarizeResult.stats);
 }
@@ -133,7 +146,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
         this.summaryStats.treeNodeCount++;
     }
 
-    private readonly summaryTree: { [path: string]: SummaryObject } = {};
+    private readonly summaryTree: { [path: string]: SummaryObject; } = {};
     private summaryStats: ISummaryStats;
 
     public addBlob(key: string, content: string | Uint8Array): void {

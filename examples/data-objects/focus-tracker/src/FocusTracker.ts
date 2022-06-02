@@ -25,7 +25,10 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 
     /**
      * Local map of focus status for clients
+     *
+     * ```
      * Map<userId, Map<clientid, hasFocus>>
+     * ```
      */
     private readonly focusMap = new Map<string, Map<string, boolean>>();
 

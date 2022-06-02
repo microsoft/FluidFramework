@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import EventEmitter from "events";
+//* import EventEmitter from "events";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { CatchUpMonitor, ConnectionState } from "../container";
+import { ConnectionState } from "../connectionState";
 import { ConnectionStateHandler } from "../connectionStateHandler";
 import { ImmediateCatchUpMonitor } from "../catchUpMonitor";
 

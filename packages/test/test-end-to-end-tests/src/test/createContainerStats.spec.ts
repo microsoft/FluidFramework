@@ -10,13 +10,12 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
+import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -24,6 +23,10 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 class TestDataObject extends DataObject {
     public get _root() {
         return this.root;
+    }
+
+    public get containerRuntime() {
+        return this.context.containerRuntime;
     }
 }
 
@@ -64,93 +67,129 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 
     let mainContainer: IContainer;
     let mainDataStore: TestDataObject;
+    let createContainerTimestamp: number;
+    let createContainerRuntimeVersion: number;
     let summaryCollection: SummaryCollection;
-    const mockLogger: MockLogger = new MockLogger();
-    let containerStatsEvents: ITelemetryBaseEvent[];
+    let mockLogger: MockLogger;
+
+    const loadContainer = async (summaryVersion?: string): Promise<IContainer> => {
+        const requestHeader = {
+            [LoaderHeader.version]: summaryVersion,
+        };
+        return provider.loadContainer(runtimeFactory, { logger: mockLogger }, requestHeader);
+    };
 
     /**
      * Waits for a summary with the current state of the document (including all in-flight changes). It basically
      * synchronizes all containers and waits for a summary that contains the last processed sequence number.
-     * @returns the sequence number of the summary
+     * @returns the version of this summary. This version can be used to load a Container with the summary associated
+     * with it.
      */
-     async function waitForSummary(): Promise<number> {
+    async function waitForSummary(): Promise<string> {
+        // Send an op which should trigger a summary.
+        mainDataStore._root.set("test", "value");
         await provider.ensureSynchronized();
-        const sequenceNumber = mainContainer.deltaManager.lastSequenceNumber;
-        await summaryCollection.waitSummaryAck(sequenceNumber);
-        return sequenceNumber;
+        const ackedSummary: IAckedSummary =
+            await summaryCollection.waitSummaryAck(mainContainer.deltaManager.lastSequenceNumber);
+        return ackedSummary.summaryAck.contents.handle;
     }
 
-    const getContainerLoadStatsEvents = (): ITelemetryBaseEvent[] =>
-        mockLogger.events.filter((event) => event.eventName === "fluid:telemetry:ContainerLoadStats");
+    function validateLoadStats(
+        summaryNumber: number,
+        containerLoadDataStoreCount: number,
+        referencedDataStoreCount: number,
+        message: string,
+        summarizer: boolean = false,
+    ) {
+        mockLogger.assertMatch([
+            {
+                eventName: "fluid:telemetry:ContainerLoadStats",
+                summaryNumber,
+                containerLoadDataStoreCount,
+                referencedDataStoreCount,
+                createContainerTimestamp,
+                createContainerRuntimeVersion,
+                clientType: summarizer ? "noninteractive/summarizer" : "interactive",
+            },
+        ], message);
+    }
 
-    const createContainer = async (logger): Promise<IContainer> => provider.createContainer(runtimeFactory, { logger });
-
-    beforeEach(async () => {
-    });
-
-    it("should generate correct container load stats with two summarizer containers", async function() {
+    beforeEach(async function() {
         provider = getTestObjectProvider();
-        // GitHub issue: #9534
         if (provider.driver.type === "odsp") {
             this.skip();
         }
 
-        // Create a Container for the first client.
-        mainContainer = await createContainer(mockLogger);
+        mockLogger = new MockLogger();
 
-        // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
-        // re-sent. Do it here so that the extra events don't mess with rest of the test.
+        // Create and set up a container for the first client.
+        mainContainer = await provider.createContainer(runtimeFactory, { logger: mockLogger });
         mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
-        mainDataStore._root.set("test", "value");
-
         // Create and setup a summary collection that will be used to track and wait for summaries.
         summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger());
 
-        // Wait for summary that contains the above set.
+        const loadStatEvents =
+            mockLogger.events.filter((event) => event.eventName === "fluid:telemetry:ContainerLoadStats");
+        assert(loadStatEvents.length === 1, "There should only be one event for the created container");
+        createContainerTimestamp = loadStatEvents[0].createContainerTimestamp as number;
+        createContainerRuntimeVersion = loadStatEvents[0].createContainerRuntimeVersion as number;
+
+        // Validate that the first container's stats are correct. It should load from summaryNumber 0 because it was
+        // just created and it shouldn't have loaded any data stores.
+        validateLoadStats(0, 0, 0, "First container stats incorrect");
+    });
+
+    it("should load summarizer with correct create stats", async function() {
+        // Wait for summarizer to load and submit a summary. Validate that it loads from summaryNumber 1 and has
+        // 1 data store which is referenced.
         await waitForSummary();
+        validateLoadStats(1, 1, 1, "Summarizer should load with correct create stats", true /* summarizer */);
+    });
 
-        // Trigger the telemetry event so it logs the new summary count
-        await provider.loadContainer(runtimeFactory, { logger: mockLogger });
-        await provider.ensureSynchronized();
+    it("should load container with correct create stats", async function() {
+        // Wait for summarizer to load and submit a summary. Validate that it loads from summaryNumber 1 and has
+        // 1 data store which is referenced.
+        const summaryVersion = await waitForSummary();
+        validateLoadStats(1, 1, 1, "Summarizer should load with correct create stats", true /* summarizer */);
 
-        // Get all the containerLoadStats events
-        containerStatsEvents = getContainerLoadStatsEvents();
-        assert(containerStatsEvents !== undefined, "container load stats event is undefined");
+        // Load a new container with the above summary and validate that it loads from summaryNumber 2.
+        await loadContainer(summaryVersion);
+        validateLoadStats(2, 1, 1, "Second container should load with correct create stats");
+    });
 
-        // Checking all the stats
-        assert.strictEqual(containerStatsEvents.length, 3, "wrong number of containerLoadStats events");
-        assert.strictEqual(containerStatsEvents[0].containerLoadDataStoreCount, 0, "dataStore count should be 0");
-        assert.strictEqual(containerStatsEvents[0].referencedDataStoreCount, 0,
-            "summarized dataStore count should be 0");
-        assert.strictEqual(containerStatsEvents[2].containerLoadDataStoreCount, 1, "data store count should be 1");
-        assert.strictEqual(containerStatsEvents[2].referencedDataStoreCount, 1,
-            "summarized data store count should be 1");
-        assert.strictEqual(containerStatsEvents[1].summaryCount, undefined, "summary count should be 0");
-        assert.strictEqual(containerStatsEvents[2].summaryCount, 1, "summary count should be 1");
+    it("should load container with correct data store load stats", async function() {
+        // Create another data store so that the data store stats are updated.
+        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
+        mainDataStore._root.set("dataStore2", dataStore2.handle);
 
-        // close the current summarizer and start a new summarizer container
-        // this is to test summaryCount will still increment instead of reset
+        // Wait for summarizer to load and submit a summary. Validate that it loads from summaryNumber 1. It loads
+        // from the first summary which does not have the newly created data store.
+        const summaryVersion = await waitForSummary();
+        validateLoadStats(1, 1, 1, "Summarizer should load with correct data store stats", true /* summarizer */);
+
+        // Load a new container with the above summary and validate that it loads with summaryNumber 2, has 2 data
+        // stores and both are referenced.
+        await loadContainer(summaryVersion);
+        validateLoadStats(2, 2, 2, "Second container should load with correct data store stats");
+    });
+
+    it("should load second summarizer with correct stats", async function() {
+        // Wait for summarizer to load and submit a summary. Validate that it loads from summaryNumber 1.
+        const summaryVersion = await waitForSummary();
+        validateLoadStats(1, 1, 1, "Summarizer should load with correct data store stats", true /* summarizer */);
+
+        // Close the main container which should also close the summarizer.
         mainContainer.close();
-        mainContainer = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
+
+        // Load and set up a new main container with the above summary and validate that it loads with summaryNumber 2.
+        mainContainer = await loadContainer(summaryVersion);
         mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
-        mainDataStore._root.set("test", "value");
+        // Create and setup a summary collection that will be used to track and wait for summaries.
         summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger());
+        validateLoadStats(2, 1, 1, "Second container should load with correct data store stats");
+
+        // Wait for summary and validate that the new summarizer loads from summary number 2 as well.
         await waitForSummary();
-        await provider.loadContainer(runtimeFactory, { logger: mockLogger });
-
-        containerStatsEvents = getContainerLoadStatsEvents();
-        assert.strictEqual(containerStatsEvents.length, 6, "wrong number of containerLoadStats events");
-
-        // createContainerTimestamp and runtimeVersio should be consistent
-        assert(containerStatsEvents.every((event) =>
-            event.createContainerTimestamp === containerStatsEvents[0].createContainerTimestamp),
-            "create container timestamp is inconsistent");
-        assert(containerStatsEvents.every((event) =>
-            event.createContainerRuntimeVersion === containerStatsEvents[0].createContainerRuntimeVersion),
-            "create container runtime version is inconsistent");
-
-        // summary count should increment instead of reset to 0
-        assert.strictEqual(containerStatsEvents[4].summaryCount, 1, "summary count should still be 1");
-        assert.strictEqual(containerStatsEvents[5].summaryCount, 2, "summary count should be 2");
+        validateLoadStats(2, 1, 1, "Summarizer should load with correct data store stats", true /* summarizer */);
     });
 });
