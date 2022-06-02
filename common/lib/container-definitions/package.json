@@ -97,7 +97,11 @@
       "RemovedVariableDeclaration_IFluidTokenProvider": {"forwardCompat": false, "backCompat": false},
       "RemovedInterfaceDeclaration_IFluidTokenProvider": {"forwardCompat": false, "backCompat": false},
       "RemovedInterfaceDeclaration_IProvideDeltaSender": {"forwardCompat": false, "backCompat": false},
-      "RemovedInterfaceDeclaration_IProvideFluidTokenProvider": {"forwardCompat": false, "backCompat": false}
+      "RemovedInterfaceDeclaration_IProvideFluidTokenProvider": {"forwardCompat": false, "backCompat": false},
+      "RemovedInterfaceDeclaration_IProxyLoaderFactory": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
     }
   }
 }
