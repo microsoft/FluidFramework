@@ -218,6 +218,7 @@ testModes.forEach((mode) => {
             return new IsomorphicGitManagerFactory(
                 testUtils.defaultProvider.get("storageDir"),
                 fileSystemManagerFactory,
+                externalStorageManager,
                 testMode.repoPerDocEnabled,
             );
         }

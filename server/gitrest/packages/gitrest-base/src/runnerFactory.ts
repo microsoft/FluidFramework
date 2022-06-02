@@ -56,6 +56,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
                 return new IsomorphicGitManagerFactory(
                     storageDirectoryConfig,
                     fileSystemManagerFactory,
+                    externalStorageManager,
                     repoPerDocEnabled,
                 );
             }
