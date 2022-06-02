@@ -364,7 +364,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     private readonly mutexes = new Map<string, MutexInterface>();
     private readonly internalHandler: (
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<IsomorphicGitRepositoryManager> | never,
+        onRepoNotExists: (args?: any) => Promise<void> | never,
         shouldUseMutex: boolean) => Promise<IsomorphicGitRepositoryManager>;
 
     constructor(
@@ -393,13 +393,6 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
                     ...(args?.lumberjackBaseProperties),
                     [BaseGitRestTelemetryProperties.directoryPath]: args?.directoryPath,
                 });
-            const repoManager = new IsomorphicGitRepositoryManager(
-                args?.fileSystemManager,
-                params.repoOwner,
-                args?.repoName,
-                args?.directoryPath,
-                args?.lumberjackBaseProperties);
-            return repoManager;
         };
 
         return this.internalHandler(params, onRepoNotExists, true);
@@ -413,8 +406,8 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
                     ...(args?.lumberjackBaseProperties),
                     [BaseGitRestTelemetryProperties.directoryPath]: args?.directoryPath,
                 });
-            // services-client/getOrCreateRepository depends on a 400 response code
-            throw new NetworkError(400, `Repo does not exist ${args?.directoryPath}`);
+                // services-client/getOrCreateRepository depends on a 400 response code
+                throw new NetworkError(400, `Repo does not exist ${args?.directoryPath}`);
         };
 
         return this.internalHandler(params, onRepoNotExists, false);
@@ -422,7 +415,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
 
     public async openOrCreate(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
         try {
-            return this.open(params);
+            return await this.open(params);
         } catch (error: any) {
             if (error instanceof Error &&
                 error?.name === "NetworkError" &&
@@ -435,7 +428,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
 
     private async repoPerDocInternalHandler(
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<IsomorphicGitRepositoryManager> | never,
+        onRepoNotExists: (args?: any) => Promise<void> | never,
         shouldUseMutex: boolean): Promise<IsomorphicGitRepositoryManager> {
         if (!params.storageRoutingId?.tenantId || !params.storageRoutingId?.documentId) {
             throw new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`);
@@ -459,7 +452,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
 
     private async repoPerTenantInternalHandler(
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<IsomorphicGitRepositoryManager> | never,
+        onRepoNotExists: (args?: any) => Promise<void> | never,
         shouldUseMutex: boolean): Promise<IsomorphicGitRepositoryManager> {
         const repoPath = helpers.getRepoPath(
             params.repoName,
@@ -481,7 +474,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
         repoPath: string,
         directoryPath: string,
         repoName: string,
-        onRepoNotExists: (args?: any) => Promise<IsomorphicGitRepositoryManager> | never,
+        onRepoNotExists: (args?: any) => Promise<void> | never,
         shouldUseMutex: boolean): Promise<IsomorphicGitRepositoryManager> {
         const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
         const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);

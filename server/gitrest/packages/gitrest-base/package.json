@@ -23,7 +23,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "start": "node dist/www.js",
-    "test": "nyc --all -x dist/test/**/* mocha dist/test -g 'Can create and retrieve a blob'",
+    "test": "nyc --all -x dist/test/**/* mocha dist/test",
     "tsc": "tsc"
   },
   "dependencies": {

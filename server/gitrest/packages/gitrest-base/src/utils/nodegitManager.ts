@@ -357,7 +357,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
     private readonly mutexes = new Map<string, MutexInterface>();
     private readonly internalHandler: (
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<NodegitRepositoryManager> | never,
+        onRepoNotExists: (args?: any) => void | never,
         shouldUseMutex: boolean) => Promise<NodegitRepositoryManager>;
 
     constructor(
@@ -374,7 +374,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
     }
 
     public async create(params: IRepoManagerParams): Promise<NodegitRepositoryManager> {
-        const onRepoNotExists = async (args?: any) => {
+        const onRepoNotExists = (args?: any) => {
             // Create and then cache the repository
             const isBare = 1;
             const repositoryP = nodegit.Repository.init(
@@ -387,14 +387,6 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
                     ...(args?.lumberjackBaseProperties),
                     [BaseGitRestTelemetryProperties.directoryPath]: args?.directoryPath,
                 });
-                const repoManager = new NodegitRepositoryManager(
-                    params.repoOwner,
-                    args?.repoName,
-                    await repositoryP,
-                    args?.directoryPath,
-                    this.externalStorageManager,
-                    args?.lumberjackBaseProperties);
-                return repoManager;
         };
 
         return this.internalHandler(params, onRepoNotExists, true);
@@ -408,16 +400,16 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
                     ...(args?.lumberjackBaseProperties),
                     [BaseGitRestTelemetryProperties.directoryPath]: args?.directoryPath,
                 });
-            // services-client/getOrCreateRepository depends on a 400 response code
-            throw new NetworkError(400, `Repo does not exist ${args?.directoryPath}`);
-        };
+                // services-client/getOrCreateRepository depends on a 400 response code
+                throw new NetworkError(400, `Repo does not exist ${args?.directoryPath}`);
+            };
 
         return this.internalHandler(params, onRepoNotExists, false);
     }
 
     public async openOrCreate(params: IRepoManagerParams): Promise<NodegitRepositoryManager> {
         try {
-            return this.open(params);
+            return await this.open(params);
         } catch (error: any) {
             if (error instanceof Error &&
                 error?.name === "NetworkError" &&
@@ -430,7 +422,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
 
     private async repoPerDocInternalHandler(
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<NodegitRepositoryManager> | never,
+        onRepoNotExists: (args?: any) => void | never,
         shouldUseMutex: boolean): Promise<NodegitRepositoryManager> {
         if (!params.storageRoutingId?.tenantId || !params.storageRoutingId?.documentId) {
             throw new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`);
@@ -454,7 +446,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
 
     private async repoPerTenantInternalHandler(
         params: IRepoManagerParams,
-        onRepoNotExists: (args?: any) => Promise<NodegitRepositoryManager> | never,
+        onRepoNotExists: (args?: any) => void | never,
         shouldUseMutex: boolean): Promise<NodegitRepositoryManager> {
         const repoPath = helpers.getRepoPath(
             params.repoName,
@@ -476,7 +468,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         repoPath: string,
         directoryPath: string,
         repoName: string,
-        onRepoNotExists: (args?: any) => Promise<NodegitRepositoryManager> | never,
+        onRepoNotExists: (args?: any) => void | never,
         shouldUseMutex: boolean): Promise<NodegitRepositoryManager> {
         const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
         const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
@@ -486,7 +478,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             if (!(repoPath in this.repositoryPCache)) {
                 const repoExists = await helpers.exists(fileSystemManager, directoryPath);
                 if (!repoExists || !repoExists.isDirectory()) {
-                    await onRepoNotExists({
+                    onRepoNotExists({
                         fileSystemManager,
                         repoPath,
                         directoryPath,

@@ -135,7 +135,7 @@ export function getRepoPath(
     }
 
     // When `documentId` is present, it needs to be valid.
-    if (documentId || path.parse(documentId).dir !== "") {
+    if (documentId && path.parse(documentId).dir !== "") {
         throw new NetworkError(400, `Invalid repo name (documentId) provided: ${documentId}`);
     }
 
