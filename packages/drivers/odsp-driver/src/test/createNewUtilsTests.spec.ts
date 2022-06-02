@@ -266,5 +266,6 @@ describe("Create New Utils Tests", () => {
             { "x-fluid-epoch": "epoch1" },
             );
         assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
+        await epochTracker.removeEntries().catch(() => {});
     });
 });
