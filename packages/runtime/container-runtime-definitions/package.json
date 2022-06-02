@@ -73,6 +73,9 @@
       },
       "InterfaceDeclaration_IProvideContainerRuntime": {
         "backCompat": false
+      },
+      "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+        "backCompat": false
       }
     }
   }

@@ -84,6 +84,7 @@ declare function get_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombi
 declare function use_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
     use: TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>);
 use_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents());
 
 /*
