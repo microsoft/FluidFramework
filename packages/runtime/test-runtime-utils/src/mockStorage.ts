@@ -17,7 +17,7 @@ export class MockStorage implements IChannelStorageService {
         return new MockStorage(tree);
     }
 
-    private static readBlobCore(tree: ITree, paths: string[]): IBlob {
+    private static readBlobCore(tree: ITree, paths: string[]): IBlob | undefined {
         if (tree) {
             for (const entry of tree.entries) {
                 if (entry.path === paths[0]) {
@@ -36,7 +36,7 @@ export class MockStorage implements IChannelStorageService {
         }
     }
 
-    constructor(protected tree?: ITree) {
+    constructor(protected tree: ITree) {
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {

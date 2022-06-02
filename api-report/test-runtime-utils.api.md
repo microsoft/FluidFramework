@@ -212,7 +212,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get serviceConfiguration(): IClientConfiguration;
     // (undocumented)
-    submit(type: MessageType, contents: any, batch: boolean, localOpMetadata: any): number;
+    submit(type: MessageType, contents: any, batch: boolean | undefined, localOpMetadata: any): number;
     // (undocumented)
     submitSignal(content: any): void;
     // (undocumented)
@@ -239,7 +239,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     // (undocumented)
     peek(): T | undefined;
     // (undocumented)
-    pop(): T;
+    pop(): T | undefined;
     // (undocumented)
     protected process(): void;
     // (undocumented)
@@ -434,9 +434,9 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
-    submitMessage(type: MessageType, content: any): any;
+    submitMessage(type: MessageType, content: any): null;
     // (undocumented)
-    submitSignal(type: string, content: any): any;
+    submitSignal(type: string, content: any): null;
     // (undocumented)
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     // (undocumented)
@@ -553,7 +553,7 @@ export class MockSharedObjectServices implements IChannelServices {
 
 // @public
 export class MockStorage implements IChannelStorageService {
-    constructor(tree?: ITree);
+    constructor(tree: ITree);
     // (undocumented)
     contains(path: string): Promise<boolean>;
     // (undocumented)
@@ -563,7 +563,7 @@ export class MockStorage implements IChannelStorageService {
     // (undocumented)
     readBlob(path: string): Promise<ArrayBufferLike>;
     // (undocumented)
-    protected tree?: ITree;
+    protected tree: ITree;
 }
 
 // (No @packageDocumentation comment for this package)
