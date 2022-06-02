@@ -11,6 +11,5 @@ module.exports = {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "rules": {
-        "no-null/no-null": "off"
     }
 }

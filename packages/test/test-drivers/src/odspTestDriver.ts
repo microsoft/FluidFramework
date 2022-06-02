@@ -23,7 +23,7 @@ import {
     getDriveItemByRootFileName,
     IClientConfig,
 } from "@fluidframework/odsp-doclib-utils";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, OdspEndpoint } from "@fluidframework/test-driver-definitions";
 import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
@@ -62,14 +62,24 @@ interface LoginTenants {
     };
 }
 
+export function assertOdspEndpoint(
+    endpoint: string | undefined,
+): asserts endpoint is OdspEndpoint | undefined {
+    if (endpoint === undefined || endpoint === "odsp" || endpoint === "odsp-df") {
+        return;
+    }
+    throw new TypeError("Not a odsp endpoint");
+}
+
 /**
  * Get from the env a set of credential to use from a single tenant
  * @param tenantIndex - interger to choose the tenant from an array
  * @param requestedUserName - specific user name to filter to
  */
-function getCredentials(tenantIndex: number, requestedUserName?: string) {
+function getCredentials(odspEndpointName: OdspEndpoint, tenantIndex: number, requestedUserName?: string) {
     const creds: { [user: string]: string; } = {};
-    const loginTenants = process.env.login__odsp__test__tenants;
+    const loginTenants = odspEndpointName === "odsp" ?
+        process.env.login__odsp__test__tenants : process.env.login__odspdf__test__tenants;
     if (loginTenants !== undefined) {
         const tenants: LoginTenants = JSON.parse(loginTenants);
         const tenantNames = Object.keys(tenants);
@@ -86,8 +96,9 @@ function getCredentials(tenantIndex: number, requestedUserName?: string) {
             }
         }
     } else {
-        const loginAccounts = process.env.login__odsp__test__accounts;
-        assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
+        const loginAccounts = odspEndpointName === "odsp" ?
+            process.env.login__odsp__test__accounts : process.env.login__odspdf__test__accounts;
+        assert(loginAccounts !== undefined, "Missing login__odsp/odspdf__test__accounts");
         // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
         const passwords: { [user: string]: string; } = JSON.parse(loginAccounts);
 
@@ -134,11 +145,14 @@ export class OdspTestDriver implements ITestDriver {
             options?: HostStoragePolicy;
             supportsBrowserAuth?: boolean;
             tenantIndex?: number;
+            odspEndpointName?: string;
         },
         api: OdspDriverApiType = OdspDriverApi,
     ) {
         const tenantIndex = config?.tenantIndex ?? 0;
-        const creds = getCredentials(tenantIndex, config?.username);
+        assertOdspEndpoint(config?.odspEndpointName);
+        const endpointName = config?.odspEndpointName ?? "odsp";
+        const creds = getCredentials(endpointName, tenantIndex, config?.username);
         // Pick a random one on the list (only supported for >= 0.46)
         const users = Object.keys(creds);
         const randomUserIndex = compare(api.version, "0.46.0") >= 0 ?
@@ -176,6 +190,7 @@ export class OdspTestDriver implements ITestDriver {
             options,
             tenantName,
             userIndex,
+            endpointName,
         );
     }
 
@@ -202,6 +217,7 @@ export class OdspTestDriver implements ITestDriver {
         options?: HostStoragePolicy,
         tenantName?: string,
         userIndex?: number,
+        endpointName?: string,
     ) {
         const tokenConfig: TokenConfig = {
             ...loginConfig,
@@ -230,6 +246,7 @@ export class OdspTestDriver implements ITestDriver {
             api,
             tenantName,
             userIndex,
+            endpointName,
         );
     }
 
@@ -276,6 +293,7 @@ export class OdspTestDriver implements ITestDriver {
         private readonly api = OdspDriverApi,
         public readonly tenantName?: string,
         public readonly userIndex?: number,
+        public readonly endpointName?: string,
     ) {
 
     }
