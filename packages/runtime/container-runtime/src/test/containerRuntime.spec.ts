@@ -103,7 +103,7 @@ describe("Runtime", () => {
                                         state: "disabled",
                                     },
                                 },
-                                flushMode: flushMode,
+                                flushMode,
                             },
                         );
                         containerErrors.length = 0;
@@ -207,7 +207,7 @@ describe("Runtime", () => {
                                 summaryOptions: {
                                     disableSummaries: true,
                                 },
-                                flushMode: flushMode,
+                                flushMode,
                             },
                         );
                         containerErrors.length = 0;
