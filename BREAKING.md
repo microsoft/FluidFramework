@@ -51,6 +51,7 @@ For more details on GC and options for controlling its behavior, please see [thi
 - [Remove Container.setAutoReconnect() and Container.resume()](#Remove-Container-setAutoReconnect-and-resume)
 - [Remove IContainer.connected and IFluidContainer.connected](#Remove-IContainer-connected-and-IFluidContainer-connected)
 - [All IFluidObject Augmentations Removed](#All-IFluidObject-Augmentations-Removed)
+- [Remove `noopTimeFrequency` and `noopCountFrequency` from ILoaderOptions](#remove-nooptimefrequency-and-noopcountfrequency-from-iloaderoptions)
 
 ### Changed AzureConnectionConfig API
 - Added a `type` field that's used to differentiate between remote and local connections.
@@ -132,6 +133,9 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
  - IFluidHandleContext
  - IFluidHandle
  - IFluidHTMLView
+
+### Remove `noopTimeFrequency` and `noopCountFrequency` from ILoaderOptions
+`noopTimeFrequency` and `noopCountFrequency` are removed from `ILoaderOptions`. Please use `noopTimeFrequency` and `noopCountFrequency` from `IClientConfiguration` in `@fluidframework/protocol-definitions`.
 
 # 0.59
 
