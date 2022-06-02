@@ -1,10 +1,13 @@
 # ReferencePosition Documentation
 
-ReferencePositions are used to indicates a MergeTree position which is stable as operations are performed. There are two types:
+ReferencePositions are used to indicates a MergeTree position which is stable as operations are performed. There are two
+types:
+
 1. LocalReferences refer to a segment and offset within that segment
 2. Markers are actual segments in the Merge Tree
 
-The function `Client.localReferencePositionToPosition` returns the numerical position of a reference.
+The function `Client.localReferencePositionToPosition` returns the numerical position of a reference in the client's
+current view.
 
 ## LocalReference behavior on Remove
 
@@ -20,10 +23,12 @@ Sliding will look for the next valid segment.
 A valid segment is one whose creation has been acknowledged and either hasn't been removed
 or the remove is pending (not acknowledged).
 If a farther segment is found, then the LocalReference will be changed to refer to that segment and have offset 0.
-This farther slide will not change the numerical position of the reference.
+In the event that the slide is happening on the acknowledgement of a remove, the slide to a farther segment will not
+change the numerical position of the reference.
 If there is no there is no valid segment farther in the tree, then the slide will place the reference on the last valid segment.
 The offset will be set to the last position in that segment.
-Sliding to a nearer segment does change the numerical position of the reference.
+In the event that the slide is happening on the acknowledgement of a remove, the reference would have been on the removed
+segment. This slide from the removed segment to a nearer segment does change the numerical position of the reference.
 If there is no valid position (all segments removed and acknowledged) then the reference is detached.
 
 ### StayOnRemove

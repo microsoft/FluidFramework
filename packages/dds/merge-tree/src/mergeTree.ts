@@ -1468,17 +1468,23 @@ export class MergeTree {
 
     /**
      * @internal - this method should only be called by client
+     * To ensure eventual consistency, this method must be called on acknowledgement
+     * of the op which created the reference.
      */
     public slideReference(ref: LocalReference) {
-        if (ref.segment) {
+        if (ref.segment && isRemovedAndAcked(ref.segment)) {
             this.slideReferences(ref.segment, [ref]);
         }
     }
 
+    /**
+     * This method should only be called when the current client sequence number is
+     * max(remove segment sequence number, add reference sequence number).
+     * Otherwise eventual consistency is not guaranteed.
+     * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
+     */
     private slideReferences(segment: ISegment, refsToSlide: LocalReference[]) {
-        if (!isRemovedAndAcked(segment)) {
-            return;
-        }
+        assert(isRemovedAndAcked(segment), "slideReferences from a segment which has not been removed and acked");
         assert(!!segment.localRefs, "Ref not in the segment localRefs");
         const newSegoff = this.getSlideToSegment(segment);
         const newSegment = newSegoff.segment;
@@ -1527,7 +1533,9 @@ export class MergeTree {
         }
         // TODO:ransomr rethink implementation of keeping and sliding refs
         // This works but is fragile and possibly slow
-        this.slideReferences(segment, refsToSlide);
+        if (!pending) {
+            this.slideReferences(segment, refsToSlide);
+        }
         segment.localRefs.clear();
         for (const lref of refsToStay) {
             lref.segment = segment;
