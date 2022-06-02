@@ -304,7 +304,8 @@ export interface IDocumentServiceFactory {
     /**
      * Creates the document service after extracting different endpoints URLs from a resolved URL.
      *
-     * @param resolvedUrl - TODO
+     * @param resolvedUrl - Contains information regarding the endpoint's URLs required to connect to those endpoints.
+     * It may also contain info about the container/file on server like things required to locate it on server.
      * @param logger - Optional telemetry logger to which telemetry events will be forwarded.
      * @param clientIsSummarizer - Whether or not the client is the
      * {@link https://fluidframework.com/docs/concepts/summarizer/ | summarizer}.
