@@ -226,6 +226,7 @@ export class ConnectionManager implements IConnectionManager {
         }
     }
 
+    /** We should join with a write connection if we have local ops that have not yet been ack'd */
     public shouldJoinWrite(): boolean {
         // We don't have to wait for ack for topmost NoOps. So subtract those.
         return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.trailingNoopCount);

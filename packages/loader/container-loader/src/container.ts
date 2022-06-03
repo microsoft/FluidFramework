@@ -586,7 +586,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     }
                 },
                 createCatchUpMonitor:
-                    this.mc.config.getBoolean("Fluid.Container.catchUpBeforeDeclaringConnected") === true
+                    this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true
                         ? () => new CatchUpMonitor(this)
                         : () => new ImmediateCatchUpMonitor(),
             },

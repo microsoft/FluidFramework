@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { logIfFalse, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState } from "./connectionState";
 import { ICatchUpMonitor } from "./catchUpMonitor";
@@ -117,6 +117,10 @@ export class ConnectionStateHandler {
         this.joinOpTimer.clear();
     }
 
+    private get waitingForLeaveOp() {
+        return this.prevClientLeftTimer.hasTimer;
+    }
+
     public dispose() {
         assert(!this.joinOpTimer.hasTimer, 0x2a5 /* "join timer" */);
         this.prevClientLeftTimer.clear();
@@ -125,7 +129,7 @@ export class ConnectionStateHandler {
     public containerSaved() {
         // If we were waiting for moving to Connected state, then only apply for state change. Since the container
         // is now saved and we don't have any ops to roundtrip, we can clear the timer and apply for connected state.
-        if (this.prevClientLeftTimer.hasTimer) {
+        if (this.waitingForLeaveOp) {
             this.prevClientLeftTimer.clear();
             this.applyForConnectedState("containerSaved");
         }
@@ -142,7 +146,7 @@ export class ConnectionStateHandler {
                 this.handler.logConnectionIssue("ReceivedJoinOp");
             }
             // Start the event in case we are waiting for leave or timeout.
-            if (this.prevClientLeftTimer.hasTimer) {
+            if (this.waitingForLeaveOp) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
                     eventName: "WaitBeforeClientLeave",
                     waitOnClientId: this._clientId,
@@ -162,7 +166,7 @@ export class ConnectionStateHandler {
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
             && quorumClients.getMember(this.pendingClientId) !== undefined
-            && !this.prevClientLeftTimer.hasTimer
+            && !this.waitingForLeaveOp
         ) {
             this.waitEvent?.end({ source });
 
@@ -177,7 +181,7 @@ export class ConnectionStateHandler {
                 source,
                 pendingClientId: this.pendingClientId,
                 clientId: this.clientId,
-                hasTimer: this.prevClientLeftTimer.hasTimer,
+                hasTimer: this.waitingForLeaveOp,
                 inQuorum: quorumClients !== undefined && this.pendingClientId !== undefined
                     && quorumClients.getMember(this.pendingClientId) !== undefined,
             });
@@ -198,9 +202,16 @@ export class ConnectionStateHandler {
 
     private readonly transitionToConnectedState = () => {
         // Defensive measure, we should always be in Connecting state when this is called.
-        if (this._connectionState === ConnectionState.Connecting) {
-            this.setConnectionState(ConnectionState.Connected);
+        const inConnectingState = this._connectionState === ConnectionState.Connecting;
+        logIfFalse(
+            inConnectingState,
+            this.logger,
+            { eventName: "cannotTransitionToConnectedState", connectionState: ConnectionState[this._connectionState] });
+        if (!inConnectingState) {
+            return;
         }
+
+        this.setConnectionState(ConnectionState.Connected);
     };
 
     /**
@@ -238,24 +249,29 @@ export class ConnectionStateHandler {
         // We are fetching ops from storage in parallel to connecting to Relay Service,
         // and given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
-// <<<<<<< HEAD
-        const pendingClientAlreadyInQuorum = quorumClients?.getMember(this._pendingClientId) !== undefined;
+        // If quorumClients itself is undefined, we expect it will process the join op after it's initialized.
+        const waitingForJoinOp = quorumClients?.getMember(this._pendingClientId) === undefined;
+
+        //* Question - if the quorum is not yet initialized, and is initialized with this new client
+        //* (rather than being added via addMember), we will not ever "get the join op". Is this possible/ok?
+        //* See members: QuorumClientsSnapshot param of Quorum constructor
 
         // IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
-        // Prepare to transition to Connected state, which may happen elsewhere once all preconditions are met
-        if (writeConnection && !pendingClientAlreadyInQuorum) {
+        // Prepare to transition to Connected state, which will happen elsewhere once all preconditions are met
+        if (writeConnection && waitingForJoinOp) {
             // Previous client left, and we are waiting for our own join op. When it is processed we'll join the quorum
             // and attempt to transition to Connected state via receivedAddMemberEvent.
             this.startJoinOpTimer();
-        } else if (this.prevClientLeftTimer.hasTimer) {
+        } else if (this.waitingForLeaveOp) {
+            // Previous client left, and we are still waiting for its leave op.
             // Nothing to do now - when the previous client is removed from the quorum
             // we will attempt to transition to Connected state via receivedRemoveMemberEvent
             assert(writeConnection, 0x2a6 /* "There should be no timer for 'read' connections" */);
         } else {
-            // We're not waiting for Leave or Join op, but we do need to wait until we are caught up (to now-known ops)
-            // before transitioning to Connected state.
+            // We're not waiting for Join or Leave op (if read-only connection those don't even apply),
+            // but we do need to wait until we are caught up (to now-known ops) before transitioning to Connected state.
             this.catchUpMonitor.on("caughtUp", this.transitionToConnectedState);
         }
     }
@@ -308,7 +324,7 @@ export class ConnectionStateHandler {
             // don't want to reset the timer as we still want to wait on original client which started this timer.
             if (client !== undefined
                 && this.handler.shouldClientJoinWrite()
-                && this.prevClientLeftTimer.hasTimer === false
+                && this.waitingForLeaveOp === false
             ) {
                 this.prevClientLeftTimer.restart();
             } else {
@@ -316,7 +332,7 @@ export class ConnectionStateHandler {
                 this.logger.sendTelemetryEvent({
                     eventName: "noWaitOnDisconnected",
                     inQuorum: client !== undefined,
-                    hasTimer: this.prevClientLeftTimer.hasTimer,
+                    hasTimer: this.waitingForLeaveOp,
                     shouldClientJoinWrite: this.handler.shouldClientJoinWrite(),
                 });
             }

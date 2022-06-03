@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 //* import EventEmitter from "events";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -83,6 +85,23 @@ describe("ConnectionStateHandler Tests", () => {
             new TelemetryNullLogger(),
         );
     });
+
+    /** Test plan:
+     * NEW BEHAVIOR
+     * (1) applyForConnectedState should wait for "caughtUp"
+     * (3) assert 0x2a6 shouldn't fire for write connections (it did before)
+     * (2) catchUpMonitor gets disposed on disconnect?
+     *
+     * PRESERVED BEHAVIOR
+     * (3) receivedDisconnectEvent should stop joinOp timer
+     * (1) [Immediate mode] Write client in quorum upon "connect" transitions directly to "connected"
+     * (1) [Immediate mode] Write client not yet in quorum transitions to "connected" upon addMember event
+     * (1) [Immediate mode] Read client transitions directly to "connected"
+     * (3) Only set Leave timer if there are unacked local ops (shouldClientJoinWrite is true) at the moment of disconnect ()  (is this even correct?)
+     *
+     * OTHER
+     * (2) cannotTransitionToConnectedState event should never fire
+     */
 
     it("Should move to connected state on normal flow for read client", async () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
