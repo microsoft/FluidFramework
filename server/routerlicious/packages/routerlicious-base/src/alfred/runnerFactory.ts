@@ -164,27 +164,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const redisClientForJwtCache = new Redis(redisOptions2);
         const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
-        const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
         // Database connection for global db if enabled
         let globalDbMongoManager;
-        let globalDb;
         const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+        const factory = await services.getDbFactory(config);
         if (globalDbEnabled) {
-            const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
-            const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
-            globalDbMongoManager = new core.MongoManager(globalDbMongoFactory, false);
-            globalDb = await globalDbMongoManager.getDatabase();
+            globalDbMongoManager = new core.MongoManager(factory, false, null, true);
         }
 
         // Database connection for operations db
-        const operationsDbMongoUrl = config.get("mongo:operationsDbEndpoint") as string;
-        const operationsDbMongoFactory = new services.MongoDbFactory(operationsDbMongoUrl, bufferMaxEntries);
-        const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory, false);
+        const operationsDbMongoManager = new core.MongoManager(factory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
         // Create the index on the documents collection
-        const operationsDb = await operationsDbMongoManager.getDatabase();
-        const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
+        const dbManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
+        const db: core.IDb = await dbManager.getDatabase();
         const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
         await documentsCollection.createIndex(
             {
@@ -333,7 +327,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
-        const appTenants = config.get("alfred:tenants") as { id: string, key: string }[];
+        const appTenants = config.get("alfred:tenants") as { id: string; key: string; }[];
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");

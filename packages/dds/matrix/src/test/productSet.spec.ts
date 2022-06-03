@@ -22,7 +22,7 @@ import { Ivl, boundedParetoSetOperations } from "../split";
 describe("Product-set tests", () => {
     const anyValue: Ivl = [0, 1000];
 
-    interface Rect2D { xDim: Ivl; yDim: Ivl }
+    interface Rect2D { xDim: Ivl; yDim: Ivl; }
 
     const createBsp = createFromKey(
         boundedParetoSetOperations(1, anyValue[0] + 1, anyValue[1], anyValue, "Interval operations" as const),

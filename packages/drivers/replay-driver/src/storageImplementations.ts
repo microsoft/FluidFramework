@@ -29,7 +29,7 @@ import { ReadDocumentStorageServiceBase } from "./replayController";
  */
 export interface IFileSnapshot {
     tree: ITree;
-    commits: { [key: string]: ITree };
+    commits: { [key: string]: ITree; };
 }
 
 export class FileSnapshotReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
@@ -39,8 +39,8 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     protected docId?: string;
     protected docTree: ISnapshotTree;
     protected blobs: Map<string, ArrayBufferLike>;
-    protected readonly commits: { [key: string]: ITree } = {};
-    protected readonly trees: { [key: string]: ISnapshotTree } = {};
+    protected readonly commits: { [key: string]: ITree; } = {};
+    protected readonly trees: { [key: string]: ISnapshotTree; } = {};
 
     public constructor(json: IFileSnapshot) {
         super();

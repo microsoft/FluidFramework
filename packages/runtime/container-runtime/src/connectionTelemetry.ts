@@ -171,16 +171,16 @@ class OpPerfTelemetry {
     }
 
     private recordPingTime(latency: number) {
-        this.pongCount++;
         this.pingLatency = latency;
-        // logging one in every 100 pongs
-        if (this.pongCount === 100) {
+        // logging one in every 1000 pongs, including the first time, if it is a "write" client.
+        if (this.pongCount % 1000 === 0 && this.deltaManager.active) {
             this.logger.sendPerformanceEvent({
                 eventName: "DeltaLatency",
                 duration: latency,
             });
             this.pongCount = 0;
         }
+        this.pongCount++;
     }
 
     private beforeOpSubmit(message: IDocumentMessage) {

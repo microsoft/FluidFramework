@@ -7,17 +7,11 @@
 import isEmpty from "lodash/isEmpty";
 import findIndex from "lodash/findIndex";
 import range from "lodash/range";
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 import { Packr } from "msgpackr";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	ISequencedDocumentMessage,
-	MessageType,
-	FileMode,
-	TreeEntry,
-	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -25,7 +19,7 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 
-import { bufferToString, stringToBuffer, assert } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -120,7 +114,7 @@ export class SharedPropertyTree extends SharedObject {
 		attributes: IChannelAttributes,
 		options: SharedPropertyTreeOptions,
 	) {
-		super(id, runtime, attributes);
+		super(id, runtime, attributes, "fluid_propertyTree_");
 
 		this.options = options;
 		// Quick hack to let the root be aware of the DDS hosting it.
@@ -185,7 +179,7 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	public get activeCommit(): IPropertyTreeMessage {
-		if(this.localChanges.length > 0) {
+		if (this.localChanges.length > 0) {
 			return this.localChanges[this.localChanges.length - 1];
 		} else {
 			return this.remoteChanges[this.remoteChanges.length - 1];

@@ -27,7 +27,9 @@ spec:
         - name: DEBUG
           value: "routerlicious:*"
         - name: NODE_ENV
-          value: production
+          value: "production"
+        - name: IS_FLUID_SERVER
+          value: "true"
         volumeMounts:
         - name: config
           mountPath: /home/node/server/config.json

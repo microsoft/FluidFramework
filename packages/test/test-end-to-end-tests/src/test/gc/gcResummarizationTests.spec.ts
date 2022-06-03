@@ -34,7 +34,11 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+        },
         gcOptions: { gcAllowed: true },
     };
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
@@ -97,7 +101,7 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
      * other data stores are not resummarized and a handle is sent for them in the summary.
      */
     async function validateResummaryState(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+        summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
         changedDataStoreIds: string[] = [],
     ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger, false /* fullTree */);
@@ -110,7 +114,7 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
 
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
         const channelsTree = (latestUploadedSummary.tree[channelsTreeName] as ISummaryTree).tree;
-        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
+        for (const [id, summaryObject] of Object.entries(channelsTree)) {
             if (changedDataStoreIds.includes(id)) {
                 assert(summaryObject.type === SummaryType.Tree, `Data store ${id}'s entry should be a tree`);
             } else {

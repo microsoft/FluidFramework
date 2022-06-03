@@ -21,7 +21,7 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 const waitForSignal =
-    async (...signallers: { once(e: "signal", l: () => void): void }[]) =>
+    async (...signallers: { once(e: "signal", l: () => void): void; }[]) =>
         Promise.all(
             signallers.map(
                 async (signaller, index) =>

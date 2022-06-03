@@ -26,8 +26,8 @@ interface ILocalData<T> {
 interface ILocalRegister<T> {
     // Register value, wrapped for backwards compatibility with < 0.17
     value: {
-        type: "Plain",
-        value: T,
+        type: "Plain";
+        value: T;
     };
 
     // The sequence number when last consensus was reached
@@ -58,14 +58,14 @@ interface IRegisterOperation {
 }
 
 /**
- * IRegisterOperation format in versions < 0.17
+ * IRegisterOperation format in versions \< 0.17
  */
 interface IRegisterOperationOld<T> {
     key: string;
     type: "write";
     value: {
-        type: "Plain",
-        value: T,
+        type: "Plain";
+        value: T;
     };
     refSeq: number;
 }
@@ -118,7 +118,7 @@ export class ConsensusRegisterCollection<T>
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_consensusRegisterCollection_");
     }
 
     /**
@@ -181,7 +181,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-        const dataObj: { [key: string]: ILocalData<T> } = {};
+        const dataObj: { [key: string]: ILocalData<T>; } = {};
         this.data.forEach((v, k) => { dataObj[k] = v; });
 
         return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));
@@ -281,8 +281,7 @@ export class ConsensusRegisterCollection<T>
             } else {
                 data.atomic = atomicUpdate;
             }
-        }
-        else {
+        } else {
             assert(!!data, 0x06f /* "data missing for non-atomic inbound update!" */);
         }
 
@@ -300,8 +299,7 @@ export class ConsensusRegisterCollection<T>
         if (!this.isAttached()) {
             assert(refSeq === 0 && sequenceNumber === 0,
                 0x070 /* "sequence numbers are expected to be 0 when unattached" */);
-        }
-        else if (data.versions.length > 0) {
+        } else if (data.versions.length > 0) {
             assert(sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
                 0x071 /* "Versions should naturally be ordered by sequenceNumber" */);
         }

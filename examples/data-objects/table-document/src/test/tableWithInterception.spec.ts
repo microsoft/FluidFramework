@@ -21,9 +21,9 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider)
 
         // Sample interface used for storing the details of a cell.
         interface ICellType {
-            row: number,
-            col: number,
-            value: string,
+            row: number;
+            col: number;
+            value: string;
         }
 
         function orderSequentially(callback: () => void): void {
@@ -197,7 +197,7 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider)
             let asserted: boolean = false;
             try {
                 tableDocumentWithInterception.setCellValue(cell.row, cell.col, cell.value);
-            } catch (error) {
+            } catch (error: any) {
                 assert.strictEqual(error.message,
                     "Interception wrapper method called recursively from the interception callback",
                     "We should have caught an assert in setCellValue because it detects an infinite recursion");

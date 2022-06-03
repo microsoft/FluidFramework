@@ -45,7 +45,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
     private localDirty = false;
 
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, initialValue: TState) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_ot_");
 
         this.global = this.local = initialValue;
     }

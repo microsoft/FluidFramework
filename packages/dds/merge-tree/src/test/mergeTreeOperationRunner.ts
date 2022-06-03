@@ -9,10 +9,9 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import random from "random-js";
-import { LocalReference } from "../localReference";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
-import { ISegment, SegmentGroup } from "../mergeTree";
+import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTree";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -30,10 +29,10 @@ export const insertAtRefPos: TestOperation =
     (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => {
         const segs: ISegment[] = [];
         // gather all the segments at the pos, including removed segments
-        client.mergeTree.walkAllSegments(client.mergeTree.root,(seg)=>{
+        client.mergeTree.walkAllSegments(client.mergeTree.root, (seg) => {
             const pos = client.getPosition(seg);
-            if(pos >= opStart) {
-                if(pos <= opStart) {
+            if (pos >= opStart) {
+                if (pos <= opStart) {
                     segs.push(seg);
                     return true;
                 }
@@ -41,16 +40,18 @@ export const insertAtRefPos: TestOperation =
             }
             return true;
         });
-        if(segs.length > 0) {
+        if (segs.length > 0) {
             const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
-            const seg = random.pick(mt,segs);
-            const lref = new LocalReference(
-                client, seg, random.integer(0, seg.cachedLength - 1)(mt),
-                random.pick(mt,[ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]));
-            if(lref.refType !== ReferenceType.Transient) {
-                client.addLocalReference(lref);
-            }
-            return client.insertAtReferencePositionLocal(lref,TextSegment.make(text));
+            const seg = random.pick(mt, segs);
+            const lref = client.createLocalReferencePosition(
+                seg,
+                toRemovalInfo(seg) ? 0 : random.integer(0, seg.cachedLength - 1)(mt),
+                toRemovalInfo(seg)
+                    ? ReferenceType.SlideOnRemove
+                    : random.pick(mt, [ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]),
+                undefined);
+
+            return client.insertAtReferencePositionLocal(lref, TextSegment.make(text));
         }
     };
 
@@ -114,7 +115,7 @@ export function runMergeTreeOperationRunner(
                 minLength,
                 config.operations,
             );
-            const msgs = messageData.map((md)=>md[0]);
+            const msgs = messageData.map((md) => md[0]);
             seq = apply(seq, messageData, clients, logger);
             const resultText = logger.validate();
             results.push({
@@ -126,7 +127,7 @@ export function runMergeTreeOperationRunner(
         }
     });
 
-    if(config.resultsFilePostfix !== undefined) {
+    if (config.resultsFilePostfix !== undefined) {
         const resultsFilePath =
             `${replayResultsPath}/len_${minLength}-clients_${clients.length}-${config.resultsFilePostfix}`;
         fs.writeFileSync(resultsFilePath, JSON.stringify(results, undefined, 4));
@@ -210,18 +211,18 @@ export function applyMessages(
     logger: TestClientLogger,
 ) {
     let seq = startingSeq;
-    try{
+    try {
         // log and apply all the ops created in the round
         while (messageData.length > 0) {
             const [message] = messageData.shift()!;
             message.sequenceNumber = ++seq;
             clients.forEach((c) => c.applyMsg(message));
         }
-    } catch(e) {
-        if(e instanceof Error) {
+    } catch (e) {
+        if (e instanceof Error) {
             e.message += `\n${logger.toString()}`;
         }
-        if(typeof e === "string") {
+        if (typeof e === "string") {
             throw new Error(`${e}\n${logger.toString()}`);
         }
         throw e;

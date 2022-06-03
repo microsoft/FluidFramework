@@ -8,6 +8,7 @@ import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
+    IClientManager,
     ICollection,
     IContext,
     IDeliState,
@@ -55,6 +56,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly operationsDbMongoManager: MongoManager,
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
+        private readonly clientManager: IClientManager | undefined,
         private readonly forwardProducer: IProducer,
         private readonly signalProducer: IProducer | undefined,
         private readonly reverseProducer: IProducer,
@@ -160,6 +162,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             documentId,
             newCheckpoint,
             checkpointManager,
+            this.clientManager,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
             this.signalProducer,
@@ -172,7 +175,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             const handler = async () => {
                 if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)) {
                     const query = { documentId, tenantId, session: { $exists: true } };
-                    const data = { "session.isSessionAlive": false };
+                    const data = { "session.isSessionAlive": false, "lastAccessTime": Date.now() };
                     await this.collection.update(query, data, null);
                     context.log?.info(`Marked isSessionAlive as false for closeType: ${JSON.stringify(closeType)}`,
                         { messageMetaData });

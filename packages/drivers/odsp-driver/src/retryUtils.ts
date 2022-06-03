@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay, performance } from "@fluidframework/common-utils";
+import { delay, performance } from "@fluidframework/common-utils";
 import { canRetryOnError } from "@fluidframework/driver-utils";
 import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { Odsp409Error } from "./epochTracker";
@@ -38,13 +38,13 @@ export async function runWithRetry<T>(
                     lastError);
             }
             return result;
-        } catch (error) {
+        } catch (error: any) {
             const canRetry = canRetryOnError(error);
 
             const coherencyError = error?.[Odsp409Error] === true;
             const serviceReadonlyError = error?.errorType === OdspErrorType.serviceReadOnly;
-            // Retry for 409 coherency errors or serviceReadOnly errors.
-            if (!(coherencyError || serviceReadonlyError)) {
+            // Retry for retriable 409 coherency errors or serviceReadOnly errors.
+            if (!(coherencyError || serviceReadonlyError || canRetry)) {
                 throw error;
             }
 
@@ -66,7 +66,6 @@ export async function runWithRetry<T>(
                 throw error;
             }
 
-            assert(canRetry, 0x24d /* "can retry" */);
             await delay(Math.floor(retryAfter));
             retryAfter += retryAfter / 4 * (1 + Math.random());
             lastError = error;

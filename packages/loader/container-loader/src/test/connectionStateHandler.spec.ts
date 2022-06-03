@@ -9,7 +9,7 @@ import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ConnectionState } from "../container";
+import { ConnectionState } from "../connectionState";
 import { ConnectionStateHandler } from "../connectionStateHandler";
 
 describe("ConnectionStateHandler Tests", () => {
@@ -21,6 +21,8 @@ describe("ConnectionStateHandler Tests", () => {
     let client: IClient;
     const expectedTimeout = 90000;
     const pendingClientId = "pendingClientId";
+    let connectionStateHandler_receivedAddMemberEvent: (id: string) => void;
+    let connectionStateHandler_receivedRemoveMemberEvent: (id: string) => void;
 
     // Stash the real setTimeout because sinon fake timers will hijack it.
     const realSetTimeout = setTimeout;
@@ -79,6 +81,10 @@ describe("ConnectionStateHandler Tests", () => {
             },
             new TelemetryNullLogger(),
         );
+        connectionStateHandler_receivedAddMemberEvent =
+            (id: string) => { (connectionStateHandler as any).receivedAddMemberEvent(id); };
+        connectionStateHandler_receivedRemoveMemberEvent =
+            (id: string) => { (connectionStateHandler as any).receivedRemoveMemberEvent(id); };
     });
 
     it("Should move to connected state on normal flow for read client", async () => {
@@ -94,14 +100,14 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
             "Client should be in disconnected state");
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client should be in connecting state");
         protocolHandler.quorum.addMember("anotherClientId", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent("anotherClientId");
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedAddMemberEvent("anotherClientId");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Some other client joined.");
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
     });
@@ -110,7 +116,7 @@ describe("ConnectionStateHandler Tests", () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
 
@@ -125,12 +131,12 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId2";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId2", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedAddMemberEvent(connectionDetails.clientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should be in connecting state as we are waiting for leave");
 
         // Send leave
-        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        connectionStateHandler_receivedRemoveMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 2 should be in connected state");
     });
@@ -139,7 +145,7 @@ describe("ConnectionStateHandler Tests", () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
 
@@ -154,13 +160,13 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId2";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId2", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedAddMemberEvent(connectionDetails.clientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should be in connecting state as we are waiting for timeout");
 
         // Check state before timeout
         await tickClock(expectedTimeout - 1);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should still be in connecting state as we are waiting for timeout");
 
         await tickClock(1);
@@ -172,7 +178,7 @@ describe("ConnectionStateHandler Tests", () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
 
@@ -187,13 +193,13 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId2";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId2", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedAddMemberEvent(connectionDetails.clientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should be in connecting state as we are waiting for timeout");
 
         // Check state before timeout
         await tickClock(expectedTimeout - 1);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should still be in connecting state as we are waiting for timeout");
 
         // Fire the container saved event.
@@ -203,12 +209,11 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Should wait for client 1 to leave before moving to conencted state(Client 3) when client 2 " +
-        "got disconnected from connecting state", async () =>
-    {
+        "got disconnected from connecting state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
@@ -222,7 +227,7 @@ describe("ConnectionStateHandler Tests", () => {
         // Make new client join but disconnect it from connecting state
         connectionDetails.clientId = "pendingClientId2";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should be in connecting state");
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -232,16 +237,16 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId3";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId3", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId);
+        connectionStateHandler_receivedAddMemberEvent(connectionDetails.clientId);
 
         // Send leave for client 2 and check that client 3 should not move to conencted state as we were waiting
         // on client 1 leave
-        connectionStateHandler.receivedRemoveMemberEvent("pendingClientId2");
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedRemoveMemberEvent("pendingClientId2");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state");
 
         // Client 1 leaves.
-        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        connectionStateHandler_receivedRemoveMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 3 should move to connected state");
         // Timeout should not raise any error as timer should be cleared
@@ -249,12 +254,11 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Should wait for client 1 timeout before moving to conencted state(Client 3) when client 2 " +
-        "got disconnected from connecting state", async () =>
-    {
+        "got disconnected from connecting state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
@@ -268,7 +272,7 @@ describe("ConnectionStateHandler Tests", () => {
         // Make new client join but disconnect it from connecting state
         connectionDetails.clientId = "pendingClientId2";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should be in connecting state");
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -278,35 +282,34 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId3";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId3", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId);
+        connectionStateHandler_receivedAddMemberEvent(connectionDetails.clientId);
 
         // Send leave for client 2 and check that client 3 should not move to conencted state as we were waiting
         // on client 1 leave.
-        connectionStateHandler.receivedRemoveMemberEvent("pendingClientId2");
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedRemoveMemberEvent("pendingClientId2");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state");
 
         // Pass some time.
         await tickClock(expectedTimeout - 1);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state as timeout has not occured");
 
         await tickClock(1);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 3 should move to connected state");
         // Sending client 1 leave now should not cause any error
-        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        connectionStateHandler_receivedRemoveMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 3 should move to connected state");
     });
 
     it("Should wait for savedEvent before moving to conencted state(Client 3) when client 2 " +
-        "got disconnected from connecting state", async () =>
-    {
+        "got disconnected from connecting state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
@@ -320,7 +323,7 @@ describe("ConnectionStateHandler Tests", () => {
         // Make new client join but disconnect it from connecting state
         connectionDetails.clientId = "pendingClientId2";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should be in connecting state");
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -330,35 +333,34 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId3";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId3", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId);
+        connectionStateHandler_receivedAddMemberEvent(connectionDetails.clientId);
 
         // Send leave for client 2 and check that client 3 should not move to conencted state as we were waiting
         // on client 1 leave.
-        connectionStateHandler.receivedRemoveMemberEvent("pendingClientId2");
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedRemoveMemberEvent("pendingClientId2");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state");
 
         // Pass some time.
         await tickClock(expectedTimeout - 1);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state as timeout has not occured");
 
         connectionStateHandler.containerSaved();
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 3 should move to connected state");
         // Sending client 1 leave now should not cause any error
-        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        connectionStateHandler_receivedRemoveMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 3 should move to connected state");
     });
 
     it("Should wait for client 1 to leave before moving to conencted state(Client 3) when client 2 " +
-        "got disconnected from connected state", async () =>
-    {
+        "got disconnected from connected state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
@@ -373,8 +375,8 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId2";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId2", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent("pendingClientId2");
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedAddMemberEvent("pendingClientId2");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should still be in connecting state");
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -384,18 +386,18 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId3";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId3", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedAddMemberEvent(connectionDetails.clientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state");
 
         // Send leave for client 2 and check that client 3 should not move to conencted state as we were waiting
         // on client 1 leave
-        connectionStateHandler.receivedRemoveMemberEvent("pendingClientId2");
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedRemoveMemberEvent("pendingClientId2");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state");
 
         // Client 1 leaves.
-        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        connectionStateHandler_receivedRemoveMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 3 should move to connected state");
         // Timeout should not raise any error as timer should be cleared
@@ -403,12 +405,11 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Should wait for client 1 timeout before moving to conencted state(Client 3) when client 2 " +
-        "got disconnected from connected state", async () =>
-    {
+        "got disconnected from connected state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
@@ -423,8 +424,8 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId2";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId2", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent("pendingClientId2");
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedAddMemberEvent("pendingClientId2");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should still be in connecting state");
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -434,17 +435,17 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId3";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId3", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId);
+        connectionStateHandler_receivedAddMemberEvent(connectionDetails.clientId);
 
         // Send leave for client 2 and check that client 3 should not move to conencted state as we were waiting
         // on client 1 leave.
-        connectionStateHandler.receivedRemoveMemberEvent("pendingClientId2");
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedRemoveMemberEvent("pendingClientId2");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state");
 
         // Pass some time.
         await tickClock(expectedTimeout - 1);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state as timeout has not occured");
 
         await tickClock(1);
@@ -452,18 +453,17 @@ describe("ConnectionStateHandler Tests", () => {
             "Client 3 should move to connected state");
 
         // Sending client 1 leave now should not cause any error
-        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        connectionStateHandler_receivedRemoveMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 3 should move to connected state");
     });
 
     it("Client 3 should wait for client 2(which got disconnected without sending any ops) to leave " +
-        "when client 2 already waited on client 1", async () =>
-    {
+        "when client 2 already waited on client 1", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 1 should be in connected state");
 
@@ -478,11 +478,11 @@ describe("ConnectionStateHandler Tests", () => {
         connectionDetails.clientId = "pendingClientId2";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember("pendingClientId2", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent("pendingClientId2");
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedAddMemberEvent("pendingClientId2");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 2 should still be in connecting state");
         // Client 1 leaves.
-        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        connectionStateHandler_receivedRemoveMemberEvent(pendingClientId);
 
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 2 should move to connected state");
@@ -495,15 +495,15 @@ describe("ConnectionStateHandler Tests", () => {
         // Make new client 3 join. Now it should not wait for previous client as client 2 already waited.
         connectionDetails.clientId = "pendingClientId3";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state");
         protocolHandler.quorum.addMember("pendingClientId3", { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(connectionDetails.clientId);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+        connectionStateHandler_receivedAddMemberEvent(connectionDetails.clientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client 3 should still be in connecting state");
 
         // Client 2 leaves.
-        connectionStateHandler.receivedRemoveMemberEvent("pendingClientId2");
+        connectionStateHandler_receivedRemoveMemberEvent("pendingClientId2");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 3 should move to connected state");
         // Timeout should not raise any error as timer should be cleared

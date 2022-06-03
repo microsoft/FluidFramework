@@ -60,8 +60,7 @@ export class TestServer extends TestClient {
         if (TestClient.useCheckQ) {
             const clid = this.getShortClientId(msg.clientId);
             return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
-        }
-        else {
+        } else {
             return false;
         }
     }
@@ -131,8 +130,7 @@ export class TestServer extends TestClient {
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 break;
             }
             _msgCount--;

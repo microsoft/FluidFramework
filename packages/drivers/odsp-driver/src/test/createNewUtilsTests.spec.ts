@@ -51,6 +51,47 @@ describe("Create New Utils Tests", () => {
         return summary;
     };
 
+    const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
+    const driveId = "driveId";
+    const itemId = "itemId";
+    const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
+    const filePath = "path";
+    let newFileParams: INewFileInfo;
+    let hashedDocumentId: string;
+    let localCache: LocalPersistentCache;
+    let fileEntry: IFileEntry;
+    let epochTracker: EpochTracker;
+
+    before(async () => {
+        hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+        fileEntry = {
+            docId: hashedDocumentId,
+            resolvedUrl,
+        };
+    });
+
+    beforeEach(async () => {
+        localCache = createUtLocalCache();
+        // use null logger here as we expect errors
+        epochTracker = new EpochTracker(
+            localCache,
+            {
+                docId: hashedDocumentId,
+                resolvedUrl,
+            },
+            new TelemetryNullLogger());
+        newFileParams = {
+            driveId,
+            siteUrl,
+            filePath,
+            filename: "filename",
+        };
+    });
+
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
+    });
+
     const test = (snapshot: ISnapshotContents) => {
         const snapshotTree = snapshot.snapshotTree;
         assert.strictEqual(Object.entries(snapshotTree.trees).length, 2, "app and protocol should be there");
@@ -78,41 +119,13 @@ describe("Create New Utils Tests", () => {
     };
 
     it("Should convert as expected and check contents", async () => {
-        const snapshot = convertCreateNewSummaryTreeToTreeAndBlobs(createSummary(),"");
+        const snapshot = convertCreateNewSummaryTreeToTreeAndBlobs(createSummary(), "");
         test(snapshot);
     });
 
     it("Should cache converted summary during createNewFluidFile", async () => {
-        const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
-        const driveId = "driveId";
-        const itemId = "itemId";
-        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
-        const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
-        const localCache = createUtLocalCache();
-        // use null logger here as we expect errors
-        const epochTracker = new EpochTracker(
-            localCache,
-            {
-                docId: hashedDocumentId,
-                resolvedUrl,
-            },
-            new TelemetryNullLogger());
-
-        const filePath = "path";
-        const newFileParams: INewFileInfo = {
-            driveId,
-            siteUrl: "https://www.localhost.xxx",
-            filePath,
-            filename: "filename",
-        };
-
-        const fileEntry: IFileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
-        };
-
         const odspResolvedUrl = await mockFetchOk(
-                async () =>createNewFluidFile(
+                async () => createNewFluidFile(
                     async (_options) => "token",
                     newFileParams,
                     new TelemetryNullLogger(),
@@ -121,8 +134,8 @@ describe("Create New Utils Tests", () => {
                     fileEntry,
                     true,
                     false,
-                ) ,
-                { itemId: "itemId1", id: "Summary handle"},
+                ),
+                { itemId: "itemId1", id: "Summary handle" },
                 { "x-fluid-epoch": "epoch1" },
                 );
         const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
@@ -131,38 +144,13 @@ describe("Create New Utils Tests", () => {
     });
 
     it("Should save share link information received during createNewFluidFile", async () => {
-        const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
-        const driveId = "driveId";
-        const itemId = "itemId";
         const createLinkType = ShareLinkTypes.csl;
-        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
-        const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
-        // use null logger here as we expect errors
-        const epochTracker = new EpochTracker(
-            createUtLocalCache(),
-            {
-                docId: hashedDocumentId,
-                resolvedUrl,
-            },
-            new TelemetryNullLogger());
-
-        const newFileParams: INewFileInfo = {
-            driveId,
-            siteUrl: "https://www.localhost.xxx",
-            filePath: "path",
-            filename: "filename",
-            createLinkType,
-        };
-
-        const fileEntry: IFileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
-        };
+        newFileParams.createLinkType = createLinkType;
 
         // Test that sharing link is set appropriately when it is received in the response from ODSP
         const mockSharingLink = "mockSharingLink";
         let odspResolvedUrl = await mockFetchOk(
-                async () =>createNewFluidFile(
+                async () => createNewFluidFile(
                     async (_options) => "token",
                     newFileParams,
                     new TelemetryNullLogger(),
@@ -172,11 +160,11 @@ describe("Create New Utils Tests", () => {
                     false,
                     false,
                 ),
-                { itemId: "mockItemId", id: "mockId", sharingLink: mockSharingLink, sharingLinkErrorReason: undefined},
+                { itemId: "mockItemId", id: "mockId", sharingLink: mockSharingLink, sharingLinkErrorReason: undefined },
                 { "x-fluid-epoch": "epoch1" },
                 );
-        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink,{
-            type:createLinkType,
+        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
+            type: createLinkType,
             link: mockSharingLink,
             error: undefined,
         });
@@ -184,7 +172,7 @@ describe("Create New Utils Tests", () => {
         // Test that error message is set appropriately when it is received in the response from ODSP
         const mockError = "mockError";
         odspResolvedUrl = await mockFetchOk(
-            async () =>createNewFluidFile(
+            async () => createNewFluidFile(
                 async (_options) => "token",
                 newFileParams,
                 new TelemetryNullLogger(),
@@ -194,14 +182,51 @@ describe("Create New Utils Tests", () => {
                 false,
                 false,
             ),
-            { itemId: "mockItemId", id: "mockId", sharingLink: undefined, sharingLinkErrorReason: mockError},
+            { itemId: "mockItemId", id: "mockId", sharingLink: undefined, sharingLinkErrorReason: mockError },
             { "x-fluid-epoch": "epoch1" },
             );
-        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink,{
-            type:createLinkType,
+        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
+            type: createLinkType,
             link: undefined,
             error: mockError,
         });
+        await epochTracker.removeEntries().catch(() => {});
+    });
+
+    it("Should set the isClpCompliantApp prop on resolved url if already present", async () => {
+        const odspResolvedUrl1 = await mockFetchOk(
+                async () => createNewFluidFile(
+                    async (_options) => "token",
+                    newFileParams,
+                    new TelemetryNullLogger(),
+                    createSummary(),
+                    epochTracker,
+                    fileEntry,
+                    true,
+                    false,
+                    true /* isClpCompliantApp */,
+                ),
+                { itemId: "itemId1", id: "Summary handle" },
+                { "x-fluid-epoch": "epoch1" },
+                );
+        assert(odspResolvedUrl1.isClpCompliantApp, "isClpCompliantApp should be set");
+
+        const odspResolvedUrl2 = await mockFetchOk(
+            async () => createNewFluidFile(
+                async (_options) => "token",
+                newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                true,
+                false,
+                undefined /* isClpCompliantApp */,
+            ),
+            { itemId: "itemId1", id: "Summary handle" },
+            { "x-fluid-epoch": "epoch1" },
+            );
+        assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
         await epochTracker.removeEntries().catch(() => {});
     });
 });

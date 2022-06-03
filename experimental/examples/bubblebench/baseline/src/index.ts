@@ -4,7 +4,7 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import { AppView } from "@fluid-experimental/bubblebench-common";
+import { AppView } from "@fluid-example/bubblebench-common";
 import React from "react";
 
 import { Bubblebench, BubblebenchInstantiationFactory } from "./main";

@@ -76,6 +76,8 @@ export async function getSession(ordererUrl: string,
 
     // The tempSession.isSessionAlive would be updated as whether the session was alive before the request came.
     tempSession.isSessionAlive = isSessionAlive;
-    Lumberjack.info(`Returning the session: ${JSON.stringify(tempSession)}`, lumberjackProperties);
+    Lumberjack.info(`Returning the session from the discovery: ${JSON.stringify(tempSession)}`,
+        lumberjackProperties);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return tempSession;
 }

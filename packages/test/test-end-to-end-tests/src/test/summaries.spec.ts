@@ -11,7 +11,7 @@ import {
     Summarizer,
     ISummarizer,
     ISummarizeResults,
-    ISummaryRuntimeOptions} from "@fluidframework/container-runtime";
+    ISummaryRuntimeOptions, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
@@ -37,8 +37,13 @@ const maxOps = 10;
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
-            initialSummarizerDelayMs: 0,
-            summaryConfigOverrides: { maxOps },
+            summaryConfigOverrides: {
+                ...DefaultSummaryConfiguration,
+                ...{
+                    maxOps,
+                    initialSummarizerDelayMs: 0,
+                },
+             },
         },
     },
 };
@@ -55,7 +60,11 @@ async function createContainer(
     ], []);
 
     // Force generateSummaries to false.
-    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt, disableSummaries: true };
+    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt,
+        summaryConfigOverrides: {
+            ...summaryOpt.summaryConfigOverrides,
+            state: "disabled",
+        } };
 
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
@@ -129,8 +138,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         try {
             negResult = undefined;
             negResult = summarizer.summarizeOnDemand({ reason: "negative test" });
-        }
-        catch(reason) {}
+        } catch (reason) {}
         assert(negResult === undefined, "Should not have attempted to summarize while summarizing");
 
         submitResult = await result.summarySubmitted;
@@ -236,7 +244,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         try {
             result = undefined;
             result = summarizer.summarizeOnDemand({ reason: "test" });
-        } catch(error) {
+        } catch (error: any) {
             assert(error.errorType === "summarizingError", "Should throw a summarizer error");
         }
         assert(result === undefined, "Should not have attempted summary with disposed summarizer");

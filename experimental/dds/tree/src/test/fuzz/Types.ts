@@ -4,8 +4,8 @@
  */
 
 import type { TestObjectProvider } from '@fluidframework/test-utils';
-import type Prando from 'prando';
 import type { IContainer } from '@fluidframework/container-definitions';
+import type { BaseFuzzTestState } from '@fluid-internal/stochastic-test-utils';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import type { SharedTree } from '../../SharedTree';
 import type { WriteFormat } from '../../persisted-types';
@@ -14,8 +14,7 @@ import type { TreeView } from '../../TreeView';
 import type { NodeId } from '../../Identifiers';
 import type { NodeIdGenerator } from '../../NodeIdUtilities';
 
-export interface FuzzTestState {
-	rand: Prando;
+export interface FuzzTestState extends BaseFuzzTestState {
 	testObjectProvider?: TestObjectProvider;
 	activeCollaborators: Collaborator[];
 	passiveCollaborators: Collaborator[];
@@ -62,17 +61,6 @@ export interface Synchronize {
  * - More fine-grained control of summarization processes
  */
 export type Operation = TreeEdit | TreeJoin | TreeLeave | Synchronize;
-
-export const done = Symbol('GeneratorDone');
-
-/**
- * TAdditionalState can be used to compose generators (see treatment of how fuzzed edit changes pass in
- * the tree to which they apply to sub-generators)
- */
-export type AsyncGenerator<T, TAdditionalState> = (
-	state: FuzzTestState,
-	additionalState: TAdditionalState
-) => Promise<T | typeof done>;
 
 export interface FuzzInsert {
 	fuzzType: 'insert';

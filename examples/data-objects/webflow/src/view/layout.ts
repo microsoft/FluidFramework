@@ -5,11 +5,9 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
 import { SequenceEvent } from "@fluidframework/sequence";
 import { FlowDocument } from "../document";
-import { IFluidHTMLViewFactory } from "../editor";
 import { clamp, Dom, done, emptyObject, getSegmentRange, hasTagName, isTextNode, TagName } from "../util";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
@@ -92,7 +90,7 @@ export class Layout extends EventEmitter {
     private renderPromise = done;
     private renderResolver: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, public readonly viewFactoryRegistry: Map<string, IFluidHTMLViewFactory> = new Map(), public readonly scope?: FluidObject) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>) {
         super();
 
         let scheduled = false;
@@ -258,8 +256,8 @@ export class Layout extends EventEmitter {
         // Look in the checkpoint's saved format stack at the depth we are about to push on to the
         // current format stack.
         const checkpoint = this.segmentToCheckpoint.get(segment);
-        const stack = checkpoint && checkpoint.formatStack;
-        const candidate = stack && stack[this.formatStack.length];
+        const stack = checkpoint?.formatStack;
+        const candidate = stack?.[this.formatStack.length];
 
         // If we find the same kind of formatter at the expected depth, pass the previous output state.
         const prevOut = (

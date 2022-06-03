@@ -351,7 +351,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         const containersToApply = this.getContainers(containers);
         for (const container of containersToApply) {
             const record = this.containers.get(container);
-            if (record !== undefined && record.paused) {
+            if (record?.paused === true) {
                 debugWait(`${record.index}: container resumed`);
                 container.deltaManager.inbound.resume();
                 container.deltaManager.outbound.resume();
@@ -503,7 +503,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         return `${address} ${JSON.stringify(contents)}`;
                     }
                     return JSON.stringify(contents);
-                } catch (e) {
+                } catch (e: any) {
                     return `${e.message}: ${e.stack}`;
                 }
             };

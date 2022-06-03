@@ -33,7 +33,11 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             [],
             []);
         const runtimeOptions: IContainerRuntimeOptions = {
-            summaryOptions: { disableSummaries: true },
+            summaryOptions: {
+                summaryConfigOverrides: {
+                    state: "disabled",
+                },
+             },
             gcOptions: { gcAllowed: true, runGCInTestMode: deleteUnreferencedContent, writeDataAtRoot: true },
         };
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
@@ -62,7 +66,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
          */
         function validateChildReferenceStates(summary: ISummaryTree, referenced: boolean) {
             const expectedUnreferenced = referenced ? undefined : true;
-            for (const [ id, summaryObject ] of Object.entries(summary.tree)) {
+            for (const [id, summaryObject] of Object.entries(summary.tree)) {
                 if (summaryObject.type !== SummaryType.Tree) {
                     continue;
                 }
@@ -162,7 +166,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
 
             let dataStoreTree: ISummaryTree | undefined;
             const channelsTree = (summary.tree[channelsTreeName] as ISummaryTree).tree;
-            for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
+            for (const [id, summaryObject] of Object.entries(channelsTree)) {
                 if (id === dataStoreId) {
                     assert(
                         summaryObject.type === SummaryType.Tree,

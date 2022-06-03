@@ -140,17 +140,21 @@ export function convertSummaryTreeToWholeSummaryTree(
  * Build a tree heirarchy from a flat tree.
  *
  * @param flatTree - a flat tree
+ * @param treePrefixToRemove - tree prefix to strip
  * @returns the heirarchical tree
  */
-function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
-    const lookup: { [path: string]: ISnapshotTree } = {};
+ function buildHierarchy(
+    flatTree: IWholeFlatSummaryTree,
+    treePrefixToRemove: string,
+): ISnapshotTree {
+    const lookup: { [path: string]: ISnapshotTree; } = {};
     // Root tree id will be used to determine which version was downloaded.
     const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.entries) {
-        // Strip the .app/ path from app tree entries such that they are stored under root.
-        const entryPath = entry.path.replace(/^\.app\//, "");
+        // Strip the `treePrefixToRemove` path from tree entries such that they are stored under root.
+        const entryPath = entry.path.replace(new RegExp(`^${treePrefixToRemove}/`), "");
         const lastIndex = entryPath.lastIndexOf("/");
         const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
         const entryPathBase = entryPath.slice(lastIndex + 1);
@@ -177,9 +181,12 @@ function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
  * Converts existing IWholeFlatSummary to snapshot tree, blob array, and sequence number.
  *
  * @param flatSummary - flat summary
+ * @param treePrefixToRemove - tree prefix to strip. By default we are stripping ".app" prefix
+ * @returns snapshot tree, blob array, and sequence number
  */
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
     flatSummary: IWholeFlatSummary,
+    treePrefixToRemove: string = ".app",
 ): INormalizedWholeSummary {
     const blobs = new Map<string, ArrayBuffer>();
     if (flatSummary.blobs) {
@@ -187,9 +194,12 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
             blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
         });
     }
-    const flatSummaryTree = flatSummary.trees && flatSummary.trees[0];
+    const flatSummaryTree = flatSummary.trees?.[0];
     const sequenceNumber = flatSummaryTree?.sequenceNumber;
-    const snapshotTree = buildHeirarchy(flatSummaryTree);
+    const snapshotTree = buildHierarchy(
+        flatSummaryTree,
+        treePrefixToRemove,
+    );
 
     return {
         blobs,
