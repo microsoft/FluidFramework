@@ -87,7 +87,7 @@ All shared objects supported by Fluid have a `handle` property that can be used 
 
 Dynamically created objects need to be stored on an already connected shared object, so the most common case is to store references to them in an initial object property, because initial objects are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense shared objects are arbitrarily nestable. But the hierarchy of referenced objects must rest in an initial object that holds the references to the first level of dynamic objects. So, there is always at least one initial object in every container.
 
-When retrieving dynamically created objects your code needs to first get the object's handle then get the object from the handle. This reference based approach enables the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
+When retrieving dynamically created objects, your code needs to first get the object's handle then get the object from the handle. This reference-based approach enables the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
 The following example demonstrates dynamically creating a `SharedCell` and storing it in the `SharedMap` initial object
 using the handle. It also demonstrates retrieving the `SharedCell` object from the `SharedMap` and listening for the new
