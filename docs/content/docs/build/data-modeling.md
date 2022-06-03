@@ -21,11 +21,10 @@ Your code must define at least one `initialObject`. In many cases one or more in
 
 ### Example usage
 
-The example below creates a new container with a `SharedMap` and a `SharedCell` as `initialObjects`.
-
-About this code note:
+The example below creates a new container with a `SharedMap` and a `SharedCell` as `initialObjects`. About this code note:
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
+- The placeholder `/*service config*/` stands for a service-specific configuration object.
 - It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 ```typescript
