@@ -11,7 +11,7 @@ import {
     IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 
 describe("FluidDataStoreRuntime Tests", () => {
@@ -37,7 +37,7 @@ describe("FluidDataStoreRuntime Tests", () => {
         dataStoreContext = new MockFluidDataStoreContext(invalidId);
         const codeBlock = () => loadRuntime(dataStoreContext, sharedObjectRegistry);
         assert.throws(codeBlock,
-            (e) => e instanceof UsageError
+            (e) => e.errorType === ContainerErrorType.usageError
                 && e.message === `Data store context ID cannot contain slashes: ${invalidId}`);
     });
 
@@ -46,7 +46,7 @@ describe("FluidDataStoreRuntime Tests", () => {
         dataStoreContext = new MockFluidDataStoreContext(invalidId);
         const codeBlock = () => new FluidDataStoreRuntime(dataStoreContext, sharedObjectRegistry, false);
         assert.throws(codeBlock,
-            (e) => e instanceof UsageError
+            (e) => e.errorType === ContainerErrorType.usageError
                 && e.message === `Data store context ID cannot contain slashes: ${invalidId}`);
     });
 
@@ -84,7 +84,7 @@ describe("FluidDataStoreRuntime Tests", () => {
         const invalidId = "beforeSlash/afterSlash";
         const codeBlock = () => dataStoreRuntime.createChannel(invalidId, "SomeType");
         assert.throws(codeBlock,
-            (e) => e instanceof UsageError
+            (e) => e.errorType === ContainerErrorType.usageError
                 && e.message === `Channel id cannot contain slashes: ${invalidId}`);
     });
 });
