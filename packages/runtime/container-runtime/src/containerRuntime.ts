@@ -1051,8 +1051,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         signalSequenceNumber: 0,
     };
     /**
-     * Returns the current perfSignalData and
-     * resets the local storage so we can initiate a new collection.
+     * Returns the current _perfSignalData and resets it so we can initiate a new collection.
      * @returns the current signal report data to be reported with the Oproundtrip event.
      */
     private get perfSignalData(): IPerfSignalReport {
