@@ -244,7 +244,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
  * cleaned up in the event of failure.
  * This includes the document itself, which will have been created by the time this error was thrown.
  *
- * TODO: examples of suggested actions for recovery.
+ * @remarks TODO: examples of suggested actions for recovery.
  * - How would a user delete the created document?
  * - What would a retry pattern look like here?
  */
