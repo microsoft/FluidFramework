@@ -213,12 +213,6 @@ describe("MergeTree.Client", () => {
         assert.equal(client1.getPosition(segoff.segment), 0);
         assert.equal(segoff.offset, 2);
 
-        // Throws
-        // assert.throws(() => { getSlideOnRemoveReferencePosition(client1, -1, createReference2); },
-        //     "should throw on negative position");
-        // assert.throws(() => { getSlideOnRemoveReferencePosition(client1, 7, createReference2); },
-        //     "should throw on position past end of string");
-
         // On a removed, unacked segment
         let remove = client1.makeOpMessage(
             client1.removeRangeLocal(2, 5),
