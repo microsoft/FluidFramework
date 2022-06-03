@@ -59,6 +59,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         };
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentServiceFactory.createContainer}
+     *
+     * @throws {@link DocumentPostCreateError}
+     * If an exception is thrown while invoking the provided {@link ITokenProvider.documentPostCreateCallback}.
+     */
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
@@ -133,7 +139,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
         // is sufficient to determine if the token will be undefined or not.
         if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
-            await this.tokenProvider.documentPostCreateCallback(documentId, token);
+            try {
+                await this.tokenProvider.documentPostCreateCallback(documentId, token);
+            } catch (error: any) {
+                throw new DocumentPostCreateError(error);
+            }
         }
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
@@ -162,9 +172,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     }
 
     /**
-     * Creates the document service after extracting different endpoints URLs from a resolved URL.
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentServiceFactory.createContainer}
      *
-     * @param resolvedUrl - URL containing different endpoint URLs.
      * @returns Routerlicious document service.
      */
     public async createDocumentService(
@@ -226,4 +235,30 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.blobCache,
             this.snapshotTreeCache);
     }
+}
+
+/**
+ * Error returned by {@link RouterliciousDocumentServiceFactory.createContainer} when an error is thrown
+ * in {@link ITokenProvider.documentPostCreateCallback}.
+ * It is the consumer's responsibility to ensure that any state related to container creation is appropriately
+ * cleaned up in the event of failure.
+ * This includes the document itself, which will have been created by the time this error was thrown.
+ *
+ * @remarks TODO: examples of suggested actions for recovery.
+ * - How would a user delete the created document?
+ * - What would a retry pattern look like here?
+ */
+ export class DocumentPostCreateError extends Error {
+    public constructor(
+        /**
+         * Inner error being wrapped.
+         */
+        private readonly innerError: Error,
+    ) {
+        super(innerError.message);
+    }
+
+    public readonly name = "DocumentPostCreateError";
+
+    public get stack() { return this.innerError.stack; }
 }
