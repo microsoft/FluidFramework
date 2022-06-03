@@ -64,6 +64,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/container-utils": "^0.60.1000",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.60.1000",
     "@fluidframework/merge-tree": "^0.60.1000",
@@ -126,7 +127,9 @@
       "ClassDeclaration_SharedSequence": {"forwardCompat": false},
       "ClassDeclaration_SharedString": {"forwardCompat": false},
       "ClassDeclaration_SparseMatrix": {"forwardCompat": false},
-      "ClassDeclaration_IntervalCollection": {"forwardCompat": false}
+      "ClassDeclaration_IntervalCollection": {"forwardCompat": false},
+      "ClassDeclaration_SequenceInterval": {"backCompat": false},
+      "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false}
     }
   }
 }
