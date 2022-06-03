@@ -24,7 +24,7 @@ These common APIs enable your code to define the container schema (which specifi
 
 Your code must define a schema that represents the structure of the data within the container. A schema can specify:
 
-- Some initial shared objects that are created as soon as the container is, and are immediately and always available to all connected clients.
+- Some initial shared objects that are created as soon as the container is created, and are immediately and always available to all connected clients.
 - The types of shared objects that can be added to the container at runtime and persisted in the container for use by all connected clients.
 
 The same schema definition that is used to create the container must be provided when clients subsequently load the container. For more information about initial objects and dynamic object creation see [Data modeling]({{< relref "data-modeling.md" >}}).
