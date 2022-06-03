@@ -197,6 +197,12 @@ export class MockContainerRuntimeFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
     public readonly quorum = new MockQuorum();
+    /**
+     * The MockContainerRuntimes we produce will push messages into this queue as they are submitted.
+     * This is playing the role of the orderer, establishing a single universal order for the messages generated.
+     * They are held in this queue until we explicitly choose to process them, at which time they are "broadcast" to
+     * each of the runtimes.
+     */
     protected messages: ISequencedDocumentMessage[] = [];
     protected readonly runtimes: MockContainerRuntime[] = [];
 
@@ -230,6 +236,9 @@ export class MockContainerRuntimeFactory {
         this.messages.push(msg as ISequencedDocumentMessage);
     }
 
+    /**
+     * Process one of the queued messages.  Throws if no messages are queued.
+     */
     public processOneMessage() {
         if (this.messages.length === 0) {
             throw new Error("Tried to process a message that did not exist");
@@ -248,6 +257,10 @@ export class MockContainerRuntimeFactory {
         }
     }
 
+    /**
+     * Process a given number of queued messages.  Throws if there are fewer messages queued than requested.
+     * @param count - the number of messages to process
+     */
     public processSomeMessages(count: number) {
         if (count > this.messages.length) {
             throw new Error("Tried to process more messages than exist");
@@ -258,6 +271,9 @@ export class MockContainerRuntimeFactory {
         }
     }
 
+    /**
+     * Process all remaining messages in the queue.
+     */
     public processAllMessages() {
         while (this.messages.length > 0) {
             this.processOneMessage();

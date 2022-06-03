@@ -331,7 +331,7 @@ describe("Quorum", () => {
             const targetKey = "key";
             quorum1.set(targetKey, "expected");
             // This should cause quorum2 to produce an accept op but...
-            containerRuntimeFactory.processSomeMessages(1);
+            containerRuntimeFactory.processSomeMessages(1); // quorum1 "set"
             // We disconnect before it gets processed.
             containerRuntime2.connected = false;
             containerRuntime2.connected = true;
@@ -398,7 +398,7 @@ describe("Quorum", () => {
             quorum1.set(targetKey, "expected");
             // TODO: In this flow, client 1 processes the set message ack before it disconnects but not the accepts
             // Consider whether it's interesting for it to disconnect before processing any ops.
-            containerRuntimeFactory.processOneMessage();
+            containerRuntimeFactory.processOneMessage(); // quorum1 "set"
             containerRuntime1.connected = false;
             containerRuntimeFactory.processAllMessages(); // Process the accept from client 2
             containerRuntime1.connected = true;
@@ -413,7 +413,7 @@ describe("Quorum", () => {
             quorum1.set(targetKey, "expected");
             // TODO: In this flow, client 1 processes the set message ack before it disconnects but not the accepts
             // Consider whether it's interesting for it to disconnect before processing any ops.
-            containerRuntimeFactory.processOneMessage();
+            containerRuntimeFactory.processOneMessage(); // quorum1 "set"
             containerRuntime1.connected = false;
             containerRuntime1.connected = true;
             assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 1, "Should only have client 2 accept");
