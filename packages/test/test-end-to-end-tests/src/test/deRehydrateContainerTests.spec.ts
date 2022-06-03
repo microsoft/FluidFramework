@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { compare } from "semver";
 import { bufferToString } from "@fluidframework/common-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails, ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
@@ -32,7 +32,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat, itExpects } from "@fluidframework/test-version-utils";
 import {
     getSnapshotTreeFromSerializedContainer,
-    ISnapshotTreeWithBlobContents,
 // eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/dist/utils";
 

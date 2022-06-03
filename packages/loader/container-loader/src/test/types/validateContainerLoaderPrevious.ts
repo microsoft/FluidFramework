@@ -35,6 +35,7 @@ declare function get_current_EnumDeclaration_ConnectionState():
 declare function use_old_EnumDeclaration_ConnectionState(
     use: TypeOnly<old.ConnectionState>);
 use_old_EnumDeclaration_ConnectionState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_ConnectionState());
 
 /*
@@ -59,6 +60,7 @@ declare function get_current_ClassDeclaration_Container():
 declare function use_old_ClassDeclaration_Container(
     use: TypeOnly<old.Container>);
 use_old_ClassDeclaration_Container(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Container());
 
 /*
@@ -251,6 +253,7 @@ declare function get_current_InterfaceDeclaration_ILoaderServices():
 declare function use_old_InterfaceDeclaration_ILoaderServices(
     use: TypeOnly<old.ILoaderServices>);
 use_old_InterfaceDeclaration_ILoaderServices(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoaderServices());
 
 /*
@@ -275,6 +278,7 @@ declare function get_current_ClassDeclaration_Loader():
 declare function use_old_ClassDeclaration_Loader(
     use: TypeOnly<old.Loader>);
 use_old_ClassDeclaration_Loader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Loader());
 
 /*

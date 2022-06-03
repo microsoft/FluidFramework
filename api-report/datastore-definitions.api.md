@@ -22,6 +22,7 @@ import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definiti
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 
 // @public (undocumented)
@@ -29,13 +30,13 @@ export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
     connect(services: IChannelServices): void;
-    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly id: string;
     isAttached(): boolean;
     // (undocumented)
     readonly owner?: string;
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
 }
 
 // @public
@@ -83,6 +84,7 @@ export interface IDeltaHandler {
     applyStashedOp(message: any): unknown;
     process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
     reSubmit(message: any, localOpMetadata: unknown): void;
+    rollback?(message: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean): void;
 }
 
