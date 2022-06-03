@@ -41,6 +41,10 @@ Your automation can connect to a test tenant for Azure Fluid Relay in the same w
 
 The Azure Fluid Relay client can also connect to a local Tinylicious instance.  This allows you to use a single client type between tests against live and local service instances, where the only difference is the configuration used to create the client.
 
+About this code note:
+
+* The values for `tenantId`, `endpoint`, and `type` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious.
+
 ```javascript
 const user = {
     id: "UserId",
@@ -60,8 +64,6 @@ const clientProps = {
 // instance rather than a live Azure Fluid Relay
 const client = new AzureClient(clientProps);
 ```
-
-These values for `tenantId`, `endpoint`, and `type` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious.
 
 ## Automation example
 
