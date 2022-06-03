@@ -88,6 +88,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
+    addSummarizeResultToSummary,
     addTreeToSummary,
     createRootSummarizerNodeWithGC,
     IRootSummarizerNodeWithGC,
@@ -100,7 +101,7 @@ import {
     calculateStats,
     TelemetryContext,
 } from "@fluidframework/runtime-utils";
-import { GCDataBuilder } from "@fluidframework/garbage-collector";
+import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -1210,6 +1211,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.logger,
             existing,
             metadata,
+            this.context.clientDetails.type === summarizerClientType,
         );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1271,7 +1273,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobId: string) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
             this.logger,
         );
@@ -1476,7 +1479,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get IFluidTokenProvider() {
-        if (this.options && this.options.intelligence) {
+        if (this.options?.intelligence) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
                 intelligence: this.options.intelligence,
@@ -1578,8 +1581,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const dataStoreChannel = await dataStoreContext.realize();
+
+        // Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
+        // the same as GC nodes id.
+        const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
         this.garbageCollector.nodeUpdated(
-            `/${id}`,
+            `/${urlWithoutQuery}`,
             "Loaded",
             undefined /* timestampMs */,
             dataStoreContext.packagePath,
@@ -1606,7 +1613,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
 
-    private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, telemetryContext?: ITelemetryContext) {
+    private addContainerStateToSummary(
+        summaryTree: ISummaryTreeWithStats,
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ) {
         this.addMetadataToSummary(summaryTree);
 
         if (this.chunkMap.size > 0) {
@@ -1632,9 +1644,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
-            const gcSummary = this.garbageCollector.summarize(telemetryContext);
+            const gcSummary = this.garbageCollector.summarize(fullTree, trackState, telemetryContext);
             if (gcSummary !== undefined) {
-                addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
+                addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
             }
         }
     }
@@ -1656,7 +1668,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return true;
         }
 
-        this.consecutiveReconnects++;
         if (this.consecutiveReconnects === Math.floor(this.maxConsecutiveReconnects / 2)) {
             // If we're halfway through the max reconnects, send an event in order
             // to better identify false positives, if any. If the rate of this event
@@ -1728,9 +1739,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // There might be no change of state due to Container calling this API after loading runtime.
         const changeOfState = this._connected !== connected;
+        const reconnection = changeOfState && connected;
         this._connected = connected;
 
-        if (changeOfState) {
+        if (reconnection) {
+            this.consecutiveReconnects++;
+
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(new GenericError(
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
@@ -1739,7 +1753,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     { attempts: this.consecutiveReconnects }));
                 return;
             }
+        }
 
+        if (changeOfState) {
             this.replayPendingStates();
         }
 
@@ -2173,7 +2189,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
-        this.addContainerStateToSummary(summarizeResult, telemetryContext);
+        this.addContainerStateToSummary(
+            summarizeResult,
+            true /* fullTree */,
+            false /* trackState */,
+            telemetryContext,
+        );
         return summarizeResult.summary;
     }
 
@@ -2200,7 +2221,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             wrapSummaryInChannelsTree(summarizeResult);
             pathPartsForChildren = [channelsTreeName];
         }
-        this.addContainerStateToSummary(summarizeResult);
+        this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
         return {
             ...summarizeResult,
             id: "",
@@ -2330,18 +2351,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Returns the type of the GC node. Currently, there are nodes that belong to data store and nodes that belong
-     * to the blob manager.
+     * Returns the type of the GC node. Currently, there are nodes that belong to the root ("/"), data stores or
+     * blob manager.
      */
     public getNodeType(nodePath: string): GCNodeType {
         if (this.isBlobPath(nodePath)) {
             return GCNodeType.Blob;
         }
-        if (this.dataStores.isDataStoreNode(nodePath)) {
-            return GCNodeType.DataStore;
-        }
-        // Root node ("/") and DDS nodes belong to "Other" node types.
-        return GCNodeType.Other;
+        return this.dataStores.getGCNodeType(nodePath) ?? GCNodeType.Other;
     }
 
     /**
@@ -2349,13 +2366,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * data store or an attachment blob.
      */
     public getGCNodePackagePath(nodePath: string): readonly string[] | undefined {
-        // If the node is a blob, return "_blobs" as the package path.
-        if (this.isBlobPath(nodePath)) {
-            return ["_blobs"];
+        switch (this.getNodeType(nodePath)) {
+            case GCNodeType.Blob:
+                return ["_blobs"];
+            case GCNodeType.DataStore:
+            case GCNodeType.SubDataStore:
+                return this.dataStores.getDataStorePackagePath(nodePath);
+            default:
+                assert(false, 0x2de /* "Package path requested for unsupported node type." */);
         }
-        const dataStorePkgPath = this.dataStores.getDataStorePackagePath(nodePath);
-        assert(dataStorePkgPath !== undefined, 0x2d6 /* "Package path requested for unknown node type." */);
-        return dataStorePkgPath;
     }
 
     /**
@@ -2528,7 +2547,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
             const gcSummaryTreeStats = summaryTree.tree[gcTreeKey]
-                ? calculateStats((summaryTree.tree[gcTreeKey] as ISummaryTree))
+                ? calculateStats(summaryTree.tree[gcTreeKey])
                 : undefined;
 
             const summaryStats: IGeneratedSummaryStats = {

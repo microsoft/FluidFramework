@@ -100,7 +100,7 @@ export function convertSnapshotAndBlobsToSummaryTree(
     });
     for (const [path, id] of Object.entries(snapshot.blobs)) {
         const blob = blobs.get(id);
-        assert(blob !== undefined, "Cannot find blob for a given id");
+        assert(blob !== undefined, 0x2dd /* "Cannot find blob for a given id" */);
         assembler.addBlob(path, IsoBuffer.from(blob).toString("utf-8"));
     }
     for (const [key, tree] of Object.entries(snapshot.trees)) {

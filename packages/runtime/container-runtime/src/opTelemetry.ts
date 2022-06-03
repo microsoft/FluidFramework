@@ -9,7 +9,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 
 export class OpTracker {
     /**
@@ -49,7 +49,7 @@ export class OpTracker {
         });
 
         deltaManager.on("op", (message: ISequencedDocumentMessage) => {
-            this._nonSystemOpCount += isSystemMessage(message) ? 0 : 1;
+            this._nonSystemOpCount += !isRuntimeMessage(message) ? 0 : 1;
             const id = OpTracker.messageId(message);
             this._opsSizeAccumulator += this.messageSize[id] ?? 0;
             this.messageSize.delete(id);

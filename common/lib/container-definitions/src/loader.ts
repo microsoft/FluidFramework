@@ -274,14 +274,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly connectionState: ConnectionState;
 
     /**
-     * Boolean indicating whether the container is currently connected or not
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Check `connectionState === ConnectionState.Connected` instead
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    readonly connected: boolean;
-
-    /**
      * Attempts to connect the container to the delta stream and process ops
      */
     connect(): void;
@@ -292,31 +284,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     disconnect(): void;
 
     /**
-     * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
-     * after receiving a disconnect event
-     * @param reconnect - Boolean indicating if reconnect should automatically occur
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` and `disconnect()` instead of `setAutoReconnect(true)` and `setAutoReconnect(false)` respectively
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    setAutoReconnect?(reconnect: boolean): void;
-
-    /**
-     * Have the container attempt to resume processing ops
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` instead
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    resume?(): void;
-
-    /**
      * The audience information for all clients currently associated with the document in the current session
      */
     readonly audience: IAudience;
 
     /**
      * The server provided ID of the client.
-     * Set once this.connected is true, otherwise undefined
+     * Set once this.connectionState === ConnectionState.Connected is true, otherwise undefined
      * @alpha
      */
     readonly clientId?: string | undefined;
@@ -396,20 +370,6 @@ export type ILoaderOptions = {
      */
     provideScopeLoader?: boolean;
 
-    // Below two are the options based on which we decide how often client needs to send noops in case of active
-    // connection which is not sending any op. The end result is the "AND" of these 2 options. So the client
-    // should hit the min time and count to send the noop.
-    /**
-     * Set min time(in ms) frequency with which noops would be sent in case of active connection which is
-     * not sending any op.
-     */
-    noopTimeFrequency?: number;
-
-    /**
-     * Set min op frequency with which noops would be sent in case of active connection which is not sending any op.
-     */
-    noopCountFrequency?: number;
-
     /**
      * Max time(in ms) container will wait for a leave message of a disconnected client.
     */
@@ -466,12 +426,12 @@ export interface IContainerLoadMode {
         | "all";
     deltaConnection?:
         /*
-         * Connection to delta stream is made only when Container.resume() call is made. Op processing
-         * is paused (when container is returned from Loader.resolve()) until Container.resume() call is made.
+         * Connection to delta stream is made only when Container.connect() call is made. Op processing
+         * is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
          */
         | "none"
         /*
-         * Connection to delta stream is made only when Container.resume() call is made.
+         * Connection to delta stream is made only when Container.connect() call is made.
          * Op fetching from storage is performed and ops are applied as they come in.
          * This is useful option if connection to delta stream is expensive and thus it's beneficial to move it
          * out from critical boot sequence, but it's beneficial to allow catch up to happen as fast as possible.
@@ -501,18 +461,6 @@ export interface IProvideLoader {
     readonly ILoader: ILoader;
 }
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IRequestHeader extends Partial<ILoaderHeader> { }
-
-    export interface IFluidObject {
-        /**
-         * @deprecated - use `FluidObject<ILoader>` instead
-         */
-        readonly ILoader?: ILoader;
-    }
-}
-
 /**
  * @deprecated 0.48, This API will be removed in 0.50
  * No replacement since it is not expected anyone will depend on this outside container-loader
@@ -529,6 +477,6 @@ export interface IPendingLocalState {
  * when attaching.
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
-    blobsContents: { [path: string]: ArrayBufferLike },
-    trees: { [path: string]: ISnapshotTreeWithBlobContents },
+    blobsContents: { [path: string]: ArrayBufferLike; };
+    trees: { [path: string]: ISnapshotTreeWithBlobContents; };
 }

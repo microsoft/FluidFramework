@@ -46,7 +46,7 @@ const testKey2 = "another test key";
 const testValue = "test value";
 
 const ensureContainerConnected = async (container: IContainer) => {
-    if (!container.connected) {
+    if (container.connectionState !== ConnectionState.Connected) {
         return new Promise<void>((resolve) => container.once("connected", () => resolve()));
     }
 };

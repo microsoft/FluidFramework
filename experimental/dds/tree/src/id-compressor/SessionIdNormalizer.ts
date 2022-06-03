@@ -8,6 +8,7 @@
 import { assert, compareFiniteNumbers, compareFiniteNumbersReversed, fail, Mutable } from '../Common';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers';
 import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap';
+import { SerializedSessionIdNormalizer } from './persisted-types';
 
 /**
  * Maps IDs created by a session between their local and final forms (i.e. normalization). These IDs are in a contiguous range.
@@ -319,7 +320,7 @@ export class SessionIdNormalizer<TRangeObject> {
 	}
 
 	public serialize(): SerializedSessionIdNormalizer {
-		const serialized: Mutable<SerializedSessionIdNormalizer> = { localRanges: [] };
+		const serialized: Mutable<SerializedSessionIdNormalizer> = { localRanges: [], nextLocalId: this.nextLocalId };
 		const localRanges = serialized.localRanges as Mutable<typeof serialized.localRanges>;
 		for (const [firstLocal, finalRanges] of this.idRanges.entries()) {
 			const [lastLocal, finalRangesTable] = finalRanges;
@@ -358,6 +359,7 @@ export class SessionIdNormalizer<TRangeObject> {
 			}
 			idRanges.append(firstLocal, [lastLocal, finalRanges]);
 		}
+		normalizer.nextLocalId = serialized.nextLocalId;
 		return normalizer;
 	}
 
@@ -365,50 +367,36 @@ export class SessionIdNormalizer<TRangeObject> {
 		other: SessionIdNormalizer<TRangeObject>,
 		compareRangeObjects: (a: TRangeObject, b: TRangeObject) => boolean = (a, b) => a === b
 	): boolean {
-		return this.idRanges.equals(other.idRanges, (localRangeA, localRangeB) => {
-			const [lastLocalA, finalRangesA] = localRangeA;
-			const [lastLocalB, finalRangesB] = localRangeB;
-			if (finalRangesA === undefined || finalRangesB === undefined) {
-				return finalRangesA === finalRangesB;
-			}
-
-			const rangeEquals = (finalRangeA: FinalRange<TRangeObject>, finalRangeB: FinalRange<TRangeObject>) => {
-				const [firstFinalA, lastFinalA, rangeObjectA] = finalRangeA;
-				const [firstFinalB, lastFinalB, rangeObjectB] = finalRangeB;
-				return (
-					firstFinalA === firstFinalB &&
-					lastFinalA === lastFinalB &&
-					compareRangeObjects(rangeObjectA, rangeObjectB)
-				);
-			};
-
-			if (isSingleRange(finalRangesA) || isSingleRange(finalRangesB)) {
-				if (!isSingleRange(finalRangesA) || !isSingleRange(finalRangesB)) {
-					return false;
+		return (
+			this.nextLocalId === other.nextLocalId &&
+			this.idRanges.equals(other.idRanges, (localRangeA, localRangeB) => {
+				const [lastLocalA, finalRangesA] = localRangeA;
+				const [lastLocalB, finalRangesB] = localRangeB;
+				if (finalRangesA === undefined || finalRangesB === undefined) {
+					return finalRangesA === finalRangesB;
 				}
-				return rangeEquals(finalRangesA, finalRangesB);
-			}
 
-			return lastLocalA === lastLocalB && finalRangesA.equals(finalRangesB, rangeEquals);
-		});
+				const rangeEquals = (finalRangeA: FinalRange<TRangeObject>, finalRangeB: FinalRange<TRangeObject>) => {
+					const [firstFinalA, lastFinalA, rangeObjectA] = finalRangeA;
+					const [firstFinalB, lastFinalB, rangeObjectB] = finalRangeB;
+					return (
+						firstFinalA === firstFinalB &&
+						lastFinalA === lastFinalB &&
+						compareRangeObjects(rangeObjectA, rangeObjectB)
+					);
+				};
+
+				if (isSingleRange(finalRangesA) || isSingleRange(finalRangesB)) {
+					if (!isSingleRange(finalRangesA) || !isSingleRange(finalRangesB)) {
+						return false;
+					}
+					return rangeEquals(finalRangesA, finalRangesB);
+				}
+
+				return lastLocalA === lastLocalB && finalRangesA.equals(finalRangesB, rangeEquals);
+			})
+		);
 	}
-}
-
-/**
- * Serialized table for normalizing IDs made by the local session.
- *
- * TODO: Move this into ID compressor persisted types when integrated.
- */
-export interface SerializedSessionIdNormalizer {
-	readonly localRanges: readonly (readonly [
-		firstLocal: LocalCompressedId,
-		lastLocal: LocalCompressedId,
-		finalRanges?: readonly (readonly [
-			alignedLocal: LocalCompressedId,
-			firstFinal: FinalCompressedId,
-			lastFinal: FinalCompressedId
-		])[]
-	])[];
 }
 
 type FinalRange<TRangeObject> = [

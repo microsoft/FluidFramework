@@ -18,7 +18,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -135,8 +134,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
     connect(): void;
-    // @deprecated
-    readonly connected: boolean;
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
@@ -151,11 +148,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly readOnlyInfo: ReadOnlyInfo;
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
-    // @deprecated
-    resume?(): void;
     serialize(): string;
-    // @deprecated
-    setAutoReconnect?(reconnect: boolean): void;
 }
 
 // @public
@@ -306,11 +299,8 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
 
-// @public @deprecated (undocumented)
-export const IDeltaSender: keyof IProvideDeltaSender;
-
 // @public
-export interface IDeltaSender extends IProvideDeltaSender {
+export interface IDeltaSender {
     flush(): void;
 }
 
@@ -395,17 +385,6 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public @deprecated (undocumented)
-export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
-
-// @public @deprecated (undocumented)
-export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
-    // (undocumented)
-    intelligence: {
-        [service: string]: any;
-    };
-}
-
 // @public
 export interface IGenericError extends IErrorBase {
     // (undocumented)
@@ -447,8 +426,6 @@ export type ILoaderOptions = {
 } & {
     cache?: boolean;
     provideScopeLoader?: boolean;
-    noopTimeFrequency?: number;
-    noopCountFrequency?: number;
     maxClientLeaveWaitTime?: number;
 };
 
@@ -460,22 +437,10 @@ export interface IPendingLocalState {
     url: string;
 }
 
-// @public @deprecated (undocumented)
-export interface IProvideDeltaSender {
-    // @deprecated (undocumented)
-    readonly IDeltaSender: IDeltaSender;
-}
-
 // @public (undocumented)
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
-// @public @deprecated (undocumented)
-export interface IProvideFluidTokenProvider {
-    // (undocumented)
-    readonly IFluidTokenProvider: IFluidTokenProvider;
 }
 
 // @public (undocumented)
@@ -488,14 +453,6 @@ export interface IProvideLoader {
 export interface IProvideRuntimeFactory {
     // (undocumented)
     readonly IRuntimeFactory: IRuntimeFactory;
-}
-
-// @public @deprecated
-export interface IProxyLoaderFactory {
-    // @deprecated
-    createProxyLoader(id: string, options: ILoaderOptions, resolved: IFluidResolvedUrl, fromSequenceNumber: number): Promise<ILoader>;
-    // @deprecated
-    environment: string;
 }
 
 // @public
