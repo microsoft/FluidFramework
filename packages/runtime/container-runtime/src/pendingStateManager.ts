@@ -118,7 +118,7 @@ export class PendingStateManager implements IDisposable {
      * @returns A boolean indicating whether there are messages or not.
      */
     public hasPendingMessages(): boolean {
-        return this.pendingMessagesCount !== 0 || !this.initialStates.isEmpty();
+        return this._pendingMessagesCount !== 0 || !this.initialStates.isEmpty();
     }
 
     public getLocalState(): IPendingLocalState | undefined {
@@ -420,7 +420,7 @@ export class PendingStateManager implements IDisposable {
             return;
         }
 
-        this.pendingMessagesCount--;
+        this._pendingMessagesCount--;
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pendingState = this.pendingStates.pop()!;
