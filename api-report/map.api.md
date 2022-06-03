@@ -152,7 +152,7 @@ export class LocalValueMaker {
     fromInMemory(value: any): ILocalValue;
     // Warning: (ae-forgotten-export) The symbol "ILocalValue" needs to be exported by the entry point index.d.ts
     fromSerializable(serializable: ISerializableValue): ILocalValue;
-    }
+}
 
 // @public @sealed
 export class MapFactory implements IChannelFactory {
@@ -209,6 +209,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
     set<T = any>(key: string, value: T): this;
     get size(): number;
     subdirectories(): IterableIterator<[string, IDirectory]>;
@@ -249,6 +251,5 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
-
 
 ```

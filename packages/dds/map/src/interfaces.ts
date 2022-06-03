@@ -118,7 +118,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * - `changed` - Information on the key that changed, its value prior to the change, and the path to the key that
  *   changed.
  *
- * - `local` - Whether the change originated from the this client.
+ * - `local` - Whether the change originated from this client.
  *
  * - `target` - The ISharedDirectory itself.
  *
@@ -131,7 +131,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * ```typescript
  * (local: boolean, target: IEventThisPlaceHolder) => void
  * ```
- * - `local` - Whether the clear originated from the this client.
+ * - `local` - Whether the clear originated from this client.
  *
  * - `target` - The ISharedDirectory itself.
  *
@@ -146,7 +146,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * ```
  * - `path` -  The relative path to the key that is created.It is relative from the object which raises the event.
  *
- * - `local` - Whether the clear originated from the this client.
+ * - `local` - Whether the clear originated from this client.
  *
  * - `target` - The ISharedDirectory itself.
  *
@@ -161,7 +161,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * ```
  * - `path` - The relative path to the key that is deleted.It is relative from the object which raises the event.
  *
- * - `local` - Whether the clear originated from the this client.
+ * - `local` - Whether the clear originated from this client.
  *
  * - `target` - The ISharedDirectory itself.
  */
@@ -203,7 +203,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * ```
  * - `changed` - Information on the key that changed and its value prior to the change.
  *
- * - `local` - Whether the change originated from the this client.
+ * - `local` - Whether the change originated from this client.
  *
  *
  * - `target` - The IDirectory itself.
@@ -218,7 +218,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * ```
  * - `path` - The relative path to the key that is created. It is relative from the object which raises the event.
  *
- * - `local` - Whether the clear originated from the this client.
+ * - `local` - Whether the clear originated from this client.
  *
  * - `target` - The ISharedDirectory itself.
  *
@@ -233,7 +233,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * ```
  * - `path` - The relative path to the key that is deleted. It is relative from the object which raises the event.
  *
- * - `local` - Whether the clear originated from the this client.
+ * - `local` - Whether the clear originated from this client.
  *
  * - `target` - The ISharedDirectory itself.
  *
@@ -312,7 +312,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
  * ```
  * - `changed` - Information on the key that changed and its value prior to the change.
  *
- * - `local` - Whether the change originated from the this client.
+ * - `local` - Whether the change originated from this client.
  *
  * - `op` - The op that caused the change in value.
  *
@@ -327,7 +327,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
  * ```typescript
  * (local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void
  * ```
- * - `local` - Whether the clear originated from the this client.
+ * - `local` - Whether the clear originated from this client.
  *
  * - `op` - The op that caused the clear.
  *
