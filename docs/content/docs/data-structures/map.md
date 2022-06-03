@@ -24,7 +24,11 @@ For additional background on DDSes and a general overview of their design, see [
 
 ## Creation
 
-The `FluidContainer` provides a container schema for defining which DDSes you would like to load from it. It provides two separate fields for establishing an initial roster of objects and dynamically creating new ones. For general guidance on using the `ContainerSchema`, please see [here]({{< relref "data-modeling.md" >}}) and for guidance on how to create/load a container using a service-specific client, please see [here]({{< relref "containers.md#creating--loading" >}}).
+The `FluidContainer` provides a container schema for defining which DDSes you would like to load from it.
+It provides two separate fields for establishing an initial roster of objects and dynamically creating new ones.
+
+- For general guidance on using the `ContainerSchema`, please see [Data modeling]({{< relref "data-modeling.md" >}}).
+- For guidance on how to create/load a container using a service-specific client, please see [Containers - Creating and loading]({{< relref "containers.md#creating--loading" >}}).
 
 Let's take a look at how you would specifically use the `ContainerSchema` for `SharedMap`.
 
