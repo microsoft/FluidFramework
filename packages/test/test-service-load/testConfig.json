@@ -13,15 +13,13 @@
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
-                        "Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload": [true],
-                        "Fluid.Container.summarizeProtocolTree": [true]
+                        "Fluid.Container.summarizeProtocolTree": [true, false]
                     }
                 },
                 "odsp-odsp-df":{
                     "configurations":{
                         "Fluid.Driver.Odsp.snapshotFormatFetchType": [0, 1],
-                        "Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload": [true],
-                        "Fluid.Container.summarizeProtocolTree": [true]
+                        "Fluid.Container.summarizeProtocolTree": [true, false]
                     }
                 }
             }
@@ -46,8 +44,7 @@
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
-                        "Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload": [true],
-                        "Fluid.Container.summarizeProtocolTree": [true]
+                        "Fluid.Container.summarizeProtocolTree": [true, false]
                     }
                 }
             }
@@ -106,21 +103,6 @@
                 "odsp":{
                     "configurations":{
                         "Fluid.Driver.Odsp.snapshotFormatFetchType": [1]
-                    }
-                }
-            }
-        },
-        "odspContainerTypeSummaryUpload": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 5000,
-            "numClients": 4,
-            "totalSendCount": 150,
-            "readWriteCycleMs": 10000,
-            "optionOverrides":{
-                "odsp":{
-                    "configurations":{
-                        "Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload": [true],
-                        "Fluid.Container.summarizeProtocolTree": [true]
                     }
                 }
             }
