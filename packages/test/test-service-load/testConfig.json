@@ -13,7 +13,7 @@
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
-                        "Fluid.Container.summarizeProtocolTree": [false]
+                        "Fluid.Container.summarizeProtocolTree": [true]
                     }
                 },
                 "odsp-odsp-df":{
@@ -44,7 +44,7 @@
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
-                        "Fluid.Container.summarizeProtocolTree": [false]
+                        "Fluid.Container.summarizeProtocolTree": [true]
                     }
                 }
             }
