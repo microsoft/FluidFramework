@@ -20,7 +20,7 @@ import {
     mixinMonitoringContext,
     MockLogger,
 } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
@@ -32,7 +32,7 @@ describe("Runtime", () => {
             const getMockContext = ((): Partial<IContainerContext> => {
                 return {
                     deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorum(),
+                    quorum: new MockQuorumClients(),
                     taggedLogger: new MockLogger(),
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (_error?: ICriticalContainerError): void => { },
@@ -73,7 +73,7 @@ describe("Runtime", () => {
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
                             deltaManager: new MockDeltaManager(),
-                            quorum: new MockQuorum(),
+                            quorum: new MockQuorumClients(),
                             taggedLogger: new MockLogger(),
                             clientDetails: { capabilities: { interactive: true } },
                             closeFn: (error?: ICriticalContainerError): void => {
@@ -184,7 +184,7 @@ describe("Runtime", () => {
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
                             deltaManager: new MockDeltaManager(),
-                            quorum: new MockQuorum(),
+                            quorum: new MockQuorumClients(),
                             taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
                                 "Fluid.ContainerRuntime.EnableRollback": true,
                             })) as unknown as MockLogger,
@@ -245,7 +245,7 @@ describe("Runtime", () => {
 
                     return {
                         deltaManager: new MockDeltaManager(),
-                        quorum: new MockQuorum(),
+                        quorum: new MockQuorumClients(),
                         taggedLogger: new MockLogger(),
                         clientDetails: { capabilities: { interactive: true } },
                         updateDirtyContainerState: (dirty: boolean) => { },
@@ -648,7 +648,7 @@ describe("Runtime", () => {
                 return {
                     clientId: "fakeClientId",
                     deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorum(),
+                    quorum: new MockQuorumClients(),
                     taggedLogger: mockLogger,
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (error?: ICriticalContainerError): void => {
