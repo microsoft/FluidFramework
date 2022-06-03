@@ -33,7 +33,7 @@ DDSes vary from each other by three characteristics:
 
 - **Basic data structure:** For example, key-value pair, a sequence, or a queue.
 - **Client autonomy vs. Consensus:** An *optimistic* DDS enables any client to unilaterally change a value and the new
-  value is relayed to all other clients. But some DDSes only allow a change if it is accepted by other clients by a
+  value is relayed to all other clients, while a *consensus-based* DDS will only allow a change if it is accepted by other clients via a
   consensus process.
 - **Merge policy:** The policy that determines how conflicting changes from clients are resolved.
 
