@@ -1526,8 +1526,8 @@ export class MergeTree {
                 }
             }
         }
-        // TODO:ransomr rethink implementation of keeping and sliding refs
-        // This works but is fragile and possibly slow
+        // Rethink implementation of keeping and sliding refs once other reference
+        // changes are complete. This works but is fragile and possibly slow.
         if (!pending) {
             this.slideReferences(segment, refsToSlide);
         }

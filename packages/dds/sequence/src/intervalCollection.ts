@@ -313,7 +313,6 @@ export class SequenceInterval implements ISerializableInterval {
             return;
         }
 
-        // TODO:ransomr ack on create for modified intervals;
         const newInterval =
             createSequenceInterval(label, startPos, endPos, this.start.getClient(), this.intervalType, op);
         if (this.properties) {

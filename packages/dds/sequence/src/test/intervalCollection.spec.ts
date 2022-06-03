@@ -158,7 +158,7 @@ describe("SharedString interval collections", () => {
             containerRuntimeFactory.processAllMessages();
             assert.throws(() => collection1.add(2, 5, IntervalType.SlideOnRemove),
                 "Should throw creating interval past end of string");
-            // TODO:ransomr where should we check for negative positions?
+            // There is no check for creating an interval at a negative offset
             // assert.throws(() => collection1.add(-1, 2, IntervalType.SlideOnRemove),
             //     "Should throw creating interval at negative position");
         });
@@ -212,7 +212,7 @@ describe("SharedString interval collections", () => {
             sharedString.removeRange(2, 3);
             assert.equal(sharedString.getText(), "AB");
             assertIntervals(sharedString, collection1, [
-                // TODO:ransomr odd behavior - end of interval doesn't slide
+                // odd behavior - end of interval doesn't slide
                 // until ack, so position beyond end of string
                 { start: 1, end: 2 },
             ]);
@@ -227,7 +227,7 @@ describe("SharedString interval collections", () => {
             // Remove location of start and end of interval
             sharedString.removeRange(1, 2);
             assertIntervals(sharedString, collection1, [
-                // TODO:ransomr odd behavior - start of interval doesn't slide
+                // odd behavior - start of interval doesn't slide
                 // until ack, so not found by overlapping search
                 { start: 1, end: 1 },
             ], false);
@@ -242,12 +242,12 @@ describe("SharedString interval collections", () => {
             // Interval on empty string
             sharedString.removeRange(0, 1);
             assertIntervals(sharedString, collection1, [
-                // TODO:ransomr Search finds interval at end of string
+                // Search finds interval at end of string
                 { start: 0, end: 0 },
             ]);
             containerRuntimeFactory.processAllMessages();
             assertIntervals(sharedString, collection1, [
-                // TODO:ransomr remove interval when string is acked empty
+                // Interval becomes detached when string is acked empty
                 { start: -1, end: -1 },
             ], false);
             assertIntervals(sharedString2, collection2, [
