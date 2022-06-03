@@ -1422,7 +1422,15 @@ export class MergeTree {
         return { segment, offset };
     }
 
-    private getSlideToSegment(currentSegment: ISegment) {
+    /**
+     * @internal must only be used by client
+     * @param segoff - The segment and offset to slide from
+     * @returns The segment and offset to slide to
+     */
+    public getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
+        if (!segoff.segment || !isRemovedAndAcked(segoff.segment)) {
+            return segoff;
+        }
         // Slide to the next farthest valid segment in the tree. If no such segment is found
         // slide to the last valid segment.
         // TODO this walks the whole tree to find the segment - could write a more efficient
@@ -1438,7 +1446,7 @@ export class MergeTree {
                     return false;
                 }
             }
-            if (!foundStart && seg === currentSegment) {
+            if (!foundStart && seg === segoff.segment) {
                 foundStart = true;
             }
             return true;
@@ -1452,29 +1460,6 @@ export class MergeTree {
     }
 
     /**
-     * @internal - this method should only be called by client
-     */
-    public getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number) {
-        let segoff = this.getContainingSegment(pos, refSeq, clientId);
-        if (segoff.segment && isRemovedAndAcked(segoff.segment)) {
-            // Only slide if the segment is removed and acked
-            segoff = this.getSlideToSegment(segoff.segment);
-        }
-        return segoff;
-    }
-
-    /**
-     * @internal - this method should only be called by client
-     * To ensure eventual consistency, this method must be called on acknowledgement
-     * of the op which created the reference.
-     */
-    public slideReference(ref: LocalReference) {
-        if (ref.segment && isRemovedAndAcked(ref.segment)) {
-            this.slideReferences(ref.segment, [ref]);
-        }
-    }
-
-    /**
      * This method should only be called when the current client sequence number is
      * max(remove segment sequence number, add reference sequence number).
      * Otherwise eventual consistency is not guaranteed.
@@ -1483,7 +1468,7 @@ export class MergeTree {
     private slideReferences(segment: ISegment, refsToSlide: LocalReference[]) {
         assert(isRemovedAndAcked(segment), "slideReferences from a segment which has not been removed and acked");
         assert(!!segment.localRefs, "Ref not in the segment localRefs");
-        const newSegoff = this.getSlideToSegment(segment);
+        const newSegoff = this.getSlideToSegment({ segment, offset: 0 });
         const newSegment = newSegoff.segment;
         if (newSegment && !newSegment.localRefs) {
             newSegment.localRefs = new LocalReferenceCollection(newSegment);
@@ -1497,7 +1482,7 @@ export class MergeTree {
                 ref.offset = 0;
             } else {
                 ref.segment = newSegment;
-                ref.offset = newSegoff.offset;
+                ref.offset = newSegoff.offset ?? 0;
                 assert(!!newSegment.localRefs, "localRefs must be allocated");
                 newSegment.localRefs.addLocalRef(ref);
             }

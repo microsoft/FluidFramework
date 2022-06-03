@@ -5,7 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { UsageError } from "@fluidframework/container-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -54,7 +53,7 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
-import { ReferencePosition, RangeStackMap, DetachedReferencePosition, refTypeIncludesFlag } from "./referencePositions";
+import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -1036,44 +1035,12 @@ export class Client {
     }
 
     /**
-     * Returns the segment and offset for creating a SlideOnRemove reference position
-     * in response to a remote op.
-     * Will return a location which is slid in an eventually consistent way.
-     * @param pos - The remote position
-     * @param op - The remote op
-     * @returns - segment and offset at which to create a SlideOnRemove reference position.
+     * Returns the position to slide a reference to if a slide is required.
+     * @param segoff - The segment and offset to slide from
+     * @returns - segment and offset to slide the reference to
      */
-    getSlideOnRemoveReferencePosition(pos: number, op: ISequencedDocumentMessage) {
-        const args = this.getClientSequenceArgsForMessage(op);
-        const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(
-            pos, args.referenceSequenceNumber, args.clientId);
-        if (segoff.offset === undefined || segoff.offset < 0) {
-            throw new Error("Invalid reference location");
-        }
-        return segoff;
-    }
-
-    /**
-     * Changes the type of a LocalReference. Only supports changing
-     * to a type which includes SlideOnRemove.
-     * @param reference - The reference to change. Must be a LocalReference.
-     * @param refType - The type to change to. Must include SlideOnRemove.
-     */
-    changeReferenceType(reference: ReferencePosition, refType: ReferenceType): void {
-        if (!(reference instanceof LocalReference)) {
-            throw new UsageError("changeReferenceType requires LocalReference");
-        }
-        if (refTypeIncludesFlag(reference, ReferenceType.Transient)) {
-            throw new UsageError("changeReferenceType called on TransientReference");
-        }
-        if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
-            throw new UsageError("changeReferenceType only support SlideOnRemove");
-        }
-        _validateReferenceType(refType);
-        reference.refType = refType;
-        if (refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
-            this.mergeTree.slideReference(reference);
-        }
+    getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
+        return this.mergeTree.getSlideToSegment(segoff);
     }
 
     getPropertiesAtPosition(pos: number) {

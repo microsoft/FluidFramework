@@ -111,7 +111,6 @@ export class Client {
     applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
     // (undocumented)
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
-    changeReferenceType(reference: ReferencePosition, refType: ReferenceType): void;
     // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)
@@ -153,7 +152,10 @@ export class Client {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    getSlideOnRemoveReferencePosition(pos: number, op: ISequencedDocumentMessage): {
+    getSlideToSegment(segoff: {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    }): {
         segment: ISegment | undefined;
         offset: number | undefined;
     };
@@ -1039,7 +1041,10 @@ export class MergeTree {
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
     // @internal
-    getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number): {
+    getSlideToSegment(segoff: {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    }): {
         segment: ISegment | undefined;
         offset: number | undefined;
     };
@@ -1092,8 +1097,6 @@ export class MergeTree {
     root: IMergeBlock;
     // (undocumented)
     setMinSeq(minSeq: number): void;
-    // @internal
-    slideReference(ref: LocalReference): void;
     // (undocumented)
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
     // (undocumented)
