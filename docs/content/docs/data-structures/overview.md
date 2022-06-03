@@ -14,10 +14,11 @@ This article assumes that you are familiar with
 
 {{% /callout %}}
 
-A distributed data structure behaves like a local data structure. Your code can add data to it, remove data, update it,
-etc. However, a DDS is not a local object. A DDS can also be changed by other clients that expose the same parent
-container of the DDS. Because users can simultaneously change the same DDS, you need to consider which DDS to use for
-modeling your data.
+A distributed data structure behaves like a local data structure. Your code can add data, remove data, update existing data,
+etc.
+However, a DDS is not a local object.
+A DDS can also be changed by other clients that expose the same parent container of the DDS.
+Because users can simultaneously change the same DDS, you need to consider which DDS to use for modeling your data.
 
 {{% callout note "Meaning of 'simultaneously'" %}}
 
