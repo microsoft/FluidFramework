@@ -38,7 +38,11 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         []);
 
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+         },
         gcOptions: { gcAllowed: true, writeDataAtRoot: true },
     };
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>

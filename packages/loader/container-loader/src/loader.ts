@@ -17,9 +17,7 @@ import {
     IFluidModule,
     IHostLoader,
     ILoader,
-    IPendingLocalState,
     ILoaderOptions as ILoaderOptions1,
-    IProxyLoaderFactory,
     LoaderHeader,
     IProvideFluidCodeDetailsComparer,
     IFluidCodeDetails,
@@ -47,7 +45,7 @@ import {
     MultiUrlResolver,
     MultiDocumentServiceFactory,
 } from "@fluidframework/driver-utils";
-import { Container } from "./container";
+import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 
@@ -201,13 +199,6 @@ export interface ILoaderProps {
     readonly scope?: FluidObject;
 
     /**
-     * Proxy loader factories for loading containers via proxy in other contexts,
-     * like web workers, or worker threads.
-     * @deprecated Not recommended for general use and will be removed in an upcoming release.
-     */
-    readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
-
-    /**
      * The logger that all telemetry should be pushed to.
      */
     readonly logger?: ITelemetryBaseLogger;
@@ -256,13 +247,6 @@ export interface ILoaderServices {
      * services for container's to integrate with their host environment.
      */
     readonly scope: FluidObject;
-
-    /**
-     * Proxy loader factories for loading containers via proxy in other contexts,
-     * like web workers, or worker threads.
-     * @deprecated Not recommended for general use and will be removed in an upcoming release.
-     */
-    readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
 
     /**
      * The logger downstream consumers should construct their loggers from
@@ -318,7 +302,6 @@ export class Loader implements IHostLoader {
             options: loaderProps.options ?? {},
             scope,
             subLogger: subMc.logger,
-            proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
             detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
         this.mc = loggerToMonitoringContext(
@@ -394,7 +377,7 @@ export class Loader implements IHostLoader {
 
     private async resolveCore(
         request: IRequest,
-        pendingLocalState?: IPendingLocalState,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<{ container: Container; parsed: IParsedUrl; }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -436,7 +419,7 @@ export class Loader implements IHostLoader {
                 await this.loadContainer(
                     request,
                     resolvedAsFluid,
-                    pendingLocalState?.pendingRuntimeState);
+                    pendingLocalState);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -487,7 +470,7 @@ export class Loader implements IHostLoader {
     private async loadContainer(
         request: IRequest,
         resolved: IFluidResolvedUrl,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<Container> {
         return Container.load(
             this,

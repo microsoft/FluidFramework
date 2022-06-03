@@ -22,7 +22,6 @@ import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
@@ -159,7 +158,6 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     // (undocumented)
     repositoryUrl: string;
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
 // @public (undocumented)
