@@ -765,7 +765,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
-        assert(!!this._protocolHandler, "Must have a valid protocol handler instance");
+        assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -1719,7 +1719,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // That means that if relay service changes settings, such changes will impact only newly booted
                 // clients.
                 // All existing will continue to use settings they got earlier.
-                assert(this.serviceConfiguration !== undefined, "there should be service config for active connection");
+                assert(this.serviceConfiguration !== undefined, 0x2e4 /* "there should be service config for active connection" */);
                 this.collabWindowTracker = new CollabWindowTracker(
                     (type, contents) => {
                         assert(this.activeConnection(),
