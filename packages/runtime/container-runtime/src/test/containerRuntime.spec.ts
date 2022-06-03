@@ -184,7 +184,7 @@ describe("Runtime", () => {
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
                             deltaManager: new MockDeltaManager(),
-                            quorum: new MockQuorum(),
+                            quorum: new MockQuorumClients(),
                             taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
                                 "Fluid.ContainerRuntime.EnableRollback": true,
                             })) as unknown as MockLogger,
