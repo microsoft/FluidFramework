@@ -140,7 +140,7 @@ export class BlobManager {
             // handles immediately while offline
             await new Promise((resolve) => this.runtime.once("connected", resolve));
         }
-        
+
         const response = await PerformanceEvent.timedExecAsync(
             this.logger,
             { eventName: "createBlob" },
