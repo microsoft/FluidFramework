@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import { List, ListMakeHead, ListRemoveEntry } from "./collections";
 import {
@@ -24,6 +25,26 @@ import {
     refHasTileLabel,
     refTypeIncludesFlag,
 } from "./referencePositions";
+
+/**
+ * @internal
+ */
+export function _validateReferenceType(refType: ReferenceType) {
+    let exclusiveCount = 0;
+    if (refTypeIncludesFlag(refType, ReferenceType.Transient)) {
+        ++exclusiveCount;
+    }
+    if (refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
+        ++exclusiveCount;
+    }
+    if (refTypeIncludesFlag(refType, ReferenceType.StayOnRemove)) {
+        ++exclusiveCount;
+    }
+    if (exclusiveCount > 1) {
+        throw new UsageError(
+            "Reference types can only be one of Transient, SlideOnRemove, and StayOnRemove");
+    }
+}
 
 /**
  * @deprecated - Use ReferencePosition
@@ -57,6 +78,7 @@ export class LocalReference implements ReferencePosition {
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
     ) {
+        _validateReferenceType(refType);
         this.segment = initSegment;
         this.properties = properties;
     }
@@ -312,8 +334,8 @@ export class LocalReferenceCollection {
             !refTypeIncludesFlag(lref, ReferenceType.Transient),
             0x2df /* "transient references cannot be bound to segments" */);
         assertLocalReferences(lref);
-        const refsAtOffset = this.refsByOffset[lref.getOffset()] =
-            this.refsByOffset[lref.getOffset()]
+        const refsAtOffset = this.refsByOffset[lref.offset] =
+            this.refsByOffset[lref.offset]
             ?? { at: ListMakeHead() };
         const atRefs = refsAtOffset.at =
             refsAtOffset.at
