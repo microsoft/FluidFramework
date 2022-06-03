@@ -107,7 +107,7 @@ import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
-import { ReportOpPerfTelemetry, latencyThreshold } from "./connectionTelemetry";
+import { ReportOpPerfTelemetry, latencyThreshold, IPerfSignalReport } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
@@ -937,6 +937,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
 
+    private _perfSignalData: IPerfSignalReport = {
+        signalsLost: 0,
+        signalsProcessed: 0,
+        totalElapsedTime: 0,
+        signalSequenceNumber: 0,
+    };
+    /**
+     * Returns the current perfSignalData and
+     * resets the local storage so we can initiate a new collection.
+     * @returns the current signal report data to be reported with the Oproundtrip event.
+     */
+    private get perfSignalData(): IPerfSignalReport {
+        const currentPerfData = this._perfSignalData;
+        this._perfSignalData = {
+            signalsLost: 0,
+            signalsProcessed: 0,
+            totalElapsedTime: 0,
+            signalSequenceNumber: 0,
+        };
+        return currentPerfData;
+    }
+
     /**
      * Summarizer is responsible for coordinating when to send generate and send summaries.
      * It is the main entry point for summary work.
@@ -1270,7 +1292,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             gcVersion: metadata?.gcFeature,
         });
 
-        ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
+        ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger, () => this.perfSignalData);
         BindBatchTracker(this, this.logger);
         this.opTracker = new OpTracker(this.deltaManager, this.mc.config.getBoolean(disableOpTrackingKey) === true);
     }
@@ -1684,6 +1706,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             type: envelope.contents.type,
         };
 
+        // Only collect signal telemetry for messages sent by the current client.
+        if (message.clientId === this.clientId) {
+            if (envelope.metadata !== undefined) {
+                if (envelope.metadata.sequenceNumber !== this._perfSignalData.signalSequenceNumber) {
+                    this._perfSignalData.signalsLost++;
+                }
+                if (this._perfSignalData.signalSequenceNumber % 100 === 1) {
+                    this._perfSignalData.totalElapsedTime += (Date.now() - envelope.metadata.timestamp);
+                    this._perfSignalData.signalsProcessed++;
+                }
+            }
+        }
         if (envelope.address === undefined) {
             // No address indicates a container signal message.
             this.emit("signal", transformed, local);
@@ -1960,12 +1994,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        const envelope: ISignalEnvelope = { address: undefined, contents: { type, content } };
+        const envelope: ISignalEnvelope = {
+            address: undefined,
+            contents: { type, content },
+            metadata: {
+                sequenceNumber: ++this._perfSignalData.signalSequenceNumber,
+                timestamp: Date.now(),
+            },
+        };
         return this.context.submitSignalFn(envelope);
     }
 
     public submitDataStoreSignal(address: string, type: string, content: any) {
-        const envelope: ISignalEnvelope = { address, contents: { type, content } };
+        const envelope: ISignalEnvelope = {
+            address,
+            contents: { type, content },
+            metadata: {
+                sequenceNumber: ++this._perfSignalData.signalSequenceNumber,
+                timestamp: Date.now(),
+            },
+         };
         return this.context.submitSignalFn(envelope);
     }
 

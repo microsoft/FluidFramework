@@ -284,6 +284,11 @@ export interface ISignalEnvelope {
         type: string;
         content: any;
     };
+    // (undocumented)
+    metadata: {
+        sequenceNumber: number;
+        timestamp: number;
+    };
 }
 
 // @public (undocumented)

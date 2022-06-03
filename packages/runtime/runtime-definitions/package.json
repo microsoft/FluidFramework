@@ -69,6 +69,8 @@
   },
   "typeValidation": {
     "version": "0.59.4000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_ISignalEnvelope": {"forwardCompat": false}
+    }
   }
 }
