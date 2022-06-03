@@ -22,8 +22,6 @@ import {
 type RepoOperationType = "create" | "open";
 
 export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepositoryManagerFactory {
-    // Cache repositories to allow for reuse
-    private readonly repositoryCache = new Map<string, TRepo>();
     // Map each mutex to one repo. We don't want to block concurrent requests on the mutex if
     // the requests are meant for different repos.
     private readonly mutexes = new Map<string, MutexInterface>();
@@ -36,6 +34,8 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
             lumberjackBaseProperties: Record<string, any>,
         ) => Promise<void> | never,
         repoOperationType: RepoOperationType) => Promise<IRepositoryManager>;
+    // Cache repositories to allow for reuse
+    protected readonly repositoryCache = new Map<string, TRepo>();
     protected abstract initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<TRepo>;
     protected abstract openGitRepo(gitdir: string): Promise<TRepo>;
     protected abstract createRepoManager(
