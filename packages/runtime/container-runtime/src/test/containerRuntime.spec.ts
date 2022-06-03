@@ -13,7 +13,13 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
+import {
+    ConfigTypes,
+    DebugLogger,
+    IConfigProviderBase,
+    mixinMonitoringContext,
+    MockLogger,
+} from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
@@ -93,7 +99,9 @@ describe("Runtime", () => {
                             undefined, // requestHandler
                             {
                                 summaryOptions: {
-                                    disableSummaries: true,
+                                    summaryConfigOverrides: {
+                                        state: "disabled",
+                                    },
                                 },
                             },
                         );
@@ -163,13 +171,76 @@ describe("Runtime", () => {
                 });
             }));
 
+            describe("orderSequentially with rollback", () =>
+            [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
+                describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
+                    let containerRuntime: ContainerRuntime;
+                    const containerErrors: ICriticalContainerError[] = [];
+
+                    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+                        getRawConfig: (name: string): ConfigTypes => settings[name],
+                    }));
+
+                    const getMockContext = ((): Partial<IContainerContext> => {
+                        return {
+                            deltaManager: new MockDeltaManager(),
+                            quorum: new MockQuorum(),
+                            taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
+                                "Fluid.ContainerRuntime.EnableRollback": true,
+                            })) as unknown as MockLogger,
+                            clientDetails: { capabilities: { interactive: true } },
+                            closeFn: (error?: ICriticalContainerError): void => {
+                                if (error !== undefined) {
+                                    containerErrors.push(error);
+                                }
+                            },
+                            updateDirtyContainerState: (dirty: boolean) => { },
+                        };
+                    });
+
+                    beforeEach(async () => {
+                        containerRuntime = await ContainerRuntime.load(
+                            getMockContext() as IContainerContext,
+                            [],
+                            undefined, // requestHandler
+                            {
+                                summaryOptions: {
+                                    disableSummaries: true,
+                                },
+                            },
+                        );
+                        containerRuntime.setFlushMode(flushMode);
+                        containerErrors.length = 0;
+                    });
+
+                    it("No errors propagate to the container on rollback", () => {
+                        assert.throws(
+                            () => containerRuntime.orderSequentially(
+                                () => {
+                                    throw new Error("Any");
+                                }));
+
+                        assert.strictEqual(containerErrors.length, 0);
+                    });
+
+                    it("No errors on successful callback with rollback set", () => {
+                        containerRuntime.orderSequentially(() => {});
+
+                        assert.strictEqual(containerErrors.length, 0);
+                    });
+                });
+            }));
+
         describe("Dirty flag", () => {
             const sandbox = createSandbox();
             const createMockContext =
                 (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
-                    const pendingMessage = {
-                        type: "message",
-                        content: {},
+                    const pendingState = {
+                        pending: { pendingStates: [{
+                            type: "attach",
+                            content: {},
+                        }] },
+                        savedOps: [],
                     };
 
                     return {
@@ -179,7 +250,7 @@ describe("Runtime", () => {
                         clientDetails: { capabilities: { interactive: true } },
                         updateDirtyContainerState: (dirty: boolean) => { },
                         attachState,
-                        pendingLocalState: addPendingMsg ? { pendingStates: [pendingMessage] } : undefined,
+                        pendingLocalState: addPendingMsg ? pendingState : undefined,
                     };
                 };
 
@@ -593,8 +664,8 @@ describe("Runtime", () => {
                 return {
                     replayPendingStates: () => { },
                     hasPendingMessages: () => hasPendingMessages,
-                    processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
-                        return { localAck: false, localOpMetadata: undefined };
+                    processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
+                        return undefined;
                     },
                 } as PendingStateManager;
             };
@@ -622,7 +693,9 @@ describe("Runtime", () => {
                     undefined, // requestHandler
                     {
                         summaryOptions: {
-                            disableSummaries: true,
+                            summaryConfigOverrides: {
+                                state: "disabled",
+                            },
                         },
                     },
                 );
@@ -639,12 +712,17 @@ describe("Runtime", () => {
                 return runtime as ContainerRuntime;
             }
 
+            const toggleConnection = (runtime: ContainerRuntime) => {
+                runtime.setConnectionState(false);
+                runtime.setConnectionState(true);
+            };
+
             it(`No progress for ${maxReconnects} connection state changes and pending state will ` +
                 "close the container", async () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
                     for (let i = 0; i < maxReconnects; i++) {
-                        containerRuntime.setConnectionState(!containerRuntime.connected);
+                        toggleConnection(containerRuntime);
                     }
 
                     const error = getFirstContainerError();
@@ -661,7 +739,7 @@ describe("Runtime", () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
                     for (let i = 0; i < maxReconnects / 2; i++) {
-                        containerRuntime.setConnectionState(!containerRuntime.connected);
+                        toggleConnection(containerRuntime);
                     }
 
                     assert.equal(containerErrors.length, 0);
@@ -678,7 +756,7 @@ describe("Runtime", () => {
                         -1 /* maxConsecutiveReplays */);
 
                     for (let i = 0; i < maxReconnects; i++) {
-                        containerRuntime.setConnectionState(!containerRuntime.connected);
+                        toggleConnection(containerRuntime);
                     }
 
                     assert.equal(containerErrors.length, 0);
@@ -690,7 +768,7 @@ describe("Runtime", () => {
                     patchRuntime(getMockPendingStateManager(false /* always has no pending messages */));
 
                     for (let i = 0; i < maxReconnects; i++) {
-                        containerRuntime.setConnectionState(!containerRuntime.connected);
+                        toggleConnection(containerRuntime);
                     }
 
                     assert.equal(containerErrors.length, 0);
@@ -722,8 +800,7 @@ describe("Runtime", () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
                     for (let i = 0; i < maxReconnects; i++) {
-                        containerRuntime.setConnectionState(false);
-                        containerRuntime.setConnectionState(true);
+                        toggleConnection(containerRuntime);
                         containerRuntime.process({
                             type: "op",
                             clientId: "clientId",

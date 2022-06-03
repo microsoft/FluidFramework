@@ -245,10 +245,11 @@ export class Heap<T> {
     /* eslint-enable no-bitwise */
 }
 
-export const enum RBColor {
-    RED,
-    BLACK,
-}
+export const RBColor = {
+    RED: 0,
+    BLACK: 1,
+} as const;
+export type RBColor = typeof RBColor[keyof typeof RBColor];
 
 export interface RBNode<TKey, TData> {
     key: TKey;
