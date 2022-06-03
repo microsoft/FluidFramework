@@ -84,13 +84,14 @@ As stated earlier, these are intended to match the `Map` API.
 However, the keys used in `SharedMap` must be strings.
 Each edit will also trigger a `valueChanged` event which will be discussed in the [Events]({{< relref "#events" >}}) section below.
 
-- `set(key, value)` -- Used for updating the value stored at `key` with the new provided value
-- `get(key)` -- Returns the latest value stored on the key or `undefined` if it does not exist
-- `has(key)` -- Checks to see if the key is available in the SharedMap and returns a boolean
-- `keys()` -- Returns an iterator for all the keys that have been set for this map
-- `entries()` -- Returns an iterator for all key/value pairs stored on the map
-- `delete(key)` -- Removes the key/value from the map
-- `forEach(callbackFn: (value, key, map) => void)` -- Applies the provided function to each entry in the map. For example, the following will print out all of the key/value pairs in the map
+- `set(key, value)` -- Updates the value stored at `key` with the new provided value
+- `get(key)` -- Returns the latest value stored on the key, or `undefined` if the key does not exist
+- `has(key)` -- Returns whether or not the key is exists in the SharedMap
+- `keys()` -- Returns an iterator for all the keys that have been set in the map
+- `entries()` -- Returns an iterator for all key/value pairs stored in the map
+- `delete(key)` -- Removes the key/value pair from the map
+- `forEach(callbackFn: (value, key, map) => void)` -- Applies the provided function to each entry in the map.
+  For example, the following will print out all of the key/value pairs in the map
 
     ```javascript
     this.map.forEach((value, key) => console.log(`${key}-${value}`));
