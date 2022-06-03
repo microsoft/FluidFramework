@@ -38,7 +38,7 @@
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/driver-definitions": "^0.46.2000-0",
     "@fluidframework/driver-utils": "^0.59.4000",
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/telemetry-utils": "^0.59.4000",
     "comlink": "^4.3.0"
   },
