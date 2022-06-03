@@ -11,6 +11,7 @@ import {
     MockContainerRuntimeFactory,
     MockFluidDataStoreRuntime,
 } from "./mocks";
+import { assert } from "@fluidframework/common-utils";
 
 /**
  * Specalized implementation of MockContainerRuntime for testing ops during reconnection.
@@ -86,8 +87,9 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         let messageCount = this.pendingMessages.length;
         while (messageCount > 0) {
             const pendingMessage: IMockContainerRuntimePendingMessage | undefined = this.pendingMessages.shift();
+            assert(pendingMessage !== undefined, "this is impossible due to the above length check");
             this.deltaConnections.forEach((dc) => {
-                dc.reSubmit(pendingMessage?.content, pendingMessage?.localOpMetadata);
+                dc.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
             });
             messageCount--;
         }
