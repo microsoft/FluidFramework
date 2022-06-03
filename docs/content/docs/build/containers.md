@@ -196,7 +196,7 @@ if(container.isDirty) {
 
 ### saved
 
-The container emits the saved event to notify the caller that all the local changes have been acknowledged by the service and the document is marked as clean.
+The container emits the *saved* event to notify the caller that all the local changes have been acknowledged by the service and the document is marked as clean.
 
 ```typescript {linenos=inline}
 container.on("saved", () => {
@@ -206,7 +206,7 @@ container.on("saved", () => {
 
 ### dirty
 
-The container emits the dirty event to notify the caller that there are local changes that have not been acknowledged by the service yet and the document is still in a dirty state.
+The container emits the *dirty* event to notify the caller that there are local changes that have not been acknowledged by the service yet and the document is still in a dirty state.
 
 ```typescript {linenos=inline}
 container.on("dirty", () => {
