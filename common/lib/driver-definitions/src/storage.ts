@@ -18,7 +18,6 @@ import {
     ISummaryHandle,
     ISummaryTree,
     ITokenClaims,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "./urlResolver";
@@ -125,11 +124,6 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * Retrieves all versions of the document starting at the specified versionId - or null if from the head
      */
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
-
-    /**
-     * Writes to the object with the given ID
-     */
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 
     /**
      * Creates a blob out of the given buffer
@@ -302,7 +296,15 @@ export interface IDocumentServiceFactory {
     protocolName: string;
 
     /**
-     * Returns an instance of IDocumentService
+     * Creates the document service after extracting different endpoints URLs from a resolved URL.
+     *
+     * @param resolvedUrl - Endpoint URL data. @see {@link IResolvedUrl}.
+     * @param logger - Optional telemetry logger to which telemetry events will be forwarded.
+     * @param clientIsSummarizer - Whether or not the client is the
+     * {@link https://fluidframework.com/docs/concepts/summarizer/ | summarizer}.
+     * `undefined` =\> false
+     *
+     * @returns An instance of {@link IDocumentService}.
      */
      createDocumentService(
         resolvedUrl: IResolvedUrl,
@@ -312,8 +314,14 @@ export interface IDocumentServiceFactory {
 
     /**
      * Creates a new document with the provided options. Returns the document service.
+     *
      * @param createNewSummary - Summary used to create file. If undefined, an empty file will be created and a summary
      * should be posted later, before connecting to ordering service.
+     * @param createNewResolvedUrl - Endpoint URL data. @see {@link IResolvedUrl}.
+     * @param logger - Optional telemetry logger to which telemetry events will be forwarded.
+     * @param clientIsSummarizer - Whether or not the client is the
+     * {@link https://fluidframework.com/docs/concepts/summarizer/ | summarizer}.
+     * `undefined` =\> false
      */
     createContainer(
         createNewSummary: ISummaryTree | undefined,
