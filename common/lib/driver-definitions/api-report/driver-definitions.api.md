@@ -149,15 +149,15 @@ export interface IDocumentServicePolicies {
 
 // @public
 export interface IDocumentStorageService extends Partial<IDisposable> {
-    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
+    createBlob(file: ArrayBufferLike, fetchReason?: string): Promise<ICreateBlobResponse>;
+    downloadSummary(handle: ISummaryHandle, fetchReason?: string): Promise<ISummaryTree>;
+    getSnapshotTree(version?: IVersion, fetchReason?: string): Promise<ISnapshotTree | null>;
+    getVersions(versionId: string | null, count: number, fetchReason?: string): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
-    readBlob(id: string): Promise<ArrayBufferLike>;
+    readBlob(id: string, fetchReason?: string): Promise<ArrayBufferLike>;
     // (undocumented)
     repositoryUrl: string;
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext, fetchReason?: string): Promise<string>;
 }
 
 // @public (undocumented)
@@ -278,7 +278,6 @@ export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
 }
-
 
 // (No @packageDocumentation comment for this package)
 

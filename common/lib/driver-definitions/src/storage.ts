@@ -118,22 +118,22 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     /**
      * Returns the snapshot tree.
      */
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
+    getSnapshotTree(version?: IVersion, fetchReason?: string): Promise<ISnapshotTree | null>;
 
     /**
      * Retrieves all versions of the document starting at the specified versionId - or null if from the head
      */
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, fetchReason?: string): Promise<IVersion[]>;
 
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    createBlob(file: ArrayBufferLike, fetchReason?: string): Promise<ICreateBlobResponse>;
 
     /**
      * Reads the object with the given ID, returns content in arrayBufferLike
      */
-    readBlob(id: string): Promise<ArrayBufferLike>;
+    readBlob(id: string, fetchReason?: string): Promise<ArrayBufferLike>;
 
     /**
      * Uploads a summary tree to storage using the given context for reference of previous summary handle.
@@ -141,13 +141,13 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * referencing from the previously acked summary.
      * Returns the uploaded summary handle.
      */
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext, fetchReason?: string): Promise<string>;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
      * server has deleted it this call may result in a broken promise.
      */
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    downloadSummary(handle: ISummaryHandle, fetchReason?: string): Promise<ISummaryTree>;
 }
 
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
