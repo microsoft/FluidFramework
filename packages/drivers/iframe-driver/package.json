@@ -35,8 +35,8 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/driver-definitions": "^0.47.1000-69949",
+    "@fluidframework/core-interfaces": "^0.60.1000",
+    "@fluidframework/driver-definitions": "^0.60.1000",
     "@fluidframework/driver-utils": "^0.60.1000",
     "@fluidframework/protocol-definitions": "^0.1028.2000-0",
     "@fluidframework/telemetry-utils": "^0.60.1000",

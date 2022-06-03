@@ -32,7 +32,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.43.1000"
+    "@fluidframework/core-interfaces": "^0.60.1000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
