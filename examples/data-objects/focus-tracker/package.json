@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/focus-tracker",
-  "version": "0.59.4000",
+  "version": "0.60.1000",
   "private": true,
   "description": "Example Data Object that tracks page focus for Audience members using signals.",
   "homepage": "https://fluidframework.com",
@@ -37,11 +37,11 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-experimental/data-objects": "^0.59.4000",
+    "@fluid-experimental/data-objects": "^0.60.1000",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/tinylicious-client": "^0.59.4000",
-    "fluid-framework": "^0.59.4000"
+    "@fluidframework/tinylicious-client": "^0.60.1000",
+    "fluid-framework": "^0.60.1000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -68,6 +68,7 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^26.6.3",
     "jest-junit": "^10.0.0",

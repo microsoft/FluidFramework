@@ -231,6 +231,6 @@ export async function getFluidDataStoreAttributes(
     // snapshotFormatVersion is at least "0.1" (1), so we don't expect it to be anything else.
     const formatVersion = getAttributesFormatVersion(attributes);
     assert(formatVersion > 0,
-        0x1d5 /* `Invalid snapshot format version ${attributes.snapshotFormatVersion}` */);
+        0x1d5 /* Invalid snapshot format version */);
     return attributes;
 }
