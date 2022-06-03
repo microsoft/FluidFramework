@@ -109,58 +109,58 @@ export class BlobManager {
         // When this blob is retrieved, let the container runtime know that the corresponding GC node got updated.
         this.gcNodeUpdated(this.getBlobGCNodePath(blobId));
 
-        return PerformanceEvent.timedExecAsync(
-            this.logger,
-            { eventName: "AttachmentReadBlob", id: storageId },
-            async () => {
-                return new BlobHandle(
-                    `${BlobManager.basePath}/${storageId}`,
-                    this.routeContext,
-                    async () => this.getStorage().readBlob(storageId),
-                );
-            },
-            { start: true, end: true, cancel: "error" });
+        return new BlobHandle(
+            `${BlobManager.basePath}/${storageId}`,
+            this.routeContext,
+            async () => PerformanceEvent.timedExecAsync(
+                this.logger,
+                { eventName: "AttachmentReadBlob", id: storageId },
+                async () => {
+                    return this.getStorage().readBlob(storageId);
+                },
+                { end: true, cancel: "error" },
+            ),
+        );
     }
 
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-        return PerformanceEvent.timedExecAsync(
+        if (this.runtime.attachState === AttachState.Attaching) {
+            // blob upload is not supported in "Attaching" state
+            this.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
+            await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
+        }
+
+        const response = await PerformanceEvent.timedExecAsync(
             this.logger,
             { eventName: "createBlob" },
-            async () => {
-                if (this.runtime.attachState === AttachState.Attaching) {
-                    // blob upload is not supported in "Attaching" state
-                    this.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
-                    await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
-                }
+            async () => this.getStorage().createBlob(blob),
+            { end: true, cancel: "error" },
+        );
+        const handle = new BlobHandle(
+            `${BlobManager.basePath}/${response.id}`,
+            this.routeContext,
+            // get() should go through BlobManager.getBlob() so handles created while detached can be redirected
+            // to the correct storage id after they are uploaded
+            async () => this.getBlob(response.id).then(async (h) => h.get()),
+        );
 
-                const response = await this.getStorage().createBlob(blob);
-                const handle = new BlobHandle(
-                    `${BlobManager.basePath}/${response.id}`,
-                    this.routeContext,
-                    // get() should go through BlobManager.getBlob() so handles created while detached can be redirected
-                    // to the correct storage id after they are uploaded
-                    async () => this.getBlob(response.id).then(async (h) => h.get()),
-                );
+        if (this.runtime.attachState === AttachState.Detached) {
+            this.detachedBlobIds.add(response.id);
+            return handle;
+        }
 
-                if (this.runtime.attachState === AttachState.Detached) {
-                    this.detachedBlobIds.add(response.id);
-                    return handle;
-                }
+        // Note - server will de-dup blobs, so we might get existing blobId!
+        if (this.pendingBlobIds.has(response.id)) {
+            await this.pendingBlobIds.get(response.id)?.promise;
+        } else if (!this.blobIds.has(response.id)) {
+            this.pendingBlobIds.set(response.id, new Deferred<void>());
 
-                // Note - server will de-dup blobs, so we might get existing blobId!
-                if (this.pendingBlobIds.has(response.id)) {
-                    await this.pendingBlobIds.get(response.id)?.promise;
-                } else if (!this.blobIds.has(response.id)) {
-                    this.pendingBlobIds.set(response.id, new Deferred<void>());
+            // send blob attach op and wait until we see it to return the handle
+            this.attachBlobCallback(response.id);
+            await this.pendingBlobIds.get(response.id)?.promise;
+        }
 
-                    // send blob attach op and wait until we see it to return the handle
-                    this.attachBlobCallback(response.id);
-                    await this.pendingBlobIds.get(response.id)?.promise;
-                }
-
-                return handle;
-            },
-            { start: true, end: true, cancel: "error" });
+        return handle;
     }
 
     public processBlobAttachOp(blobId: string, local: boolean) {
