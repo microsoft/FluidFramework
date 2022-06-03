@@ -132,7 +132,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @param id - optional name of the shared map
      */
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_cell_");
     }
 
     /**
