@@ -59,7 +59,7 @@ example, you may wish to handle some categories differently than others, or you 
 the input.
 
 Regardless of your logic, `ITelemetryBaseLogger` must be implemented, and you must call the `send()` method ultimately
-since it is the actual method that is piped to the container's telemetry system and sends the telemetry event.
+since it is the actual method that is piped to the container's telemetry system and sends the telemetry events.
 
 To see an example of building custom logic into the telemetry implementation, see the `ITelemetryLogger` interface
 snippets below, or in the `@fluidframework/common-definitions` package for full details.
@@ -96,8 +96,8 @@ public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
 }
 ```
 
-Like demonstrated here, it is imperative to ensure `send()` is ultimately called at the end of custom properties for the
-information to be piped to the container's telemetry system and sends the telemetry event.
+Like demonstrated here, it is imperative to ensure `send()` is ultimately called at the end of custom properties.
+This ensures that information is piped to the container's telemetry system, and that the telemetry event is correctly fired.
 
 ## ITelemetryBaseEvent interface
 
