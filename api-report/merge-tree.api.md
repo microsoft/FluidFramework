@@ -111,7 +111,6 @@ export class Client {
     applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
     // (undocumented)
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
-    changeReferenceType(reference: ReferencePosition, refType: ReferenceType): void;
     // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)
@@ -1098,8 +1097,6 @@ export class MergeTree {
     root: IMergeBlock;
     // (undocumented)
     setMinSeq(minSeq: number): void;
-    // @internal
-    slideReference(ref: LocalReference): void;
     // (undocumented)
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
     // (undocumented)

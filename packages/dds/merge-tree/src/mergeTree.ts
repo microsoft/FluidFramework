@@ -1460,17 +1460,6 @@ export class MergeTree {
     }
 
     /**
-     * @internal - this method should only be called by client
-     * To ensure eventual consistency, this method must be called on acknowledgement
-     * of the op which created the reference.
-     */
-    public slideReference(ref: LocalReference) {
-        if (ref.segment && isRemovedAndAcked(ref.segment)) {
-            this.slideReferences(ref.segment, [ref]);
-        }
-    }
-
-    /**
      * This method should only be called when the current client sequence number is
      * max(remove segment sequence number, add reference sequence number).
      * Otherwise eventual consistency is not guaranteed.
