@@ -237,7 +237,7 @@ For more information about initial objects see [Data modeling]({{< relref "data-
 
 ### create
 
-The container also exposes a create function that enables creation of shared objects at runtime.
+The container also exposes a `create` function that enables creation of shared objects at runtime.
 
 For more information about dynamic object creation see [Data modeling]({{< relref "data-modeling.md" >}}).
 
