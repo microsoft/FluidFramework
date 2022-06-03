@@ -77,7 +77,7 @@ To implement an operation which creates LocalReferences which will be have an ev
 3. On acknowledgement of the local create:
    1. set the `refType` of the reference to include `SlideOnRemove`
    2. call `Client.getSlideToSegment` with the references current segment and offset to get the proper new location
-   3. set the `segment` and `offset` of the reference to the returned values
+   3. Delete the old reference and create a new one with the returned values
 4. Remote clients, on receiving the op, call `Client.getContainingSegment` followed by `Client.getSlideToSegment`
 on the result. Call `Client.createLocalReferencePosition` with the result to create a `SlideOnRemove` reference.
 

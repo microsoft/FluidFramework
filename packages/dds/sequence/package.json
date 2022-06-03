@@ -127,7 +127,9 @@
       "ClassDeclaration_SharedSequence": {"forwardCompat": false},
       "ClassDeclaration_SharedString": {"forwardCompat": false},
       "ClassDeclaration_SparseMatrix": {"forwardCompat": false},
-      "ClassDeclaration_IntervalCollection": {"forwardCompat": false}
+      "ClassDeclaration_IntervalCollection": {"forwardCompat": false},
+      "ClassDeclaration_SequenceInterval": {"backCompat": false},
+      "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false}
     }
   }
 }
