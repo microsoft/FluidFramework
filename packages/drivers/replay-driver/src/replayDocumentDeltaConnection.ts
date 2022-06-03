@@ -204,8 +204,8 @@ export class ReplayDocumentDeltaConnection
                 maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
                 summary: {
                     idleTime: 5000,
-                    maxOps: 1000,
                     maxTime: 5000 * 12,
+                    maxOps: 1000,
                     maxAckWaitTime: 600000,
                 },
             },
