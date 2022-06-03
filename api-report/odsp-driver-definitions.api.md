@@ -17,7 +17,7 @@ export interface HostStoragePolicy {
     // (undocumented)
     concurrentOpsBatches?: number;
     concurrentSnapshotFetch?: boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     enableRedeemFallback?: boolean;
     enableShareLinkWithCreate?: boolean;
     // @deprecated (undocumented)

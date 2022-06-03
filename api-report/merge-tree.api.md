@@ -480,7 +480,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     // (undocumented)
     relativePos2?: IRelativePosition;
     // (undocumented)
-    type: MergeTreeDeltaType.ANNOTATE;
+    type: typeof MergeTreeDeltaType.ANNOTATE;
 }
 
 // @public (undocumented)
@@ -521,7 +521,7 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     // (undocumented)
     ops: IMergeTreeDeltaOp[];
     // (undocumented)
-    type: MergeTreeDeltaType.GROUP;
+    type: typeof MergeTreeDeltaType.GROUP;
 }
 
 // @public (undocumented)
@@ -537,7 +537,7 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     // (undocumented)
     seg?: any;
     // (undocumented)
-    type: MergeTreeDeltaType.INSERT;
+    type: typeof MergeTreeDeltaType.INSERT;
 }
 
 // @public (undocumented)
@@ -558,7 +558,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     // (undocumented)
     relativePos2?: IRelativePosition;
     // (undocumented)
-    type: MergeTreeDeltaType.REMOVE;
+    type: typeof MergeTreeDeltaType.REMOVE;
 }
 
 // @public (undocumented)
@@ -1107,35 +1107,35 @@ export class MergeTree {
 export type MergeTreeDeltaCallback = (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
 
 // @public (undocumented)
-export type MergeTreeDeltaOperationType = MergeTreeDeltaType.ANNOTATE | MergeTreeDeltaType.INSERT | MergeTreeDeltaType.REMOVE;
+export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE;
 
 // @public (undocumented)
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
 // @public (undocumented)
-export const enum MergeTreeDeltaType {
-    // (undocumented)
-    ANNOTATE = 2,
-    // (undocumented)
-    GROUP = 3,
-    // (undocumented)
-    INSERT = 0,
-    // (undocumented)
-    REMOVE = 1
-}
+export const MergeTreeDeltaType: {
+    readonly INSERT: 0;
+    readonly REMOVE: 1;
+    readonly ANNOTATE: 2;
+    readonly GROUP: 3;
+};
+
+// @public (undocumented)
+export type MergeTreeDeltaType = typeof MergeTreeDeltaType[keyof typeof MergeTreeDeltaType];
 
 // @public (undocumented)
 export type MergeTreeMaintenanceCallback = (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;
 
 // @public (undocumented)
-export const enum MergeTreeMaintenanceType {
-    ACKNOWLEDGED = -4,
-    // (undocumented)
-    APPEND = -1,
-    // (undocumented)
-    SPLIT = -2,
-    UNLINK = -3
-}
+export const MergeTreeMaintenanceType: {
+    readonly APPEND: -1;
+    readonly SPLIT: -2;
+    readonly UNLINK: -3;
+    readonly ACKNOWLEDGED: -4;
+};
+
+// @public (undocumented)
+export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
 
 // @public (undocumented)
 export interface MergeTreeStats {
@@ -1248,12 +1248,13 @@ export interface QProperty<TKey, TData> {
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 // @public (undocumented)
-export const enum RBColor {
-    // (undocumented)
-    BLACK = 1,
-    // (undocumented)
-    RED = 0
-}
+export const RBColor: {
+    readonly RED: 0;
+    readonly BLACK: 1;
+};
+
+// @public (undocumented)
+export type RBColor = typeof RBColor[keyof typeof RBColor];
 
 // @public (undocumented)
 export interface RBNode<TKey, TData> {

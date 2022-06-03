@@ -2075,7 +2075,7 @@ export class MergeTree {
         newSegments: T[],
     ) {
         let segIsLocal = false;
-        const checkSegmentIsLocal = (segment: ISegment, _pos: number, _refSeq: number, _clientId: number) => {
+        const checkSegmentIsLocal = (segment: ISegment) => {
             if (segment.seq === UnassignedSequenceNumber) {
                 segIsLocal = true;
             }
@@ -2225,9 +2225,11 @@ export class MergeTree {
         }
     }
 
-    // Visit segments starting from node's right siblings, then up to node's parent
-    private rightExcursion(node: IMergeNode, leafAction: ISegmentAction<undefined>) {
-        const actions = { leaf: leafAction };
+    /**
+     * Visit segments starting from node's right siblings, then up to node's parent.
+     * All segments past `node` are visited, regardless of their visibility.
+     */
+    private rightExcursion(node: IMergeNode, leafAction: (seg: ISegment) => boolean) {
         let go = true;
         let startNode = node;
         let parent = startNode.parent;
@@ -2241,10 +2243,9 @@ export class MergeTree {
                 if (matchedStart) {
                     if (!_node.isLeaf()) {
                         const childBlock = _node;
-                        go = this.nodeMap(childBlock, actions, 0, UniversalSequenceNumber, this.collabWindow.clientId,
-                            undefined);
+                        go = this.walkAllSegments(childBlock, leafAction);
                     } else {
-                        go = leafAction(_node, 0, UniversalSequenceNumber, this.collabWindow.clientId, 0, 0, undefined);
+                        go = leafAction(_node);
                     }
                     if (!go) {
                         return;

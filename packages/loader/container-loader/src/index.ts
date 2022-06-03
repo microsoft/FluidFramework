@@ -8,6 +8,7 @@ export {
     Container,
     IContainerLoadOptions,
     IContainerConfig,
+    IPendingContainerState,
     waitContainerToCatchUp,
 } from "./container";
 export {
