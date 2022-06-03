@@ -98,7 +98,7 @@ Your test can then call this function to create a client object without concerni
 ```typescript
 import { v4 as uuid } from "uuid";
 
-...
+// ...
 
 describe("ClientTest", () => {
     const client = createAzureClient();
