@@ -13,11 +13,14 @@ For example, in a traditional `Map`, setting a key would only set it on the loca
 {{% callout tip "Differences between Map and SharedMap" %}}
 
 - SharedMaps *must* use string keys.
-- You must only store *plain objects* -- those that are safely JSON-serializable -- as values in a SharedMap. If you store class instances, for example, then data synchronization will not work as expected.
+- You must only store the following as values in a `SharedMap`:
+  - *Plain objects* -- those that are safely JSON-serializable.
+    If you store class instances, for example, then data synchronization will not work as expected.
+  - [Handles]({{< relref "handles.md" >}}) to other Fluid DDSes
 - When storing objects as values in a SharedMap, changes to the object will be synchronized whole-for-whole. This means that individual changes to the properties of an object are not merged during synchronization. If you need this behavior you should store individual properties in the SharedMap instead of full objects. See [Picking the right data structure]({{< relref "dds.md#picking-the-right-data-structure" >}}) for more information.
 {{% /callout %}}
 
-For additional background on DDSes and a general overview of their design, please take a look [here]({{< relref "dds.md" >}}).
+For additional background on DDSes and a general overview of their design, see [Introducing distributed data structures]({{< relref "dds.md" >}}).
 
 ## Creation
 
