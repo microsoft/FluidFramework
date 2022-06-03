@@ -79,7 +79,10 @@ Once the async call to `create` returns, you can treat it the same as you were u
 
 ## API
 
-The `SharedMap` object provides a number of functions to allow you to edit the key/value pairs stored on the object. As stated earlier, these are intended to match the `Map` API. However, the keys used in `SharedMap` must be strings. Each edit will also trigger a `valueChanged` event which will be discussed in the [Events]({{< relref "#events" >}}) section below.
+The `SharedMap` object provides a number of methods to allow you to edit the key/value pairs stored on the object.
+As stated earlier, these are intended to match the `Map` API.
+However, the keys used in `SharedMap` must be strings.
+Each edit will also trigger a `valueChanged` event which will be discussed in the [Events]({{< relref "#events" >}}) section below.
 
 - `set(key, value)` -- Used for updating the value stored at `key` with the new provided value
 - `get(key)` -- Returns the latest value stored on the key or `undefined` if it does not exist
