@@ -1096,8 +1096,6 @@ export class MergeTree {
     slideReference(ref: LocalReference): void;
     // (undocumented)
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
-    // @internal
-    updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean): void;
     // (undocumented)
     walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
 }

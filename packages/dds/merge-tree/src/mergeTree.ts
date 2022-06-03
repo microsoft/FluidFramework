@@ -564,16 +564,13 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 return true;
 
             case MergeTreeDeltaType.REMOVE:
-
                 const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
                 assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
                 this.localRemovedSeq = undefined;
                 if (removalInfo.removedSeq === UnassignedSequenceNumber) {
                     removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
-                    mergeTree.updateSegmentRefsAfterMarkRemoved(this, false);
                     return true;
                 }
-
                 return false;
 
             default:
@@ -1512,10 +1509,7 @@ export class MergeTree {
         }
     }
 
-    /**
-     * @internal - this method should only be called by BaseSegment
-     */
-    public updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean) {
+    private updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean) {
         if (!segment.localRefs || segment.localRefs.empty) {
             return;
         }
@@ -1806,7 +1800,13 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                overwrite = !pendingSegment.ack(pendingSegmentGroup, opArgs, this) || overwrite;
+                const modified = pendingSegment.ack(pendingSegmentGroup, opArgs, this);
+                // This computation of overwrite appears incorrect. Leaving as is to avoid breaking something.
+                overwrite = !modified || overwrite;
+
+                if (modified && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
+                    this.updateSegmentRefsAfterMarkRemoved(pendingSegment, false);
+                }
                 if (MergeTree.options.zamboniSegments) {
                     this.addToLRUSet(pendingSegment, seq);
                 }
