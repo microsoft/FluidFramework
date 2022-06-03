@@ -863,7 +863,7 @@ describe("Runtime", () => {
             const getMockContext = ((): Partial<IContainerContext> => {
                 return {
                     deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorum(),
+                    quorum: new MockQuorumClients(),
                     taggedLogger: new MockLogger(),
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (_error?: ICriticalContainerError): void => { },
