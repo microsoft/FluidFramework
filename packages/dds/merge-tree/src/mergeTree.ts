@@ -1427,7 +1427,7 @@ export class MergeTree {
      * @param segoff - The segment and offset to slide from
      * @returns The segment and offset to slide to
      */
-    public getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
+    public _getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
         if (!segoff.segment || !isRemovedAndAcked(segoff.segment)) {
             return segoff;
         }
@@ -1468,7 +1468,7 @@ export class MergeTree {
     private slideReferences(segment: ISegment, refsToSlide: LocalReference[]) {
         assert(isRemovedAndAcked(segment), "slideReferences from a segment which has not been removed and acked");
         assert(!!segment.localRefs, "Ref not in the segment localRefs");
-        const newSegoff = this.getSlideToSegment({ segment, offset: 0 });
+        const newSegoff = this._getSlideToSegment({ segment, offset: 0 });
         const newSegment = newSegoff.segment;
         if (newSegment && !newSegment.localRefs) {
             newSegment.localRefs = new LocalReferenceCollection(newSegment);

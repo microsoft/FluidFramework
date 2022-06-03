@@ -1040,7 +1040,7 @@ export class Client {
      * @returns - segment and offset to slide the reference to
      */
     getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
-        return this.mergeTree.getSlideToSegment(segoff);
+        return this.mergeTree._getSlideToSegment(segoff);
     }
 
     getPropertiesAtPosition(pos: number) {

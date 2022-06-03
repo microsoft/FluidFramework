@@ -1041,7 +1041,7 @@ export class MergeTree {
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
     // @internal
-    getSlideToSegment(segoff: {
+    _getSlideToSegment(segoff: {
         segment: ISegment | undefined;
         offset: number | undefined;
     }): {
