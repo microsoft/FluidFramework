@@ -27,6 +27,7 @@ import {
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummarizerNodeWithGC,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { ChildLogger, TelemetryDataTag, ThresholdCounter } from "@fluidframework/telemetry-utils";
 import {
@@ -82,7 +83,8 @@ export class RemoteChannelContext implements IChannelContext {
             extraBlobs);
 
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+            async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
+            this.summarizeInternal(fullTree, trackState, telemetryContext);
 
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
@@ -138,18 +140,33 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
+    public rollback(content: any, localOpMetadata: unknown) {
+        assert(this.isLoaded, "Remote channel must be loaded when rolling back op");
+
+        this.services.deltaConnection.rollback(content, localOpMetadata);
+    }
+
     /**
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree, trackState);
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
     }
 
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
-        const summarizeResult = await summarizeChannelAsync(channel, fullTree, trackState);
+        const summarizeResult = await summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
         return { ...summarizeResult, id: this.id };
     }
 

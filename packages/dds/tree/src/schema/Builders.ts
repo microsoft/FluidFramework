@@ -10,7 +10,8 @@ import {
 /**
  * APIs to help build schema.
  *
- * TODO: make these infer typescript type level data.
+ * See typedSchema.ts for a wrapper for these APIs that captures the types as TypeScript types
+ * in addition to runtime data.
  */
 
 /**
@@ -55,7 +56,7 @@ const defaultExtraGlobalFields = false;
 /**
  * See {@link TreeSchema} for details.
  */
-interface TreeSchemaBuilder {
+export interface TreeSchemaBuilder {
     readonly localFields?: { [key: string]: FieldSchema; };
     readonly globalFields?: Iterable<GlobalFieldKey>;
     readonly extraLocalFields?: FieldSchema;

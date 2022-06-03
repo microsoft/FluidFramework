@@ -13,8 +13,14 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
+import {
+    ConfigTypes,
+    DebugLogger,
+    IConfigProviderBase,
+    mixinMonitoringContext,
+    MockLogger,
+} from "@fluidframework/telemetry-utils";
+import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { ContainerMessageType, ContainerRuntime, ScheduleManager } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
@@ -26,7 +32,7 @@ describe("Runtime", () => {
             const getMockContext = ((): Partial<IContainerContext> => {
                 return {
                     deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorum(),
+                    quorum: new MockQuorumClients(),
                     taggedLogger: new MockLogger(),
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (_error?: ICriticalContainerError): void => { },
@@ -67,7 +73,7 @@ describe("Runtime", () => {
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
                             deltaManager: new MockDeltaManager(),
-                            quorum: new MockQuorum(),
+                            quorum: new MockQuorumClients(),
                             taggedLogger: new MockLogger(),
                             clientDetails: { capabilities: { interactive: true } },
                             closeFn: (error?: ICriticalContainerError): void => {
@@ -93,7 +99,9 @@ describe("Runtime", () => {
                             undefined, // requestHandler
                             {
                                 summaryOptions: {
-                                    disableSummaries: true,
+                                    summaryConfigOverrides: {
+                                        state: "disabled",
+                                    },
                                 },
                             },
                         );
@@ -163,23 +171,86 @@ describe("Runtime", () => {
                 });
             }));
 
+            describe("orderSequentially with rollback", () =>
+            [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
+                describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
+                    let containerRuntime: ContainerRuntime;
+                    const containerErrors: ICriticalContainerError[] = [];
+
+                    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+                        getRawConfig: (name: string): ConfigTypes => settings[name],
+                    }));
+
+                    const getMockContext = ((): Partial<IContainerContext> => {
+                        return {
+                            deltaManager: new MockDeltaManager(),
+                            quorum: new MockQuorumClients(),
+                            taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
+                                "Fluid.ContainerRuntime.EnableRollback": true,
+                            })) as unknown as MockLogger,
+                            clientDetails: { capabilities: { interactive: true } },
+                            closeFn: (error?: ICriticalContainerError): void => {
+                                if (error !== undefined) {
+                                    containerErrors.push(error);
+                                }
+                            },
+                            updateDirtyContainerState: (dirty: boolean) => { },
+                        };
+                    });
+
+                    beforeEach(async () => {
+                        containerRuntime = await ContainerRuntime.load(
+                            getMockContext() as IContainerContext,
+                            [],
+                            undefined, // requestHandler
+                            {
+                                summaryOptions: {
+                                    disableSummaries: true,
+                                },
+                            },
+                        );
+                        containerRuntime.setFlushMode(flushMode);
+                        containerErrors.length = 0;
+                    });
+
+                    it("No errors propagate to the container on rollback", () => {
+                        assert.throws(
+                            () => containerRuntime.orderSequentially(
+                                () => {
+                                    throw new Error("Any");
+                                }));
+
+                        assert.strictEqual(containerErrors.length, 0);
+                    });
+
+                    it("No errors on successful callback with rollback set", () => {
+                        containerRuntime.orderSequentially(() => {});
+
+                        assert.strictEqual(containerErrors.length, 0);
+                    });
+                });
+            }));
+
         describe("Dirty flag", () => {
             const sandbox = createSandbox();
             const createMockContext =
                 (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
-                    const pendingMessage = {
-                        type: "message",
-                        content: {},
+                    const pendingState = {
+                        pending: { pendingStates: [{
+                            type: "attach",
+                            content: {},
+                        }] },
+                        savedOps: [],
                     };
 
                     return {
                         deltaManager: new MockDeltaManager(),
-                        quorum: new MockQuorum(),
+                        quorum: new MockQuorumClients(),
                         taggedLogger: new MockLogger(),
                         clientDetails: { capabilities: { interactive: true } },
                         updateDirtyContainerState: (_dirty: boolean) => { },
                         attachState,
-                        pendingLocalState: addPendingMsg ? { pendingStates: [pendingMessage] } : undefined,
+                        pendingLocalState: addPendingMsg ? pendingState : undefined,
                     };
                 };
 
@@ -577,7 +648,7 @@ describe("Runtime", () => {
                 return {
                     clientId: "fakeClientId",
                     deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorum(),
+                    quorum: new MockQuorumClients(),
                     taggedLogger: mockLogger,
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (error?: ICriticalContainerError): void => {
@@ -596,6 +667,9 @@ describe("Runtime", () => {
                     hasPendingMessages: (): boolean => pendingMessages > 0,
                     processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
                         return { localAck: false, localOpMetadata: undefined };
+                    },
+                    processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
+                        return undefined;
                     },
                     get pendingMessagesCount() {
                         return pendingMessages;
@@ -634,7 +708,9 @@ describe("Runtime", () => {
                     undefined, // requestHandler
                     {
                         summaryOptions: {
-                            disableSummaries: true,
+                            summaryConfigOverrides: {
+                                state: "disabled",
+                            },
                         },
                     },
                 );
