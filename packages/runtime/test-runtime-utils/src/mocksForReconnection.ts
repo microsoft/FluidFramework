@@ -5,13 +5,13 @@
 
 import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
 import {
     IMockContainerRuntimePendingMessage,
     MockContainerRuntime,
     MockContainerRuntimeFactory,
     MockFluidDataStoreRuntime,
 } from "./mocks";
-import { assert } from "@fluidframework/common-utils";
 
 /**
  * Specalized implementation of MockContainerRuntime for testing ops during reconnection.

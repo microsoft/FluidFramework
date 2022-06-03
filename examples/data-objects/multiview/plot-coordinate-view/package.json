@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/multiview-plot-coordinate-view",
-  "version": "0.59.4000",
+  "version": "0.60.1000",
   "private": true,
   "description": "View for multiview sample",
   "homepage": "https://fluidframework.com",
@@ -42,11 +42,11 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/multiview-coordinate-interface": "^0.59.4000",
+    "@fluid-example/multiview-coordinate-interface": "^0.60.1000",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.59.4000",
+    "@fluid-tools/webpack-fluid-loader": "^0.60.1000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-tools": "^0.2.3074",
@@ -75,6 +75,7 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0",
     "jest": "^26.6.3",
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",

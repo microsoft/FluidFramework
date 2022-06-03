@@ -17,7 +17,6 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
@@ -37,7 +36,6 @@ import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitio
 import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -120,7 +118,7 @@ export class MockContainerRuntimeFactory {
     // (undocumented)
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
-    readonly quorum: MockQuorum;
+    readonly quorum: MockQuorumClients;
     // (undocumented)
     protected readonly runtimes: MockContainerRuntime[];
     // (undocumented)
@@ -416,7 +414,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     processSignal(message: any, local: boolean): void;
     // (undocumented)
-    quorum: MockQuorum;
+    quorum: MockQuorumClients;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -425,6 +423,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     reSubmit(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): IFluidHandleContext;
     // (undocumented)
@@ -484,7 +484,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 }
 
 // @public (undocumented)
-export class MockQuorum implements IQuorum, EventEmitter {
+export class MockQuorumClients implements IQuorumClients, EventEmitter {
     constructor(...members: [string, Partial<ISequencedClient>][]);
     // (undocumented)
     addListener(event: string | symbol, listener: (...args: any[]) => void): this;
@@ -499,17 +499,11 @@ export class MockQuorum implements IQuorum, EventEmitter {
     // (undocumented)
     eventNames(): (string | symbol)[];
     // (undocumented)
-    get(key: string): any;
-    // (undocumented)
-    getApprovalData(key: string): ICommittedProposal | undefined;
-    // (undocumented)
     getMaxListeners(): number;
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
     // (undocumented)
     getMembers(): Map<string, ISequencedClient>;
-    // (undocumented)
-    has(key: string): boolean;
     // (undocumented)
     listenerCount(type: string | symbol): number;
     // (undocumented)
@@ -524,8 +518,6 @@ export class MockQuorum implements IQuorum, EventEmitter {
     prependListener(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
     prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
-    // (undocumented)
-    propose(key: string, value: any): Promise<void>;
     // (undocumented)
     rawListeners(event: string | symbol): Function[];
     // (undocumented)
@@ -565,6 +557,9 @@ export class MockStorage implements IChannelStorageService {
     // (undocumented)
     protected tree?: ITree | undefined;
 }
+
+// @public
+export function validateAssertionError(error: Error, expectedErrorMsg: string): boolean;
 
 // (No @packageDocumentation comment for this package)
 
