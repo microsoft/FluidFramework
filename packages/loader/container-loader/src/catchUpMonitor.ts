@@ -5,9 +5,8 @@
 
 import { IDisposable, IEvent } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import { IContainer, IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ConnectionState } from "./connectionState";
 
 /** @see ICatchUpMonitor for usage */
 type CaughtUpListener = (hasCheckpointSequenceNumber: boolean) => void;
@@ -25,7 +24,6 @@ export interface ICatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents
  * known at the time the monitor was created.
  */
 export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> implements ICatchUpMonitor {
-    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly hasCheckpointSequenceNumber: boolean;
     private readonly targetSeqNumber: number;
     private caughtUp: boolean = false;
@@ -41,14 +39,10 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
      * Create the CatchUpMonitor, setting the target sequence number to wait for based on DeltaManager's current state.
      */
     constructor(
-        container: IContainer,
+        private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
     ) {
         super();
 
-        assert(container.connectionState !== ConnectionState.Disconnected,
-            0x0cd /* "Container disconnected while waiting for ops!" */);
-
-        this.deltaManager = container.deltaManager;
         this.hasCheckpointSequenceNumber = this.deltaManager.hasCheckpointSequenceNumber;
         this.targetSeqNumber = this.deltaManager.lastKnownSeqNumber;
 

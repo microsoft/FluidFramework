@@ -106,7 +106,7 @@ import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from 
 import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
-import { CatchUpMonitor, ImmediateCatchUpMonitor } from "./catchUpMonitor";
+import { CatchUpMonitor, ICatchUpMonitor, ImmediateCatchUpMonitor } from "./catchUpMonitor";
 import { ConnectionState } from "./connectionState";
 
 const detachedContainerRefSeqNumber = 0;
@@ -160,6 +160,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
         throw new UsageError("waitContainerToCatchUp: Container closed");
     }
 
+    let catchUpMonitor: ICatchUpMonitor | undefined;
     return new Promise<boolean>((resolve, reject) => {
         const closedCallback = (err?: ICriticalContainerError | undefined) => {
             container.off("closed", closedCallback);
@@ -172,28 +173,32 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on("closed", closedCallback);
 
-        // This sets the target op to be last known op as of now.
-        const catchUpMonitor = new CatchUpMonitor(container);
-
         // Depending on config, transition to "connected" state may include the guarantee
         // that all known ops have been processed.  If so, we may introduce additional wait here.
         // Waiting for "connected" state in either case gets us at least to our own Join op
         // which is a reasonable approximation of "caught up"
 
         if (container.connectionState === ConnectionState.Connected) {
+            catchUpMonitor = new CatchUpMonitor(container.deltaManager);
             catchUpMonitor.on("caughtUp", resolve);
             return;
         }
 
-        const callback = () => {
-            container.off(connectedEventName, callback);
+        const onConnected = () => {
+            container.off(connectedEventName, onConnected);
+
+            // This sets the target op to be last known op as of now
+            catchUpMonitor = new CatchUpMonitor(container.deltaManager);
             catchUpMonitor.on("caughtUp", resolve);
         };
-        container.on(connectedEventName, callback);
+        container.on(connectedEventName, onConnected);
 
         // TODO: Remove null check after next release #8523
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         container.resume!();
+    })
+    .finally(() => {
+        catchUpMonitor?.dispose();
     });
 }
 
@@ -587,7 +592,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
                 createCatchUpMonitor:
                     this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true
-                        ? () => new CatchUpMonitor(this)
+                        ? () => new CatchUpMonitor(this.deltaManager)
                         : () => new ImmediateCatchUpMonitor(),
             },
             this.mc.logger,
