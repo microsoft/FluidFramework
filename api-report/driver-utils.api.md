@@ -90,8 +90,6 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     protected virtualBlobs: Map<string, ArrayBufferLike>;
     // (undocumented)
     static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean, packingLevel?: number): BlobAggregationStorage;
-    // (undocumented)
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
 // @public
@@ -163,8 +161,6 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-    // (undocumented)
-    write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
 // @public
