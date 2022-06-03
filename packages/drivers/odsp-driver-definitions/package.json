@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-driver-definitions",
-  "version": "0.60.1000",
+  "version": "1.0.0",
   "description": "Socket storage implementation for SPO and ODC",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,7 +36,7 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/driver-definitions": "^0.60.1000"
+    "@fluidframework/driver-definitions": "^1.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -68,7 +68,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.60.1000",
+    "version": "1.0.0",
     "broken": {}
   }
 }

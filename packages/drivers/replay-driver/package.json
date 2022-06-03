@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/replay-driver",
-  "version": "0.60.1000",
+  "version": "1.0.0",
   "description": "Document replay version of Socket.IO implementation",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,10 +35,10 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": "^0.60.1000",
-    "@fluidframework/driver-utils": "^0.60.1000",
+    "@fluidframework/driver-definitions": "^1.0.0",
+    "@fluidframework/driver-utils": "^1.0.0",
     "@fluidframework/protocol-definitions": "^0.1028.2000-0",
-    "@fluidframework/telemetry-utils": "^0.60.1000"
+    "@fluidframework/telemetry-utils": "^1.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -73,7 +73,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.60.1000",
+    "version": "1.0.0",
     "broken": {
       "ClassDeclaration_FileSnapshotReader": {
         "backCompat": false
