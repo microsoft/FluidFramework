@@ -11,6 +11,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
@@ -115,18 +116,14 @@ export class BlobManager {
         return new BlobHandle(
             `${BlobManager.basePath}/${storageId}`,
             this.routeContext,
-            async () => {
-                return this.getStorage().readBlob(storageId).catch((error) => {
-                    this.logger.sendErrorEvent(
-                        {
-                            eventName: "AttachmentReadBlobError",
-                            id: storageId,
-                        },
-                        error,
-                    );
-                    throw error;
-                });
-            },
+            async () => PerformanceEvent.timedExecAsync(
+                this.logger,
+                { eventName: "AttachmentReadBlob", id: storageId },
+                async () => {
+                    return this.getStorage().readBlob(storageId);
+                },
+                { end: true, cancel: "error" },
+            ),
         );
     }
 
@@ -144,7 +141,13 @@ export class BlobManager {
             await new Promise((resolve) => this.runtime.once("connected", resolve));
         }
 
-        const response = await this.getStorage().createBlob(blob);
+        const response = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "createBlob" },
+            async () => this.getStorage().createBlob(blob),
+            { end: true, cancel: "error" },
+        );
+
         const handle = new BlobHandle(
             `${BlobManager.basePath}/${response.id}`,
             this.routeContext,
