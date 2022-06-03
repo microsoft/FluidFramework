@@ -116,10 +116,23 @@ export function resolveVersion(requested: string, installed: boolean) {
         }
         throw new Error(`No matching version found in ${baseModulePath}`);
     } else {
-        const result = execSync(
+        let result = execSync(
             `npm v @fluidframework/container-loader@"${requested}" version --json`,
             { encoding: "utf8" },
         );
+        // if we are requesting an x.x.0-0 prerelease and failed the first try, try
+        // again using the virtualPatch schema
+        if (result === "") {
+            const requestedVersion = new semver.SemVer(requested.substring(requested.indexOf("^") + 1));
+            if (requestedVersion.patch === 0 && requestedVersion.prerelease.length > 0) {
+                const retryVersion = `^${requestedVersion.major}.${requestedVersion.minor}.1000-0`;
+                result = execSync(
+                    `npm v @fluidframework/container-loader@"${retryVersion}" version --json`,
+                    { encoding: "utf8" },
+                );
+            }
+        }
+
         try {
             const versions: string | string[] = JSON.parse(result);
             const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;

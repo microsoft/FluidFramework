@@ -16,11 +16,12 @@ import {
     IContainerRuntimeOptions,
     RuntimeHeaders,
     SummaryCollection,
+    ISummaryConfiguration,
+    DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
@@ -87,13 +88,16 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
         []);
 
     const IdleDetectionTime = 100;
-    const summaryConfigOverrides: Partial<ISummaryConfiguration> = {
-        idleTime: IdleDetectionTime,
-        maxTime: IdleDetectionTime * 12,
+    const summaryConfigOverrides: ISummaryConfiguration = {
+        ...DefaultSummaryConfiguration,
+        ...{
+            idleTime: IdleDetectionTime,
+            maxTime: IdleDetectionTime * 12,
+            initialSummarizerDelayMs: 10,
+        },
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },
         gcOptions: {

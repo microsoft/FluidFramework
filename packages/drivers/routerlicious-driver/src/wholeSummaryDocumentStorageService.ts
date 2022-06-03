@@ -22,7 +22,6 @@ import {
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -167,10 +166,6 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 
         const { blobs, snapshotTree } = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary, "");
         return convertSnapshotAndBlobsToSummaryTree(snapshotTree, blobs);
-    }
-
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        throw new Error("NOT IMPLEMENTED!");
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {

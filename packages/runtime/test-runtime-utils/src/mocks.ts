@@ -24,8 +24,6 @@ import {
 
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
-    ICommittedProposal,
-    IQuorum,
     IQuorumClients,
     ISequencedClient,
     ISequencedDocumentMessage,
@@ -196,7 +194,7 @@ export class MockContainerRuntime {
 export class MockContainerRuntimeFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
-    public readonly quorum = new MockQuorum();
+    public readonly quorum = new MockQuorumClients();
     protected messages: ISequencedDocumentMessage[] = [];
     protected readonly runtimes: MockContainerRuntime[] = [];
 
@@ -247,34 +245,12 @@ export class MockContainerRuntimeFactory {
     }
 }
 
-export class MockQuorum implements IQuorum, EventEmitter {
-    private readonly map = new Map<string, any>();
+export class MockQuorumClients implements IQuorumClients, EventEmitter {
     private readonly members: Map<string, ISequencedClient>;
     private readonly eventEmitter = new EventEmitter();
 
     constructor(...members: [string, Partial<ISequencedClient>][]) {
         this.members = new Map(members as [string, ISequencedClient][] ?? []);
-    }
-
-    async propose(key: string, value: any) {
-        if (this.map.has(key)) {
-            throw new Error(`${key} exists`);
-        }
-        this.map.set(key, value);
-        this.eventEmitter.emit("approveProposal", 0, key, value);
-    }
-
-    has(key: string): boolean {
-        return this.map.has(key);
-    }
-
-    get(key: string) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.map.get(key);
-    }
-
-    getApprovalData(key: string): ICommittedProposal | undefined {
-        throw new Error("Method not implemented.");
     }
 
     addMember(id: string, client: Partial<ISequencedClient>) {
@@ -311,8 +287,6 @@ export class MockQuorum implements IQuorum, EventEmitter {
 
             case "addMember":
             case "removeMember":
-            case "addProposal":
-            case "approveProposal":
                 this.eventEmitter.on(event, listener);
                 this.eventEmitter.emit("afterOn", event);
                 return this;
@@ -387,7 +361,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public deltaManager = new MockDeltaManager();
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
-    public quorum = new MockQuorum();
+    public quorum = new MockQuorumClients();
 
     public get absolutePath() {
         return `/${this.id}`;
@@ -553,6 +527,9 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public async applyStashedOp(content: any) {
+        return;
+    }
+    public rollback?(message: any, localOpMetadata: unknown): void {
         return;
     }
 }
