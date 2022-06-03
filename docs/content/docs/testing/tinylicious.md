@@ -6,7 +6,8 @@ editor: sdeshpande3
 
 ## What is Tinylicious?
 
-**Tinylicious** is a local, in-memory Fluid service intended for prototyping and development purpose. The [TinyliciousClient]({{< relref "tinyliciousclient.md" >}}) is designed to work specifically with the Tinylicious service.
+**Tinylicious** is a local, in-memory Fluid service intended for prototyping and development purpose.
+The `TinyliciousClient` is designed to work specifically with the Tinylicious service.
 
 ## Using Tinylicious locally
 
