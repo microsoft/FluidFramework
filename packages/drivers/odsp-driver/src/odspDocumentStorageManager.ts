@@ -642,12 +642,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
-        this.checkSnapshotUrl();
-
-        throw new Error("Not supported");
-    }
-
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 

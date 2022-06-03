@@ -28,9 +28,13 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
+import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 
 // @public
 export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
+
+// @public (undocumented)
+export const blobCountPropertyName = "BlobCount";
 
 // @public (undocumented)
 export const channelsTreeName = ".channels";
@@ -130,7 +134,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     readonly attachState: AttachState;
     // @deprecated (undocumented)
     bindToContext(): void;
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;
@@ -138,8 +142,9 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
+    rollback?(type: string, content: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean, clientId?: string): any;
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
     // (undocumented)
     readonly visibilityState?: VisibilityState_2;
@@ -291,14 +296,14 @@ export interface ISignalEnvelope {
     };
 }
 
-// @public (undocumented)
+// @public
 export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
     id: string;
     pathPartsForChildren?: string[];
 }
 
-// @public (undocumented)
+// @public
 export interface ISummarizeResult {
     // (undocumented)
     stats: ISummaryStats;
@@ -310,7 +315,7 @@ export interface ISummarizeResult {
 export interface ISummarizerNode {
     // (undocumented)
     createChild(
-    summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+    summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfig): ISummarizerNode;
@@ -324,7 +329,7 @@ export interface ISummarizerNode {
     loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
-    summarize(fullTree: boolean): Promise<ISummarizeResult>;
+    summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
 }
 
 // @public (undocumented)
@@ -342,7 +347,7 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // (undocumented)
     createChild(
-    summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+    summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
@@ -354,12 +359,10 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // @deprecated (undocumented)
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
-    // (undocumented)
-    summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryStats {
     // (undocumented)
     blobNodeCount: number;
@@ -373,12 +376,17 @@ export interface ISummaryStats {
     unreferencedBlobSize: number;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryTreeWithStats {
-    // (undocumented)
     stats: ISummaryStats;
-    // (undocumented)
     summary: ISummaryTree;
+}
+
+// @public
+export interface ITelemetryContext {
+    get(prefix: string, property: string): TelemetryEventPropertyType;
+    serialize(): string;
+    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
 }
 
 // @public
@@ -388,7 +396,10 @@ export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreReg
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 
 // @public (undocumented)
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;
+
+// @public (undocumented)
+export const totalBlobSizePropertyName = "TotalBlobSize";
 
 // @public
 const VisibilityState_2: {
