@@ -55,7 +55,6 @@ export class EpochTracker implements IPersistedFileCache {
         protected readonly cache: IPersistedCache,
         protected readonly fileEntry: IFileEntry,
         protected readonly logger: ITelemetryLogger,
-        protected readonly clientIsSummarizer?: boolean,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
@@ -301,12 +300,7 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     private formatClientCorrelationId(fetchReason?: string) {
-        const items: string[] = [
-            `driverId=${this.driverId}`,
-            `RequestNumber=${this.networkCallNumber++}`,
-            `driverVersion=${driverVersion}`,
-            `isSummarizer=${this.clientIsSummarizer}`,
-        ];
+        const items: string[] = [`driverId=${this.driverId}`, `RequestNumber=${this.networkCallNumber++}`];
         if (fetchReason !== undefined) {
             items.push(`fetchReason=${fetchReason}`);
         }
@@ -481,9 +475,8 @@ export function createOdspCacheAndTracker(
     persistedCacheArg: IPersistedCache,
     nonpersistentCache: INonPersistentCache,
     fileEntry: IFileEntry,
-    logger: ITelemetryLogger,
-    clientIsSummarizer?: boolean): ICacheAndTracker {
-    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger, clientIsSummarizer);
+    logger: ITelemetryLogger): ICacheAndTracker {
+    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger);
     return {
         cache: {
             ...nonpersistentCache,

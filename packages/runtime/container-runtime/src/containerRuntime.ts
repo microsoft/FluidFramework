@@ -1668,6 +1668,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return true;
         }
 
+        this.consecutiveReconnects++;
         if (this.consecutiveReconnects === Math.floor(this.maxConsecutiveReconnects / 2)) {
             // If we're halfway through the max reconnects, send an event in order
             // to better identify false positives, if any. If the rate of this event
@@ -1739,12 +1740,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // There might be no change of state due to Container calling this API after loading runtime.
         const changeOfState = this._connected !== connected;
-        const reconnection = changeOfState && connected;
         this._connected = connected;
 
-        if (reconnection) {
-            this.consecutiveReconnects++;
-
+        if (changeOfState) {
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(new GenericError(
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
@@ -1753,9 +1751,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     { attempts: this.consecutiveReconnects }));
                 return;
             }
-        }
 
-        if (changeOfState) {
             this.replayPendingStates();
         }
 
@@ -3022,7 +3018,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.attachState !== AttachState.Attached || this.context.pendingLocalState) {
             return;
         }
-        assert(!!this.context.baseSnapshot, "Must have a base snapshot");
+        assert(!!this.context.baseSnapshot, 0x2e5 /* "Must have a base snapshot" */);
         this.baseSnapshotBlobs = await SerializedSnapshotStorage.serializeTree(this.context.baseSnapshot, this.storage);
     }
 
@@ -3040,8 +3036,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 savedOps: this.savedOps,
             };
         }
-        assert(!!this.context.baseSnapshot, "Must have a base snapshot");
-        assert(!!this.baseSnapshotBlobs, "Must serialize base snapshot blobs before getting runtime state");
+        assert(!!this.context.baseSnapshot, 0x2e6 /* "Must have a base snapshot" */);
+        assert(!!this.baseSnapshotBlobs, 0x2e7 /* "Must serialize base snapshot blobs before getting runtime state" */);
         return {
             pending: this.pendingStateManager.getLocalState(),
             snapshotBlobs: this.baseSnapshotBlobs,

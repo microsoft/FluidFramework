@@ -61,7 +61,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": "^0.47.1000-69949",
+    "@fluidframework/driver-definitions": "^0.60.1000",
     "@fluidframework/driver-utils": "^0.60.1000",
     "@fluidframework/odsp-driver-definitions": "^0.60.1000",
     "@fluidframework/telemetry-utils": "^0.60.1000",

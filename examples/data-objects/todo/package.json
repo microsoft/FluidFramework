@@ -45,7 +45,7 @@
     "@fluid-experimental/react-inputs": "^0.60.1000",
     "@fluidframework/aqueduct": "^0.60.1000",
     "@fluidframework/container-runtime-definitions": "^0.60.1000",
-    "@fluidframework/core-interfaces": "^0.43.1000",
+    "@fluidframework/core-interfaces": "^0.60.1000",
     "@fluidframework/map": "^0.60.1000",
     "@fluidframework/runtime-utils": "^0.60.1000",
     "@fluidframework/sequence": "^0.60.1000",

@@ -102,8 +102,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.persistedCache,
             this.nonPersistentCache,
             fileEntry,
-            odspLogger,
-            clientIsSummarizer);
+            odspLogger);
 
         return PerformanceEvent.timedExecAsync(
             odspLogger,
@@ -190,8 +189,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.persistedCache,
             this.nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
-            odspLogger,
-            clientIsSummarizer);
+            odspLogger);
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,
