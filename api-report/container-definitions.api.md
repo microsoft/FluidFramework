@@ -385,6 +385,17 @@ export interface IFluidPackageEnvironment {
     };
 }
 
+// @public (undocumented)
+export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
+
+// @public (undocumented)
+export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
+    // (undocumented)
+    intelligence: {
+        [service: string]: any;
+    };
+}
+
 // @public
 export interface IGenericError extends IErrorBase {
     // (undocumented)
@@ -441,6 +452,12 @@ export interface IPendingLocalState {
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
+}
+
+// @public (undocumented)
+export interface IProvideFluidTokenProvider {
+    // (undocumented)
+    readonly IFluidTokenProvider: IFluidTokenProvider;
 }
 
 // @public (undocumented)
