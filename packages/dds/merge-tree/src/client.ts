@@ -1036,21 +1036,12 @@ export class Client {
     }
 
     /**
-     * Returns the segment and offset for creating a SlideOnRemove reference position
-     * in response to a remote op.
-     * Will return a location which is slid in an eventually consistent way.
-     * @param pos - The remote position
-     * @param op - The remote op
-     * @returns - segment and offset at which to create a SlideOnRemove reference position.
+     * Returns the position to slide a reference to if a slide is required.
+     * @param segoff - The segment and offset to slide from
+     * @returns - segment and offset to slide the reference to
      */
-    getSlideOnRemoveReferencePosition(pos: number, op: ISequencedDocumentMessage) {
-        const args = this.getClientSequenceArgsForMessage(op);
-        const segoff = this.mergeTree.getSlideOnRemoveReferenceSegmentAndOffset(
-            pos, args.referenceSequenceNumber, args.clientId);
-        if (segoff.offset === undefined || segoff.offset < 0) {
-            throw new Error("Invalid reference location");
-        }
-        return segoff;
+    getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
+        return this.mergeTree.getSlideToSegment(segoff);
     }
 
     /**

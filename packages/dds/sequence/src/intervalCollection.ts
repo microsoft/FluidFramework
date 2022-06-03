@@ -330,7 +330,8 @@ function createPositionReference(
     let segoff;
     if (op) {
         assert((refType & ReferenceType.SlideOnRemove) !== 0, "op create references must be SlideOnRemove");
-        segoff = client.getSlideOnRemoveReferencePosition(pos, op);
+        segoff = client.getContainingSegment(pos, op);
+        segoff = client.getSlideToSegment(segoff);
     } else {
         assert((refType & ReferenceType.SlideOnRemove) === 0, "SlideOnRemove references must be op created");
         segoff = client.getContainingSegment(pos);

@@ -153,7 +153,10 @@ export class Client {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    getSlideOnRemoveReferencePosition(pos: number, op: ISequencedDocumentMessage): {
+    getSlideToSegment(segoff: {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    }): {
         segment: ISegment | undefined;
         offset: number | undefined;
     };
@@ -1039,7 +1042,10 @@ export class MergeTree {
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
     // @internal
-    getSlideOnRemoveReferenceSegmentAndOffset(pos: number, refSeq: number, clientId: number): {
+    getSlideToSegment(segoff: {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    }): {
         segment: ISegment | undefined;
         offset: number | undefined;
     };
