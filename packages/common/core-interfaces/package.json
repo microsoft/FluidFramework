@@ -35,8 +35,7 @@
     "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -d .",
-    "typetests:prepare": "fluid-type-validator -d . -p"
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
