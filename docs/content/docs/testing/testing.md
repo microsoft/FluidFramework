@@ -69,7 +69,9 @@ const client = new AzureClient(clientProps);
 
 This example combines the concepts from this document to show how you can write one test suite that runs against both Tinylicious or Azure Fluid Relay.
 
-First you need to create a client that can adapt to the test scenario.  This example uses an environment variable to determine which service to target and for the tenant key.  The target service variable can be set as part of the test script, while secrets can be set by individual users or provided by your CI pipeline.
+First you need to create a client that can adapt to the test scenario.
+This example uses an environment variable to determine which service to target, as well as the tenant key.
+The target service variable can be set as part of the test script, while secrets can be set by individual users or provided by your CI pipeline.
 
 ```typescript
 function createAzureClient(): AzureClient {
