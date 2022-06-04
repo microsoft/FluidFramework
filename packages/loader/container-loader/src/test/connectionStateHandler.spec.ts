@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
@@ -134,6 +136,38 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 2 should be in connected state");
     });
+
+    it.only("Should wait for previous client to leave before moving to conencted state, even if already in quorum", async () => {
+        client.mode = "write";
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
+        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client should be in connected state");
+
+        shouldClientJoinWrite = true;
+        client.mode = "write";
+        // Disconnect the client
+        connectionStateHandler.receivedDisconnectEvent("Test");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in disconnected state");
+
+        // Make new client join so that it waits for previous client to leave
+        // Put Client 2 in quorum before receiving connect event
+        connectionDetails.clientId = "pendingClientId2";
+        protocolHandler.quorum.addMember("pendingClientId2", { client, sequenceNumber: 0 });
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+            "Client 2 should be in connecting state as we are waiting for leave");
+
+        // Send leave
+        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client 2 should be in connected state");
+    });
+
+    //* TODO - Consider adding a test for when quorum is not yet initialized when "connect" happens
+    //* And test both the client arriving (and addMember firing) and the client being included in initial members
 
     it("Should wait for timeout before moving to conencted state if no leave received", async () => {
         client.mode = "write";
