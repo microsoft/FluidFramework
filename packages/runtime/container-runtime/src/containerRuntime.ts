@@ -1055,10 +1055,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         signalSequenceNumber: 0,
     };
     private resetPerfSignalData() {
-        this._perfSignalData = {
-            signalsLost: 0,
-            signalSequenceNumber: 0,
-        };
+        this._perfSignalData.signalsLost = 0;
         this._signalTimestampCache.removeAllEntries();
     }
 
@@ -1889,8 +1886,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // check to see if the cache expired
             if (initialTimestamp === undefined) {
                 this._perfSignalData.signalsLost++;
-            } else if (envelope.clientSignalSequenceNumber % 100 === 1) {
-                const duration = (Date.now() - initialTimestamp);
+            } else if (envelope.clientSignalSequenceNumber % 100 === 1 && this.connected) {
+                const duration = Date.now() - initialTimestamp;
                 const signalsLost = this._perfSignalData.signalsLost;
                 this.logger.sendPerformanceEvent({
                     eventName: "SignalLatency",
@@ -1898,6 +1895,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     signalsLost,
                 });
                 this.resetPerfSignalData();
+                this._perfSignalData.signalSequenceNumber = 0;
             }
         }
 
