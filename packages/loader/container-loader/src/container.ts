@@ -1518,11 +1518,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._audience.addMember(priorClient.clientId, priorClient.client);
             }
 
+            const deltaManagerForCatchingUp =
+                this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true ?
+                    this.deltaManager
+                    : undefined;
+
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,
-                this.deltaManager,
-                this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true,
+                deltaManagerForCatchingUp,
             );
         });
 

@@ -218,12 +218,15 @@ export class ConnectionStateHandler {
      * The "connect" event indicates the connection to the Relay Service is live.
      * However, some additional conditions must be met before we can fully transition to
      * "Connected" state. This function handles that interim period, known as "Connecting" state.
+     * @param connectionMode - Read or Write connection
+     * @param details - Connection details returned from the ordering service
+     * @param deltaManager - DeltaManager to be used for delaying Connected transition until caught up.
+     * If it's undefined, then don't delay and transition to Connected event as soon as Leave/Join op are accounted for
      */
     public receivedConnectEvent(
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
-        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        catchUpBeforeDeclaringConnected: boolean,
+        deltaManager?: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
     ) {
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.Connecting;
@@ -245,7 +248,7 @@ export class ConnectionStateHandler {
         this._pendingClientId = details.clientId;
 
         // We may want to catch up to known ops as of now before transitioning to Connected state
-        this.catchUpMonitor = catchUpBeforeDeclaringConnected
+        this.catchUpMonitor = deltaManager !== undefined
             ? new CatchUpMonitor(deltaManager)
             : new ImmediateCatchUpMonitor();
 

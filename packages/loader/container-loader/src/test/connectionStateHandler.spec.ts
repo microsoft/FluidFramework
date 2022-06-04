@@ -102,9 +102,6 @@ describe("ConnectionStateHandler Tests", () => {
      * (2) cannotTransitionToConnectedState event should never fire
      */
 
-    //* Need to streamline calling receivedConnectEvent with Immediate behavior where deltaManager param is ignored.
-    //* Or switch to undefined deltaManager ==> Immediate behavior.
-
     it("Should move to connected state on normal flow for read client", async () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
             "Client should be in disconnected state");
