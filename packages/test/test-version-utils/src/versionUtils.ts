@@ -234,5 +234,12 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
     if (typeof requested === "string") { return requested; }
     const version = new semver.SemVer(baseVersion);
     // ask for prerelease in case we just bumpped the version and haven't release the previous version yet.
+    if (baseVersion === "1.0.0") {
+        if (requested === -1) {
+            return "0.59.4000";
+        } else if (requested === -2) {
+            return "0.58.2000";
+        }
+    }
     return `^${version.major}.${version.minor + requested}.0-0`;
 }
