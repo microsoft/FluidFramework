@@ -113,7 +113,8 @@ The `SharedMap` object will emit events on changes from local and remote clients
 - Signature: `(event: "clear", listener: (local) => void)`
 - Description: This event is sent when `clear()` is called to alert clients that all data from the map has been removed. The `local` boolean parameter indicates if the current client is the one that made the function call.
 
-If client A and client B are both updating the same `SharedMap` and client B triggers a `set` call to update a value, both client A and B's local `SharedMap` objects will fire the `valueChanged` event. You can use these events in order to keep your application state in sync with all changes various clients are making to the map.
+If client A and client B are both updating the same `SharedMap`, and client B triggers a `set` call to update a value, both client A's and B's local `SharedMap` objects will fire the `valueChanged` event.
+You can use these events in order to keep your application state in sync with all changes various clients are making to the map.
 
 Consider the following example where you have a label and a button. When clicked, the button updates the label contents to be a random number.
 
