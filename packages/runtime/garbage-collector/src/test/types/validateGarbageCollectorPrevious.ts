@@ -184,6 +184,78 @@ use_old_FunctionDeclaration_runGarbageCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_trimLeadingAndTrailingSlashes": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_trimLeadingAndTrailingSlashes():
+    TypeOnly<typeof old.trimLeadingAndTrailingSlashes>;
+declare function use_current_FunctionDeclaration_trimLeadingAndTrailingSlashes(
+    use: TypeOnly<typeof current.trimLeadingAndTrailingSlashes>);
+use_current_FunctionDeclaration_trimLeadingAndTrailingSlashes(
+    get_old_FunctionDeclaration_trimLeadingAndTrailingSlashes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_trimLeadingAndTrailingSlashes": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_trimLeadingAndTrailingSlashes():
+    TypeOnly<typeof current.trimLeadingAndTrailingSlashes>;
+declare function use_old_FunctionDeclaration_trimLeadingAndTrailingSlashes(
+    use: TypeOnly<typeof old.trimLeadingAndTrailingSlashes>);
+use_old_FunctionDeclaration_trimLeadingAndTrailingSlashes(
+    get_current_FunctionDeclaration_trimLeadingAndTrailingSlashes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_trimLeadingSlashes": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_trimLeadingSlashes():
+    TypeOnly<typeof old.trimLeadingSlashes>;
+declare function use_current_FunctionDeclaration_trimLeadingSlashes(
+    use: TypeOnly<typeof current.trimLeadingSlashes>);
+use_current_FunctionDeclaration_trimLeadingSlashes(
+    get_old_FunctionDeclaration_trimLeadingSlashes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_trimLeadingSlashes": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_trimLeadingSlashes():
+    TypeOnly<typeof current.trimLeadingSlashes>;
+declare function use_old_FunctionDeclaration_trimLeadingSlashes(
+    use: TypeOnly<typeof old.trimLeadingSlashes>);
+use_old_FunctionDeclaration_trimLeadingSlashes(
+    get_current_FunctionDeclaration_trimLeadingSlashes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_trimTrailingSlashes": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_trimTrailingSlashes():
+    TypeOnly<typeof old.trimTrailingSlashes>;
+declare function use_current_FunctionDeclaration_trimTrailingSlashes(
+    use: TypeOnly<typeof current.trimTrailingSlashes>);
+use_current_FunctionDeclaration_trimTrailingSlashes(
+    get_old_FunctionDeclaration_trimTrailingSlashes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_trimTrailingSlashes": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_trimTrailingSlashes():
+    TypeOnly<typeof current.trimTrailingSlashes>;
+declare function use_old_FunctionDeclaration_trimTrailingSlashes(
+    use: TypeOnly<typeof old.trimTrailingSlashes>);
+use_old_FunctionDeclaration_trimTrailingSlashes(
+    get_current_FunctionDeclaration_trimTrailingSlashes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_unpackChildNodesGCDetails": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_unpackChildNodesGCDetails():
