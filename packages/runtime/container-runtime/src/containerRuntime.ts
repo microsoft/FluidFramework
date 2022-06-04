@@ -108,7 +108,12 @@ import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
-import { ReportOpPerfTelemetry, latencyThreshold, IPerfSignalReport } from "./connectionTelemetry";
+import {
+    ReportOpPerfTelemetry,
+    latencyThreshold,
+    IPerfSignalReport,
+    SignalTimestampCache,
+} from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
@@ -1044,24 +1049,29 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
 
+    private readonly _signalTimestampCache: SignalTimestampCache = new SignalTimestampCache();
     private _perfSignalData: IPerfSignalReport = {
         signalsLost: 0,
         signalsProcessed: 0,
         totalElapsedTime: 0,
         signalSequenceNumber: 0,
     };
-    /**
-     * Returns the current _perfSignalData and resets it so we can initiate a new collection.
-     * @returns the current signal report data to be reported with the Oproundtrip event.
-     */
-    private get perfSignalData(): IPerfSignalReport {
-        const currentPerfData = this._perfSignalData;
+    private resetPerfSignalData() {
         this._perfSignalData = {
             signalsLost: 0,
             signalsProcessed: 0,
             totalElapsedTime: 0,
             signalSequenceNumber: 0,
         };
+        this._signalTimestampCache.removeAllEntries();
+    }
+    /**
+     * Returns the current _perfSignalData and resets it so we can initiate a new collection.
+     * @returns the current signal report data to be reported with the Oproundtrip event.
+     */
+    private get perfSignalData(): IPerfSignalReport {
+        const currentPerfData = this._perfSignalData;
+        this.resetPerfSignalData();
         return currentPerfData;
     }
 
@@ -1764,6 +1774,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const reconnection = changeOfState && connected;
         this._connected = connected;
 
+        if (!connected) {
+            this.resetPerfSignalData();
+        }
+
         if (reconnection) {
             this.consecutiveReconnects++;
 
@@ -1883,17 +1897,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
 
         // Only collect signal telemetry for messages sent by the current client.
-        if (message.clientId === this.clientId) {
-            if (envelope.metadata !== undefined) {
-                if (envelope.metadata.sequenceNumber !== this._perfSignalData.signalSequenceNumber) {
-                    this._perfSignalData.signalsLost++;
-                }
-                if (this._perfSignalData.signalSequenceNumber % 100 === 1) {
-                    this._perfSignalData.totalElapsedTime += (Date.now() - envelope.metadata.timestamp);
-                    this._perfSignalData.signalsProcessed++;
-                }
+        if (message.clientId === this.clientId && envelope.clientSignalSequenceNumber !== undefined) {
+            const initialTimestamp = this._signalTimestampCache.get(envelope.clientSignalSequenceNumber);
+            // check to see if the cache expired
+            if (initialTimestamp === undefined) {
+                this._perfSignalData.signalsLost++;
+            } else {
+                this._perfSignalData.totalElapsedTime += (Date.now() - initialTimestamp);
+                this._perfSignalData.signalsProcessed++;
             }
         }
+
         if (envelope.address === undefined) {
             // No address indicates a container signal message.
             this.emit("signal", transformed, local);
@@ -2185,25 +2199,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.verifyNotClosed();
         const envelope: ISignalEnvelope = {
             address: undefined,
+            clientSignalSequenceNumber: ++this._perfSignalData.signalSequenceNumber,
             contents: { type, content },
-            metadata: {
-                sequenceNumber: ++this._perfSignalData.signalSequenceNumber,
-                timestamp: Date.now(),
-            },
         };
+        this._signalTimestampCache.put(this._perfSignalData.signalSequenceNumber, Date.now());
         return this.context.submitSignalFn(envelope);
     }
 
     public submitDataStoreSignal(address: string, type: string, content: any) {
         const envelope: ISignalEnvelope = {
             address,
+            clientSignalSequenceNumber: ++this._perfSignalData.signalSequenceNumber,
             contents: { type, content },
-            metadata: {
-                sequenceNumber: ++this._perfSignalData.signalSequenceNumber,
-                timestamp: Date.now(),
-            },
          };
-        return this.context.submitSignalFn(envelope);
+         this._signalTimestampCache.put(this._perfSignalData.signalSequenceNumber, Date.now());
+         return this.context.submitSignalFn(envelope);
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {

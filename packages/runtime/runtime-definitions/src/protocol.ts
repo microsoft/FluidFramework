@@ -26,17 +26,17 @@ export interface ISignalEnvelope {
      */
     address?: string;
 
+    /**
+     * Identifier for the signal being submitted.
+     */
+    clientSignalSequenceNumber: number;
+
      /**
      * The contents of the envelope
      */
     contents: {
         type: string;
         content: any;
-    };
-
-    metadata: {
-        sequenceNumber: number;
-        timestamp: number;
     };
 }
 
