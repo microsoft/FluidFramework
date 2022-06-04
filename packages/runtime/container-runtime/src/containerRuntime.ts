@@ -1052,27 +1052,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly _signalTimestampCache: SignalTimestampCache = new SignalTimestampCache();
     private _perfSignalData: IPerfSignalReport = {
         signalsLost: 0,
-        signalsProcessed: 0,
-        totalElapsedTime: 0,
         signalSequenceNumber: 0,
     };
     private resetPerfSignalData() {
         this._perfSignalData = {
             signalsLost: 0,
-            signalsProcessed: 0,
-            totalElapsedTime: 0,
             signalSequenceNumber: 0,
         };
         this._signalTimestampCache.removeAllEntries();
-    }
-    /**
-     * Returns the current _perfSignalData and resets it so we can initiate a new collection.
-     * @returns the current signal report data to be reported with the Oproundtrip event.
-     */
-    private get perfSignalData(): IPerfSignalReport {
-        const currentPerfData = this._perfSignalData;
-        this.resetPerfSignalData();
-        return currentPerfData;
     }
 
     /**
@@ -1480,7 +1467,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             gcVersion: metadata?.gcFeature,
         });
 
-        ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger, () => this.perfSignalData);
+        ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
         BindBatchTracker(this, this.logger);
         this.opTracker = new OpTracker(this.deltaManager, this.mc.config.getBoolean(disableOpTrackingKey) === true);
     }
@@ -1902,9 +1889,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // check to see if the cache expired
             if (initialTimestamp === undefined) {
                 this._perfSignalData.signalsLost++;
-            } else {
-                this._perfSignalData.totalElapsedTime += (Date.now() - initialTimestamp);
-                this._perfSignalData.signalsProcessed++;
+            } else if (envelope.clientSignalSequenceNumber % 100 === 1) {
+                const duration = (Date.now() - initialTimestamp);
+                const signalsLost = this._perfSignalData.signalsLost;
+                this.logger.sendPerformanceEvent({
+                    eventName: "SignalLatency",
+                    duration,
+                    signalsLost,
+                });
+                this.resetPerfSignalData();
             }
         }
 

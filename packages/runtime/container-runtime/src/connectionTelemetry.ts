@@ -74,8 +74,7 @@ class OpPerfTelemetry {
     public constructor(
         private clientId: string | undefined,
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        logger: ITelemetryLogger,
-        private readonly getPerfSignalData: () => IPerfSignalReport) {
+        logger: ITelemetryLogger) {
         this.logger = ChildLogger.create(logger, "OpPerf");
 
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
@@ -244,13 +243,6 @@ class OpPerfTelemetry {
             // performance impacts all workloads relying on service.
             const category = duration > latencyThreshold ? "error" : "performance";
 
-            const perfSignalData: IPerfSignalReport = this.getPerfSignalData();
-            const signalDuration = perfSignalData.signalsProcessed > 0 && perfSignalData.totalElapsedTime > 0 ?
-                perfSignalData.totalElapsedTime / perfSignalData.signalsProcessed : undefined;
-            const signalsLost = perfSignalData.signalsLost;
-            const signalsProcessed = perfSignalData.signalsProcessed !== 0 ?
-                perfSignalData.signalsProcessed : undefined;
-
             this.logger.sendPerformanceEvent({
                 eventName: "OpRoundtripTime",
                 sequenceNumber,
@@ -259,9 +251,6 @@ class OpPerfTelemetry {
                 category,
                 pingLatency: this.pingLatency,
                 msnDistance: this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
-                signalDuration,
-                signalsProcessed,
-                signalsLost,
                 ...this.opPerfData,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
@@ -275,14 +264,6 @@ export interface IPerfSignalReport {
      * allow collection of data around the roundtrip of signal messages.
      */
     signalSequenceNumber: number;
-    /**
-     * Aggregation of elapsed times from signals.
-     */
-    totalElapsedTime: number;
-    /**
-     * Number of signals represented by the totalElapsedTime.
-     */
-    signalsProcessed: number;
     /**
      * Number of signals that were expected but not received.
      */
@@ -331,7 +312,6 @@ export class SignalTimestampCache {
 export function ReportOpPerfTelemetry(
     clientId: string | undefined,
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-    logger: ITelemetryLogger,
-    getPerfSignalData: () => IPerfSignalReport) {
-    new OpPerfTelemetry(clientId, deltaManager, logger, getPerfSignalData);
+    logger: ITelemetryLogger) {
+    new OpPerfTelemetry(clientId, deltaManager, logger);
 }
