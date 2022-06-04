@@ -272,42 +272,42 @@ describe("Routerlicious", () => {
                         assert.deepEqual(lastMessage.operation, message);
                     });
 
-                    // it("Should throttle excess submitOps for tenant", async () => {
-                    //     const socket = webSocketServer.createConnection();
-                    //     const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);
+                    it("Should throttle excess submitOps for tenant", async () => {
+                        const socket = webSocketServer.createConnection();
+                        const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);
 
-                    //     const messageFactory = new MessageFactory(testId, connectMessage.clientId);
+                        const messageFactory = new MessageFactory(testId, connectMessage.clientId);
 
-                    //     let i = 0;
-                    //     const deferredNack = new Deferred<INack[]>();
-                    //     socket.on("nack", (reason: string, nackMessages: INack[]) => {
-                    //         if (i < throttleLimit) {
-                    //             deferredNack.reject(`Submit op NACK before reaching throttle limit: ${nackMessages}`);
-                    //         } else {
-                    //             deferredNack.resolve(nackMessages);
-                    //         }
-                    //     });
-                    //     for (; i < throttleLimit; i++) {
-                    //         const message = messageFactory.createDocumentMessage();
+                        let i = 0;
+                        const deferredNack = new Deferred<INack[]>();
+                        socket.on("nack", (reason: string, nackMessages: INack[]) => {
+                            if (i < throttleLimit) {
+                                deferredNack.reject(`Submit op NACK before reaching throttle limit: ${nackMessages}`);
+                            } else {
+                                deferredNack.resolve(nackMessages);
+                            }
+                        });
+                        for (; i < throttleLimit; i++) {
+                            const message = messageFactory.createDocumentMessage();
 
-                    //         const beforeCount = deliKafka.getRawMessages().length;
-                    //         socket.send("submitOp", connectMessage.clientId, [message]);
-                    //         assert.equal(deliKafka.getRawMessages().length, beforeCount + 1);
-                    //         const lastMessage = deliKafka.getLastMessage();
-                    //         assert.equal(lastMessage.documentId, testId);
-                    //         assert.equal(lastMessage.type, RawOperationType);
-                    //         assert.deepEqual(lastMessage.operation, message);
-                    //     }
+                            const beforeCount = deliKafka.getRawMessages().length;
+                            socket.send("submitOp", connectMessage.clientId, [message]);
+                            assert.equal(deliKafka.getRawMessages().length, beforeCount + 1);
+                            const lastMessage = deliKafka.getLastMessage();
+                            assert.equal(lastMessage.documentId, testId);
+                            assert.equal(lastMessage.type, RawOperationType);
+                            assert.deepEqual(lastMessage.operation, message);
+                        }
 
-                    //     const blockedMessage = messageFactory.createDocumentMessage();
-                    //     socket.send("submitOp", connectMessage.clientId, [blockedMessage]);
-                    //     const nackMessages = await deferredNack.promise;
+                        const blockedMessage = messageFactory.createDocumentMessage();
+                        socket.send("submitOp", connectMessage.clientId, [blockedMessage]);
+                        const nackMessages = await deferredNack.promise;
 
-                    //     const nackContent = nackMessages[0]?.content as INackContent;
-                    //     assert.strictEqual(nackContent.code, 429);
-                    //     assert.strictEqual(nackContent.type, NackErrorType.ThrottlingError);
-                    //     assert.strictEqual(nackContent.retryAfter, 1);
-                    // });
+                        const nackContent = nackMessages[0]?.content as INackContent;
+                        assert.strictEqual(nackContent.code, 429);
+                        assert.strictEqual(nackContent.type, NackErrorType.ThrottlingError);
+                        assert.strictEqual(nackContent.retryAfter, 1);
+                    });
                 });
             });
         });

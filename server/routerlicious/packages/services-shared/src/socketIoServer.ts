@@ -120,7 +120,7 @@ export function create(
         // Enable compatibility with socket.io v2 clients
         allowEIO3: true,
         // Indicates whether a connection should use compression
-        perMessageDeflate: true,
+        perMessageDeflate: false,
         // Enable long-polling as a fallback
         transports: ["websocket", "polling"],
         cors: {
