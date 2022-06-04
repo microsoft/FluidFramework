@@ -16,8 +16,8 @@ import {
     SummaryType,
     ICommittedProposal,
     INack,
-    // INackContent,
-    // NackErrorType,
+    INackContent,
+    NackErrorType,
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
@@ -200,38 +200,38 @@ describe("Routerlicious", () => {
                         });
 
 
-                    // it("Should throttle excess connections for tenant", async () => {
-                    //     for (let i = 0; i < throttleLimit; i++) {
-                    //         const id = `${testId}-${i}`;
-                    //         const socket = webSocketServer.createConnection();
-                    //         const connectMessage = await connectToServer(id, testTenantId, testSecret, socket);
-                    //         assert.ok(connectMessage.clientId);
-                    //         assert.equal(connectMessage.existing, true);
+                    it("Should throttle excess connections for tenant", async () => {
+                        for (let i = 0; i < throttleLimit; i++) {
+                            const id = `${testId}-${i}`;
+                            const socket = webSocketServer.createConnection();
+                            const connectMessage = await connectToServer(id, testTenantId, testSecret, socket);
+                            assert.ok(connectMessage.clientId);
+                            assert.equal(connectMessage.existing, true);
 
-                    //         // Verify a connection message was sent
-                    //         const message = deliKafka.getLastMessage();
-                    //         const systemJoinMessage = message.operation as ISequencedDocumentSystemMessage;
-                    //         assert.equal(message.documentId, id);
-                    //         assert.equal(systemJoinMessage.clientId, undefined);
-                    //         assert.equal(systemJoinMessage.type, MessageType.ClientJoin);
-                    //         const JoinMessage = JSON.parse(systemJoinMessage.data) as IClientJoin;
-                    //         assert.equal(JoinMessage.clientId, connectMessage.clientId);
-                    //     }
+                            // Verify a connection message was sent
+                            const message = deliKafka.getLastMessage();
+                            const systemJoinMessage = message.operation as ISequencedDocumentSystemMessage;
+                            assert.equal(message.documentId, id);
+                            assert.equal(systemJoinMessage.clientId, undefined);
+                            assert.equal(systemJoinMessage.type, MessageType.ClientJoin);
+                            const JoinMessage = JSON.parse(systemJoinMessage.data) as IClientJoin;
+                            assert.equal(JoinMessage.clientId, connectMessage.clientId);
+                        }
 
-                    //     const failedConnectMessage = await connectToServer(`${testId}-${throttleLimit + 1}`, testTenantId, testSecret, webSocketServer.createConnection())
-                    //         .then(() => {
-                    //             assert.fail("Connection should have failed");
-                    //         })
-                    //         .catch((err) => {
-                    //             return err;
-                    //         }) as INackContent;
-                    //     assert.strictEqual(failedConnectMessage.code, 429);
-                    //     assert.strictEqual(failedConnectMessage.type, NackErrorType.ThrottlingError);
-                    //     assert.strictEqual(failedConnectMessage.retryAfter, 1);
+                        const failedConnectMessage = await connectToServer(`${testId}-${throttleLimit + 1}`, testTenantId, testSecret, webSocketServer.createConnection())
+                            .then(() => {
+                                assert.fail("Connection should have failed");
+                            })
+                            .catch((err) => {
+                                return err;
+                            }) as INackContent;
+                        assert.strictEqual(failedConnectMessage.code, 429);
+                        assert.strictEqual(failedConnectMessage.type, NackErrorType.ThrottlingError);
+                        assert.strictEqual(failedConnectMessage.retryAfter, 1);
 
-                    //     // A separate tenant should not be throttled
-                    //     await connectToServer(testId, `${testTenantId}-2`, testSecret, webSocketServer.createConnection());
-                    // });
+                        // A separate tenant should not be throttled
+                        await connectToServer(testId, `${testTenantId}-2`, testSecret, webSocketServer.createConnection());
+                    });
                 });
 
                 describe("#disconnect", () => {
