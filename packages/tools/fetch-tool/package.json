@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/fetch-tool",
-  "version": "0.60.1000",
+  "version": "1.0.0",
   "description": "Console tool to fetch Fluid data from relay service",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -29,23 +29,23 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluid-tools/fluidapp-odsp-urlresolver": "^0.60.1000",
+    "@fluid-tools/fluidapp-odsp-urlresolver": "^1.0.0",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-runtime": "^0.60.1000",
-    "@fluidframework/datastore": "^0.60.1000",
-    "@fluidframework/driver-definitions": "^0.47.1000-69949",
-    "@fluidframework/driver-utils": "^0.60.1000",
-    "@fluidframework/odsp-doclib-utils": "^0.60.1000",
-    "@fluidframework/odsp-driver": "^0.60.1000",
-    "@fluidframework/odsp-driver-definitions": "^0.60.1000",
-    "@fluidframework/odsp-urlresolver": "^0.60.1000",
+    "@fluidframework/container-runtime": "^1.0.0",
+    "@fluidframework/datastore": "^1.0.0",
+    "@fluidframework/driver-definitions": "^1.0.0",
+    "@fluidframework/driver-utils": "^1.0.0",
+    "@fluidframework/odsp-doclib-utils": "^1.0.0",
+    "@fluidframework/odsp-driver": "^1.0.0",
+    "@fluidframework/odsp-driver-definitions": "^1.0.0",
+    "@fluidframework/odsp-urlresolver": "^1.0.0",
     "@fluidframework/protocol-definitions": "^0.1028.2000-0",
-    "@fluidframework/routerlicious-driver": "^0.60.1000",
-    "@fluidframework/routerlicious-urlresolver": "^0.60.1000",
-    "@fluidframework/runtime-definitions": "^0.60.1000",
-    "@fluidframework/telemetry-utils": "^0.60.1000",
-    "@fluidframework/test-client-utils": "^0.60.1000",
-    "@fluidframework/tool-utils": "^0.60.1000"
+    "@fluidframework/routerlicious-driver": "^1.0.0",
+    "@fluidframework/routerlicious-urlresolver": "^1.0.0",
+    "@fluidframework/runtime-definitions": "^1.0.0",
+    "@fluidframework/telemetry-utils": "^1.0.0",
+    "@fluidframework/test-client-utils": "^1.0.0",
+    "@fluidframework/tool-utils": "^1.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

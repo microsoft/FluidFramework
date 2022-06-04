@@ -137,7 +137,7 @@ export class ConnectionStateHandler {
 
         assert(this.prevClientLeftTimer.hasTimer === false ||
             (this.clientId !== undefined && quorumClients.getMember(this.clientId) !== undefined),
-            "Must only wait for leave message when clientId in quorum");
+            0x2e2 /* "Must only wait for leave message when clientId in quorum" */);
 
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
