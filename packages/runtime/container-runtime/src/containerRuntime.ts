@@ -1895,7 +1895,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     signalsLost,
                 });
                 this.resetPerfSignalData();
-                this._perfSignalData.signalSequenceNumber = 0;
             }
         }
 
