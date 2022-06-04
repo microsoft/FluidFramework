@@ -14,9 +14,9 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
-# 0.60
+# 1.0.0
 
-## 0.60 Upcoming changes
+## 1.0.0 Upcoming changes
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
 - [bindToContext to be removed from IFluidDataStoreChannel](#bindToContext-to-be-removed-from-IFluidDataStoreChannel)
 - [Garbage Collection (GC) mark phase turned on by default](#Garbage-Collection-(GC)-mark-phase-turned-on-by-default)
@@ -37,7 +37,7 @@ For more details on GC and options for controlling its behavior, please see [thi
 
 > Note: GC sweep phase has not been enabled yet so unreferenced content won't be deleted. The work to enable it is in progress and will be ready soon.
 
-## 0.60 Breaking changes
+## 1.0.0 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
