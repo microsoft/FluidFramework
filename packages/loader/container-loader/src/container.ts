@@ -106,7 +106,6 @@ import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from 
 import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
-import { CatchUpMonitor, ICatchUpMonitor, ImmediateCatchUpMonitor } from "./catchUpMonitor";
 import { ConnectionState } from "./connectionState";
 
 const detachedContainerRefSeqNumber = 0;
@@ -160,8 +159,9 @@ export async function waitContainerToCatchUp(container: IContainer) {
         throw new UsageError("waitContainerToCatchUp: Container closed");
     }
 
-    let catchUpMonitor: ICatchUpMonitor | undefined;
     return new Promise<boolean>((resolve, reject) => {
+        const deltaManager = container.deltaManager;
+
         const closedCallback = (err?: ICriticalContainerError | undefined) => {
             container.off("closed", closedCallback);
             const baseMessage = "Container closed while waiting to catch up";
@@ -173,32 +173,47 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on("closed", closedCallback);
 
-        // Depending on config, transition to "connected" state may include the guarantee
-        // that all known ops have been processed.  If so, we may introduce additional wait here.
-        // Waiting for "connected" state in either case gets us at least to our own Join op
-        // which is a reasonable approximation of "caught up"
+        const waitForOps = () => {
+            assert(container.connectionState !== ConnectionState.Disconnected,
+                0x0cd /* "Container disconnected while waiting for ops!" */);
+            const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
+            const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
+            assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
+                0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
+            if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
+                container.off("closed", closedCallback);
+                resolve(hasCheckpointSequenceNumber);
+                return;
+            }
+            const callbackOps = (message: ISequencedDocumentMessage) => {
+                if (connectionOpSeqNumber <= message.sequenceNumber) {
+                    container.off("closed", closedCallback);
+                    resolve(hasCheckpointSequenceNumber);
+                    deltaManager.off("op", callbackOps);
+                }
+            };
+            deltaManager.on("op", callbackOps);
+        };
+
+        // We can leverage DeltaManager's "connect" event here and test for ConnectionState.Disconnected
+        // But that works only if service provides us checkPointSequenceNumber
+        // Our internal testing is based on R11S that does not, but almost all tests connect as "write" and
+        // use this function to catch up, so leveraging our own join op as a fence/barrier
         if (container.connectionState === ConnectionState.Connected) {
-            catchUpMonitor = new CatchUpMonitor(container.deltaManager);
-            catchUpMonitor.on("caughtUp", resolve);
+            waitForOps();
             return;
         }
 
-        const onConnected = () => {
-            container.off(connectedEventName, onConnected);
-
-            // This sets the target op to be last known op as of now
-            catchUpMonitor = new CatchUpMonitor(container.deltaManager);
-            catchUpMonitor.on("caughtUp", resolve);
+        const callback = () => {
+            container.off(connectedEventName, callback);
+            waitForOps();
         };
-        container.on(connectedEventName, onConnected);
+        container.on(connectedEventName, callback);
 
         // TODO: Remove null check after next release #8523
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         container.resume!();
-    })
-    .finally(() => {
-        catchUpMonitor?.dispose();
     });
 }
 
@@ -590,10 +605,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.propagateConnectionState();
                     }
                 },
-                createCatchUpMonitor:
-                    this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true
-                        ? () => new CatchUpMonitor(this.deltaManager)
-                        : () => new ImmediateCatchUpMonitor(),
             },
             this.mc.logger,
         );
