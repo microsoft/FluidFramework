@@ -4,7 +4,7 @@
  */
 
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { NodeId } from "../Identifiers";
+import { NodeId } from "./Identifiers";
 import { StableId } from "./Anchors";
 import { DetachedRange } from "./TreeAnchors";
 

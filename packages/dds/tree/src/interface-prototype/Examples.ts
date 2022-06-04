@@ -5,15 +5,16 @@
 
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { v4 } from "uuid";
+
+import { Side, Snapshot } from "../forest";
 import { CheckoutEvent } from "../Checkout";
-import { fail } from "../Common";
-import { ConstraintEffect } from "../default-edits";
+import { fail } from "../utils";
+import { ConstraintEffect } from "./edits";
 // This file uses these as opaque id types:
 // the user of these APIs should not know or care if they are short IDs or not,
 // other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
-import { Definition, TraitLabel } from "../Identifiers";
-import { Side, Snapshot } from "../forest";
+import { Definition, TraitLabel } from "./Identifiers";
 import { StableId } from "./Anchors";
 import {
 	anchorDataFromNodeId,
@@ -44,13 +45,13 @@ export const insertExample = {
 	id: "f73f004c-3b3e-42fe-b7c9-2e5e8793ca45" as CommandId,
 	run: (
 		context: CommandContext,
-		{ definition: def, identifier: id }: { definition: StableId; identifier: StableId },
-		{ place }: { place: Place }
+		{ definition: def, identifier: id }: { definition: StableId; identifier: StableId; },
+		{ place }: { place: Place; },
 	): TreeNode => {
 		const definition = context.loadDefinition(def);
 		const identifier = context.loadNodeId(id);
 		const range = context.move(place, context.create({ definition, identifier }));
-		return range.start.adjacentNode(Side.After) ?? fail();
+		return range.start.adjacentNode(Side.After) ?? fail("x");
 	},
 };
 
@@ -62,7 +63,7 @@ type Empty = Record<string, never>;
 
 export const doubleInsertExample = {
 	id: "08bac27d-632f-48bb-834a-90af8d67ca60" as CommandId,
-	run: (context: CommandContext, _: Empty, { parent }: { parent: TreeNode }): TreeNode => {
+	run: (context: CommandContext, _: Empty, { parent }: { parent: TreeNode; }): TreeNode => {
 		const a = context.runCommand(
 			insertExample,
 			{ definition: context.stabilize(bar), identifier: newNodeId() },
@@ -153,7 +154,7 @@ async function wait(ms: number) {
 
 export const deleteNode = {
 	id: "710e8cce-c7fa-4d4e-ade2-1ed66bd9bdfc" as CommandId,
-	run: (context: CommandContext, options: Empty, { target }: { target: TreeNode }): Place => {
+	run: (context: CommandContext, options: Empty, { target }: { target: TreeNode; }): Place => {
 		const before = target.adjacentPlace(Side.Before);
 		const range = before.rangeTo(target.adjacentPlace(Side.After));
 
@@ -176,7 +177,7 @@ export const deleteNode = {
 
 export const moveToFront = {
 	id: "64cacbb8-a52c-47ce-bf68-88be3d2cbd80" as CommandId,
-	run: (context: CommandContext, options: Empty, { target }: { target: TreeNode }): void => {
+	run: (context: CommandContext, options: Empty, { target }: { target: TreeNode; }): void => {
 		const before = target.adjacentPlace(Side.Before);
 		// Assuming iteratorFromEnd is anchored based on the end of the trait, not relative to what ever node is last.
 		const end = target.parent.iteratorFromEnd().current();
@@ -208,7 +209,7 @@ function sort(context: CommandContext, target: Range, cmp: (a: TreeNode, b: Tree
 // Example command using sort.
 export const sortNumbers = {
 	id: "7c16bdc0-f772-46a3-acc5-3504ae745880" as CommandId,
-	run: (context: CommandContext, options: Empty, { target }: { target: Range }): void => {
+	run: (context: CommandContext, options: Empty, { target }: { target: Range; }): void => {
 		sort(context, target, (a, b) => requireNumber(a.value) - requireNumber(b.value));
 	},
 };
@@ -219,9 +220,9 @@ function requireNumber(n: Serializable): number {
 
 // Note: Redo is the same as undoing an undo (at this level).
 // TODO: Maybe allow a kind of anchor to a Revision（and maybe definition and label?)
-export const undo: Command<{ editId: StableId }, Empty, void> = {
+export const undo: Command<{ editId: StableId; }, Empty, void> = {
 	id: "083ed8c8-9ee3-435f-b949-190a8eb9915c" as CommandId,
-	run: (context: CommandContext, { editId }: { editId: StableId }, anchors: Empty): void => {
+	run: (context: CommandContext, { editId }: { editId: StableId; }, anchors: Empty): void => {
 		// TODO: need way to deal with history access being async sometimes,
 		// but sometimes require command to be synchronous.
 		// For now just using "in session" methods which are synchronous.

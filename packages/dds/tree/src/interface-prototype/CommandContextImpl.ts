@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { OrderedEditSet } from "../EditLog";
-import { Definition, NodeId, TraitLabel, EditId } from "../Identifiers";
 import { Snapshot } from "../forest";
+import { OrderedEditSet } from "../EditLog";
+import { Definition, NodeId, TraitLabel, EditId } from "./Identifiers";
 
 import { Change, ConstraintEffect } from "./edits";
 import { RangeData, StableId, TreeNodeData } from "./Anchors";

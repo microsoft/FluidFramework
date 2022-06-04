@@ -4,14 +4,6 @@
  */
 
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { OrderedEditSet } from "../EditLog";
-import { initialTree } from "../InitialTree";
-import { LogViewer } from "../LogViewer";
-// This file uses these as opaque id types:
-// the user of these APIs should not know or care if they are short IDs or not,
-// other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
-// In practice, these would most likely be implemented as ShortId numbers.
-import { Definition, NodeId, TraitLabel, EditId } from "../Identifiers";
 
 // TODO: we are just reusing the exiting Snapshot type.
 // This existing type does not support partial checkout:
@@ -28,11 +20,21 @@ import { Definition, NodeId, TraitLabel, EditId } from "../Identifiers";
 // and give it a nicer API,
 // Probably something more like TreeNodeHandle and/or the non-mutating subset of TreeNode.
 import { Snapshot } from "../forest";
+
+import { areSafelyAssignable, requireTrue } from "../typeCheck";
+import { OrderedEditSet } from "../EditLog";
+import { initialTree } from "../InitialTree";
+import { LogViewer } from "../LogViewer";
+// This file uses these as opaque id types:
+// the user of these APIs should not know or care if they are short IDs or not,
+// other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
+// In practice, these would most likely be implemented as ShortId numbers.
+import { Definition, NodeId, TraitLabel, EditId } from "./Identifiers";
+
 import { Change, ConstraintEffect } from "./edits";
 import { Anchor, AnchorData, PlaceData, RangeData, StableId, TreeNodeData } from "./Anchors";
 import { DetachedRange, Place, Range, TreeNode } from "./TreeAnchors";
 import { TreeDescriptor } from "./TreeNodeDescriptor";
-import { areSafelyAssignable, isTrue } from "./TypeCheck";
 
 // Some branded ID types.
 export type CommandId = StableId & { readonly CommandId: "b1b691dc-9142-4ea2-a1aa-5f04c3808fea"; };
@@ -177,13 +179,12 @@ type Contextualize<TData extends AnchorData> = TData extends PlaceData
 // We would use this more specific type, but it causes the mutable versions to not be subtypes of the views.
 // export type ParentReadonly = Trait<TreeNodeViewReadonly, PlaceViewReadonly>;
 
-isTrue<areSafelyAssignable<Place, Contextualize<Place>>>();
-isTrue<areSafelyAssignable<Range, Contextualize<Range>>>();
-isTrue<areSafelyAssignable<TreeNode, Contextualize<TreeNode>>>();
-
-isTrue<areSafelyAssignable<Place, Contextualize<PlaceData>>>();
-isTrue<areSafelyAssignable<Range, Contextualize<RangeData>>>();
-isTrue<areSafelyAssignable<TreeNode, Contextualize<TreeNodeData>>>();
+type _test = requireTrue<areSafelyAssignable<Place, Contextualize<Place>>> |
+	requireTrue<areSafelyAssignable<Range, Contextualize<Range>>> |
+	requireTrue<areSafelyAssignable<TreeNode, Contextualize<TreeNode>>> |
+	requireTrue<areSafelyAssignable<Place, Contextualize<PlaceData>>> |
+	requireTrue<areSafelyAssignable<Range, Contextualize<RangeData>>> |
+	requireTrue<areSafelyAssignable<TreeNode, Contextualize<TreeNodeData>>>;
 
 type Decontextualize<TData extends AnchorData> = TData extends PlaceData
 	? PlaceData

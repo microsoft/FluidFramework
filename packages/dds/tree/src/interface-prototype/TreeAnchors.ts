@@ -4,13 +4,13 @@
  */
 
 import { Serializable } from "@fluidframework/datastore-definitions";
+import { Side } from "../forest";
 import { ChangeNode, TreeNode as RawTreeNode } from "../generic";
 // This file uses these as opaque id types:
 // the user of these APIs should not know or care if they are short IDs or not,
 // other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
-import { Definition, NodeId, TraitLabel } from "../Identifiers";
-import { Side } from "../forest";
+import { Definition, NodeId, TraitLabel } from "./Identifiers";
 import { Anchor, PlaceData, RangeData, TreeNodeData } from "./Anchors";
 import { Sequence, SequenceIterator } from "./Sequence";
 

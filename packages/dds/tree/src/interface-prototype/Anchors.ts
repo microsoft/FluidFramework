@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { Covariant } from "../typeCheck";
+
 import { ConstraintEffect } from "./edits";
 
 // This import is a layering violation. Maybe find a better design.
 import type { Tree } from "./Checkout";
-import { Covariant } from "./TypeCheck";
 
 export type StableId = string & { readonly StableId: "b1b691dc-9142-4ea2-a1aa-5f04c3808fea"; };
 
