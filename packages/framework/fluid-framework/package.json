@@ -72,7 +72,6 @@
   "typeValidation": {
     "version": "1.0.0",
     "broken": {
-      "ClassDeclaration_IntervalCollection": {"forwardCompat": false},
       "InterfaceDeclaration_IFluidContainer": {"backCompat": false, "forwardCompat": false},
       "ClassDeclaration_FluidContainer": {"backCompat": false}
     },
