@@ -243,9 +243,11 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
     // ask for prerelease in case we just bumped the version and haven't release the previous version yet.
     if (version.major === 1) {
         if (requested === -1) {
-            return "0.59.0-0";
+            // TODO: don't have these hardcoded
+            return "0.59.4000";
         } else if (requested === -2) {
-            return "0.58.0-0";
+            // TODO: don't have these hardcoded
+            return "0.58.2000";
         }
     }
     return `^${version.major}.${version.minor + requested}.0-0`;
