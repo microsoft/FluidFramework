@@ -89,6 +89,7 @@ describe("ConnectionStateHandler Tests", () => {
      * NEW BEHAVIOR
      * (1) applyForConnectedState should wait for "caughtUp"
      * (3) assert 0x2a6 shouldn't fire for write connections (it did before)
+     *      Write connection after Join op before prior Leave op
      * (2) catchUpMonitor gets disposed on disconnect?
      *
      * PRESERVED BEHAVIOR
@@ -152,6 +153,37 @@ describe("ConnectionStateHandler Tests", () => {
 
         // Send leave
         connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client 2 should be in connected state");
+    });
+
+    it.only("Should wait for previous client to leave before moving to conencted state, even if already in quorum", async () => {
+        client.mode = "write";
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
+        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        await Promise.resolve();
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client should be in connected state");
+
+        shouldClientJoinWrite = true;
+        client.mode = "write";
+        // Disconnect the client
+        connectionStateHandler.receivedDisconnectEvent("Test");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in disconnected state");
+
+        // Make new client join so that it waits for previous client to leave
+        // Put Client 2 in quorum before receiving connect event
+        connectionDetails.clientId = "pendingClientId2";
+        protocolHandler.quorum.addMember("pendingClientId2", { client, sequenceNumber: 0 });
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+            "Client 2 should be in connecting state as we are waiting for leave");
+
+        // Send leave
+        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        await Promise.resolve();
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 2 should be in connected state");
     });

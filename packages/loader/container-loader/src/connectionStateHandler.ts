@@ -50,6 +50,7 @@ const JoinOpTimeoutMs = 45000;
  * For (A) we give up waiting after some time (same timeout as server uses), and go ahead and transition to Connected.
  * For (B) we log telemetry if it takes too long, but still only transition to Connected when the Join op is processed
  * and we are added to the Quorum.
+ * For (C) this is optional behavior, controlled by the parameters of receivedConnectEvent
  */
 export class ConnectionStateHandler {
     private _connectionState = ConnectionState.Disconnected;
