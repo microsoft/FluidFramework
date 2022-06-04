@@ -4,12 +4,14 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IConnectionDetails } from "@fluidframework/container-definitions";
-import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { IConnectionDetails, IDeltaManager } from "@fluidframework/container-definitions";
+//*
+// eslint-disable-next-line max-len
+import { ConnectionMode, IDocumentMessage, IQuorumClients, ISequencedClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { logIfFalse, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState } from "./connectionState";
-import { ICatchUpMonitor } from "./catchUpMonitor";
+import { CatchUpMonitor, ICatchUpMonitor, ImmediateCatchUpMonitor } from "./catchUpMonitor";
 
 export interface IConnectionStateHandler {
     /** Provides access to the clients currently in the quorum */
@@ -25,8 +27,6 @@ export interface IConnectionStateHandler {
     logConnectionIssue: (eventName: string) => void;
     /** Callback whenever the ConnectionState changes between Disconnected and Connected */
     connectionStateChanged: () => void;
-    /** Creates the monitor which will notify when op processing has caught up to the last op known when invoked */
-    createCatchUpMonitor: () => ICatchUpMonitor;
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -222,6 +222,8 @@ export class ConnectionStateHandler {
     public receivedConnectEvent(
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
+        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        catchUpBeforeDeclaringConnected: boolean,
     ) {
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.Connecting;
@@ -242,8 +244,10 @@ export class ConnectionStateHandler {
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
-        // We will want to catch up to known ops as of now before transitioning to Connected state
-        this.catchUpMonitor = this.handler.createCatchUpMonitor();
+        // We may want to catch up to known ops as of now before transitioning to Connected state
+        this.catchUpMonitor = catchUpBeforeDeclaringConnected
+            ? new CatchUpMonitor(deltaManager)
+            : new ImmediateCatchUpMonitor();
 
         // This pending clientId could be in the quorum already (i.e. join op already processed).
         // We are fetching ops from storage in parallel to connecting to Relay Service,

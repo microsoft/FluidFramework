@@ -173,6 +173,10 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on("closed", closedCallback);
 
+        // Depending on config, transition to "connected" state may include the guarantee
+        // that all known ops have been processed.  If so, we may introduce additional wait here.
+        // Waiting for "connected" state in either case gets us at least to our own Join op
+        // which is a reasonable approximation of "caught up"
         const waitForOps = () => {
             assert(container.connectionState !== ConnectionState.Disconnected,
                 0x0cd /* "Container disconnected while waiting for ops!" */);
@@ -1517,6 +1521,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,
+                this.deltaManager,
+                this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true,
             );
         });
 

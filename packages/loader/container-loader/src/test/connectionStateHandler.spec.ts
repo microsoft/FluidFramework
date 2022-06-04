@@ -80,7 +80,6 @@ describe("ConnectionStateHandler Tests", () => {
                 shouldClientJoinWrite: () => shouldClientJoinWrite,
                 logConnectionIssue: (eventName: string) => { throw new Error("logConnectionIssue"); },
                 connectionStateChanged: () => {},
-                createCatchUpMonitor: () => new ImmediateCatchUpMonitor(),
             },
             new TelemetryNullLogger(),
         );
@@ -102,6 +101,9 @@ describe("ConnectionStateHandler Tests", () => {
      * OTHER
      * (2) cannotTransitionToConnectedState event should never fire
      */
+
+    //* Need to streamline calling receivedConnectEvent with Immediate behavior where deltaManager param is ignored.
+    //* Or switch to undefined deltaManager ==> Immediate behavior.
 
     it("Should move to connected state on normal flow for read client", async () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,

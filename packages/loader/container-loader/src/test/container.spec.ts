@@ -68,35 +68,35 @@ describe("Container", () => {
         });
 
         //* SKIP
-        it.skip("Fluid.Container.CatchUpBeforeDeclaringConnected = true, use CatchUpMonitor", () => {
-            injectedSettings["Fluid.Container.CatchUpBeforeDeclaringConnected"] = true;
+        // it.skip("Fluid.Container.CatchUpBeforeDeclaringConnected = true, use CatchUpMonitor", () => {
+        //     injectedSettings["Fluid.Container.CatchUpBeforeDeclaringConnected"] = true;
 
-            //* Never going to work. Need a legit connection to be able to create the CatchUpMonitor
-            const container = new Container({ services: { options: {} } } as Loader, {});
-            container.connect();
+        //     //* Never going to work. Need a legit connection to be able to create the CatchUpMonitor
+        //     const container = new Container({ services: { options: {} } } as Loader, {});
+        //     container.connect();
 
-            const connectionStateHandlerArgs = (container as any).connectionStateHandler.handler as IConnectionStateHandler;
-            const catchUpMonitor = connectionStateHandlerArgs.createCatchUpMonitor();
-            assert(catchUpMonitor instanceof CatchUpMonitor);
-        });
+        //     const connectionStateHandlerArgs = (container as any).connectionStateHandler.handler as IConnectionStateHandler;
+        //     const catchUpMonitor = connectionStateHandlerArgs.createCatchUpMonitor();
+        //     assert(catchUpMonitor instanceof CatchUpMonitor);
+        // });
 
-        it("Fluid.Container.CatchUpBeforeDeclaringConnected undefined, use ImmediateCatchUpMonitor", () => {
-            const container = new Container({ services: { options: {} } } as Loader, {});
-            const connectionStateHandlerArgs = (container as any).connectionStateHandler.handler as IConnectionStateHandler;
-            const catchUpMonitor = connectionStateHandlerArgs.createCatchUpMonitor();
-            assert(catchUpMonitor instanceof ImmediateCatchUpMonitor);
-        });
+        // it("Fluid.Container.CatchUpBeforeDeclaringConnected undefined, use ImmediateCatchUpMonitor", () => {
+        //     const container = new Container({ services: { options: {} } } as Loader, {});
+        //     const connectionStateHandlerArgs = (container as any).connectionStateHandler.handler as IConnectionStateHandler;
+        //     const catchUpMonitor = connectionStateHandlerArgs.createCatchUpMonitor();
+        //     assert(catchUpMonitor instanceof ImmediateCatchUpMonitor);
+        // });
 
-        it("Fluid.Container.CatchUpBeforeDeclaringConnected only read on construction", () => {
-            const container = new Container({ services: { options: {} } } as Loader, {});
+        // it("Fluid.Container.CatchUpBeforeDeclaringConnected only read on construction", () => {
+        //     const container = new Container({ services: { options: {} } } as Loader, {});
 
-            // This should not change anything since Container constructor has already been called
-            injectedSettings["Fluid.Container.CatchUpBeforeDeclaringConnected"] = true;
+        //     // This should not change anything since Container constructor has already been called
+        //     injectedSettings["Fluid.Container.CatchUpBeforeDeclaringConnected"] = true;
 
-            const connectionStateHandlerArgs = (container as any).connectionStateHandler.handler as IConnectionStateHandler;
-            const catchUpMonitor = connectionStateHandlerArgs.createCatchUpMonitor();
-            assert(catchUpMonitor instanceof ImmediateCatchUpMonitor);
-        });
+        //     const connectionStateHandlerArgs = (container as any).connectionStateHandler.handler as IConnectionStateHandler;
+        //     const catchUpMonitor = connectionStateHandlerArgs.createCatchUpMonitor();
+        //     assert(catchUpMonitor instanceof ImmediateCatchUpMonitor);
+        // });
     });
 
     describe("waitContainerToCatchUp", () => {
