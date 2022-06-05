@@ -37,7 +37,7 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/test-runtime-utils": "^1.0.0",
     "sillyname": "^0.1.0"
   },

@@ -36,9 +36,9 @@
     "@fluidframework/driver-definitions": "^1.0.0",
     "@fluidframework/driver-utils": "^1.0.0",
     "@fluidframework/local-driver": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/routerlicious-driver": "^1.0.0",
-    "@fluidframework/server-local-server": "^0.1036.3000-0",
+    "@fluidframework/server-local-server": "^0.1036.4000",
     "@fluidframework/test-runtime-utils": "^1.0.0",
     "@fluidframework/tinylicious-driver": "^1.0.0",
     "jsonwebtoken": "^8.4.0"
