@@ -4,7 +4,7 @@
  */
 
 import { IThrottlerResponse } from "@fluidframework/server-services-core";
-import { TestThrottleStorageManager } from "@fluidframework/server-test-utils";
+import { TestThrottleAndUsageStorageManager } from "@fluidframework/server-test-utils";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import assert from "assert";
 import Sinon from "sinon";
@@ -32,7 +32,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number = 1;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -51,7 +51,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number = 2;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -70,7 +70,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number = operationsPerCooldown + 1;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -86,7 +86,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -109,7 +109,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -137,7 +137,7 @@ describe("ThrottlerHelper", () => {
         const cooldownIntervalInMs = 10;
         let weight: number = 1;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -169,7 +169,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number = operationsPerCooldown + 1;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -186,7 +186,7 @@ describe("ThrottlerHelper", () => {
         const cooldownIntervalInMs = 10;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
@@ -215,7 +215,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -241,7 +241,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -267,7 +267,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -293,7 +293,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -319,7 +319,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -345,7 +345,7 @@ describe("ThrottlerHelper", () => {
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
         let weight: number;
         let response: IThrottlerResponse;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -368,7 +368,7 @@ describe("ThrottlerHelper", () => {
         const opsPerMs = 1;
         const opsBurstLimit = 10;
         const cooldownIntervalInMs = 10;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         const id = "test-id";
@@ -381,7 +381,7 @@ describe("ThrottlerHelper", () => {
         const opsBurstLimit = 10;
         const cooldownIntervalInMs = 10;
         const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
-        const throttleStorageManager = new TestThrottleStorageManager();
+        const throttleStorageManager = new TestThrottleAndUsageStorageManager();
         const throttlerHelper = new ThrottlerHelper(throttleStorageManager, opsPerMs, opsBurstLimit, cooldownIntervalInMs);
 
         let response: IThrottlerResponse;
