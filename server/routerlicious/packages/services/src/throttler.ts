@@ -9,6 +9,7 @@ import {
     IThrottlerResponse,
     ThrottlingError,
     ILogger,
+    IUsageData,
 } from "@fluidframework/server-services-core";
 import LRUCache from "lru-cache";
 import { CommonProperties, Lumberjack, ThrottlingTelemetryProperties } from "@fluidframework/server-services-telemetry";
@@ -44,10 +45,13 @@ export class Throttler implements IThrottler {
      * Uses most recently calculated throttle status to determine current throttling, while updating in the background.
      * @throws {@link ThrottlingError} if throttled
      */
-    public incrementCount(id: string, weight: number = 1): void {
+     public incrementCount(id: string,
+        weight: number = 1,
+        usageStorageId?: string,
+        usageData?: IUsageData): void {
         this.updateCountDelta(id, weight);
 
-        void this.updateAndCacheThrottleStatus(id);
+        void this.updateAndCacheThrottleStatus(id, usageStorageId, usageData);
 
         // check cached throttle status, but allow operation through if status is not yet cached
         const cachedThrottlerResponse = this.throttlerResponseCache.get(id);
@@ -92,12 +96,16 @@ export class Throttler implements IThrottler {
         this.countDeltaMap.set(id, currentValue + value);
     }
 
-    private async updateAndCacheThrottleStatus(id: string): Promise<void> {
+    private async updateAndCacheThrottleStatus(
+        id: string,
+        usageStorageId?: string,
+        usageData?: IUsageData): Promise<void> {
         const now = Date.now();
         if (this.lastThrottleUpdateAtMap.get(id) === undefined) {
             this.lastThrottleUpdateAtMap.set(id, now);
         }
-        if (now - this.lastThrottleUpdateAtMap.get(id) > this.minThrottleIntervalInMs) {
+        const lastThrottleUpdateTime = this.lastThrottleUpdateAtMap.get(id);
+        if (now - lastThrottleUpdateTime > this.minThrottleIntervalInMs) {
             const countDelta = this.countDeltaMap.get(id);
             this.lastThrottleUpdateAtMap.set(id, now);
             this.countDeltaMap.set(id, 0);
@@ -111,7 +119,13 @@ export class Throttler implements IThrottler {
                 [ThrottlingTelemetryProperties.key]: id,
                 [ThrottlingTelemetryProperties.weight]: countDelta,
             };
-            await this.throttlerHelper.updateCount(id, countDelta)
+            // poplulate usageData with relevant data.
+            if (usageData) {
+                usageData.value = countDelta;
+                usageData.startTime = lastThrottleUpdateTime;
+                usageData.endTime = now;
+            }
+            await this.throttlerHelper.updateCount(id, countDelta, usageStorageId, usageData)
                 .then((throttlerResponse) => {
                     this.logger?.info(`Incremented throttle count for ${id} by ${countDelta}`, { messageMetaData });
                     Lumberjack.info(`Incremented throttle count for ${id} by ${countDelta}`, lumberjackProperties);
