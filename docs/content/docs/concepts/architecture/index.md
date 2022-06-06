@@ -107,7 +107,7 @@ stored in **shared objects**.
 ### Fluid service
 
 The Fluid service is primarily a total-order broadcast: it takes in changes (called "operations" or "ops") from each
-client, gives the op a sequential order number, and sends the ordered op back to each client. Distributed data
+client, gives each op a sequential order number, and sends each ordered op back to each client. Distributed data
 structures use these ops to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact,
 the service knows nothing about the contents of any Fluid container.
 
