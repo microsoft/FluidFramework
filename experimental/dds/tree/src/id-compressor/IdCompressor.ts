@@ -626,10 +626,10 @@ export class IdCompressor {
 						const lastFinalizedFinal = (currentBaseFinalId + currentCluster.count - 1) as FinalCompressedId;
 						const finalPivot = (lastFinalizedFinal - overflow + 1) as FinalCompressedId;
 						this.sessionIdNormalizer.addFinalIds(finalPivot, lastFinalizedFinal, currentCluster);
-                        this.logger?.sendTelemetryEvent({
-                            eventName: 'ClusterExpansion',
-                            expansionAmount
-                        });
+						this.logger?.sendTelemetryEvent({
+							eventName: 'ClusterExpansion',
+							expansionAmount,
+						});
 					}
 				}
 			} else {
