@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
@@ -11,7 +11,7 @@ import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframewor
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 
-export interface IConnectionStateHandlerProps {
+export interface IConnectionStateHandler {
     /** Provides access to the clients currently in the quorum */
     quorumClients: () => IQuorumClients | undefined;
     /** Log to telemetry any change in state, included to Connecting */
@@ -22,7 +22,7 @@ export interface IConnectionStateHandlerProps {
     /** (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again */
     maxClientLeaveWaitTime: number | undefined;
     /** Log an issue encountered while in the Connecting state. details will be logged as a JSON string */
-    logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => void;
+    logConnectionIssue: (eventName: string) => void;
     /** Callback whenever the ConnectionState changes between Disconnected and Connected */
     connectionStateChanged: () => void;
 }
@@ -31,23 +31,8 @@ export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
-const JoinOpTimeoutMs = 45000;
+const JoinOpTimer = 45000;
 
-/**
- * In the lifetime of a container, the connection will likely disconnect and reconnect periodically.
- * Due to the distributed nature of the ordering service, the transition from old clientId to new clientId
- * (since each reconnect gets a unique clientId) is asynchronous and the sequence of events is unpredictable.
- *
- * The job of this class is to encapsulate that transition period, which is identified by ConnectionState.Connecting.
- * Specifically, before moving to Connected state, it ensures that:
- * (A) We process the Leave op for the previous clientId. This means the server will reject any subsequent outbound ops
- *     with that clientId (important because we will likely attempt to resend pending ops with the new clientId)
- * (B) We process the Join op for the new clientId (identified when the underlying connection was first established)
- *
- * For (A) we give up waiting after some time (same timeout as server uses), and go ahead and transition to Connected.
- * For (B) we log telemetry if it takes too long, but still only transition to Connected when the Join op is processed
- * and we are added to the Quorum.
- */
 export class ConnectionStateHandler {
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
@@ -73,7 +58,7 @@ export class ConnectionStateHandler {
     }
 
     constructor(
-        private readonly handler: IConnectionStateHandlerProps,
+        private readonly handler: IConnectionStateHandler,
         private readonly logger: ITelemetryLogger,
         private _clientId?: string,
     ) {
@@ -92,21 +77,13 @@ export class ConnectionStateHandler {
         // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
         // if retrying fixes the problem, we should not see these events.
         this.joinOpTimer = new Timer(
-            JoinOpTimeoutMs,
+            JoinOpTimer,
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
                 // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
-                if (this.connectionState !== ConnectionState.CatchingUp) {
-                    return;
+                if (this.connectionState === ConnectionState.CatchingUp) {
+                    this.handler.logConnectionIssue("NoJoinOp");
                 }
-                const quorumClients = this.handler.quorumClients();
-                const details = {
-                    quorumInitialized: quorumClients !== undefined,
-                    hasPendingClientId: this.pendingClientId !== undefined,
-                    inQuorum: quorumClients?.getMember(this.pendingClientId ?? "") !== undefined,
-                    waitingForLeaveOp: this.waitingForLeaveOp,
-                };
-                this.handler.logConnectionIssue("NoJoinOp", details);
             },
         );
     }
@@ -121,10 +98,6 @@ export class ConnectionStateHandler {
         this.joinOpTimer.clear();
     }
 
-    private get waitingForLeaveOp() {
-        return this.prevClientLeftTimer.hasTimer;
-    }
-
     public dispose() {
         assert(!this.joinOpTimer.hasTimer, 0x2a5 /* "join timer" */);
         this.prevClientLeftTimer.clear();
@@ -133,7 +106,7 @@ export class ConnectionStateHandler {
     public containerSaved() {
         // If we were waiting for moving to Connected state, then only apply for state change. Since the container
         // is now saved and we don't have any ops to roundtrip, we can clear the timer and apply for connected state.
-        if (this.waitingForLeaveOp) {
+        if (this.prevClientLeftTimer.hasTimer) {
             this.prevClientLeftTimer.clear();
             this.applyForConnectedState("containerSaved");
         }
@@ -150,13 +123,11 @@ export class ConnectionStateHandler {
                 this.handler.logConnectionIssue("ReceivedJoinOp");
             }
             // Start the event in case we are waiting for leave or timeout.
-            if (this.waitingForLeaveOp) {
+            if (this.prevClientLeftTimer.hasTimer) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
                     eventName: "WaitBeforeClientLeave",
-                    details: JSON.stringify({
-                        waitOnClientId: this._clientId,
-                        hadOutstandingOps: this.handler.shouldClientJoinWrite(),
-                    }),
+                    waitOnClientId: this._clientId,
+                    hadOutstandingOps: this.handler.shouldClientJoinWrite(),
                 });
             }
             this.applyForConnectedState("addMemberEvent");
@@ -177,7 +148,7 @@ export class ConnectionStateHandler {
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
             && quorumClients.getMember(this.pendingClientId) !== undefined
-            && !this.waitingForLeaveOp
+            && !this.prevClientLeftTimer.hasTimer
         ) {
             this.waitEvent?.end({ source });
             this.setConnectionState(ConnectionState.Connected);
@@ -187,12 +158,11 @@ export class ConnectionStateHandler {
                 eventName: "connectedStateRejected",
                 category: source === "timeout" ? "error" : "generic",
                 source,
-                details: JSON.stringify({
-                    pendingClientId: this.pendingClientId,
-                    clientId: this.clientId,
-                    waitingForLeaveOp: this.waitingForLeaveOp,
-                    inQuorum: quorumClients?.getMember(this.pendingClientId ?? "") !== undefined,
-                }),
+                pendingClientId: this.pendingClientId,
+                clientId: this.clientId,
+                hasTimer: this.prevClientLeftTimer.hasTimer,
+                inQuorum: quorumClients !== undefined && this.pendingClientId !== undefined
+                    && quorumClients.getMember(this.pendingClientId) !== undefined,
             });
         }
     }
@@ -212,13 +182,6 @@ export class ConnectionStateHandler {
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
-    /**
-     * The "connect" event indicates the connection to the Relay Service is live.
-     * However, some additional conditions must be met before we can fully transition to
-     * "Connected" state. This function handles that interim period, known as "Connecting" state.
-     * @param connectionMode - Read or Write connection
-     * @param details - Connection details returned from the ordering service
-     */
     public receivedConnectEvent(
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
@@ -239,21 +202,21 @@ export class ConnectionStateHandler {
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
-        // This pending clientId could be in the quorum already (i.e. join op already processed).
+        // For write connections, this pending clientId could be in the quorum already (i.e. join op already processed).
         // We are fetching ops from storage in parallel to connecting to Relay Service,
         // and given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         // If quorumClients itself is undefined, we expect it will process the join op after it's initialized.
-        const waitingForJoinOp = quorumClients?.getMember(this._pendingClientId) === undefined;
+        const waitingForJoinOp = writeConnection && quorumClients?.getMember(this._pendingClientId) === undefined;
 
         // IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.CatchingUp, oldState);
 
-        if (writeConnection && waitingForJoinOp) {
+        if (waitingForJoinOp) {
             // Previous client left, and we are waiting for our own join op. When it is processed we'll join the quorum
             // and attempt to transition to Connected state via receivedAddMemberEvent.
             this.startJoinOpTimer();
-        } else if (this.waitingForLeaveOp) {
+        } else if (this.prevClientLeftTimer.hasTimer) {
             // Previous client left, and we are waiting for its leave op.
             // Nothing to do now - when the previous client is removed from the quorum
             // we will attempt to transition to Connected state via receivedRemoveMemberEvent
@@ -265,9 +228,9 @@ export class ConnectionStateHandler {
         }
     }
 
-    private setConnectionState(value: ConnectionState.Disconnected, reason: string): void;
-    private setConnectionState(value: ConnectionState.Connected): void;
-    private setConnectionState(value: ConnectionState, reason?: string): void {
+    private setConnectionState(value: ConnectionState.Disconnected, reason: string);
+    private setConnectionState(value: ConnectionState.Connected);
+    private setConnectionState(value: ConnectionState, reason?: string) {
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
@@ -300,18 +263,16 @@ export class ConnectionStateHandler {
             // don't want to reset the timer as we still want to wait on original client which started this timer.
             if (client !== undefined
                 && this.handler.shouldClientJoinWrite()
-                && this.waitingForLeaveOp === false
+                && this.prevClientLeftTimer.hasTimer === false
             ) {
                 this.prevClientLeftTimer.restart();
             } else {
                 // Adding this event temporarily so that we can get help debugging if something goes wrong.
                 this.logger.sendTelemetryEvent({
                     eventName: "noWaitOnDisconnected",
-                    details: JSON.stringify({
-                        inQuorum: client !== undefined,
-                        waitingForLeaveOp: this.waitingForLeaveOp,
-                        hadOutstandingOps: this.handler.shouldClientJoinWrite(),
-                    }),
+                    inQuorum: client !== undefined,
+                    hasTimer: this.prevClientLeftTimer.hasTimer,
+                    shouldClientJoinWrite: this.handler.shouldClientJoinWrite(),
                 });
             }
         }

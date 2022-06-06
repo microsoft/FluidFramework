@@ -117,25 +117,6 @@ describe("ConnectionStateHandler Tests", () => {
             "Client should be in connected state");
     });
 
-    it("Should move to connected state on normal flow for write client, even if quorum isn't initialized at first", async () => {
-        // swap out quorumClients fn for one that returns undefined at first
-        handlerProps.quorumClients = () => undefined;
-
-        client.mode = "write";
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
-            "Client should be in disconnected state");
-        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
-            "Client should be in connecting state");
-
-        // Restore quorumClients fn to return the test quorum object
-        handlerProps.quorumClients = () => protocolHandler.quorum;
-        protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
-            "Client should be in connected state");
-    });
-
     it("Should wait for previous client to leave before moving to connected state", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
@@ -166,6 +147,7 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     it("Should wait for previous client to leave before moving to connected state, even if already in quorum", async () => {
+        // Connect a write client, to be Disconnected
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
@@ -175,7 +157,7 @@ describe("ConnectionStateHandler Tests", () => {
 
         shouldClientJoinWrite = true;
         client.mode = "write";
-        // Disconnect the client
+        // Disconnect the first client
         connectionStateHandler.receivedDisconnectEvent("Test");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
             "Client should be in disconnected state");
