@@ -173,9 +173,6 @@ extends TypedEventEmitter<ILocalReferenceEvents> implements ReferencePosition {
     }
 
     public getOffset() {
-        if (this.segment?.removedSeq) {
-            return 0;
-        }
         return this.offset;
     }
 

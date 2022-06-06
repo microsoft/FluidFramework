@@ -706,7 +706,7 @@ describe("SharedString interval collections", () => {
                 collection = sharedString.getIntervalCollection("test");
             });
 
-            it.only("retains intervalTree coherency when falling back to end comparison", () => {
+            it("retains intervalTree coherency when falling back to end comparison", () => {
                 collection.add(1, 6, IntervalType.SlideOnRemove);
                 collection.add(2, 5, IntervalType.SlideOnRemove);
                 const initiallyLargest = collection.add(3, 4, IntervalType.SlideOnRemove);
