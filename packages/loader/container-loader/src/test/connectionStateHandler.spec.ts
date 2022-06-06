@@ -12,10 +12,11 @@ import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/pro
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ConnectionState } from "../connectionState";
-import { ConnectionStateHandler } from "../connectionStateHandler";
+import { ConnectionStateHandler, IConnectionStateHandler } from "../connectionStateHandler";
 
 describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
+    let handlerProps: IConnectionStateHandler;
     let connectionStateHandler: ConnectionStateHandler;
     let protocolHandler: ProtocolOpHandler;
     let shouldClientJoinWrite: boolean;
@@ -70,15 +71,16 @@ describe("ConnectionStateHandler Tests", () => {
             },
             scopes: [],
         };
+        handlerProps = {
+            logConnectionStateChangeTelemetry: () => undefined,
+            maxClientLeaveWaitTime: expectedTimeout,
+            quorumClients: () => protocolHandler.quorum,
+            shouldClientJoinWrite: () => shouldClientJoinWrite,
+            logConnectionIssue: (eventName: string) => { throw new Error("logConnectionIssue"); },
+            connectionStateChanged: () => {},
+        };
         connectionStateHandler = new ConnectionStateHandler(
-            {
-                logConnectionStateChangeTelemetry: () => undefined,
-                maxClientLeaveWaitTime: expectedTimeout,
-                quorumClients: () => protocolHandler.quorum,
-                shouldClientJoinWrite: () => shouldClientJoinWrite,
-                logConnectionIssue: (eventName: string) => { throw new Error("logConnectionIssue"); },
-                connectionStateChanged: () => {},
-            },
+            handlerProps,
             new TelemetryNullLogger(),
         );
     });
@@ -98,6 +100,29 @@ describe("ConnectionStateHandler Tests", () => {
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
             "Client should be in connecting state");
+        protocolHandler.quorum.addMember("anotherClientId", { client, sequenceNumber: 0 });
+        connectionStateHandler.receivedAddMemberEvent("anotherClientId");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+            "Some other client joined.");
+        protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
+        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client should be in connected state");
+    });
+
+    it.only("Should move to connected state on normal flow for write client, even if quorum isn't initialized at first", async () => {
+        // swap out quorumClients fn for one that returns undefined at first
+        const initializedQuorumClients = handlerProps.quorumClients;
+        handlerProps.quorumClients = () => undefined;
+
+        client.mode = "write";
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in disconnected state");
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
+            "Client should be in connecting state");
+
+        handlerProps.quorumClients = initializedQuorumClients;
         protocolHandler.quorum.addMember("anotherClientId", { client, sequenceNumber: 0 });
         connectionStateHandler.receivedAddMemberEvent("anotherClientId");
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
@@ -165,9 +190,6 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 2 should be in connected state");
     });
-
-    //* TODO - Consider adding a test for when quorum is not yet initialized when "connect" happens
-    //* And test both the client arriving (and addMember firing) and the client being included in initial members
 
     it("Should wait for timeout before moving to connected state if no leave received", async () => {
         client.mode = "write";
