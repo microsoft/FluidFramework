@@ -1,7 +1,12 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:14.19.1-stretch-slim AS base
+# Override this by setting the REGISTRY argument when calling docker build
+# to use a different registry than docker hub
+# docker build . REGISTRY=<custom registry>
+ARG REGISTRY=docker.io
+
+FROM ${REGISTRY}/node:14-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \

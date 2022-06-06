@@ -1,7 +1,12 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-FROM alpine:3.12
+# Override this by setting the REGISTRY argument when calling docker build
+# to use a different registry than docker hub
+# docker build . REGISTRY=<custom registry>
+ARG REGISTRY=docker.io
+
+FROM ${REGISTRY}/alpine:3.13
 
 # Install Git and OpenSSH so we can run a git server
 RUN apk add --no-cache git

@@ -1,7 +1,12 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:14.19.1-stretch AS base
+# Override this by setting the REGISTRY argument when calling docker build
+# to use a different registry than docker hub
+# docker build . REGISTRY=<custom registry>
+ARG REGISTRY=docker.io
+
+FROM ${REGISTRY}/node:14 AS base
 
 # Add Tini
 ENV TINI_VERSION v0.18.0

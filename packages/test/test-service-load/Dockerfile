@@ -1,8 +1,13 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
+# Override this by setting the REGISTRY argument when calling docker build
+# to use a different registry than docker hub
+# docker build . REGISTRY=<custom registry>
+ARG REGISTRY=docker.io
+
 # Build doesn't work with node 16
-FROM node:14-slim
+FROM ${REGISTRY}/node:14-slim
 
 # Use app insights logger
 ENV FLUID_TEST_LOGGER_PKG_PATH '@fluid-internal/test-app-insights-logger'
@@ -11,7 +16,7 @@ RUN apt-get update
 
 # Install module to get processess through ps-node package
 RUN apt-get install -y procps jq \
-  && apt-get clean
+    && apt-get clean
 
 RUN npm update -g
 

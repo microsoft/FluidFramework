@@ -1,7 +1,12 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:14.19.1
+# Override this by setting the REGISTRY argument when calling docker build
+# to use a different registry than docker hub
+# docker build . REGISTRY=<custom registry>
+ARG REGISTRY=docker.io
+
+FROM ${REGISTRY}/node:14
 
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
