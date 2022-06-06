@@ -58,7 +58,7 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/core-interfaces": "^1.0.0",
     "@fluidframework/driver-definitions": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

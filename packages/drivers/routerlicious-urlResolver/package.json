@@ -40,7 +40,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^1.0.0",
     "@fluidframework/driver-definitions": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "nconf": "^0.11.4"
   },
   "devDependencies": {

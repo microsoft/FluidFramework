@@ -50,10 +50,10 @@
     "@fluidframework/driver-utils": "^0.59.2001",
     "@fluidframework/fluid-static": "^0.59.2001",
     "@fluidframework/map": "^0.59.2001",
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/routerlicious-driver": "^0.59.2001",
     "@fluidframework/runtime-utils": "^0.59.2000",
-    "@fluidframework/server-services-client": "^0.1036.3000",
+    "@fluidframework/server-services-client": "^0.1036.4000",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },

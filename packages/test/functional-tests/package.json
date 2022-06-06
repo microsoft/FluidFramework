@@ -63,7 +63,7 @@
     "@fluidframework/driver-definitions": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/sequence": "^1.0.0",
     "@fluidframework/telemetry-utils": "^1.0.0",
     "@fluidframework/test-loader-utils": "^1.0.0",

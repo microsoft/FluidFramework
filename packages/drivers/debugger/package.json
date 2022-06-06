@@ -35,7 +35,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/driver-definitions": "^1.0.0",
     "@fluidframework/driver-utils": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/replay-driver": "^1.0.0",
     "jsonschema": "^1.2.6"
   },
