@@ -58,8 +58,8 @@ identical state.
 Note, there isn't a centralized Fluid service for all Fluid experiences. But for each Fluid experience, there is only
 one Fluid service.
 
-Fluid clients connect to the Fluid service using the WebSocket protocol. However, the Fluid runtime manages
-all of the connections so that Fluid client developers can focus on local experiences.
+Fluid clients connect to the Fluid service using the [WebSocket](https://en.wikipedia.org/wiki/WebSocket) protocol.
+However, the Fluid runtime manages all of the connections so that Fluid client developers can focus on local experiences.
 
 ## Scale
 
