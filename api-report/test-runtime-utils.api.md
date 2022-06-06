@@ -107,17 +107,13 @@ export class MockContainerRuntimeFactory {
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
     getMinSeq(): number;
-    // (undocumented)
     protected messages: ISequencedDocumentMessage[];
     // (undocumented)
     minSeq: Map<string, number>;
     // (undocumented)
     get outstandingMessageCount(): number;
-    // (undocumented)
     processAllMessages(): void;
-    // (undocumented)
     processOneMessage(): void;
-    // (undocumented)
     processSomeMessages(count: number): void;
     // (undocumented)
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
