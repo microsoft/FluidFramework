@@ -712,12 +712,17 @@ describe("Runtime", () => {
                 return runtime as ContainerRuntime;
             }
 
+            const toggleConnection = (runtime: ContainerRuntime) => {
+                runtime.setConnectionState(false);
+                runtime.setConnectionState(true);
+            };
+
             it(`No progress for ${maxReconnects} connection state changes and pending state will ` +
                 "close the container", async () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
                     for (let i = 0; i < maxReconnects; i++) {
-                        containerRuntime.setConnectionState(!containerRuntime.connected);
+                        toggleConnection(containerRuntime);
                     }
 
                     const error = getFirstContainerError();
@@ -734,7 +739,7 @@ describe("Runtime", () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
                     for (let i = 0; i < maxReconnects / 2; i++) {
-                        containerRuntime.setConnectionState(!containerRuntime.connected);
+                        toggleConnection(containerRuntime);
                     }
 
                     assert.equal(containerErrors.length, 0);
@@ -751,7 +756,7 @@ describe("Runtime", () => {
                         -1 /* maxConsecutiveReplays */);
 
                     for (let i = 0; i < maxReconnects; i++) {
-                        containerRuntime.setConnectionState(!containerRuntime.connected);
+                        toggleConnection(containerRuntime);
                     }
 
                     assert.equal(containerErrors.length, 0);
@@ -763,7 +768,7 @@ describe("Runtime", () => {
                     patchRuntime(getMockPendingStateManager(false /* always has no pending messages */));
 
                     for (let i = 0; i < maxReconnects; i++) {
-                        containerRuntime.setConnectionState(!containerRuntime.connected);
+                        toggleConnection(containerRuntime);
                     }
 
                     assert.equal(containerErrors.length, 0);
@@ -795,8 +800,7 @@ describe("Runtime", () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
                     for (let i = 0; i < maxReconnects; i++) {
-                        containerRuntime.setConnectionState(false);
-                        containerRuntime.setConnectionState(true);
+                        toggleConnection(containerRuntime);
                         containerRuntime.process({
                             type: "op",
                             clientId: "clientId",

@@ -574,26 +574,14 @@ use_old_InterfaceDeclaration_IDeltaQueueEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IDeltaSender": {"forwardCompat": false}
+* "RemovedVariableDeclaration_IDeltaSender": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_IDeltaSender():
-    TypeOnly<typeof old.IDeltaSender>;
-declare function use_current_VariableDeclaration_IDeltaSender(
-    use: TypeOnly<typeof current.IDeltaSender>);
-use_current_VariableDeclaration_IDeltaSender(
-    get_old_VariableDeclaration_IDeltaSender());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IDeltaSender": {"backCompat": false}
+* "RemovedVariableDeclaration_IDeltaSender": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_IDeltaSender():
-    TypeOnly<typeof current.IDeltaSender>;
-declare function use_old_VariableDeclaration_IDeltaSender(
-    use: TypeOnly<typeof old.IDeltaSender>);
-use_old_VariableDeclaration_IDeltaSender(
-    get_current_VariableDeclaration_IDeltaSender());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -617,6 +605,7 @@ declare function get_current_InterfaceDeclaration_IDeltaSender():
 declare function use_old_InterfaceDeclaration_IDeltaSender(
     use: TypeOnly<old.IDeltaSender>);
 use_old_InterfaceDeclaration_IDeltaSender(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltaSender());
 
 /*
@@ -1102,26 +1091,14 @@ use_old_InterfaceDeclaration_IPendingLocalState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideDeltaSender": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IProvideDeltaSender": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IProvideDeltaSender():
-    TypeOnly<old.IProvideDeltaSender>;
-declare function use_current_InterfaceDeclaration_IProvideDeltaSender(
-    use: TypeOnly<current.IProvideDeltaSender>);
-use_current_InterfaceDeclaration_IProvideDeltaSender(
-    get_old_InterfaceDeclaration_IProvideDeltaSender());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideDeltaSender": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IProvideDeltaSender": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IProvideDeltaSender():
-    TypeOnly<current.IProvideDeltaSender>;
-declare function use_old_InterfaceDeclaration_IProvideDeltaSender(
-    use: TypeOnly<old.IProvideDeltaSender>);
-use_old_InterfaceDeclaration_IProvideDeltaSender(
-    get_current_InterfaceDeclaration_IProvideDeltaSender());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1222,26 +1199,14 @@ use_old_InterfaceDeclaration_IProvideRuntimeFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProxyLoaderFactory": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IProxyLoaderFactory": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IProxyLoaderFactory():
-    TypeOnly<old.IProxyLoaderFactory>;
-declare function use_current_InterfaceDeclaration_IProxyLoaderFactory(
-    use: TypeOnly<current.IProxyLoaderFactory>);
-use_current_InterfaceDeclaration_IProxyLoaderFactory(
-    get_old_InterfaceDeclaration_IProxyLoaderFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProxyLoaderFactory": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IProxyLoaderFactory": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IProxyLoaderFactory():
-    TypeOnly<current.IProxyLoaderFactory>;
-declare function use_old_InterfaceDeclaration_IProxyLoaderFactory(
-    use: TypeOnly<old.IProxyLoaderFactory>);
-use_old_InterfaceDeclaration_IProxyLoaderFactory(
-    get_current_InterfaceDeclaration_IProxyLoaderFactory());
 
 /*
 * Validate forward compat by using old type in place of current type

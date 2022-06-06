@@ -14,9 +14,19 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
-# 0.60
+# 2.0.0
 
-## 0.60 Upcoming changes
+## 2.0.0 Upcoming changes
+
+## 2.0.0 Breaking changes
+- [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
+
+### Remove `IContainerRuntimeBase.setFlushMode`
+The `setFlushMode` has been removed from `IContainerRuntimeBase`. Please remove all usage of this method as FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
+
+# 1.0.0
+
+## 1.0.0 Upcoming changes
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
 - [bindToContext to be removed from IFluidDataStoreChannel](#bindToContext-to-be-removed-from-IFluidDataStoreChannel)
 - [Garbage Collection (GC) mark phase turned on by default](#Garbage-Collection-(GC)-mark-phase-turned-on-by-default)
@@ -37,7 +47,7 @@ For more details on GC and options for controlling its behavior, please see [thi
 
 > Note: GC sweep phase has not been enabled yet so unreferenced content won't be deleted. The work to enable it is in progress and will be ready soon.
 
-## 0.60 Breaking changes
+## 1.0.0 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
@@ -48,9 +58,12 @@ For more details on GC and options for controlling its behavior, please see [thi
 - [`ISummarizerOptions` is deprecated](#isummarizerOptions-is-deprecated)
 - [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
-- [Remove Container.setAutoReconnect() and Container.resume()](#Remove-Container-setAutoReconnect-and-resume)
-- [Remove IContainer.connected and IFluidContainer.connected](#Remove-IContainer-connected-and-IFluidContainer-connected)
-- [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
+- [Remove Container.setAutoReconnect() and Container.resume()](#remove-containersetautoreconnect-and-containerresume)
+- [Remove IContainer.connected and IFluidContainer.connected](#remove-icontainerconnected-and-ifluidcontainerconnected)
+- [All IFluidObject Augmentations Removed](#All-IFluidObject-Augmentations-Removed)
+- [Remove `noopTimeFrequency` and `noopCountFrequency` from ILoaderOptions](#remove-nooptimefrequency-and-noopcountfrequency-from-iloaderoptions)
+- [proxyLoaderFactories members removed from ILoaderProps and ILoaderServices](#proxyloaderfactories-members-to-be-removed-from-iloaderprops-and-iloaderservices)
+- [IContainer.connectionState yields finer-grained ConnectionState values](#icontainerconnectionstate-yields-finer-grained-connectionstate-values)
 
 ### Changed AzureConnectionConfig API
 - Added a `type` field that's used to differentiate between remote and local connections.
@@ -119,8 +132,38 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
 }
 ```
 
-### Remove `IContainerRuntimeBase.setFlushMode`
-The `setFlushMode` has been removed from `IContainerRuntimeBase`. Please remove all usage of this method as FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
+### All IFluidObject Augmentations Removed
+ All augmentations to IFluidObject are now removed. IFluidObject is deprecated and being replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject). The interface IFluidObject still exists as an empty interface, to support any pre-existing augmentations. However these should be moved to the [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) pattern, as IFluidObject will
+ be completely removed in an upcoming release.
+
+ The following interfaces still exist independently and can be used via FLuidObject, but no longer exist on IFluidObject.
+ - IRuntimeFactory
+ - ILoader
+ - IFluidLoadable
+ - IFluidRunnable
+ - IFluidRouter
+ - IFluidHandleContext
+ - IFluidHandle
+ - IFluidHTMLView
+
+### Remove `noopTimeFrequency` and `noopCountFrequency` from ILoaderOptions
+`noopTimeFrequency` and `noopCountFrequency` are removed from `ILoaderOptions`. Please use `noopTimeFrequency` and `noopCountFrequency` from `IClientConfiguration` in `@fluidframework/protocol-definitions`.
+
+### proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices
+The `proxyLoaderFactories` member on `ILoaderProps` and `ILoaderServices` was deprecated in 0.59 and has now been removed.
+
+### IContainer.connectionState yields finer-grained ConnectionState values
+In both `@fluidframework/container-definitions` and `@fluidframework/container-loader` packages,
+the `ConnectionState` types have been updated to include a new state which previously was
+encompassed by the `Disconnected` state. The new state is `EstablishingConnection` and indicates that the container is
+attempting to connect to the ordering service, but is not yet connected.
+
+Any logic based on the `Disconnected` state (e.g. checking the value of `connectionState` on either `IContainer` and `Container`)
+should be updated depending on how you want to treat this new `EstablishingConnection` state.
+
+Additionally, please note that the `Connecting` state is being renamed to `CatchingUp`.
+`ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
+`ConnectionState.Connecting` will be removed in the following major release.
 
 # 0.59
 
@@ -132,6 +175,7 @@ The `setFlushMode` has been removed from `IContainerRuntimeBase`. Please remove 
 - [LocalReference class and method deprecations](#LocalReference-class-and-method-deprecations)
 - [Deprecated properties from ILoaderOptions](#Deprecated-properties-from-ILoaderOptions)
 - [Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions](#Deprecated-forceAccessTokenViaAuthorizationHeader-from-ICollabSessionOptions)
+- [Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver](#Deprecated-enableRedeemFallback-from-HostStoragePolicy-in-Odsp-driver)]
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
@@ -160,6 +204,9 @@ To support this change the following methods are deprecated with replacements th
 
 ### Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions
 Deprecated forceAccessTokenViaAuthorizationHeader from ICollabSessionOptions as auth token will be supplied as Header by default due to security reasons.
+
+### Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver
+Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver as it will be always enabled by default.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
