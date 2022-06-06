@@ -40,6 +40,30 @@ use_old_FunctionDeclaration_addBlobToSummary(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_addSummarizeResultToSummary": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_addSummarizeResultToSummary():
+    TypeOnly<typeof old.addSummarizeResultToSummary>;
+declare function use_current_FunctionDeclaration_addSummarizeResultToSummary(
+    use: TypeOnly<typeof current.addSummarizeResultToSummary>);
+use_current_FunctionDeclaration_addSummarizeResultToSummary(
+    get_old_FunctionDeclaration_addSummarizeResultToSummary());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_addSummarizeResultToSummary": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_addSummarizeResultToSummary():
+    TypeOnly<typeof current.addSummarizeResultToSummary>;
+declare function use_old_FunctionDeclaration_addSummarizeResultToSummary(
+    use: TypeOnly<typeof old.addSummarizeResultToSummary>);
+use_old_FunctionDeclaration_addSummarizeResultToSummary(
+    get_current_FunctionDeclaration_addSummarizeResultToSummary());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_addTreeToSummary": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_addTreeToSummary():

@@ -141,7 +141,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public rollback(content: any, localOpMetadata: unknown) {
-        assert(this.isLoaded, "Remote channel must be loaded when rolling back op");
+        assert(this.isLoaded, 0x2f0 /* "Remote channel must be loaded when rolling back op" */);
 
         this.services.deltaConnection.rollback(content, localOpMetadata);
     }

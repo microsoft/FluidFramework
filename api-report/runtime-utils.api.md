@@ -113,7 +113,7 @@ export interface ISummarizerNodeRootContract {
 }
 
 // @public (undocumented)
-export function listBlobsAtTreePath(inputTree: ITree, path: string): Promise<string[]>;
+export function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]>;
 
 // @public
 export function mergeStats(...stats: ISummaryStats[]): ISummaryStats;

@@ -14,9 +14,9 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
-# 0.60
+# 1.0.0
 
-## 0.60 Upcoming changes
+## 1.0.0 Upcoming changes
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
 - [bindToContext to be removed from IFluidDataStoreChannel](#bindToContext-to-be-removed-from-IFluidDataStoreChannel)
 - [Garbage Collection (GC) mark phase turned on by default](#Garbage-Collection-(GC)-mark-phase-turned-on-by-default)
@@ -24,6 +24,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ### Summarize heuristic changes based on telemetry
 Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
 - Change `minOpsForLastSummaryAttempt` from `50` -> `10`
+- Change `maxOps` from `1000` -> `100`
 
 ### bindToContext to be removed from IFluidDataStoreChannel
 `bindToContext` will be removed from `IFluidDataStoreChannel` in the next major release.
@@ -37,7 +38,7 @@ For more details on GC and options for controlling its behavior, please see [thi
 
 > Note: GC sweep phase has not been enabled yet so unreferenced content won't be deleted. The work to enable it is in progress and will be ready soon.
 
-## 0.60 Breaking changes
+## 1.0.0 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
@@ -48,11 +49,12 @@ For more details on GC and options for controlling its behavior, please see [thi
 - [`ISummarizerOptions` is deprecated](#isummarizerOptions-is-deprecated)
 - [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
 - [Remove Const Enums from Merge Tree, Sequence, and Shared String](#Remove-Const-Enums-from-Merge-Tree-Sequence-and-Shared-String)
-- [Remove Container.setAutoReconnect() and Container.resume()](#Remove-Container-setAutoReconnect-and-resume)
-- [Remove IContainer.connected and IFluidContainer.connected](#Remove-IContainer-connected-and-IFluidContainer-connected)
+- [Remove Container.setAutoReconnect() and Container.resume()](#remove-containersetautoreconnect-and-containerresume)
+- [Remove IContainer.connected and IFluidContainer.connected](#remove-icontainerconnected-and-ifluidcontainerconnected)
 - [All IFluidObject Augmentations Removed](#All-IFluidObject-Augmentations-Removed)
 - [Remove `noopTimeFrequency` and `noopCountFrequency` from ILoaderOptions](#remove-nooptimefrequency-and-noopcountfrequency-from-iloaderoptions)
-- [proxyLoaderFactories members removed from ILoaderProps and ILoaderServices](#proxyLoaderFactories-members-removed-from-ILoaderProps-and-ILoaderServices)
+- [proxyLoaderFactories members removed from ILoaderProps and ILoaderServices](#proxyloaderfactories-members-to-be-removed-from-iloaderprops-and-iloaderservices)
+- [IContainer.connectionState yields finer-grained ConnectionState values](#icontainerconnectionstate-yields-finer-grained-connectionstate-values)
 
 ### Changed AzureConnectionConfig API
 - Added a `type` field that's used to differentiate between remote and local connections.
@@ -140,6 +142,19 @@ The properties `IContainer.connected` and `IFluidContainer.connected` were depre
 
 ### proxyLoaderFactories members to be removed from ILoaderProps and ILoaderServices
 The `proxyLoaderFactories` member on `ILoaderProps` and `ILoaderServices` was deprecated in 0.59 and has now been removed.
+
+### IContainer.connectionState yields finer-grained ConnectionState values
+In both `@fluidframework/container-definitions` and `@fluidframework/container-loader` packages,
+the `ConnectionState` types have been updated to include a new state which previously was
+encompassed by the `Disconnected` state. The new state is `EstablishingConnection` and indicates that the container is
+attempting to connect to the ordering service, but is not yet connected.
+
+Any logic based on the `Disconnected` state (e.g. checking the value of `connectionState` on either `IContainer` and `Container`)
+should be updated depending on how you want to treat this new `EstablishingConnection` state.
+
+Additionally, please note that the `Connecting` state is being renamed to `CatchingUp`.
+`ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
+`ConnectionState.Connecting` will be removed in the following major release.
 
 # 0.59
 
