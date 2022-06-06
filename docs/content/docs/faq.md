@@ -185,8 +185,9 @@ Fluid developers will be able to leverage existing Fluid services that will emer
 
 ### How are Fluid solutions deployed?
 
-Fluid solutions are, at the end of the day, simple JavaScript. At Microsoft, Fluid solutions are deployed to CDNs like
-any other static resource. Because Fluid is very client-centric, deployment is very simple.
+Fluid solutions are, at the end of the day, simple JavaScript.
+At Microsoft, Fluid solutions are deployed to [content delivery network](https://en.wikipedia.org/wiki/Content_delivery_network)s (CDNs) like any other static resource.
+Because Fluid is very client-centric, deployment is very simple.
 
 ## Conflicts and History
 
