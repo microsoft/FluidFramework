@@ -365,11 +365,11 @@ export interface ISummarizeHeuristicData {
     /** Most recent summary that received an ack */
     readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
 
-    /** Number of system ops since last summary */
-    numSystemOps: number;
+    /** Number of runtime ops since last summary */
+    numRuntimeOps: number;
 
-    /** Number of non-system ops since last summary */
-    numNonSystemOps: number;
+    /** Number of non-runtime ops since last summary */
+    numNonRuntimeOps: number;
 
     /**
      * Updates lastAttempt and lastSuccessfulAttempt based on the last summary.

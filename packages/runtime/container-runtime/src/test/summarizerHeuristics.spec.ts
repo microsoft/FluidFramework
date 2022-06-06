@@ -31,8 +31,8 @@ describe("Runtime", () => {
                 maxOpsSinceLastSummary: 7000,
                 initialSummarizerDelayMs: 0,
                 summarizerClientElection: false,
-                systemOpWeight: 0.1,
-                nonSystemOpWeight: 1.0,
+                nonRuntimeOpWeight: 0.1,
+                runtimeOpWeight: 1.0,
             };
             let summaryConfig: Readonly<ISummaryConfiguration>;
             let data: ISummarizeHeuristicData;
@@ -62,8 +62,8 @@ describe("Runtime", () => {
                 summarizerClientElection = defaultSummaryConfig.summarizerClientElection,
                 minOpsForLastSummaryAttempt = defaultSummaryConfig.minOpsForLastSummaryAttempt,
                 run = true,
-                systemOpWeight = defaultSummaryConfig.systemOpWeight,
-                nonSystemOpWeight = defaultSummaryConfig.nonSystemOpWeight,
+                nonRuntimeOpWeight = defaultSummaryConfig.nonRuntimeOpWeight,
+                runtimeOpWeight = defaultSummaryConfig.runtimeOpWeight,
             }: Partial<ISummaryConfigurationHeuristics & ISummarizeAttempt & {
                 lastOpSequenceNumber: number;
                 run: boolean;
@@ -80,8 +80,8 @@ describe("Runtime", () => {
                     initialSummarizerDelayMs,
                     summarizerClientElection,
                     minOpsForLastSummaryAttempt,
-                    systemOpWeight,
-                    nonSystemOpWeight } as const;
+                    nonRuntimeOpWeight,
+                    runtimeOpWeight } as const;
 
                 runner = new SummarizeHeuristicRunner(
                     data,
@@ -102,12 +102,12 @@ describe("Runtime", () => {
                 initialize({ maxOps });
 
                 data.lastOpSequenceNumber = maxOps;
-                data.numNonSystemOps = maxOps;
+                data.numRuntimeOps = maxOps;
                 runner.run();
                 assertAttemptCount(0, "should not run yet");
 
                 data.lastOpSequenceNumber++;
-                data.numNonSystemOps++;
+                data.numRuntimeOps++;
                 runner.run();
                 assertAttemptCount(1, "should run now");
                 assert(getLastAttempt() === "maxOps");
@@ -119,12 +119,12 @@ describe("Runtime", () => {
                 initialize({ refSequenceNumber: lastSummary, maxOps });
 
                 data.lastOpSequenceNumber = lastSummary + maxOps;
-                data.numNonSystemOps = maxOps;
+                data.numRuntimeOps = maxOps;
                 runner.run();
                 assertAttemptCount(0, "should not run yet");
 
                 data.lastOpSequenceNumber++;
-                data.numNonSystemOps++;
+                data.numRuntimeOps++;
                 runner.run();
                 assertAttemptCount(1, "should run now");
                 assert(getLastAttempt() === "maxOps");
@@ -234,21 +234,21 @@ describe("Runtime", () => {
 
             it("Weights ops properly", () => {
                 const maxOps = 2;
-                const systemOpWeight = 1.1;
-                const nonSystemOpWeight = 0.1;
-                initialize({ maxOps, systemOpWeight, nonSystemOpWeight });
+                const nonRuntimeOpWeight = 1.1;
+                const runtimeOpWeight = 0.1;
+                initialize({ maxOps, nonRuntimeOpWeight, runtimeOpWeight });
 
                 data.lastOpSequenceNumber = maxOps;
 
-                data.numNonSystemOps += 9;
+                data.numRuntimeOps += 9;
                 runner.run();
                 assertAttemptCount(0, "should not run yet");
 
-                data.numSystemOps += 1;
+                data.numNonRuntimeOps += 1;
                 runner.run();
                 assertAttemptCount(0, "should not run yet");
 
-                data.numNonSystemOps += 1;
+                data.numRuntimeOps += 1;
                 runner.run();
                 assertAttemptCount(1, "should run");
                 assert(getLastAttempt() === "maxOps");

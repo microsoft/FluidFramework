@@ -26,14 +26,14 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
         return this._lastSuccessfulSummary;
     }
 
-    public numSystemOps: number = 0;
+    public numNonRuntimeOps: number = 0;
     /**
      * Number of system ops at beginning of attempting to summarize.
      * Is used to adjust numSystemOps appropriately after successful summarization.
      */
     private numSystemOpsBefore: number = 0;
 
-    public numNonSystemOps: number = 0;
+    public numRuntimeOps: number = 0;
     /**
      * Number of non-system ops at beginning of attempting to summarize.
      * Is used to adjust numNonSystemOps appropriately after successful summarization.
@@ -60,17 +60,17 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
             summaryTime: Date.now(),
         };
 
-        this.numSystemOpsBefore = this.numSystemOps;
-        this.numNonSystemOpsBefore = this.numNonSystemOps;
+        this.numSystemOpsBefore = this.numNonRuntimeOps;
+        this.numNonSystemOpsBefore = this.numRuntimeOps;
     }
 
     public markLastAttemptAsSuccessful() {
         this._lastSuccessfulSummary = { ...this.lastAttempt };
 
-        this.numSystemOps -= this.numSystemOpsBefore;
+        this.numNonRuntimeOps -= this.numSystemOpsBefore;
         this.numSystemOpsBefore = 0;
 
-        this.numNonSystemOps -= this.numNonSystemOpsBefore;
+        this.numRuntimeOps -= this.numNonSystemOpsBefore;
         this.numNonSystemOpsBefore = 0;
     }
 }
@@ -161,8 +161,8 @@ class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
         configuration: ISummaryConfigurationHeuristics,
         heuristicData: ISummarizeHeuristicData,
     ): boolean {
-        const weightedNumOfOps = (configuration.systemOpWeight * heuristicData.numSystemOps)
-                               + (configuration.nonSystemOpWeight * heuristicData.numNonSystemOps);
+        const weightedNumOfOps = (configuration.runtimeOpWeight * heuristicData.numRuntimeOps)
+                               + (configuration.nonRuntimeOpWeight * heuristicData.numNonRuntimeOps);
         return weightedNumOfOps > configuration.maxOps;
     }
 }

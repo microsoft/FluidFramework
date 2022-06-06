@@ -6,6 +6,7 @@
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -84,12 +85,12 @@ export class RunningSummarizer implements IDisposable {
         // 2. Op was sequenced after the last time we summarized (op sequence number > summarize ref sequence number)
         const diff = runtime.deltaManager.lastSequenceNumber - (
             heuristicData.lastSuccessfulSummary.refSequenceNumber
-            + heuristicData.numSystemOps
-            + heuristicData.numNonSystemOps);
+            + heuristicData.numNonRuntimeOps
+            + heuristicData.numRuntimeOps);
         if (diff > 0) {
             // Split the diff 50-50 and increment the counts appropriately
-            heuristicData.numSystemOps += Math.ceil(diff / 2);
-            heuristicData.numNonSystemOps += Math.floor(diff / 2);
+            heuristicData.numNonRuntimeOps += Math.ceil(diff / 2);
+            heuristicData.numRuntimeOps += Math.floor(diff / 2);
         }
 
         // Update last seq number (in case the handlers haven't processed anything yet)
@@ -236,10 +237,10 @@ export class RunningSummarizer implements IDisposable {
     public handleOp(op: ISequencedDocumentMessage) {
         this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
-        if (isSystemMessage(op)) {
-            this.heuristicData.numSystemOps++;
+        if (op.type !== MessageType.Summarize && isRuntimeMessage(op)) {
+            this.heuristicData.numRuntimeOps++;
         } else {
-            this.heuristicData.numNonSystemOps++;
+            this.heuristicData.numNonRuntimeOps++;
         }
 
         // Check for enqueued on-demand summaries; Intentionally do nothing otherwise

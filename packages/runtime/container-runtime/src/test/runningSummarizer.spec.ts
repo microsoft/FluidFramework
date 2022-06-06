@@ -62,8 +62,8 @@ describe("Runtime", () => {
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
-                systemOpWeight: 0.1,
-                nonSystemOpWeight: 1.0,
+                nonRuntimeOpWeight: 0.1,
+                runtimeOpWeight: 1.0,
                 ...summaryCommon,
             };
             const summaryConfigDisableHeuristics: ISummaryConfiguration = {
@@ -81,7 +81,7 @@ describe("Runtime", () => {
                 timestamp: number = Date.now(),
                 type: string = MessageType.Operation,
             ) {
-                heuristicData.numNonSystemOps += increment - 1; // -1 because we emit an op below
+                heuristicData.numRuntimeOps += increment - 1; // -1 because we emit an op below
                 lastRefSeq += increment;
                 const op: Partial<ISequencedDocumentMessage> = {
                     sequenceNumber: lastRefSeq,
@@ -444,6 +444,16 @@ describe("Runtime", () => {
 
                     await emitNextOp(1, Date.now(), MessageType.Summarize);
                     assertRunCounts(0, 0, 0, "should not perform summary");
+                });
+
+                it("Should not include Summarize ops with runtime count", async () => {
+                    assert.strictEqual(heuristicData.numRuntimeOps, 0);
+                    assert.strictEqual(heuristicData.numNonRuntimeOps, 0);
+                    
+                    await emitNextOp(1, Date.now(), MessageType.Summarize);
+
+                    assert.strictEqual(heuristicData.numRuntimeOps, 0);
+                    assert.strictEqual(heuristicData.numNonRuntimeOps, 1);
                 });
             });
 
@@ -893,7 +903,7 @@ describe("Runtime", () => {
                     assert(submitResult.data.stage === "submit",
                         "enqueued summary submitted data stage should be submit");
 
-                    // 24 = 22 regular non-system ops + 2 summary ack ops
+                    // 24 = 22 regular runtime ops + 2 summary ack ops
                     const expectedRefSeqNum = summaryConfig.maxOps * 2 + 24;
                     assert.strictEqual(submitResult.data.referenceSequenceNumber, expectedRefSeqNum, "ref seq num");
                     assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");

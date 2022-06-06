@@ -238,13 +238,13 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      */
     minOpsForLastSummaryAttempt: number;
     /**
-     * System op weight to use in heuristic summarizing
+     * Runtime op weight to use in heuristic summarizing
      */
-    systemOpWeight: number;
+    runtimeOpWeight: number;
     /**
-     * Non-system op weight to use in heuristic summarizing
+     * Non-runtime op weight to use in heuristic summarizing
      */
-    nonSystemOpWeight: number;
+    nonRuntimeOpWeight: number;
 }
 
 export interface ISummaryConfigurationDisableSummarizer {
@@ -279,9 +279,9 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
     summarizerClientElection: false,
 
-    systemOpWeight: 0.1,
+    nonRuntimeOpWeight: 0.1,
 
-    nonSystemOpWeight: 1.0,
+    runtimeOpWeight: 1.0,
 };
 
 export interface IGCRuntimeOptions {
