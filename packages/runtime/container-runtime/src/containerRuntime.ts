@@ -1903,18 +1903,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public orderSequentially(callback: () => void): void {
-        // If flush mode is already TurnBased we are either
-        // nested in another orderSequentially, or
-        // the app is flushing manually, in which
-        // case this invocation doesn't own
-        // flushing.
-        this.trackOrderSequentiallyCalls(callback);
-        if (this.flushMode === FlushMode.Immediate) {
-            this.flush();
-        }
-    }
-
-    private trackOrderSequentiallyCalls(callback: () => void): void {
         let checkpoint: { rollback: () => void; } | undefined;
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
             checkpoint = this.pendingStateManager.checkpoint();
@@ -1934,6 +1922,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
+        }
+
+        if (this._orderSequentiallyCalls === 0 && this.flushMode === FlushMode.Immediate) {
+            this.flush();
         }
     }
 
@@ -2723,7 +2715,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 content,
                 serializedContent,
                 maxOpSize,
-                this._flushMode === FlushMode.TurnBased,
+                this._flushMode === FlushMode.TurnBased  || this._orderSequentiallyCalls > 0,
                 opMetadataInternal);
         }
 
