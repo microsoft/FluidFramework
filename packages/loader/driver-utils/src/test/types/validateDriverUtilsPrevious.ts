@@ -35,6 +35,7 @@ declare function get_current_ClassDeclaration_AuthorizationError():
 declare function use_old_ClassDeclaration_AuthorizationError(
     use: TypeOnly<old.AuthorizationError>);
 use_old_ClassDeclaration_AuthorizationError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_AuthorizationError());
 
 /*
@@ -422,6 +423,7 @@ declare function get_current_ClassDeclaration_GenericNetworkError():
 declare function use_old_ClassDeclaration_GenericNetworkError(
     use: TypeOnly<old.GenericNetworkError>);
 use_old_ClassDeclaration_GenericNetworkError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_GenericNetworkError());
 
 /*
@@ -1119,6 +1121,7 @@ declare function get_current_ClassDeclaration_ThrottlingError():
 declare function use_old_ClassDeclaration_ThrottlingError(
     use: TypeOnly<old.ThrottlingError>);
 use_old_ClassDeclaration_ThrottlingError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ThrottlingError());
 
 /*
