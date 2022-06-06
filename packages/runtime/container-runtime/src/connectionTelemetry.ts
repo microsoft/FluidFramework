@@ -299,6 +299,7 @@ export class SignalTimestampCache {
                 this.removeSignalFromCaches(cachekey);
             });
     }
+
     private removeSignalFromCaches(key: number) {
         this.cache.delete(key);
         const timeout = this.expirationMap.get(key);

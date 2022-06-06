@@ -2180,6 +2180,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return true;
     }
 
+    private createNewSignalEnvelope(address: string | undefined, type: string, content: any): ISignalEnvelope {
+        const newEnvelope: ISignalEnvelope = {
+            address,
+            clientSignalSequenceNumber: ++this._perfSignalData.signalSequenceNumber,
+            contents: { type, content },
+        };
+        this._signalTimestampCache.put(this._perfSignalData.signalSequenceNumber, Date.now());
+        return newEnvelope;
+    }
+
     /**
      * Submits the signal to be sent to other clients.
      * @param type - Type of the signal.
@@ -2187,22 +2197,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        const envelope: ISignalEnvelope = {
-            address: undefined,
-            clientSignalSequenceNumber: ++this._perfSignalData.signalSequenceNumber,
-            contents: { type, content },
-        };
-        this._signalTimestampCache.put(this._perfSignalData.signalSequenceNumber, Date.now());
+        const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
         return this.context.submitSignalFn(envelope);
     }
 
     public submitDataStoreSignal(address: string, type: string, content: any) {
-        const envelope: ISignalEnvelope = {
-            address,
-            clientSignalSequenceNumber: ++this._perfSignalData.signalSequenceNumber,
-            contents: { type, content },
-         };
-         this._signalTimestampCache.put(this._perfSignalData.signalSequenceNumber, Date.now());
+        const envelope = this.createNewSignalEnvelope(address, type, content);
          return this.context.submitSignalFn(envelope);
     }
 
