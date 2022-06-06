@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -20,8 +20,8 @@ export interface IConnectionStateHandler {
     shouldClientJoinWrite: () => boolean;
     /** (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again */
     maxClientLeaveWaitTime: number | undefined;
-    /** Log to telemetry an issue encountered while in the Connecting state */
-    logConnectionIssue: (eventName: string) => void;
+    /** Log an issue encountered while in the Connecting state. details will be logged as a JSON string */
+    logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => void;
     /** Callback whenever the ConnectionState changes between Disconnected and Connected */
     connectionStateChanged: () => void;
 }
@@ -95,9 +95,17 @@ export class ConnectionStateHandler {
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
                 // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
-                if (this.connectionState === ConnectionState.Connecting) {
-                    this.handler.logConnectionIssue("NoJoinOp");
+                if (this.connectionState !== ConnectionState.Connecting) {
+                    return;
                 }
+                const quorumClients = this.handler.quorumClients();
+                const details = {
+                    quorumInitialized: quorumClients !== undefined,
+                    hasPendingClientId: this.pendingClientId !== undefined,
+                    inQuorum: quorumClients?.getMember(this.pendingClientId ?? "") !== undefined,
+                    waitingForLeaveOp: this.waitingForLeaveOp,
+                };
+                this.handler.logConnectionIssue("NoJoinOp", details);
             },
         );
     }
@@ -144,8 +152,10 @@ export class ConnectionStateHandler {
             if (this.waitingForLeaveOp) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
                     eventName: "WaitBeforeClientLeave",
-                    waitOnClientId: this._clientId,
-                    hadOutstandingOps: this.handler.shouldClientJoinWrite(),
+                    details: JSON.stringify({
+                        waitOnClientId: this._clientId,
+                        hadOutstandingOps: this.handler.shouldClientJoinWrite(),
+                    }),
                 });
             }
             this.applyForConnectedState("addMemberEvent");
@@ -171,11 +181,12 @@ export class ConnectionStateHandler {
                 eventName: "connectedStateRejected",
                 category: source === "timeout" ? "error" : "generic",
                 source,
-                pendingClientId: this.pendingClientId,
-                clientId: this.clientId,
-                hasTimer: this.waitingForLeaveOp,
-                inQuorum: quorumClients !== undefined && this.pendingClientId !== undefined
-                    && quorumClients.getMember(this.pendingClientId) !== undefined,
+                details: JSON.stringify({
+                    pendingClientId: this.pendingClientId,
+                    clientId: this.clientId,
+                    waitingForLeaveOp: this.waitingForLeaveOp,
+                    inQuorum: quorumClients?.getMember(this.pendingClientId ?? "") !== undefined,
+                }),
             });
         }
     }
@@ -290,9 +301,11 @@ export class ConnectionStateHandler {
                 // Adding this event temporarily so that we can get help debugging if something goes wrong.
                 this.logger.sendTelemetryEvent({
                     eventName: "noWaitOnDisconnected",
-                    inQuorum: client !== undefined,
-                    hasTimer: this.waitingForLeaveOp,
-                    shouldClientJoinWrite: this.handler.shouldClientJoinWrite(),
+                    details: JSON.stringify({
+                        inQuorum: client !== undefined,
+                        waitingForLeaveOp: this.waitingForLeaveOp,
+                        hadOutstandingOps: this.handler.shouldClientJoinWrite(),
+                    }),
                 });
             }
         }
