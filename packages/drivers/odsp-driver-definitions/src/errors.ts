@@ -30,6 +30,11 @@ export enum OdspErrorType {
     fetchTimeout = "fetchTimeout",
 
     /*
+     * Fetch stopped by provided abort signal.
+     */
+    fetchAborted = "fetchAborted",
+
+    /*
         * SPO admin toggle: fluid service is not enabled.
         */
     fluidNotEnabled = "fluidNotEnabled",

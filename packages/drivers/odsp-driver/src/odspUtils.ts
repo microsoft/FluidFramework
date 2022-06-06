@@ -135,7 +135,7 @@ export async function fetchHelper(
         // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
             throw new RetryableError(
-                "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, { driverVersion });
+                "Fetch Timeout (AbortError)", OdspErrorType.fetchAborted, { driverVersion });
         }
         // TCP/IP timeout
         if (errorText.includes("ETIMEDOUT")) {
