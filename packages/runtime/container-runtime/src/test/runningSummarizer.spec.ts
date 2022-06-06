@@ -449,7 +449,7 @@ describe("Runtime", () => {
                 it("Should not include Summarize ops with runtime count", async () => {
                     assert.strictEqual(heuristicData.numRuntimeOps, 0);
                     assert.strictEqual(heuristicData.numNonRuntimeOps, 0);
-                    
+
                     await emitNextOp(1, Date.now(), MessageType.Summarize);
 
                     assert.strictEqual(heuristicData.numRuntimeOps, 0);
