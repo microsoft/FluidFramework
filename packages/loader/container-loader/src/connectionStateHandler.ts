@@ -12,18 +12,15 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 
 export interface IConnectionStateHandler {
-    /** Provides access to the clients currently in the quorum */
     quorumClients: () => IQuorumClients | undefined;
-    /** Log to telemetry any change in state, included to Connecting */
-    logConnectionStateChangeTelemetry:
-        (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void;
-    /** Whether to expect the client to join in write mode on next connection */
+    logConnectionStateChangeTelemetry: (
+        value: ConnectionState,
+        oldState: ConnectionState,
+        reason?: string | undefined
+    ) => void;
     shouldClientJoinWrite: () => boolean;
-    /** (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again */
     maxClientLeaveWaitTime: number | undefined;
-    /** Log an issue encountered while in the Connecting state. details will be logged as a JSON string */
     logConnectionIssue: (eventName: string) => void;
-    /** Callback whenever the ConnectionState changes between Disconnected and Connected */
     connectionStateChanged: () => void;
 }
 
