@@ -777,7 +777,7 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
         op: IValueTypeOperationValue,
         { localSeq }: IMapMessageLocalMetadata,
     ) => {
-        const rebasedValue = value.rebaseLocalInterval(op.value, localSeq);
+        const rebasedValue = value.rebaseLocalInterval(op.opName, op.value, localSeq);
         const rebasedOp = { ...op, value: rebasedValue };
         return { rebasedOp, rebasedLocalOpMetadata: { localSeq } };
     };
@@ -1193,6 +1193,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
     /** @internal */
     public rebaseLocalInterval(
+        opName: string,
         serializedInterval: ISerializedInterval,
         localSeq: number,
     ) {
@@ -1204,12 +1205,17 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         const startRebased = this.client.rebasePosition(start, sequenceNumber, localSeq);
         const endRebased = this.client.rebasePosition(end, sequenceNumber, localSeq);
 
-        const interval = this.localCollection.createInterval(startRebased, endRebased, intervalType);
-        interval.addProperties(properties);
-        const rebased = interval.serialize(this.client);
-        if (this.hasPendingChangeStart(interval.getIntervalId())) {
+        const intervalId = properties[reservedIntervalIdKey];
+        const rebased: ISerializedInterval = {
+            start: startRebased,
+            end: endRebased,
+            intervalType,
+            sequenceNumber: this.client?.getCurrentSeq() ?? 0,
+            properties
+        };
+        if (opName === "change" && this.hasPendingChangeStart(intervalId)) {
             this.removePendingChange(serializedInterval);
-            this.addPendingChange(interval.getIntervalId(), rebased);
+            this.addPendingChange(intervalId, rebased);
         }
         return rebased;
     }

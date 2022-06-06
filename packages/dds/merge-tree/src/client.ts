@@ -716,6 +716,10 @@ export class Client {
     /**
      * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
      * of the current sequence number. This is desirable when rebasing operations for reconnection.
+     *
+     * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
+     * the current sequence number, the returned position will align with the position of a reference given
+     * `SlideOnRemove` semantics.
      */
     public rebasePosition(
         pos: number,
@@ -746,7 +750,7 @@ export class Client {
             }
 
             // Keep going while we've yet to reach the segment at the desired position
-            return posAccumulated < pos;
+            return posAccumulated <= pos;
         });
 
         assert(segment !== undefined, "No segment found");

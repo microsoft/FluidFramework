@@ -875,6 +875,48 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
+        it("can rebase an add followed by a change", () => {
+            // This is a regression test for an issue involving faulty update of the pendingChange maps
+            // when both an add and a change op are rebased. Pending change tracking should only apply
+            // to "change" ops, but was also erroneously updated for "add" ops.
+            collection1.removeIntervalById(interval.getIntervalId());
+            containerRuntimeFactory.processAllMessages();
+            containerRuntime1.connected = false;
+            const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
+            sharedString.insertText(2, "llo he");
+            collection1.change(newInterval.getIntervalId(), 6, 7);
+            // Previously would fail: rebase of the "add" op would cause "Mismatch in pending changes" assert
+            // to fire (since the pending change wasn't actually the addition of the interval; it was the change)
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 6, end: 7 }
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 6, end: 7 }
+            ]);
+        });
+
+        it("can rebase a change operation to positions that are invalid in the current view", () => {
+            // This is a regression test for an issue in which attempting to rebase an interval op could hit
+            // issues in local position validation. The root cause was that the rebase logic round-tripped its
+            // rebase positions through a SequenceInterval (i.e. constructed an interval with the desired rebase
+            // positions, then serialized it). The problem is that interval isn't always valid to construct on
+            // the state of the local client's merge tree.
+            containerRuntimeFactory.processAllMessages();
+            containerRuntime1.connected = false;
+            // Since there aren't any other ops, the idea is the rebased version of this op would be the same as
+            // the original version. However, at the time the client is rebasing, it only has a single character of
+            // text. So it's impossible to generate valid LocalReference_s with positions that evaluate to 8 and 9
+            // as the original problematic implementation did.
+            collection1.change(interval.getIntervalId(), 8, 9);
+            sharedString.removeRange(1, sharedString.getLength());
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [{ start: 0, end: 0 }]);
+            assertIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
+        });
+
         it("addInterval resubmitted with concurrent delete", async () => {
             containerRuntime1.connected = false;
 

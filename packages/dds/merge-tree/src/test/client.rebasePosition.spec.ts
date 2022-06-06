@@ -38,9 +38,11 @@ describe("client.rebasePosition", () => {
 
     it("rebase amid remote delete", () => {
         client.removeRangeRemote(5, 8 /* " wo" */, ++seq, 0, remoteUserLongId);
-        const rebasedPos = client.rebasePosition(6 /* w */, 0, 0);
-        const text = getTextAt(rebasedPos);
-        assert.equal(text, "r", "rebased pos should refer to position immediately following removed segment");
+        for (const pos of [5, 6, 7]) {
+            const rebasedPos = client.rebasePosition(pos, 0, 0);
+            const text = getTextAt(rebasedPos);
+            assert.equal(text, "r", `rebase of pos ${pos} should refer to position immediately following removed segment`);
+        }
     });
 
     describe("with subsequent local changes", () => {
