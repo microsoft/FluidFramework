@@ -94,7 +94,7 @@ Most developers will use the Fluid Framework to create Fluid containers.
 Based on our two design principles of "Keep the server simple" and "Move logic to the client", the majority of the Fluid
 codebase is focused on building containers.
 
-### Fluid containers
+### Fluid container
 
 The Fluid container defines the application logic while containing persistent data. If the Fluid Framework is a
 serverless application model with persistent data, the container is the serverless application and data.
