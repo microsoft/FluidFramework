@@ -7,7 +7,6 @@ import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definition
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
     MessageType,
