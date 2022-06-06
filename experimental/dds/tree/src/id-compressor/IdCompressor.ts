@@ -393,7 +393,6 @@ export class IdCompressor {
 			assertIsUuidString(attributionId);
 		}
 		this.localSession = this.createSession(localSessionId, attributionId);
-		this.logger = logger;
 		if (reservedIdCount > 0) {
 			const clusterCapacity = this.clusterCapacity;
 			this.clusterCapacity = reservedIdCount;
