@@ -195,6 +195,12 @@ export class MockContainerRuntimeFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
     public readonly quorum = new MockQuorumClients();
+    /**
+     * The MockContainerRuntimes we produce will push messages into this queue as they are submitted.
+     * This is playing the role of the orderer, establishing a single universal order for the messages generated.
+     * They are held in this queue until we explicitly choose to process them, at which time they are "broadcast" to
+     * each of the runtimes.
+     */
     protected messages: ISequencedDocumentMessage[] = [];
     protected readonly runtimes: MockContainerRuntime[] = [];
 
@@ -228,19 +234,47 @@ export class MockContainerRuntimeFactory {
         this.messages.push(msg as ISequencedDocumentMessage);
     }
 
+    /**
+     * Process one of the queued messages.  Throws if no messages are queued.
+     */
+    public processOneMessage() {
+        if (this.messages.length === 0) {
+            throw new Error("Tried to process a message that did not exist");
+        }
+
+        let msg = this.messages.shift();
+
+        // Explicitly JSON clone the value to match the behavior of going thru the wire.
+        msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
+
+        this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
+        msg.sequenceNumber = ++this.sequenceNumber;
+        msg.minimumSequenceNumber = this.getMinSeq();
+        for (const runtime of this.runtimes) {
+            runtime.process(msg);
+        }
+    }
+
+    /**
+     * Process a given number of queued messages.  Throws if there are fewer messages queued than requested.
+     * @param count - the number of messages to process
+     */
+    public processSomeMessages(count: number) {
+        if (count > this.messages.length) {
+            throw new Error("Tried to process more messages than exist");
+        }
+
+        for (let i = 0; i < count; i++) {
+            this.processOneMessage();
+        }
+    }
+
+    /**
+     * Process all remaining messages in the queue.
+     */
     public processAllMessages() {
         while (this.messages.length > 0) {
-            let msg = this.messages.shift();
-
-            // Explicitly JSON clone the value to match the behavior of going thru the wire.
-            msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
-
-            this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
-            msg.sequenceNumber = ++this.sequenceNumber;
-            msg.minimumSequenceNumber = this.getMinSeq();
-            for (const runtime of this.runtimes) {
-                runtime.process(msg);
-            }
+            this.processOneMessage();
         }
     }
 }
@@ -255,12 +289,12 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 
     addMember(id: string, client: Partial<ISequencedClient>) {
         this.members.set(id, client as ISequencedClient);
-        this.eventEmitter.emit("addMember");
+        this.eventEmitter.emit("addMember", id, client);
     }
 
     removeMember(id: string) {
         if (this.members.delete(id)) {
-            this.eventEmitter.emit("removeMember");
+            this.eventEmitter.emit("removeMember", id);
         }
     }
 
