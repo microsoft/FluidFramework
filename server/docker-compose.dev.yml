@@ -160,7 +160,7 @@ services:
       - "2181:2181"
     restart: on-failure
   kafka:
-    image: wurstmeister/kafka:2.11-1.1.1
+    image: ${REGISTRY:-wurstmeister}/kafka:2.11-1.1.1
     ports:
       - "9092:9092"
     environment:
@@ -171,10 +171,12 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     restart: on-failure
   redis:
-    image: "redis:alpine"
+    image: "${REGISTRY:-docker.io}/redis:7"
   mongodb:
+    # TODO: no image available in MCR
     image: "mongo:3.4.3"
   rabbitmq:
+    # TODO: no image available in MCR
     image: "rabbitmq:alpine"
 volumes:
   git:

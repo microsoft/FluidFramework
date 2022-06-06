@@ -15,8 +15,9 @@ services:
         image: prague.azurecr.io/gitrest:1038
         restart: always
     redis:
-        image: redis:alpine
+        image: ${REGISTRY:-docker.io}/redis:7
     mongodb:
+        # TODO: no image available in MCR
         image: mongo:3.4.3
     riddler:
         image: prague.azurecr.io/prague:2302
