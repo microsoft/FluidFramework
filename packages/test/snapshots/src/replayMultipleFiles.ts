@@ -25,7 +25,6 @@ function getFileLocations(): [string, string] {
     // Relative to this generated js file being executed
     testCollateralPath = nodePath.join(__dirname, "..", testCollateralPath);
     workerPath = nodePath.join(__dirname, "..", workerPath);
-    assert(fs.existsSync(testCollateralPath), `Cannot find test collateral path: ${origTestCollateralPath}`);
     assert(fs.existsSync(workerPath), `Cannot find worker js file: ${workerPath}`);
     return [testCollateralPath, workerPath];
 }
@@ -146,6 +145,8 @@ export async function processOneNode(args: IWorkerArgs) {
 export async function processContent(mode: Mode, concurrently = true) {
     const limiter = new ConcurrencyLimiter(numberOfThreads);
 
+    ensureTestCollateralPath();
+
     for (const node of fs.readdirSync(fileLocation, { withFileTypes: true })) {
         if (!node.isDirectory()) {
             continue;
@@ -192,6 +193,10 @@ export async function processContent(mode: Mode, concurrently = true) {
     }
 
     return limiter.waitAll();
+}
+
+export function testCollateralExists() {
+    return fs.existsSync(fileLocation);
 }
 
 /**
@@ -409,4 +414,16 @@ function cleanFailedSnapshots(dir: string) {
     }
 
     fs.rmdirSync(failedSnapshotsDir);
+}
+
+let collateralPathValidated: boolean;
+
+/**
+ * Validates that the required external files exist.
+ */
+function ensureTestCollateralPath() {
+    if (!collateralPathValidated) {
+        assert(fs.existsSync(fileLocation), `Cannot find test collateral path: ${fileLocation}`);
+        collateralPathValidated = true;
+    }
 }

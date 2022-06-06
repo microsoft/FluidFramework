@@ -48,7 +48,7 @@ export class MockDocumentDeltaConnection
         ver: "1.0",
     };
 
-    public readonly mode: ConnectionMode = "write";
+    public mode: ConnectionMode = "write";
     public readonly existing: boolean = true;
     public readonly maxMessageSize: number = 16 * 1024;
     public readonly version: string = "";

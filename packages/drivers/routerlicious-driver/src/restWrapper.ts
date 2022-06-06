@@ -83,7 +83,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
         // Failure
         if (response.status === 401 && canRetry) {
             // Refresh Authorization header and retry once
-            this.authorizationHeader = await this.getAuthorizationHeader(true);
+            this.authorizationHeader = await this.getAuthorizationHeader(true /* refreshToken */);
             return this.request<T>(config, statusCode, false);
         }
         if (response.status === 429 && responseBody?.retryAfter > 0) {
@@ -144,12 +144,12 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         const defaultQueryString = {
             token: `${fromUtf8ToBase64(tenantId)}`,
         };
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refreshToken?: boolean): Promise<string> => {
             // Craft credentials using tenant id and token
             const storageToken = await tokenProvider.fetchStorageToken(
                 tenantId,
                 documentId,
-                refresh,
+                refreshToken,
             );
             const credentials = {
                 password: storageToken.jwt,
@@ -193,11 +193,11 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         useRestLess: boolean,
         baseurl?: string,
     ): Promise<RouterliciousOrdererRestWrapper> {
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refreshToken?: boolean): Promise<string> => {
             const ordererToken = await tokenProvider.fetchOrdererToken(
                 tenantId,
                 documentId,
-                refresh,
+                refreshToken,
             );
             return `Basic ${ordererToken.jwt}`;
         };

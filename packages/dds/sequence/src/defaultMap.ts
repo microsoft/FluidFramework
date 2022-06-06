@@ -360,7 +360,7 @@ export class DefaultMap<T> {
      */
     private makeLocal(key: string, serializable: ISerializableValue): ValueTypeLocalValue<T> {
         assert(serializable.type !== ValueType[ValueType.Plain] && serializable.type !== ValueType[ValueType.Shared],
-            "Support for plain value types removed.");
+            0x2e1 /* "Support for plain value types removed." */);
 
         serializable.value = parseHandles(serializable.value, this.serializer);
         const localValue = this.type.factory.load(

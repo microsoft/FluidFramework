@@ -118,7 +118,7 @@ export class SharedIntervalCollection
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_sharedIntervalCollection_");
         this.intervalCollections = new DefaultMap(
             this.serializer,
             this.handle,
