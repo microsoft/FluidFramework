@@ -196,12 +196,6 @@ export interface IHelpMessage {
 }
 
 // @public (undocumented)
-export interface ILocalSequencedClient extends ISequencedClient {
-    // (undocumented)
-    shouldHaveLeft?: boolean;
-}
-
-// @public (undocumented)
 export interface INack {
     // (undocumented)
     content: INackContent;

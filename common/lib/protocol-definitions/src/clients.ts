@@ -41,10 +41,6 @@ export interface ISequencedClient {
     sequenceNumber: number;
 }
 
-export interface ILocalSequencedClient extends ISequencedClient {
-    shouldHaveLeft?: boolean;
-}
-
 export interface ISignalClient {
 
     clientId: string;

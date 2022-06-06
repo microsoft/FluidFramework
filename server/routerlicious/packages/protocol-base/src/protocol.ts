@@ -44,6 +44,10 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
     }
 }
 
+export interface ILocalSequencedClient extends ISequencedClient {
+    shouldHaveLeft?: boolean;
+}
+
 export interface IProtocolHandler {
     readonly quorum: IQuorum;
     readonly attributes: IDocumentAttributes;
