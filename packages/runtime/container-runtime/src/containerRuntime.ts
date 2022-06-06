@@ -629,7 +629,7 @@ class ScheduleManagerCore {
         this.localPaused = false;
 
         // Random round number - we want to know when batch waiting paused op processing.
-        if (duration > latencyThreshold) {
+        if (duration !== undefined && duration > latencyThreshold) {
             this.logger.sendErrorEvent({
                 eventName: "MaxBatchWaitTimeExceeded",
                 duration,
