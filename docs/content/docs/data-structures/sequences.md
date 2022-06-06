@@ -10,12 +10,12 @@ aliases:
      content, so you should commit the resulting changes. -->
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=packages/dds/sequence/README.md&start=2&end=252) -->
-The **@fluidframework/sequence** packages supports distributed data structures which are list-like.  It includes
-SharedString for storing and simultaneously editing a sequence of text. Note that SharedString is a sequence
-DDS but it has additional specialized features and behaviors for working with text.
+The **@fluidframework/sequence** packages supports distributed data structures which are list-like.
+It includes [SharedString]({{< relref "string.md" >}}) for storing and simultaneously editing a sequence of text.
+Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for working with text.
 
-Sequence DDSes share a common base class, SharedSegmentSequence. For the remainder of this document, the term
-*sequence* refers to this base class.
+Sequence DDSes share a common base class, `SharedSegmentSequence`.
+For the remainder of this document, the term *sequence* will refer to this base class.
 
 *Item*s are the individual units that are stored within the sequence (e.g. in a SharedString the items are characters),
 but regardless of the type of data stored in the sequence, every item in a sequence is at a specific *position* starting
