@@ -28,8 +28,11 @@ export type Brand<ValueType, Name extends string> = ValueType &
  * - allow use as {@link Opaque} branded type (not assignable to `ValueType`, but captures `ValueType`).
  *
  * See {@link MakeNominal} for some more details.
+ *
+ * Do not use this class with `instanceof`: this will always be false at runtime,
+ * but the compiler may think its true in some cases.
  */
-export class BrandedType<ValueType, Name extends string> {
+export abstract class BrandedType<ValueType, Name extends string> {
     protected _typeCheck?: Invariant<ValueType>;
     /**
      * Compile time only marker to make type checking more strict.
@@ -65,6 +68,10 @@ export type Opaque<T extends Brand<any, string>> = T extends Brand<
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
     TOpaque extends BrandedType<infer ValueType, infer Name>? Brand<ValueType, Name> : never;
 
+type ValueFromBranded<T extends BrandedType<any, string>> =
+    T extends BrandedType<infer ValueType, string> ? ValueType : never;
+type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType< any, infer Name> ? Name : never;
+
 /**
  * Converts a {@link Opaque} handle to the underlying branded type.
  *
@@ -76,4 +83,26 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
 ): ExtractFromOpaque<TOpaque> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value as ExtractFromOpaque<TOpaque>;
+}
+
+/**
+ * Adds a type {@link Brand} to a value.
+ *
+ * Only do this when specifically allowed by the requirements of the type being converted to.
+ */
+export function asBranded<T extends Brand<any, string>>(
+    value: T extends BrandedType<infer ValueType, string> ? ValueType : never,
+): T {
+    return value as T;
+}
+
+/**
+ * Adds a type {@link Brand} to a value, returning it as a  {@link Opaque} handle.
+ *
+ * Only do this when specifically allowed by the requirements of the type being converted to.
+ */
+ export function asOpaque<T extends BrandedType<any, string>>(
+    value: ValueFromBranded<T>,
+): BrandedType<ValueFromBranded<T>, NameFromBranded<T>> {
+    return value as BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
 }
