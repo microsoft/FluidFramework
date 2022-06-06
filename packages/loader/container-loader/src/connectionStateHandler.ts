@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
+import { IProtocolHandler } from "@fluidframework/protocol-base";
 import { ConnectionMode, IQuorumClients, ILocalSequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
@@ -264,8 +265,8 @@ export class ConnectionStateHandler {
         this.handler.connectionStateChanged();
     }
 
-    public initProtocol(protocol: ProtocolOpHandler) {
-        protocol.quorum.on("addMember", (clientId, details) => {
+    public initProtocol(protocol: IProtocolHandler) {
+        protocol.quorum.on("addMember", (clientId, _details) => {
             this.receivedAddMemberEvent(clientId);
         });
 
