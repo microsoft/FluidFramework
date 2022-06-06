@@ -19,7 +19,6 @@ import {
     ISnapshotTreeEx,
     ISummaryHandle,
     ISummaryTree,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -148,19 +147,6 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         const bufferContent = stringToBuffer(value.content, value.encoding);
         await this.blobCache?.put(value.sha, bufferContent);
         return bufferContent;
-    }
-
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        const branch = ref ? `datastores/${this.id}/${ref}` : this.id;
-        const commit = await PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
-                eventName: "write",
-                id: branch,
-            },
-            async () => this.manager.write(branch, tree, parents, message),
-        );
-        return { date: commit.committer.date, id: commit.sha, treeId: commit.tree.sha };
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {

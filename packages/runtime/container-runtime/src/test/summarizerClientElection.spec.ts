@@ -16,11 +16,11 @@ import {
     ISummarizerEvents,
     SummarizerStopReason,
 } from "../summarizerTypes";
-import { TestQuorum } from "./testQuorum";
+import { TestQuorumClients } from "./testQuorumClients";
 
 describe("Summarizer Client Election", () => {
     const maxOps = 1000;
-    const testQuorum = new TestQuorum();
+    const testQuorum = new TestQuorumClients();
     let currentSequenceNumber: number = 0;
     const testDeltaManager = { get lastSequenceNumber() { return currentSequenceNumber; } };
     const mockLogger = new MockLogger();

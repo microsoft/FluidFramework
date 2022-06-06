@@ -51,14 +51,14 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
  * Converts existing IOdspSnapshot to snapshot tree, blob array and ops
  * @param odspSnapshot - snapshot
  */
-export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
+export function convertOdspSnapshotToSnapshotTreeAndBlobs(
     odspSnapshot: IOdspSnapshot,
 ): ISnapshotContents {
     const blobsWithBufferContent = new Map<string, ArrayBuffer>();
     if (odspSnapshot.blobs) {
         odspSnapshot.blobs.forEach((blob) => {
             assert(blob.encoding === "base64" || blob.encoding === undefined,
-                0x0a4 /* `Unexpected blob encoding type: '${blob.encoding}'` */);
+                0x0a4 /* Unexpected blob encoding type */);
             blobsWithBufferContent.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf8"));
         });
     }
