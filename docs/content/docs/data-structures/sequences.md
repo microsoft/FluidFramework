@@ -56,6 +56,8 @@ farther position is closer to the length. -->
 Sequences support three basic operations: insert, remove, and annotate. Insert and remove are used to add and remove
 items from the sequence, while annotate is used to add metadata to items.
 
+### Insert
+
 Insert operations on the sequence take a single position argument along with the content. This position is inclusive and
 can be any position in the sequence including 0, to insert at the beginning of the sequence, and the length of the
 sequence, to insert at the end.
@@ -84,6 +86,8 @@ sequence, to insert at the end.
     // positions: 012345678
 ```
 
+### Remove
+
 Remove operations take a start and an end position, referred to as a *range*. The start position is inclusive and can be
 any position in the sequence from 0 to its `length - 1`. The start position cannot be the length of the sequence like it
 can in insert, because there is nothing at that position. The end position is exclusive and must be greater than the
@@ -103,6 +107,8 @@ start, so it can be any value from 1 to *n* (where *n* is the length of the sequ
     //   content:
     // positions:
 ```
+
+### Annotate
 
 Annotate operations can add or remove map-like properties to or from items in the sequence. They can store any JSON
 serializable data and have the same merge behavior as a [SharedMap][] (last writer wins). Annotate takes a start and end
@@ -146,6 +152,8 @@ specified range. Setting a property key to null will remove that property from t
     // props1 = { decoration: "underline" }
     // props5 = { decoration: "underline" }
 ```
+
+### Sequence Delta
 
 Whenever an operation is performed on a sequence a *sequenceDelta* event will be raised. This event provides the ranges
 affected by the operation, the type of the operation, and the properties that were changes by the operation.
