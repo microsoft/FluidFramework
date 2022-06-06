@@ -690,7 +690,7 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
-        describe.skip("intervalCollection comparator consistency", () => {
+        describe("intervalCollection comparator consistency", () => {
             // This is a regression suite for an issue caught by fuzz testing:
             // if intervals A, B, C are created which initially compare A < B < C,
             // it's possible that string operations can change this order. Specifically,
@@ -706,7 +706,7 @@ describe("SharedString interval collections", () => {
                 collection = sharedString.getIntervalCollection("test");
             });
 
-            it("retains intervalTree coherency when falling back to end comparison", () => {
+            it.only("retains intervalTree coherency when falling back to end comparison", () => {
                 collection.add(1, 6, IntervalType.SlideOnRemove);
                 collection.add(2, 5, IntervalType.SlideOnRemove);
                 const initiallyLargest = collection.add(3, 4, IntervalType.SlideOnRemove);

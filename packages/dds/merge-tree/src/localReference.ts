@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/common-definitions";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import { List, ListMakeHead, ListRemoveEntry } from "./collections";
@@ -46,10 +47,15 @@ export function _validateReferenceType(refType: ReferenceType) {
     }
 }
 
+export interface ILocalReferenceEvents extends IEvent {
+    (event: "beforeSlide" | "afterSlide", listener: () => void);
+}
+
 /**
  * @deprecated - Use ReferencePosition
  */
-export class LocalReference implements ReferencePosition {
+export class LocalReference
+extends TypedEventEmitter<ILocalReferenceEvents> implements ReferencePosition {
     /**
      * @deprecated - use DetachedReferencePosition
      */
@@ -78,6 +84,7 @@ export class LocalReference implements ReferencePosition {
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
     ) {
+        super();
         _validateReferenceType(refType);
         this.segment = initSegment;
         this.properties = properties;

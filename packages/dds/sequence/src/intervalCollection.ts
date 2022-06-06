@@ -60,7 +60,8 @@ export interface ISerializedInterval {
     properties?: PropertySet;
 }
 
-export interface ISerializableInterval extends IInterval {
+export interface ISerializableInterval
+extends IInterval {
     properties: PropertySet;
     propertyManager: PropertiesManager;
     serialize(client: Client): ISerializedInterval;
@@ -202,7 +203,14 @@ export class Interval implements ISerializableInterval {
     }
 }
 
-export class SequenceInterval implements ISerializableInterval {
+export interface ISequenceIntervalEvents extends IEvent {
+    (event: "beforePositionChange" | "afterPositionChange",
+        listener: () => void);
+}
+
+export class SequenceInterval
+extends TypedEventEmitter<ISequenceIntervalEvents>
+implements ISerializableInterval {
     public properties: PropertySet;
     public propertyManager: PropertiesManager;
 
@@ -211,9 +219,16 @@ export class SequenceInterval implements ISerializableInterval {
         public end: LocalReference,
         public intervalType: IntervalType,
         props?: PropertySet) {
+        super();
         if (props) {
             this.addProperties(props);
         }
+        const beforeSlide = () => this.emit("beforeSlide");
+        const afterSlide = () => this.emit("afterSlide");
+        this.start.on("beforeSlide", beforeSlide);
+        this.start.on("afterSlide", afterSlide);
+        this.end.on("beforeSlide", beforeSlide);
+        this.end.on("afterSlide", afterSlide);
     }
 
     public serialize(client: Client) {
@@ -627,6 +642,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                 interval.properties[reservedIntervalIdKey] = uuid();
             }
             this.add(interval);
+            this.addIntervalListeners(interval);
         }
         return interval;
     }
@@ -661,6 +677,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         if (newInterval) {
             this.removeExistingInterval(interval);
             this.add(newInterval);
+            this.addIntervalListeners(newInterval);
         }
         return newInterval;
     }
@@ -669,6 +686,13 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
         return intervals.map((interval) => interval.serialize(client));
+    }
+
+    private addIntervalListeners(interval: TInterval) {
+        if (interval instanceof SequenceInterval) {
+            interval.on("beforePositionChange", () => this.removeExistingInterval(interval));
+            interval.on("afterPositionChange", () => this.add(interval));
+        }
     }
 }
 
@@ -1222,6 +1246,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             }
             this.localCollection.add(interval);
         }
+        // TODO:ransomr add slide listener
     }
 
     /** @deprecated - use ackAdd */

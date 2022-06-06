@@ -371,8 +371,10 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
 }
 
+// Warning: (ae-forgotten-export) The symbol "ISequenceIntervalEvents" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export class SequenceInterval implements ISerializableInterval {
+export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents> implements ISerializableInterval {
     constructor(start: LocalReference, end: LocalReference, intervalType: IntervalType, props?: PropertySet);
     // (undocumented)
     addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
