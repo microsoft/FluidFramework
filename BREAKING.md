@@ -35,6 +35,19 @@ to be `string | undefined`.
 ### `IContainerRuntime.flush` is deprecated
 `IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
 
+# 1.2.0
+
+## 1.2.0 Upcoming changes
+- [ Added locationRedirection errorType in DriverErrorType enum](#Added-locationRedirection-errorType-in-DriverErrorType-enum)
+- [ Added ILocationRedirectionError error in DriverError type](#Added-ILocationRedirectionError-error-in-DriverError-type)
+
+ ### Added locationRedirection errorType in DriverErrorType enum
+ Added locationRedirection errorType in DriverErrorType enum. This error tells that the location of file on server has changed.
+ This error will not be thrown in 1.x.x version but we are just adding it in the type for now. This will be thrown from 2.x.x onward.
+
+ ### Added ILocationRedirectionError error in DriverError type
+ Added ILocationRedirectionError error in DriverError. This error tells that the location of file on server has changed. In case of Odsp, the domain of file changes on server.
+
 # 1.1.0
 
 ## 1.1.0 Upcoming changes
