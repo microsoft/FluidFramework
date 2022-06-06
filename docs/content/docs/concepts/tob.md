@@ -55,10 +55,10 @@ with all other clients. This is managed by the Fluid runtime.
 
 ## Summary operations
 
-As the number of operations increases, replaying all ops when loading a Fluid data structure is inefficient. Fluid
-provides a specialized operation, called a Summary operation, to address this. As the name implies, a Summary op is an
-operation that summarizes all previous operations. Thus, a Summary op represents the state of Fluid data structures at a
-particular sequence number.
+As the number of operations increases, replaying all ops when loading a Fluid data structure is inefficient.
+Fluid provides a specialized operation, called a Summary operation, to address this.
+As the name implies, a Summary operation is one that summarizes all previous operations.
+Thus, a Summary op represents the state of Fluid data structures at a particular sequence number.
 
 When a client boots, rather than loading all ops, the client can load the most recent Summary op, making the local Fluid
 data structures consistent with the rest of the clients. Summary ops, like all Fluid operations, are created by the
