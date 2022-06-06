@@ -48,7 +48,7 @@ It is important to note that these files share many of the properties of a norma
 location in a file structure, but because these experiences rely on the Fluid service, downloading the files and
 working locally is not supported.
 
-### How is data sync'd?
+### How is data synchronized?
 
 In order to keep all clients in sync, they must be connected to a Fluid service. This service's core
 responsibility is sequencing all the incoming Fluid operations and then broadcasting them to all clients. Because
