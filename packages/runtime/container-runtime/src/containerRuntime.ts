@@ -238,11 +238,15 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      */
     minOpsForLastSummaryAttempt: number;
     /**
-     * Runtime op weight to use in heuristic summarizing
+     * Runtime op weight to use in heuristic summarizing.
+     * This number is a multiplier on the number of runtime ops we process when running summarize heuristics.
+     * For example: (multiplier) * (number of runtime ops) = weighted number of runtime ops
      */
     runtimeOpWeight: number;
     /**
      * Non-runtime op weight to use in heuristic summarizing
+     * This number is a multiplier on the number of non-runtime ops we process when running summarize heuristics.
+     * For example: (multiplier) * (number of non-runtime ops) = weighted number of non-runtime ops
      */
     nonRuntimeOpWeight: number;
 }
