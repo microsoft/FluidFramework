@@ -29,7 +29,7 @@ This can be hidden by waiting for the Container to be fully connected, or by all
 
 ## Summary lifecycle
 
-The lifecycle of a summary starts when the Summary Manager selects the client that will summarize the state of the container.
+The lifecycle of a summary starts when the [Summary Manager](#summary-manager) selects the client that will summarize the state of the container.
 
 1. The selected client spawns a non-user runtime (including a quorum, clientId, and container) that will generate the summary.
 2. Runtime generates summary tree (more details below).
