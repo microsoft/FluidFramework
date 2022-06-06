@@ -582,6 +582,10 @@ export class IdCompressor {
 					Math.min(currentCluster.count + finalizeCount, currentCluster.capacity) -
 					1) as FinalCompressedId;
 				if (lastFinalInCluster > lastKnownFinal) {
+					this.logger?.sendTelemetryEvent({
+						eventName: 'EagerFinalsAllocated',
+						idCount: lastFinalInCluster - (lastKnownFinal + 1),
+					});
 					this.sessionIdNormalizer.addFinalIds(
 						(lastKnownFinal + 1) as FinalCompressedId,
 						lastFinalInCluster,
@@ -607,10 +611,6 @@ export class IdCompressor {
 						this.nextClusterBaseFinalId < Number.MAX_SAFE_INTEGER,
 						'The number of allocated final IDs must not exceed the JS maximum safe integer.'
 					);
-					this.logger?.sendTelemetryEvent({
-						eventName: 'ClusterExpansion',
-						expansionAmount,
-					});
 					this.checkClusterForCollision(currentCluster);
 					if (isLocal) {
 						// Example with cluster size of 3:
@@ -626,6 +626,10 @@ export class IdCompressor {
 						const lastFinalizedFinal = (currentBaseFinalId + currentCluster.count - 1) as FinalCompressedId;
 						const finalPivot = (lastFinalizedFinal - overflow + 1) as FinalCompressedId;
 						this.sessionIdNormalizer.addFinalIds(finalPivot, lastFinalizedFinal, currentCluster);
+                        this.logger?.sendTelemetryEvent({
+                            eventName: 'ClusterExpansion',
+                            expansionAmount
+                        });
 					}
 				}
 			} else {
@@ -643,6 +647,9 @@ export class IdCompressor {
 		} else {
 			// Session has never made a cluster, form a new one with the session UUID as the baseUuid
 			newBaseUuid = session.sessionUuid;
+			this.logger?.sendTelemetryEvent({
+				eventName: 'FirstCluster',
+			});
 		}
 
 		// Finalizing a range results in one of three cases:
