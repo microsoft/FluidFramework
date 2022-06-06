@@ -8,7 +8,7 @@ aliases:
 ## Fluid Data: Operations all the way down
 
 Fluid data is different than data you might be familiar with. In Fluid, when data is changed, the change is modeled as
-an operation (often shortened to op) on the existing data (if you've used [Operational
+an operation (often shortened as "op") on the existing data (if you've used [Operational
 Transform](https://en.wikipedia.org/wiki/Operational_transformation), this concept may sound familiar).
 
 Operations describe changes to a data structure. By chaining a series of operations together we can represent changes to
