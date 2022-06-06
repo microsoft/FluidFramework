@@ -143,7 +143,7 @@ specified range. Setting a property key to null will remove that property from t
     // props5 = { decoration: "underline" }
 ```
 
-### Sequence Delta Event
+### Sequence delta event
 
 Whenever an operation is performed on a sequence a *sequenceDelta* event will be raised. This event provides the ranges
 affected by the operation, the type of the operation, and the properties that were changes by the operation.
@@ -154,6 +154,8 @@ The Fluid sequence data structures are eventually consistent, which means all ed
 final state. However, the intermediate states seen by each collaborator may not be seen by other collaborators. These
 intermediate states occur when two or more collaborators modify the same position in the sequence which results in a
 conflict.
+
+### Merge strategy for insert
 
 Consider a sequence like this:
 
@@ -236,6 +238,8 @@ removed.
 Another way to consider this behavior is that a remove operation will only remove content that was inserted earlier in
 the order. Anything inserted after a remove operation will be ignored. The sequence also detects overlapping remove
 operations, and the merge resolution is straightforward -- the data is removed.
+
+### Merge strategy for annotate
 
 As mentioned above, annotate operations behave like operations on SharedMaps. The merge strategy used is last writer
 wins. If two collaborators set the same key on the annotate properties the operation that gets ordered last will
