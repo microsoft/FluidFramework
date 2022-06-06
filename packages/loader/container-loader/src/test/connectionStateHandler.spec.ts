@@ -128,9 +128,10 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connecting,
             "Client should be in connecting state");
 
+        // Restore quorumClients fn to return the test quorum object
         handlerProps.quorumClients = () => protocolHandler.quorum;
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
     });
@@ -168,7 +169,7 @@ describe("ConnectionStateHandler Tests", () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
 
@@ -188,7 +189,7 @@ describe("ConnectionStateHandler Tests", () => {
             "Client 2 should be in connecting state as we are waiting for leave");
 
         // Send leave
-        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
+        connectionStateHandler_receivedRemoveMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 2 should be in connected state");
     });
