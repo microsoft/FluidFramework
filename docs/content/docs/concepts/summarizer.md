@@ -8,7 +8,7 @@ aliases:
 ---
 
 Summaries are client-generated snapshots of the state of the document at a given sequence number. A summary is a
-consolidation of the op log into one JSON blob.
+consolidation of the operation (op) log into one JSON blob.
 
 ## Why have summaries?
 
