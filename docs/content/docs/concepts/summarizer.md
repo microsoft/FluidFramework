@@ -21,8 +21,8 @@ Instead, when a client joins a collaborative document, they can instead download
 
 ## What do I need to know?
 
-Ideally very little. If you are building on top of our runtime and dds, then you won't need to think about the summary
-at all.
+Ideally very little.
+If you are building on top of our runtime and [distributed data structure]({{< relref "glossary.md#distributed-data-structures-ddses" >}})s (DDSes), then you won't need to think about the summary at all.
 
 When users with significant latency use your application, they may see the state of the container at the summary and
 then see new operations get applied. This can be hidden by waiting for the Container to be fully connected or you can
