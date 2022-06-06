@@ -234,9 +234,9 @@ describe("Runtime", () => {
 
             it("Weights ops properly", () => {
                 const maxOps = 2;
-                const nonRuntimeOpWeight = 1.1;
                 const runtimeOpWeight = 0.1;
-                initialize({ maxOps, nonRuntimeOpWeight, runtimeOpWeight });
+                const nonRuntimeOpWeight = 1.1;
+                initialize({ maxOps, runtimeOpWeight, nonRuntimeOpWeight });
 
                 data.lastOpSequenceNumber = maxOps;
 
