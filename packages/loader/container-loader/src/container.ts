@@ -31,6 +31,8 @@ import {
     isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
+    DataCorruptionError,
+    extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
  } from "@fluidframework/container-utils";
@@ -1672,7 +1674,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const local = this.clientId === message.clientId;
 
         // Allow the protocol handler to process the message
-        const result = this.protocolHandler.processMessage(message, local);
+        let result: IProcessMessageResult = { immediateNoOp: false };
+        try {
+            result = this.protocolHandler.processMessage(message, local);
+        } catch (error) {
+            assert(error instanceof Error, "Unexpected error type from the protocol handler");
+            this.close(normalizeError(
+                new DataCorruptionError(
+                    error.message,
+                    extractSafePropertiesFromMessage(message))));
+        }
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
