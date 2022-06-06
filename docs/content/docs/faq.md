@@ -112,9 +112,9 @@ conflicts. This allows us to have non-commutative operations because there is an
 
 ### What kind of support is there for real-time editing of text?
 
-This is the scenario that Fluid was first designed to support. Consequently, the Fluid Framework is an ideal foundation
-for rich text editors that support simultaneous editing by multiple clients. The SharedString DDS is
-tailor-made for this scenario.
+This is the scenario that Fluid was first designed to support.
+Consequently, the Fluid Framework is an ideal foundation for rich text editors that support simultaneous editing by multiple clients.
+The [SharedString]({{< relref "string.md" >}}) DDS is tailor-made for this scenario.
 
 ### Turn-based games?
 
@@ -139,7 +139,7 @@ The Fluid service is general-purpose and, as a rule, Fluid solutions will work w
 Fluid solutions can use a local server or a "test quality" server for development and trust that their solution
 will work against whatever production server their solution is pointed at.
 
-The Fluid Framework includes a reference implementation of the Fluid service called Routerlicious that you can use for
+The Fluid Framework includes a reference implementation of the Fluid service called [Routerlicious](https://github.com/microsoft/FluidFramework/tree/main/server#readme) that you can use for
 development or as the basis for a production quality server.
 
 ### Where is the shared data stored?
