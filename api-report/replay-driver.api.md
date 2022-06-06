@@ -84,8 +84,6 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
-    // (undocumented)
-    write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion>;
 }
 
 // @public

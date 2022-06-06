@@ -24,8 +24,6 @@ import {
 
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
-    ICommittedProposal,
-    IQuorum,
     IQuorumClients,
     ISequencedClient,
     ISequencedDocumentMessage,
@@ -122,7 +120,7 @@ export class MockContainerRuntime {
         this.dataStoreRuntime.deltaManager = this.deltaManager;
         this.dataStoreRuntime.quorum = factory.quorum;
         // FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
-        this.clientId = this.dataStoreRuntime.clientId;
+        this.clientId = this.dataStoreRuntime.clientId ?? uuid();
         factory.quorum.addMember(this.clientId, {});
     }
 
@@ -178,7 +176,7 @@ export class MockContainerRuntime {
         const local = this.clientId === message.clientId;
         if (local) {
             const pendingMessage = this.pendingMessages.shift();
-            assert(pendingMessage.clientSequenceNumber === message.clientSequenceNumber,
+            assert(pendingMessage?.clientSequenceNumber === message.clientSequenceNumber,
                 "Unexpected client sequence number from message");
             localOpMetadata = pendingMessage.localOpMetadata;
         }
@@ -196,7 +194,7 @@ export class MockContainerRuntime {
 export class MockContainerRuntimeFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
-    public readonly quorum = new MockQuorum();
+    public readonly quorum = new MockQuorumClients();
     /**
      * The MockContainerRuntimes we produce will push messages into this queue as they are submitted.
      * This is playing the role of the orderer, establishing a single universal order for the messages generated.
@@ -211,7 +209,7 @@ export class MockContainerRuntimeFactory {
     }
 
     public getMinSeq(): number {
-        let minSeq: number;
+        let minSeq: number | undefined;
         for (const [, clientSeq] of this.minSeq) {
             if (!minSeq) {
                 minSeq = clientSeq;
@@ -219,7 +217,7 @@ export class MockContainerRuntimeFactory {
                 minSeq = Math.min(minSeq, clientSeq);
             }
         }
-        return minSeq ? minSeq : 0;
+        return minSeq ?? 0;
     }
 
     public createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime {
@@ -230,7 +228,7 @@ export class MockContainerRuntimeFactory {
     }
 
     public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
-        if (!this.minSeq.has(msg.clientId)) {
+        if (msg.clientId && msg.referenceSequenceNumber !== undefined && !this.minSeq.has(msg.clientId)) {
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
         }
         this.messages.push(msg as ISequencedDocumentMessage);
@@ -247,7 +245,7 @@ export class MockContainerRuntimeFactory {
         let msg = this.messages.shift();
 
         // Explicitly JSON clone the value to match the behavior of going thru the wire.
-        msg = JSON.parse(JSON.stringify(msg));
+        msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
 
         this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
         msg.sequenceNumber = ++this.sequenceNumber;
@@ -281,34 +279,12 @@ export class MockContainerRuntimeFactory {
     }
 }
 
-export class MockQuorum implements IQuorum, EventEmitter {
-    private readonly map = new Map<string, any>();
+export class MockQuorumClients implements IQuorumClients, EventEmitter {
     private readonly members: Map<string, ISequencedClient>;
     private readonly eventEmitter = new EventEmitter();
 
     constructor(...members: [string, Partial<ISequencedClient>][]) {
         this.members = new Map(members as [string, ISequencedClient][] ?? []);
-    }
-
-    async propose(key: string, value: any) {
-        if (this.map.has(key)) {
-            throw new Error(`${key} exists`);
-        }
-        this.map.set(key, value);
-        this.eventEmitter.emit("approveProposal", 0, key, value);
-    }
-
-    has(key: string): boolean {
-        return this.map.has(key);
-    }
-
-    get(key: string) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.map.get(key);
-    }
-
-    getApprovalData(key: string): ICommittedProposal | undefined {
-        throw new Error("Method not implemented.");
     }
 
     addMember(id: string, client: Partial<ISequencedClient>) {
@@ -345,8 +321,6 @@ export class MockQuorum implements IQuorum, EventEmitter {
 
             case "addMember":
             case "removeMember":
-            case "addProposal":
-            case "approveProposal":
                 this.eventEmitter.on(event, listener);
                 this.eventEmitter.emit("afterOn", event);
                 return this;
@@ -411,17 +385,17 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public get IFluidRouter() { return this; }
 
-    public readonly documentId: string;
+    public readonly documentId: string = undefined as any;
     public readonly id: string = uuid();
-    public readonly existing: boolean;
+    public readonly existing: boolean = undefined as any;
     public options: ILoaderOptions = {};
     public clientId: string | undefined = uuid();
     public readonly path = "";
     public readonly connected = true;
     public deltaManager = new MockDeltaManager();
-    public readonly loader: ILoader;
+    public readonly loader: ILoader = undefined as any;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
-    public quorum = new MockQuorum();
+    public quorum = new MockQuorumClients();
 
     public get absolutePath() {
         return `/${this.id}`;
@@ -446,10 +420,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public async getChannel(id: string): Promise<IChannel> {
-        return null;
+        return null as any as IChannel;
     }
     public createChannel(id: string, type: string): IChannel {
-        return null;
+        return null as any as IChannel;
     }
 
     public get isAttached(): boolean {
@@ -481,7 +455,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public getAudience(): IAudience {
-        return null;
+        return null as any as IAudience;
     }
 
     public save(message: string) {
@@ -489,11 +463,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public async close(): Promise<void> {
-        return null;
+        return;
     }
 
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-        return null;
+        return null as any as IFluidHandle<ArrayBufferLike>;
     }
 
     public async getBlob(blobId: string): Promise<any> {
@@ -529,7 +503,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return null;
+        return null as any as IResponse;
     }
 
     public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
@@ -579,7 +553,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public async requestDataStore(request: IRequest): Promise<IResponse> {
-        return null;
+        return null as any as IResponse;
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
@@ -587,6 +561,9 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public async applyStashedOp(content: any) {
+        return;
+    }
+    public rollback?(message: any, localOpMetadata: unknown): void {
         return;
     }
 }

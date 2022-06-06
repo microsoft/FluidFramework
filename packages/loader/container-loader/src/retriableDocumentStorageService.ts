@@ -15,7 +15,6 @@ import {
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -59,13 +58,6 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         return this.runWithRetry(
             async () => this.internalStorageService.getVersions(versionId, count),
             "storage_getVersions",
-        );
-    }
-
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.runWithRetry(
-            async () => this.internalStorageService.write(tree, parents, message, ref),
-            "storage_write",
         );
     }
 

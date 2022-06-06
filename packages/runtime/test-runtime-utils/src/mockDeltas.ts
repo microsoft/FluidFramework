@@ -29,7 +29,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public processCallback: (el: T) => void = () => {};
 
-    public get disposed() { return undefined; }
+    public get disposed(): any { return undefined; }
 
     public get paused(): boolean {
         return this.pauseCount !== 0;
@@ -44,7 +44,9 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     protected process() {
         void Promise.resolve().then(() => {
             while (this.pauseCount === 0 && this.length > 0) {
-                this.processCallback(this.pop());
+                const el = this.pop();
+                assert(el !== undefined, "this is impossible due to the above length check");
+                this.processCallback(el);
             }
         });
     }
@@ -93,16 +95,16 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
  */
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents>
     implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-    public get disposed() { return undefined; }
+    public get disposed(): any { return undefined; }
 
     public readOnlyInfo: ReadOnlyInfo = { readonly: false };
-    public readonly clientType: string;
-    public readonly clientDetails: IClientDetails;
+    public readonly clientType: string = undefined as any;
+    public readonly clientDetails: IClientDetails = undefined as any;
     public get IDeltaSender() { return this; }
 
-    private readonly _inbound: MockDeltaQueue<ISequencedDocumentMessage>;
-    private readonly _inboundSignal: MockDeltaQueue<ISignalMessage>;
-    private readonly _outbound: MockDeltaQueue<IDocumentMessage[]>;
+    private readonly _inbound: MockDeltaQueue<ISequencedDocumentMessage> = undefined as any;
+    private readonly _inboundSignal: MockDeltaQueue<ISignalMessage> = undefined as any;
+    private readonly _outbound: MockDeltaQueue<IDocumentMessage[]> = undefined as any;
 
     public get inbound(): MockDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
@@ -126,7 +128,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents>
     public hasCheckpointSequenceNumber = false;
 
     public get version(): string {
-        return undefined;
+        return undefined as any as string;
     }
 
     public get maxMessageSize(): number {
@@ -134,7 +136,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents>
     }
 
     public get serviceConfiguration(): IClientConfiguration {
-        return undefined;
+        return undefined as any as IClientConfiguration;
     }
 
     public get active(): boolean {

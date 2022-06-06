@@ -51,7 +51,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     //`Util.ts
 
     import { IFluidContainer } from "fluid-framework";
-    import { AzureClient, AzureClientProps, LOCAL_MODE_TENANT_ID } from "@fluidframework/azure-client";
+    import { AzureClient, AzureClientProps } from "@fluidframework/azure-client";
     import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
     ```
 
@@ -88,10 +88,9 @@ const containerSchema = {
 const connectionConfig : AzureClientProps =
 {
     connection: {
-        tenantId: LOCAL_MODE_TENANT_ID,
+        type: "local",
         tokenProvider: new InsecureTokenProvider("foobar", { id: "user" }),
-        orderer: "http://localhost:7070",
-        storage: "http://localhost:7070"
+        endpoint: "http://localhost:7070"
     }
 };
 ```

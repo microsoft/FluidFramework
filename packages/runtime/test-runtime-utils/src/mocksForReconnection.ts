@@ -5,6 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
 import {
     IMockContainerRuntimePendingMessage,
     MockContainerRuntime,
@@ -87,7 +88,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     private reSubmitMessages() {
         let messageCount = this.pendingMessages.length;
         while (messageCount > 0) {
-            const pendingMessage: IMockContainerRuntimePendingMessage = this.pendingMessages.shift();
+            const pendingMessage: IMockContainerRuntimePendingMessage | undefined = this.pendingMessages.shift();
+            assert(pendingMessage !== undefined, "this is impossible due to the above length check");
             this.deltaConnections.forEach((dc) => {
                 dc.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
             });
