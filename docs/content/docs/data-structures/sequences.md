@@ -17,7 +17,7 @@ Note that SharedString is a sequence DDS but it has additional specialized featu
 Sequence DDSes share a common base class, `SharedSegmentSequence`.
 For the remainder of this document, the term *sequence* will refer to this base class.
 
-*Item*s are the individual units that are stored within the sequence (e.g. in a SharedString the items are characters),
+*Item*s are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
 but regardless of the type of data stored in the sequence, every item in a sequence is at a specific *position* starting
 at 0, similar to an array. However, sequences differ from arrays in that the positions can move as local and remote
 editors make modifications to the sequence.
