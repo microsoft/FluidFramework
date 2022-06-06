@@ -75,6 +75,7 @@ import {
 	WriteFormat,
 	TreeNodeSequence,
 	InternalizedChange,
+	stashedSessionId,
 } from './persisted-types';
 import { serialize, SummaryContents } from './Summary';
 import {
@@ -425,6 +426,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		normalizeToOpSpace: (id) => this.idCompressor.normalizeToOpSpace(id) as OpSpaceNodeId,
 		normalizeToSessionSpace: (id, sessionId) => this.idCompressor.normalizeToSessionSpace(id, sessionId) as NodeId,
 	};
+	/** Temporarily created to apply stashed ops from a previous session */
+	private stashedIdCompressor?: IdCompressor | null;
 
 	// The initial tree's definition isn't included in any op by default but it should still be interned. Including it here ensures that.
 	private interner: MutableStringInterner = new MutableStringInterner([initialTree.definition]);
@@ -1585,14 +1588,29 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 								break;
 							}
 							case WriteFormat.v0_1_1: {
-								// Interpret the IDs from the stashed ops as stable IDs, and use those as overrides for the equivalent new ops
+								assert(this.stashedIdCompressor !== null, 'Stashed op applied after expected window');
+								// Allocate
+								this.stashedIdCompressor ??= IdCompressor.deserialize(
+									this.idCompressor.serialize(false),
+									stashedSessionId,
+									sharedTreeOp.idRange.attributionId
+								);
+								// Ack
+								this.stashedIdCompressor.finalizeCreationRange(sharedTreeOp.idRange);
+								const stashedIdContext = getNodeIdContext(this.stashedIdCompressor);
+								// Apply
 								const normalizer: NodeIdNormalizer<OpSpaceNodeId> = {
 									localSessionId: this.idCompressor.localSessionId,
-									normalizeToSessionSpace: (id, _sessionId) =>
-										this.idCompressor.reclaimRemoteCompressedId(
+									normalizeToSessionSpace: (id, _sessionId) => {
+										// Interpret the IDs from the stashed ops as stable IDs, and use those as overrides for the equivalent new ops
+										const sessionSpaceId = stashedIdContext.normalizeToSessionSpace(
 											id,
 											sharedTreeOp.idRange.sessionId
-										) as NodeId,
+										);
+										return this.generateNodeId(
+											stashedIdContext.convertToStableNodeId(sessionSpaceId)
+										);
+									},
 									normalizeToOpSpace: (id) => this.idNormalizer.normalizeToOpSpace(id),
 								};
 

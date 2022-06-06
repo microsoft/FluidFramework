@@ -12,6 +12,8 @@ import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types';
 import type { EditLog } from '../../EditLog';
 import { SharedTree } from '../../SharedTree';
 import { Change, StablePlace } from '../../ChangeTypes';
+import { TreeView } from '../../TreeView';
+import { NodeId, TraitLabel } from '../../Identifiers';
 import {
 	getEditLogInternal,
 	LocalServerSharedTreeTestingComponents,
@@ -19,6 +21,7 @@ import {
 	setUpTestTree,
 	stabilizeEdit,
 } from './TestUtilities';
+import { SimpleTestTree } from './TestNode';
 
 async function withContainerOffline<TReturn>(
 	provider: ITestObjectProvider,
@@ -98,7 +101,6 @@ export function runPendingLocalStateTests(
 			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_1_1));
 		it('applies and submits ops from 0.1.1 in 0.0.2 (via upgrade)', async () =>
 			applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_0_2));
-
 		it('applies and submits ops from 0.1.1 in 0.1.1', async () =>
 			applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_1_1));
 
@@ -121,18 +123,27 @@ export function runPendingLocalStateTests(
 			await testObjectProvider.ensureSynchronized();
 			const initialEditLogLength = stashingTree.edits.length;
 
+			const insertedLeafLabel = 'leaf' as TraitLabel;
+			const insertedLeafNodeId = stashingTestTree.generateNodeId('insertedLeafId');
+			const insertedLeafStableId = stashingTestTree.convertToStableNodeId(insertedLeafNodeId);
 			const { pendingLocalState, actionReturn: edit } = await withContainerOffline(
 				testObjectProvider,
 				stashingContainer,
 				() =>
 					stashingTree.applyEdit(
-						...Change.insertTree(stashingTestTree.buildLeaf(), StablePlace.after(stashingTestTree.left))
+						...Change.insertTree(
+							{
+								...stashingTestTree.buildLeaf(),
+								traits: {
+									[insertedLeafLabel]: stashingTestTree.buildLeaf(insertedLeafNodeId),
+								},
+							},
+							StablePlace.after(stashingTestTree.left)
+						)
 					)
 			);
 			await testObjectProvider.ensureSynchronized();
-			const observerLeftTraitAfterStash = observerTree.currentView.getTrait(
-				stashingTestTree.left.traitLocation.translate(observerTree)
-			);
+			const observerAfterStash = observerTree.currentView;
 			const loader = testObjectProvider.makeTestLoader();
 
 			// Simulate reconnect of user 1; a new container will be created which passes the stashed local state in its
@@ -145,16 +156,33 @@ export function runPendingLocalStateTests(
 			await testObjectProvider.ensureSynchronized();
 			await testObjectProvider.ensureSynchronized(); // Synchronize twice in case stashed ops caused an upgrade round-trip
 
-			expect(observerLeftTraitAfterStash.length).to.equal(
-				1,
+			function tryGetInsertedLeafId(view: TreeView): NodeId | undefined {
+				const rootNode = view.getViewNode(
+					view.getTrait({ parent: view.root, label: SimpleTestTree.traitLabel })[0]
+				);
+				const leftTrait = view.getTrait({ parent: rootNode.identifier, label: SimpleTestTree.leftTraitLabel });
+				if (leftTrait.length !== 2) {
+					return undefined;
+				}
+				const insertedParent = view.tryGetViewNode(leftTrait[1]);
+				if (insertedParent === undefined) {
+					return undefined;
+				}
+				return view.getTrait({ parent: insertedParent.identifier, label: insertedLeafLabel })[0];
+			}
+
+			expect(tryGetInsertedLeafId(observerAfterStash)).to.equal(
+				undefined,
 				'Observing tree should not receive edits made by the stashing tree after it went offline.'
 			);
-			expect(
-				stashingTree2.currentView.getTrait(stashingTestTree.left.traitLocation.translate(stashingTree2)).length
-			).to.equal(2, 'Tree which loaded with stashed pending edits should apply them.');
-			expect(
-				observerTree.currentView.getTrait(stashingTestTree.left.traitLocation.translate(observerTree)).length
-			).to.equal(2, 'Tree collaborating with a client that applies stashed pending edits should see them.');
+			expect(tryGetInsertedLeafId(stashingTree2.currentView)).to.equal(
+				stashingTree2.convertToNodeId(insertedLeafStableId),
+				'Tree which loaded with stashed pending edits should apply them correctly.'
+			);
+			expect(tryGetInsertedLeafId(stashingTree.currentView)).to.equal(
+				stashingTree.convertToNodeId(insertedLeafStableId),
+				'Tree collaborating with a client that applies stashed pending edits should also apply them.'
+			);
 
 			const stableEdit = stabilizeEdit(stashingTree, edit as unknown as Edit<ChangeInternal>);
 			expect(

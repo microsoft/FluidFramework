@@ -715,7 +715,7 @@ export class IdCompressor {
 				cluster.overrides ??= new Map();
 
 				const inversionKey = IdCompressor.createInversionKey(override);
-				const existingIds = this.getExistingIdsForNewOverride(inversionKey, true, false);
+				const existingIds = this.getExistingIdsForNewOverride(inversionKey, true);
 				let overrideForCluster: string | FinalCompressedId;
 				let associatedLocal: LocalCompressedId | undefined;
 				if (existingIds !== undefined) {
@@ -828,8 +828,7 @@ export class IdCompressor {
 	 */
 	private getExistingIdsForNewOverride(
 		inversionKey: InversionKey,
-		isFinalOverride: boolean,
-		checkOverrideCollisions = true
+		isFinalOverride: boolean
 	): SessionSpaceCompressedId | [LocalCompressedId, FinalCompressedId] | undefined {
 		const closestMatch = this.clustersAndOverridesInversion.getPairOrNextLower(inversionKey, reusedArray);
 		let numericOverride: NumericUuid | undefined;
@@ -853,15 +852,8 @@ export class IdCompressor {
 					numericOverride = numericUuidFromStableId(stableOverride);
 					const delta = getPositiveDelta(numericOverride, cluster.baseUuid, cluster.capacity - 1);
 					if (delta !== undefined) {
-						if (isFinalOverride) {
-							if (checkOverrideCollisions) {
-								IdCompressor.failWithCollidingOverride(inversionKey);
-							}
-						} else {
+						if (!isFinalOverride) {
 							if (delta >= cluster.count) {
-								if (checkOverrideCollisions) {
-									IdCompressor.failWithCollidingOverride(inversionKey);
-								}
 								// TODO:#283: Properly implement unification
 								return undefined;
 							}
@@ -928,17 +920,10 @@ export class IdCompressor {
 	 * @returns an existing ID if one already exists for `override`, and a new local ID otherwise. The returned ID is in session space.
 	 */
 	public generateCompressedId(override?: string): SessionSpaceCompressedId {
-		return this.getOrCreateCompressedId(override, true);
-	}
-
-	private getOrCreateCompressedId(
-		override: string | undefined,
-		checkOverrideCollisions: boolean
-	): SessionSpaceCompressedId {
 		let overrideInversionKey: InversionKey | undefined;
 		if (override !== undefined) {
 			overrideInversionKey = IdCompressor.createInversionKey(override);
-			const existingIds = this.getExistingIdsForNewOverride(overrideInversionKey, false, checkOverrideCollisions);
+			const existingIds = this.getExistingIdsForNewOverride(overrideInversionKey, false);
 			if (existingIds !== undefined) {
 				return typeof existingIds === 'number' ? existingIds : existingIds[0];
 			}
@@ -980,21 +965,6 @@ export class IdCompressor {
 		}
 
 		return newLocalId;
-	}
-
-	/**
-	 * Takes an ID that was generated (but not necessarily finalized) from a remote session and generates an equivalent ID
-	 * in this session. The remote session should not generate any more IDs after it has had IDs reclaimed.
-	 * @param id - the ID produced by the remote session
-	 * @param remoteSessionId - the remote session
-	 * @returns an new ID created by this session that is equivalent to the one created by the remote session
-	 */
-	public reclaimRemoteCompressedId(id: OpSpaceCompressedId, remoteSessionId: SessionId): SessionSpaceCompressedId {
-		assert(
-			remoteSessionId !== this.localSessionId,
-			'Attempted to generate remote ID for local session. Use `generateCompressedId` instead'
-		);
-		return this.getOrCreateCompressedId(this.decompressRemote(id, remoteSessionId), false);
 	}
 
 	/**
@@ -1057,7 +1027,10 @@ export class IdCompressor {
 	 * exist in this compressor's session space).
 	 */
 	private decompressRemote(id: OpSpaceCompressedId, remoteSessionId: SessionId): StableId | string {
-		assert(remoteSessionId !== this.localSessionId, 'Remote session may not belong to this compressor');
+		assert(
+			remoteSessionId !== this.localSessionId,
+			'Session ID matches local session ID; expected remote session ID'
+		);
 		const session = this.sessions.get(remoteSessionId) ?? this.createSession(remoteSessionId, undefined);
 		if (isLocalId(id)) {
 			return stableIdFromNumericUuid(session.sessionUuid, -id - 1);
