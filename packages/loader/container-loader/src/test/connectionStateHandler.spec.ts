@@ -11,13 +11,11 @@ import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ConnectionState } from "../connectionState";
-import { ConnectionStateHandler, IConnectionStateHandlerProps } from "../connectionStateHandler";
+import { ConnectionStateHandler } from "../connectionStateHandler";
 
 describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
-    let handlerProps: IConnectionStateHandlerProps;
     let connectionStateHandler: ConnectionStateHandler;
     let protocolHandler: ProtocolOpHandler;
     let shouldClientJoinWrite: boolean;
@@ -74,16 +72,15 @@ describe("ConnectionStateHandler Tests", () => {
             },
             scopes: [],
         };
-        handlerProps = {
-            logConnectionStateChangeTelemetry: () => undefined,
-            maxClientLeaveWaitTime: expectedTimeout,
-            quorumClients: () => protocolHandler.quorum,
-            shouldClientJoinWrite: () => shouldClientJoinWrite,
-            logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => { throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`); },
-            connectionStateChanged: () => {},
-        };
         connectionStateHandler = new ConnectionStateHandler(
-            handlerProps,
+            {
+                logConnectionStateChangeTelemetry: () => undefined,
+                maxClientLeaveWaitTime: expectedTimeout,
+                quorumClients: () => protocolHandler.quorum,
+                shouldClientJoinWrite: () => shouldClientJoinWrite,
+                logConnectionIssue: (eventName: string) => { throw new Error("logConnectionIssue"); },
+                connectionStateChanged: () => {},
+            },
             new TelemetryNullLogger(),
         );
         connectionStateHandler_receivedAddMemberEvent =

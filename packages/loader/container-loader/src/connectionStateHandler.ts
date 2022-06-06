@@ -199,15 +199,15 @@ export class ConnectionStateHandler {
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
+        // IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
+        this.handler.logConnectionStateChangeTelemetry(ConnectionState.CatchingUp, oldState);
+
         // For write connections, this pending clientId could be in the quorum already (i.e. join op already processed).
         // We are fetching ops from storage in parallel to connecting to Relay Service,
         // and given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         // If quorumClients itself is undefined, we expect it will process the join op after it's initialized.
         const waitingForJoinOp = writeConnection && quorumClients?.getMember(this._pendingClientId) === undefined;
-
-        // IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
-        this.handler.logConnectionStateChangeTelemetry(ConnectionState.CatchingUp, oldState);
 
         if (waitingForJoinOp) {
             // Previous client left, and we are waiting for our own join op. When it is processed we'll join the quorum
