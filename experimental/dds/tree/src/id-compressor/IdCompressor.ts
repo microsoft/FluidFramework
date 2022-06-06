@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import BTree from 'sorted-btree';
 import {
 	assert,
@@ -370,6 +371,8 @@ export class IdCompressor {
 		compareFiniteNumbers
 	);
 
+    private readonly logger?: ITelemetryLogger;
+
 	/**
 	 * @param localSessionId - the `IdCompressor`'s current local session ID.
 	 * @param reservedIdCount - the number of IDs that will be known by this compressor without relying on consensus.
@@ -384,13 +387,15 @@ export class IdCompressor {
 	public constructor(
 		public readonly localSessionId: SessionId,
 		public readonly reservedIdCount: number,
-		attributionId?: AttributionId
+		attributionId?: AttributionId,
+        logger?: ITelemetryLogger,
 	) {
 		assert(reservedIdCount >= 0, 'reservedIdCount must be non-negative');
 		if (attributionId !== undefined) {
 			assertIsUuidString(attributionId);
 		}
 		this.localSession = this.createSession(localSessionId, attributionId);
+        this.logger = logger;
 		if (reservedIdCount > 0) {
 			const clusterCapacity = this.clusterCapacity;
 			this.clusterCapacity = reservedIdCount;
@@ -602,6 +607,10 @@ export class IdCompressor {
 						this.nextClusterBaseFinalId < Number.MAX_SAFE_INTEGER,
 						'The number of allocated final IDs must not exceed the JS maximum safe integer.'
 					);
+                    this.logger?.sendTelemetryEvent({
+                        eventName: 'ClusterExpansion',
+                        expansionAmount
+                    });
 					this.checkClusterForCollision(currentCluster);
 					if (isLocal) {
 						// Example with cluster size of 3:
@@ -625,6 +634,11 @@ export class IdCompressor {
 				newBaseUuid = incrementUuid(currentCluster.baseUuid, currentCluster.capacity);
 				currentCluster.count += remainingCapacity;
 				remainingCount -= remainingCapacity;
+                this.logger?.sendTelemetryEvent({
+                    eventName: 'OverfilledCluster',
+                    overflow: remainingCount,
+                    allocated: remainingCapacity
+                });
 			}
 		} else {
 			// Session has never made a cluster, form a new one with the session UUID as the baseUuid
