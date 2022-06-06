@@ -1747,10 +1747,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.consecutiveReconnects++;
 
             if (!this.shouldContinueReconnecting()) {
-                this.closeFn(new GenericError(
+                this.closeFn(new DataCorruptionError(
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
                     "Runtime detected too many reconnects with no progress syncing local ops",
-                    undefined, // error
                     {
                         attempts: this.consecutiveReconnects,
                         pendingMessages: this.pendingStateManager.pendingMessagesCount,
