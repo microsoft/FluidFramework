@@ -11,13 +11,13 @@ import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ConnectionState } from "../connectionState";
-import { ConnectionStateHandler, IConnectionStateHandler } from "../connectionStateHandler";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ConnectionState } from "../connectionState";
+import { ConnectionStateHandler, IConnectionStateHandlerProps } from "../connectionStateHandler";
 
 describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
-    let handlerProps: IConnectionStateHandler;
+    let handlerProps: IConnectionStateHandlerProps;
     let connectionStateHandler: ConnectionStateHandler;
     let protocolHandler: ProtocolOpHandler;
     let shouldClientJoinWrite: boolean;

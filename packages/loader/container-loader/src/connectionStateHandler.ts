@@ -10,7 +10,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState } from "./connectionState";
 
-export interface IConnectionStateHandler {
+export interface IConnectionStateHandlerProps {
     /** Provides access to the clients currently in the quorum */
     quorumClients: () => IQuorumClients | undefined;
     /** Log to telemetry any change in state, included to Connecting */
@@ -73,7 +73,7 @@ export class ConnectionStateHandler {
     }
 
     constructor(
-        private readonly handler: IConnectionStateHandler,
+        private readonly handler: IConnectionStateHandlerProps,
         private readonly logger: ITelemetryLogger,
     ) {
         this.prevClientLeftTimer = new Timer(
