@@ -97,8 +97,11 @@ export interface HostStoragePolicy {
      */
     sessionOptions?: ICollabSessionOptions;
 
-    // True to have the sharing link redeem fallback in case the Trees Latest/Redeem 1RT call fails with redeem error.
-    // During fallback it will first redeem the sharing link and then make the Trees latest call.
+    /**
+     * @deprecated - This field will be always set to true after removal.
+     * True to have the sharing link redeem fallback in case the Trees Latest/Redeem 1RT call fails with redeem error.
+     * During fallback it will first redeem the sharing link and then make the Trees latest call.
+     */
     enableRedeemFallback?: boolean;
 
     /**
