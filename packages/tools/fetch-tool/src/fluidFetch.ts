@@ -37,7 +37,7 @@ async function tryFluidFetchOneSharePointFile(server: string, driveItem: IOdspDr
     await fluidFetchOneFile(`https://${server}/_api/v2.1/drives/${driveId}/items/${itemId}`, name);
 }
 
-function getSharePointSpecificDriveItem(url: URL): { driveId: string; itemId: string } | undefined {
+function getSharePointSpecificDriveItem(url: URL): { driveId: string; itemId: string; } | undefined {
     if (url.searchParams.has("driveId") && url.searchParams.has("itemId")) {
         return {
             driveId: url.searchParams.get("driveId") as string,

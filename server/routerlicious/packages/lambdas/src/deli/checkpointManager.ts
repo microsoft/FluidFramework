@@ -25,7 +25,7 @@ export interface ICheckpointParams {
     reason: DeliCheckpointReason;
 
     /**
-     * The deli checkpoint state @ deliCheckpointMessage
+     * The deli checkpoint state \@ deliCheckpointMessage
      */
     deliState: IDeliState;
 

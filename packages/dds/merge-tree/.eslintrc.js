@@ -15,7 +15,6 @@ module.exports = {
         "@typescript-eslint/strict-boolean-expressions": "off",
         "keyword-spacing": "off", // Off because it conflicts with typescript-formatter
         "no-case-declarations": "off",
-        "no-null/no-null": "off",
         "prefer-arrow/prefer-arrow-functions": "off"
     }
 }

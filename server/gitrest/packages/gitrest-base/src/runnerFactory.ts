@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import { Provider } from "nconf";
 import * as services from "@fluidframework/server-services-shared";
 import * as core from "@fluidframework/server-services-core";
@@ -25,7 +26,8 @@ export class GitrestResources implements core.IResources {
         public readonly config: Provider,
         public readonly port: string | number,
         public readonly fileSystemManagerFactory: IFileSystemManagerFactory,
-        public readonly repositoryManagerFactory: IRepositoryManagerFactory) {
+        public readonly repositoryManagerFactory: IRepositoryManagerFactory,
+        public readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
         this.webServerFactory = new services.BasicWebServerFactory();
     }
 
@@ -57,8 +59,14 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
             throw new Error("Invalid git library name.");
         };
         const repositoryManagerFactory = getRepositoryManagerFactory();
+        const asyncLocalStorage = config.get("asyncLocalStorageInstance")?.[0];
 
-        return new GitrestResources(config, port, fileSystemManagerFactory, repositoryManagerFactory);
+        return new GitrestResources(
+            config,
+            port,
+            fileSystemManagerFactory,
+            repositoryManagerFactory,
+            asyncLocalStorage);
     }
 }
 
@@ -69,6 +77,7 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
             resources.config,
             resources.port,
             resources.fileSystemManagerFactory,
-            resources.repositoryManagerFactory);
+            resources.repositoryManagerFactory,
+            resources.asyncLocalStorage);
     }
 }

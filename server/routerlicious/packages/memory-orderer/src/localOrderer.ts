@@ -221,7 +221,7 @@ export class LocalOrderer implements IOrderer {
     }
 
     public hasPendingWork(): boolean {
-        if (this.broadcasterLambda && this.broadcasterLambda.lambda) {
+        if (this.broadcasterLambda?.lambda) {
             return (this.broadcasterLambda.lambda as BroadcasterLambda).hasPendingWork();
         }
 

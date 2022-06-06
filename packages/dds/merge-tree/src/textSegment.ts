@@ -204,10 +204,10 @@ export class MergeTreeTextHelper {
                 const tags = [] as string[];
                 const initTags = [] as string[];
 
-                if (segment.properties && (segment.properties["font-weight"])) {
+                if (segment.properties?.["font-weight"]) {
                     tags.push("b");
                 }
-                if (segment.properties && (segment.properties["text-decoration"])) {
+                if (segment.properties?.["text-decoration"]) {
                     tags.push("u");
                 }
                 const remTags = [] as string[];

@@ -58,6 +58,7 @@ import {
     ISummarizeResult,
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -246,7 +247,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     // The used state of this node as per the last GC run. This is used to update the used state of the channel
     // if it realizes after GC is run.
-    private lastUsedState: { usedRoutes: string[], gcTimestamp?: number } | undefined;
+    private lastUsedState: { usedRoutes: string[]; gcTimestamp?: number; } | undefined;
 
     public readonly id: string;
     private readonly _containerRuntime: ContainerRuntime;
@@ -275,7 +276,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // URIs use slashes as delimiters. Handles use URIs.
         // Thus having slashes in types almost guarantees trouble down the road!
-        assert(this.id.indexOf("/") === -1, 0x13a /* `Data store ID contains slash: ${id}` */);
+        assert(!this.id.includes("/"), 0x13a /* Data store ID contains slash */);
 
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && this.existing ?
             this.containerRuntime.attachState : AttachState.Detached;
@@ -289,7 +290,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         };
 
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+            async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
+            this.summarizeInternal(fullTree, trackState, telemetryContext);
 
         this.summarizerNode = props.createSummarizerNodeFn(
             thisSummarizeInternal,
@@ -317,7 +319,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
+        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
@@ -326,11 +328,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
                 const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
-                errorWrapped.addTelemetryProperties({ fluidDataStoreId: {
-                    value: this.id,
-                    tag: TelemetryDataTag.PackageData } });
+                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData" } });
                 this.channelDeferred?.reject(errorWrapped);
-                this.logger.sendErrorEvent({ eventName: "RealizeError"}, errorWrapped);
+                this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
             });
         }
         return this.channelDeferred.promise;
@@ -447,16 +447,25 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree, trackState);
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
     }
 
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeInternalResult> {
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const summarizeResult = await this.channel!.summarize(fullTree, trackState);
+        const summarizeResult = await this.channel!.summarize(fullTree, trackState, telemetryContext);
         let pathPartsForChildren: string[] | undefined;
 
         if (!this.disableIsolatedChannels) {
@@ -643,8 +652,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             throw new Error("Runtime already bound");
         }
 
-        try
-        {
+        try {
             assert(!this.detachedRuntimeCreation, 0x148 /* "Detached runtime creation on runtime bind" */);
             assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
             assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
@@ -682,10 +690,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError",
-                  fluidDataStoreId: {
-                      value: this.id,
-                      tag: TelemetryDataTag.PackageData } },
+                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData" } },
                 error);
         }
     }
@@ -1009,8 +1014,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
  */
 export class LocalDetachedFluidDataStoreContext
     extends LocalFluidDataStoreContextBase
-    implements IFluidDataStoreContextDetached
-{
+    implements IFluidDataStoreContextDetached {
     constructor(props: ILocalFluidDataStoreContextProps) {
         super(props);
         this.detachedRuntimeCreation = true;
@@ -1018,8 +1022,7 @@ export class LocalDetachedFluidDataStoreContext
 
     public async attachRuntime(
         registry: IProvideFluidDataStoreFactory,
-        dataStoreChannel: IFluidDataStoreChannel)
-    {
+        dataStoreChannel: IFluidDataStoreChannel) {
         assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
         assert(this.channelDeferred === undefined, 0x155 /* "channel deferral is already set" */);
 

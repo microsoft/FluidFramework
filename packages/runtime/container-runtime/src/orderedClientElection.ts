@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+/* eslint-disable @rushstack/no-new-null */
 import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
@@ -417,8 +417,7 @@ export class OrderedClientElection
             // Note that we allow a summarizer client to supercede an interactive client as elected client.
             if (this._electedClient === undefined || (!electedClientIsSummarizer && newClientIsSummarizer)) {
                 this.tryElectingClient(client, sequenceNumber);
-            }
-            else if (this._electedParent === undefined && !newClientIsSummarizer) {
+            } else if (this._electedParent === undefined && !newClientIsSummarizer) {
                 // This is an odd case. If the _electedClient is set, the _electedParent should be as well.
                 this.tryElectingParent(client, sequenceNumber);
             }
@@ -443,16 +442,14 @@ export class OrderedClientElection
                         throw new UsageError("Elected client should be a summarizer client 1");
                     }
                     this.tryElectingClient(this._electedParent, sequenceNumber);
-                }
-                else {
+                } else {
                     // 2. The _electedClient is an interactive client that has left the quorum.
                     // Automatically shift to next oldest client.
                     const nextClient = this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
                         this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
                     this.tryElectingClient(nextClient, sequenceNumber);
                 }
-            }
-            else if (this._electedParent === client) {
+            } else if (this._electedParent === client) {
                 // Removing the _electedParent (but not _electedClient).
                 // Shift to the next oldest parent, but do not replace the _electedClient,
                 // which is a summarizer that is still doing work.
@@ -478,8 +475,7 @@ export class OrderedClientElection
             this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
         if (this._electedClient === undefined || this._electedClient === this._electedParent) {
             this.tryElectingClient(nextClient, sequenceNumber);
-        }
-        else {
+        } else {
             // The _electedClient is a summarizer and should not be replaced until it leaves the quorum.
             // Changing the _electedParent will stop the summarizer.
             this.tryElectingParent(nextClient, sequenceNumber);
@@ -493,8 +489,7 @@ export class OrderedClientElection
         const firstClient = this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
         if (this._electedClient === undefined || this._electedClient === this._electedParent) {
             this.tryElectingClient(firstClient, sequenceNumber);
-        }
-        else {
+        } else {
             // The _electedClient is a summarizer and should not be replaced until it leaves the quorum.
             // Changing the _electedParent will stop the summarizer.
             this.tryElectingParent(firstClient, sequenceNumber);

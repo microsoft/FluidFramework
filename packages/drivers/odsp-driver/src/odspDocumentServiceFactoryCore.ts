@@ -14,7 +14,10 @@ import {
     TelemetryLogger,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import {
+    getDocAttributesFromProtocolSummary,
+    ensureFluidResolvedUrl,
+} from "@fluidframework/driver-utils";
 import {
     TokenFetchOptions,
     OdspResourceTokenFetchOptions,
@@ -72,6 +75,15 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         if (filePath === undefined || filePath === null) {
             throw new Error("File path should be provided!!");
         }
+
+        const protocolSummary = createNewSummary?.tree[".protocol"];
+        if (protocolSummary) {
+            const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary as ISummaryTree);
+            if (documentAttributes?.sequenceNumber !== 0) {
+                throw new Error("Seq number in detached ODSP container should be 0");
+            }
+        }
+
         const newFileInfo: INewFileInfo = {
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
@@ -90,7 +102,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.persistedCache,
             this.nonPersistentCache,
             fileEntry,
-            odspLogger);
+            odspLogger,
+            clientIsSummarizer);
 
         return PerformanceEvent.timedExecAsync(
             odspLogger,
@@ -113,6 +126,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     fileEntry,
                     this.hostPolicy.cacheCreateNewSummary ?? true,
                     !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    odspResolvedUrl.isClpCompliantApp,
                 );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
                     cacheAndTracker, clientIsSummarizer);
@@ -144,6 +158,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             // create the key to separate the socket reuse cache
             this.socketReferenceKeyPrefix = uuid();
         }
+        // Set enableRedeemFallback by default as true.
+        this.hostPolicy.enableRedeemFallback = this.hostPolicy.enableRedeemFallback ?? true;
+        this.hostPolicy.sessionOptions = {
+            forceAccessTokenViaAuthorizationHeader: true,
+            ...this.hostPolicy.sessionOptions,
+        };
     }
 
     public async createDocumentService(
@@ -170,7 +190,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.persistedCache,
             this.nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
-            odspLogger);
+            odspLogger,
+            clientIsSummarizer);
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,

@@ -101,7 +101,7 @@ export class SummaryManager implements IDisposable {
         this.logger = ChildLogger.create(
             parentLogger,
             "SummaryManager",
-            {all:{ clientId: () => this.latestClientId }});
+            { all: { clientId: () => this.latestClientId } });
 
         this.connectedState.on("connected", this.handleConnected);
         this.connectedState.on("disconnected", this.handleDisconnected);
@@ -337,7 +337,7 @@ export class SummaryManager implements IDisposable {
             // Create a Promise that will resolve if the ops count passes the threshold.
             const opPromise = new Promise<void>((resolve) => { resolveOpPromiseFn = resolve; });
             this.summaryCollection.addOpListener(opsListenerFn);
-            await Promise.race([ delayPromise, opPromise ]);
+            await Promise.race([delayPromise, opPromise]);
             this.summaryCollection.removeOpListener(opsListenerFn);
         }
         return startWithInitialDelay;

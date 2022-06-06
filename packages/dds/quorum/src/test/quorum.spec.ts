@@ -212,11 +212,86 @@ describe("Quorum", () => {
             assert.strictEqual(quorum1.get(expectedKey), expectedValue, "Wrong value in Quorum 1");
             assert.strictEqual(quorum2.get(expectedKey), expectedValue, "Wrong value in Quorum 2");
         });
+
+        it("Resolves simultaneous sets and deletes with first-write-wins", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "expected");
+            quorum2.set(targetKey, "unexpected1");
+            containerRuntimeFactory.processAllMessages();
+
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Unexpected value in quorum1");
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Unexpected value in quorum2");
+
+            quorum2.delete(targetKey);
+            quorum1.set(targetKey, "unexpected2");
+            containerRuntimeFactory.processAllMessages();
+
+            assert.strictEqual(quorum1.get(targetKey), undefined, "Unexpected value in quorum1");
+            assert.strictEqual(quorum2.get(targetKey), undefined, "Unexpected value in quorum2");
+        });
     });
 
-    describe.skip("Detached/Attach", () => {
-        describe("Behavior before attach", () => { });
-        describe("Behavior after attaching", () => { });
+    describe("Detached/Attach", () => {
+        let containerRuntimeFactory: MockContainerRuntimeFactory;
+
+        beforeEach(() => {
+            containerRuntimeFactory = new MockContainerRuntimeFactory();
+        });
+
+        it("Can set and delete values before attaching and functions normally after attaching", async () => {
+            // Create a detached Quorum.
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+
+            const quorum = new Quorum("quorum", dataStoreRuntime, QuorumFactory.Attributes);
+            assert.strict(!quorum.isAttached(), "Quorum is attached earlier than expected");
+
+            const accept1P = new Promise<void>((resolve) => {
+                quorum.on("accepted", (key) => {
+                    if (key === "baz") {
+                        resolve();
+                    }
+                });
+            });
+            quorum.set("foo", "bar");
+            quorum.set("baz", "boop");
+            await accept1P;
+            assert.strictEqual(quorum.get("baz"), "boop", "Couldn't set value in detached state");
+
+            const accept2P = new Promise<void>((resolve) => {
+                quorum.on("accepted", (key) => {
+                    if (key === "foo") {
+                        resolve();
+                    }
+                });
+            });
+            quorum.delete("foo");
+            await accept2P;
+            assert.strictEqual(quorum.get("foo"), undefined, "Couldn't delete value in detached state");
+
+            // Attach the Quorum
+            const services = {
+                deltaConnection: containerRuntime.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            quorum.connect(services);
+
+            assert.strict(quorum.isAttached(), "Quorum is not attached when expected");
+            assert.strictEqual(quorum.get("foo"), undefined, "Wrong value in foo after attach");
+            assert.strictEqual(quorum.get("baz"), "boop", "Wrong value in baz after attach");
+
+            const accept3P = new Promise<void>((resolve) => {
+                quorum.on("accepted", (key) => {
+                    if (key === "woz") {
+                        resolve();
+                    }
+                });
+            });
+            quorum.set("woz", "wiz");
+            containerRuntimeFactory.processAllMessages();
+            await accept3P;
+            assert.strictEqual(quorum.get("woz"), "wiz", "Wrong value in woz after post-attach set");
+        });
     });
 
     describe("Disconnect/Reconnect", () => {

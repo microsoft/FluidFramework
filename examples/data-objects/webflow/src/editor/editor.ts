@@ -7,12 +7,10 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 import { paste } from "../clipboard/paste";
 import { FlowDocument } from "../document";
 import { Direction, getDeltaX, KeyCode } from "../util";
-import { ownsNode } from "../util/event";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 import { Caret } from "./caret";
 import { debug } from "./debug";
-import * as styles from "./index.css";
 
 export class Editor {
     private readonly layout: Layout;
@@ -80,25 +78,13 @@ export class Editor {
 
     private unlinkChildren(node: Node | HTMLElement) {
         while (node.lastChild) {
-            // Leave an inclusion's content alone.
-            if ("classList" in node && node.classList.contains(styles.inclusion)) {
-                break;
-            }
             const child = node.lastChild;
             node.removeChild(child);
             this.unlinkChildren(child);
         }
     }
 
-    private shouldHandleEvent(e: Event) {
-        return ownsNode(this.root, e.target as Node);
-    }
-
     private readonly onKeyDown = (e: KeyboardEvent) => {
-        if (!this.shouldHandleEvent(e)) {
-            return;
-        }
-
         switch (e.code) {
             case KeyCode.F4: {
                 console.clear();
@@ -129,19 +115,11 @@ export class Editor {
     };
 
     private readonly onPaste = (e: ClipboardEvent) => {
-        if (!this.shouldHandleEvent(e)) {
-            return;
-        }
-
         this.consume(e);
         paste(this.doc, e.clipboardData, this.caret.position);
     };
 
     private readonly onKeyPress = (e: KeyboardEvent) => {
-        if (!this.shouldHandleEvent(e)) {
-            return;
-        }
-
         this.consume(e);
 
         switch (e.code) {

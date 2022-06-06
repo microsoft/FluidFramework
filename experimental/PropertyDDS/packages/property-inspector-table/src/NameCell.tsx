@@ -85,7 +85,7 @@ const copyHandler = (rowData: IInspectorRow, ref: React.MutableRefObject<HTMLTex
 const isStaticProperty = (parent: BaseProperty, rowName: string) => {
   if (typeof (parent as NodeProperty).getDynamicIds === "function") {
     const dynamicIds = (parent as NodeProperty).getDynamicIds();
-    if (dynamicIds.indexOf(rowName) > -1) {
+    if (dynamicIds.includes(rowName)) {
       return false;
     }
   } else if (parent.getContext() !== "single") {
@@ -102,7 +102,7 @@ const NameCellHoveredClass = "NameCell__hovered";
  * Inspector table name column cell. Displays the property name for which the row represents.
  */
 const NameCell: React.FunctionComponent<WithStyles<typeof styles> & INameCellProps & ICellProps> =
-({rowData, iconRenderer, classes, className, editReferenceHandler, ...restProps}) => {
+({ rowData, iconRenderer, classes, className, editReferenceHandler, ...restProps }) => {
   const icon = iconRenderer(rowData);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -161,5 +161,5 @@ const NameCell: React.FunctionComponent<WithStyles<typeof styles> & INameCellPro
   );
 };
 
-const StyledNameCell = withStyles(styles, {name: "NameCell"})(NameCell);
+const StyledNameCell = withStyles(styles, { name: "NameCell" })(NameCell);
 export { StyledNameCell as NameCell };

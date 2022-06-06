@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import { expect } from 'chai';
-import Prando from 'prando';
+import { makeRandom } from '@fluid-internal/stochastic-test-utils';
 import { compareStrings } from '../Common';
 import {
 	numericUuidEquals,
@@ -16,10 +16,9 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 	ensureSessionUuid,
-	isStableId,
-	assertIsStableId,
 } from '../id-compressor/NumericUuid';
 import { StableId } from '../Identifiers';
+import { assertIsStableId, isStableId } from '../UuidUtilities';
 import { integerToStableId } from './utilities/IdCompressorTestUtilities';
 
 describe('NumericUuid', () => {
@@ -132,10 +131,10 @@ describe('NumericUuid', () => {
 	];
 
 	describe('incrementing', () => {
-		const prando = new Prando('incrementing');
+		const rand = makeRandom(0);
 		const incrementAmounts = [
 			...[...new Array(53).keys()].map((n) => 2 ** n - 1),
-			...[...new Array(10).keys()].map((_) => prando.nextInt(0, Number.MAX_SAFE_INTEGER)),
+			...[...new Array(10).keys()].map((_) => rand.integer(0, Number.MAX_SAFE_INTEGER)),
 		];
 		stableIds.forEach((stableId) => {
 			it(`can increment ${stableId}`, () => {

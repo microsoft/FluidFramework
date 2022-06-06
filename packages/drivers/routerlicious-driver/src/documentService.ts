@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
-import { IClient} from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -42,7 +42,7 @@ export class DocumentService implements api.IDocumentService {
 
     private documentStorageService: DocumentStorageService | undefined;
 
-    public dispose() {}
+    public dispose() { }
 
     /**
      * Connects to a storage endpoint for snapshot service.
@@ -128,10 +128,11 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta stream service for routerlicious driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
-        const connect = async () => {
+        const connect = async (refreshToken?: boolean) => {
             const ordererToken = await this.tokenProvider.fetchOrdererToken(
                 this.tenantId,
                 this.documentId,
+                refreshToken,
             );
             return R11sDocumentDeltaConnection.create(
                 this.tenantId,
@@ -153,7 +154,7 @@ export class DocumentService implements api.IDocumentService {
             if (error?.statusCode === 401) {
                 // Fetch new token and retry once,
                 // otherwise 401 will be bubbled up as non-retriable AuthorizationError.
-                return connect();
+                return connect(true /* refreshToken */);
             }
             throw error;
         }

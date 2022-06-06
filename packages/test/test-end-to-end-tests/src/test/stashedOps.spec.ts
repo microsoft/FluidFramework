@@ -46,7 +46,7 @@ const testKey2 = "another test key";
 const testValue = "test value";
 
 const ensureContainerConnected = async (container: IContainer) => {
-    if (!container.connected) {
+    if (container.connectionState !== ConnectionState.Connected) {
         return new Promise<void>((resolve) => container.once("connected", () => resolve()));
     }
 };
@@ -93,7 +93,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 };
 
 async function loadOffline(provider: ITestObjectProvider, request: IRequest, pendingLocalState: string):
-    Promise<{ container: IContainer, connect: () => void }> {
+    Promise<{ container: IContainer; connect: () => void; }> {
     const p = new Deferred();
     const documentServiceFactory = provider.driver.createDocumentServiceFactory();
 
@@ -201,12 +201,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend a lot of successful ops", async function() {
-        // Github issue #9163
-        if ((provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
-            provider.driver.type === "tinylicious") {
-            this.skip();
-        }
-
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
@@ -281,12 +275,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend successful chunked op", async function() {
-        // Github issue #9163
-        if ((provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
-            provider.driver.type === "tinylicious") {
-            this.skip();
-        }
-
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
@@ -327,12 +315,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("successful map clear no resend", async function() {
-        // Github issue #9163
-        if ((provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
-            provider.driver.type === "tinylicious") {
-            this.skip();
-        }
-
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             map.clear();
         });
@@ -578,7 +560,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         });
 
         // wait for the join message so we see connectedStateRejected
-        if (container2.connectionState !== ConnectionState.Connecting) {
+        if (container2.connectionState !== ConnectionState.CatchingUp) {
             await new Promise((resolve) => container2.deltaManager.on("connect", resolve));
         }
 
@@ -687,7 +669,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         });
 
         // wait for the join message so we see connectedStateRejected
-        if (container3.connectionState !== ConnectionState.Connecting) {
+        if (container3.connectionState !== ConnectionState.CatchingUp) {
             await new Promise((resolve) => container3.deltaManager.on("connect", resolve));
         }
 

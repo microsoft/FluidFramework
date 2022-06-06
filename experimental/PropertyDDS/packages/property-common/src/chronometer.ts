@@ -196,7 +196,7 @@ export class Chronometer {
      *    - chrono A stopped chronometer instance from which to get the elapsed time,
      *    - result The resolved result of the promise returned by promiseFn
      */
-    static async timePromise<T>(promiseFn: () => Promise<T>): Promise<{ chrono: Chronometer, result: T }> {
+    static async timePromise<T>(promiseFn: () => Promise<T>): Promise<{ chrono: Chronometer; result: T; }> {
         const chrono = new Chronometer();
         const result = await promiseFn();
         chrono.stop();

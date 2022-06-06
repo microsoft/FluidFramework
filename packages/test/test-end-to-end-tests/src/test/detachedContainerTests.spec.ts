@@ -161,7 +161,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
     it("can create DDS in detached container and attach / update it", async function() {
         // GitHub issue: #9534
-        if(provider.driver.type === "tinylicious") {
+        if (provider.driver.type === "tinylicious") {
             this.skip();
         }
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -342,7 +342,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
                 assert.strictEqual(contents.contents.type,
                     testDataStoreType, "DataStore type should match");
                 defPromise.resolve();
-            } catch(e) {
+            } catch (e) {
                 defPromise.reject(e);
             }
             return 0;
@@ -642,7 +642,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
     }).timeout(5000);
 
-    itExpects("Container should be closed on failed attach with non retryable error",[
+    itExpects("Container should be closed on failed attach with non retryable error", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" },
     ], async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
