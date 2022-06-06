@@ -50,7 +50,7 @@
     "@fluidframework/map": "^1.0.0",
     "@fluidframework/matrix": "^1.0.0",
     "@fluidframework/ordered-collection": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/register-collection": "^1.0.0",
     "@fluidframework/replay-driver": "^1.0.0",
     "@fluidframework/request-handler": "^1.0.0",

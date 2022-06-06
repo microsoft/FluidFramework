@@ -42,7 +42,7 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/core-interfaces": "^1.0.0",
     "@fluidframework/driver-definitions": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0"
+    "@fluidframework/protocol-definitions": "^0.1028.2000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -79,12 +79,29 @@
       "TypeAliasDeclaration_ConnectionState": {
         "backCompat": false
       },
-      "RemovedVariableDeclaration_IDeltaSender": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IDeltaSender": {"backCompat": false},
-      "RemovedVariableDeclaration_IFluidTokenProvider": {"forwardCompat": false, "backCompat": false},
-      "RemovedInterfaceDeclaration_IFluidTokenProvider": {"forwardCompat": false, "backCompat": false},
-      "RemovedInterfaceDeclaration_IProvideDeltaSender": {"forwardCompat": false, "backCompat": false},
-      "RemovedInterfaceDeclaration_IProvideFluidTokenProvider": {"forwardCompat": false, "backCompat": false},
+      "RemovedVariableDeclaration_IDeltaSender": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IDeltaSender": {
+        "backCompat": false
+      },
+      "RemovedVariableDeclaration_IFluidTokenProvider": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IFluidTokenProvider": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IProvideDeltaSender": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IProvideFluidTokenProvider": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
       "RemovedInterfaceDeclaration_IProxyLoaderFactory": {
         "backCompat": false,
         "forwardCompat": false
