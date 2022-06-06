@@ -18,7 +18,7 @@ import { SharedObject, SharedObjectCore } from "../sharedObject";
 class MySharedObject extends SharedObject {
     constructor(
         id: string) {
-        super(id, undefined as unknown as IFluidDataStoreRuntime, undefined as unknown as IChannelAttributes);
+        super(id, undefined as unknown as IFluidDataStoreRuntime, undefined as unknown as IChannelAttributes, "");
     }
 
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
