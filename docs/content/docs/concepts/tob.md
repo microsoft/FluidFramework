@@ -39,7 +39,7 @@ eventually be consistent with the client that originated the change.
 ## Operations
 
 Fluid is also efficient when communicating with the server. When you change a data structure, Fluid doesn't send the
-whole data structure to the server. Rather, it sends operations. For example, consider the [SharedNumberSequence][] data
+whole data structure to the server. Rather, it sends operations. For example, consider the [SharedSequence][] data
 structure. When a client inserts, appends, or deletes items in the sequence, Fluid sends the server the operation that
 was performed and the data that was inserted/appended/etc. When the Fluid service broadcasts the operation to all the
 other connected clients, it again sends only the operation itself, not the full data structure. This efficiency in
