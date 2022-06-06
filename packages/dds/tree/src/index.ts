@@ -4,7 +4,7 @@
  */
 
 export {
-    TreeKey,
+    FieldKey,
     TreeType,
 } from "./tree";
 
