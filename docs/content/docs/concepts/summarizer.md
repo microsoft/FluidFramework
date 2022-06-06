@@ -14,8 +14,9 @@ consolidation of the operation (op) log into one JSON blob.
 
 Summaries allow new clients to quickly catch up to recent state.
 
-Without a summary, the client has to apply every operation in the op log even if those operations no longer affect the
-current state (e.g. op 1 inserts 'h' and op 2 deletes 'h').
+Without a summary, the client would have to apply every operation in the op log, even if those operations no longer affected the current state (e.g. op 1 inserts 'h' and op 2 deletes 'h').
+For very large op logs, this would be very expensive.
+Instead, when a client joins a collaborative document, they can instead download a summary of the document state, and simply process new operations from that point foreward.
 
 ## What do I need to know?
 
