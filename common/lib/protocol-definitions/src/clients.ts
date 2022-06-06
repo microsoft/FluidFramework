@@ -41,6 +41,13 @@ export interface ISequencedClient {
     sequenceNumber: number;
 }
 
+export interface ILocalSequencedClient extends ISequencedClient {
+    /**
+     * True if the client should have left the quorum, false otherwise
+     */
+    shouldHaveLeft?: boolean;
+}
+
 export interface ISignalClient {
 
     clientId: string;
