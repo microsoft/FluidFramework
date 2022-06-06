@@ -236,16 +236,14 @@ export class ConnectionStateHandler {
             // Previous client left, and we are waiting for our own join op. When it is processed we'll join the quorum
             // and attempt to transition to Connected state via receivedAddMemberEvent.
             this.startJoinOpTimer();
+        } else if (this.waitingForLeaveOp) {
+            // Previous client left, and we are waiting for its leave op.
+            // Nothing to do now - when the previous client is removed from the quorum
+            // we will attempt to transition to Connected state via receivedRemoveMemberEvent
+            assert(writeConnection, 0x2a6 /* "there should be no timer for 'read' connections" */);
         } else {
-            // Previous client left, and we may still be waiting for its leave op.
-            //* Nothing to do now - when the previous client is removed from the quorum
-            //* we will attempt to transition to Connected state via receivedRemoveMemberEvent
-            //* BUG: Fix is to say writeConnection || ...
-            assert(!this.waitingForLeaveOp, 0x2a6 /* "there should be no timer for 'read' connections" */);
-
-            //* FIX UP COMMENTS IN THIS BLOCK
-            //* We're not waiting for Join or Leave op (if read-only connection those don't even apply),
-            //* but we do need to wait until we are caught up (to now-known ops) before transitioning to Connected state
+            // We're not waiting for Join or Leave op (if read-only connection those don't even apply),
+            // go ahead and declare the state to be Connected!
             this.setConnectionState(ConnectionState.Connected);
         }
     }
