@@ -10,3 +10,4 @@ export * from "./loader";
 export * from "./fluidModule";
 export * from "./fluidPackage";
 export * from "./runtime";
+export * from "./tokenProvider";
