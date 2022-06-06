@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TelemetryEventPropertyType } from "@fluidframework/common-definitions";
 import {
     bufferToString,
     fromBase64ToUtf8,
@@ -25,6 +26,7 @@ import {
     ISummaryStats,
     ISummarizeResult,
     ISummaryTreeWithStats,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 
 /**
@@ -341,4 +343,29 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
         entries,
         unreferenced: summaryTree.unreferenced,
     };
+}
+
+export class TelemetryContext implements ITelemetryContext {
+    private readonly telemetry = new Map<string, TelemetryEventPropertyType>();
+
+    /**
+     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
+     */
+    set(prefix: string, property: string, value: TelemetryEventPropertyType): void {
+        this.telemetry.set(`${prefix}${property}`, value);
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
+     */
+    get(prefix: string, property: string): TelemetryEventPropertyType {
+        return this.telemetry.get(`${prefix}${property}`);
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.serialize}
+     */
+    serialize(): string {
+        return JSON.stringify(this.telemetry);
+    }
 }

@@ -177,7 +177,6 @@ export class FluidSerializer implements IFluidSerializer {
         }
 
         // Otherwise descend into the object graph looking for IFluidHandle instances.
-        // eslint-disable-next-line @typescript-eslint/ban-types
         let clone: object | undefined;
         for (const key of Object.keys(input)) {
             const value = input[key];

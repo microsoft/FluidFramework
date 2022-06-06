@@ -12,16 +12,14 @@
             "faultInjectionMaxMs": 150000,
             "optionOverrides":{
                 "odsp":{
-                    "loader":{
-                        "summarizeProtocolTree": [false]
+                    "configurations":{
+                        "Fluid.Container.summarizeProtocolTree": [true, false]
                     }
                 },
                 "odsp-odsp-df":{
-                    "loader":{
-                        "summarizeProtocolTree": [false]
-                    },
                     "configurations":{
-                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [0, 1]
+                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [0, 1],
+                        "Fluid.Container.summarizeProtocolTree": [true, false]
                     }
                 }
             }
@@ -45,8 +43,8 @@
             "faultInjectionMaxMs": 50000,
             "optionOverrides":{
                 "odsp":{
-                    "loader":{
-                        "summarizeProtocolTree": [false]
+                    "configurations":{
+                        "Fluid.Container.summarizeProtocolTree": [true, false]
                     }
                 }
             }
@@ -105,23 +103,6 @@
                 "odsp":{
                     "configurations":{
                         "Fluid.Driver.Odsp.snapshotFormatFetchType": [1]
-                    }
-                }
-            }
-        },
-        "odspContainerTypeSummaryUpload": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 5000,
-            "numClients": 4,
-            "totalSendCount": 150,
-            "readWriteCycleMs": 10000,
-            "optionOverrides":{
-                "odsp":{
-                    "configurations":{
-                        "Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload": [true]
-                    },
-                    "loader":{
-                        "summarizeProtocolTree": [true]
                     }
                 }
             }

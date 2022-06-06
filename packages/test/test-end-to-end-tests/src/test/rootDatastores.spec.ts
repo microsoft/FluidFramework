@@ -20,6 +20,7 @@ import {
     ContainerRuntime,
     IAckedSummary,
     SummaryCollection,
+    DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
@@ -44,7 +45,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         fluidDataObjectType: DataObjectFactoryType.Test,
         runtimeOptions: {
             summaryOptions: {
-                disableSummaries: true,
+                summaryConfigOverrides: {
+                    state: "disabled",
+                },
             },
             gcOptions: {
                 gcAllowed: true,
@@ -395,11 +398,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                     ...testContainerConfig,
                     runtimeOptions: {
                         summaryOptions: {
-                            generateSummaries: true,
-                            initialSummarizerDelayMs: 10,
                             summaryConfigOverrides: {
-                                idleTime: IdleDetectionTime,
-                                maxTime: IdleDetectionTime * 12,
+                                ...DefaultSummaryConfiguration,
+                                ...{
+                                    idleTime: IdleDetectionTime,
+                                    maxTime: IdleDetectionTime * 12,
+                                    initialSummarizerDelayMs: 10,
+                                },
                             },
                         },
                         gcOptions: {

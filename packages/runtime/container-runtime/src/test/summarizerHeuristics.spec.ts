@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import {
+    ISummaryConfiguration,
+    ISummaryConfigurationHeuristics,
+} from "../containerRuntime";
 import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerHeuristics";
 import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";
@@ -17,15 +21,21 @@ describe("Runtime", () => {
             before(() => { clock = sinon.useFakeTimers(); });
             after(() => { clock.restore(); });
 
-            const defaultSummaryConfig: ISummaryConfiguration = {
+            const defaultSummaryConfig: ISummaryConfigurationHeuristics = {
+                state: "enabled",
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
+                minOpsForLastSummaryAttempt: 50,
                 maxAckWaitTime: 120000, // 2 min
+                maxOpsSinceLastSummary: 7000,
+                initialSummarizerDelayMs: 0,
+                summarizerClientElection: false,
             };
             let summaryConfig: Readonly<ISummaryConfiguration>;
             let data: ISummarizeHeuristicData;
             let runner: SummarizeHeuristicRunner;
+            let mockLogger: MockLogger;
 
             let attempts: SummarizeReason[];
             const trySummarize = (reason: SummarizeReason) => {
@@ -41,20 +51,38 @@ describe("Runtime", () => {
                 refSequenceNumber = 0,
                 lastOpSequenceNumber = refSequenceNumber,
                 summaryTime = Date.now(),
-                minOpsForAttemptOnClose = 50,
                 idleTime = defaultSummaryConfig.idleTime,
                 maxTime = defaultSummaryConfig.maxTime,
                 maxOps = defaultSummaryConfig.maxOps,
                 maxAckWaitTime = defaultSummaryConfig.maxAckWaitTime,
+                maxOpsSinceLastSummary = defaultSummaryConfig.maxOpsSinceLastSummary,
+                initialSummarizerDelayMs = defaultSummaryConfig.initialSummarizerDelayMs,
+                summarizerClientElection = defaultSummaryConfig.summarizerClientElection,
+                minOpsForLastSummaryAttempt = defaultSummaryConfig.minOpsForLastSummaryAttempt,
                 run = true,
-            }: Partial<ISummaryConfiguration & ISummarizeAttempt & {
+            }: Partial<ISummaryConfigurationHeuristics & ISummarizeAttempt & {
                 lastOpSequenceNumber: number;
-                minOpsForAttemptOnClose: number;
                 run: boolean;
             }> = {}) {
+                mockLogger = new MockLogger();
                 data = new SummarizeHeuristicData(lastOpSequenceNumber, { refSequenceNumber, summaryTime });
-                summaryConfig = { idleTime, maxTime, maxOps, maxAckWaitTime } as const;
-                runner = new SummarizeHeuristicRunner(data, summaryConfig, trySummarize, minOpsForAttemptOnClose);
+                summaryConfig = {
+                    state: "enabled",
+                    idleTime,
+                    maxTime,
+                    maxOps,
+                    maxAckWaitTime,
+                    maxOpsSinceLastSummary,
+                    initialSummarizerDelayMs,
+                    summarizerClientElection,
+                    minOpsForLastSummaryAttempt } as const;
+
+                runner = new SummarizeHeuristicRunner(
+                    data,
+                    summaryConfig,
+                    trySummarize,
+                    mockLogger);
+
                 if (run) {
                     runner.run();
                 }
@@ -153,20 +181,21 @@ describe("Runtime", () => {
 
             it("Should summarize on close if enough outstanding ops", () => {
                 const lastSummary = 1000;
-                const minOpsForAttemptOnClose = 10;
-                initialize({ refSequenceNumber: lastSummary, minOpsForAttemptOnClose });
+                const minOpsForLastSummaryAttempt = 10;
+                initialize({ refSequenceNumber: lastSummary, minOpsForLastSummaryAttempt });
 
-                data.lastOpSequenceNumber = lastSummary + minOpsForAttemptOnClose + 1;
+                data.lastOpSequenceNumber = lastSummary + minOpsForLastSummaryAttempt + 1;
                 assert(runner.shouldRunLastSummary() === true, "should run on close");
             });
 
             it("Should not summarize on close if insufficient outstanding ops", () => {
                 const lastSummary = 1000;
-                const minOpsForAttemptOnClose = 10;
-                initialize({ refSequenceNumber: lastSummary, minOpsForAttemptOnClose });
+                const minOpsForLastSummaryAttempt = 10;
+                initialize({ refSequenceNumber: lastSummary, minOpsForLastSummaryAttempt });
 
-                data.lastOpSequenceNumber = lastSummary + minOpsForAttemptOnClose;
-                assert(runner.shouldRunLastSummary() === false, "should not run on close");
+                data.lastOpSequenceNumber = lastSummary + minOpsForLastSummaryAttempt - 1;
+                assert(runner.shouldRunLastSummary() === false,
+                    "should not run on close");
             });
 
             it("Should not run idle timer after dispose", () => {
