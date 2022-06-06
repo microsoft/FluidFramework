@@ -19,7 +19,7 @@ However, just sending operations is not enough -- we need to be sure that each c
 order.
 
 Fluid is, at its core, a data model for distributed state. Building collaborative experiences boils down to managing
-distributed state, and Fluid provides powerful developer-friendly abstractions for managing this state in the form of
+distributed state. Fluid provides powerful, developer-friendly abstractions for managing this state in the form of
 distributed data structures (DDSes). Each of these data structures is eventually consistent -- this means that, assuming
 no new changes to the data structures, all clients reach an identical state in a finite amount of time.
 
