@@ -607,10 +607,10 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     maxOps: number;
     maxTime: number;
     minOpsForLastSummaryAttempt: number;
+    nonRuntimeOpWeight: number;
     runtimeOpWeight: number;
     // (undocumented)
     state: "enabled";
-    nonRuntimeOpWeight: number;
 }
 
 // @public
