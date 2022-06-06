@@ -31,6 +31,7 @@ import {
     BaseGitRestTelemetryProperties,
     IRepoManagerParams,
     getLumberjackBasePropertiesFromRepoManagerParams,
+    getRepoManagerFromWriteAPI,
 } from "../utils";
 
 function getDocumentStorageDirectory(repoManager: IRepositoryManager, documentId: string): string {
@@ -181,6 +182,7 @@ export function create(
 ): Router {
     const router: Router = Router();
     const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
+    const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
     /**
      * Retrieves a summary.
@@ -220,7 +222,7 @@ export function create(
             return;
         }
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
-        const resultP = repoManagerFactory.open(repoManagerParams)
+        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
             .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => createSummary(
                 repoManager,
                 fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),

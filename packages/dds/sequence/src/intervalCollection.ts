@@ -346,11 +346,11 @@ function createPositionReference(
     op?: ISequencedDocumentMessage): LocalReference {
     let segoff;
     if (op) {
-        assert((refType & ReferenceType.SlideOnRemove) !== 0, "op create references must be SlideOnRemove");
+        assert((refType & ReferenceType.SlideOnRemove) !== 0, 0x2f5 /* op create references must be SlideOnRemove */);
         segoff = client.getContainingSegment(pos, op);
         segoff = client.getSlideToSegment(segoff);
     } else {
-        assert((refType & ReferenceType.SlideOnRemove) === 0, "SlideOnRemove references must be op created");
+        assert((refType & ReferenceType.SlideOnRemove) === 0, 0x2f6 /* SlideOnRemove references must be op created */);
         segoff = client.getContainingSegment(pos);
     }
     return createPositionReferenceFromSegoff(client, segoff, refType, op);
@@ -1202,7 +1202,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             return;
         }
         assert(refTypeIncludesFlag(interval.end, ReferenceType.StayOnRemove),
-            "start and end must both be StayOnRemove");
+            0x2f7 /* start and end must both be StayOnRemove */);
         const newStart = this.getSlideToSegment(interval.start);
         const newEnd = this.getSlideToSegment(interval.end);
         this.setSlideOnRemove(interval.start);

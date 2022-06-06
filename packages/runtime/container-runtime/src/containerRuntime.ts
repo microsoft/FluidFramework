@@ -259,7 +259,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
     maxTime: 5000 * 12,
 
-    maxOps: 1000, // Summarize if 1000 ops received since last snapshot.
+    maxOps: 100, // Summarize if 100 ops received since last snapshot.
 
     minOpsForLastSummaryAttempt: 10,
 
@@ -3026,7 +3026,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.attachState !== AttachState.Attached || this.context.pendingLocalState) {
             return;
         }
-        assert(!!this.context.baseSnapshot, "Must have a base snapshot");
+        assert(!!this.context.baseSnapshot, 0x2e5 /* "Must have a base snapshot" */);
         this.baseSnapshotBlobs = await SerializedSnapshotStorage.serializeTree(this.context.baseSnapshot, this.storage);
     }
 
@@ -3044,8 +3044,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 savedOps: this.savedOps,
             };
         }
-        assert(!!this.context.baseSnapshot, "Must have a base snapshot");
-        assert(!!this.baseSnapshotBlobs, "Must serialize base snapshot blobs before getting runtime state");
+        assert(!!this.context.baseSnapshot, 0x2e6 /* "Must have a base snapshot" */);
+        assert(!!this.baseSnapshotBlobs, 0x2e7 /* "Must serialize base snapshot blobs before getting runtime state" */);
         return {
             pending: this.pendingStateManager.getLocalState(),
             snapshotBlobs: this.baseSnapshotBlobs,
