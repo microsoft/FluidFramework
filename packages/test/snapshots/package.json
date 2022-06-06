@@ -72,11 +72,11 @@
     "@fluidframework/map": "^1.0.0",
     "@fluidframework/matrix": "^1.0.0",
     "@fluidframework/ordered-collection": "^1.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/register-collection": "^1.0.0",
     "@fluidframework/replay-driver": "^1.0.0",
     "@fluidframework/sequence": "^1.0.0",
-    "@fluidframework/server-local-server": "^0.1036.3000-0",
+    "@fluidframework/server-local-server": "^0.1036.4000",
     "@fluidframework/test-utils": "^1.0.0"
   },
   "devDependencies": {
