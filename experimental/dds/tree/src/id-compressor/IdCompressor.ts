@@ -371,8 +371,6 @@ export class IdCompressor {
 		compareFiniteNumbers
 	);
 
-	private readonly logger?: ITelemetryLogger;
-
 	/**
 	 * @param localSessionId - the `IdCompressor`'s current local session ID.
 	 * @param reservedIdCount - the number of IDs that will be known by this compressor without relying on consensus.
@@ -388,7 +386,7 @@ export class IdCompressor {
 		public readonly localSessionId: SessionId,
 		public readonly reservedIdCount: number,
 		attributionId?: AttributionId,
-		logger?: ITelemetryLogger
+		private readonly logger?: ITelemetryLogger
 	) {
 		assert(reservedIdCount >= 0, 'reservedIdCount must be non-negative');
 		if (attributionId !== undefined) {
