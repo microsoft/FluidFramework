@@ -38,9 +38,9 @@ The lifecycle of a summary starts when the [Summary Manager](#summary-manager) s
 4. The runtime submits a "summarize" op to the server containing that uploaded summary handle.
 5. The ordering service on server stamps and broadcasts the "summarize" op.
 6. Another service on server responds to "summarize" op.
-    - The server can reject the summary by sending a "summaryNack" (summary not acknowledged) op referencing the sequence number of the "summarize" op.
+    - The server can reject the summary by sending a "summaryNack" (summary negative acknowledgement) op referencing the sequence number of the "summarize" op.
     - The server can accept the summary, but first it must serialize the protocol state and add it to the posted summary.
-      Then it will need to send a "summaryAck" (summar acknowledged) op with the new handle to the augmented summary.
+      Then it will need to send a "summaryAck" (summary acknowledgement) op with the new handle to the augmented summary.
 7. The runtime watches for "summaryAck"/"summaryNack" ops, using them as input to its heuristics determining when to generate summaries
 
 ## Summarizing
