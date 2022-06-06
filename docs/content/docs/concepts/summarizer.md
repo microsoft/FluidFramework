@@ -32,17 +32,17 @@ This can be hidden by waiting for the Container to be fully connected, or by all
 The lifecycle of a summary starts when the [Summary Manager](#summary-manager) selects the client that will summarize the state of the container.
 
 1. The selected client spawns a non-user runtime (including a quorum, clientId, and container) that will generate the summary.
-2. Runtime generates summary tree (more details below).
+2. The runtime generates summary tree (more details [below](#shape-of-a-summary)).
     - The timing of the summaries is determined by a few heuristics discussed below
-3. Runtime uploads summary tree to the Fluid Service storage (Historian), which returns a handle to the data.
-4. Runtime submits a "summarize" op to the server containing that uploaded summary handle.
-5. Ordering service on server stamps and broadcasts the "summarize" op.
+3. The runtime uploads summary tree to the Fluid Service storage (Historian), which returns a handle to the data.
+4. The runtime submits a "summarize" op to the server containing that uploaded summary handle.
+5. The ordering service on server stamps and broadcasts the "summarize" op.
 6. Another service on server responds to "summarize" op.
     - The server can reject the summary by sending a "summaryNack" op referencing the sequence number of the "summarize"
       op.
     - The server can accept the summary, but first it must serialize the protocol state and add it to the posted
       summary. Then it will need to send a "summaryAck" op with the new handle to the augmented summary.
-7. Runtime watches for "summaryAck"/"summaryNack" ops, using them as input to its heuristics determining when to
+7. The runtime watches for "summaryAck"/"summaryNack" ops, using them as input to its heuristics determining when to
    generate summaries
 
 ## Summarizing
