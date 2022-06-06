@@ -7,19 +7,43 @@
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @public
-export interface ITreeCursor {
-    down(key: TreeKey, index: number): TreeNavigationResult;
-    keys: Iterable<TreeKey>;
-    length(key: TreeKey): number;
-    type: TreeType;
-    up(): TreeNavigationResult;
-    value: undefined | Serializable;
+export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
+
+// @public
+export abstract class BrandedType<ValueType, Name extends string> {
+    protected readonly _type_brand: Name;
+    // Warning: (ae-forgotten-export) The symbol "Invariant" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    protected _typeCheck?: Invariant<ValueType>;
 }
 
+// Warning: (ae-forgotten-export) The symbol "ExtractFromOpaque" needs to be exported by the entry point index.d.ts
+//
+// @public
+export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
+
 // @public (undocumented)
-export type TreeKey = (number | string) & {
-    readonly TreeKey: symbol;
-};
+export type FieldKey = Brand<number | string, "FieldKey">;
+
+// @public
+export interface ITreeCursor {
+    down(key: FieldKey, index: number): TreeNavigationResult;
+    // (undocumented)
+    keys: Iterable<FieldKey>;
+    // (undocumented)
+    length(key: FieldKey): number;
+    readonly type: TreeType;
+    up(): TreeNavigationResult;
+    readonly value: undefined | Serializable;
+}
+
+// @public
+export interface MakeNominal {
+}
+
+// @public
+export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
 // @public (undocumented)
 export const enum TreeNavigationResult {
@@ -29,9 +53,7 @@ export const enum TreeNavigationResult {
 }
 
 // @public (undocumented)
-export type TreeType = (number | string) & {
-    readonly TreeType: symbol;
-};
+export type TreeType = Brand<number | string, "TreeType">;
 
 // (No @packageDocumentation comment for this package)
 

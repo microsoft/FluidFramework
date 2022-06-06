@@ -39,7 +39,7 @@ export abstract class BrandedType<ValueType, Name extends string> {
      * This field will not exist at runtime and accessing it is invalid.
      * See {@link Brand} for details.
      */
-    protected readonly _type_brand: Name;
+    protected readonly _type_brand!: Name;
 
     /**
      * This class should never exist at runtime, so make it un-constructable.

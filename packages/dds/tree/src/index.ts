@@ -12,3 +12,7 @@ export {
     ITreeCursor,
     TreeNavigationResult,
 } from "./forest";
+
+export { Brand, BrandedType, Opaque, extractFromOpaque } from "./brand";
+
+export { MakeNominal } from "./typeCheck";
