@@ -13,9 +13,6 @@ import { ErrorPopup } from "./ErrorPopup";
 import { iconHeight, iconWidth } from "./constants";
 
 const useStyles = makeStyles((theme: Theme) => ({
-  bold: {
-    fontWeight: theme.typography.fontWeightBold,
-  },
   bottomMargin: {
     marginBottom: theme.spacing(1),
   },
@@ -94,7 +91,7 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
           height={iconHeight}
           svgId="reference-24"
         />
-        <span className={classes.bold}>
+        <span>
           Modifying the reference path for <span className={classes.italic}>{name}</span>
         </span>
       </div>

@@ -1,5 +1,5 @@
 ---
-title: Feature detection via IFluidObject
+title: Feature detection via FluidObject
 draft: true
 status: outdated
 aliases:
@@ -13,21 +13,20 @@ data included.
 Fluid can be a very dynamic system. There are scenarios in which your code will call certain members of an object, *if
 and only if*, the object has certain capabilities; that is, it implements certain interfaces. So, your code needs a way
 of detecting whether the object implements specific interfaces. To make this easier, Fluid has a feature detection
-mechanism, which centers around a special interface called `IFluidObject`. Feature detection is a technique by which one
+mechanism, which centers around a special type called `FluidObject`. Feature detection is a technique by which one
 Data Object can dynamically determine the capabilities of another Data Object.
 
-In order to detect features supported by an unknown object, you cast it to an `IFluidObject` and then query the object
-for a specific interface that it may support. The interfaces exposed via `IFluidObject` include many core Fluid
-interfaces, such as `IFluidHandle` or `IFluidLoadable`, and this list can be augmented using [TypeScript's interface
-merging capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces). This
+In order to detect features supported by an unknown object, you cast it to an `FluidObject` and then query the object
+for a specific interface that it may support. The interfaces available via `FluidObject` include many core Fluid
+interfaces, such as `IFluidHandle` or `IFluidLoadable`. This
 discovery system (see example below) enables any Data Object to record what interfaces it implements and make it
 possible for other Data Objects to discover them. The specifics of how these interfaces are declared is not relevant
 until you want to define your own interfaces, which we'll cover in a later section.
 
-The following is an example of feature detection using `IFluidObject`:
+The following is an example of feature detection using `FluidObject`:
 
 ```typescript
-const anUnknownObject = anyObject as IFluidObject;
+const anUnknownObject = anyObject as FluidObject<IFluidLoadable>;
 
 // Query the object to see if it supports IFluidLoadable
 const loadable = anUnknownObject.IFluidLoadable; // loadable: IFluidLoadable | undefined

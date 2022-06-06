@@ -116,6 +116,11 @@ export const handler: Handler = {
     },
     final: (root, resolve) => {
         const errors: string[]=[];
+
+        function isNumericLiteral(msg: StringLiteralLike | NumericLiteral) : msg is NumericLiteral {
+            return msg.getKind() === SyntaxKind.NumericLiteral;
+        }
+
         // go through all the newly collected asserts and add short codes
         for(const s of newAssetFiles){
             // another policy may have changed the file, so reload it
@@ -123,7 +128,7 @@ export const handler: Handler = {
             for(const msg of getAssertMessageParams(s)){
                 // here we only want to looks at those messages that are not numbers,
                 // as we validated existing short codes above
-                if(!(msg instanceof NumericLiteral)){
+                if(!isNumericLiteral(msg)){
                     // resolve === fix
                     if(resolve){
                         //for now we don't care about filling gaps, but possible

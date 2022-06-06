@@ -25,6 +25,7 @@ import {
     InboundAttachMessage,
     ISummarizeResult,
     ISummaryTreeWithStats,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
      convertSnapshotTreeToSummaryTree,
@@ -380,6 +381,13 @@ export class DataStores implements IDisposable {
         context.reSubmit(envelope.contents, localOpMetadata);
     }
 
+    public rollbackDataStoreOp(content: any, localOpMetadata: unknown) {
+        const envelope = content as IEnvelope;
+        const context = this.contexts.get(envelope.address);
+        assert(!!context, 0x2e8 /* "There should be a store context for the op" */);
+        context.rollback(envelope.contents, localOpMetadata);
+    }
+
     public async applyStashedOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
@@ -473,7 +481,11 @@ export class DataStores implements IDisposable {
         return this.contexts.size;
     }
 
-    public async summarize(fullTree: boolean, trackState: boolean): Promise<ISummaryTreeWithStats> {
+    public async summarize(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -484,14 +496,14 @@ export class DataStores implements IDisposable {
                     0x165 /* "Summarizer cannot work if client has local changes" */);
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
-                const contextSummary = await context.summarize(fullTree, trackState);
+                const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
                 summaryBuilder.addWithStats(contextId, contextSummary);
             }));
 
         return summaryBuilder.getSummaryTree();
     }
 
-    public createSummary(): ISummaryTreeWithStats {
+    public createSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
         // Attaching graph of some stores can cause other stores to get bound too.
         // So keep taking summary until no new stores get bound.

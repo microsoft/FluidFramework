@@ -11,7 +11,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import random from "random-js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
-import { ISegment, SegmentGroup } from "../mergeTree";
+import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTree";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -45,8 +45,10 @@ export const insertAtRefPos: TestOperation =
             const seg = random.pick(mt, segs);
             const lref = client.createLocalReferencePosition(
                 seg,
-                random.integer(0, seg.cachedLength - 1)(mt),
-                random.pick(mt, [ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]),
+                toRemovalInfo(seg) ? 0 : random.integer(0, seg.cachedLength - 1)(mt),
+                toRemovalInfo(seg)
+                    ? ReferenceType.SlideOnRemove
+                    : random.pick(mt, [ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]),
                 undefined);
 
             return client.insertAtReferencePositionLocal(lref, TextSegment.make(text));
