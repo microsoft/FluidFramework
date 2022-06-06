@@ -2715,7 +2715,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 content,
                 serializedContent,
                 maxOpSize,
-                this._flushMode === FlushMode.TurnBased  || this._orderSequentiallyCalls > 0,
+                this._flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls > 0,
                 opMetadataInternal);
         }
 
