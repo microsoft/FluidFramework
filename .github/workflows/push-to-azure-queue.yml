@@ -13,11 +13,12 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 14
-      - run: npm i -g @azure/storage-queue
+      - run: npm ci
+      - run: npm install @azure/storage-queue
       - uses: actions/github-script@v6
         with:
           script: |
-            import { QueueClient, QueueServiceClient } from "@azure/storage-queue";
+            const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
             const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
