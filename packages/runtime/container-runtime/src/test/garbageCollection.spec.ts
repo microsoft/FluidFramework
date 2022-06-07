@@ -989,7 +989,14 @@ describe("Garbage Collection Tests", () => {
             );
         };
 
-        // On the server we may get something like 1.0.0-1 - handle that situation
+        /**
+         * The client package version on the server is likely to be [major].[minor].[patch]-[pre-release], i.e 1.0.0-1
+         * This does conversions like this as minimumVersion needs to be [major].[minor].[patch] where [x] is a number.
+         * 1.0.0-1 to 1.0.0
+         * 1.0.0 to 1.0.0
+         * 1.0.0-pre1+12 to 1.0.0
+         * 1.0.0+a123-a123 to 1.0.0
+         */
         const getRegularSemverVersion = () => {
             let lastRegularIndex = pkgVersion.length;
             const firstHyphen = pkgVersion.indexOf("-");
