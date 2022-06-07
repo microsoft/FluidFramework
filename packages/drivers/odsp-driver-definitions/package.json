@@ -56,6 +56,10 @@
   },
   "typeValidation": {
     "version": "1.0.0",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IOdspError": {"backCompat": false},
+      "TypeAliasDeclaration_OdspError": {"backCompat": false},
+      "EnumDeclaration_OdspErrorType": {"backCompat": false}
+    }
   }
 }
