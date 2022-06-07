@@ -58,26 +58,6 @@ export interface IProtocolHandler {
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
 }
 
-export type ProtocolHandlerBuilder = (
-    attributes: IDocumentAttributes,
-    snapshot: IQuorumSnapshot,
-    sendProposal: (key: string, value: any) => number,
-) => IProtocolHandler;
-
-export const MakeProtocolHandler: ProtocolHandlerBuilder = (
-    attributes: IDocumentAttributes,
-    snapshot: IQuorumSnapshot,
-    sendProposal: (key: string, value: any) => number,
-) => new ProtocolOpHandler(
-    attributes.minimumSequenceNumber,
-    attributes.sequenceNumber,
-    attributes.term,
-    snapshot.members,
-    snapshot.proposals,
-    snapshot.values,
-    sendProposal,
-);
-
 /**
  * Handles protocol specific ops.
  */

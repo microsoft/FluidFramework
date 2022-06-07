@@ -54,7 +54,7 @@ import {
 import {
     isSystemMessage,
     IProtocolHandler,
-    MakeProtocolHandler,
+    ProtocolOpHandler,
 } from "@fluidframework/protocol-base";
 import {
     IClient,
@@ -767,7 +767,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
         assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
-        assert(!!this._protocolHandler.attributes.term, "Must have a valid protocol handler instance");
+        assert(this._protocolHandler.attributes.term !== undefined, "Must have a valid protocol handler instance");
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -1373,9 +1373,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, any][],
     ): Promise<IProtocolHandler> {
-        const protocol = MakeProtocolHandler(
-            attributes,
-            { members, proposals, values },
+        const protocol = new ProtocolOpHandler(
+            attributes.minimumSequenceNumber,
+            attributes.sequenceNumber,
+            attributes.term,
+            members,
+            proposals,
+            values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
         );
 
