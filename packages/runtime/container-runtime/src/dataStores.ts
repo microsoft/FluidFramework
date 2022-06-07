@@ -25,6 +25,7 @@ import {
     InboundAttachMessage,
     ISummarizeResult,
     ISummaryTreeWithStats,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
      convertSnapshotTreeToSummaryTree,
@@ -50,6 +51,7 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
+import { GCNodeType } from "./garbageCollection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -90,8 +92,8 @@ export class DataStores implements IDisposable {
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
         getBaseGCDetails: () => Promise<Map<string, IGarbageCollectionDetailsBase>>,
-        private readonly dataStoreChanged: (
-            dataStorePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
+        private readonly gcNodeUpdated: (
+            nodePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
         private readonly aliasMap: Map<string, string>,
         private readonly writeGCDataAtRoot: boolean,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
@@ -379,6 +381,13 @@ export class DataStores implements IDisposable {
         context.reSubmit(envelope.contents, localOpMetadata);
     }
 
+    public rollbackDataStoreOp(content: any, localOpMetadata: unknown) {
+        const envelope = content as IEnvelope;
+        const context = this.contexts.get(envelope.address);
+        assert(!!context, 0x2e8 /* "There should be a store context for the op" */);
+        context.rollback(envelope.contents, localOpMetadata);
+    }
+
     public async applyStashedOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
@@ -399,8 +408,9 @@ export class DataStores implements IDisposable {
         assert(!!context, 0x162 /* "There should be a store context for the op" */);
         context.process(transformed, local, localMessageMetadata);
 
-        // Notify that a data store changed. This is used to detect if a deleted data store is being used.
-        this.dataStoreChanged(
+        // Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
+        // being used.
+        this.gcNodeUpdated(
             `/${envelope.address}`,
             message.timestamp,
             context.isLoaded ? context.packagePath : undefined,
@@ -471,7 +481,11 @@ export class DataStores implements IDisposable {
         return this.contexts.size;
     }
 
-    public async summarize(fullTree: boolean, trackState: boolean): Promise<ISummaryTreeWithStats> {
+    public async summarize(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -482,14 +496,14 @@ export class DataStores implements IDisposable {
                     0x165 /* "Summarizer cannot work if client has local changes" */);
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
-                const contextSummary = await context.summarize(fullTree, trackState);
+                const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
                 summaryBuilder.addWithStats(contextId, contextSummary);
             }));
 
         return summaryBuilder.getSummaryTree();
     }
 
-    public createSummary(): ISummaryTreeWithStats {
+    public createSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
         // Attaching graph of some stores can cause other stores to get bound too.
         // So keep taking summary until no new stores get bound.
@@ -534,7 +548,7 @@ export class DataStores implements IDisposable {
     public async updateStateBeforeGC(): Promise<void> {
         for (const id of this.dataStoresSinceLastGC) {
             const context = this.contexts.get(id);
-            assert(context !== undefined, 0x2b6 /* `Missing data store context with id ${id}` */);
+            assert(context !== undefined, 0x2b6 /* Missing data store context */);
             if (await context.isRoot()) {
                 // A root data store is basically a reference from the container runtime to the data store.
                 const handle = new FluidObjectHandle(context, id, this.runtime.IFluidHandleContext);
@@ -608,7 +622,7 @@ export class DataStores implements IDisposable {
                 continue;
             }
             const dataStoreId = pathParts[1];
-            assert(this.contexts.has(dataStoreId), 0x2d7 /* `${dataStoreId} is not a data store` */);
+            assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.
@@ -642,14 +656,21 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Called by GC to know if a node is a data store or not. Data store ids are of the format "/dataStoreId".
+     * Called by GC to determine if a node is for a data store or for an object within a data store (for e.g. DDS).
+     * @returns the GC node type if the node belongs to a data store or object within data store, undefined otherwise.
      */
-    public isDataStoreNode(nodePath: string): boolean {
+    public getGCNodeType(nodePath: string): GCNodeType | undefined {
         const pathParts = nodePath.split("/");
-        if (pathParts.length === 2 && this.contexts.has(pathParts[1])) {
-            return true;
+        if (!this.contexts.has(pathParts[1])) {
+            return undefined;
         }
-        return false;
+
+        // Data stores paths are of the format "/dataStoreId".
+        // Sub data store paths are of the format "/dataStoreId/subPath/...".
+        if (pathParts.length === 2) {
+            return GCNodeType.DataStore;
+        }
+        return GCNodeType.SubDataStore;
     }
 }
 
@@ -663,7 +684,7 @@ export function getSummaryForDatastores(
 
     if (rootHasIsolatedChannels(metadata)) {
         const datastoresSnapshot = snapshot.trees[channelsTreeName];
-        assert(!!datastoresSnapshot, 0x168 /* `expected ${channelsTreeName} tree in snapshot` */);
+        assert(!!datastoresSnapshot, 0x168 /* Expected tree in snapshot not found */);
         return datastoresSnapshot;
     } else {
         // back-compat: strip out all non-datastore paths before giving to DataStores object.

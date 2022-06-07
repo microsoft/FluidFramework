@@ -36,7 +36,11 @@ describeFullCompat("GC unreferenced flag in downloaded snapshot", (getTestObject
         []);
 
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+         },
         gcOptions: { gcAllowed: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -94,7 +98,7 @@ describeFullCompat("GC unreferenced flag in downloaded snapshot", (getTestObject
      * @param summaryVersion - The version of the summary that got uploaded to be used to download it from the server.
      */
     async function validateUnreferencedFlag(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+        summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
         unreferencedDataStoreIds: string[],
     ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger);

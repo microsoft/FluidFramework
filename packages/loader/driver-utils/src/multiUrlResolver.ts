@@ -15,10 +15,9 @@ export async function configurableUrlResolver(
     resolversList: IUrlResolver[],
     request: IRequest,
 ): Promise<IResolvedUrl | undefined> {
-    const url = request.url;
     let resolved: IResolvedUrl | undefined;
     for (const resolver of resolversList) {
-        resolved = await resolver.resolve({ url });
+        resolved = await resolver.resolve({ ...request });
         if (resolved !== undefined) {
             return resolved;
         }

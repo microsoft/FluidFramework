@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
-// eslint-disable-next-line import/no-unresolved
-import { Params } from "express-serve-static-core";
+import type { Params } from "express-serve-static-core";
 
 export function getParam(params: Params, key: string) {
     return Array.isArray(params) ? undefined : params[key];

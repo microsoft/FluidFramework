@@ -256,8 +256,8 @@ export class Layout extends EventEmitter {
         // Look in the checkpoint's saved format stack at the depth we are about to push on to the
         // current format stack.
         const checkpoint = this.segmentToCheckpoint.get(segment);
-        const stack = checkpoint && checkpoint.formatStack;
-        const candidate = stack && stack[this.formatStack.length];
+        const stack = checkpoint?.formatStack;
+        const candidate = stack?.[this.formatStack.length];
 
         // If we find the same kind of formatter at the expected depth, pass the previous output state.
         const prevOut = (

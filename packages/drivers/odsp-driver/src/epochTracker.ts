@@ -55,6 +55,7 @@ export class EpochTracker implements IPersistedFileCache {
         protected readonly cache: IPersistedCache,
         protected readonly fileEntry: IFileEntry,
         protected readonly logger: ITelemetryLogger,
+        protected readonly clientIsSummarizer?: boolean,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
@@ -198,8 +199,8 @@ export class EpochTracker implements IPersistedFileCache {
 
     private async fetchCore<T>(
         url: string,
-        fetchOptions: { [index: string]: any },
-        fetcher: (url: string, fetchOptions: { [index: string]: any }) => Promise<IOdspResponse<T>>,
+        fetchOptions: { [index: string]: any; },
+        fetcher: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<T>>,
         fetchType: FetchType,
         addInBody: boolean = false,
         fetchReason?: string,
@@ -239,7 +240,7 @@ export class EpochTracker implements IPersistedFileCache {
      */
     public async fetchArray(
         url: string,
-        fetchOptions: { [index: string]: any },
+        fetchOptions: { [index: string]: any; },
         fetchType: FetchType,
         addInBody: boolean = false,
         fetchReason?: string,
@@ -254,7 +255,7 @@ export class EpochTracker implements IPersistedFileCache {
     ) {
         const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp;
         if (addInBody) {
-            const headers: { [key: string]: string } = {};
+            const headers: { [key: string]: string; } = {};
             headers["X-RequestStats"] = clientCorrelationId;
             if (this.fluidEpoch !== undefined) {
                 headers["x-fluid-epoch"] = this.fluidEpoch;
@@ -281,14 +282,14 @@ export class EpochTracker implements IPersistedFileCache {
         }
     }
 
-    private addParamInBody(fetchOptions: RequestInit, headers: { [key: string]: string }) {
+    private addParamInBody(fetchOptions: RequestInit, headers: { [key: string]: string; }) {
         // We use multi part form request for post body where we want to use this.
         // So extract the form boundary to mark the end of form.
         const body = fetchOptions.body;
         assert(typeof body === "string", 0x21d /* "body is not string" */);
         const splitBody = body.split("\r\n");
         const firstLine = splitBody.shift();
-        assert(firstLine !== undefined && firstLine.startsWith("--"), 0x21e /* "improper boundary format" */);
+        assert(firstLine?.startsWith("--") === true, 0x21e /* "improper boundary format" */);
         const formParams = [firstLine];
         Object.entries(headers).forEach(([key, value]) => {
             formParams.push(`${key}: ${value}`);
@@ -300,7 +301,12 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     private formatClientCorrelationId(fetchReason?: string) {
-        const items: string[] = [`driverId=${this.driverId}`, `RequestNumber=${this.networkCallNumber++}`];
+        const items: string[] = [
+            `driverId=${this.driverId}`,
+            `RequestNumber=${this.networkCallNumber++}`,
+            `driverVersion=${driverVersion}`,
+            `isSummarizer=${this.clientIsSummarizer}`,
+        ];
         if (fetchReason !== undefined) {
             items.push(`fetchReason=${fetchReason}`);
         }
@@ -412,7 +418,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 
     public async fetchAndParseAsJSON<T>(
         url: string,
-        fetchOptions: { [index: string]: any },
+        fetchOptions: { [index: string]: any; },
         fetchType: FetchType,
         addInBody: boolean = false,
         fetchReason?: string,
@@ -475,8 +481,9 @@ export function createOdspCacheAndTracker(
     persistedCacheArg: IPersistedCache,
     nonpersistentCache: INonPersistentCache,
     fileEntry: IFileEntry,
-    logger: ITelemetryLogger): ICacheAndTracker {
-    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger);
+    logger: ITelemetryLogger,
+    clientIsSummarizer?: boolean): ICacheAndTracker {
+    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger, clientIsSummarizer);
     return {
         cache: {
             ...nonpersistentCache,

@@ -22,6 +22,14 @@ export class InMemoryDb extends EventEmitter implements IDb {
 
         return this.collections.get(name);
     }
+
+    public async dropCollection(name: string): Promise<boolean> {
+        if (!this.collections.has(name)) {
+            return true;
+        }
+        this.collections.delete(name);
+        return true;
+    }
 }
 
 export class InMemoryDbFactory implements IDbFactory {

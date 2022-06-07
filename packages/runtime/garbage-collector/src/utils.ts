@@ -12,12 +12,39 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 /**
+ * Trims the leading and trailing slashes from the given string.
+ * @param str - A string that may contain leading and / or trailing slashes.
+ * @returns A new string without leading and trailing slashes.
+ */
+export function trimLeadingAndTrailingSlashes(str: string) {
+    return str.replace(/^\/+|\/+$/g, "");
+}
+
+/**
+ * Trims the leading slashes from the given string.
+ * @param str - A string that may contain leading slashes.
+ * @returns A new string without leading slashes.
+ */
+export function trimLeadingSlashes(str: string) {
+    return str.replace(/^\/+/g, "");
+}
+
+/**
+ * Trims the trailing slashes from the given string.
+ * @param str - A string that may contain trailing slashes.
+ * @returns A new string without trailing slashes.
+ */
+export function trimTrailingSlashes(str: string) {
+    return str.replace(/\/+$/g, "");
+}
+
+/**
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
  * @returns a clone of the given GC data.
  */
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
-    const clonedGCNodes: { [ id: string ]: string[] } = {};
+    const clonedGCNodes: { [ id: string ]: string[]; } = {};
     for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
         clonedGCNodes[id] = Array.from(outboundRoutes);
     }
@@ -114,7 +141,7 @@ export function unpackChildNodesUsedRoutes(usedRoutes: string[]) {
  * @param gcNodes - The nodes from which the route is to be removed.
  * @param outboundRoute - The route to be removed.
  */
-export function removeRouteFromAllNodes(gcNodes: { [ id: string ]: string[] }, outboundRoute: string) {
+export function removeRouteFromAllNodes(gcNodes: { [ id: string ]: string[]; }, outboundRoute: string) {
     const channels = Object.entries(gcNodes);
     for (const [nodeId, outboundRoutes] of channels) {
         // Remove route from channel to parent for each channel
@@ -131,7 +158,7 @@ export function concatGarbageCollectionStates(
     gcState1: IGarbageCollectionState,
     gcState2: IGarbageCollectionState,
 ): IGarbageCollectionState {
-    const combinedGCNodes: { [ id: string ]: IGarbageCollectionNodeData } = {};
+    const combinedGCNodes: { [ id: string ]: IGarbageCollectionNodeData; } = {};
     for (const [nodeId, nodeData] of Object.entries(gcState1.gcNodes)) {
         combinedGCNodes[nodeId] = {
             outboundRoutes: Array.from(nodeData.outboundRoutes),
@@ -180,8 +207,8 @@ export function concatGarbageCollectionData(gcData1: IGarbageCollectionData, gcD
 }
 
 export class GCDataBuilder implements IGarbageCollectionData {
-    private readonly gcNodesSet: { [ id: string ]: Set<string> } = {};
-    public get gcNodes(): { [ id: string ]: string[] } {
+    private readonly gcNodesSet: { [ id: string ]: Set<string>; } = {};
+    public get gcNodes(): { [ id: string ]: string[]; } {
         const gcNodes = {};
         for (const [nodeId, outboundRoutes] of Object.entries(this.gcNodesSet)) {
             gcNodes[nodeId] = [...outboundRoutes];
@@ -199,28 +226,22 @@ export class GCDataBuilder implements IGarbageCollectionData {
      * - Prefixes the given `prefixId` to the given nodes' ids.
      * - Adds the outbound routes of the nodes against the normalized and prefixed id.
      */
-    public prefixAndAddNodes(prefixId: string, gcNodes: { [ id: string ]: string[] }) {
+    public prefixAndAddNodes(prefixId: string, gcNodes: { [ id: string ]: string[]; }) {
         for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
-            let normalizedId = id;
-            // Remove any starting slashes from the id.
-            while (normalizedId.startsWith("/")) {
-                normalizedId = normalizedId.substr(1);
-            }
-
+            // Remove any leading slashes from the id.
+            let normalizedId = trimLeadingSlashes(id);
             // Prefix the given id to the normalized id.
             normalizedId = `/${prefixId}/${normalizedId}`;
-
-            // Remove any trailing slashes from the normalized id.
-            while (normalizedId.endsWith("/")) {
-                normalizedId = normalizedId.substr(0, normalizedId.length - 1);
-            }
+            // Remove any trailing slashes from the normalized id. Note that the trailing slashes are removed after
+            // adding the prefix for handling the special case where id is "/".
+            normalizedId = trimTrailingSlashes(normalizedId);
 
             // Add the outbound routes against the normalized and prefixed id without duplicates.
             this.gcNodesSet[normalizedId] = new Set(outboundRoutes);
         }
     }
 
-    public addNodes(gcNodes: { [ id: string ]: string[] }) {
+    public addNodes(gcNodes: { [ id: string ]: string[]; }) {
         for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
             this.gcNodesSet[id] = new Set(outboundRoutes);
         }

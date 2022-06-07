@@ -5,7 +5,11 @@
 
 import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import {
+    ILoaderProps,
+    Loader,
+    waitContainerToCatchUp as waitContainerToCatchUp_original,
+} from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -47,25 +51,25 @@ export interface ITestObjectProvider {
      * Used to create a test Container. The Loader/ContainerRuntime/DataRuntime might be different versioned.
      * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader,
-    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>,
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     /**
      *
      * @param url - Resolved container URL
      */
-    updateDocumentId(url: IResolvedUrl | undefined): void,
+    updateDocumentId(url: IResolvedUrl | undefined): void;
 
-    logger: ITelemetryBaseLogger,
-    documentServiceFactory: IDocumentServiceFactory,
-    urlResolver: IUrlResolver,
-    defaultCodeDetails: IFluidCodeDetails,
-    opProcessingController: IOpProcessingController,
+    logger: ITelemetryBaseLogger;
+    documentServiceFactory: IDocumentServiceFactory;
+    urlResolver: IUrlResolver;
+    defaultCodeDetails: IFluidCodeDetails;
+    opProcessingController: IOpProcessingController;
 
     ensureSynchronized(): Promise<void>;
-    reset(): void,
+    reset(): void;
 
-    documentId: string,
+    documentId: string;
     driver: ITestDriver;
 }
 
@@ -76,16 +80,16 @@ export enum DataObjectFactoryType {
 
 export interface ITestContainerConfig {
     /** TestFluidDataObject instead of PrimedDataStore */
-    fluidDataObjectType?: DataObjectFactoryType,
+    fluidDataObjectType?: DataObjectFactoryType;
 
     /** An array of channel name and DDS factory pair to create on container creation time */
-    registry?: ChannelFactoryRegistry,
+    registry?: ChannelFactoryRegistry;
 
     /** Container runtime options for the container instance */
-    runtimeOptions?: IContainerRuntimeOptions,
+    runtimeOptions?: IContainerRuntimeOptions;
 
     /** Loader options for the loader used to create containers */
-    loaderProps?: Partial<ILoaderProps>,
+    loaderProps?: Partial<ILoaderProps>;
 }
 
 export const createDocumentId = (): string => uuid();
@@ -133,7 +137,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
         super();
     }
 
-    private readonly expectedEvents: ({ index: number, event: ITelemetryGenericEvent | undefined } | undefined)[] = [];
+    private readonly expectedEvents: ({ index: number; event: ITelemetryGenericEvent | undefined; } | undefined)[] = [];
     private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
     public registerExpectedEvent(... orderedExpectedEvents: ITelemetryGenericEvent[]) {
@@ -367,7 +371,8 @@ export class TestObjectProvider implements ITestObjectProvider {
             url: await this.driver.createContainerUrl(this.documentId),
             headers: requestHeader,
         });
-        await waitContainerToCatchUp(container);
+        await this.waitContainerToCatchUp(container);
+
         return container;
     }
 
@@ -386,6 +391,18 @@ export class TestObjectProvider implements ITestObjectProvider {
 
     public async ensureSynchronized() {
         return this._loaderContainerTracker.ensureSynchronized();
+    }
+
+    public async waitContainerToCatchUp(container: IContainer) {
+        // The original waitContainerToCatchUp() from container loader uses either Container.resume()
+        // or Container.connect() as part of its implementation. However, resume() was deprecated
+        // and eventually replaced with connect(). To avoid issues during LTS compatibility testing
+        // with older container versions issues, we use resume() when connect() is unavailable.
+        if ((container as any).connect === undefined) {
+            (container as any).connect = (container as any).resume;
+        }
+
+        return waitContainerToCatchUp_original(container);
     }
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {

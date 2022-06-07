@@ -17,7 +17,7 @@ export {
 } from "./intervalCollection";
 export {
     IValueOpEmitter,
-} from "./mapKernelInterfaces";
+} from "./defaultMapInterfaces";
 export * from "./sharedString";
 export * from "./sequence";
 export * from "./sequenceFactory";

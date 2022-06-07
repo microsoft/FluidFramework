@@ -50,7 +50,7 @@ export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IC
 };
 
 export const createFluidObjectResponse = (fluidObject: FluidObject):
-    { status: 200, mimeType: "fluid/object", value: FluidObject } => {
+    { status: 200; mimeType: "fluid/object"; value: FluidObject; } => {
     return { status: 200, mimeType: "fluid/object", value: fluidObject };
 };
 

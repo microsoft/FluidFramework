@@ -17,8 +17,8 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
  * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
  */
 export interface ITaggedTelemetryPropertyType {
-    value: TelemetryEventPropertyType,
-    tag: string,
+    value: TelemetryEventPropertyType;
+    tag: string;
 }
 export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;

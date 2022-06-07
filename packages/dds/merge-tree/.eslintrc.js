@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        require.resolve("@fluidframework/eslint-config-fluid")
     ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
@@ -15,7 +15,6 @@ module.exports = {
         "@typescript-eslint/strict-boolean-expressions": "off",
         "keyword-spacing": "off", // Off because it conflicts with typescript-formatter
         "no-case-declarations": "off",
-        "no-null/no-null": "off",
         "prefer-arrow/prefer-arrow-functions": "off"
     }
 }

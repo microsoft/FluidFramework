@@ -78,7 +78,7 @@ type PendingResolve<T> = (value: IConsensusOrderedCollectionValue<T> | undefined
  * Key is the acquireId from when it was acquired
  * Value is the acquired value, and the id of the client who acquired it, or undefined for unattached client
  */
-type JobTrackingInfo<T> = Map<string, { value: T, clientId: string | undefined }>;
+type JobTrackingInfo<T> = Map<string, { value: T; clientId: string | undefined; }>;
 const idForLocalUnattachedClient = undefined;
 
 /**
@@ -107,7 +107,7 @@ export class ConsensusOrderedCollection<T = any>
         attributes: IChannelAttributes,
         private readonly data: IOrderedCollection<T>,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_consensusOrderedCollection_");
 
         // We can't simply call this.removeClient(this.runtime.clientId) in on runtime disconnected,
         // because other clients may disconnect concurrently.

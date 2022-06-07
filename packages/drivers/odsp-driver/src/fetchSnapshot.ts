@@ -16,7 +16,7 @@ import {
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { IOdspSnapshot, ISnapshotCachedEntry, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -28,7 +28,7 @@ import {
     IOdspResponse,
     ISnapshotContents,
 } from "./odspUtils";
-import { convertOdspSnapshotToSnapsohtTreeAndBlobs } from "./odspSnapshotParser";
+import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
 import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { EpochTracker } from "./epochTracker";
@@ -59,7 +59,7 @@ export async function fetchSnapshot(
     fetchFullSnapshot: boolean,
     forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
-    snapshotDownloader: (url: string, fetchOptions: { [index: string]: any }) => Promise<IOdspResponse<unknown>>,
+    snapshotDownloader: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
@@ -83,7 +83,7 @@ export async function fetchSnapshot(
         },
         async () => snapshotDownloader(url, { headers }),
     ) as IOdspResponse<IOdspSnapshot>;
-    return convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
+    return convertOdspSnapshotToSnapshotTreeAndBlobs(response.content);
 }
 
 export async function fetchSnapshotWithRedeem(
@@ -323,7 +323,7 @@ async function fetchLatestSnapshotCore(
                     encodedBlobsSize,
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
-                    nonSysOps: snapshot.ops?.filter((op) => !isSystemMessage(op)).length ?? 0,
+                    userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
                     // Interval between the first fetch until the last byte of the last redirect.
                     redirectTime,
@@ -354,8 +354,6 @@ async function fetchLatestSnapshotCore(
         ).catch((error) => {
             // We hit these errors in stress tests, under load
             // It's useful to try one more time in such case.
-            // We might want to add DriverErrorType.offlineError in the future if we see evidence it happens
-            // (not in "real" offline) and it actually helps.
             if (typeof error === "object" && error !== null && (error.errorType === DriverErrorType.fetchFailure ||
                 error.errorType === OdspErrorType.fetchTimeout)) {
                 error[getWithRetryForTokenRefreshRepeat] = true;
@@ -366,16 +364,16 @@ async function fetchLatestSnapshotCore(
 }
 
 interface ISnapshotRequestAndResponseOptions {
-    odspSnapshotResponse: IOdspResponse<ISnapshotContents>,
-    requestUrl: string,
-    requestHeaders: { [index: string]: any },
+    odspSnapshotResponse: IOdspResponse<ISnapshotContents>;
+    requestUrl: string;
+    requestHeaders: { [index: string]: any; };
 }
 
 function getFormBodyAndHeaders(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
     snapshotOptions: ISnapshotOptions | undefined,
-    headers?: { [index: string]: string },
+    headers?: { [index: string]: string; },
 ) {
     const formBoundary = uuid();
     const formParams: string[] = [];
@@ -402,7 +400,7 @@ function getFormBodyAndHeaders(
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
     const postBody = formParams.join("\r\n");
-    const header: { [index: string]: any } = {
+    const header: { [index: string]: any; } = {
         "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
     };
     return { body: postBody, headers: header };
@@ -493,7 +491,7 @@ export async function downloadSnapshot(
         const text = await response.content.text();
         const content: IOdspSnapshot = JSON.parse(text);
         response.propsToLog.bodySize = text.length;
-        const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(content);
+        const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
         finalSnapshotContents = { ...response, content: snapshotContents };
     } else {
         assert(contentType === "application/ms-fluid", 0x2c3 /* "Content type should be application/ms-fluid" */);

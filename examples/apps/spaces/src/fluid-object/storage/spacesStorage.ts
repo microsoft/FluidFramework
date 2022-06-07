@@ -26,7 +26,7 @@ export interface ISpacesStorage<T> extends EventEmitter {
      * @param serializableItemData - The data of the item to add.
      * @returns A unique key corresponding to the added item.
      */
-    addItem(serializableItemData: Serializable<T>, layout?: Layout): string
+    addItem(serializableItemData: Serializable<T>, layout?: Layout): string;
     /**
      * Removes the item specified by the given key.
      * @param key - The key referring to the item to remove.

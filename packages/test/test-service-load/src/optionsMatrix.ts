@@ -54,13 +54,12 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     disableGC: booleanCases,
     gcAllowed: booleanCases,
     runFullGC: booleanCases,
-    runSweep: [false],
+    sweepAllowed: [false],
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
     disableIsolatedChannels: booleanCases,
     disableSummaries: [false],
-    generateSummaries: [true],
     initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides: [undefined],
     maxOpsSinceLastSummary: numberCases,
@@ -80,6 +79,7 @@ export function generateRuntimeOptions(
         summaryOptions: [undefined, ...summaryOptions],
         loadSequenceNumberVerification: [undefined],
         useDataStoreAliasing: [undefined],
+        enableOfflineLoad: [undefined],
         flushMode: [undefined],
     };
 

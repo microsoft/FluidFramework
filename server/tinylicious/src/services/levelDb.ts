@@ -31,6 +31,10 @@ export class LevelDb extends EventEmitter implements IDb {
         return new Collection(collectionDb, this.getProperty(name));
     }
 
+    public async dropCollection(name: string): Promise<boolean> {
+        throw new Error("Method Not Implemented");
+    }
+
     // LevelDB is a pure key value storage so we need to know the fields prior to generate insertion key.
     // (similar to createIndex() call in mongodb)
     private getProperty(name: string): ICollectionProperty {

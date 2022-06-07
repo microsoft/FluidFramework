@@ -24,15 +24,18 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
     intervalView: IntervalCollection<SequenceInterval>,
-    expected: readonly { start: number; end: number }[],
+    expected: readonly { start: number; end: number; }[],
 ) => {
-    const actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    let actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    if (sharedString.getLength() === 0) {
+        actual = Array.from(intervalView);
+    }
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
 
@@ -198,7 +201,7 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
         intervalCollection.removeIntervalById(id);
     }
 }
-describeFullCompat("SharedInterval", (getTestObjectProvider) => {
+describeNoCompat("SharedInterval", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
@@ -210,7 +213,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         let intervals: IntervalCollection<SequenceInterval>;
         let dataObject: ITestFluidObject & IFluidLoadable;
 
-        const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
+        const assertIntervals = (expected: readonly { start: number; end: number; }[]) => {
             // Make sure all ops have been sent before actually asserting
             (dataObject.context.containerRuntime as IContainerRuntime).flush();
             assertIntervalsHelper(sharedString, intervals, expected);
@@ -246,6 +249,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             assertIntervals([{ start: 0, end: len - 1 }]);
 
             sharedString.removeRange(0, len);
+            await provider.ensureSynchronized();
             assertIntervals([{ start: LocalReference.DetachedPosition, end: LocalReference.DetachedPosition }]);
         });
 
@@ -541,8 +545,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(interval, interval2, "Oddball interval found in client 2");
             }
 
-            if (typeof(intervals1.change) === "function" &&
-                typeof(intervals2.change) === "function") {
+            if (typeof (intervals1.change) === "function" &&
+                typeof (intervals2.change) === "function") {
                 // Conflicting changes
                 intervals1.change(id1, 1, 2);
                 intervals2.change(id1, 2, 1);
@@ -598,8 +602,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(interval2.end.getOffset(), 2, "Conflicting transparent change");
             }
 
-            if (typeof(intervals1.changeProperties) === "function" &&
-                typeof(intervals2.changeProperties) === "function") {
+            if (typeof (intervals1.changeProperties) === "function" &&
+                typeof (intervals2.changeProperties) === "function") {
                 const assertPropertyChangedArg = (p: any, v: any, m: string) => {
                     // Check expected values of args passed to the propertyChanged event only if IntervalCollection
                     // is a TypedEventEmitter. (This is not true of earlier versions,
@@ -781,7 +785,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 (parsedContent["intervalCollections/comments"].value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             assert(serializedInterval1FromSnapshot.properties);
-            const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
+            const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string; };
             assert.equal(
                 handleLocalValueFromSnapshot.type,
                 "__fluid_handle__",
