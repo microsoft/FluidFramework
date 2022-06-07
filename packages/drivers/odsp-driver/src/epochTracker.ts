@@ -6,7 +6,12 @@
 import { v4 as uuid } from "uuid";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ThrottlingError, RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
+import {
+    ThrottlingError,
+    RateLimiter,
+    NonRetryableError,
+    LocationRedirectionError,
+} from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
 import {
     snapshotKey,
@@ -27,6 +32,7 @@ import {
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { ClpCompliantAppHeader } from "./contractsPublic";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { patchOdspResolvedUrl } from "./odspLocationRedirection";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -223,6 +229,25 @@ export class EpochTracker implements IPersistedFileCache {
                 epochFromResponse = (error as IOdspError).serverEpoch;
             }
             await this.checkForEpochError(error, epochFromResponse, fetchType);
+            throw error;
+        }).catch((error) => {
+            // If the error is about location redirection, then we need to generate new resolved url with correct location
+            // info.
+            if (isFluidError(error) && error.errorType === DriverErrorType.locationRedirection) {
+                const redirectLocation = error.getTelemetryProperties().redirectLocation?.toString();
+                assert(redirectLocation !== undefined, "locationRedirection error should contain redirectLocation");
+                const patchedResolvedUrl = patchOdspResolvedUrl(
+                    this.fileEntry.resolvedUrl,
+                    redirectLocation,
+                );
+                const locationRedirectionError = new LocationRedirectionError(
+                    error.message,
+                    patchedResolvedUrl,
+                    { driverVersion, redirectLocation },
+                );
+                locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
+                throw locationRedirectionError;
+            }
             throw error;
         }).catch((error) => {
             const fluidError = normalizeError(error, { props: { XRequestStatsHeader: clientCorrelationId } });

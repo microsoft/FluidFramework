@@ -184,7 +184,7 @@ export function createOdspNetworkError(
                 if (redirectLocation !== undefined) {
                     const propsWithRedirectLocation = { ...driverProps, redirectLocation };
                     error = new NonRetryableError(
-                        errorMessage, OdspErrorType.locationRedirection, propsWithRedirectLocation);
+                        errorMessage, DriverErrorType.locationRedirection, propsWithRedirectLocation);
                     break;
                 }
             }
