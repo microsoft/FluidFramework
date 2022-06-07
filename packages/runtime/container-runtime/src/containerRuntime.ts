@@ -2200,7 +2200,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             contents: { type, content },
         };
 
-        if (newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 ) {
+        if (newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1) {
             this._perfSignalData.signalTimestamp = Date.now();
         }
 
