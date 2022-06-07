@@ -1721,6 +1721,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const local = this.clientId === message.clientId;
 
+        console.log("message is a ", message.type);
+
         // Forward non system messages to the loaded runtime for processing
         if (isRuntimeMessage(message)) {
             this.context.process(message, local, undefined);
