@@ -657,9 +657,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return transientInterval;
     }
 
-    public removeExistingInterval(interval: TInterval) {
+    private removeIntervalFromIndex(interval: TInterval) {
         this.intervalTree.removeExisting(interval);
         this.endIntervalTree.remove(interval);
+    }
+
+    public removeExistingInterval(interval: TInterval) {
+        this.removeIntervalFromIndex(interval);
+        this.removeIntervalListeners(interval);
     }
 
     public createInterval(
@@ -689,12 +694,11 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                 interval.properties[reservedIntervalIdKey] = uuid();
             }
             this.add(interval);
-            this.addIntervalListeners(interval);
         }
         return interval;
     }
 
-    public add(interval: TInterval) {
+    private addIntervalToIndex(interval: TInterval) {
         assert(Object.prototype.hasOwnProperty.call(interval.properties, reservedIntervalIdKey),
             0x2c0 /* "ID must be created before adding interval to collection" */);
         // Make the ID immutable.
@@ -705,6 +709,11 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         });
         this.intervalTree.put(interval, this.conflictResolver);
         this.endIntervalTree.put(interval, interval, this.endConflictResolver);
+    }
+
+    public add(interval: TInterval) {
+        this.addIntervalToIndex(interval);
+        this.addIntervalListeners(interval);
     }
 
     public getIntervalById(id: string) {
@@ -723,9 +732,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         const newInterval = interval.modify(this.label, start, end, op) as TInterval | undefined;
         if (newInterval) {
             this.removeExistingInterval(interval);
-            this.removeIntervalListeners(interval);
             this.add(newInterval);
-            this.addIntervalListeners(newInterval);
         }
         return newInterval;
     }
@@ -736,14 +743,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return intervals.map((interval) => interval.serialize(client));
     }
 
-    public addIntervalListeners(interval: TInterval) {
+    private addIntervalListeners(interval: TInterval) {
         if (interval instanceof SequenceInterval) {
-            interval.on("beforePositionChange", () => this.removeExistingInterval(interval));
-            interval.on("afterPositionChange", () => this.add(interval));
+            interval.on("beforePositionChange", () => this.removeIntervalFromIndex(interval));
+            interval.on("afterPositionChange", () => this.addIntervalToIndex(interval));
         }
     }
 
-    public removeIntervalListeners(interval: TInterval) {
+    private removeIntervalListeners(interval: TInterval) {
         if (interval instanceof SequenceInterval) {
             interval.removeAllListeners("beforePositionChange");
             interval.removeAllListeners("afterPositionChange");
@@ -1027,7 +1034,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     private deleteExistingInterval(interval: TInterval, local: boolean, op: ISequencedDocumentMessage) {
         // The given interval is known to exist in the collection.
         this.localCollection.removeExistingInterval(interval);
-        this.localCollection.removeIntervalListeners(interval);
 
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
@@ -1307,7 +1313,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             // it is necessary to remove and re-add the interval listeners.
             // This ensures that the correct listeners are added to the ReferencePosition.
             this.localCollection.removeExistingInterval(interval);
-            this.localCollection.removeIntervalListeners(interval);
 
             if (needsStartUpdate) {
                 const props = interval.start.properties;
@@ -1322,7 +1327,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 interval.end.addProperties(props);
             }
             this.localCollection.add(interval);
-            this.localCollection.addIntervalListeners(interval);
         }
     }
 
