@@ -223,12 +223,45 @@ implements ISerializableInterval {
         if (props) {
             this.addProperties(props);
         }
-        const beforeSlide = () => this.emit("beforeSlide");
-        const afterSlide = () => this.emit("afterSlide");
-        this.start.on("beforeSlide", beforeSlide);
-        this.start.on("afterSlide", afterSlide);
-        this.end.on("beforeSlide", beforeSlide);
-        this.end.on("afterSlide", afterSlide);
+
+        // Only listen to events from the positions when there is a listener on this.
+        // This is particularly important since SequenceIntervals are cloned when put in the
+        // interval trees and we don't want to listen on the clones.
+        const beforeSlide = () => this.emit("beforePositionChange");
+        const afterSlide = () => this.emit("afterPositionChange");
+        super.on("newListener", (event) => {
+            switch (event) {
+                case "beforePositionChange":
+                    if (super.listenerCount(event) === 0) {
+                        this.start.on("beforeSlide", beforeSlide);
+                        this.end.on("beforeSlide", beforeSlide);
+                    }
+                    break;
+                case "afterPositionChange":
+                    if (super.listenerCount(event) === 0) {
+                        this.start.on("afterSlide", afterSlide);
+                        this.end.on("afterSlide", afterSlide);
+                    }
+                    break;
+                default:
+            }
+        });
+        super.on("removeListener", (event: string | symbol) => {
+            switch (event) {
+                case "beforePositionChange":
+                    if (super.listenerCount(event) === 0) {
+                        this.start.off("beforeSlide", beforeSlide);
+                    }
+                    break;
+                case "afterPositionChange":
+                    if (super.listenerCount(event) === 0) {
+                        this.start.off("afterSlide", afterSlide);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        });
     }
 
     public serialize(client: Client) {

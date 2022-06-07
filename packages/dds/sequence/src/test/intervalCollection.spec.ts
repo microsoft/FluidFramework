@@ -711,7 +711,49 @@ describe("SharedString interval collections", () => {
                 collection.add(2, 5, IntervalType.SlideOnRemove);
                 const initiallyLargest = collection.add(3, 4, IntervalType.SlideOnRemove);
                 sharedString.removeRange(1, 4);
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 3 },
+                    { start: 1, end: 2 },
+                    { start: 1, end: 1 },
+                ]);
                 collection.removeIntervalById(initiallyLargest.getIntervalId());
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 3 },
+                    { start: 1, end: 2 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 3 },
+                    { start: 1, end: 2 },
+                ]);
+            });
+
+            it("retains intervalTree coherency after slide when falling back to end comparison", () => {
+                collection.add(1, 6, IntervalType.SlideOnRemove);
+                collection.add(2, 5, IntervalType.SlideOnRemove);
+                const initiallyLargest = collection.add(3, 4, IntervalType.SlideOnRemove);
+                sharedString.removeRange(1, 4);
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 3 },
+                    { start: 1, end: 2 },
+                    { start: 1, end: 1 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 3 },
+                    { start: 1, end: 2 },
+                    { start: 1, end: 1 },
+                ]);
+                collection.removeIntervalById(initiallyLargest.getIntervalId());
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 3 },
+                    { start: 1, end: 2 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 3 },
+                    { start: 1, end: 2 },
+                ]);
             });
 
             it("retains intervalTree coherency when falling back to id comparison", () => {
@@ -720,7 +762,50 @@ describe("SharedString interval collections", () => {
                 collection.add(0, 2, IntervalType.SlideOnRemove, { intervalId: idMiddle });
                 collection.add(0, 3, IntervalType.SlideOnRemove, { intervalId: idLowest });
                 sharedString.removeRange(1, 4);
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
                 collection.removeIntervalById(idLowest);
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+            });
+
+            it("retains intervalTree coherency after slide when falling back to id comparison", () => {
+                const [idLowest, idMiddle, idLargest] = ["a", "b", "c"];
+                collection.add(0, 1, IntervalType.SlideOnRemove, { intervalId: idLargest });
+                collection.add(0, 2, IntervalType.SlideOnRemove, { intervalId: idMiddle });
+                collection.add(0, 3, IntervalType.SlideOnRemove, { intervalId: idLowest });
+                sharedString.removeRange(1, 4);
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+                collection.removeIntervalById(idLowest);
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
             });
         });
 
