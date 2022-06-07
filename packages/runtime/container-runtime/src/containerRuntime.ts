@@ -112,7 +112,6 @@ import {
     ReportOpPerfTelemetry,
     latencyThreshold,
     IPerfSignalReport,
-    SignalTimestampCache,
 } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
@@ -1049,15 +1048,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
 
-    private readonly _signalTimestampCache: SignalTimestampCache = new SignalTimestampCache();
+    private readonly defaultTelemetrySignalSampleCount = 100;
     private _perfSignalData: IPerfSignalReport = {
         signalsLost: 0,
         signalSequenceNumber: 0,
+        signalTimestamp: 0,
+        expectedSignalSequenceFloorNumber: 0,
     };
-    private resetPerfSignalData() {
-        this._perfSignalData.signalsLost = 0;
-        this._signalTimestampCache.removeAllEntries();
-    }
 
     /**
      * Summarizer is responsible for coordinating when to send generate and send summaries.
@@ -1759,7 +1756,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._connected = connected;
 
         if (!connected) {
-            this.resetPerfSignalData();
+            this._perfSignalData.signalsLost = 0;
+            this._perfSignalData.signalTimestamp = 0;
+            this._perfSignalData.expectedSignalSequenceFloorNumber = 0;
         }
 
         if (reconnection) {
@@ -1872,6 +1871,30 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processAliasMessage(message, localOpMetadata, local);
     }
 
+    /**
+     * Emits the Signal event and update the perf signal data.
+     * @param clientSignalSequenceNumber is the client signal sequence number to be uploaded.
+     */
+    private emitSignalEvent(clientSignalSequenceNumber: number)
+    {
+        const currentSequence = Math.floor(clientSignalSequenceNumber / this.defaultTelemetrySignalSampleCount);
+        // Check to see if we missed the previous sequence number.
+        if (this._perfSignalData.expectedSignalSequenceFloorNumber !==  currentSequence) {
+            this._perfSignalData.signalsLost++;
+        }
+
+        this._perfSignalData.expectedSignalSequenceFloorNumber = currentSequence + 1;
+        const duration = Date.now() - this._perfSignalData.signalTimestamp;
+        this.logger.sendPerformanceEvent({
+            eventName: "SignalLatency",
+            duration,
+            signalsLost: this._perfSignalData.signalsLost,
+        });
+
+        this._perfSignalData.signalsLost = 0;
+        this._perfSignalData.signalTimestamp = 0;
+    }
+
     public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as ISignalEnvelope;
         const transformed: IInboundSignalMessage = {
@@ -1882,19 +1905,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // Only collect signal telemetry for messages sent by the current client.
         if (message.clientId === this.clientId && envelope.clientSignalSequenceNumber !== undefined) {
-            const initialTimestamp = this._signalTimestampCache.get(envelope.clientSignalSequenceNumber);
-            // check to see if the cache expired
-            if (initialTimestamp === undefined) {
-                this._perfSignalData.signalsLost++;
-            } else if (envelope.clientSignalSequenceNumber % 100 === 1 && this.connected) {
-                const duration = Date.now() - initialTimestamp;
-                const signalsLost = this._perfSignalData.signalsLost;
-                this.logger.sendPerformanceEvent({
-                    eventName: "SignalLatency",
-                    duration,
-                    signalsLost,
-                });
-                this.resetPerfSignalData();
+            if (envelope.clientSignalSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 && this.connected) {
+                this.emitSignalEvent(envelope.clientSignalSequenceNumber);
             }
         }
 
@@ -2181,12 +2193,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private createNewSignalEnvelope(address: string | undefined, type: string, content: any): ISignalEnvelope {
+        const newSequenceNumber = ++this._perfSignalData.signalSequenceNumber;
         const newEnvelope: ISignalEnvelope = {
             address,
-            clientSignalSequenceNumber: ++this._perfSignalData.signalSequenceNumber,
+            clientSignalSequenceNumber: newSequenceNumber,
             contents: { type, content },
         };
-        this._signalTimestampCache.put(this._perfSignalData.signalSequenceNumber, Date.now());
+
+        if (newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 ) {
+            this._perfSignalData.signalTimestamp = Date.now();
+        }
+
         return newEnvelope;
     }
 

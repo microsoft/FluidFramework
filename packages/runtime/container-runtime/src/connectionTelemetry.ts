@@ -268,46 +268,16 @@ export interface IPerfSignalReport {
      * Number of signals that were expected but not received.
      */
     signalsLost: number;
-}
 
-export class SignalTimestampCache {
-    private readonly cache = new Map<number, number>();
-    private readonly expirationMap = new Map<number, ReturnType<typeof setTimeout>>();
+    /**
+     * Timestamp before submitting the signal we will trace.
+     */
+    signalTimestamp: number;
 
-    public constructor(private readonly snapshotExpiryPolicy = 120 * 1000) { }
-
-    get(key: number): number | undefined {
-        return this.cache.get(key);
-    }
-
-    put(key: number, value: number) {
-        this.cache.set(key, value);
-        this.expirationMap.set(
-            key,
-            setTimeout(
-                () => {
-                    this.removeSignalFromCaches(key);
-                },
-                this.snapshotExpiryPolicy,
-            ),
-        );
-    }
-
-    public removeAllEntries() {
-        return Array.from(this.cache)
-            .map(([cachekey]) => {
-                this.removeSignalFromCaches(cachekey);
-            });
-    }
-
-    private removeSignalFromCaches(key: number) {
-        this.cache.delete(key);
-        const timeout = this.expirationMap.get(key);
-        if (timeout !== undefined) {
-            clearTimeout(timeout);
-            this.expirationMap.delete(key);
-        }
-    }
+    /**
+     * Next expected Signal Sequence Floor Number. Ex, 1 for 100, 2 for 200, etc.
+     */
+    expectedSignalSequenceFloorNumber: number;
 }
 
 export function ReportOpPerfTelemetry(
