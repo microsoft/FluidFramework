@@ -19,7 +19,7 @@ import {
     LoaderCachingPolicy,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
+import { RateLimiter, NonRetryableError, UsageError } from "@fluidframework/driver-utils";
 import {
     IOdspResolvedUrl,
     ISnapshotOptions,
@@ -190,8 +190,6 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 
     private _snapshotSequenceNumber: number | undefined;
 
-    protected readonly snapshotUrl: string | undefined;
-
     protected readonly blobCache = new BlobCache();
 
     public set ops(ops: api.ISequencedDocumentMessage[] | undefined) {
@@ -205,12 +203,6 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 
     public get snapshotSequenceNumber() {
         return this._snapshotSequenceNumber;
-    }
-
-    constructor(
-        protected readonly odspResolvedUrl: IOdspResolvedUrl,
-    ) {
-        this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
     }
 
     public get repositoryUrl(): string {
@@ -237,10 +229,6 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
-        if (!this.snapshotUrl) {
-            return null;
-        }
-
         let id: string;
         if (!version || !version.id) {
             const versions = await this.getVersions(null, 1);
@@ -289,9 +277,6 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
     }
 
     private async readTree(id: string): Promise<api.ISnapshotTree | null> {
-        if (!this.snapshotUrl) {
-            return null;
-        }
         let tree = this.commitCache.get(id);
         if (!tree) {
             tree = await this.fetchTreeFromSnapshot(id);
@@ -321,7 +306,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
         return summarySnapshotTree;
     }
 
-    protected initializeFromCachedValue(odspSnapshotCacheValue: ISnapshotContents): string | undefined {
+    protected initializeFromSnapshot(odspSnapshotCacheValue: ISnapshotContents): string | undefined {
         this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
         const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
 
@@ -358,6 +343,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
     private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
 
+    private readonly snapshotUrl: string | undefined;
     private readonly attachmentGETUrl: string | undefined;
     private readonly attachmentPOSTUrl: string | undefined;
 
@@ -365,7 +351,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
     private readonly createBlobRateLimiter = new RateLimiter(1);
 
     constructor(
-        odspResolvedUrl: IOdspResolvedUrl,
+        private readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
@@ -375,16 +361,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         private readonly flushCallback: () => Promise<FlushResult>,
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
-        super(
-            odspResolvedUrl,
-        );
+        super();
 
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
+        this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
         this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
         this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
 
         this.odspSummaryUploadManager = new OdspSummaryUploadManager(
-            this.snapshotUrl!,
+            this.snapshotUrl,
             getStorageToken,
             logger,
             epochTracker,
@@ -504,7 +489,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
             // Successful call, make network calls only
             this.firstVersionCall = false;
-            const id = this.initializeFromCachedValue(odspSnapshotCacheValue);
+            const id = this.initializeFromSnapshot(odspSnapshotCacheValue);
 
             return id ? [{ id, treeId: undefined! }] : [];
         }
@@ -647,14 +632,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
         // Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
         if (".protocol" in summary.tree && context.ackHandle !== undefined) {
-            for (let retry = 1; retry <= 4; retry++) {
+            let retry = 1;
+            for (;;) {
                 const result = await this.flushCallback();
                 const seq = result.lastPersistedSequenceNumber;
                 if (seq !== undefined && seq >= context.referenceSequenceNumber) {
                     break;
                 }
 
-                if (retry === 4) {
+                if (retry > 3) {
                     this.logger.sendErrorEvent({
                         eventName: "FlushFailure",
                         ...result,
@@ -671,6 +657,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                     referenceSequenceNumber: context.referenceSequenceNumber,
                 });
 
+                retry++;
                 await delay(1000 * (result.retryAfter ?? 1));
             }
         }
@@ -826,51 +813,67 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
         return response.content;
     }
+
+    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+        if (!this.snapshotUrl) {
+            return null;
+        }
+        return super.getSnapshotTree(version);
+    }
 }
 
 export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceBase {
+    private snapshotTreeId: string | undefined;
+
     constructor(
-        resolvedUrl: IOdspResolvedUrl,
-        _logger: ITelemetryLogger,
-        private readonly fluidFile: Uint8Array | string,
+        private readonly logger: ITelemetryLogger,
+        private readonly localSnapshot: Uint8Array | string,
     ) {
-        super(
-            resolvedUrl,
-        );
+        super();
     }
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
+        assert(blobid === null, "Invalid usage. \"blobid\" should always be null");
+        assert(count === 1, "Invalid usage. \"count\" should always be 1");
+
+        if (this.snapshotTreeId) {
+            return [{ id: this.snapshotTreeId, treeId: undefined! }];
+        }
+
         let snapshotContents: ISnapshotContents;
 
-        if (typeof this.fluidFile === "string") {
-            const content: IOdspSnapshot = JSON.parse(this.fluidFile);
+        if (typeof this.localSnapshot === "string") {
+            const content: IOdspSnapshot = JSON.parse(this.localSnapshot);
             snapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
         } else {
             snapshotContents = parseCompactSnapshotResponse(
-                new ReadBuffer(this.fluidFile));
+                new ReadBuffer(this.localSnapshot));
         }
 
-        const id = this.initializeFromCachedValue(snapshotContents);
-
-        // Look at fetchSnapshot.ts > downloadSnapshot(...)
-        return id ? [{ id, treeId: undefined! }] : [];
+        this.snapshotTreeId = this.initializeFromSnapshot(snapshotContents);
+        return this.snapshotTreeId ? [{ id: this.snapshotTreeId, treeId: undefined! }] : [];
     }
 
     protected async fetchTreeFromSnapshot(id: string): Promise<api.ISnapshotTree | undefined> {
-        return undefined;
+        throw this.getUsageErrorToThrow("fetchTreeFromSnapshot");
     }
 
     protected async fetchBlobFromStorage(blobId: string, evicted: boolean): Promise<ArrayBuffer> {
-        // TODO
-        return new ArrayBuffer(0);
+        throw this.getUsageErrorToThrow("fetchBlobFromStorage");
     }
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
-        throw new Error("TODO: should not try to summarize");
+        throw this.getUsageErrorToThrow("uploadSummaryWithContext");
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
-        throw new Error("TODO: should not try to create a blob");
+        throw this.getUsageErrorToThrow("createBlob");
+    }
+
+    private getUsageErrorToThrow(methodName: string): UsageError {
+        const toThrow = new UsageError(`"${methodName}" is not supported by LocalOdspDocumentStorageService`);
+        this.logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+        return toThrow;
     }
 }
 

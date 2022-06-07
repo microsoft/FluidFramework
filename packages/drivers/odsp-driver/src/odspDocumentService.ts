@@ -21,7 +21,7 @@ import {
     IDocumentServicePolicies,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
+import { DeltaStreamConnectionForbiddenError, NonRetryableError, UsageError } from "@fluidframework/driver-utils";
 import { IFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
@@ -545,7 +545,7 @@ export class LocalOdspDocumentService implements IDocumentService {
     constructor(
         private readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly logger: ITelemetryLogger,
-        private readonly fluidFile: Uint8Array | string,
+        private readonly localSnapshot: Uint8Array | string,
     ) {
         this.policies = { storageOnly: true };
     }
@@ -556,19 +556,19 @@ export class LocalOdspDocumentService implements IDocumentService {
 
     public async connectToStorage(): Promise<IDocumentStorageService> {
         return new LocalOdspDocumentStorageService(
-            this.odspResolvedUrl,
             this.logger,
-            this.fluidFile,
+            this.localSnapshot,
         );
     }
 
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        // TODO: do we expect to call this?
-        throw new Error("Method not implemented.");
+        const toThrow = new UsageError("\"createContainer\" is not supported by LocalOdspDocumentServiceFactory");
+        this.logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+        throw toThrow;
     }
 
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-        // TODO: do we expect to call this?
+        // TODO: we expect this call to be made. see PR
         throw new Error("Method not implemented.");
     }
 

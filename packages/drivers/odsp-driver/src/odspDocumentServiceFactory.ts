@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { UsageError } from "@fluidframework/driver-utils";
 import {
     OdspResourceTokenFetchOptions,
     TokenFetcher,
     IPersistedCache,
     HostStoragePolicy,
-    IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -17,7 +18,7 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
 import { LocalOdspDocumentService } from "./odspDocumentService";
-import { createOdspLogger } from "./odspUtils";
+import { createOdspLogger, getOdspResolvedUrl } from "./odspUtils";
 import { ICacheAndTracker } from "./epochTracker";
 
 /**
@@ -42,15 +43,27 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 }
 
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
+    private logger: TelemetryLogger | undefined;
+
     constructor(
-        private readonly fluidFile: Uint8Array | string,
+        private readonly localSnapshot: Uint8Array | string,
     ) {
         super(
-            async (_options) => { return null; }, // TODO
+            async (_options) => {
+                const toThrow = new UsageError(
+                    "Getting storage token is not supported by LocalOdspDocumentServiceFactory");
+                this.logger?.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+                throw toThrow;
+            },
             undefined,
-            async () => getSocketIo(), // TODO
-            undefined,
-            undefined, // TODO
+            async () => {
+                const toThrow = new UsageError(
+                    "Getting SocketIO Client is not supported by LocalOdspDocumentServiceFactory");
+                this.logger?.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+                throw toThrow;
+            },
+            undefined, // TODO: need to adjust constructor of base class
+            undefined, // TODO: need to adjust constructor of base class
         );
     }
 
@@ -60,12 +73,9 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
         logger?: ITelemetryBaseLogger,
         _clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
-        const odspLogger = createOdspLogger(logger);
-
-        return this.createDocumentServiceCore(
-            this.getFakeOdspResolvedUrl(),
-            odspLogger,
-        );
+        const toThrow = new UsageError("\"createContainer\" is not supported by LocalOdspDocumentServiceFactory");
+        createOdspLogger(logger).sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+        throw toThrow;
     }
 
     protected async createDocumentServiceCore(
@@ -74,33 +84,10 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
         _cacheAndTrackerArg?: ICacheAndTracker,
         _clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
-        return new LocalOdspDocumentService(this.getFakeOdspResolvedUrl(), odspLogger, this.fluidFile);
-    }
-
-    private getFakeOdspResolvedUrl(): IOdspResolvedUrl {
-        return {
-            type: "fluid",
-            odspResolvedUrl: true,
-            id: "1",
-            siteUrl: "fakeUrl",
-            driveId: "1",
-            itemId: "1",
-            // URL to send to fluid, contains the documentId and the path
-            url: "fakeUrl",
-            // A hashed identifier that is unique to this document
-            hashedDocumentId: "1",
-            endpoints: {
-                snapshotStorageUrl: "fakeUrl",
-                attachmentPOSTStorageUrl: "fakeUrl",
-                attachmentGETStorageUrl: "fakeUrl",
-                deltaStorageUrl: "fakeUrl",
-            },
-            // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
-            tokens: {},
-            fileName: "fakeName",
-            summarizer: false,
-            fileVersion: "1",
-        };
+        assert(_cacheAndTrackerArg === undefined, "Invalid usage. \"_cacheAndTrackerArg\" should not be provided");
+        assert(_clientIsSummarizer !== true, "Invalid usage. \"_clientIsSummarizer\" should not be provided");
+        this.logger = odspLogger;
+        return new LocalOdspDocumentService(getOdspResolvedUrl(resolvedUrl), odspLogger, this.localSnapshot);
     }
 }
 

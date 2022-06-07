@@ -42,7 +42,7 @@ export enum ClpCompliantAppHeader {
 }
 
 // @public (undocumented)
-export function createLocalOdspDocumentServiceFactory(fluidFile: Uint8Array | string): IDocumentServiceFactory;
+export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @public
 export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createLinkType?: ShareLinkTypes): IRequest;
@@ -88,7 +88,7 @@ export function isSpoUrl(url: string): boolean;
 
 // @public (undocumented)
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
-    constructor(fluidFile: Uint8Array | string);
+    constructor(localSnapshot: Uint8Array | string);
     // (undocumented)
     createContainer(_createNewSummary: ISummaryTree | undefined, _createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, _clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // Warning: (ae-forgotten-export) The symbol "ICacheAndTracker" needs to be exported by the entry point index.d.ts
