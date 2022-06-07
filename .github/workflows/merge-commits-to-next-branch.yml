@@ -11,8 +11,11 @@ jobs:
   dequeue:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Azure Storage
-        run: npm i @azure/storage-queue
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - run: npm i -g @azure/storage-queue
       - name: Check queue first item
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
@@ -84,8 +87,11 @@ jobs:
     needs: [ createPullRequest ]
     if: ( needs.createPullRequest.result == 'success' )
     steps:
-      - name: Install Azure Queue
-        run: npm i @azure/storage-queue
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - run: npm i -g @azure/storage-queue
       - name: Update Queue label
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
@@ -108,8 +114,11 @@ jobs:
       (needs.createPullRequest.result.action == 'closed' ||
       needs.createPullRequest.result.merged == 'true' )
     steps:
-      - name: Install Azure Queue
-        run: npm i @azure/storage-queue
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - run: npm i -g @azure/storage-queue
       - name: Remove from Queue
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
