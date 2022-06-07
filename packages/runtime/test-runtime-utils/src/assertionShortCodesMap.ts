@@ -621,5 +621,9 @@ export const shortCodeMap = {
     "0x1ec": "No refresh token provided.",
     "0x1ce": "clientId not found",
     "0x1cf": "clientId not found",
-    "0x1d0": "sequenceNumber not found"
+    "0x1d0": "sequenceNumber not found",
+    "0x2e3": "Expected real numbers in minimum version!",
+    "0x2e4": "Expected minimumVersion to be [major].[minor].[patch]",
+    "0x2e5": "Expected version to match semver rules!",
+    "0x2e6": "Expected real numbers in minimum version!"
 };
