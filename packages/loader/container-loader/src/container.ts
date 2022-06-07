@@ -771,7 +771,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
-            protocol: this._protocolHandler.getProtocolState(),
+            protocol: {
+                sequenceNumber: this._protocolHandler.attributes.sequenceNumber,
+                minimumSequenceNumber: this._protocolHandler.attributes.minimumSequenceNumber,
+                ...this._protocolHandler.snapshot(),
+            },
             term: this._protocolHandler.attributes.term,
             clientId: this.clientId,
         };
