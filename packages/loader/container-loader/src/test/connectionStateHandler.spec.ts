@@ -173,6 +173,30 @@ describe("ConnectionStateHandler Tests", () => {
             "Client 2 should be in connected state");
     });
 
+    it("read connection following write connection won't have leave timer", async () => {
+        // Connect a write client, to be Disconnected
+        client.mode = "write";
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client should be in connected state");
+
+        // Disconnect the first client, indicating all pending ops were ack'd
+        shouldClientJoinWrite = false;
+        client.mode = "write";
+        connectionStateHandler.receivedDisconnectEvent("Test");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in disconnected state");
+
+        // Make new client join as read - no waiting for leave since shouldClientJoinWrite is false
+        client.mode = "read";
+        connectionDetails.clientId = "pendingClientId2";
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client 2 should be in connected state");
+    });
+
     it("Should wait for timeout before moving to connected state if no leave received", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);

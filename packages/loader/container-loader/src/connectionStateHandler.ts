@@ -191,7 +191,10 @@ export class ConnectionStateHandler {
         this._connectionState = ConnectionState.CatchingUp;
 
         const writeConnection = connectionMode === "write";
-        assert(writeConnection || !this.waitingForLeaveOp, 0x2a6 /* "should be no timer for 'read' connections" */);
+        assert(writeConnection || !this.handler.shouldClientJoinWrite(),
+            "shouldClientJoinWrite should imply this is a writeConnection");
+        assert(writeConnection || !this.waitingForLeaveOp,
+            0x2a6 /* "waitingForLeaveOp should imply writeConnection (we need to be ready to flush pending ops)" */);
 
         // Note that this may be undefined since the connection is established proactively on load
         // and the quorum may still be under initialization.
@@ -262,7 +265,7 @@ export class ConnectionStateHandler {
             // don't want to reset the timer as we still want to wait on original client which started this timer.
             if (client !== undefined
                 && this.handler.shouldClientJoinWrite()
-                && this.waitingForLeaveOp === false
+                && this.prevClientLeftTimer.hasTimer === false
             ) {
                 this.prevClientLeftTimer.restart();
             } else {
@@ -292,8 +295,12 @@ export class ConnectionStateHandler {
             this.receivedRemoveMemberEvent(clientId);
         });
 
-        // if we have a clientId from a previous container we need to wait for its leave message
-        if (this.clientId !== undefined && protocol.quorum.getMember(this.clientId) !== undefined) {
+        //* Double-check these changes with Wes and add a test
+        // if we have a clientId from a previous container having pending ops, we need to wait for its leave message
+        if (this.clientId !== undefined &&
+            this.handler.shouldClientJoinWrite() &&
+            protocol.quorum.getMember(this.clientId) !== undefined
+        ) {
             this.prevClientLeftTimer.restart();
         }
     }
