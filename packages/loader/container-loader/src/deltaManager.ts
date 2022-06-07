@@ -271,6 +271,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 try {
                     this.enqueueMessages(messages, reason);
                 } catch (error) {
+                    this.logger.sendErrorEvent({ eventName: "EnqueueMessages_Exception" }, error);
                     this.close(normalizeError(error));
                 }
             },
