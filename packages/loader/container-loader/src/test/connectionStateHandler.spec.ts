@@ -48,7 +48,6 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     beforeEach(() => {
-        protocolHandler = new ProtocolOpHandler(0, 0, 1, [], [], [], (key, value) => 0);
         connectionDetails = {
             clientId: pendingClientId,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -72,6 +71,8 @@ describe("ConnectionStateHandler Tests", () => {
             },
             scopes: [],
         };
+        protocolHandler = new ProtocolOpHandler(0, 0, 1, [], [], [], (key, value) => 0);
+        shouldClientJoinWrite = false;
         connectionStateHandler = new ConnectionStateHandler(
             {
                 logConnectionStateChangeTelemetry: () => undefined,

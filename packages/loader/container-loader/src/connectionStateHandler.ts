@@ -295,7 +295,6 @@ export class ConnectionStateHandler {
             this.receivedRemoveMemberEvent(clientId);
         });
 
-        //* Double-check these changes with Wes and add a test
         // if we have a clientId from a previous container having pending ops, we need to wait for its leave message
         if (this.clientId !== undefined &&
             this.handler.shouldClientJoinWrite() &&
