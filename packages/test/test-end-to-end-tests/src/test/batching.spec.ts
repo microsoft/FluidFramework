@@ -104,6 +104,12 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
         dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
         dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 
+        // @ts-expect-error older versions rely on the "setFlushMode" method
+        if (runtimeOptions?.flushMode !== undefined && dataObject1.context.containerRuntime.setFlushMode) {
+            // @ts-expect-error older versions rely on the "setFlushMode" method
+            dataObject1.context.containerRuntime.setFlushMode(runtimeOptions.flushMode);
+        }
+
         await waitForCleanContainers(dataObject1, dataObject2);
         await provider.ensureSynchronized();
     }
