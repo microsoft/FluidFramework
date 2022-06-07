@@ -7,7 +7,9 @@ import generateName from "sillyname";
 import { v4 as uuid } from "uuid";
 
 /**
- * Create a new user object with a unique id (uuid) and random name (FIRST LAST)
+ * Create a new user object with a unique id
+ * ({@link https://en.wikipedia.org/wiki/Universally_unique_identifier | uuid}) and random name (FIRST LAST)
+ *
  * @returns a user object with a name and id property
  */
 export const generateTestUser = (): IUser & { name: string; } => {
