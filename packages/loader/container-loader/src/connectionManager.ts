@@ -619,6 +619,7 @@ export class ConnectionManager implements IConnectionManager {
         this.pendingConnection = undefined;
 
         if (this.closed || abortSignal.aborted === true) {
+            connection.dispose();
             return;
         }
 
