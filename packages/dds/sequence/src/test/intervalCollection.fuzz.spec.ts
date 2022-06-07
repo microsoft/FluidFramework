@@ -405,6 +405,10 @@ function runIntervalCollectionFuzz(
 
 const directory = path.join(__dirname, "../../src/test/results");
 
+function getPath(seed: number): string {
+    return path.join(directory, `${seed}.json`);
+}
+
 // Once known issues with SharedInterval are fixed, a small set of fuzz tests with reasonably-tuned parameters
 // should be enabled.
 describe.skip("IntervalCollection fuzz testing", () => {
@@ -417,7 +421,6 @@ describe.skip("IntervalCollection fuzz testing", () => {
     function runTests(seed: number, generator: Generator<Operation, FuzzTestState>, loggingInfo?: LoggingInfo): void {
         it(`with default config, seed ${seed}`, async () => {
             const numClients = 3;
-            const filepath = path.join(directory, `${seed}.json`);
 
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const sharedStrings = Array.from({ length: numClients }, (_, index) => {
@@ -447,14 +450,14 @@ describe.skip("IntervalCollection fuzz testing", () => {
             runIntervalCollectionFuzz(
                 generator,
                 initialState,
-                { saveOnFailure: true, filepath },
+                { saveOnFailure: true, filepath: getPath(seed) },
                 loggingInfo,
             );
         });
     }
 
     function replayTestFromFailureFile(seed: number, loggingInfo?: LoggingInfo) {
-        const filepath = path.join(directory, `${seed}.json`);
+        const filepath = getPath(seed);
         let operations: Operation[];
         try {
             operations = JSON.parse(readFileSync(filepath).toString());
