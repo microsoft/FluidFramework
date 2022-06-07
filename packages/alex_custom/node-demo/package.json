@@ -1,0 +1,21 @@
+{
+  "name": "@fluid-example/node-demo",
+  "version": "0.1.0",
+  "repository": "microsoft/FluidExamples",
+  "main": "./src/index.js",
+  "scripts": {
+    "build": "npm build",
+    "start:client": "node ./src/index.js",
+    "start:server": "npx tinylicious@latest",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:report": "echo No test for this example"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@fluidframework/tinylicious-client": "^1.0.0",
+    "fluid-framework": "^1.0.0",
+    "@fluidframework/map": "^1.0.0",
+    "@fluidframework/new-map": "^1.0.0"
+  },
+  "type": "module"
+}
