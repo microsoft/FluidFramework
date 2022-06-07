@@ -118,8 +118,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
         if (message.clientId != null) {
             if (client === undefined && message.type !== MessageType.ClientJoin) {
                 // pre-0.58 error message: messageClientIdMissingFromQuorum
-                // TODO check if the message data propagates properly,
-                // like a data corruption error.
                 throw new Error("Remote message's clientId is missing from the quorum");
             }
 
