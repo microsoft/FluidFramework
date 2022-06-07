@@ -441,6 +441,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
+     * @deprecated - Should not be exposed externally
      * Binds this runtime to the container
      * This includes the following:
      * 1. Sending an Attach op that includes all existing state

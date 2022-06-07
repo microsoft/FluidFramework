@@ -232,6 +232,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
+    /** @deprecated - use makeVisible */
     public readonly bindToContext: () => void;
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
