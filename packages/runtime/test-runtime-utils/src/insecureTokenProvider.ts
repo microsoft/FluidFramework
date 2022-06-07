@@ -20,7 +20,8 @@ export class InsecureTokenProvider implements ITokenProvider {
         private readonly tenantKey: string,
 
         /**
-         * TODO
+         * User with whom generated tokens will be associated.
+         * @see {@link generateToken}.
          */
         private readonly user: IUser,
     ) {
