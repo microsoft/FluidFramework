@@ -31,22 +31,12 @@ const assertIntervals = (
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
 
-    for (const actualInterval of actual) {
-        const start = sharedString.localRefToPos(actualInterval.start);
-        const end = sharedString.localRefToPos(actualInterval.end);
-        let found = false;
-
-        // console.log(`[${start},${end}): ${sharedString.getText().slice(start, end)}`);
-
-        for (const expectedInterval of expected) {
-            if (expectedInterval.start === start && expectedInterval.end === end) {
-                found = true;
-                break;
-            }
-        }
-
-        assert(found, `Unexpected interval [${start}..${end}) (expected ${JSON.stringify(expected)})`);
-    }
+    const actualPos = actual.map((interval) => {
+        const start = sharedString.localRefToPos(interval.start);
+        const end = sharedString.localRefToPos(interval.end);
+        return { start, end };
+    });
+    assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
 function assertIntervalEquals(
@@ -711,6 +701,8 @@ describe("SharedString interval collections", () => {
                 collection.add(2, 5, IntervalType.SlideOnRemove);
                 const initiallyLargest = collection.add(3, 4, IntervalType.SlideOnRemove);
                 sharedString.removeRange(1, 4);
+                // Interval slide doesn't happen until creation is acked, so interval sort order
+                // is still by start position, which do not compare equal despite all appearing to be 1
                 assertIntervals(sharedString, collection, [
                     { start: 1, end: 3 },
                     { start: 1, end: 2 },
@@ -722,9 +714,10 @@ describe("SharedString interval collections", () => {
                     { start: 1, end: 2 },
                 ]);
                 containerRuntimeFactory.processAllMessages();
+                // After processing messages, intervals slide and order is as expected.
                 assertIntervals(sharedString, collection, [
-                    { start: 1, end: 3 },
                     { start: 1, end: 2 },
+                    { start: 1, end: 3 },
                 ]);
             });
 
@@ -740,19 +733,19 @@ describe("SharedString interval collections", () => {
                 ]);
                 containerRuntimeFactory.processAllMessages();
                 assertIntervals(sharedString, collection, [
-                    { start: 1, end: 3 },
-                    { start: 1, end: 2 },
                     { start: 1, end: 1 },
+                    { start: 1, end: 2 },
+                    { start: 1, end: 3 },
                 ]);
                 collection.removeIntervalById(initiallyLargest.getIntervalId());
                 assertIntervals(sharedString, collection, [
-                    { start: 1, end: 3 },
                     { start: 1, end: 2 },
+                    { start: 1, end: 3 },
                 ]);
                 containerRuntimeFactory.processAllMessages();
                 assertIntervals(sharedString, collection, [
-                    { start: 1, end: 3 },
                     { start: 1, end: 2 },
+                    { start: 1, end: 3 },
                 ]);
             });
 
@@ -805,6 +798,44 @@ describe("SharedString interval collections", () => {
                 assertIntervals(sharedString, collection, [
                     { start: 0, end: 1 },
                     { start: 0, end: 1 },
+                ]);
+            });
+
+            it("retains intervalTree coherency after slide on create ack", () => {
+                // The code in createAck needs to change the reference positions for an interval.
+                // The test verifies that is done correctly and that the listener is added
+                // to fix the interval position on subsequent slide.
+                containerRuntimeFactory.processAllMessages();
+                collection.add(4, 4, IntervalType.SlideOnRemove);
+                collection.add(4, 5, IntervalType.SlideOnRemove);
+
+                sharedString2.removeRange(1, 2);
+
+                const initiallySmallest = collection.add(1, 6, IntervalType.SlideOnRemove);
+
+                sharedString2.removeRange(1, 3);
+
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 6 },
+                    { start: 4, end: 4 },
+                    { start: 4, end: 5 },
+                ]);
+
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 1 },
+                    { start: 1, end: 2 },
+                    { start: 1, end: 3 },
+                ]);
+                collection.removeIntervalById(initiallySmallest.getIntervalId());
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 1 },
+                    { start: 1, end: 2 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 1 },
+                    { start: 1, end: 2 },
                 ]);
             });
         });

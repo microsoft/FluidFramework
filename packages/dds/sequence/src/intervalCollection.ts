@@ -224,11 +224,25 @@ implements ISerializableInterval {
             this.addProperties(props);
         }
 
+        // It's possible that both the start and end position slide at the same time.
+        // In that case we notify before on the first before notification and after
+        // on the last after notification.
+        let slideCount = 0;
+        const beforeSlide = () => {
+            assert(slideCount < 2, "more beforeSlide notifications than start and end");
+            if (++slideCount === 1) {
+                this.emit("beforePositionChange");
+            }
+        };
+        const afterSlide = () => {
+            assert(slideCount > 0, "unmatched afterSlide");
+            if (--slideCount === 0) {
+                this.emit("afterPositionChange");
+            }
+        };
         // Only listen to events from the positions when there is a listener on this.
         // This is particularly important since SequenceIntervals are cloned when put in the
         // interval trees and we don't want to listen on the clones.
-        const beforeSlide = () => this.emit("beforePositionChange");
-        const afterSlide = () => this.emit("afterPositionChange");
         super.on("newListener", (event) => {
             switch (event) {
                 case "beforePositionChange":
@@ -709,6 +723,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         const newInterval = interval.modify(this.label, start, end, op) as TInterval | undefined;
         if (newInterval) {
             this.removeExistingInterval(interval);
+            this.removeIntervalListeners(interval);
             this.add(newInterval);
             this.addIntervalListeners(newInterval);
         }
@@ -721,10 +736,17 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return intervals.map((interval) => interval.serialize(client));
     }
 
-    private addIntervalListeners(interval: TInterval) {
+    public addIntervalListeners(interval: TInterval) {
         if (interval instanceof SequenceInterval) {
             interval.on("beforePositionChange", () => this.removeExistingInterval(interval));
             interval.on("afterPositionChange", () => this.add(interval));
+        }
+    }
+
+    public removeIntervalListeners(interval: TInterval) {
+        if (interval instanceof SequenceInterval) {
+            interval.removeAllListeners("beforePositionChange");
+            interval.removeAllListeners("afterPositionChange");
         }
     }
 }
@@ -1005,6 +1027,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     private deleteExistingInterval(interval: TInterval, local: boolean, op: ISequencedDocumentMessage) {
         // The given interval is known to exist in the collection.
         this.localCollection.removeExistingInterval(interval);
+        this.localCollection.removeIntervalListeners(interval);
+
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
@@ -1266,20 +1290,27 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.setSlideOnRemove(interval.end);
 
         if (newStart || newEnd) {
+            // In this case, where we change the start or end of an interval,
+            // it is necessary to remove and re-add the interval listeners.
+            // This ensures that the correct listeners are added to the ReferencePosition.
             this.localCollection.removeExistingInterval(interval);
+            this.localCollection.removeIntervalListeners(interval);
+
             if (newStart) {
                 const props = interval.start.properties;
+                this.client.removeLocalReferencePosition(interval.start);
                 interval.start = createPositionReferenceFromSegoff(this.client, newStart, interval.start.refType, op);
                 interval.start.addProperties(props);
             }
             if (newEnd) {
                 const props = interval.end.properties;
+                this.client.removeLocalReferencePosition(interval.end);
                 interval.end = createPositionReferenceFromSegoff(this.client, newEnd, interval.end.refType, op);
                 interval.end.addProperties(props);
             }
             this.localCollection.add(interval);
+            this.localCollection.addIntervalListeners(interval);
         }
-        // TODO:ransomr add slide listener
     }
 
     /** @deprecated - use ackAdd */
