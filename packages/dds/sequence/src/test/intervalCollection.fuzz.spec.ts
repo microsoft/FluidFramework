@@ -30,11 +30,12 @@ import { SharedString } from "../sharedString";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 
+const testCount = 10;
+
 interface Client {
     sharedString: SharedString;
     containerRuntime: MockContainerRuntimeForReconnection;
 }
-
 interface FuzzTestState extends BaseFuzzTestState {
     containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
     clients: Client[];
@@ -261,15 +262,15 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return true;
     };
 
-    const and = <T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
+    const all = <T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
         (t: T) => clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
 
     const clientBaseOperationGenerator = createWeightedGenerator<Operation, ClientOpState>([
         [addText, 2, isShorterThanMaxLength],
         [removeRange, 1, hasNonzeroLength],
-        [addInterval, 2, and(hasNotTooManyIntervals, hasNonzeroLength)],
+        [addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
         [deleteInterval, 2, hasAnInterval],
-        [changeInterval, 2, and(hasAnInterval, hasNonzeroLength)],
+        [changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
         [changeConnectionState, 1]
     ]);
 
@@ -290,93 +291,95 @@ interface LoggingInfo {
     clientIds: string[];
 }
 
+function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
+    for (const id of loggingInfo.clientIds) {
+        const { sharedString } = state.clients.find(s => s.sharedString.id === id);
+        const labels = getUnscopedLabels(sharedString);
+        const interval = Array.from(labels)
+            .map((label) =>
+                sharedString.getIntervalCollection(label).getIntervalById(loggingInfo.intervalId))
+            .find((result) => result !== undefined);
+
+        console.log(`Client ${id}:`);
+        if (interval !== undefined) {
+            const start = sharedString.localReferencePositionToPosition(interval.start);
+            const end = sharedString.localReferencePositionToPosition(interval.end);
+            if (end === start) {
+                console.log(`${" ".repeat(start) }x`);
+            } else {
+                console.log(`${" ".repeat(start) }[${ " ".repeat(end - start - 1) }]`);
+            }
+        }
+        console.log(sharedString.getText());
+        console.log("\n");
+    }
+}
+
+/**
+ * Validates that all shared strings in the provided array are consistent in the underlying text
+ * and location of all intervals in any interval collections they have.
+ * */
+function assertConsistent(clients: Client[]): void {
+    const connectedClients = clients.filter(client => client.containerRuntime.connected);
+    if (connectedClients.length < 2) {
+        // No two strings are expected to be consistent.
+        return;
+    }
+    const first = connectedClients[0].sharedString;
+    for (const { sharedString: other } of connectedClients.slice(1)) {
+    assert.equal(first.getLength(), other.getLength());
+        assert.equal(
+            first.getText(),
+            other.getText(),
+            `Non-equal text between strings ${first.id} and ${other.id}.`,
+        );
+        const firstLabels = Array.from(getUnscopedLabels(first)).sort();
+        const otherLabels = Array.from(getUnscopedLabels(other)).sort();
+        assert.deepEqual(
+            firstLabels,
+            otherLabels,
+            `Different interval collections found between ${first.id} and ${other.id}.`,
+        );
+        for (let i = 0; i < firstLabels.length; i++) {
+            const collection1 = first.getIntervalCollection(firstLabels[i]);
+            const collection2 = other.getIntervalCollection(otherLabels[i]);
+            const intervals1 = Array.from(collection1);
+            const intervals2 = Array.from(collection2);
+            assert.equal(
+                intervals1.length,
+                intervals2.length,
+                `Different number of intervals found in ${first.id} and ${other.id}` +
+                ` at collection ${firstLabels[i]}`,
+            );
+            for (const interval of intervals1) {
+                const otherInterval = collection2.getIntervalById(interval.getIntervalId());
+                const firstStart = first.localRefToPos(interval.start);
+                const otherStart = other.localRefToPos(otherInterval.start);
+                assert.equal(firstStart, otherStart,
+                    `Startpoints of interval ${interval.getIntervalId()} different:\n` +
+                    `\tfull text:${first.getText()}\n` +
+                    `\tclient ${first.id} char:${first.getText(firstStart, firstStart + 1)}\n` +
+                    `\tclient ${other.id} char:${other.getText(otherStart, otherStart + 1)}`);
+                const firstEnd = first.localRefToPos(interval.end);
+                const otherEnd = other.localRefToPos(otherInterval.end);
+                assert.equal(firstEnd, otherEnd,
+                    `Endpoints of interval ${interval.getIntervalId()} different:\n` +
+                    `\tfull text:${first.getText()}\n` +
+                    `\tclient ${first.id} char:${first.getText(firstEnd, firstEnd + 1)}\n` +
+                    `\tclient ${other.id} char:${other.getText(otherEnd, otherEnd + 1)}`);
+                assert.equal(interval.intervalType, otherInterval.intervalType);
+                assert.deepEqual(interval.properties, otherInterval.properties);
+            }
+        }
+    }
+}
+
 function runIntervalCollectionFuzz(
     generator: Generator<Operation, FuzzTestState>,
     initialState: FuzzTestState,
     saveInfo?: SaveInfo,
-    loggingInfo?: LoggingInfo
+    loggingInfo?: LoggingInfo,
 ): void {
-    // Validates that all shared strings in the provided array are consistent in the underlying text
-    // and location of all intervals in any interval collections they have.
-    function assertConsistent(clients: Client[]): void {
-        const connectedClients = clients.filter(client => client.containerRuntime.connected);
-        if (connectedClients.length < 2) {
-            // No two strings are expected to be consistent.
-            return;
-        }
-        const first = connectedClients[0].sharedString;
-        for (const { sharedString: other } of connectedClients.slice(1)) {
-            assert.equal(first.getLength(), other.getLength());
-            assert.equal(
-                first.getText(),
-                other.getText(),
-                `Non-equal text between strings ${first.id} and ${other.id}.`,
-            );
-            const firstLabels = Array.from(getUnscopedLabels(first)).sort();
-            const otherLabels = Array.from(getUnscopedLabels(other)).sort();
-            assert.deepEqual(
-                firstLabels,
-                otherLabels,
-                `Different interval collections found between ${first.id} and ${other.id}.`,
-            );
-            for (let i = 0; i < firstLabels.length; i++) {
-                const collection1 = first.getIntervalCollection(firstLabels[i]);
-                const collection2 = other.getIntervalCollection(otherLabels[i]);
-                const intervals1 = Array.from(collection1);
-                const intervals2 = Array.from(collection2);
-                assert.equal(
-                    intervals1.length,
-                    intervals2.length,
-                    `Different number of intervals found in ${first.id} and ${other.id}` +
-                    ` at collection ${firstLabels[i]}`,
-                );
-                for (const interval of intervals1) {
-                    const otherInterval = collection2.getIntervalById(interval.getIntervalId());
-                    const firstStart = first.localRefToPos(interval.start);
-                    const otherStart = other.localRefToPos(otherInterval.start);
-                    assert.equal(firstStart, otherStart,
-                        `Startpoints of interval ${interval.getIntervalId()} different:\n` +
-                        `\tfull text:${first.getText()}\n` +
-                        `\tclient ${first.id} char:${first.getText(firstStart, firstStart + 1)}\n` +
-                        `\tclient ${other.id} char:${other.getText(otherStart, otherStart + 1)}`);
-                    const firstEnd = first.localRefToPos(interval.end);
-                    const otherEnd = other.localRefToPos(otherInterval.end);
-                    assert.equal(firstEnd, otherEnd,
-                        `Endpoints of interval ${interval.getIntervalId()} different:\n` +
-                        `\tfull text:${first.getText()}\n` +
-                        `\tclient ${first.id} char:${first.getText(firstEnd, firstEnd + 1)}\n` +
-                        `\tclient ${other.id} char:${other.getText(otherEnd, otherEnd + 1)}`);
-                    assert.equal(interval.intervalType, otherInterval.intervalType);
-                    assert.deepEqual(interval.properties, otherInterval.properties);
-                }
-            }
-        }
-    }
-
-    function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
-        for (const id of loggingInfo.clientIds) {
-            const { sharedString } = state.clients.find(s => s.sharedString.id === id);
-            const labels = getUnscopedLabels(sharedString);
-            const interval = Array.from(labels)
-                .map((label) =>
-                    sharedString.getIntervalCollection(label).getIntervalById(loggingInfo.intervalId))
-                .find((interval) => interval !== undefined);
-
-            console.log(`Client ${id}:`);
-            if (interval !== undefined) {
-                const start = sharedString.localReferencePositionToPosition(interval.start);
-                const end = sharedString.localReferencePositionToPosition(interval.end);
-                if (end === start) {
-                    console.log(' '.repeat(start) + 'x');
-                } else {
-                    console.log(' '.repeat(start) + '[' + ' '.repeat(end - start - 1) + ']');
-                }
-            }
-            console.log(sharedString.getText());
-            console.log('\n');
-        }
-    }
-
     // Small wrapper to avoid having to return the same state repeatedly; all operations in this suite mutate.
     // Also a reasonable point to inject logging of incremental state.
     const statefully =
@@ -384,7 +387,7 @@ function runIntervalCollectionFuzz(
             (state, operation) => {
                 if (loggingInfo !== undefined) {
                     logCurrentState(state, loggingInfo);
-                    console.log('-'.repeat(20));
+                    console.log("-".repeat(20));
                     console.log("Next operation:", JSON.stringify(operation, undefined, 4));
                 }
                 statefulReducer(state, operation);
@@ -433,6 +436,10 @@ function runIntervalCollectionFuzz(
 
 const directory = path.join(__dirname, "../../src/test/results");
 
+function getPath(seed: number): string {
+    return path.join(directory, `${seed}.json`);
+}
+
 // Once known issues with SharedInterval are fixed, a small set of fuzz tests with reasonably-tuned parameters
 // should be enabled.
 describe.skip("IntervalCollection fuzz testing", () => {
@@ -445,7 +452,6 @@ describe.skip("IntervalCollection fuzz testing", () => {
     function runTests(seed: number, generator: Generator<Operation, FuzzTestState>, loggingInfo?: LoggingInfo): void {
         it(`with default config, seed ${seed}`, async () => {
             const numClients = 3;
-            const filepath = path.join(directory, `${seed}.json`);
 
             const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
             const clients = Array.from({ length: numClients }, (_, index) => {
@@ -475,14 +481,14 @@ describe.skip("IntervalCollection fuzz testing", () => {
             runIntervalCollectionFuzz(
                 generator,
                 initialState,
-                { saveOnFailure: true, filepath },
-                loggingInfo
+                { saveOnFailure: true, filepath: getPath(seed) },
+                loggingInfo,
             );
         });
     }
 
     function replayTestFromFailureFile(seed: number, loggingInfo?: LoggingInfo) {
-        const filepath = path.join(directory, `${seed}.json`);
+        const filepath = getPath(seed);
         let operations: Operation[];
         try {
             operations = JSON.parse(readFileSync(filepath).toString());
@@ -499,19 +505,18 @@ describe.skip("IntervalCollection fuzz testing", () => {
         }
 
         const generator = generatorFromArray(operations);
-        runTests(seed, generator);
+        runTests(seed, generator, loggingInfo);
     }
 
-    const testCount = 10;
     for (let i = 0; i < testCount; i++) {
         const generator = take(30, makeOperationGenerator({ validateInterval: 10 }));
         runTests(i, generator);
     }
 
-    // Change this seed and unskip the block to replay the actions from JSON on-disk.
-    // This can be useful for quickly minimizing failure json while attempting to root cause.
+    // Change this seed and unskip the block to replay the actions from JSON on disk.
+    // This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
     describe.skip("replay specific seed", () => {
-        const seedToReplay = 37;
+        const seedToReplay = 0;
         replayTestFromFailureFile(
             seedToReplay,
             // The following line can be uncommented for useful logging output which tracks the provided
