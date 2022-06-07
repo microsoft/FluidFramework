@@ -74,11 +74,19 @@ export function getGitType(value: SummaryObject): "blob" | "tree";
 export function getQuorumTreeEntries(documentId: string, minimumSequenceNumber: number, sequenceNumber: number, term: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
 
 // @public (undocumented)
+export interface ILocalSequencedClient extends ISequencedClient {
+    // (undocumented)
+    shouldHaveLeft?: boolean;
+}
+
+// @public (undocumented)
 export interface IProtocolHandler {
     // (undocumented)
     readonly attributes: IDocumentAttributes;
     // (undocumented)
     close(): void;
+    // (undocumented)
+    getProtocolState(): IScribeProtocolState;
     // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)

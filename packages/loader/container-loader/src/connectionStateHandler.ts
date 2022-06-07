@@ -6,8 +6,8 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
-import { IProtocolHandler } from "@fluidframework/protocol-base";
-import { ConnectionMode, IQuorumClients, ILocalSequencedClient } from "@fluidframework/protocol-definitions";
+import { IProtocolHandler, ILocalSequencedClient } from "@fluidframework/protocol-base";
+import { ConnectionMode, IQuorumClients } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 

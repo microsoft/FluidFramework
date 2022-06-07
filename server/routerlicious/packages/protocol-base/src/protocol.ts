@@ -10,7 +10,6 @@ import {
     IProcessMessageResult,
     IProposal,
     IQuorum,
-    ILocalSequencedClient,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -57,6 +56,7 @@ export interface IProtocolHandler {
 
     close(): void;
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+    getProtocolState(): IScribeProtocolState;
 }
 
 export type ProtocolHandlerBuilder = (
