@@ -1873,13 +1873,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Emits the Signal event and update the perf signal data.
-     * @param clientSignalSequenceNumber is the client signal sequence number to be uploaded.
+     * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
      */
-    private emitSignalEvent(clientSignalSequenceNumber: number)
-    {
+    private emitSignalEvent(clientSignalSequenceNumber: number) {
         const currentSequence = Math.floor(clientSignalSequenceNumber / this.defaultTelemetrySignalSampleCount);
         // Check to see if we missed the previous sequence number.
-        if (this._perfSignalData.expectedSignalSequenceFloorNumber !==  currentSequence) {
+        if (this._perfSignalData.expectedSignalSequenceFloorNumber !== currentSequence) {
             this._perfSignalData.signalsLost++;
         }
 
