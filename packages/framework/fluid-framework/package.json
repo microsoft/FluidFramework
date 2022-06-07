@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,10 +35,10 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^1.0.0",
-    "@fluidframework/fluid-static": "^1.0.0",
-    "@fluidframework/map": "^1.0.0",
-    "@fluidframework/sequence": "^1.0.0"
+    "@fluidframework/container-definitions": "^1.1.0",
+    "@fluidframework/fluid-static": "^1.1.0",
+    "@fluidframework/map": "^1.1.0",
+    "@fluidframework/sequence": "^1.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -59,10 +59,19 @@
   "typeValidation": {
     "version": "1.0.0",
     "broken": {
-      "InterfaceDeclaration_IFluidContainer": {"backCompat": false, "forwardCompat": false},
-      "ClassDeclaration_FluidContainer": {"backCompat": false},
-      "ClassDeclaration_SequenceInterval": {"backCompat": false},
-      "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false}
+      "InterfaceDeclaration_IFluidContainer": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_FluidContainer": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceInterval": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_SharedStringSegment": {
+        "backCompat": false
+      }
     },
     "disabled": false
   }

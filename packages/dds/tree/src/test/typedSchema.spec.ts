@@ -8,7 +8,7 @@
 import { typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo } from "../schema/typedSchema";
 
 import { FieldKind, ValueSchema } from "../schema";
-import { requireTrue } from "../typeCheck";
+import { requireTrue } from "../util";
 
 // These tests currently just cover the type checking, so its all compile time.
 
