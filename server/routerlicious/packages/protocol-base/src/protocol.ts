@@ -61,8 +61,6 @@ export interface IProtocolHandler {
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
 }
 
-
-
 /**
  * Handles protocol specific ops.
  */
