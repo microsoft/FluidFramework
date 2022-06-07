@@ -789,6 +789,21 @@ describe("SharedString interval collections", () => {
             assert.equal(Array.from(collection1).length, 0);
             assert.equal(Array.from(collection2).length, 0);
         });
+
+        it.only("remains consistent on add+change with concurrent remove", () => {
+            // WIP: oddly, doesn't repro.
+            sharedString.insertText(0, "ABCDEF");
+            const collection1 = sharedString.getIntervalCollection("test");
+            const collection2 = sharedString2.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+            sharedString.removeRange(3, 6);
+            const interval = collection2.add(3, 4, IntervalType.SlideOnRemove);
+            collection2.change(interval.getIntervalId(), 1, 5);
+            containerRuntimeFactory.processAllMessages();
+            assert.equal(sharedString.getText(), "ABC");
+            assertIntervals(sharedString, collection1, [{ start: 1, end: 2 }]);
+            assertIntervals(sharedString2, collection2, [{ start: 1, end: 2 }]);
+        });
     });
 
     // TODO: Enable this test suite once correctness issues with reconnect are addressed.
