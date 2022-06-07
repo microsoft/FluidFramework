@@ -972,5 +972,5 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
   }
 
-const StyledInspectorTable = withStyles(styles, { name: "InspectorTable" })(InspectorTable);
+const StyledInspectorTable = withStyles(styles, { name: "InspectorTable" })(InspectorTable as any);
 export { StyledInspectorTable as InspectorTable };

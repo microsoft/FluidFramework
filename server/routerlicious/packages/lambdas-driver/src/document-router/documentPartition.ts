@@ -15,7 +15,6 @@ import {
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { QueueObject, queue } from "async";
-import * as _ from "lodash";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {

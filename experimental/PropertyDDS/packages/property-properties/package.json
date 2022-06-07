@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-properties",
-  "version": "0.59.4000",
+  "version": "1.1.0",
   "description": "definitions of properties",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -61,8 +61,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": "^0.59.4000",
-    "@fluid-experimental/property-common": "^0.59.4000",
+    "@fluid-experimental/property-changeset": "^1.1.0",
+    "@fluid-experimental/property-common": "^1.1.0",
     "ajv": "7.1.1",
     "async": "^3.2.0",
     "fastest-json-copy": "^1.0.1",
@@ -73,22 +73,12 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/mocha-test-setup": "^0.59.4000",
+    "@fluidframework/mocha-test-setup": "^1.1.0",
     "@types/mocha": "^9.1.1",
     "chai": "^4.2.0",
     "concurrently": "^6.2.0",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
-    "eslint-plugin-editorconfig": "~3.2.0",
-    "eslint-plugin-eslint-comments": "~3.2.0",
-    "eslint-plugin-import": "~2.25.4",
-    "eslint-plugin-jest": "~26.1.3",
-    "eslint-plugin-jsdoc": "~39.3.0",
-    "eslint-plugin-mocha": "~10.0.3",
-    "eslint-plugin-promise": "~6.0.0",
-    "eslint-plugin-react": "~7.28.0",
-    "eslint-plugin-tsdoc": "~0.2.14",
-    "eslint-plugin-unicorn": "~40.0.0",
     "mocha": "^10.0.0",
     "nock": "^10.0.1",
     "nyc": "^15.0.0",
