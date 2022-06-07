@@ -296,7 +296,15 @@ export interface IDocumentServiceFactory {
     protocolName: string;
 
     /**
-     * Returns an instance of IDocumentService
+     * Creates the document service after extracting different endpoints URLs from a resolved URL.
+     *
+     * @param resolvedUrl - Endpoint URL data. @see {@link IResolvedUrl}.
+     * @param logger - Optional telemetry logger to which telemetry events will be forwarded.
+     * @param clientIsSummarizer - Whether or not the client is the
+     * {@link https://fluidframework.com/docs/concepts/summarizer/ | summarizer}.
+     * `undefined` =\> false
+     *
+     * @returns An instance of {@link IDocumentService}.
      */
      createDocumentService(
         resolvedUrl: IResolvedUrl,
@@ -306,8 +314,14 @@ export interface IDocumentServiceFactory {
 
     /**
      * Creates a new document with the provided options. Returns the document service.
+     *
      * @param createNewSummary - Summary used to create file. If undefined, an empty file will be created and a summary
      * should be posted later, before connecting to ordering service.
+     * @param createNewResolvedUrl - Endpoint URL data. @see {@link IResolvedUrl}.
+     * @param logger - Optional telemetry logger to which telemetry events will be forwarded.
+     * @param clientIsSummarizer - Whether or not the client is the
+     * {@link https://fluidframework.com/docs/concepts/summarizer/ | summarizer}.
+     * `undefined` =\> false
      */
     createContainer(
         createNewSummary: ISummaryTree | undefined,

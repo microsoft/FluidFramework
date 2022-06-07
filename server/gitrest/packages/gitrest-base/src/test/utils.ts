@@ -12,9 +12,10 @@ export type gitLibType = "nodegit" | "isomorphic-git";
 export interface ITestMode {
     name: string;
     gitLibrary: gitLibType;
+    repoPerDocEnabled: boolean;
 }
 
-export const defaultProvider = new nconf.Provider({}).defaults({
+export const defaultProvider = new nconf.Provider({}).use("memory").defaults({
     logger: {
         colorize: true,
         json: false,

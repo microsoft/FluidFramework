@@ -622,7 +622,7 @@ class ScheduleManagerCore {
 
     private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
         const endBatch = messageEndBatch.sequenceNumber;
-        const duration = performance.now() - this.timePaused;
+        const duration = this.localPaused ? (performance.now() - this.timePaused) : undefined;
 
         this.batchCount++;
         if (this.batchCount % 1000 === 1) {
@@ -645,7 +645,7 @@ class ScheduleManagerCore {
         this.localPaused = false;
 
         // Random round number - we want to know when batch waiting paused op processing.
-        if (duration > latencyThreshold) {
+        if (duration !== undefined && duration > latencyThreshold) {
             this.logger.sendErrorEvent({
                 eventName: "MaxBatchWaitTimeExceeded",
                 duration,
@@ -1692,6 +1692,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.logger.sendTelemetryEvent({
                 eventName: "ReconnectsWithNoProgress",
                 attempts: this.consecutiveReconnects,
+                pendingMessages: this.pendingStateManager.pendingMessagesCount,
             });
         }
 
@@ -1766,7 +1767,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
                     "Runtime detected too many reconnects with no progress syncing local ops",
                     undefined, // error
-                    { attempts: this.consecutiveReconnects }));
+                    {
+                        attempts: this.consecutiveReconnects,
+                        pendingMessages: this.pendingStateManager.pendingMessagesCount,
+                    }));
                 return;
             }
         }
