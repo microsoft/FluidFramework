@@ -325,22 +325,103 @@ describe("Quorum", () => {
             quorum2.connect(services2);
         });
 
-        describe("Behavior transitioning to disconnect", () => {
-            it("Can do something", async () => {
-                assert.strict(true);
-            });
+        // TODO: Consider if there's any value in distinctly testing these scenarios for acceptance via
+        // accept ops vs. via the last expected signoff disconnecting.
+        it("Doesn't resubmit accept ops that were sent before offline", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "expected");
+            // This should cause quorum2 to produce an accept op but...
+            containerRuntimeFactory.processSomeMessages(1); // quorum1 "set"
+            // We disconnect before it gets processed.
+            containerRuntime2.connected = false;
+            containerRuntime2.connected = true;
+            // Processing an unexpected accept will error and fail the test
+            containerRuntimeFactory.processAllMessages();
         });
 
-        describe("Behavior while disconnected", () => {
-            it("Can do something", async () => {
-                assert.strict(true);
-            });
+        // eslint-disable-next-line max-len
+        it("Doesn't resubmit unsequenced proposals that were sent before offline but are futile after reconnect", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "unexpected");
+            containerRuntime1.connected = false;
+            containerRuntimeFactory.processAllMessages();
+            quorum2.set(targetKey, "expected");
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+            assert.strictEqual(quorum1.get(targetKey), undefined, "Quorum1 should not see any value");
+            containerRuntime1.connected = true;
+            assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 0, "Should not have generated an op");
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
         });
 
-        describe("Behavior transitioning to connected", () => {
-            it("Can do something", async () => {
-                assert.strict(true);
-            });
+        // eslint-disable-next-line max-len
+        it("Unsequenced proposals sent before offline and still valid after reconnect are accepted after reconnect", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "expected");
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+        });
+
+        // eslint-disable-next-line max-len
+        it("Doesn't resubmit unsequenced proposals that were sent during offline but are futile after reconnect", async () => {
+            const targetKey = "key";
+            containerRuntime1.connected = false;
+            quorum1.set(targetKey, "unexpected");
+            containerRuntimeFactory.processAllMessages();
+            quorum2.set(targetKey, "expected");
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+            assert.strictEqual(quorum1.get(targetKey), undefined, "Quorum1 should not see any value");
+            containerRuntime1.connected = true;
+            assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 0, "Should not have generated an op");
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+        });
+
+        // eslint-disable-next-line max-len
+        it("Unsequenced proposals sent during offline and still valid after reconnect are accepted after reconnect", async () => {
+            const targetKey = "key";
+            containerRuntime1.connected = false;
+            quorum1.set(targetKey, "expected");
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+        });
+
+        // eslint-disable-next-line max-len
+        it("Sequenced proposals that were accepted during offline have correct state after reconnect", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "expected");
+            // TODO: In this flow, client 1 processes the set message ack before it disconnects but not the accepts
+            // Consider whether it's interesting for it to disconnect before processing any ops.
+            containerRuntimeFactory.processOneMessage(); // quorum1 "set"
+            containerRuntime1.connected = false;
+            containerRuntimeFactory.processAllMessages(); // Process the accept from client 2
+            containerRuntime1.connected = true;
+            assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 0, "Should not have generated an op");
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+        });
+
+        // eslint-disable-next-line max-len
+        it("Sequenced proposals that remained pending during offline have correct state after reconnect", async () => {
+            const targetKey = "key";
+            quorum1.set(targetKey, "expected");
+            // TODO: In this flow, client 1 processes the set message ack before it disconnects but not the accepts
+            // Consider whether it's interesting for it to disconnect before processing any ops.
+            containerRuntimeFactory.processOneMessage(); // quorum1 "set"
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+            assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 1, "Should only have client 2 accept");
+            assert.strictEqual(quorum1.get(targetKey), undefined, "Quorum1 should not see the expected value");
+            assert.strictEqual(quorum2.get(targetKey), undefined, "Quorum2 should not see the expected value");
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
         });
     });
 });

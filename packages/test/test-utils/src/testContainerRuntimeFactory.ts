@@ -5,7 +5,11 @@
 
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+    ContainerRuntime,
+    IContainerRuntimeOptions,
+    DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     buildRuntimeRequestHandler,
@@ -22,7 +26,14 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             public type: string,
             public dataStoreFactory: IFluidDataStoreFactory,
             public runtimeOptions: IContainerRuntimeOptions = {
-                summaryOptions: { initialSummarizerDelayMs: 0 },
+                summaryOptions: {
+                    summaryConfigOverrides: {
+                        ...DefaultSummaryConfiguration,
+                        ...{
+                            initialSummarizerDelayMs: 0,
+                        },
+                    },
+                },
             },
             public requestHandlers: RuntimeRequestHandler[] = [],
         ) {

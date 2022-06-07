@@ -69,7 +69,7 @@ module.exports = {
       analyzerMode: 'static',
       reportFilename: path.resolve(process.cwd(), 'bundleAnalysis/report.html'),
       openAnalyzer: false,
-      generateStatsFile: false,
+      generateStatsFile: true,
       statsFilename: path.resolve(process.cwd(), 'bundleAnalysis/report.json')
     }),
     // Plugin that generates a compressed version of the stats file that can be uploaded to blob storage
