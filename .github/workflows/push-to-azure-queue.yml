@@ -9,8 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.label.name != 'do-not-merge-in-next' }}
     steps:
-      - name: Install Azure Storage
-        run: npm i -g @azure/storage-queue
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - run: npm i -g @azure/storage-queue
       - name: Queue Commit
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
