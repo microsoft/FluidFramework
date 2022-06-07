@@ -231,8 +231,8 @@ export class EpochTracker implements IPersistedFileCache {
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }).catch((error) => {
-            // If the error is about location redirection, then we need to generate new resolved url with correct location
-            // info.
+            // If the error is about location redirection, then we need to generate new resolved url with correct
+            // location info.
             if (isFluidError(error) && error.errorType === DriverErrorType.locationRedirection) {
                 const redirectLocation = error.getTelemetryProperties().redirectLocation?.toString();
                 assert(redirectLocation !== undefined, "locationRedirection error should contain redirectLocation");
