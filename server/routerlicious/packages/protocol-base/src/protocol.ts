@@ -64,7 +64,7 @@ export interface IProtocolHandler {
 /**
  * Handles protocol specific ops.
  */
- export class ProtocolOpHandler implements IProtocolHandler {
+export class ProtocolOpHandler implements IProtocolHandler {
     public readonly _quorum: Quorum;
     public get quorum(): Quorum {
         return this._quorum;
@@ -139,13 +139,6 @@ export interface IProtocolHandler {
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
         this.validateClientMessage(message);
-
-        // verify it's moving sequentially
-        if (message.sequenceNumber !== this.sequenceNumber + 1) {
-            throw new Error(
-                `Protocol state is not moving sequentially. ` +
-                `Current is ${this.sequenceNumber}. Next is ${message.sequenceNumber}`);
-        }
 
         // Update tracked sequence numbers
         this.sequenceNumber = message.sequenceNumber;
