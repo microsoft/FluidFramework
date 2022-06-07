@@ -694,7 +694,7 @@ export interface IRBMatcher<TKey, TData> {
     matchNode(node: RBNode<TKey, TData> | undefined, key: TKey): boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface IReferencePositionEvents extends IEvent {
     // (undocumented)
     (event: "beforeSlide" | "afterSlide", listener: () => void): any;

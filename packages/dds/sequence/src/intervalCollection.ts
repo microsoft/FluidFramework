@@ -60,8 +60,7 @@ export interface ISerializedInterval {
     properties?: PropertySet;
 }
 
-export interface ISerializableInterval
-extends IInterval {
+export interface ISerializableInterval extends IInterval {
     properties: PropertySet;
     propertyManager: PropertiesManager;
     serialize(client: Client): ISerializedInterval;
@@ -203,6 +202,10 @@ export class Interval implements ISerializableInterval {
     }
 }
 
+/**
+ * ISequenceIntervalEvents events should only be used internally in IntervalCollections.
+ * SequenceInterval is exported as public so this must be too.
+ */
 export interface ISequenceIntervalEvents extends IEvent {
     (event: "beforePositionChange" | "afterPositionChange",
         listener: () => void);
@@ -223,7 +226,12 @@ implements ISerializableInterval {
         if (props) {
             this.addProperties(props);
         }
+        if (intervalType === IntervalType.SlideOnRemove) {
+            this.prepareIntervalEventEmitter();
+        }
+    }
 
+    private prepareIntervalEventEmitter() {
         // It's possible that both the start and end position slide at the same time.
         // In that case we notify before on the first before notification and after
         // on the last after notification.
