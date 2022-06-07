@@ -55,6 +55,7 @@ export interface IProtocolHandler {
     snapshot(): IQuorumSnapshot;
 
     close(): void;
+    processMessageInQuorum(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
 }
 
@@ -107,7 +108,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
         this._quorum.close();
     }
 
-    private validateClientMessage(message: ISequencedDocumentMessage) {
+    public processMessageInQuorum(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
         const client: ILocalSequencedClient | undefined = this._quorum.getMember(message.clientId);
 
         // Check and report if we're getting messages from a clientId that we previously
@@ -126,16 +127,16 @@ export class ProtocolOpHandler implements IProtocolHandler {
             }
         }
 
+        return this.processMessage(message, local);
+    }
+
+    public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
         // verify it's moving sequentially
         if (message.sequenceNumber !== this.sequenceNumber + 1) {
             throw new Error(
                 `Protocol state is not moving sequentially. ` +
                 `Current is ${this.sequenceNumber}. Next is ${message.sequenceNumber}`);
         }
-    }
-
-    public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
-        this.validateClientMessage(message);
 
         // Update tracked sequence numbers
         this.sequenceNumber = message.sequenceNumber;

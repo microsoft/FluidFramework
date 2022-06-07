@@ -86,9 +86,9 @@ export interface IProtocolHandler {
     // (undocumented)
     close(): void;
     // (undocumented)
-    getProtocolState(): IScribeProtocolState;
-    // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+    // (undocumented)
+    processMessageInQuorum(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)
     readonly quorum: IQuorum;
     // (undocumented)
@@ -128,13 +128,7 @@ export const isServiceMessageType: (type: string) => boolean;
 export function isSystemMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)
-export const MakeProtocolHandler: ProtocolHandlerBuilder;
-
-// @public (undocumented)
 export function mergeAppAndProtocolTree(appSummaryTree: ITree_2, protocolTree: ITree_2): ICreateTreeEntry[];
-
-// @public (undocumented)
-export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
 // @public
 export class ProtocolOpHandler implements IProtocolHandler {
@@ -148,6 +142,8 @@ export class ProtocolOpHandler implements IProtocolHandler {
     minimumSequenceNumber: number;
     // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+    // (undocumented)
+    processMessageInQuorum(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)
     get quorum(): Quorum;
     // (undocumented)

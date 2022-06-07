@@ -1685,7 +1685,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Allow the protocol handler to process the message
         let result: IProcessMessageResult = { immediateNoOp: false };
         try {
-            result = this.protocolHandler.processMessage(message, local);
+            result = this.protocolHandler.processMessageInQuorum(message, local);
         } catch (error) {
             assert(error instanceof Error, "Unexpected error type from the protocol handler");
             this.close(normalizeError(
