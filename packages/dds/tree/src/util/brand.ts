@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "./typeCheck";
+import { Invariant, isAny } from "./typeCheck";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
@@ -66,11 +66,14 @@ export type Opaque<T extends Brand<any, string>> = T extends Brand<
  * See {@link extractFromOpaque}.
  */
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
-    TOpaque extends BrandedType<infer ValueType, infer Name>? Brand<ValueType, Name> : never;
+    TOpaque extends BrandedType<infer ValueType, infer Name>
+        ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name>
+        : never;
 
 type ValueFromBranded<T extends BrandedType<any, string>> =
     T extends BrandedType<infer ValueType, string> ? ValueType : never;
-type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType< any, infer Name> ? Name : never;
+type NameFromBranded<T extends BrandedType<any, string>> =
+    T extends BrandedType<any, infer Name> ? Name : never;
 
 /**
  * Converts a {@link Opaque} handle to the underlying branded type.
@@ -81,7 +84,6 @@ type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
     value: TOpaque,
 ): ExtractFromOpaque<TOpaque> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value as ExtractFromOpaque<TOpaque>;
 }
 
@@ -101,8 +103,8 @@ export function brand<T extends Brand<any, string>>(
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
  */
- export function brandOpaque<T extends BrandedType<any, string>>(
-    value: ValueFromBranded<T>,
+export function brandOpaque<T extends BrandedType<any, string>>(
+    value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
 ): BrandedType<ValueFromBranded<T>, NameFromBranded<T>> {
     return value as BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
 }

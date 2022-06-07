@@ -9,11 +9,13 @@ import {
     ExtractFromOpaque,
     brand,
     brandOpaque,
+    extractFromOpaque,
+    BrandedType,
     // Allow importing from this specific file which is being tested:
     /* eslint-disable-next-line import/no-internal-modules */
 } from "../util/brand";
 
-import { areSafelyAssignable, isAssignableTo, requireTrue, requireFalse } from "../util";
+import { areSafelyAssignable, isAssignableTo, requireTrue, requireFalse, isAny } from "../util";
 
 // These tests currently just cover the type checking, so its all compile time.
 
@@ -34,3 +36,13 @@ type _check =
 
 const _branded: T1 = brand(0);
 const _opaque: O1 = brandOpaque<O1>(0);
+
+// No type to infer: does not build.
+// const _branded2 = brand(0);
+
+// No type to infer: does not build.
+// const untypedOpaque = brandOpaque(0);
+
+// If somehow an untyped opaque handle is produced, make sure any does not leak out:
+const extracted = extractFromOpaque(0 as any as BrandedType<any, string>);
+type _check2 = requireFalse<isAny<typeof extracted>>;
