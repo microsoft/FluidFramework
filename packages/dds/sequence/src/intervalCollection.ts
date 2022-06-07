@@ -232,21 +232,11 @@ implements ISerializableInterval {
     }
 
     private prepareIntervalEventEmitter() {
-        // It's possible that both the start and end position slide at the same time.
-        // In that case we notify before on the first before notification and after
-        // on the last after notification.
-        let slideCount = 0;
         const beforeSlide = () => {
-            assert(slideCount < 2, "more beforeSlide notifications than start and end");
-            if (++slideCount === 1) {
-                this.emit("beforePositionChange");
-            }
+            this.emit("beforePositionChange");
         };
         const afterSlide = () => {
-            assert(slideCount > 0, "unmatched afterSlide");
-            if (--slideCount === 0) {
-                this.emit("afterPositionChange");
-            }
+            this.emit("afterPositionChange");
         };
         // Only listen to events from the positions when there is a listener on this.
         // This is particularly important since SequenceIntervals are cloned when put in the
@@ -273,11 +263,13 @@ implements ISerializableInterval {
                 case "beforePositionChange":
                     if (super.listenerCount(event) === 0) {
                         this.start.off("beforeSlide", beforeSlide);
+                        this.end.off("beforeSlide", beforeSlide);
                     }
                     break;
                 case "afterPositionChange":
                     if (super.listenerCount(event) === 0) {
                         this.start.off("afterSlide", afterSlide);
+                        this.end.off("afterSlide", afterSlide);
                     }
                     break;
                 default:
