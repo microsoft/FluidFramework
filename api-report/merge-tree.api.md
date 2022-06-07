@@ -694,6 +694,12 @@ export interface IRBMatcher<TKey, TData> {
     matchNode(node: RBNode<TKey, TData> | undefined, key: TKey): boolean;
 }
 
+// @public (undocumented)
+export interface IReferencePositionEvents extends IEvent {
+    // (undocumented)
+    (event: "beforeSlide" | "afterSlide", listener: () => void): any;
+}
+
 // @public
 export interface IRelativePosition {
     before?: boolean;
@@ -812,10 +818,8 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 // @public (undocumented)
 export const LocalClientId = -1;
 
-// Warning: (ae-forgotten-export) The symbol "ILocalReferenceEvents" needs to be exported by the entry point index.d.ts
-//
 // @public @deprecated (undocumented)
-export class LocalReference extends TypedEventEmitter<ILocalReferenceEvents> implements ReferencePosition {
+export class LocalReference extends TypedEventEmitter<IReferencePositionEvents> implements ReferencePosition {
     // @deprecated
     constructor(client: Client, initSegment: ISegment,
     offset?: number, refType?: ReferenceType, properties?: PropertySet);

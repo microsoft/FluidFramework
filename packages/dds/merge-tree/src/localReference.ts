@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
@@ -25,6 +24,7 @@ import {
     refHasRangeLabel,
     refHasTileLabel,
     refTypeIncludesFlag,
+    IReferencePositionEvents,
 } from "./referencePositions";
 
 /**
@@ -47,15 +47,11 @@ export function _validateReferenceType(refType: ReferenceType) {
     }
 }
 
-export interface ILocalReferenceEvents extends IEvent {
-    (event: "beforeSlide" | "afterSlide", listener: () => void);
-}
-
 /**
  * @deprecated - Use ReferencePosition
  */
 export class LocalReference
-extends TypedEventEmitter<ILocalReferenceEvents> implements ReferencePosition {
+extends TypedEventEmitter<IReferencePositionEvents> implements ReferencePosition {
     /**
      * @deprecated - use DetachedReferencePosition
      */
