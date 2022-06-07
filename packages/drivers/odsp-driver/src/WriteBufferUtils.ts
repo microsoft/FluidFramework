@@ -49,7 +49,7 @@ export class WriteBuffer {
             code = Math.floor(code / 256);
             length--;
         }
-        assert(code === 0, 0x226 /* `Should write complete data code= ${codeArg} ${lengthArg}` */);
+        assert(code === 0, 0x226 /* Should write complete data */);
     }
 
     public done(): ReadBuffer {

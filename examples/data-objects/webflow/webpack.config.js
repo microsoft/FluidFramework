@@ -30,48 +30,17 @@ module.exports = env => {
             devtool: 'source-map',
             mode: "production",
             module: {
-                rules: [
-                    {
-                        test: /\.tsx?$/,
-                        use: [{
-                            loader: require.resolve("ts-loader"),
-                            options: {
-                                compilerOptions: {
-                                    module: "esnext"
-                                },
-                            }
-                        }],
-                        exclude: /node_modules/
-                    },
-                    {
-                        test: /\.js$/,
-                        use: [require.resolve("source-map-loader")],
-                        enforce: "pre"
-                    },
-                    {
-                        test: /\.css$/,
-                        use: [
-                            "style-loader", {
-                                loader: require.resolve("css-loader"),
-                                options: {
-                                    modules: true,
-                                    localIdentName: styleLocalIdentName
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                        loader: require.resolve('url-loader'),
-                        options: {
-                            limit: 10000
-                        }
-                    },
-                    {
-                        test: /\.html$/,
-                        loader: require.resolve('html-loader')
-                    }
-                ]
+                rules: [{
+                    test: /\.tsx?$/,
+                    loader: require.resolve("ts-loader")
+                },
+                {
+                    test: /\.css$/,
+                    use: [
+                        require.resolve("style-loader"), // creates style nodes from JS strings
+                        require.resolve("css-loader"), // translates CSS into CommonJS
+                    ]
+                }]
             },
             output: {
                 filename: '[name].bundle.js',

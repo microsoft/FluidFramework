@@ -48,7 +48,7 @@ import {
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
 import {
     IntervalCollection,
@@ -173,7 +173,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
     ) {
-        super(id, dataStoreRuntime, attributes);
+        super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
         this.loadedDeferred.promise.catch((error) => {
             this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
@@ -463,7 +463,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.intervalCollections.keys();
     }
 
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
 
         // conditionally write the interval collection blob
@@ -519,7 +522,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
     }
 
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         if (!this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
@@ -559,18 +562,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                             || m.referenceSequenceNumber < collabWindow.minSeq
                             || m.sequenceNumber <= collabWindow.minSeq
                             || m.sequenceNumber <= collabWindow.currentSeq) {
-                            throw new Error(`Invalid catchup operations in snapshot: ${
-                                JSON.stringify({
-                                    op: {
-                                        seq: m.sequenceNumber,
-                                        minSeq: m.minimumSequenceNumber,
-                                        refSeq: m.referenceSequenceNumber,
-                                    },
-                                    collabWindow: {
-                                        seq: collabWindow.currentSeq,
-                                        minSeq: collabWindow.minSeq,
-                                    },
-                                })}`);
+                            throw new Error(`Invalid catchup operations in snapshot: ${JSON.stringify({
+                                op: {
+                                    seq: m.sequenceNumber,
+                                    minSeq: m.minimumSequenceNumber,
+                                    refSeq: m.referenceSequenceNumber,
+                                },
+                                collabWindow: {
+                                    seq: collabWindow.currentSeq,
+                                    minSeq: collabWindow.minSeq,
+                                },
+                            })}`);
                         }
                         this.processMergeTreeMsg(m);
                     });
@@ -666,7 +668,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 // shallow clone the message as we only overwrite top level properties,
                 // like referenceSequenceNumber and content only
                 stashMessage = {
-                    ... message,
+                    ...message,
                     referenceSequenceNumber: stashMessage.sequenceNumber - 1,
                     contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
                 };

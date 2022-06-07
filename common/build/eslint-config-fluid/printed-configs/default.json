@@ -22,6 +22,7 @@
         "import",
         "unicorn",
         "react",
+        "unused-imports",
         "tsdoc",
         "promise",
         "jsdoc",
@@ -480,6 +481,9 @@
         "import/order": [
             "error"
         ],
+        "jsdoc/check-access": [
+            "error"
+        ],
         "jsx-quotes": [
             "error"
         ],
@@ -898,6 +902,9 @@
             "error"
         ],
         "unicorn/no-unsafe-regex": [
+            "error"
+        ],
+        "unused-imports/no-unused-imports": [
             "error"
         ],
         "use-isnan": [

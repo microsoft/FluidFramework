@@ -42,6 +42,8 @@ module.exports = {
         "eslint-plugin-promise",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-tsdoc
         "eslint-plugin-tsdoc",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unused-imports
+        "unused-imports",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
         "react",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
@@ -97,6 +99,11 @@ module.exports = {
                 "ignoreEOLComments": true
             }
         ],
+
+        // Note: this can be replaced altogether by `@typescript-eslint/no-unused-vars`,
+        // but that rule covers many more scenarios than this one does, and there are many violations,
+        // currently in the repository, so it has not been enabled yet.
+        "unused-imports/no-unused-imports": "error",
 
         // Catches a common coding mistake where "resolve" and "reject" are confused.
         "promise/param-names": "warn",
@@ -190,6 +197,9 @@ module.exports = {
 
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",
+
+        // eslint-plugin-jsdoc rules
+        "jsdoc/check-access": "error", // Ensures that conflicting access tags don't exist in the same comment. See <https://github.com/gajus/eslint-plugin-jsdoc#check-access>.
 
         "@typescript-eslint/prefer-includes": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
