@@ -41,7 +41,11 @@ describe("client.rebasePosition", () => {
         for (const pos of [5, 6, 7]) {
             const rebasedPos = client.rebasePosition(pos, 0, 0);
             const text = getTextAt(rebasedPos);
-            assert.equal(text, "r", `rebase of pos ${pos} should refer to position immediately following removed segment`);
+            assert.equal(
+                text,
+                "r",
+                `rebase of pos ${pos} should refer to position immediately following removed segment`,
+            );
         }
     });
 

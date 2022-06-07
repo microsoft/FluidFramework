@@ -890,10 +890,10 @@ describe("SharedString interval collections", () => {
             containerRuntime1.connected = true;
             containerRuntimeFactory.processAllMessages();
             assertIntervals(sharedString, collection1, [
-                { start: 6, end: 7 }
+                { start: 6, end: 7 },
             ]);
             assertIntervals(sharedString2, collection2, [
-                { start: 6, end: 7 }
+                { start: 6, end: 7 },
             ]);
         });
 

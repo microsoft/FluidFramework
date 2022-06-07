@@ -176,7 +176,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     previousInterval(pos: number): TInterval;
     // @internal (undocumented)
-    rebaseLocalInterval(serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
+    rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
     // (undocumented)
     removeIntervalById(id: string): TInterval;
     // (undocumented)

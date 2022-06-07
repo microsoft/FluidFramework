@@ -1211,7 +1211,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             end: endRebased,
             intervalType,
             sequenceNumber: this.client?.getCurrentSeq() ?? 0,
-            properties
+            properties,
         };
         if (opName === "change" && this.hasPendingChangeStart(intervalId)) {
             this.removePendingChange(serializedInterval);
