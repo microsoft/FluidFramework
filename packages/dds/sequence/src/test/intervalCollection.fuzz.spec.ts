@@ -4,13 +4,14 @@
  */
 
 import * as path from "path";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync, readFileSync } from "fs";
 import { strict as assert } from "assert";
 import {
     AcceptanceCondition,
     BaseFuzzTestState,
     createWeightedGenerator,
     Generator,
+    generatorFromArray,
     interleave,
     makeRandom,
     performFuzzActions,
@@ -20,17 +21,23 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import {
     MockFluidDataStoreRuntime,
-    MockContainerRuntimeFactory,
     MockStorage,
+    MockContainerRuntimeFactoryForReconnection,
+    MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { SharedString } from "../sharedString";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 
+interface Client {
+    sharedString: SharedString;
+    containerRuntime: MockContainerRuntimeForReconnection;
+}
+
 interface FuzzTestState extends BaseFuzzTestState {
-    containerRuntimeFactory: MockContainerRuntimeFactory;
-    sharedStrings: SharedString[];
+    containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+    clients: Client[];
 }
 
 interface ClientSpec {
@@ -76,6 +83,11 @@ interface DeleteInterval extends ClientSpec, IntervalCollectionSpec {
     id: string;
 }
 
+interface ChangeConnectionState extends ClientSpec {
+    type: "changeConnectionState";
+    connected: boolean;
+}
+
 interface Synchronize {
     type: "synchronize";
 }
@@ -84,7 +96,7 @@ type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
 
 type TextOperation = AddText | RemoveRange;
 
-type ClientOperation = IntervalOperation | TextOperation;
+type ClientOperation = IntervalOperation | TextOperation | ChangeConnectionState;
 
 type Operation = ClientOperation | Synchronize;
 
@@ -214,6 +226,17 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         };
     }
 
+    function changeConnectionState(state: ClientOpState): ChangeConnectionState {
+        const stringId =  state.sharedString.id;
+        const { containerRuntime } = state.clients.find(c => c.sharedString.id === stringId);
+        return {
+            type: "changeConnectionState",
+            stringId,
+            // No-ops aren't interesting; always make this flip the connection state.
+            connected: containerRuntime.connected ? false : true
+        }
+    }
+
     const hasAnInterval = ({ sharedString }: ClientOpState): boolean =>
         Array.from(getUnscopedLabels(sharedString)).some((label) => {
             const collection = sharedString.getIntervalCollection(label);
@@ -238,16 +261,20 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return true;
     };
 
+    const and = <T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
+        (t: T) => clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
+
     const clientBaseOperationGenerator = createWeightedGenerator<Operation, ClientOpState>([
         [addText, 2, isShorterThanMaxLength],
         [removeRange, 1, hasNonzeroLength],
-        [addInterval, 2, hasNotTooManyIntervals],
+        [addInterval, 2, and(hasNotTooManyIntervals, hasNonzeroLength)],
         [deleteInterval, 2, hasAnInterval],
-        [changeInterval, 2, hasAnInterval],
+        [changeInterval, 2, and(hasAnInterval, hasNonzeroLength)],
+        [changeConnectionState, 1]
     ]);
 
     const clientOperationGenerator = (state: FuzzTestState) =>
-        clientBaseOperationGenerator({ ...state, sharedString: state.random.pick(state.sharedStrings) });
+        clientBaseOperationGenerator({ ...state, sharedString: state.random.pick(state.clients).sharedString });
 
     return interleave(
         clientOperationGenerator,
@@ -256,16 +283,29 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     );
 }
 
+interface LoggingInfo {
+    /** id of the interval to track over time */
+    intervalId: string;
+    /** Clients to print */
+    clientIds: string[];
+}
+
 function runIntervalCollectionFuzz(
     generator: Generator<Operation, FuzzTestState>,
     initialState: FuzzTestState,
     saveInfo?: SaveInfo,
+    loggingInfo?: LoggingInfo
 ): void {
     // Validates that all shared strings in the provided array are consistent in the underlying text
     // and location of all intervals in any interval collections they have.
-    function assertConsistent(sharedStrings: SharedString[]): void {
-        const first = sharedStrings[0];
-        for (const other of sharedStrings.slice(1)) {
+    function assertConsistent(clients: Client[]): void {
+        const connectedClients = clients.filter(client => client.containerRuntime.connected);
+        if (connectedClients.length < 2) {
+            // No two strings are expected to be consistent.
+            return;
+        }
+        const first = connectedClients[0].sharedString;
+        for (const { sharedString: other } of connectedClients.slice(1)) {
             assert.equal(first.getLength(), other.getLength());
             assert.equal(
                 first.getText(),
@@ -292,8 +332,20 @@ function runIntervalCollectionFuzz(
                 );
                 for (const interval of intervals1) {
                     const otherInterval = collection2.getIntervalById(interval.getIntervalId());
-                    assert.equal(first.localRefToPos(interval.start), other.localRefToPos(otherInterval.start));
-                    assert.equal(first.localRefToPos(interval.end), other.localRefToPos(otherInterval.end));
+                    const firstStart = first.localRefToPos(interval.start);
+                    const otherStart = other.localRefToPos(otherInterval.start);
+                    assert.equal(firstStart, otherStart,
+                        `Startpoints of interval ${interval.getIntervalId()} different:\n` +
+                        `\tfull text:${first.getText()}\n` +
+                        `\tclient ${first.id} char:${first.getText(firstStart, firstStart + 1)}\n` +
+                        `\tclient ${other.id} char:${other.getText(otherStart, otherStart + 1)}`);
+                    const firstEnd = first.localRefToPos(interval.end);
+                    const otherEnd = other.localRefToPos(otherInterval.end);
+                    assert.equal(firstEnd, otherEnd,
+                        `Endpoints of interval ${interval.getIntervalId()} different:\n` +
+                        `\tfull text:${first.getText()}\n` +
+                        `\tclient ${first.id} char:${first.getText(firstEnd, firstEnd + 1)}\n` +
+                        `\tclient ${other.id} char:${other.getText(otherEnd, otherEnd + 1)}`);
                     assert.equal(interval.intervalType, otherInterval.intervalType);
                     assert.deepEqual(interval.properties, otherInterval.properties);
                 }
@@ -301,10 +353,40 @@ function runIntervalCollectionFuzz(
         }
     }
 
+    function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
+        for (const id of loggingInfo.clientIds) {
+            const { sharedString } = state.clients.find(s => s.sharedString.id === id);
+            const labels = getUnscopedLabels(sharedString);
+            const interval = Array.from(labels)
+                .map((label) =>
+                    sharedString.getIntervalCollection(label).getIntervalById(loggingInfo.intervalId))
+                .find((interval) => interval !== undefined);
+
+            console.log(`Client ${id}:`);
+            if (interval !== undefined) {
+                const start = sharedString.localReferencePositionToPosition(interval.start);
+                const end = sharedString.localReferencePositionToPosition(interval.end);
+                if (end === start) {
+                    console.log(' '.repeat(start) + 'x');
+                } else {
+                    console.log(' '.repeat(start) + '[' + ' '.repeat(end - start - 1) + ']');
+                }
+            }
+            console.log(sharedString.getText());
+            console.log('\n');
+        }
+    }
+
     // Small wrapper to avoid having to return the same state repeatedly; all operations in this suite mutate.
+    // Also a reasonable point to inject logging of incremental state.
     const statefully =
         <T>(statefulReducer: (state: FuzzTestState, operation: T) => void): Reducer<T, FuzzTestState> =>
             (state, operation) => {
+                if (loggingInfo !== undefined) {
+                    logCurrentState(state, loggingInfo);
+                    console.log('-'.repeat(20));
+                    console.log("Next operation:", JSON.stringify(operation, undefined, 4));
+                }
                 statefulReducer(state, operation);
                 return state;
             };
@@ -312,33 +394,37 @@ function runIntervalCollectionFuzz(
     performFuzzActions(
         generator,
         {
-            addText: statefully(({ sharedStrings }, { stringId, index, content }) => {
-                const sharedString = sharedStrings.find((s) => s.id === stringId);
+            addText: statefully(({ clients }, { stringId, index, content }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 sharedString.insertText(index, content);
             }),
-            removeRange: statefully(({ sharedStrings }, { stringId, start, end }) => {
-                const sharedString = sharedStrings.find((s) => s.id === stringId);
+            removeRange: statefully(({ clients }, { stringId, start, end }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 sharedString.removeRange(start, end);
             }),
-            addInterval: statefully(({ sharedStrings }, { stringId, start, end, collectionName, id }) => {
-                const sharedString = sharedStrings.find((s) => s.id === stringId);
+            addInterval: statefully(({ clients }, { stringId, start, end, collectionName, id }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 const collection = sharedString.getIntervalCollection(collectionName);
                 collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
             }),
-            deleteInterval: statefully(({ sharedStrings }, { stringId, id, collectionName }) => {
-                const sharedString = sharedStrings.find((s) => s.id === stringId);
+            deleteInterval: statefully(({ clients }, { stringId, id, collectionName }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 const collection = sharedString.getIntervalCollection(collectionName);
                 collection.removeIntervalById(id);
             }),
-            changeInterval: statefully(({ sharedStrings }, { stringId, id, start, end, collectionName }) => {
-                const sharedString = sharedStrings.find((s) => s.id === stringId);
+            changeInterval: statefully(({ clients }, { stringId, id, start, end, collectionName }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 const collection = sharedString.getIntervalCollection(collectionName);
                 collection.change(id, start, end);
             }),
-            synchronize: statefully(({ containerRuntimeFactory, sharedStrings }) => {
+            synchronize: statefully(({ containerRuntimeFactory, clients }) => {
                 containerRuntimeFactory.processAllMessages();
-                assertConsistent(sharedStrings);
+                assertConsistent(clients);
             }),
+            changeConnectionState: statefully(({ clients }, { stringId, connected }) => {
+                const { containerRuntime } = clients.find((c) => c.sharedString.id === stringId);
+                containerRuntime.connected = connected;
+            })
         },
         initialState,
         saveInfo,
@@ -356,40 +442,81 @@ describe.skip("IntervalCollection fuzz testing", () => {
         }
     });
 
-    it("with default config", async () => {
-        const numClients = 3;
+    function runTests(seed: number, generator: Generator<Operation, FuzzTestState>, loggingInfo?: LoggingInfo): void {
+        it(`with default config, seed ${seed}`, async () => {
+            const numClients = 3;
+            const filepath = path.join(directory, `${seed}.json`);
 
-        const containerRuntimeFactory = new MockContainerRuntimeFactory();
-        const sharedStrings = Array.from({ length: numClients }, (_, index) => {
-            const dataStoreRuntime = new MockFluidDataStoreRuntime();
-            const sharedString = new SharedString(
-                dataStoreRuntime,
-                String.fromCharCode(index + 65),
-                SharedStringFactory.Attributes,
-            );
-            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-            const services: IChannelServices = {
-                deltaConnection: containerRuntime.createDeltaConnection(),
-                objectStorage: new MockStorage(),
+            const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+            const clients = Array.from({ length: numClients }, (_, index) => {
+                const dataStoreRuntime = new MockFluidDataStoreRuntime();
+                const sharedString = new SharedString(
+                    dataStoreRuntime,
+                    String.fromCharCode(index + 65),
+                    SharedStringFactory.Attributes,
+                );
+                const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+                const services: IChannelServices = {
+                    deltaConnection: containerRuntime.createDeltaConnection(),
+                    objectStorage: new MockStorage(),
+                };
+
+                sharedString.initializeLocal();
+                sharedString.connect(services);
+                return { containerRuntime, sharedString };
+            });
+
+            const initialState: FuzzTestState = {
+                clients,
+                containerRuntimeFactory,
+                random: makeRandom(seed),
             };
 
-            sharedString.initializeLocal();
-            sharedString.connect(services);
-            return sharedString;
+            runIntervalCollectionFuzz(
+                generator,
+                initialState,
+                { saveOnFailure: true, filepath },
+                loggingInfo
+            );
         });
+    }
 
-        const generator = take(300, makeOperationGenerator());
+    function replayTestFromFailureFile(seed: number, loggingInfo?: LoggingInfo) {
+        const filepath = path.join(directory, `${seed}.json`);
+        let operations: Operation[];
+        try {
+            operations = JSON.parse(readFileSync(filepath).toString());
+        } catch (err: any) {
+            // Mocha executes skipped suite creation blocks, but whoever's running this suite only cares if
+            // the containing block isn't skipped. Report the original error to them from inside a test.
+            if (err.message.includes("ENOENT")) {
+                it(`with default config, seed ${seed}`, () => {
+                    throw err;
+                });
+                return;
+            }
+            throw err;
+        }
 
-        const initialState: FuzzTestState = {
-            sharedStrings,
-            containerRuntimeFactory,
-            random: makeRandom(0),
-        };
+        const generator = generatorFromArray(operations);
+        runTests(seed, generator);
+    }
 
-        runIntervalCollectionFuzz(
-            generator,
-            initialState,
-            { saveOnFailure: true, filepath: path.join(directory, "0.json") },
+    const testCount = 10;
+    for (let i = 0; i < testCount; i++) {
+        const generator = take(30, makeOperationGenerator({ validateInterval: 10 }));
+        runTests(i, generator);
+    }
+
+    // Change this seed and unskip the block to replay the actions from JSON on-disk.
+    // This can be useful for quickly minimizing failure json while attempting to root cause.
+    describe.skip("replay specific seed", () => {
+        const seedToReplay = 37;
+        replayTestFromFailureFile(
+            seedToReplay,
+            // The following line can be uncommented for useful logging output which tracks the provided
+            // intervalId over time.
+            // { intervalId: "", clientIds: ["A", "B", "C"] },
         );
-    });
+    })
 });
