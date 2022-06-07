@@ -205,7 +205,7 @@ module.exports = {
 
         // Ensure function/method parameter comments include a `-` between name and description.
         // Useful to ensure API-Extractor compatability.
-        // See <https://www.npmjs.com/package/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-hyphen-before-param-description>
+        // See <https://www.npmjs.com/package/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-hyphen-before-param-description>.
         "jsdoc/require-hyphen-before-param-description": "error",
 
         "@typescript-eslint/prefer-includes": "error",

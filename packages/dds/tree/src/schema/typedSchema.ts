@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "../typeCheck";
+import { Invariant } from "../util";
 import { fieldSchema, treeSchema, TreeSchemaBuilder } from "./Builders";
 import {
     FieldSchema,
