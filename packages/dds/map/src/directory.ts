@@ -888,9 +888,9 @@ function isDirectoryLocalOpMetadata(metadata: any): metadata is DirectoryLocalOp
  */
 class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirectory {
     /**
-     * Tells if the sub directory is disposed or not.
+     * Tells if the sub directory is deleted or not.
      */
-    private _disposed = false;
+    private _deleted = false;
 
     /**
      * String representation for the class.
@@ -944,24 +944,23 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     }
 
     public dispose(error?: Error): void {
-        this._disposed = true;
+        this._deleted = true;
         this.emit("disposed", this);
     }
 
     /**
-     * Rollback a prior dispose.
-     * This is a weird thing to do and maybe there should be an event to counter the prior disposed event.
+     * Unmark the deleted property when rolling back delete.
      */
     private undispose(): void {
-        this._disposed = false;
+        this._deleted = false;
     }
 
     public get disposed(): boolean {
-        return this._disposed;
+        return this._deleted;
     }
 
     private throwIfDisposed() {
-        if (this._disposed) {
+        if (this._deleted) {
             throw new UsageError("Cannot access Disposed subDirectory");
         }
     }
@@ -1627,9 +1626,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             if (localOpMetadata.subDirectory === "unknown") {
                 throw new Error("Cannot rollback without previous contents");
             } else if (localOpMetadata.subDirectory !== undefined) {
-                this.undisposeSubDirectoryTree(localOpMetadata.subDirectory);
+                this.undeleteSubDirectoryTree(localOpMetadata.subDirectory);
                 // don't need to register events because deleting never unregistered
-                // Should we emit events for all the children in the subdir?
                 this._subdirectories.set(op.subdirName, localOpMetadata.subDirectory);
                 this.emit("subDirectoryCreated", op.subdirName, true, this);
             }
@@ -1849,10 +1847,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         }
     }
 
-    private undisposeSubDirectoryTree(directory: SubDirectory) {
-        // Undispose the subdirectory tree. This will undispose the subdirectories from bottom to top.
+    private undeleteSubDirectoryTree(directory: SubDirectory) {
+        // Restore deleted subdirectory tree. This will unmark "deleted" from the subdirectories from bottom to top.
         for (const [_, subDirectory] of this._subdirectories.entries()) {
-            this.undisposeSubDirectoryTree(subDirectory);
+            this.undeleteSubDirectoryTree(subDirectory);
         }
         directory.undispose();
     }
