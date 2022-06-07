@@ -9,16 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.label.name != 'do-not-merge-in-next' }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 14
-      - run: npm i -g @azure/storage-queue
+      - name: Install Azure Storage
+        run: npm i -g @azure/storage-queue
       - name: Queue Commit
-        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
+        uses: actions/checkout@v2
+        uses: actions/github-script@v6
         with:
           script: |
-            const { QueueClient, QueueServiceClient } = require("@azure/storage-queue");
+            const { QueueClient, QueueServiceClient } = require('@azure/storage-queue');
             const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
@@ -31,11 +29,10 @@ jobs:
             await queueClient.sendMessage(JSON.stringify(message));
   add-comment:
     runs-on: ubuntu-latest
-    needs: [ queue-pr ]
+    needs: [queue-pr]
     steps:
-      - name: add-conflict-comment
-        uses: thollander/actions-comment-pull-request@686ab1cab89e0f715a44a0d04b9fdfdd4f33d751 # pin@v1
+      - name:  add-conflict-comment
+        uses: thollander/actions-comment-pull-request@v1
         with:
-          message: 'Commit queued for merging with the test_next branch! Please ignore the
-            comment for now.'
+          message: 'Commit queued for merging with the test_next branch! Please ignore the comment for now.'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
