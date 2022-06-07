@@ -495,6 +495,10 @@ export const shortCodeMap = {
     "0x2a8": "Expected data store snapshot tree in base snapshot",
     "0x2a9": "GC nodes for data store not in GC blob",
     "0x2ad": "GC blob missing from snapshot",
+    "0x2e3": "Expected real numbers in minimum version!",
+    "0x2e4": "Expected minimumVersion to be [major].[minor].[patch]",
+    "0x2e5": "Expected version to match semver rules!",
+    "0x2e6": "Expected real numbers in minimum version!",
     "0x1f6": "Negative client sequence number not allowed",
     "0x1f7": "Previous client should always be defined",
     "0x28b": "multiple clients connected with stashed ops",
@@ -617,9 +621,5 @@ export const shortCodeMap = {
     "0x1ec": "No refresh token provided.",
     "0x1ce": "clientId not found",
     "0x1cf": "clientId not found",
-    "0x1d0": "sequenceNumber not found",
-    "0x2e3": "Expected real numbers in minimum version!",
-    "0x2e4": "Expected minimumVersion to be [major].[minor].[patch]",
-    "0x2e5": "Expected version to match semver rules!",
-    "0x2e6": "Expected real numbers in minimum version!"
+    "0x1d0": "sequenceNumber not found"
 };
