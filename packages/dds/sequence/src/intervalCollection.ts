@@ -1181,7 +1181,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         const segoff = { segment: lref.segment, offset: lref.offset };
         const newSegoff = this.client.getSlideToSegment(segoff);
         const value: { segment: ISegment | undefined; offset: number | undefined; } | undefined
-            = (segoff === newSegoff) ? undefined : newSegoff;
+            = (segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset) ? undefined : newSegoff;
         return value;
     }
 
@@ -1205,17 +1205,30 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             0x2f7 /* start and end must both be StayOnRemove */);
         const newStart = this.getSlideToSegment(interval.start);
         const newEnd = this.getSlideToSegment(interval.end);
-        this.setSlideOnRemove(interval.start);
-        this.setSlideOnRemove(interval.end);
 
-        if (newStart || newEnd) {
+        const id = interval.properties[reservedIntervalIdKey];
+        const hasPendingStartChange = this.hasPendingChangeStart(id);
+        const hasPendingEndChange = this.hasPendingChangeEnd(id);
+
+        if (!hasPendingStartChange) {
+            this.setSlideOnRemove(interval.start);
+        }
+
+        if (!hasPendingEndChange) {
+            this.setSlideOnRemove(interval.end);
+        }
+
+        const needsStartUpdate = newStart !== undefined && !hasPendingStartChange;
+        const needsEndUpdate = newEnd !== undefined && !hasPendingEndChange;
+
+        if (needsStartUpdate || needsEndUpdate) {
             this.localCollection.removeExistingInterval(interval);
-            if (newStart) {
+            if (needsStartUpdate) {
                 const props = interval.start.properties;
                 interval.start = createPositionReferenceFromSegoff(this.client, newStart, interval.start.refType, op);
                 interval.start.addProperties(props);
             }
-            if (newEnd) {
+            if (needsEndUpdate) {
                 const props = interval.end.properties;
                 interval.end = createPositionReferenceFromSegoff(this.client, newEnd, interval.end.refType, op);
                 interval.end.addProperties(props);
