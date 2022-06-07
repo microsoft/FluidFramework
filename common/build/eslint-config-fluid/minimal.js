@@ -42,6 +42,8 @@ module.exports = {
         "eslint-plugin-promise",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-tsdoc
         "eslint-plugin-tsdoc",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unused-imports
+        "unused-imports",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
         "react",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
@@ -97,6 +99,11 @@ module.exports = {
                 "ignoreEOLComments": true
             }
         ],
+
+        // Note: this can be replaced altogether by `@typescript-eslint/no-unused-vars`,
+        // but that rule covers many more scenarios than this one does, and there are many violations,
+        // currently in the repository, so it has not been enabled yet.
+        "unused-imports/no-unused-imports": "error",
 
         // Catches a common coding mistake where "resolve" and "reject" are confused.
         "promise/param-names": "warn",

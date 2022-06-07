@@ -76,7 +76,6 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
     readonly errorType = "usageError";
 }
 
-
 // (No @packageDocumentation comment for this package)
 
 ```

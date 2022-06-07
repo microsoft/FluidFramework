@@ -10,6 +10,7 @@ import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
+import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -89,8 +90,6 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     protected virtualBlobs: Map<string, ArrayBufferLike>;
     // (undocumented)
     static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean, packingLevel?: number): BlobAggregationStorage;
-    // (undocumented)
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
 // @public
@@ -162,8 +161,6 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-    // (undocumented)
-    write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
 // @public
@@ -222,10 +219,16 @@ export interface IProgress {
 }
 
 // @public (undocumented)
+export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+
+// @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
+
+// @public (undocumented)
+export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
 // @public
 export interface ISummaryTreeAssemblerProps {

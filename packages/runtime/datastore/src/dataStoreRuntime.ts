@@ -50,6 +50,7 @@ import {
     IInboundSignalMessage,
     ISummaryTreeWithStats,
     VisibilityState,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
@@ -694,8 +695,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to summarize
@@ -708,14 +714,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // (i.e. it has a base mapping) - then we go ahead and summarize
                 return isAttached;
             }).map(async ([contextId, context]) => {
-                const contextSummary = await context.summarize(fullTree, trackState);
+                const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
                 summaryBuilder.addWithStats(contextId, contextSummary);
             }));
 
         return summaryBuilder.getSummaryTree();
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         /**
          * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
          * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
@@ -747,7 +753,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             if (!this.notBoundedChannelContextSet.has(contextId)) {
                 let summaryTree: ISummaryTreeWithStats;
                 if (context.isLoaded) {
-                    const contextSummary = context.getAttachSummary();
+                    const contextSummary = context.getAttachSummary(telemetryContext);
                     assert(
                         contextSummary.summary.type === SummaryType.Tree,
                         0x180 /* "getAttachSummary should always return a tree" */);
@@ -853,6 +859,29 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 break;
             default:
                 unreachableCase(type);
+        }
+    }
+
+    /**
+     * Revert a local op.
+     * @param content - The content of the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    public rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+        this.verifyNotClosed();
+
+        switch (type) {
+            case DataStoreMessageType.ChannelOp:
+                {
+                    // For Operations, find the right channel and trigger resubmission on it.
+                    const envelope = content as IEnvelope;
+                    const channelContext = this.contexts.get(envelope.address);
+                    assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
+                    channelContext.rollback(envelope.contents, localOpMetadata);
+                    break;
+                }
+            default:
+                throw new Error(`Can't rollback ${type} message`);
         }
     }
 

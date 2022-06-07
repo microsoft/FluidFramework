@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/azure-client",
-  "version": "0.59.3000",
+  "version": "0.60.1000",
   "description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -50,10 +50,10 @@
     "@fluidframework/driver-utils": "^0.59.2001",
     "@fluidframework/fluid-static": "^0.59.2001",
     "@fluidframework/map": "^0.59.2001",
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/routerlicious-driver": "^0.59.2001",
     "@fluidframework/runtime-utils": "^0.59.2000",
-    "@fluidframework/server-services-client": "^0.1036.3000",
+    "@fluidframework/server-services-client": "^0.1036.4000",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },
@@ -62,7 +62,7 @@
     "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@0.59.2000",
     "@fluidframework/azure-local-service": "^0.1.38773",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66793",
+    "@fluidframework/build-tools": "^0.2.71273",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-client-utils": "^0.59.2001",
     "@microsoft/api-extractor": "^7.22.2",
@@ -78,10 +78,26 @@
     "typescript": "~4.5.5"
   },
   "peerDependencies": {
-    "fluid-framework": "^0.58.0"
+    "fluid-framework": "^0.60.1000"
   },
   "typeValidation": {
-    "version": "0.59.3000",
-    "broken": {}
+    "version": "0.60.1000",
+    "broken": {
+      "ClassDeclaration_AzureClient": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_AzureClientProps": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_AzureConnectionConfig": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_LOCAL_MODE_TENANT_ID": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
   }
 }
