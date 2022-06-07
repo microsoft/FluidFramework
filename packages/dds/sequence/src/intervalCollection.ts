@@ -1206,7 +1206,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         const newStart = this.getSlideToSegment(interval.start);
         const newEnd = this.getSlideToSegment(interval.end);
 
-        // TODO: Regression test for this behavior.
         const id = interval.properties[reservedIntervalIdKey];
         const hasPendingStartChange = this.hasPendingChangeStart(id);
         const hasPendingEndChange = this.hasPendingChangeEnd(id);
