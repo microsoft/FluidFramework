@@ -14,3 +14,4 @@
 
 export * from "./utils";
 export * from "./typeCheck";
+export * from "./brand";

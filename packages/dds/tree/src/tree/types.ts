@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Brand } from "../brand";
+import { Brand } from "../util";
 
 export type FieldKey = Brand<number | string, "FieldKey">;
 export type TreeType = Brand<number | string, "TreeType">;

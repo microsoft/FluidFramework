@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-// Allow importing from this specific file which is being tested:
-
 import {
     Brand,
     Opaque,
     ExtractFromOpaque,
-    asBranded,
-    asOpaque,
-} from "../brand";
-import { areSafelyAssignable, isAssignableTo, requireTrue, requireFalse } from "../typeCheck";
+    brand,
+    brandOpaque,
+    // Allow importing from this specific file which is being tested:
+    /* eslint-disable-next-line import/no-internal-modules */
+} from "../util/brand";
+
+import { areSafelyAssignable, isAssignableTo, requireTrue, requireFalse } from "../util";
 
 // These tests currently just cover the type checking, so its all compile time.
 
@@ -31,5 +32,5 @@ type _check =
     | requireFalse<isAssignableTo<O1, O2>>
     | requireFalse<isAssignableTo<T1, T2>>;
 
-const _branded: T1 = asBranded(0);
-const _opaque: O1 = asOpaque<O1>(0);
+const _branded: T1 = brand(0);
+const _opaque: O1 = brandOpaque<O1>(0);

@@ -12,10 +12,20 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
 // @public
 export abstract class BrandedType<ValueType, Name extends string> {
     protected readonly _type_brand: Name;
-    // Warning: (ae-forgotten-export) The symbol "Invariant" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     protected _typeCheck?: Invariant<ValueType>;
+}
+
+// @public
+export interface Contravariant<T> {
+    // (undocumented)
+    _removeCovariance?: (_: T) => void;
+}
+
+// @public
+export interface Covariant<T> {
+    // (undocumented)
+    _removeContravariance?: T;
 }
 
 // Warning: (ae-forgotten-export) The symbol "ExtractFromOpaque" needs to be exported by the entry point index.d.ts
@@ -25,6 +35,10 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(valu
 
 // @public (undocumented)
 export type FieldKey = Brand<number | string, "FieldKey">;
+
+// @public
+export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
+}
 
 // @public
 export interface ITreeCursor {
