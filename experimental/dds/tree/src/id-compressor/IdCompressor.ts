@@ -567,6 +567,7 @@ export class IdCompressor {
 		const finalizeCount = normalizedLastFinalizedLocal - newLastFinalizedLocal;
 		assert(finalizeCount >= 1, 'Cannot finalize an empty range.');
 
+		let eagerFinalIdCount = 0;
 		let initialClusterCount = 0;
 		let remainingCount = finalizeCount;
 		let newBaseUuid: NumericUuid | undefined;
@@ -579,10 +580,7 @@ export class IdCompressor {
 					Math.min(currentCluster.count + finalizeCount, currentCluster.capacity) -
 					1) as FinalCompressedId;
 				if (lastFinalInCluster > lastKnownFinal) {
-					this.logger?.sendTelemetryEvent({
-						eventName: 'EagerFinalsAllocated',
-						idCount: lastFinalInCluster - (lastKnownFinal + 1),
-					});
+					eagerFinalIdCount = lastFinalInCluster - (lastKnownFinal + 1);
 					this.sessionIdNormalizer.addFinalIds(
 						(lastKnownFinal + 1) as FinalCompressedId,
 						lastFinalInCluster,
@@ -602,6 +600,7 @@ export class IdCompressor {
 					// The cluster is full but is the last in the list of clusters.
 					// This allows it to be expanded instead of allocating a new one.
 					const expansionAmount = this.newClusterCapacity + overflow;
+					const previousCapacity = currentCluster.capacity;
 					currentCluster.capacity += expansionAmount;
 					this.nextClusterBaseFinalId = (this.nextClusterBaseFinalId + expansionAmount) as FinalCompressedId;
 					assert(
@@ -625,7 +624,10 @@ export class IdCompressor {
 						this.sessionIdNormalizer.addFinalIds(finalPivot, lastFinalizedFinal, currentCluster);
 						this.logger?.sendTelemetryEvent({
 							eventName: 'ClusterExpansion',
-							expansionAmount,
+							sessionId: this.localSessionId,
+							previousCapacity,
+							newCapacity: currentCluster.capacity,
+							overflow,
 						});
 					}
 				}
@@ -637,8 +639,7 @@ export class IdCompressor {
 				remainingCount -= remainingCapacity;
 				this.logger?.sendTelemetryEvent({
 					eventName: 'OverfilledCluster',
-					overflow: remainingCount,
-					allocated: remainingCapacity,
+					sessionId: this.localSessionId,
 				});
 			}
 		} else {
@@ -646,6 +647,7 @@ export class IdCompressor {
 			newBaseUuid = session.sessionUuid;
 			this.logger?.sendTelemetryEvent({
 				eventName: 'FirstCluster',
+				sessionId: this.localSessionId,
 			});
 		}
 
@@ -670,9 +672,10 @@ export class IdCompressor {
 			}
 
 			newBaseFinalId = this.nextClusterBaseFinalId;
+			const newCapacity = Math.max(this.newClusterCapacity, remainingCount);
 			newCluster = {
 				baseUuid: newBaseUuid,
-				capacity: Math.max(this.newClusterCapacity, remainingCount),
+				capacity: newCapacity,
 				count: remainingCount,
 				session,
 			};
@@ -681,6 +684,12 @@ export class IdCompressor {
 			localIdPivot = (newFirstFinalizedLocal - usedCapacity) as LocalCompressedId;
 
 			if (isLocal) {
+				this.logger?.sendTelemetryEvent({
+					eventName: 'NewCluster',
+					sessionId: this.localSessionId,
+					clusterCapacity: newCapacity,
+					clusterCount: remainingCount,
+				});
 				const lastFinalizedFinal = (newBaseFinalId + newCluster.count - 1) as FinalCompressedId;
 				this.sessionIdNormalizer.addFinalIds(newBaseFinalId, lastFinalizedFinal, newCluster);
 			}
@@ -795,6 +804,16 @@ export class IdCompressor {
 					this.clustersAndOverridesInversion.set(inversionKey, finalizedOverride);
 				}
 			}
+		}
+
+		if (isLocal) {
+			this.logger?.sendTelemetryEvent({
+				eventName: 'IdCompressorStatus',
+				eagerFinalIdCount,
+				localIdCount: remainingCount,
+				overridesCount: overrides?.length ?? 0,
+				sessionId: this.localSessionId,
+			});
 		}
 
 		session.lastFinalizedLocalId = newLastFinalizedLocal;
