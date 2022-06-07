@@ -29,6 +29,8 @@ import { SharedString } from "../sharedString";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 
+const testCount = 10;
+
 interface FuzzTestState extends BaseFuzzTestState {
     containerRuntimeFactory: MockContainerRuntimeFactory;
     sharedStrings: SharedString[];
@@ -239,15 +241,15 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return true;
     };
 
-    const and = <T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
+    const all = <T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
         (t: T) => clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
 
     const clientBaseOperationGenerator = createWeightedGenerator<Operation, ClientOpState>([
         [addText, 2, isShorterThanMaxLength],
         [removeRange, 1, hasNonzeroLength],
-        [addInterval, 2, and(hasNotTooManyIntervals, hasNonzeroLength)],
+        [addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
         [deleteInterval, 2, hasAnInterval],
-        [changeInterval, 2, and(hasAnInterval, hasNonzeroLength)],
+        [changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
     ]);
 
     const clientOperationGenerator = (state: FuzzTestState) =>
@@ -472,7 +474,6 @@ describe.skip("IntervalCollection fuzz testing", () => {
         runTests(seed, generator, loggingInfo);
     }
 
-    const testCount = 10;
     for (let i = 0; i < testCount; i++) {
         const generator = take(30, makeOperationGenerator({ validateInterval: 10 }));
         runTests(i, generator);
