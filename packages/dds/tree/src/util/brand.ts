@@ -24,7 +24,7 @@ export type Brand<ValueType, Name extends string> = ValueType &
  * This is split out into its own as thats the only way to:
  * - have doc comments for the field.
  * - make the field protected (so you don't accidentally try and read it).
- * - get nominal typing (so types produces without using this class can never ne assignable to it).
+ * - get nominal typing (so types produced without using this class can never be assignable to it).
  * - allow use as {@link Opaque} branded type (not assignable to `ValueType`, but captures `ValueType`).
  *
  * See {@link MakeNominal} for some more details.
