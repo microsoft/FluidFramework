@@ -267,7 +267,6 @@ export const shortCodeMap = {
     "0x0c8": "Interception wrapper methods called recursively from the interception callback",
     "0x0c9": "Interception wrapper methods called recursively from the interception callback",
     "0x0ca": "Trying to use legacy graph attach!",
-    "0x0ce": "Don't acknowledge no-ops",
     "0x242": "has timer",
     "0x243": "stopSequenceNumberUpdate should be called as result of sending any op!",
     "0x278": "API is not supported for non-connecting or closed container",
@@ -320,7 +319,6 @@ export const shortCodeMap = {
     "0x0e0": "lost minBlobSize policy",
     "0x0dc": "Protocol handler should be set here",
     "0x241": "disconnect should result in stopSequenceNumberUpdate() call",
-    "0x2e2": "there should be service config for active connection",
     "0x0dd": "Existing context not disposed",
     "0x0de": "Mismatch in connection state while setting",
     "0x0df": "Missing active connection",
@@ -619,5 +617,9 @@ export const shortCodeMap = {
     "0x1ec": "No refresh token provided.",
     "0x1ce": "clientId not found",
     "0x1cf": "clientId not found",
-    "0x1d0": "sequenceNumber not found"
+    "0x1d0": "sequenceNumber not found",
+    "0x2e3": "Expected real numbers in minimum version!",
+    "0x2e4": "Expected minimumVersion to be [major].[minor].[patch]",
+    "0x2e5": "Expected version to match semver rules!",
+    "0x2e6": "Expected real numbers in minimum version!"
 };
