@@ -21,8 +21,7 @@ export interface ITokenResponse {
 }
 
 /**
- * The ITokenProvider abstracts the token fetching mechanism for a host. Host will be responsible for
- * implementing the interfaces.
+ * Abstracts the token fetching mechanism for a host. Host will be responsible for implementing the interfaces.
  */
 export interface ITokenProvider {
     /**
