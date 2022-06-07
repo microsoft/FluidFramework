@@ -85,7 +85,11 @@ export interface IProtocolHandler {
     // (undocumented)
     close(): void;
     // (undocumented)
+    getProtocolState(): IScribeProtocolState;
+    // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+    // (undocumented)
+    processMessageInQuorum(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)
     readonly quorum: IQuorum;
     // (undocumented)
@@ -139,6 +143,8 @@ export class ProtocolOpHandler implements IProtocolHandler {
     minimumSequenceNumber: number;
     // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+    // (undocumented)
+    processMessageInQuorum(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)
     get quorum(): Quorum;
     // (undocumented)
