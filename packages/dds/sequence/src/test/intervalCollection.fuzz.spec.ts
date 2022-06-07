@@ -228,14 +228,14 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     }
 
     function changeConnectionState(state: ClientOpState): ChangeConnectionState {
-        const stringId =  state.sharedString.id;
-        const { containerRuntime } = state.clients.find(c => c.sharedString.id === stringId);
+        const stringId = state.sharedString.id;
+        const { containerRuntime } = state.clients.find((c) => c.sharedString.id === stringId);
         return {
             type: "changeConnectionState",
             stringId,
             // No-ops aren't interesting; always make this flip the connection state.
-            connected: containerRuntime.connected ? false : true
-        }
+            connected: containerRuntime.connected ? false : true,
+        };
     }
 
     const hasAnInterval = ({ sharedString }: ClientOpState): boolean =>
@@ -271,7 +271,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         [addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
         [deleteInterval, 2, hasAnInterval],
         [changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
-        [changeConnectionState, 1]
+        [changeConnectionState, 1],
     ]);
 
     const clientOperationGenerator = (state: FuzzTestState) =>
@@ -293,7 +293,7 @@ interface LoggingInfo {
 
 function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
     for (const id of loggingInfo.clientIds) {
-        const { sharedString } = state.clients.find(s => s.sharedString.id === id);
+        const { sharedString } = state.clients.find((s) => s.sharedString.id === id);
         const labels = getUnscopedLabels(sharedString);
         const interval = Array.from(labels)
             .map((label) =>
@@ -320,7 +320,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
  * and location of all intervals in any interval collections they have.
  * */
 function assertConsistent(clients: Client[]): void {
-    const connectedClients = clients.filter(client => client.containerRuntime.connected);
+    const connectedClients = clients.filter((client) => client.containerRuntime.connected);
     if (connectedClients.length < 2) {
         // No two strings are expected to be consistent.
         return;
@@ -427,7 +427,7 @@ function runIntervalCollectionFuzz(
             changeConnectionState: statefully(({ clients }, { stringId, connected }) => {
                 const { containerRuntime } = clients.find((c) => c.sharedString.id === stringId);
                 containerRuntime.connected = connected;
-            })
+            }),
         },
         initialState,
         saveInfo,
@@ -523,5 +523,5 @@ describe.skip("IntervalCollection fuzz testing", () => {
             // intervalId over time.
             // { intervalId: "", clientIds: ["A", "B", "C"] },
         );
-    })
+    });
 });
