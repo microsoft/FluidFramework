@@ -234,7 +234,7 @@ stages:
           command: build
           dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
           buildContext: ${{ parameters.buildDirectory }}
-          arguments: --target base REGISTRY=mcr.microsoft.com/mirror/docker/library
+          arguments: --target base --build-arg REGISTRY=mcr.microsoft.com/mirror/docker/library
           tags: |
             $(containerTagSuffix)
 
@@ -321,7 +321,7 @@ stages:
         command: build
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
-        arguments: REGISTRY=mcr.microsoft.com/mirror/docker/library
+        arguments: --build-arg REGISTRY=mcr.microsoft.com/mirror/docker/library
         tags: |
           $(containerTagSuffix)
           ${{ variables.latestContainerTagSuffix }}
