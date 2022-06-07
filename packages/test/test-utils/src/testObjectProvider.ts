@@ -5,7 +5,11 @@
 
 import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import {
+    ILoaderProps,
+    Loader,
+    waitContainerToCatchUp as waitContainerToCatchUp_original,
+} from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -367,7 +371,8 @@ export class TestObjectProvider implements ITestObjectProvider {
             url: await this.driver.createContainerUrl(this.documentId),
             headers: requestHeader,
         });
-        await waitContainerToCatchUp(container);
+        await this.waitContainerToCatchUp(container);
+
         return container;
     }
 
@@ -386,6 +391,18 @@ export class TestObjectProvider implements ITestObjectProvider {
 
     public async ensureSynchronized() {
         return this._loaderContainerTracker.ensureSynchronized();
+    }
+
+    public async waitContainerToCatchUp(container: IContainer) {
+        // The original waitContainerToCatchUp() from container loader uses either Container.resume()
+        // or Container.connect() as part of its implementation. However, resume() was deprecated
+        // and eventually replaced with connect(). To avoid issues during LTS compatibility testing
+        // with older container versions issues, we use resume() when connect() is unavailable.
+        if ((container as any).connect === undefined) {
+            (container as any).connect = (container as any).resume;
+        }
+
+        return waitContainerToCatchUp_original(container);
     }
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {

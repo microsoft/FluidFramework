@@ -31,25 +31,78 @@ export interface AzureClientProps {
 }
 
 /**
+ * Container version metadata.
+ */
+export interface AzureContainerVersion {
+    /**
+     * Version ID
+     */
+    id: string;
+
+    /**
+     * Time when version was generated.
+     * ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
+     */
+    date?: string;
+}
+
+/**
+ * Options for "Get Container Versions" API.
+ */
+export interface AzureGetVersionsOptions {
+    /**
+     * Max number of versions
+     */
+    maxCount: number;
+}
+
+/**
+ * The type of connection.
+ * - "local" for local connections to a Fluid relay instance running on the localhost
+ * - "remote" for client connections to the Azure Fluid Relay service
+ */
+export type AzureConnectionConfigType = "local" | "remote";
+
+/**
  * Parameters for establishing a connection with the Azure Fluid Relay.
  */
 export interface AzureConnectionConfig {
     /**
-     * URI to the Azure Fluid Relay orderer endpoint
+     * The type of connection. Whether we're connecting to a remote Fluid relay server or a local instance.
      */
-    orderer: string;
+    type: AzureConnectionConfigType;
     /**
-     * URI to the Azure Fluid Relay storage endpoint
+     * URI to the Azure Fluid Relay service discovery endpoint.
      */
-    storage: string;
+    endpoint: string;
     /**
-     * Unique tenant identifier
-    */
-    tenantId: "local" | string;
-    /**
-     * Instance that provides Azure Fluid Relay endpoint tokens
+     * Instance that provides Azure Fluid Relay endpoint tokens.
      */
     tokenProvider: ITokenProvider;
+}
+
+/**
+ * Parameters for establishing a remote connection with the Azure Fluid Relay.
+ */
+export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
+    /**
+     * The type of connection. Set to a remote connection.
+     */
+    type: "remote";
+    /**
+     * Unique tenant identifier.
+     */
+    tenantId: string;
+}
+
+/**
+ * Parameters for establishing a local connection with a local instance of the Azure Fluid Relay.
+ */
+export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
+    /**
+     * The type of connection. Set to a remote connection.
+     */
+    type: "local";
 }
 
 /**

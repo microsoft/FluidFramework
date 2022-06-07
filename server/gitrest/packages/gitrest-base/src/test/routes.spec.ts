@@ -21,7 +21,12 @@ import sillyname from "sillyname";
 import request from "supertest";
 import * as app from "../app";
 import { ExternalStorageManager } from "../externalStorageManager";
-import { IsomorphicGitManagerFactory, NodeFsManagerFactory, NodegitRepositoryManagerFactory } from "../utils";
+import {
+    Constants,
+    IsomorphicGitManagerFactory,
+    NodeFsManagerFactory,
+    NodegitRepositoryManagerFactory,
+} from "../utils";
 import * as testUtils from "./utils";
 
 // TODO: (issue logged): replace email & name
@@ -41,11 +46,13 @@ async function createBlob(
     supertest: request.SuperTest<request.Test>,
     owner: string,
     repoName: string,
+    documentId: string,
     blob: ICreateBlobParams) {
     return supertest
         .post(`/repos/${owner}/${repoName}/git/blobs`)
         .set("Accept", "application/json")
         .set("Content-Type", "application/json")
+        .set(Constants.StorageRoutingIdHeader, getStorageRoutingHeaderValue(repoName, documentId))
         .send(blob)
         .expect(201);
 }
@@ -54,11 +61,13 @@ async function createTree(
     supertest: request.SuperTest<request.Test>,
     owner: string,
     repoName: string,
+    documentId: string,
     tree: ICreateTreeParams) {
     return supertest
         .post(`/repos/${owner}/${repoName}/git/trees`)
         .set("Accept", "application/json")
         .set("Content-Type", "application/json")
+        .set(Constants.StorageRoutingIdHeader, getStorageRoutingHeaderValue(repoName, documentId))
         .send(tree)
         .expect(201);
 }
@@ -67,11 +76,13 @@ async function createCommit(
     supertest: request.SuperTest<request.Test>,
     owner: string,
     repoName: string,
+    documentId: string,
     commit: ICreateCommitParams) {
     return supertest
         .post(`/repos/${owner}/${repoName}/git/commits`)
         .set("Accept", "application/json")
         .set("Content-Type", "application/json")
+        .set(Constants.StorageRoutingIdHeader, getStorageRoutingHeaderValue(repoName, documentId))
         .send(commit)
         .expect(201);
 }
@@ -80,11 +91,13 @@ async function createRef(
     supertest: request.SuperTest<request.Test>,
     owner: string,
     repoName: string,
+    documentId: string,
     ref: ICreateRefParams) {
     return supertest
         .post(`/repos/${owner}/${repoName}/git/refs`)
         .set("Accept", "application/json")
         .set("Content-Type", "application/json")
+        .set(Constants.StorageRoutingIdHeader, getStorageRoutingHeaderValue(repoName, documentId))
         .send(ref)
         .expect(201);
 }
@@ -93,15 +106,20 @@ async function initBaseRepo(
     supertest: request.SuperTest<request.Test>,
     owner: string,
     repoName: string,
+    documentId: string,
     testBlob: ICreateBlobParams,
     testTree: ICreateTreeParams,
     testCommit: ICreateCommitParams,
     testRef: ICreateRefParams) {
     await createRepo(supertest, owner, repoName);
-    await createBlob(supertest, owner, repoName, testBlob);
-    await createTree(supertest, owner, repoName, testTree);
-    await createCommit(supertest, owner, repoName, testCommit);
-    await createRef(supertest, owner, repoName, testRef);
+    await createBlob(supertest, owner, repoName, documentId, testBlob);
+    await createTree(supertest, owner, repoName, documentId, testTree);
+    await createCommit(supertest, owner, repoName, documentId, testCommit);
+    await createRef(supertest, owner, repoName, documentId, testRef);
+}
+
+function getStorageRoutingHeaderValue(tenantId: string, documentId: string) {
+    return `${tenantId}:${documentId}`;
 }
 
 function normalizeMessage(gitLibrary: testUtils.gitLibType, message: string) {
@@ -119,12 +137,24 @@ function normalizeMessage(gitLibrary: testUtils.gitLibType, message: string) {
 
 const testModes: testUtils.ITestMode[] = [
     {
-        name: "Using NodeGit as RepoManager",
+        name: "Using NodeGit as RepoManager with repoPerDoc enabled",
         gitLibrary: "nodegit",
+        repoPerDocEnabled: true,
     },
     {
-        name: "Using isomorphic-git as RepoManager",
+        name: "Using NodeGit as RepoManager with repoPerDoc disabled",
+        gitLibrary: "nodegit",
+        repoPerDocEnabled: false,
+    },
+    {
+        name: "Using isomorphic-git as RepoManager with repoPerDoc enabled",
         gitLibrary: "isomorphic-git",
+        repoPerDocEnabled: true,
+    },
+    {
+        name: "Using isomorphic-git as RepoManager with repoPerDoc disabled",
+        gitLibrary: "isomorphic-git",
+        repoPerDocEnabled: false,
     },
 ];
 
@@ -132,6 +162,7 @@ testModes.forEach((mode) => {
     describe(`GitRest: ${mode.name}`, () => {
         const testOwnerName = "owner";
         const testRepoName = "test";
+        const testDocId = "document1";
         const testBlob: ICreateBlobParams = {
             content: "Hello, World!",
             encoding: "utf-8",
@@ -172,13 +203,14 @@ testModes.forEach((mode) => {
 
         const fileSystemManagerFactory = new NodeFsManagerFactory();
         const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
-        const getRepoManagerFactory = (gitLibrary: testUtils.gitLibType) =>
+        const getRepoManagerFactory = (testMode: testUtils.ITestMode) =>
         {
-            if (gitLibrary === "nodegit") {
+            if (testMode.gitLibrary === "nodegit") {
                 return new NodegitRepositoryManagerFactory(
                     testUtils.defaultProvider.get("storageDir"),
                     fileSystemManagerFactory,
                     externalStorageManager,
+                    testMode.repoPerDocEnabled,
                 );
             }
 
@@ -186,6 +218,8 @@ testModes.forEach((mode) => {
             return new IsomorphicGitManagerFactory(
                 testUtils.defaultProvider.get("storageDir"),
                 fileSystemManagerFactory,
+                externalStorageManager,
+                testMode.repoPerDocEnabled,
             );
         }
         describe("Routes", () => {
@@ -194,7 +228,8 @@ testModes.forEach((mode) => {
             // Create the git repo before and after each test
             let supertest: request.SuperTest<request.Test>;
             beforeEach(() => {
-                const repoManagerFactory = getRepoManagerFactory(mode.gitLibrary);
+                const repoManagerFactory = getRepoManagerFactory(mode);
+                testUtils.defaultProvider.set("git:repoPerDocEnabled", mode.repoPerDocEnabled);
                 const testApp = app.create(testUtils.defaultProvider, fileSystemManagerFactory, repoManagerFactory);
                 supertest = request(testApp);
             });
@@ -209,36 +244,46 @@ testModes.forEach((mode) => {
                             .expect(200);
                     });
 
-                    it("Returns 400 for an unknown repo", async () => {
-                        return supertest
-                            .get(`/repos/${testOwnerName}/${testRepoName}`)
-                            .expect(400);
-                    });
+                    if (!mode.repoPerDocEnabled) {
+                        it("Returns 400 for an unknown repo", async () => {
+                            return supertest
+                                .get(`/repos/${testOwnerName}/${testRepoName}`)
+                                .expect(400);
+                        });
 
-                    it("Rejects invalid repo names", async () => {
-                        return supertest
-                            .post(`/${testOwnerName}/repos`)
-                            .set("Accept", "application/json")
-                            .set("Content-Type", "application/json")
-                            .send({ name: "../evilrepo" })
-                            .expect(400);
-                    });
+                        it("Rejects invalid repo names", async () => {
+                            return supertest
+                                .post(`/${testOwnerName}/repos`)
+                                .set("Accept", "application/json")
+                                .set("Content-Type", "application/json")
+                                .send({ name: "../evilrepo" })
+                                .expect(400);
+                        });
 
-                    it("Rejects missing repo names", async () => {
-                        return supertest
-                            .post(`/${testOwnerName}/repos`)
-                            .expect(400);
-                    });
+                        it("Rejects missing repo names", async () => {
+                            return supertest
+                                .post(`/${testOwnerName}/repos`)
+                                .expect(400);
+                        });
+                    }
                 });
 
                 describe("Blobs", () => {
                     it("Can create and retrieve a blob", async () => {
                         await createRepo(supertest, testOwnerName, testRepoName);
-                        const result = await createBlob(supertest, testOwnerName, testRepoName, testBlob);
+                        const result = await createBlob(
+                            supertest,
+                            testOwnerName,
+                            testRepoName,
+                            testDocId,
+                            testBlob);
                         assert.strictEqual(result.body.sha, "b45ef6fec89518d314f546fd6c3025367b721684");
 
                         return supertest
                             .get(`/repos/${testOwnerName}/${testRepoName}/git/blobs/${result.body.sha}`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(200)
                             .expect((getResult) => {
                                 assert.strictEqual(getResult.body.sha, result.body.sha);
@@ -247,20 +292,23 @@ testModes.forEach((mode) => {
 
                     it("Can create an existing blob without error", async () => {
                         await createRepo(supertest, testOwnerName, testRepoName);
-                        await createBlob(supertest, testOwnerName, testRepoName, testBlob);
-                        await createBlob(supertest, testOwnerName, testRepoName, testBlob);
+                        await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
+                        await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
                     });
                 });
 
                 describe("Trees", () => {
                     it("Can create and retrieve a tree", async () => {
                         await createRepo(supertest, testOwnerName, testRepoName);
-                        await createBlob(supertest, testOwnerName, testRepoName, testBlob);
-                        const tree = await createTree(supertest, testOwnerName, testRepoName, testTree);
+                        await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
+                        const tree = await createTree(supertest, testOwnerName, testRepoName, testDocId, testTree);
                         assert.strictEqual(tree.body.sha, "bf4db183cbd07f48546a5dde098b4510745d79a1");
 
                         return supertest
                             .get(`/repos/${testOwnerName}/${testRepoName}/git/trees/${tree.body.sha}`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(200)
                             .expect((getResult) => {
                                 assert.strictEqual(getResult.body.sha, tree.body.sha);
@@ -270,12 +318,13 @@ testModes.forEach((mode) => {
                     it("Can recursively retrieve a tree", async () => {
                         // Create a tree with a single sub directory
                         await createRepo(supertest, testOwnerName, testRepoName);
-                        await createBlob(supertest, testOwnerName, testRepoName, testBlob);
-                        await createTree(supertest, testOwnerName, testRepoName, testTree);
+                        await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
+                        await createTree(supertest, testOwnerName, testRepoName, testDocId, testTree);
                         const parentBlob = await createBlob(
                             supertest,
                             testOwnerName,
                             testRepoName,
+                            testDocId,
                             { content: "Parent", encoding: "utf-8" });
                         const parentTree = {
                             tree: [
@@ -292,7 +341,7 @@ testModes.forEach((mode) => {
                                     type: "tree",
                                 }],
                         };
-                        const tree = await createTree(supertest, testOwnerName, testRepoName, parentTree);
+                        const tree = await createTree(supertest, testOwnerName, testRepoName, testDocId, parentTree);
 
                         // And then a commit to reference it
                         const treeCommit: ICreateCommitParams = {
@@ -305,10 +354,13 @@ testModes.forEach((mode) => {
                             parents: [],
                             tree: tree.body.sha,
                         };
-                        const commit = await createCommit(supertest, testOwnerName, testRepoName, treeCommit);
+                        const commit = await createCommit(supertest, testOwnerName, testRepoName, testDocId, treeCommit);
 
                         return supertest
                             .get(`/repos/${testOwnerName}/${testRepoName}/git/trees/${commit.body.tree.sha}?recursive=1`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(200);
                     });
                 });
@@ -316,13 +368,16 @@ testModes.forEach((mode) => {
                 describe("Commits", () => {
                     it("Can create and retrieve a commit", async () => {
                         await createRepo(supertest, testOwnerName, testRepoName);
-                        await createBlob(supertest, testOwnerName, testRepoName, testBlob);
-                        await createTree(supertest, testOwnerName, testRepoName, testTree);
-                        const commit = await createCommit(supertest, testOwnerName, testRepoName, testCommit);
+                        await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
+                        await createTree(supertest, testOwnerName, testRepoName, testDocId, testTree);
+                        const commit = await createCommit(supertest, testOwnerName, testRepoName, testDocId, testCommit);
                         assert.strictEqual(commit.body.sha, "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18");
 
                         return supertest
                             .get(`/repos/${testOwnerName}/${testRepoName}/git/commits/${commit.body.sha}`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(200)
                             .expect((getResult) => {
                                 assert.strictEqual(getResult.body.sha, commit.body.sha);
@@ -333,14 +388,17 @@ testModes.forEach((mode) => {
                 describe("Refs", () => {
                     it("Can create and retrieve a reference", async () => {
                         await createRepo(supertest, testOwnerName, testRepoName);
-                        await createBlob(supertest, testOwnerName, testRepoName, testBlob);
-                        await createTree(supertest, testOwnerName, testRepoName, testTree);
-                        await createCommit(supertest, testOwnerName, testRepoName, testCommit);
-                        const ref = await createRef(supertest, testOwnerName, testRepoName, testRef);
+                        await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
+                        await createTree(supertest, testOwnerName, testRepoName, testDocId, testTree);
+                        await createCommit(supertest, testOwnerName, testRepoName, testDocId, testCommit);
+                        const ref = await createRef(supertest, testOwnerName, testRepoName, testDocId, testRef);
                         assert.strictEqual(ref.body.ref, testRef.ref);
 
                         return supertest
                             .get(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(200)
                             .expect((getResult) => {
                                 assert.strictEqual(getResult.body.ref, ref.body.ref);
@@ -348,9 +406,12 @@ testModes.forEach((mode) => {
                     });
 
                     it("Can retrieve all references", async () => {
-                        await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                        await initBaseRepo(supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef);
                         return supertest
                             .get(`/repos/${testOwnerName}/${testRepoName}/git/refs`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(200)
                             .expect((getResult) => {
                                 assert.strictEqual(getResult.body.length, 1);
@@ -359,11 +420,14 @@ testModes.forEach((mode) => {
                     });
 
                     it("Can patch to create a reference", async () => {
-                        await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                        await initBaseRepo(supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef);
                         return supertest
                             .patch(`/repos/${testOwnerName}/${testRepoName}/git/refs/heads/patch`)
                             .set("Accept", "application/json")
                             .set("Content-Type", "application/json")
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .send({
                                 force: true,
                                 sha: "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18",
@@ -373,11 +437,14 @@ testModes.forEach((mode) => {
                     });
 
                     it("Can't patch an existing reference without force flag set", async () => {
-                        await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                        await initBaseRepo(supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef);
                         return supertest
                             .patch(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
                             .set("Accept", "application/json")
                             .set("Content-Type", "application/json")
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .send({
                                 force: false,
                                 sha: "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18",
@@ -387,11 +454,14 @@ testModes.forEach((mode) => {
                     });
 
                     it("Can patch an existing reference with force flag set", async () => {
-                        await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                        await initBaseRepo(supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef);
                         return supertest
                             .patch(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
                             .set("Accept", "application/json")
                             .set("Content-Type", "application/json")
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .send({
                                 force: true,
                                 sha: "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18",
@@ -405,16 +475,23 @@ testModes.forEach((mode) => {
                             supertest,
                             testOwnerName,
                             testRepoName,
+                            testDocId,
                             testBlob,
                             testTree,
                             testCommit,
                             testRefWriteDisabled);
                         await supertest
                             .delete(`/repos/${testOwnerName}/${testRepoName}/git/${testRefWriteDisabled.ref}`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(204);
 
                         return supertest
                             .get(`/repos/${testOwnerName}/${testRepoName}/git/${testRefWriteDisabled.ref}`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(400);
                     });
                 });
@@ -433,17 +510,23 @@ testModes.forEach((mode) => {
                             type: "commit",
                         };
 
-                        await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                        await initBaseRepo(supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef);
                         const tag = await supertest
                             .post(`/repos/${testOwnerName}/${testRepoName}/git/tags`)
                             .set("Accept", "application/json")
                             .set("Content-Type", "application/json")
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .send(tagParams)
                             .expect(201);
                         assert.strictEqual(tag.body.sha, "2f208d6d4c5698feada2b5dad3886a0ceff4f80b");
 
                         return supertest
                             .get(`/repos/${testOwnerName}/${testRepoName}/git/tags/${tag.body.sha}`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(200)
                             .expect((result) => {
                                 assert.strictEqual(result.body.sha, tag.body.sha);
@@ -457,11 +540,15 @@ testModes.forEach((mode) => {
                     const MaxTreeLength = 10;
                     const MaxParagraphs = 200;
 
-                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
-                    const repoManagerFactory = getRepoManagerFactory(mode.gitLibrary);
+                    await initBaseRepo(supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef);
+                    const repoManagerFactory = getRepoManagerFactory(mode);
                     const repoManager = await repoManagerFactory.open({
                         repoOwner: testOwnerName,
                         repoName: testRepoName,
+                        storageRoutingId: {
+                            tenantId: testRepoName,
+                            documentId: testDocId,
+                        }
                     });
 
                     let lastCommit;
@@ -549,9 +636,12 @@ testModes.forEach((mode) => {
             describe("Repository", () => {
                 describe("Commits", () => {
                     it("Can list recent commits", async () => {
-                        await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                        await initBaseRepo(supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef);
                         return supertest
                             .get(`/repos/${testOwnerName}/${testRepoName}/commits?sha=main`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(200)
                             .expect((result) => {
                                 assert.strictEqual(result.body.length, 1);
@@ -561,10 +651,13 @@ testModes.forEach((mode) => {
 
                 describe("Content", () => {
                     it("Can retrieve a stored object", async () => {
-                        await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                        await initBaseRepo(supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef);
                         const fullRepoPath = `${testOwnerName}/${testRepoName}`;
                         return supertest
                             .get(`/repos/${fullRepoPath}/contents/${testTree.tree[0].path}?ref=${testRef.sha}`)
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(200);
                     });
                 });
@@ -580,6 +673,9 @@ testModes.forEach((mode) => {
                             .set(correlationIdHeaderName, testCorrelationId)
                             .set("Accept", "application/json")
                             .set("Content-Type", "application/json")
+                            .set(
+                                Constants.StorageRoutingIdHeader,
+                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .then((res) => {
                                 assert.strictEqual(res.headers?.[correlationIdHeaderName], testCorrelationId);
                         });
@@ -589,7 +685,7 @@ testModes.forEach((mode) => {
                     describe("Blobs", () => {
                         it("Should have correlation id when creating a blob", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/${testOwnerName}/repos`,
@@ -598,7 +694,7 @@ testModes.forEach((mode) => {
                         });
                         it("Should have correlation id when getting a blob", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/blobs/${testTree.tree[0].sha}`,
@@ -609,7 +705,7 @@ testModes.forEach((mode) => {
                     describe("Commits", () => {
                         it("Should have correlation id when creating a commit", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/commits`,
@@ -618,7 +714,7 @@ testModes.forEach((mode) => {
                         });
                         it("Should have correlation id when getting a commit", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/commits/${testTree.tree[0].sha}`,
@@ -629,7 +725,7 @@ testModes.forEach((mode) => {
                     describe("Refs", () => {
                         it("GET /repos/:owner/:repo/git/refs", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`,
@@ -637,7 +733,7 @@ testModes.forEach((mode) => {
                         });
                         it("GET /repos/:owner/:repo/git/refs/*", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}/*`,
@@ -645,7 +741,7 @@ testModes.forEach((mode) => {
                         });
                         it("POST /repos/:owner/:repo/git/refs", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/refs`,
@@ -654,7 +750,7 @@ testModes.forEach((mode) => {
                         });
                         it("PATCH /repos/:owner/:repo/git/refs/*", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/refs/heads/patch`,
@@ -663,7 +759,7 @@ testModes.forEach((mode) => {
                         });
                         it("DELETE /repos/:owner/:repo/git/refs/*", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/${testRefWriteDisabled.ref}`,
@@ -675,13 +771,13 @@ testModes.forEach((mode) => {
                     describe("Repos", () => {
                         it("Should have correlation id when creating a repo", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(`/repos/${testOwnerName}/repos`, "post");
                         });
                         it("Should have correlation id when getting a repo", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}`,
@@ -692,7 +788,7 @@ testModes.forEach((mode) => {
                     describe("Tags", () => {
                         it("Should have correlation id when creating a tag", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/tags`,
@@ -701,7 +797,7 @@ testModes.forEach((mode) => {
                         });
                         it("Should have correlation id when getting a tag", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/tags/${testTree.tree[0].sha}`,
@@ -712,7 +808,7 @@ testModes.forEach((mode) => {
                     describe("Trees", () => {
                         it("Should have correlation id when creating a tree", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/trees`, "post",
@@ -720,7 +816,7 @@ testModes.forEach((mode) => {
                         });
                         it("Should have correlation id when getting a tree", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/git/trees/${testTree.tree[0].sha}`,
@@ -733,7 +829,7 @@ testModes.forEach((mode) => {
                     describe("Commits", () => {
                         it("Should have correlation id when listing recent commits", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             await assertCorrelationId(
                                 `/repos/${testOwnerName}/${testRepoName}/commits?sha=main`,
@@ -744,7 +840,7 @@ testModes.forEach((mode) => {
                     describe("Content", () => {
                         it("Should have correlation id when retrieving a stored object", async () => {
                             await initBaseRepo(
-                                supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef,
+                                supertest, testOwnerName, testRepoName, testDocId, testBlob, testTree, testCommit, testRef,
                             );
                             const fullRepoPath = `${testOwnerName}/${testRepoName}`;
                             await assertCorrelationId(

@@ -29,7 +29,7 @@ export interface IDiceRollerController extends EventEmitter {
 // The data is stored in a key-value pair data object, so we'll use this key for storing the value.
 const diceValueKey = "diceValue";
 
-interface DiceRollerControllerProps {
+export interface DiceRollerControllerProps {
     get: (key: string) => any;
     set: (key: string, value: any) => void;
     on(event: "valueChanged", listener: (args: IValueChanged) => void): this;
