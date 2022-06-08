@@ -295,11 +295,8 @@ export class ConnectionStateHandler {
             this.receivedRemoveMemberEvent(clientId);
         });
 
-        // if we have a clientId from a previous container having pending ops, we need to wait for its leave message
-        if (this.clientId !== undefined &&
-            this.handler.shouldClientJoinWrite() &&
-            protocol.quorum.getMember(this.clientId) !== undefined
-        ) {
+        // if we have a clientId from a previous container we need to wait for its leave message
+        if (this.clientId !== undefined && protocol.quorum.getMember(this.clientId) !== undefined) {
             this.prevClientLeftTimer.restart();
         }
     }
