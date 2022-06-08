@@ -122,7 +122,7 @@ export class PendingStateManager implements IDisposable {
     }
 
     public getLocalState(): IPendingLocalState | undefined {
-        assert(this.initialStates.isEmpty(), "Must call getLocalState() after applying initial states");
+        assert(this.initialStates.isEmpty(), 0x2e9 /* "Must call getLocalState() after applying initial states" */);
         if (this.hasPendingMessages()) {
             return {
                 pendingStates: this.pendingStates.toArray().map(

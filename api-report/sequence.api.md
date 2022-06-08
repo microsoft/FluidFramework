@@ -205,6 +205,12 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     segment: ISegment;
 }
 
+// @public
+export interface ISequenceIntervalEvents extends IEvent {
+    // (undocumented)
+    (event: "beforePositionChange" | "afterPositionChange", listener: () => void): any;
+}
+
 // @public (undocumented)
 export interface ISerializableInterval extends IInterval {
     // (undocumented)
@@ -372,7 +378,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 }
 
 // @public (undocumented)
-export class SequenceInterval implements ISerializableInterval {
+export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents> implements ISerializableInterval {
     constructor(start: LocalReference, end: LocalReference, intervalType: IntervalType, props?: PropertySet);
     // (undocumented)
     addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;

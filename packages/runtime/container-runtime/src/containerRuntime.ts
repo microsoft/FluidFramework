@@ -606,7 +606,7 @@ class ScheduleManagerCore {
 
     private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
         const endBatch = messageEndBatch.sequenceNumber;
-        const duration = performance.now() - this.timePaused;
+        const duration = this.localPaused ? (performance.now() - this.timePaused) : undefined;
 
         this.batchCount++;
         if (this.batchCount % 1000 === 1) {
@@ -629,7 +629,7 @@ class ScheduleManagerCore {
         this.localPaused = false;
 
         // Random round number - we want to know when batch waiting paused op processing.
-        if (duration > latencyThreshold) {
+        if (duration !== undefined && duration > latencyThreshold) {
             this.logger.sendErrorEvent({
                 eventName: "MaxBatchWaitTimeExceeded",
                 duration,
@@ -3026,7 +3026,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.attachState !== AttachState.Attached || this.context.pendingLocalState) {
             return;
         }
-        assert(!!this.context.baseSnapshot, "Must have a base snapshot");
+        assert(!!this.context.baseSnapshot, 0x2e5 /* "Must have a base snapshot" */);
         this.baseSnapshotBlobs = await SerializedSnapshotStorage.serializeTree(this.context.baseSnapshot, this.storage);
     }
 
@@ -3044,8 +3044,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 savedOps: this.savedOps,
             };
         }
-        assert(!!this.context.baseSnapshot, "Must have a base snapshot");
-        assert(!!this.baseSnapshotBlobs, "Must serialize base snapshot blobs before getting runtime state");
+        assert(!!this.context.baseSnapshot, 0x2e6 /* "Must have a base snapshot" */);
+        assert(!!this.baseSnapshotBlobs, 0x2e7 /* "Must serialize base snapshot blobs before getting runtime state" */);
         return {
             pending: this.pendingStateManager.getLocalState(),
             snapshotBlobs: this.baseSnapshotBlobs,

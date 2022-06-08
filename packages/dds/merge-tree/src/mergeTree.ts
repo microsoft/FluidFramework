@@ -1466,16 +1466,19 @@ export class MergeTree {
      * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
      */
     private slideReferences(segment: ISegment, refsToSlide: LocalReference[]) {
-        assert(isRemovedAndAcked(segment), "slideReferences from a segment which has not been removed and acked");
-        assert(!!segment.localRefs, "Ref not in the segment localRefs");
+        assert(
+            isRemovedAndAcked(segment),
+            0x2f1 /* slideReferences from a segment which has not been removed and acked */);
+        assert(!!segment.localRefs, 0x2f2 /* Ref not in the segment localRefs */);
         const newSegoff = this._getSlideToSegment({ segment, offset: 0 });
         const newSegment = newSegoff.segment;
         if (newSegment && !newSegment.localRefs) {
             newSegment.localRefs = new LocalReferenceCollection(newSegment);
         }
         for (const ref of refsToSlide) {
+            ref.emit("beforeSlide");
             const removedRef = segment.localRefs.removeLocalRef(ref);
-            assert(ref === removedRef, "Ref not in the segment localRefs");
+            assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
             if (!newSegment) {
                 // No valid segments (all nodes removed or not yet created)
                 ref.segment = undefined;
@@ -1483,9 +1486,10 @@ export class MergeTree {
             } else {
                 ref.segment = newSegment;
                 ref.offset = newSegoff.offset ?? 0;
-                assert(!!newSegment.localRefs, "localRefs must be allocated");
+                assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
                 newSegment.localRefs.addLocalRef(ref);
             }
+            ref.emit("afterSlide");
         }
         // TODO is it required to update the path lengths?
         if (newSegment) {

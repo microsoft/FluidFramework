@@ -127,10 +127,7 @@
       "build": "common/build",
       "common-def": "common/lib/common-definitions",
       "common-utils": "common/lib/common-utils",
-      "core-interfaces": "common/lib/core-interfaces",
       "protocol-def": "common/lib/protocol-definitions",
-      "driver-def": "common/lib/driver-definitions",
-      "container-def": "common/lib/container-definitions",
       "azure": "azure",
       "server": "server/routerlicious",
       "client": {
