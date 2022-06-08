@@ -1616,7 +1616,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const state = this.connectionState === ConnectionState.Connected;
 
-        assert(this.context !== undefined, "This function should be called only after context & protocol are fully loaded");
+        assert(this.context !== undefined,
+            "This function should be called only after context & protocol are fully loaded");
         assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
 
         if (!this.context.disposed) {
