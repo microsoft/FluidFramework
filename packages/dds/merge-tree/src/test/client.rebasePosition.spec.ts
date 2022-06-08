@@ -101,5 +101,19 @@ describe("client.rebasePosition", () => {
             client.applyMsg(client.makeOpMessage(op2, ++seq, 0, localUserLongId), true);
             expectTextAtRebasedPosMatches(rebasedPos2, "4");
         });
+
+        // Mid-remote delete with meanwhile local edits isn't particularly more interesting than the cases
+        // handled above. Instead we include some rebased positions amid the local delete (removal of "lo")
+        // as this caught a bug with the original implementation.
+        it("rebase mid local delete", () => {
+            client.removeRangeRemote(0, 2, ++seq, 0, remoteUserLongId);
+            const rebasedPos = client.rebasePosition(4 /* index 4 into "hello world" */, 0, 0);
+            const rebasedPos1 = client.rebasePosition(4 /* index 4 into "hello123456 world" */, 0, 1);
+            const rebasedPos2 = client.rebasePosition(4 /* index 4 into "hel123456 world" */, 0, 2);
+
+            assert.equal(rebasedPos, 2);
+            assert.equal(rebasedPos1, 2);
+            assert.equal(rebasedPos2, 2);
+        });
     });
 });
