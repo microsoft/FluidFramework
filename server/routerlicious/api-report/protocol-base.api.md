@@ -89,8 +89,6 @@ export interface IProtocolHandler {
     // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)
-    processMessageInQuorum(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
-    // (undocumented)
     readonly quorum: IQuorum;
     // (undocumented)
     setConnectionState(connected: boolean, clientId: string | undefined): any;
@@ -144,8 +142,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
     // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)
-    processMessageInQuorum(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
-    // (undocumented)
     get quorum(): Quorum;
     // (undocumented)
     readonly _quorum: Quorum;
@@ -157,6 +153,17 @@ export class ProtocolOpHandler implements IProtocolHandler {
     snapshot(): IQuorumSnapshot;
     // (undocumented)
     readonly term: number;
+}
+
+// @public (undocumented)
+export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
+    constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
+    // (undocumented)
+    minimumSequenceNumber: number;
+    // (undocumented)
+    processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+    // (undocumented)
+    sequenceNumber: number;
 }
 
 // @public

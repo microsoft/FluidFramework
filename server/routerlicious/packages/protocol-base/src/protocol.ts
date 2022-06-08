@@ -58,7 +58,6 @@ export interface IProtocolHandler {
     snapshot(): IQuorumSnapshot;
 
     close(): void;
-    processMessageInQuorum(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     getProtocolState(): IScribeProtocolState;
 }
@@ -110,26 +109,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
 
     public close() {
         this._quorum.close();
-    }
-
-    public processMessageInQuorum(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
-        const client: ILocalSequencedClient | undefined = this._quorum.getMember(message.clientId);
-
-        // Check and report if we're getting messages from a clientId that we previously
-        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
-        if (message.clientId != null) {
-            if (client === undefined && message.type !== MessageType.ClientJoin) {
-                // pre-0.58 error message: messageClientIdMissingFromQuorum
-                throw new Error("Remote message's clientId is missing from the quorum");
-            }
-
-            if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
-                // pre-0.58 error message: messageClientIdShouldHaveLeft
-                throw new Error("Remote message's clientId already should have left");
-            }
-        }
-
-        return this.processMessage(message, local);
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
@@ -200,5 +179,46 @@ export class ProtocolOpHandler implements IProtocolHandler {
             minimumSequenceNumber: this.minimumSequenceNumber,
             ...this._quorum.snapshot(),
         };
+    }
+}
+
+export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
+    constructor(
+        public minimumSequenceNumber: number,
+        public sequenceNumber: number,
+        term: number | undefined,
+        members: [string, ISequencedClient][],
+        proposals: [number, ISequencedProposal, string[]][],
+        values: [string, ICommittedProposal][],
+        sendProposal: (key: string, value: any) => number,
+    ) {
+        super(
+            minimumSequenceNumber,
+            sequenceNumber,
+            term,
+            members,
+            proposals,
+            values,
+            sendProposal);
+    }
+
+    public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
+        const client: ILocalSequencedClient | undefined = this._quorum.getMember(message.clientId);
+
+        // Check and report if we're getting messages from a clientId that we previously
+        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
+        if (message.clientId != null) {
+            if (client === undefined && message.type !== MessageType.ClientJoin) {
+                // pre-0.58 error message: messageClientIdMissingFromQuorum
+                throw new Error("Remote message's clientId is missing from the quorum");
+            }
+
+            if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
+                // pre-0.58 error message: messageClientIdShouldHaveLeft
+                throw new Error("Remote message's clientId already should have left");
+            }
+        }
+
+        return super.processMessage(message, local);
     }
 }
