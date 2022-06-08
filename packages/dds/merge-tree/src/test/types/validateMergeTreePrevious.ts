@@ -1031,7 +1031,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeAnnotateMsg():
 declare function use_current_InterfaceDeclaration_IMergeTreeAnnotateMsg(
     use: TypeOnly<current.IMergeTreeAnnotateMsg>);
 use_current_InterfaceDeclaration_IMergeTreeAnnotateMsg(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeAnnotateMsg());
 
 /*
@@ -1044,7 +1043,6 @@ declare function get_current_InterfaceDeclaration_IMergeTreeAnnotateMsg():
 declare function use_old_InterfaceDeclaration_IMergeTreeAnnotateMsg(
     use: TypeOnly<old.IMergeTreeAnnotateMsg>);
 use_old_InterfaceDeclaration_IMergeTreeAnnotateMsg(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeTreeAnnotateMsg());
 
 /*
@@ -1081,7 +1079,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeDelta():
 declare function use_current_InterfaceDeclaration_IMergeTreeDelta(
     use: TypeOnly<current.IMergeTreeDelta>);
 use_current_InterfaceDeclaration_IMergeTreeDelta(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeDelta());
 
 /*
@@ -1094,7 +1091,6 @@ declare function get_current_InterfaceDeclaration_IMergeTreeDelta():
 declare function use_old_InterfaceDeclaration_IMergeTreeDelta(
     use: TypeOnly<old.IMergeTreeDelta>);
 use_old_InterfaceDeclaration_IMergeTreeDelta(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeTreeDelta());
 
 /*
@@ -1107,7 +1103,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs():
 declare function use_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
     use: TypeOnly<current.IMergeTreeDeltaCallbackArgs>);
 use_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs());
 
 /*
@@ -1120,7 +1115,6 @@ declare function get_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs():
 declare function use_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
     use: TypeOnly<old.IMergeTreeDeltaCallbackArgs>);
 use_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs());
 
 /*
@@ -1133,7 +1127,6 @@ declare function get_old_TypeAliasDeclaration_IMergeTreeDeltaOp():
 declare function use_current_TypeAliasDeclaration_IMergeTreeDeltaOp(
     use: TypeOnly<current.IMergeTreeDeltaOp>);
 use_current_TypeAliasDeclaration_IMergeTreeDeltaOp(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IMergeTreeDeltaOp());
 
 /*
@@ -1146,7 +1139,6 @@ declare function get_current_TypeAliasDeclaration_IMergeTreeDeltaOp():
 declare function use_old_TypeAliasDeclaration_IMergeTreeDeltaOp(
     use: TypeOnly<old.IMergeTreeDeltaOp>);
 use_old_TypeAliasDeclaration_IMergeTreeDeltaOp(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IMergeTreeDeltaOp());
 
 /*
@@ -1159,7 +1151,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs():
 declare function use_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
     use: TypeOnly<current.IMergeTreeDeltaOpArgs>);
 use_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs());
 
 /*
@@ -1172,7 +1163,6 @@ declare function get_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs():
 declare function use_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
     use: TypeOnly<old.IMergeTreeDeltaOpArgs>);
 use_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs());
 
 /*
@@ -1185,7 +1175,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeGroupMsg():
 declare function use_current_InterfaceDeclaration_IMergeTreeGroupMsg(
     use: TypeOnly<current.IMergeTreeGroupMsg>);
 use_current_InterfaceDeclaration_IMergeTreeGroupMsg(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeGroupMsg());
 
 /*
@@ -1198,7 +1187,6 @@ declare function get_current_InterfaceDeclaration_IMergeTreeGroupMsg():
 declare function use_old_InterfaceDeclaration_IMergeTreeGroupMsg(
     use: TypeOnly<old.IMergeTreeGroupMsg>);
 use_old_InterfaceDeclaration_IMergeTreeGroupMsg(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeTreeGroupMsg());
 
 /*
@@ -1211,7 +1199,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeInsertMsg():
 declare function use_current_InterfaceDeclaration_IMergeTreeInsertMsg(
     use: TypeOnly<current.IMergeTreeInsertMsg>);
 use_current_InterfaceDeclaration_IMergeTreeInsertMsg(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeInsertMsg());
 
 /*
@@ -1224,7 +1211,6 @@ declare function get_current_InterfaceDeclaration_IMergeTreeInsertMsg():
 declare function use_old_InterfaceDeclaration_IMergeTreeInsertMsg(
     use: TypeOnly<old.IMergeTreeInsertMsg>);
 use_old_InterfaceDeclaration_IMergeTreeInsertMsg(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeTreeInsertMsg());
 
 /*
@@ -1237,7 +1223,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
 declare function use_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
     use: TypeOnly<current.IMergeTreeMaintenanceCallbackArgs>);
 use_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs());
 
 /*
@@ -1250,7 +1235,6 @@ declare function get_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackA
 declare function use_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
     use: TypeOnly<old.IMergeTreeMaintenanceCallbackArgs>);
 use_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs());
 
 /*
@@ -1263,7 +1247,6 @@ declare function get_old_TypeAliasDeclaration_IMergeTreeOp():
 declare function use_current_TypeAliasDeclaration_IMergeTreeOp(
     use: TypeOnly<current.IMergeTreeOp>);
 use_current_TypeAliasDeclaration_IMergeTreeOp(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IMergeTreeOp());
 
 /*
@@ -1276,7 +1259,6 @@ declare function get_current_TypeAliasDeclaration_IMergeTreeOp():
 declare function use_old_TypeAliasDeclaration_IMergeTreeOp(
     use: TypeOnly<old.IMergeTreeOp>);
 use_old_TypeAliasDeclaration_IMergeTreeOp(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IMergeTreeOp());
 
 /*
@@ -1289,7 +1271,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeRemoveMsg():
 declare function use_current_InterfaceDeclaration_IMergeTreeRemoveMsg(
     use: TypeOnly<current.IMergeTreeRemoveMsg>);
 use_current_InterfaceDeclaration_IMergeTreeRemoveMsg(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeRemoveMsg());
 
 /*
@@ -1302,7 +1283,6 @@ declare function get_current_InterfaceDeclaration_IMergeTreeRemoveMsg():
 declare function use_old_InterfaceDeclaration_IMergeTreeRemoveMsg(
     use: TypeOnly<old.IMergeTreeRemoveMsg>);
 use_old_InterfaceDeclaration_IMergeTreeRemoveMsg(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeTreeRemoveMsg());
 
 /*
@@ -1555,7 +1535,6 @@ declare function get_old_TypeAliasDeclaration_IntervalNode():
 declare function use_current_TypeAliasDeclaration_IntervalNode(
     use: TypeOnly<current.IntervalNode<any>>);
 use_current_TypeAliasDeclaration_IntervalNode(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IntervalNode());
 
 /*
@@ -1568,7 +1547,6 @@ declare function get_current_TypeAliasDeclaration_IntervalNode():
 declare function use_old_TypeAliasDeclaration_IntervalNode(
     use: TypeOnly<old.IntervalNode<any>>);
 use_old_TypeAliasDeclaration_IntervalNode(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IntervalNode());
 
 /*
@@ -2205,7 +2183,6 @@ declare function get_old_TypeAliasDeclaration_MergeTreeDeltaOperationType():
 declare function use_current_TypeAliasDeclaration_MergeTreeDeltaOperationType(
     use: TypeOnly<current.MergeTreeDeltaOperationType>);
 use_current_TypeAliasDeclaration_MergeTreeDeltaOperationType(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_MergeTreeDeltaOperationType());
 
 /*
@@ -2218,7 +2195,6 @@ declare function get_current_TypeAliasDeclaration_MergeTreeDeltaOperationType():
 declare function use_old_TypeAliasDeclaration_MergeTreeDeltaOperationType(
     use: TypeOnly<old.MergeTreeDeltaOperationType>);
 use_old_TypeAliasDeclaration_MergeTreeDeltaOperationType(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_MergeTreeDeltaOperationType());
 
 /*
@@ -2231,7 +2207,6 @@ declare function get_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes():
 declare function use_current_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
     use: TypeOnly<current.MergeTreeDeltaOperationTypes>);
 use_current_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes());
 
 /*
@@ -2244,7 +2219,6 @@ declare function get_current_TypeAliasDeclaration_MergeTreeDeltaOperationTypes()
 declare function use_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
     use: TypeOnly<old.MergeTreeDeltaOperationTypes>);
 use_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_MergeTreeDeltaOperationTypes());
 
 /*
@@ -2257,7 +2231,6 @@ declare function get_old_EnumDeclaration_MergeTreeDeltaType():
 declare function use_current_EnumDeclaration_MergeTreeDeltaType(
     use: TypeOnly<current.MergeTreeDeltaType>);
 use_current_EnumDeclaration_MergeTreeDeltaType(
-    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_MergeTreeDeltaType());
 
 /*
@@ -2270,7 +2243,6 @@ declare function get_current_EnumDeclaration_MergeTreeDeltaType():
 declare function use_old_EnumDeclaration_MergeTreeDeltaType(
     use: TypeOnly<old.MergeTreeDeltaType>);
 use_old_EnumDeclaration_MergeTreeDeltaType(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_MergeTreeDeltaType());
 
 /*
@@ -2307,7 +2279,6 @@ declare function get_old_EnumDeclaration_MergeTreeMaintenanceType():
 declare function use_current_EnumDeclaration_MergeTreeMaintenanceType(
     use: TypeOnly<current.MergeTreeMaintenanceType>);
 use_current_EnumDeclaration_MergeTreeMaintenanceType(
-    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_MergeTreeMaintenanceType());
 
 /*
@@ -2320,7 +2291,6 @@ declare function get_current_EnumDeclaration_MergeTreeMaintenanceType():
 declare function use_old_EnumDeclaration_MergeTreeMaintenanceType(
     use: TypeOnly<old.MergeTreeMaintenanceType>);
 use_old_EnumDeclaration_MergeTreeMaintenanceType(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_MergeTreeMaintenanceType());
 
 /*
@@ -2669,7 +2639,6 @@ declare function get_old_EnumDeclaration_RBColor():
 declare function use_current_EnumDeclaration_RBColor(
     use: TypeOnly<current.RBColor>);
 use_current_EnumDeclaration_RBColor(
-    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_RBColor());
 
 /*
@@ -2682,7 +2651,6 @@ declare function get_current_EnumDeclaration_RBColor():
 declare function use_old_EnumDeclaration_RBColor(
     use: TypeOnly<old.RBColor>);
 use_old_EnumDeclaration_RBColor(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_RBColor());
 
 /*
@@ -2695,7 +2663,6 @@ declare function get_old_InterfaceDeclaration_RBNode():
 declare function use_current_InterfaceDeclaration_RBNode(
     use: TypeOnly<current.RBNode<any,any>>);
 use_current_InterfaceDeclaration_RBNode(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_RBNode());
 
 /*
@@ -2708,7 +2675,6 @@ declare function get_current_InterfaceDeclaration_RBNode():
 declare function use_old_InterfaceDeclaration_RBNode(
     use: TypeOnly<old.RBNode<any,any>>);
 use_old_InterfaceDeclaration_RBNode(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_RBNode());
 
 /*

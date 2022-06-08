@@ -68,7 +68,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.70857",
-    "@fluidframework/container-utils-previous": "npm:@fluidframework/container-utils@0.59.4000",
+    "@fluidframework/container-utils-previous": "npm:@fluidframework/container-utils@0.59.4001",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^0.59.4002",
     "@fluidframework/test-runtime-utils": "^0.59.4002",
@@ -99,7 +99,7 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "0.59.4001",
+    "version": "0.59.4002",
     "broken": {}
   }
 }
