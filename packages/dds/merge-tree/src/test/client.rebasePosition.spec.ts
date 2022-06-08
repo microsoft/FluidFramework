@@ -49,6 +49,22 @@ describe("client.rebasePosition", () => {
         }
     });
 
+    it("rebase on a variety of seqNumberFrom values", () => {
+        client.insertTextRemote(0, "abc", undefined, ++seq, 0, remoteUserLongId);
+        client.removeRangeRemote(0, 1, ++seq, seq - 1, remoteUserLongId);
+        client.insertTextRemote(1, "XYZ@", undefined, ++seq, seq - 1, remoteUserLongId);
+
+        const rebasedPos0 = client.rebasePosition(6 /* into "hello world" */, 0, 0);
+        const rebasedPos1 = client.rebasePosition(6 /* into "abchello world" */, 1, 0);
+        const rebasedPos2 = client.rebasePosition(6 /* into "bchello world" */, 2, 0);
+        const rebasedPos3 = client.rebasePosition(6 /* into "bXYZ@chello world" */, 3, 0);
+
+        assert.equal(getTextAt(rebasedPos0), "w");
+        assert.equal(getTextAt(rebasedPos1), "l");
+        assert.equal(getTextAt(rebasedPos2), "o");
+        assert.equal(getTextAt(rebasedPos3), "h");
+    });
+
     describe("with subsequent local changes", () => {
         // Rebasing is made more complicated from the client perspective when there are local changes applied
         // meanwhile, since the local state of the string contains segments that should not be considered
