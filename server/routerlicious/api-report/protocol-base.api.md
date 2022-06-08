@@ -157,13 +157,8 @@ export class ProtocolOpHandler implements IProtocolHandler {
 
 // @public (undocumented)
 export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
-    constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
-    // (undocumented)
-    minimumSequenceNumber: number;
     // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
-    // (undocumented)
-    sequenceNumber: number;
 }
 
 // @public
