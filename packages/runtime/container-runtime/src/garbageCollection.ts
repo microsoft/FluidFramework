@@ -22,9 +22,8 @@ import {
     IGarbageCollectionData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
-    ISummarizeResult,
-    ITelemetryContext,
     IGarbageCollectionNodeData,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
     mergeStats,
@@ -163,11 +162,7 @@ export interface IGarbageCollector {
         options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean; },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
-    summarize(
-        fullTree: boolean,
-        trackState: boolean,
-        telemetryContext?: ITelemetryContext,
-    ): ISummarizeResult | undefined;
+    summarize(fullTree: boolean, trackState: boolean): ISummarizeResult | undefined;
     /** Returns the garbage collector specific metadata to be written into the summary. */
     getMetadata(): IGCMetadata;
     /** Returns a map of each node id to its base GC details in the base summary. */
@@ -335,7 +330,7 @@ export class GarbageCollector implements IGarbageCollector {
     private _writeDataAtRoot: boolean = false;
     public get writeDataAtRoot(): boolean {
         return this._writeDataAtRoot;
-    }
+     }
 
     /**
      * Tells whether the initial GC state needs to be reset. This can happen under 2 conditions:
@@ -425,14 +420,12 @@ export class GarbageCollector implements IGarbageCollector {
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
-            if (gcOptions.sweepAllowed && gcOptions.gcAllowed === false) {
+            if (gcOptions.sweepAllowed && !gcOptions.gcAllowed) {
                 throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
             }
 
-            // For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
-            // flag in GC options to false.
-            this.gcEnabled = gcOptions.gcAllowed !== false;
-            // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
+            // For new documents, GC has to be explicitly enabled via the flags in GC options.
+            this.gcEnabled = gcOptions.gcAllowed === true;
             this.sweepEnabled = gcOptions.sweepAllowed === true;
 
             // Set the Session Expiry only if the flag is enabled or the test option is set.
@@ -595,7 +588,7 @@ export class GarbageCollector implements IGarbageCollector {
                 return;
             }
 
-            const gcNodes: { [id: string]: string[]; } = {};
+            const gcNodes: { [ id: string ]: string[]; } = {};
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 if (nodeData.unreferencedTimestampMs !== undefined) {
                     this.unreferencedNodesState.set(
@@ -620,7 +613,7 @@ export class GarbageCollector implements IGarbageCollector {
                 return new Map();
             }
 
-            const gcNodes: { [id: string]: string[]; } = {};
+            const gcNodes: { [ id: string ]: string[]; } = {};
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
             }
@@ -744,7 +737,8 @@ export class GarbageCollector implements IGarbageCollector {
             this.completedRuns++;
 
             return gcStats;
-        }, { end: true, cancel: "error" });
+        },
+        { end: true, cancel: "error" });
     }
 
     /**
@@ -755,7 +749,6 @@ export class GarbageCollector implements IGarbageCollector {
     public summarize(
         fullTree: boolean,
         trackState: boolean,
-        telemetryContext?: ITelemetryContext,
     ): ISummarizeResult | undefined {
         if (!this.shouldRunGC || this.previousGCDataFromLastRun === undefined) {
             return;
@@ -1345,16 +1338,16 @@ function meetsMinimumVersionRequirement(currentVersion: string, minimumVersion: 
  */
 export function semverCompare(currentVersion: string, minimumVersion: string): number {
     const minimumValues = minimumVersion.split(".").map((value): number => {
-        assert(isNaN(+value) === false, 0x2fa /* Expected real numbers in minimum version! */);
+        assert(isNaN(+value) === false, 0x2e3 /* Expected real numbers in minimum version! */);
         return Number.parseInt(value, 10);
     });
-    assert(minimumValues.length === 3, 0x2fb /* Expected minimumVersion to be [major].[minor].[patch] */);
+    assert(minimumValues.length === 3, 0x2e4 /* Expected minimumVersion to be [major].[minor].[patch] */);
     const [minMajor, minMinor, minPatch] = minimumValues;
 
     const currentValuesString = currentVersion.split(/\W/);
-    assert(currentValuesString.length >= 3, 0x2fc /* Expected version to match semver rules! */);
+    assert(currentValuesString.length >= 3, 0x2e5 /* Expected version to match semver rules! */);
     const currentValues = currentValuesString.slice(0, 3).map((value) => {
-        assert(isNaN(+value) === false, 0x2fd /* Expected real numbers in minimum version! */);
+        assert(isNaN(+value) === false, 0x2e6 /* Expected real numbers in minimum version! */);
         return Number.parseInt(value, 10);
     });
     const [cMajor, cMinor, cPatch] = currentValues;
