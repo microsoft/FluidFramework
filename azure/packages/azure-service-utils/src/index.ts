@@ -4,7 +4,8 @@
  */
 
 /**
- * A set of helper utilities for building backend APIs for use with Azure Fluid Relay.
+ * A set of helper utilities for building backend APIs for use with
+ * {@link https://docs.microsoft.com/en-us/azure/azure-fluid-relay/overview/overview | Azure Fluid Relay}.
  *
  * @packageDocumentation
  */
