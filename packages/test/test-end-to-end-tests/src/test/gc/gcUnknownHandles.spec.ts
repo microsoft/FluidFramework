@@ -67,7 +67,7 @@ describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
-        gcOptions: { gcAllowed: true, writeDataAtRoot: true },
+        gcOptions: { gcAllowed: true },
     };
     let mainContainer: IContainer;
     let dataStoreA: ITestDataObject;

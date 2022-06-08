@@ -74,7 +74,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             ],
             undefined,
             [innerRequestHandler],
-            { ...defaultRuntimeOptions, gcOptions: { gcAllowed, writeDataAtRoot: true } },
+            { ...defaultRuntimeOptions, gcOptions: { gcAllowed } },
         );
         return provider.createContainer(runtimeFactory, { configProvider });
     };
@@ -88,7 +88,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             ],
             undefined,
             [innerRequestHandler],
-            { ...defaultRuntimeOptions, gcOptions: { gcAllowed, disableGC, writeDataAtRoot: true } },
+            { ...defaultRuntimeOptions, gcOptions: { gcAllowed, disableGC } },
         );
         return loadSummarizer(
             provider,

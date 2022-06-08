@@ -47,7 +47,7 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
                 state: "disabled",
             },
         },
-        gcOptions: { gcAllowed: true, writeDataAtRoot: true },
+        gcOptions: { gcAllowed: true },
     };
 
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>

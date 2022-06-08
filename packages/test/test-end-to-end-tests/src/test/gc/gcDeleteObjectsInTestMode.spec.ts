@@ -38,7 +38,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
                     state: "disabled",
                 },
              },
-            gcOptions: { gcAllowed: true, runGCInTestMode: deleteUnreferencedContent, writeDataAtRoot: true },
+            gcOptions: { gcAllowed: true, runGCInTestMode: deleteUnreferencedContent },
         };
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
             runtime.IFluidHandleContext.resolveHandle(request);

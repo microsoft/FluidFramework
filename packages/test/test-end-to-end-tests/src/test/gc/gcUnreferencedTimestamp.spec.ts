@@ -43,7 +43,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
                 state: "disabled",
             },
          },
-        gcOptions: { gcAllowed: true, writeDataAtRoot: true },
+        gcOptions: { gcAllowed: true },
     };
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
