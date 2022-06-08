@@ -267,8 +267,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     ) {
         super();
         const props: IConnectionManagerFactoryArgs = {
-            incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) =>
-                this.enqueueMessages(messages, reason),
+            incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
+                try {
+                    this.enqueueMessages(messages, reason);
+                } catch (error) {
+                    this.logger.sendErrorEvent({ eventName: "EnqueueMessages_Exception" }, error);
+                    this.close(normalizeError(error));
+                }
+            },
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
             reconnectionDelayHandler: (delayMs: number, error: unknown) =>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),

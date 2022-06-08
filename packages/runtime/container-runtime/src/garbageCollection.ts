@@ -40,7 +40,6 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 
-import * as semver from "semver";
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
 import { pkgVersion } from "./packageVersion";
@@ -1155,11 +1154,10 @@ export class GarbageCollector implements IGarbageCollector {
 
         const updateNodeStats = (nodeId: string, referenced: boolean) => {
             gcStats.nodeCount++;
-            /**
-             * `this.unreferencedNodesState` has the previous unreferenced state of all nodes. `referenced` flag passed
-             * here is current state of the give node. Check if the reference state of the changed.
-             */
-            const stateUpdated = this.unreferencedNodesState.has(nodeId) ? referenced : !referenced;
+            // If there is no previous GC data, every node's state is generated and is considered as updated.
+            // Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
+            const stateUpdated = this.previousGCDataFromLastRun === undefined ||
+                this.unreferencedNodesState.has(nodeId) === referenced;
             if (stateUpdated) {
                 gcStats.updatedNodeCount++;
             }
@@ -1331,5 +1329,56 @@ function setLongTimeout(
  * @param minimumVersion - the function to execute when the timer ends
  */
 function meetsMinimumVersionRequirement(currentVersion: string, minimumVersion: string | undefined) {
-    return minimumVersion === undefined || semver.compare(currentVersion, minimumVersion) >= 0;
+    return minimumVersion === undefined || semverCompare(currentVersion, minimumVersion) >= 0;
+}
+
+/**
+ * Compare semver versions.
+ * @param currentVersion - assumed to be any valid semver version
+ * @param minimumVersion - must be [major].[minor].[patch], where major, minor, and patch are all numbers
+ *  as it complicates the algorithm if we allow comparisons against minimum pre-release versions.
+ * @returns
+ *  0 if the currentVersion equals the minimumVersion
+ *  1 if the currentVersion is greater than the minimumVersion
+ *  -1 if the minimumVersion is greater than the currentVersion
+ */
+export function semverCompare(currentVersion: string, minimumVersion: string): number {
+    const minimumValues = minimumVersion.split(".").map((value): number => {
+        assert(isNaN(+value) === false, 0x2fa /* Expected real numbers in minimum version! */);
+        return Number.parseInt(value, 10);
+    });
+    assert(minimumValues.length === 3, 0x2fb /* Expected minimumVersion to be [major].[minor].[patch] */);
+    const [minMajor, minMinor, minPatch] = minimumValues;
+
+    const currentValuesString = currentVersion.split(/\W/);
+    assert(currentValuesString.length >= 3, 0x2fc /* Expected version to match semver rules! */);
+    const currentValues = currentValuesString.slice(0, 3).map((value) => {
+        assert(isNaN(+value) === false, 0x2fd /* Expected real numbers in minimum version! */);
+        return Number.parseInt(value, 10);
+    });
+    const [cMajor, cMinor, cPatch] = currentValues;
+
+    if (cMajor > minMajor) {
+        return 1;
+    } else if (minMajor > cMajor) {
+        return -1;
+    }
+
+    if (cMinor > minMinor) {
+        return 1;
+    } else if (minMinor > cMinor) {
+        return -1;
+    }
+
+    if (cPatch > minPatch) {
+        return 1;
+    } else if (minPatch > cPatch) {
+        return -1;
+    }
+
+    if (currentValuesString.length === 3) {
+        return 0;
+    }
+
+    return -1;
 }

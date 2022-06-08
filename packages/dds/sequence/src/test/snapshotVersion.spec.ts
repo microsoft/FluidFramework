@@ -14,11 +14,51 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalType } from "../intervalCollection";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
+
+function assertIntervalCollectionsAreEquivalent(
+    actual: SharedString,
+    expected: SharedString,
+    message: string,
+): void {
+    assert.deepEqual(
+        Array.from(actual.getIntervalCollectionLabels()),
+        Array.from(expected.getIntervalCollectionLabels()),
+        message,
+    );
+
+    for (const label of actual.getIntervalCollectionLabels()) {
+        const expectedCollection = expected.getIntervalCollection(label);
+        for (const interval of actual.getIntervalCollection(label)) {
+            const expectedInterval = expectedCollection.getIntervalById(interval.getIntervalId());
+            const start = actual.localReferencePositionToPosition(interval.start);
+            const expectedStart = expected.localReferencePositionToPosition(expectedInterval.start);
+            assert.equal(start, expectedStart, message);
+            const end = actual.localReferencePositionToPosition(interval.end);
+            const expectedEnd = expected.localReferencePositionToPosition(expectedInterval.end);
+            assert.equal(end, expectedEnd, message);
+        }
+    }
+}
+
+function assertSharedStringsAreEquivalent(
+    actual: SharedString,
+    expected: SharedString,
+    message: string,
+): void {
+    assert.equal(actual.getLength(), expected.getLength(), message);
+    assert.equal(actual.getText(), expected.getText(), message);
+
+    for (let j = 0; j < actual.getLength(); j += 10) {
+        assert(JSON.stringify(actual.getPropertiesAtPosition(j)) ===
+            JSON.stringify(expected.getPropertiesAtPosition(j)), message);
+    }
+}
 
 describe("SharedString Snapshot Version", () => {
     let filebase: string;
-    const message = "SharedString snapshot format has changed." +
+    const message = "SharedString snapshot format has changed. " +
         "Please update the snapshotFormatVersion if appropriate " +
         "and then run npm test:newsnapfiles to create new snapshot test files.";
 
@@ -26,54 +66,51 @@ describe("SharedString Snapshot Version", () => {
         filebase = path.join(__dirname, `../../${LocationBase}`);
     });
 
+    async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {
+        const containerRuntimeFactory = new MockContainerRuntimeFactory();
+        const dataStoreRuntime = new MockFluidDataStoreRuntime();
+        const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+        const services = {
+            deltaConnection: containerRuntime.createDeltaConnection(),
+            objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),
+        };
+        const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
+        await sharedString.load(services);
+        await sharedString.loaded;
+        return sharedString;
+    }
+
     function generateSnapshotRebuildTest(name: string, testString: SharedString) {
         it(name, async () => {
             const filename = `${filebase}${name}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8");
-            const oldsnap = JSON.parse(data);
-
-            // load snapshot into sharedString
-            const documentId = "fakeId";
-            const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const dataStoreRuntime = new MockFluidDataStoreRuntime();
-            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-            const services = {
-                deltaConnection: containerRuntime.createDeltaConnection(),
-                objectStorage: new MockStorage(oldsnap),
-            };
-            const sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
-            await sharedString.load(services);
-            await sharedString.loaded;
-
-            // test rebuilt sharedString
-            assert(sharedString.getLength() === testString.getLength(), message);
-            assert(sharedString.getText() === testString.getText(), message);
-
-            for (let j = 0; j < sharedString.getLength(); j += 10) {
-                assert(JSON.stringify(sharedString.getPropertiesAtPosition(j)) ===
-                    JSON.stringify(testString.getPropertiesAtPosition(j)), message);
-            }
+            const sharedString = await loadSharedString("fakeId", data);
+            // test rebuilt sharedString against the original
+            assertSharedStringsAreEquivalent(sharedString, testString, message);
+            // Only verify interval collection equivalence before editing both strings; the sliding
+            // behavior of intervals requires acking and `testString` is only set up locally.
+            assertIntervalCollectionsAreEquivalent(sharedString, testString, message);
 
             for (let j = 0; j < sharedString.getLength(); j += 50) {
                 sharedString.insertText(j, "NEWTEXT");
                 testString.insertText(j, "NEWTEXT");
             }
 
-            assert(sharedString.getLength() === testString.getLength(), message);
-            assert(sharedString.getText() === testString.getText(), message);
+            assertSharedStringsAreEquivalent(sharedString, testString, message);
 
             sharedString.replaceText(0, sharedString.getLength(), "hello world");
             testString.replaceText(0, testString.getLength(), "hello world");
-            assert(sharedString.getLength() === testString.getLength(), message);
-            assert(sharedString.getText() === testString.getText(), message);
+
+            assertSharedStringsAreEquivalent(sharedString, testString, message);
 
             sharedString.removeText(0, sharedString.getLength());
             testString.removeText(0, testString.getLength());
-            assert(sharedString.getLength() === testString.getLength(), message);
-            assert(sharedString.getText() === testString.getText(), message);
+
+            assertSharedStringsAreEquivalent(sharedString, testString, message);
         });
     }
+
     function generateSnapshotRebuildTests() {
         describe("Snapshot rebuild", () => {
             for (const str of generateStrings()) {
@@ -107,4 +144,50 @@ describe("SharedString Snapshot Version", () => {
         });
     }
     generateSnapshotDiffTests();
+
+    it("normalizes prefixed interval collection keys", async () => {
+        // This test verifies some back-compat for the fix related to
+        // https://github.com/microsoft/FluidFramework/issues/10557.
+        const originalString = new SharedString(
+            new MockFluidDataStoreRuntime(),
+            "original",
+            SharedStringFactory.Attributes,
+        );
+        originalString.initializeLocal();
+        originalString.insertText(0, "ABCD");
+        const collectionId = "015e0f46-efa3-42d7-a9ab-970ecc376df9";
+        originalString.getIntervalCollection(collectionId).add(1, 2, IntervalType.SlideOnRemove);
+        const summaryTree = originalString.getAttachSummary().summary;
+        const snapshotTree = convertSummaryTreeToITree(summaryTree);
+        const serializedSnapshot = JSON.stringify(snapshotTree);
+        const denormalizedSnapshot = serializedSnapshot.replace(collectionId, `intervalCollections/${collectionId}`);
+
+        assert(denormalizedSnapshot.includes(`intervalCollections/${collectionId}`));
+        const rehydratedString = await loadSharedString("rehydrated", serializedSnapshot);
+        const rehydratedFromDenormalizedString = await loadSharedString("denormalized", denormalizedSnapshot);
+
+        const assertEquivalent = (actual: SharedString, expected: SharedString) => {
+            assertSharedStringsAreEquivalent(
+                actual,
+                expected,
+                `Difference found between ${actual.id} and ${expected.id}'s text.`,
+            );
+            assertIntervalCollectionsAreEquivalent(
+                actual,
+                expected,
+                `Difference found between ${actual.id} and ${expected.id}'s intervals.`,
+            );
+        };
+
+        assertEquivalent(originalString, rehydratedString);
+        assertEquivalent(originalString, rehydratedFromDenormalizedString);
+
+        for (const sharedString of [originalString, rehydratedString, rehydratedFromDenormalizedString]) {
+            assert.deepEqual(
+                Array.from(sharedString.getIntervalCollectionLabels()),
+                [collectionId],
+                `Unexpected labels for string "${sharedString.id}".`,
+            );
+        }
+    });
 });

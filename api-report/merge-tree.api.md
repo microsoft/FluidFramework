@@ -5,12 +5,14 @@
 ```ts
 
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IEvent } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
@@ -693,6 +695,12 @@ export interface IRBMatcher<TKey, TData> {
 }
 
 // @public
+export interface IReferencePositionEvents extends IEvent {
+    // (undocumented)
+    (event: "beforeSlide" | "afterSlide", listener: () => void): any;
+}
+
+// @public
 export interface IRelativePosition {
     before?: boolean;
     id?: string;
@@ -811,7 +819,7 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 export const LocalClientId = -1;
 
 // @public @deprecated (undocumented)
-export class LocalReference implements ReferencePosition {
+export class LocalReference extends TypedEventEmitter<IReferencePositionEvents> implements ReferencePosition {
     // @deprecated
     constructor(client: Client, initSegment: ISegment,
     offset?: number, refType?: ReferenceType, properties?: PropertySet);
