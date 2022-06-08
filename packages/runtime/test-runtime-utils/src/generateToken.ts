@@ -25,8 +25,25 @@ import { v4 as uuid } from "uuid";
  */
 
 /**
- * Generates a JWT token to authorize access to a Routerlicious-based Fluid service. This function uses a browser
- * friendly auth library (jsrsasign) and should only be used in client (browser) context.
+ * Generates a {@link https://en.wikipedia.org/wiki/JSON_Web_Token | JWT token}
+ * to authorize access to a Routerlicious-based Fluid service.
+ *
+ * This function uses a browser friendly auth library ({@link https://www.npmjs.com/package/jsrsasign | jsrsasign})
+ * and should only be used in client (browser) context.
+ *
+ * @param tenantId - @see {@link @fluidframework/protocol-definitions#ITokenClaims.tenantId}
+ * @param key - TODO
+ * @param scopes - @see {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
+ * @param documentId - @see {@link @fluidframework/protocol-definitions#ITokenClaims.documentId}.
+ * If not specified, an empty string will be used instead.
+ * @param user - User with whom generated tokens will be associated.
+ * If not specified, a randomly generated mock user will be used instead.
+ * @see {@link @fluidframework/protocol-definitions#ITokenClaims.user}
+ * @param lifetime - Used to generate the {@link @fluidframework/protocol-definitions#ITokenClaims.exp | expiration}.
+ * Expiration = now + lifetime.
+ * Default: 3600.
+ * @param ver - @see {@link @fluidframework/protocol-definitions#ITokenClaims.ver}.
+ * Default: `1.0`.
  */
 export function generateToken(
     tenantId: string,
@@ -60,6 +77,10 @@ export function generateToken(
     return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 }
 
+/**
+ * Generates an arbitrary ("random") {@link IUser} by generating a random UUID for its
+ * {@link IUser.id} and `name` properties.
+ */
 export function generateUser(): IUser {
     const randomUser = {
         id: uuid(),
