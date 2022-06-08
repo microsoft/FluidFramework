@@ -67,7 +67,9 @@ export interface IMockContainerRuntimePendingMessage {
 
 // @public
 export class InsecureTokenProvider implements ITokenProvider {
-    constructor(tenantKey: string, user: IUser);
+    constructor(
+    tenantKey: string,
+    user: IUser);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
