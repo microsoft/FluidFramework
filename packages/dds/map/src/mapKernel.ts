@@ -419,7 +419,7 @@ export class MapKernel {
 
     /**
      * Process the given op if a handler is registered.
-     * @param message - The message to process
+     * @param op - The message to process
      * @param local - Whether the message originated from the local client
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
@@ -445,7 +445,6 @@ export class MapKernel {
      * @param key - The key being set
      * @param value - The value being set
      * @param local - Whether the message originated from the local client
-     * @param op - The message if from a remote set, or null if from a local set
      */
     private setCore(key: string, value: ILocalValue, local: boolean): void {
         const previousValue = this.get(key);
@@ -457,7 +456,6 @@ export class MapKernel {
     /**
      * Clear implementation used for both locally sourced clears as well as incoming remote clears.
      * @param local - Whether the message originated from the local client
-     * @param op - The message if from a remote clear, or null if from a local clear
      */
     private clearCore(local: boolean): void {
         this.data.clear();
@@ -468,7 +466,6 @@ export class MapKernel {
      * Delete implementation used for both locally sourced deletes as well as incoming remote deletes.
      * @param key - The key being deleted
      * @param local - Whether the message originated from the local client
-     * @param op - The message if from a remote delete, or null if from a local delete
      * @returns True if the key existed and was deleted, false if it did not exist
      */
     private deleteCore(key: string, local: boolean): boolean {
@@ -521,7 +518,6 @@ export class MapKernel {
      * not process the incoming operation.
      * @param op - Operation to check
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @returns True if the operation should be processed, false otherwise
