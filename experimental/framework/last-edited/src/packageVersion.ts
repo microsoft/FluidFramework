@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/last-edited";
-export const pkgVersion = "0.59.4001";
+export const pkgVersion = "0.59.4002";
