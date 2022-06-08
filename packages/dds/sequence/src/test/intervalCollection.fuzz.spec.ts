@@ -118,18 +118,6 @@ const defaultOptions: Required<OperationGenerationConfig> = {
     validateInterval: 100,
 };
 
-// A few places in the fuzz testing code need to inspect existing collections on a SharedString
-// to determine where to insert/modify/delete an interval from. There's some logic to scope all
-// provided labels with "intervalCollections/", which is what the iterator returns. This works
-// around that.
-function* getUnscopedLabels(string: SharedString): Iterable<string> {
-    const prefix = "intervalCollections/";
-    for (const label of string.getIntervalCollectionLabels()) {
-        assert(label.startsWith(prefix));
-        yield label.substring(prefix.length);
-    }
-}
-
 function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Generator<Operation, FuzzTestState> {
     const options = { ...defaultOptions, ...(optionsParam ?? {}) };
     type ClientOpState = FuzzTestState & { sharedString: SharedString; };
@@ -160,7 +148,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     }
 
     function nonEmptyIntervalCollection({ sharedString, random }: ClientOpState): string {
-        const nonEmptyLabels = Array.from(getUnscopedLabels(sharedString)).filter((label) => {
+        const nonEmptyLabels = Array.from(sharedString.getIntervalCollectionLabels()).filter((label) => {
             const collection = sharedString.getIntervalCollection(label);
             return isNonEmpty(collection);
         });
@@ -218,7 +206,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     }
 
     const hasAnInterval = ({ sharedString }: ClientOpState): boolean =>
-        Array.from(getUnscopedLabels(sharedString)).some((label) => {
+        Array.from(sharedString.getIntervalCollectionLabels()).some((label) => {
             const collection = sharedString.getIntervalCollection(label);
             return isNonEmpty(collection);
         });
@@ -230,7 +218,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 
     const hasNotTooManyIntervals: AcceptanceCondition<ClientOpState> = ({ sharedString }) => {
         let intervalCount = 0;
-        for (const label of getUnscopedLabels(sharedString)) {
+        for (const label of sharedString.getIntervalCollectionLabels()) {
             for (const _ of sharedString.getIntervalCollection(label)) {
                 intervalCount++;
                 if (intervalCount >= options.maxIntervals) {
@@ -272,7 +260,7 @@ interface LoggingInfo {
 function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
     for (const id of loggingInfo.clientIds) {
         const sharedString = state.sharedStrings.filter((s) => s.id === id)[0];
-        const labels = getUnscopedLabels(sharedString);
+        const labels = sharedString.getIntervalCollectionLabels();
         const interval = Array.from(labels)
             .map((label) =>
                 sharedString.getIntervalCollection(label).getIntervalById(loggingInfo.intervalId))
@@ -306,8 +294,8 @@ function assertConsistent(sharedStrings: SharedString[]): void {
             other.getText(),
             `Non-equal text between strings ${first.id} and ${other.id}.`,
         );
-        const firstLabels = Array.from(getUnscopedLabels(first)).sort();
-        const otherLabels = Array.from(getUnscopedLabels(other)).sort();
+        const firstLabels = Array.from(first.getIntervalCollectionLabels()).sort();
+        const otherLabels = Array.from(other.getIntervalCollectionLabels()).sort();
         assert.deepEqual(
             firstLabels,
             otherLabels,

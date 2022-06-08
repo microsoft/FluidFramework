@@ -442,13 +442,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalCollections.get(this.getIntervalCollectionPath(label));
+        return this.intervalCollections.get(label);
     }
 
     public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
-        const labelPath = this.getIntervalCollectionPath(label);
-        const sharedCollection = this.intervalCollections.get(labelPath);
-        return sharedCollection;
+        return this.intervalCollections.get(label);
     }
 
     /**
@@ -682,10 +680,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
             }
         }
-    }
-
-    private getIntervalCollectionPath(label: string) {
-        return `intervalCollections/${label}`;
     }
 
     private processMinSequenceNumberChanged(minSeq: number) {

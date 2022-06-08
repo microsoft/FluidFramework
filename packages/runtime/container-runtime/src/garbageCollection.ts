@@ -1154,11 +1154,10 @@ export class GarbageCollector implements IGarbageCollector {
 
         const updateNodeStats = (nodeId: string, referenced: boolean) => {
             gcStats.nodeCount++;
-            /**
-             * `this.unreferencedNodesState` has the previous unreferenced state of all nodes. `referenced` flag passed
-             * here is current state of the give node. Check if the reference state of the changed.
-             */
-            const stateUpdated = this.unreferencedNodesState.has(nodeId) ? referenced : !referenced;
+            // If there is no previous GC data, every node's state is generated and is considered as updated.
+            // Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
+            const stateUpdated = this.previousGCDataFromLastRun === undefined ||
+                this.unreferencedNodesState.has(nodeId) === referenced;
             if (stateUpdated) {
                 gcStats.updatedNodeCount++;
             }
@@ -1345,16 +1344,16 @@ function meetsMinimumVersionRequirement(currentVersion: string, minimumVersion: 
  */
 export function semverCompare(currentVersion: string, minimumVersion: string): number {
     const minimumValues = minimumVersion.split(".").map((value): number => {
-        assert(isNaN(+value) === false, "Expected real numbers in minimum version!");
+        assert(isNaN(+value) === false, 0x2fa /* Expected real numbers in minimum version! */);
         return Number.parseInt(value, 10);
     });
-    assert(minimumValues.length === 3, "Expected minimumVersion to be [major].[minor].[patch]");
+    assert(minimumValues.length === 3, 0x2fb /* Expected minimumVersion to be [major].[minor].[patch] */);
     const [minMajor, minMinor, minPatch] = minimumValues;
 
     const currentValuesString = currentVersion.split(/\W/);
-    assert(currentValuesString.length >= 3, "Expected version to match semver rules!");
+    assert(currentValuesString.length >= 3, 0x2fc /* Expected version to match semver rules! */);
     const currentValues = currentValuesString.slice(0, 3).map((value) => {
-        assert(isNaN(+value) === false, "Expected real numbers in minimum version!");
+        assert(isNaN(+value) === false, 0x2fd /* Expected real numbers in minimum version! */);
         return Number.parseInt(value, 10);
     });
     const [cMajor, cMinor, cPatch] = currentValues;

@@ -886,14 +886,14 @@ describe("SharedString interval collections", () => {
                 assert.equal(infoArray.length, createInfo.length, `Wrong number of create calls: ${i}`);
             };
             verifyCreateEvents(sharedString, createInfo1, [
-                { label: "intervalCollections/test1", local: true },
-                { label: "intervalCollections/test2", local: false },
-                { label: "intervalCollections/test3", local: false },
+                { label: "test1", local: true },
+                { label: "test2", local: false },
+                { label: "test3", local: false },
             ]);
             verifyCreateEvents(sharedString2, createInfo2, [
-                { label: "intervalCollections/test2", local: true },
-                { label: "intervalCollections/test3", local: true },
-                { label: "intervalCollections/test1", local: false },
+                { label: "test2", local: true },
+                { label: "test3", local: true },
+                { label: "test1", local: false },
             ]);
         });
 

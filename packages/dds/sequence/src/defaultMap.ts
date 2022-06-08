@@ -271,8 +271,14 @@ export class DefaultMap<T> {
                 continue;
             }
 
+            // Back-compat: Sequence previously arbitrarily prefixed all interval collection keys with
+            // "intervalCollections/". This would burden users trying to iterate the collection and
+            // access its value, as well as those trying to match a create message to its underlying
+            // collection. See https://github.com/microsoft/FluidFramework/issues/10557 for more context.
+            const normalizedKey = key.startsWith("intervalCollections/") ? key.substring(20) : key;
+
             const localValue = {
-                key,
+                key: normalizedKey,
                 value: this.makeLocal(key, serializable),
             };
 
