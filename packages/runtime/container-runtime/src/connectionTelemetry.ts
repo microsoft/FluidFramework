@@ -28,7 +28,7 @@ export const latencyThreshold = 5000;
 interface IOpPerfTelemetryProperties {
     /** Measure time between (1) and (2) - Measure time outbound op is sitting in queue due to active batch */
     durationOutboundBatching: number; // was durationOutboundQueue in previous versions
-    /** Measure time between (2) and (3) - Track how long it tool for op to be acked by service */
+    /** Measure time between (2) and (3) - Track how long it took for op to be acked by service */
     durationNetwork: number; // was durationInboundQueue
     /** Measure time between (3) and (4) - Time between DM's inbound "push" event until DM's "op" event */
     durationInboundToProcessing: number;
