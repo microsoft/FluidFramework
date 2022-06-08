@@ -183,25 +183,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
 }
 
 export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
-    constructor(
-        public minimumSequenceNumber: number,
-        public sequenceNumber: number,
-        term: number | undefined,
-        members: [string, ISequencedClient][],
-        proposals: [number, ISequencedProposal, string[]][],
-        values: [string, ICommittedProposal][],
-        sendProposal: (key: string, value: any) => number,
-    ) {
-        super(
-            minimumSequenceNumber,
-            sequenceNumber,
-            term,
-            members,
-            proposals,
-            values,
-            sendProposal);
-    }
-
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
         const client: ILocalSequencedClient | undefined = this._quorum.getMember(message.clientId);
 
