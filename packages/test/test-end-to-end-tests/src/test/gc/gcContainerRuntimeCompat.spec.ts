@@ -64,8 +64,7 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
     const logger = new TelemetryNullLogger();
 
     // Enable config provider setting to write GC data at the root.
-    const settings = { "Fluid.GarbageCollection.WriteDataAtRoot": "true" };
-    const configProvider = mockConfigProvider(settings);
+    const configProvider = mockConfigProvider({});
 
     // Stores the latest summary uploaded to the server.
     let latestUploadedSummary: ISummaryTree | undefined;

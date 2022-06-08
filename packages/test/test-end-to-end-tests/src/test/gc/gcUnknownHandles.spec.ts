@@ -83,7 +83,7 @@ describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
     const loadContainer = async () => {
         return provider.loadTestContainer({
             runtimeOptions,
-            loaderProps: { configProvider: mockConfigProvider({}) },
+            loaderProps: { configProvider: mockConfigProvider({ "Fluid.GarbageCollection.WriteDataAtRoot": "true" }) },
         });
     };
 
