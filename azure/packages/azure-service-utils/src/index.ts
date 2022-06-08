@@ -10,5 +10,5 @@
  * @packageDocumentation
  */
 
-export { ScopeType } from "@fluidframework/protocol-definitions";
+export { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 export { generateToken } from "./generateToken";
