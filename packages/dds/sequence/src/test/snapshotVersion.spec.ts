@@ -14,8 +14,47 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { generateStrings, LocationBase } from "./generateSharedStrings";
 import { IntervalType } from "../intervalCollection";
+import { generateStrings, LocationBase } from "./generateSharedStrings";
+
+function assertIntervalCollectionsAreEquivalent(
+    actual: SharedString,
+    expected: SharedString,
+    message: string,
+): void {
+    assert.deepEqual(
+        Array.from(actual.getIntervalCollectionLabels()),
+        Array.from(expected.getIntervalCollectionLabels()),
+        message,
+    );
+
+    for (const label of actual.getIntervalCollectionLabels()) {
+        const expectedCollection = expected.getIntervalCollection(label);
+        for (const interval of actual.getIntervalCollection(label)) {
+            const expectedInterval = expectedCollection.getIntervalById(interval.getIntervalId());
+            const start = actual.localReferencePositionToPosition(interval.start);
+            const expectedStart = expected.localReferencePositionToPosition(expectedInterval.start);
+            assert.equal(start, expectedStart, message);
+            const end = actual.localReferencePositionToPosition(interval.end);
+            const expectedEnd = expected.localReferencePositionToPosition(expectedInterval.end);
+            assert.equal(end, expectedEnd, message);
+        }
+    }
+}
+
+function assertSharedStringsAreEquivalent(
+    actual: SharedString,
+    expected: SharedString,
+    message: string,
+): void {
+    assert.equal(actual.getLength(), expected.getLength(), message);
+    assert.equal(actual.getText(), expected.getText(), message);
+
+    for (let j = 0; j < actual.getLength(); j += 10) {
+        assert(JSON.stringify(actual.getPropertiesAtPosition(j)) ===
+            JSON.stringify(expected.getPropertiesAtPosition(j)), message);
+    }
+}
 
 describe("SharedString Snapshot Version", () => {
     let filebase: string;
@@ -39,37 +78,6 @@ describe("SharedString Snapshot Version", () => {
         await sharedString.load(services);
         await sharedString.loaded;
         return sharedString;
-    }
-
-    function assertIntervalCollectionsAreEquivalent(actual: SharedString, expected: SharedString, message: string): void {
-        assert.deepEqual(
-            Array.from(actual.getIntervalCollectionLabels()),
-            Array.from(expected.getIntervalCollectionLabels()),
-            message,
-        );
-
-        for (const label of actual.getIntervalCollectionLabels()) {
-            const expectedCollection = expected.getIntervalCollection(label);
-            for (const interval of actual.getIntervalCollection(label)) {
-                const expectedInterval = expectedCollection.getIntervalById(interval.getIntervalId());
-                const start = actual.localReferencePositionToPosition(interval.start);
-                const expectedStart = expected.localReferencePositionToPosition(expectedInterval.start);
-                assert.equal(start, expectedStart, message);
-                const end = actual.localReferencePositionToPosition(interval.end);
-                const expectedEnd = expected.localReferencePositionToPosition(expectedInterval.end);
-                assert.equal(end, expectedEnd, message);
-            }
-        }
-    }
-
-    function assertSharedStringsAreEquivalent(actual: SharedString, expected: SharedString, message: string): void {
-        assert.equal(actual.getLength(), expected.getLength(), message);
-        assert.equal(actual.getText(), expected.getText(), message);
-
-        for (let j = 0; j < actual.getLength(); j += 10) {
-            assert(JSON.stringify(actual.getPropertiesAtPosition(j)) ===
-                JSON.stringify(expected.getPropertiesAtPosition(j)), message);
-        }
     }
 
     function generateSnapshotRebuildTest(name: string, testString: SharedString) {
@@ -169,7 +177,7 @@ describe("SharedString Snapshot Version", () => {
                 expected,
                 `Difference found between ${actual.id} and ${expected.id}'s intervals.`,
             );
-        }
+        };
 
         assertEquivalent(originalString, rehydratedString);
         assertEquivalent(originalString, rehydratedFromDenormalizedString);
