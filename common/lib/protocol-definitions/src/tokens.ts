@@ -5,14 +5,43 @@
 
 import { IUser } from "./users";
 
+/**
+ * TODO
+ */
 export interface ITokenClaims {
+    /**
+     * TODO
+     */
     documentId: string;
+    /**
+     * TODO
+     */
     scopes: string[];
+    /**
+     * TODO
+     */
     tenantId: string;
+    /**
+     * TODO
+     */
     user: IUser;
+    /**
+     * TODO
+     * Also, units?
+     */
     iat: number;
+    /**
+     * TODO
+     * Also, units?
+     */
     exp: number;
+    /**
+     * TODO
+     */
     ver: string;
+    /**
+     * TODO
+     */
     jti?: string;
 }
 
