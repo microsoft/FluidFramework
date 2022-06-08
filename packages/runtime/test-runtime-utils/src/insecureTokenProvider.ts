@@ -21,7 +21,6 @@ export class InsecureTokenProvider implements ITokenProvider {
 
         /**
          * User with whom generated tokens will be associated.
-         * @see {@link generateToken}.
          */
         private readonly user: IUser,
     ) {
