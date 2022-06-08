@@ -1156,10 +1156,8 @@ export class GarbageCollector implements IGarbageCollector {
             gcStats.nodeCount++;
             // If there is no previous GC data, every node's state is generated and is considered as updated.
             // Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
-            const stateUpdated = this.previousGCDataFromLastRun === undefined
-                ? true
-                : (this.unreferencedNodesState.has(nodeId) ? referenced : !referenced);
-
+            const stateUpdated = this.previousGCDataFromLastRun === undefined ||
+                this.unreferencedNodesState.has(nodeId) === referenced;
             if (stateUpdated) {
                 gcStats.updatedNodeCount++;
             }

@@ -18,20 +18,15 @@ import { describeFullCompat, ITestDataObject, TestDataObjectType } from "@fluidf
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 
-let summarizer: ISummarizer;
 const defaultDataStoreId = "default";
-
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
+            initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without this.
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
-                ...{
-                    maxOps: 10,
-                    initialSummarizerDelayMs: 0,
-                    idleTime: 10,
-                },
+                ...{ maxOps: 10, initialSummarizerDelayMs: 0, idleTime: 10 },
              },
         },
     },
@@ -68,7 +63,6 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
     return JSON.parse(json);
 }
 
-// REVIEW: enable compat testing?
 describeFullCompat("Summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
@@ -76,7 +70,7 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
     });
 
     it("On demand summaries", async () => {
-        summarizer = await createSummarizer(provider);
+        const summarizer = await createSummarizer(provider);
 
         let result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
         let negResult: ISummarizeResults | undefined = summarizer.summarizeOnDemand({ reason: "negative test" });
@@ -121,7 +115,36 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
         assert(ackNackResult.success, "summary op should be acked");
     });
 
-    it("Should generate summary tree", async () => {
+    it("should fail on demand summary on stopped summarizer", async () => {
+        const summarizer = await createSummarizer(provider);
+        let result: ISummarizeResults | undefined = summarizer.summarizeOnDemand({ reason: "test" });
+
+        const submitResult = await result.summarySubmitted;
+        assert(submitResult.success, "on-demand summary should submit");
+        assert(submitResult.data.stage === "submit",
+            "on-demand summary submitted data stage should be submit");
+
+        assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+        const broadcastResult = await result.summaryOpBroadcasted;
+        assert(broadcastResult.success, "summary op should be broadcast");
+
+        const ackNackResult = await result.receivedSummaryAckOrNack;
+        assert(ackNackResult.success, "summary should be acked");
+
+        summarizer.stop("summarizerClientDisconnected");
+        await flushPromises();
+
+        try {
+            result = undefined;
+            result = summarizer.summarizeOnDemand({ reason: "test" });
+        } catch (error: any) {
+            assert(error.errorType === "summarizingError", "Should throw a summarizer error");
+        }
+        assert(result === undefined, "Should not have attempted summary with disposed summarizer");
+    });
+
+    it("should generate summary tree", async () => {
         const container = await createContainer(provider, { disableIsolatedChannels: false });
         const defaultDataStore = await requestFluidObject<ITestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
@@ -177,23 +200,7 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
         const container = await createContainer(provider, { disableIsolatedChannels: true });
         const defaultDataStore = await requestFluidObject<ITestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
-
         await provider.ensureSynchronized();
-
-        let result: ISummarizeResults | undefined = summarizer.summarizeOnDemand({ reason: "test" });
-
-        const submitResult = await result.summarySubmitted;
-        assert(submitResult.success, "on-demand summary should submit");
-        assert(submitResult.data.stage === "submit",
-            "on-demand summary submitted data stage should be submit");
-
-        assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
-
-        const broadcastResult = await result.summaryOpBroadcasted;
-        assert(broadcastResult.success, "summary op should be broadcast");
-
-        const ackNackResult = await result.receivedSummaryAckOrNack;
-        assert(ackNackResult.success, "summary should be acked");
 
         const { stats, summary } = await containerRuntime.summarize({
             runGC: false,
@@ -201,17 +208,6 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
             trackState: false,
             summaryLogger: new TelemetryNullLogger(),
         });
-
-        summarizer.stop("summarizerClientDisconnected");
-        await flushPromises();
-
-        try {
-            result = undefined;
-            result = summarizer.summarizeOnDemand({ reason: "test" });
-        } catch (error: any) {
-            assert(error.errorType === "summarizingError", "Should throw a summarizer error");
-        }
-        assert(result === undefined, "Should not have attempted summary with disposed summarizer");
 
         // Validate stats
         assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
@@ -250,7 +246,7 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
      * In the first summary all data stores are summarized because GC hasn't run yet so it has to summarize every data
      * store to update "unreferenced" flag in its summary.
      */
-    it.only("should not violate incremental summary principles on first summary", async () => {
+    it("should not violate incremental summary principles on first summary", async () => {
         const loader = provider.makeTestLoader(testContainerConfig);
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         const summaryCollection = new SummaryCollection(container.deltaManager, new TelemetryNullLogger());
