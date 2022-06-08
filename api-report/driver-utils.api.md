@@ -400,6 +400,13 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
 }
 
 // @public
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    constructor(message: string);
+    // (undocumented)
+    readonly errorType = "usageError";
+}
+
+// @public
 export function waitForConnectedState(minDelay: number): Promise<void>;
 
 // (No @packageDocumentation comment for this package)
