@@ -623,7 +623,7 @@ export class IdCompressor {
 						const finalPivot = (lastFinalizedFinal - overflow + 1) as FinalCompressedId;
 						this.sessionIdNormalizer.addFinalIds(finalPivot, lastFinalizedFinal, currentCluster);
 						this.logger?.sendTelemetryEvent({
-							eventName: 'ClusterExpansion',
+							eventName: 'IdCompressor:ClusterExpansion',
 							sessionId: this.localSessionId,
 							previousCapacity,
 							newCapacity: currentCluster.capacity,
@@ -638,7 +638,7 @@ export class IdCompressor {
 				currentCluster.count += remainingCapacity;
 				remainingCount -= remainingCapacity;
 				this.logger?.sendTelemetryEvent({
-					eventName: 'OverfilledCluster',
+					eventName: 'IdCompressor:OverfilledCluster',
 					sessionId: this.localSessionId,
 				});
 			}
@@ -646,7 +646,7 @@ export class IdCompressor {
 			// Session has never made a cluster, form a new one with the session UUID as the baseUuid
 			newBaseUuid = session.sessionUuid;
 			this.logger?.sendTelemetryEvent({
-				eventName: 'FirstCluster',
+				eventName: 'IdCompressor:FirstCluster',
 				sessionId: this.localSessionId,
 			});
 		}
@@ -685,7 +685,7 @@ export class IdCompressor {
 
 			if (isLocal) {
 				this.logger?.sendTelemetryEvent({
-					eventName: 'NewCluster',
+					eventName: 'IdCompressor:NewCluster',
 					sessionId: this.localSessionId,
 					clusterCapacity: newCapacity,
 					clusterCount: remainingCount,
@@ -808,7 +808,7 @@ export class IdCompressor {
 
 		if (isLocal) {
 			this.logger?.sendTelemetryEvent({
-				eventName: 'IdCompressorStatus',
+				eventName: 'IdCompressor:IdCompressorStatus',
 				eagerFinalIdCount,
 				localIdCount: remainingCount,
 				overridesCount: overrides?.length ?? 0,

@@ -19,7 +19,7 @@ async function setupHeartbeat() {
 	const events: ITelemetryBaseEvent[] = [];
 	const { tree, containerRuntimeFactory } = setUpTestSharedTree({
 		localMode: false,
-		logger: { send: (event) => events.push(event) },
+		logger: { send: (event) => !event.eventName.includes('IdCompressor') && events.push(event) },
 		allowInvalid: true,
 	});
 	const testTree = setUpTestTree(tree);
