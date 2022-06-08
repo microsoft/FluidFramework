@@ -275,9 +275,9 @@ export interface IPerfSignalReport {
     signalTimestamp: number;
 
     /**
-     * Next expected Signal Sequence Floor Number. Ex, 1 for 100, 2 for 200, etc.
+     * Expected Signal Sequence to be received.
      */
-    expectedSignalSequenceFloorNumber: number;
+    trackingSignalSequenceNumber: number | undefined;
 }
 
 export function ReportOpPerfTelemetry(
