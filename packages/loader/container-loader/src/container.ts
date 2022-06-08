@@ -1683,11 +1683,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         try {
             result = this.protocolHandler.processMessage(message, local);
         } catch (error) {
-            assert(error instanceof Error, "Unexpected error type from the protocol handler");
-            this.close(normalizeError(
-                new DataCorruptionError(
-                    error.message,
-                    extractSafePropertiesFromMessage(message))));
+            this.close(wrapError(error, (errorMessage) =>
+                new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
         }
 
         // Forward non system messages to the loaded runtime for processing
