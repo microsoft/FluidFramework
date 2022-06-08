@@ -119,6 +119,8 @@ export const shortCodeMap = {
     "0x069": "On consensusOrderedCollection load, data size > 0",
     "0x06a": "Trying to submit message while detached!",
     "0x06b": "Loading snapshot into a non-empty collection",
+    "0x2f8": "Unexpected accept op, nothing pending",
+    "0x2f9": "Unexpected accept op, client not in expectedSignoffs",
     "0x06c": "Value should be undefined or non-empty",
     "0x06d": "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized as of 0.17",
     "0x06e": "Message's reference sequence number < op's reference sequence number!",
@@ -504,6 +506,10 @@ export const shortCodeMap = {
     "0x2a8": "Expected data store snapshot tree in base snapshot",
     "0x2a9": "GC nodes for data store not in GC blob",
     "0x2ad": "GC blob missing from snapshot",
+    "0x2fa": "Expected real numbers in minimum version!",
+    "0x2fb": "Expected minimumVersion to be [major].[minor].[patch]",
+    "0x2fc": "Expected version to match semver rules!",
+    "0x2fd": "Expected real numbers in minimum version!",
     "0x1f6": "Negative client sequence number not allowed",
     "0x1f7": "Previous client should always be defined",
     "0x2e9": "Must call getLocalState() after applying initial states",
@@ -629,7 +635,5 @@ export const shortCodeMap = {
     "0x1ec": "No refresh token provided.",
     "0x1ce": "clientId not found",
     "0x1cf": "clientId not found",
-    "0x1d0": "sequenceNumber not found",
-    "0x2f8": "Unexpected accept op, nothing pending",
-    "0x2f9": "Unexpected accept op, client not in expectedSignoffs"
+    "0x1d0": "sequenceNumber not found"
 };
