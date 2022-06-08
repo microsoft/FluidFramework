@@ -896,26 +896,73 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
-        it("can rebase an add followed by a change", () => {
-            // This is a regression test for an issue involving faulty update of the pendingChange maps
+        describe("correctly tracks pendingChanges for", () => {
+            // This is a regression suite for an issue involving faulty update of the pendingChange maps
             // when both an add and a change op are rebased. Pending change tracking should only apply
-            // to "change" ops, but was also erroneously updated for "add" ops.
-            collection1.removeIntervalById(interval.getIntervalId());
-            containerRuntimeFactory.processAllMessages();
-            containerRuntime1.connected = false;
-            const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
-            sharedString.insertText(2, "llo he");
-            collection1.change(newInterval.getIntervalId(), 6, 7);
-            // Previously would fail: rebase of the "add" op would cause "Mismatch in pending changes" assert
-            // to fire (since the pending change wasn't actually the addition of the interval; it was the change)
-            containerRuntime1.connected = true;
-            containerRuntimeFactory.processAllMessages();
-            assertIntervals(sharedString, collection1, [
-                { start: 6, end: 7 },
-            ]);
-            assertIntervals(sharedString2, collection2, [
-                { start: 6, end: 7 },
-            ]);
+            // to "change" ops, but was also erroneously updated for "add" ops. Change tracking should also
+            // properly handle rebasing ops that only affect one endpoint.
+            const testCases = [
+                {
+                    name: "that changes both endpoints",
+                    start: 6,
+                    end: 7,
+                },
+                {
+                    name: "that changes only the start",
+                    start: 6,
+                    end: undefined,
+                },
+                {
+                    name: "that changes only the end",
+                    start: undefined,
+                    end: 7,
+                },
+            ];
+
+            describe("an add followed by a change", () => {
+                for (const { name, start, end } of testCases) {
+                    it(name, () => {
+                        collection1.removeIntervalById(interval.getIntervalId());
+                        containerRuntimeFactory.processAllMessages();
+                        containerRuntime1.connected = false;
+                        const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
+                        sharedString.insertText(2, "llo he");
+                        collection1.change(newInterval.getIntervalId(), start, end);
+                        // Previously would fail: rebase of the "add" op would cause "Mismatch in pending changes"
+                        // assert to fire (since the pending change wasn't actually the addition of the interval;
+                        // it was the change)
+                        containerRuntime1.connected = true;
+                        containerRuntimeFactory.processAllMessages();
+                        const expectedIntervals = [{ start: start ?? 0, end: end ?? 1 }];
+                        assertIntervals(sharedString, collection1, expectedIntervals);
+                        assertIntervals(sharedString2, collection2, expectedIntervals);
+                    });
+                }
+            });
+
+            describe("a change", () => {
+                // Like above, but the string-modifying operation is performed remotely. This means the pendingChange
+                // recorded prior to rebasing will have a different index from the pendingChange that would be generated
+                // upon rebasing (so failing to update would cause mismatch)
+                for (const { name, start, end } of testCases) {
+                    it(name, () => {
+                        collection1.removeIntervalById(interval.getIntervalId());
+                        containerRuntimeFactory.processAllMessages();
+                        containerRuntime1.connected = false;
+                        const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
+                        sharedString2.insertText(2, "llo he");
+                        collection1.change(newInterval.getIntervalId(), start, end);
+                        containerRuntimeFactory.processAllMessages();
+                        containerRuntime1.connected = true;
+                        containerRuntimeFactory.processAllMessages();
+                        const expectedStart = start === undefined ? 0 : start + "llo he".length;
+                        const expectedEnd = end === undefined ? 1 : end + "llo he".length;
+                        const expectedIntervals = [{ start: expectedStart ?? 0, end: expectedEnd }];
+                        assertIntervals(sharedString, collection1, expectedIntervals);
+                        assertIntervals(sharedString2, collection2, expectedIntervals);
+                    });
+                }
+            });
         });
 
         it("can rebase a change operation to positions that are invalid in the current view", () => {
@@ -936,6 +983,18 @@ describe("SharedString interval collections", () => {
             containerRuntimeFactory.processAllMessages();
             assertIntervals(sharedString, collection1, [{ start: 0, end: 0 }]);
             assertIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
+        });
+
+        it("can rebase changeProperty ops", () => {
+            containerRuntime1.connected = false;
+            collection1.changeProperties(interval.getIntervalId(), { foo: "prop" });
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [{ start: 6, end: 8 }]);
+            assertIntervals(sharedString2, collection2, [{ start: 6, end: 8 }]);
+            const interval2 = collection2.getIntervalById(interval.getIntervalId());
+            assert.equal(interval2.properties.foo, "prop");
+            assert.equal(interval.properties.foo, "prop");
         });
 
         it("addInterval resubmitted with concurrent delete", async () => {

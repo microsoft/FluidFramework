@@ -1203,8 +1203,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
 
         const { start, end, intervalType, properties, sequenceNumber } = serializedInterval;
-        const startRebased = this.client.rebasePosition(start, sequenceNumber, localSeq);
-        const endRebased = this.client.rebasePosition(end, sequenceNumber, localSeq);
+        const startRebased = start === undefined ? undefined :
+            this.client.rebasePosition(start, sequenceNumber, localSeq);
+        const endRebased = end === undefined ? undefined :
+            this.client.rebasePosition(end, sequenceNumber, localSeq);
 
         const intervalId = properties[reservedIntervalIdKey];
         const rebased: ISerializedInterval = {
@@ -1214,7 +1216,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             sequenceNumber: this.client?.getCurrentSeq() ?? 0,
             properties,
         };
-        if (opName === "change" && this.hasPendingChangeStart(intervalId)) {
+        if (opName === "change" && (this.hasPendingChangeStart(intervalId) || this.hasPendingChangeEnd(intervalId))) {
             this.removePendingChange(serializedInterval);
             this.addPendingChange(intervalId, rebased);
         }
@@ -1242,11 +1244,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             return;
         }
 
-        if (!refTypeIncludesFlag(interval.start, ReferenceType.StayOnRemove)) {
+        if (!refTypeIncludesFlag(interval.start, ReferenceType.StayOnRemove) &&
+            !refTypeIncludesFlag(interval.end, ReferenceType.StayOnRemove)) {
             return;
         }
-        assert(refTypeIncludesFlag(interval.end, ReferenceType.StayOnRemove),
-            0x2f7 /* start and end must both be StayOnRemove */);
+
         const newStart = this.getSlideToSegment(interval.start);
         const newEnd = this.getSlideToSegment(interval.end);
 
