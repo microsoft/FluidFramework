@@ -54,7 +54,7 @@ import {
 import {
     isSystemMessage,
     IProtocolHandler,
-    ProtocolOpHandler,
+    ProtocolOpHandlerWithClientValidation,
 } from "@fluidframework/protocol-base";
 import {
     IClient,
@@ -771,11 +771,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
-            protocol: {
-                sequenceNumber: this._protocolHandler.attributes.sequenceNumber,
-                minimumSequenceNumber: this._protocolHandler.attributes.minimumSequenceNumber,
-                ...this._protocolHandler.snapshot(),
-            },
+            protocol: this.protocolHandler.getProtocolState(),
             term: this._protocolHandler.attributes.term,
             clientId: this.clientId,
         };
@@ -1373,7 +1369,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, any][],
     ): Promise<IProtocolHandler> {
-        const protocol = new ProtocolOpHandler(
+        const protocol = new ProtocolOpHandlerWithClientValidation(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
             attributes.term,
@@ -1685,7 +1681,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Allow the protocol handler to process the message
         let result: IProcessMessageResult = { immediateNoOp: false };
         try {
-            result = this.protocolHandler.processMessageInQuorum(message, local);
+            result = this.protocolHandler.processMessage(message, local);
         } catch (error) {
             assert(error instanceof Error, "Unexpected error type from the protocol handler");
             this.close(normalizeError(
