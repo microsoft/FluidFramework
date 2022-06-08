@@ -262,7 +262,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.mc.logger,
             { eventName: "Load" },
             async (event) => new Promise<Container>((resolve, reject) => {
-                container._lifecycleState = "loading";
                 const version = loadOptions.version;
 
                 const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
@@ -314,7 +313,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.mc.logger,
             { eventName: "CreateDetached" },
             async (_event) => {
-                container._lifecycleState = "loading";
                 await container.createDetached(codeDetails);
                 return container;
             },
@@ -337,7 +335,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             { eventName: "RehydrateDetachedFromSnapshot" },
             async (_event) => {
                 const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
-                container._lifecycleState = "loading";
                 await container.rehydrateDetachedFromSnapshot(deserializedSummary);
                 return container;
             },
@@ -352,19 +349,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly mc: MonitoringContext;
 
-    private _lifecycleState: "created" | "loading" | "loaded" | "closing" | "closed" = "created";
+    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" = "loading";
 
-    private get loaded(): boolean {
-        return (this._lifecycleState !== "created" && this._lifecycleState !== "loading");
-    }
-
-    private set loaded(t: boolean) {
-        assert(t, 0x27d /* "Setting loaded state to false is not supported" */);
-        assert(this._lifecycleState !== "created", 0x27e /* "Must go through loading state before loaded" */);
-
+    private setLoaded() {
         // It's conceivable the container could be closed when this is called
         // Only transition states if currently loading
         if (this._lifecycleState === "loading") {
+            // Propagate current connection state through the system.
+            this.propagateConnectionState();
             this._lifecycleState = "loaded";
         }
     }
@@ -617,7 +609,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     });
                 },
                 connectionStateChanged: () => {
-                    if (this.loaded) {
+                    // Fire events only if container is fully loaded and not closed
+                    if (this._lifecycleState === "loaded") {
                         this.propagateConnectionState();
                     }
                 },
@@ -1167,11 +1160,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pendingLocalState?.pendingRuntimeState,
         );
 
-        // Propagate current connection state through the system.
-        this.propagateConnectionState();
-
         // Internal context is fully loaded at this point
-        this.loaded = true;
+        this.setLoaded();
 
         // We might have hit some failure that did not manifest itself in exception in this flow,
         // do not start op processing in such case - static version of Container.load() will handle it correctly.
@@ -1243,9 +1233,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             false, // existing
         );
 
-        this.propagateConnectionState();
-
-        this.loaded = true;
+        this.setLoaded();
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
@@ -1280,9 +1268,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             snapshotTree,
         );
 
-        this.loaded = true;
-
-        this.propagateConnectionState();
+        this.setLoaded();
     }
 
     private async connectStorageService(): Promise<void> {
@@ -1629,10 +1615,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         const state = this.connectionState === ConnectionState.Connected;
+
+        assert(this.context !== undefined, "This function should be called only after context & protocol are fully loaded");
+        assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
+
         if (!this.context.disposed) {
             this.context.setConnectionState(state, this.clientId);
         }
-        assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
         this.protocolHandler.quorum.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
 
