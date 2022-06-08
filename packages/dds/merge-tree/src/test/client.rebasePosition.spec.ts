@@ -73,6 +73,7 @@ describe("client.rebasePosition", () => {
         };
 
         it("rebase past remote insert", () => {
+            client.insertTextRemote(0, "abc", undefined, ++seq, 0, remoteUserLongId);
             const rebasedPos = client.rebasePosition(6 /* index 6 into "hello world" */, 0, 0);
             const rebasedPos1 = client.rebasePosition(6 /* index 6 into "hello123456 world" */, 0, 1);
             const rebasedPos2 = client.rebasePosition(6 /* index 6 into "hel123456 world" */, 0, 2);

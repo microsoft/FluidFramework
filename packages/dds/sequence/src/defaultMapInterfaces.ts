@@ -89,7 +89,7 @@ export interface IValueOperation<T> {
         params: any,
         local: boolean,
         message: ISequencedDocumentMessage | undefined,
-        localOpMetadata: unknown | undefined
+        localOpMetadata: IMapMessageLocalMetadata | undefined
     );
 
     /**

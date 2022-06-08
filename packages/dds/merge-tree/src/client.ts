@@ -755,7 +755,9 @@ export class Client {
 
         assert(segment !== undefined, "No segment found");
         const seqNumberTo = this.getCollabWindow().currentSeq;
-        if ((segment.removedSeq !== undefined && segment.removedSeq <= seqNumberTo)
+        if ((segment.removedSeq !== undefined &&
+             segment.removedSeq !== UnassignedSequenceNumber &&
+             segment.removedSeq <= seqNumberTo)
             || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
             // Segment that the position was in has been removed: null out offset.
             offset = 0;

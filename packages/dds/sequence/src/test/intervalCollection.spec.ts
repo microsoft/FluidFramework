@@ -874,7 +874,7 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
-        // This is useful to ensure rebasing reconnection ops doesn't take into local account string state
+        // This is useful to ensure rebasing reconnection ops doesn't take into account local string state
         // that has been applied since the interval addition.
         it("addInterval and string operations resubmitted with concurrent insert", async () => {
             containerRuntime1.connected = false;

@@ -773,21 +773,22 @@ export class IntervalCollectionValueType
 
 function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<IntervalCollection<T>>> {
     const rebase = (
-        value: IntervalCollection<T>,
+        collection: IntervalCollection<T>,
         op: IValueTypeOperationValue,
-        { localSeq }: IMapMessageLocalMetadata,
+        localOpMetadata: IMapMessageLocalMetadata,
     ) => {
-        const rebasedValue = value.rebaseLocalInterval(op.opName, op.value, localSeq);
+        const { localSeq } = localOpMetadata;
+        const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
         const rebasedOp = { ...op, value: rebasedValue };
-        return { rebasedOp, rebasedLocalOpMetadata: { localSeq } };
+        return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
     };
 
     return new Map<string, IValueOperation<IntervalCollection<T>>>(
         [[
             "add",
             {
-                process: (value, params, local, op) => {
-                    value.ackAdd(params, local, op);
+                process: (collection, params, local, op) => {
+                    collection.ackAdd(params, local, op);
                 },
                 rebase,
             },
@@ -795,10 +796,10 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
         [
             "delete",
             {
-                process: (value, params, local, op) => {
-                    value.ackDelete(params, local, op);
+                process: (collection, params, local, op) => {
+                    collection.ackDelete(params, local, op);
                 },
-                rebase: (value, op, localOpMetadata) => {
+                rebase: (collection, op, localOpMetadata) => {
                     // Deletion of intervals is based on id, so requires no rebasing.
                     return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
                 },
@@ -807,8 +808,8 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
         [
             "change",
             {
-                process: (value, params, local, op) => {
-                    value.ackChange(params, local, op);
+                process: (collection, params, local, op) => {
+                    collection.ackChange(params, local, op);
                 },
                 rebase,
             },
