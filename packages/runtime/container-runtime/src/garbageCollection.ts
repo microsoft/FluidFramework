@@ -507,7 +507,7 @@ export class GarbageCollector implements IGarbageCollector {
             // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
             // contain GC tree and GC is enabled.
             const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
-            this.initialStateNeedsReset = gcTreePresent === !this.shouldRunGC;
+            this.initialStateNeedsReset = gcTreePresent !== this.shouldRunGC;
         }
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
