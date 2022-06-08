@@ -283,19 +283,19 @@ module.exports = {
         "jsdoc": {
             // The following are intended to keep js/jsx jsdoc comments in line with tsdoc syntax used in ts/tsx code.
             "tagNamePreference": {
-				"arg": {
-					"message": "Please use @param instead of @arg.",
-					"replacement": "param",
-				},
-				"argument": {
-					"message": "Please use @param instead of @argument.",
-					"replacement": "param",
-				},
-				"return": {
-					"message": "Please use @returns instead of @return.",
-					"replacement": "returns",
-				},
-			},
+                "arg": {
+                    "message": "Please use @param instead of @arg.",
+                    "replacement": "param",
+                },
+                "argument": {
+                    "message": "Please use @param instead of @argument.",
+                    "replacement": "param",
+                },
+                "return": {
+                    "message": "Please use @returns instead of @return.",
+                    "replacement": "returns",
+                },
+            },
         }
     }
 };
