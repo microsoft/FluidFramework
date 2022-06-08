@@ -534,9 +534,9 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     closeFn(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // (undocumented)
+    // @deprecated (undocumented)
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     readonly summarizerClientId: string | undefined;
 }
@@ -607,6 +607,8 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     maxOps: number;
     maxTime: number;
     minOpsForLastSummaryAttempt: number;
+    nonRuntimeOpWeight: number;
+    runtimeOpWeight: number;
     // (undocumented)
     state: "enabled";
 }
