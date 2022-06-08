@@ -481,6 +481,9 @@
         "import/order": [
             "error"
         ],
+        "jsdoc/check-access": [
+            "error"
+        ],
         "jsx-quotes": [
             "error"
         ],
