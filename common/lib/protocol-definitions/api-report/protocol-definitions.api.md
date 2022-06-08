@@ -638,13 +638,10 @@ export enum NackErrorType {
     ThrottlingError = "ThrottlingError"
 }
 
-// @public (undocumented)
+// @public
 export enum ScopeType {
-    // (undocumented)
     DocRead = "doc:read",
-    // (undocumented)
     DocWrite = "doc:write",
-    // (undocumented)
     SummaryWrite = "summary:write"
 }
 
