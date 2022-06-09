@@ -2,38 +2,7 @@
 # Including: *.ts
 
 19 results - 8 files
-
-packages/runtime/container-runtime/src/containerRuntime.ts:
-  1995:         // older versions, we still have to call bindToContext.
-  1999:             fluidDataStore.bindToContext();
-  2072:             // For older versions, we still have to call bindToContext.
-  2076:                 fluidDataStore.bindToContext();
-
-packages/runtime/container-runtime/src/dataStore.ts:
-  79:         // older versions, we still have to call bindToContext.
-  83:             this.fluidDataStoreChannel.bindToContext();
-
-packages/runtime/container-runtime/src/dataStoreContext.ts:
-   236:     public readonly bindToContext: () => void;
-   285:         this.bindToContext = () => {
-  1045:             // For older versions, we still have to call bindToContext.
-  1049:                 dataStoreChannel.bindToContext();
-
+rm
 packages/runtime/container-runtime-definitions/src/containerRuntime.ts:
   37: export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
   38:     fluidDataStoreChannel?: { bindToContext?(): void; };
-
-packages/runtime/datastore/src/dataStoreRuntime.ts:
-  433:         this.bindToContext();
-  450:     public bindToContext() {
-  455:         this.dataStoreContext.bindToContext();
-
-packages/runtime/runtime-definitions/src/dataStoreContext.ts:
-  217:     bindToContext(): void;
-  389:     bindToContext(): void;
-
-packages/runtime/test-runtime-utils/src/mocks.ts:
-  445:     public bindToContext(): void {
-
-packages/runtime/test-runtime-utils/src/mocksDataStoreContext.ts:
-  105:     public bindToContext(): void {
