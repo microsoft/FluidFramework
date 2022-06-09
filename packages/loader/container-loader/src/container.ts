@@ -706,11 +706,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         try {
-            this._lifecycleState = "closing";
-
             // Ensure that we raise all key events even if one of these throws
             try {
+                // Close DetlaManager before changing _lifecycleState. Key two reasons:
+                // 1. We do close containers either directly because Container.close() is called, or because error
+                //    happens in DeltaManager layer (or disconnect happens for containers that do not allow disconnect)
+                //    We want DM's logic in both cases to run in exactly same state - not yet closing.
+                // 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
+                //    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
+                //    "closing" will lose that info (can also solve by tracking extra state).
                 this._deltaManager.close(error);
+
+                this._lifecycleState = "closing";
 
                 this._protocolHandler?.close();
 
@@ -1616,9 +1623,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const state = this.connectionState === ConnectionState.Connected;
 
-        assert(this.context !== undefined,
-            "This function should be called only after context & protocol are fully loaded");
-        assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
+        // Both protocol and context should not be undefined if we got so far.
 
         if (!this.context.disposed) {
             this.context.setConnectionState(state, this.clientId);
