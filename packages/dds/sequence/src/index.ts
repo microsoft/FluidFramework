@@ -17,6 +17,7 @@ export {
     ISequenceIntervalEvents,
 } from "./intervalCollection";
 export {
+    IMapMessageLocalMetadata,
     IValueOpEmitter,
 } from "./defaultMapInterfaces";
 export * from "./sharedString";

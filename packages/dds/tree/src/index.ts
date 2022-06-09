@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-export {
-    TreeKey,
-    TreeType,
-} from "./tree";
+export { FieldKey, TreeType } from "./tree";
+
+export { ITreeCursor, TreeNavigationResult } from "./forest";
 
 export {
-    ITreeCursor,
-    TreeNavigationResult,
-} from "./forest";
+    Brand,
+    BrandedType,
+    Opaque,
+    extractFromOpaque,
+    MakeNominal,
+    Invariant,
+    Contravariant,
+    Covariant,
+} from "./util";

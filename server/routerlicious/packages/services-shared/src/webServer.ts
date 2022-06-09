@@ -71,7 +71,8 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
     constructor(
         private readonly redisConfig: any,
         private readonly socketIoAdapterConfig?: any,
-        private readonly httpServerConfig?: IHttpServerConfig) {
+        private readonly httpServerConfig?: IHttpServerConfig,
+        private readonly socketIoConfig?: any) {
     }
 
     public create(requestListener: RequestListener): core.IWebServer {
@@ -79,7 +80,11 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
         const server = createAndConfigureHttpServer(requestListener, this.httpServerConfig);
         const httpServer = new HttpServer(server);
 
-        const socketIoServer = socketIo.create(this.redisConfig, server, this.socketIoAdapterConfig);
+        const socketIoServer = socketIo.create(
+            this.redisConfig,
+            server,
+            this.socketIoAdapterConfig,
+            this.socketIoConfig);
 
         return new WebServer(httpServer, socketIoServer);
     }
