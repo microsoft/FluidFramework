@@ -568,6 +568,18 @@ use_old_InterfaceDeclaration_IClientConfig(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedInterfaceDeclaration_IFacetCodes": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedInterfaceDeclaration_IFacetCodes": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOdspAuthRequestInfo": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOdspAuthRequestInfo():
