@@ -11,7 +11,7 @@ import {
 from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidSerializer } from "../serializer";
 import { SharedObject, SharedObjectCore } from "../sharedObject";
 
@@ -75,8 +75,7 @@ describe("SharedObject", () => {
         const invalidId = "beforeSlash/afterSlash";
         const codeBlock = () => new MySharedObject(invalidId);
         assert.throws(codeBlock,
-            (e) => e.errorType === ContainerErrorType.usageError
-                && e.message === `Id cannot contain slashes: ${invalidId}`);
+            (e) => validateAssertionError(e, "Id cannot contain slashes"));
     });
 });
 
@@ -85,7 +84,6 @@ describe("SharedObjectCore", () => {
         const invalidId = "beforeSlash/afterSlash";
         const codeBlock = () => new MySharedObjectCore(invalidId);
         assert.throws(codeBlock,
-            (e) => e.errorType === ContainerErrorType.usageError
-                && e.message === `Id cannot contain slashes: ${invalidId}`);
+            (e) => validateAssertionError(e, "Id cannot contain slashes"));
     });
 });
