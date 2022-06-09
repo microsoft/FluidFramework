@@ -33,8 +33,12 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             [],
             []);
         const runtimeOptions: IContainerRuntimeOptions = {
-            summaryOptions: { disableSummaries: true },
-            gcOptions: { gcAllowed: true, runGCInTestMode: deleteUnreferencedContent, writeDataAtRoot: true },
+            summaryOptions: {
+                summaryConfigOverrides: {
+                    state: "disabled",
+                },
+             },
+            gcOptions: { gcAllowed: true, runGCInTestMode: deleteUnreferencedContent },
         };
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
             runtime.IFluidHandleContext.resolveHandle(request);
@@ -47,9 +51,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             [innerRequestHandler],
             runtimeOptions,
         );
-        // Enable config provider setting to write GC data at the root.
-        const settings = { "Fluid.GarbageCollection.WriteDataAtRoot": "true" };
-        const configProvider = mockConfigProvider(settings);
+        const configProvider = mockConfigProvider({});
 
         let provider: ITestObjectProvider;
         let containerRuntime: ContainerRuntime;

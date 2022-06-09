@@ -6,7 +6,7 @@
 import { resolve } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
-import { SummaryCollection } from '@fluidframework/container-runtime';
+import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
@@ -316,11 +316,16 @@ export async function setUpLocalServerTestSharedTree(
 			TestDataStoreType,
 			new TestFluidObjectFactory(registry),
 			{
+				enableOfflineLoad: true,
 				summaryOptions: {
 					summaryConfigOverrides: {
-						idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
+						...DefaultSummaryConfiguration,
+						...{
+							idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
+							maxTime: 1000 * 12,
+							initialSummarizerDelayMs: 0,
+						},
 					},
-					initialSummarizerDelayMs: 0,
 				},
 			},
 			[innerRequestHandler]

@@ -24,6 +24,7 @@ export interface IValueChanged {
 
 /**
  * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
+ * @internal
  */
 export interface IValueOpEmitter {
     /**
@@ -31,9 +32,17 @@ export interface IValueOpEmitter {
      * @param opName - Name of the emitted operation
      * @param previousValue - JSONable previous value as defined by the value type
      * @param params - JSONable params for the operation as defined by the value type
-     * @alpha
+     * @param localOpMetadata - JSONable local metadata which should be submitted with the op
+     * @internal
      */
-    emit(opName: string, previousValue: any, params: any): void;
+    emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
+}
+
+/**
+ * @internal
+ */
+export interface IMapMessageLocalMetadata {
+    localSeq: number;
 }
 
 /**
@@ -72,14 +81,30 @@ export interface IValueOperation<T> {
      * @param params - The params on the incoming operation
      * @param local - Whether the operation originated from this client
      * @param message - The operation itself
+     * @param localOpMetadata - any local metadata submitted by `IValueOpEmitter.emit`.
      * @alpha
      */
     process(
         value: T,
         params: any,
         local: boolean,
-        message: ISequencedDocumentMessage | undefined
+        message: ISequencedDocumentMessage | undefined,
+        localOpMetadata: IMapMessageLocalMetadata | undefined
     );
+
+    /**
+     * Rebases an `op` on `value` from its original perspective (ref/local seq) to the current
+     * perspective. Should be invoked on reconnection.
+     * @param value - The current value stored at the given key, which should be the value type.
+     * @param op - The op to be rebased.
+     * @param localOpMetadata - Any local metadata that was originally submitted with the op.
+     * @returns A rebased version of the op and any local metadata that should be submitted with it.
+     */
+    rebase(
+        value: T,
+        op: IValueTypeOperationValue,
+        localOpMetadata: IMapMessageLocalMetadata
+    ): { rebasedOp: IValueTypeOperationValue; rebasedLocalOpMetadata: IMapMessageLocalMetadata; };
 }
 
 /**

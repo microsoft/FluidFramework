@@ -34,6 +34,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 import { LocalReference } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
@@ -74,6 +75,12 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 export interface IJSONRunSegment<T> extends IJSONSegment {
     // (undocumented)
     items: Serializable<T>[];
+}
+
+// @internal (undocumented)
+export interface IMapMessageLocalMetadata {
+    // (undocumented)
+    localSeq: number;
 }
 
 // @public (undocumented)
@@ -121,6 +128,7 @@ export class Interval implements ISerializableInterval {
 export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
+    // @internal
     constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]);
     // @internal (undocumented)
     ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
@@ -128,7 +136,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     // @internal (undocumented)
     ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
-    // (undocumented)
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
     // (undocumented)
     addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;
@@ -168,6 +175,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     nextInterval(pos: number): TInterval;
     // (undocumented)
     previousInterval(pos: number): TInterval;
+    // @internal (undocumented)
+    rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
     // (undocumented)
     removeIntervalById(id: string): TInterval;
     // (undocumented)
@@ -190,9 +199,8 @@ export enum IntervalType {
     Nest = 1,
     // (undocumented)
     Simple = 0,
-    // (undocumented)
     SlideOnRemove = 2,
-    // (undocumented)
+    // @internal
     Transient = 4
 }
 
@@ -204,6 +212,12 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     // (undocumented)
     propertyDeltas: PropertySet;
     segment: ISegment;
+}
+
+// @public
+export interface ISequenceIntervalEvents extends IEvent {
+    // (undocumented)
+    (event: "beforePositionChange" | "afterPositionChange", listener: () => void): any;
 }
 
 // @public (undocumented)
@@ -259,10 +273,9 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
     posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
-// @public
+// @internal
 export interface IValueOpEmitter {
-    // @alpha
-    emit(opName: string, previousValue: any, params: any): void;
+    emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
 }
 
 // @public @deprecated (undocumented)
@@ -373,7 +386,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 }
 
 // @public (undocumented)
-export class SequenceInterval implements ISerializableInterval {
+export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents> implements ISerializableInterval {
     constructor(start: LocalReference, end: LocalReference, intervalType: IntervalType, props?: PropertySet);
     // (undocumented)
     addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
@@ -601,7 +614,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     submitSequenceMessage(message: IMergeTreeOp): void;
     // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // @deprecated (undocumented)
     waitIntervalCollection(label: string): Promise<IntervalCollection<SequenceInterval>>;
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;

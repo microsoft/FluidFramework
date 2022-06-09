@@ -29,7 +29,11 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         [],
         []);
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+        },
         gcOptions: { gcAllowed: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -101,13 +105,13 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const expectedGCStats: IGCStats = {
             nodeCount: 9,
             unrefNodeCount: 0,
-            updatedNodeCount: 0,
+            updatedNodeCount: 9,
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
-            updatedDataStoreCount: 0,
+            updatedDataStoreCount: 3,
             attachmentBlobCount: 2,
             unrefAttachmentBlobCount: 0,
-            updatedAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 2,
         };
 
         // Add both data store handles in default data store to mark them referenced.
@@ -138,13 +142,13 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const expectedGCStats: IGCStats = {
             nodeCount: 9,
             unrefNodeCount: 0,
-            updatedNodeCount: 0,
+            updatedNodeCount: 9,
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
-            updatedDataStoreCount: 0,
+            updatedDataStoreCount: 3,
             attachmentBlobCount: 2,
             unrefAttachmentBlobCount: 0,
-            updatedAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 2,
         };
 
         // Add both data store handles in default data store to mark them referenced.
@@ -161,6 +165,9 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
 
+        let gcStats = await containerRuntime.collectGarbage({});
+        assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+
         // Remove dataStore1 and blob1's handles to mark them unreferenced.
         defaultDataStore._root.delete("dataStore1");
         defaultDataStore._root.delete("blob1");
@@ -175,7 +182,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         expectedGCStats.unrefAttachmentBlobCount = 1;
         expectedGCStats.updatedAttachmentBlobCount = 1;
 
-        let gcStats = await containerRuntime.collectGarbage({});
+        gcStats = await containerRuntime.collectGarbage({});
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         let summarizeResult = await containerRuntime.summarize({ trackState: false });
@@ -218,13 +225,13 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const expectedGCStats: IGCStats = {
             nodeCount: 9,
             unrefNodeCount: 0,
-            updatedNodeCount: 0,
+            updatedNodeCount: 9,
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
-            updatedDataStoreCount: 0,
+            updatedDataStoreCount: 3,
             attachmentBlobCount: 2,
             unrefAttachmentBlobCount: 0,
-            updatedAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 2,
         };
 
         // Add both data store handles in default data store to mark them referenced.
@@ -268,10 +275,10 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const expectedGCStats: IGCStats = {
             nodeCount: 7,
             unrefNodeCount: 0,
-            updatedNodeCount: 0,
+            updatedNodeCount: 7,
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
-            updatedDataStoreCount: 0,
+            updatedDataStoreCount: 3,
             attachmentBlobCount: 0,
             unrefAttachmentBlobCount: 0,
             updatedAttachmentBlobCount: 0,

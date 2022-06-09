@@ -22,8 +22,9 @@ import {
     IGarbageCollectionData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionNodeData,
     ISummarizeResult,
+    ITelemetryContext,
+    IGarbageCollectionNodeData,
 } from "@fluidframework/runtime-definitions";
 import {
     mergeStats,
@@ -39,7 +40,6 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 
-import * as semver from "semver";
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
 import { pkgVersion } from "./packageVersion";
@@ -73,8 +73,6 @@ const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 // Feature gate key to disable expiring session after a set period of time, even if expiry value is present
 export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
-// Feature gate key to log error messages if GC reference validation fails.
-export const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 // Feature gate key to write the gc blob as a handle if the data is the same.
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to limit which versions can write the gc blob as a handle if the data is the same.
@@ -163,7 +161,11 @@ export interface IGarbageCollector {
         options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean; },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
-    summarize(fullTree: boolean, trackState: boolean): ISummarizeResult | undefined;
+    summarize(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): ISummarizeResult | undefined;
     /** Returns the garbage collector specific metadata to be written into the summary. */
     getMetadata(): IGCMetadata;
     /** Returns a map of each node id to its base GC details in the base summary. */
@@ -328,10 +330,10 @@ export class GarbageCollector implements IGarbageCollector {
     /**
      * Tells whether the GC data should be written to the root of the summary tree.
      */
-    private _writeDataAtRoot: boolean = false;
+    private _writeDataAtRoot: boolean = true;
     public get writeDataAtRoot(): boolean {
         return this._writeDataAtRoot;
-     }
+    }
 
     /**
      * Tells whether the initial GC state needs to be reset. This can happen under 2 conditions:
@@ -421,12 +423,14 @@ export class GarbageCollector implements IGarbageCollector {
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
-            if (gcOptions.sweepAllowed && !gcOptions.gcAllowed) {
+            if (gcOptions.sweepAllowed && gcOptions.gcAllowed === false) {
                 throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
             }
 
-            // For new documents, GC has to be explicitly enabled via the flags in GC options.
-            this.gcEnabled = gcOptions.gcAllowed === true;
+            // For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
+            // flag in GC options to false.
+            this.gcEnabled = gcOptions.gcAllowed !== false;
+            // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
             this.sweepEnabled = gcOptions.sweepAllowed === true;
 
             // Set the Session Expiry only if the flag is enabled or the test option is set.
@@ -496,19 +500,15 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
 
-        /**
-         * Enable resetting initial state once the following issue is resolved:
-         * https://github.com/microsoft/FluidFramework/issues/8878.
-         * Currently, the GC tree is not written at root, so we don't know if the base snapshot contains GC tree or not.
-         */
-        // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't contain
-        // GC tree and GC is enabled.
-        // const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
-        // this.initialStateNeedsReset = gcTreePresent ? !this.shouldRunGC : this.shouldRunGC;
+        // GC state is written into root of the summary tree by default. Can be overridden via feature flag for now.
+        this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? true;
 
-        // If `writeDataAtRoot` setting is true, write the GC data into the root of the summary tree. We do this so that
-        // the roll out can be staged. Once its rolled out everywhere, we will start writing at root by default.
-        this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? this.gcOptions.writeDataAtRoot === true;
+        if (this._writeDataAtRoot) {
+            // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
+            // contain GC tree and GC is enabled.
+            const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
+            this.initialStateNeedsReset = gcTreePresent !== this.shouldRunGC;
+        }
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
@@ -589,7 +589,7 @@ export class GarbageCollector implements IGarbageCollector {
                 return;
             }
 
-            const gcNodes: { [ id: string ]: string[]; } = {};
+            const gcNodes: { [id: string]: string[]; } = {};
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 if (nodeData.unreferencedTimestampMs !== undefined) {
                     this.unreferencedNodesState.set(
@@ -614,7 +614,7 @@ export class GarbageCollector implements IGarbageCollector {
                 return new Map();
             }
 
-            const gcNodes: { [ id: string ]: string[]; } = {};
+            const gcNodes: { [id: string]: string[]; } = {};
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
             }
@@ -738,8 +738,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.completedRuns++;
 
             return gcStats;
-        },
-        { end: true, cancel: "error" });
+        }, { end: true, cancel: "error" });
     }
 
     /**
@@ -750,6 +749,7 @@ export class GarbageCollector implements IGarbageCollector {
     public summarize(
         fullTree: boolean,
         trackState: boolean,
+        telemetryContext?: ITelemetryContext,
     ): ISummarizeResult | undefined {
         if (!this.shouldRunGC || this.previousGCDataFromLastRun === undefined) {
             return;
@@ -1001,10 +1001,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.newReferencesSinceLastRun,
         );
 
-        // The following log will be enabled once this issue is resolved:
-        // https://github.com/microsoft/FluidFramework/issues/8878.
-        if (this.mc.config.getBoolean(logUnknownOutboundReferencesKey) === true
-            && missingExplicitReferences.length > 0) {
+        if (this.writeDataAtRoot && missingExplicitReferences.length > 0) {
             missingExplicitReferences.forEach((missingExplicitReference) => {
                 const event: ITelemetryPerformanceEvent = {
                     eventName: "gcUnknownOutboundReferences",
@@ -1148,11 +1145,10 @@ export class GarbageCollector implements IGarbageCollector {
 
         const updateNodeStats = (nodeId: string, referenced: boolean) => {
             gcStats.nodeCount++;
-            /**
-             * `this.unreferencedNodesState` has the previous unreferenced state of all nodes. `referenced` flag passed
-             * here is current state of the give node. Check if the reference state of the changed.
-             */
-            const stateUpdated = this.unreferencedNodesState.has(nodeId) ? referenced : !referenced;
+            // If there is no previous GC data, every node's state is generated and is considered as updated.
+            // Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
+            const stateUpdated = this.previousGCDataFromLastRun === undefined ||
+                this.unreferencedNodesState.has(nodeId) === referenced;
             if (stateUpdated) {
                 gcStats.updatedNodeCount++;
             }
@@ -1324,5 +1320,56 @@ function setLongTimeout(
  * @param minimumVersion - the function to execute when the timer ends
  */
 function meetsMinimumVersionRequirement(currentVersion: string, minimumVersion: string | undefined) {
-    return minimumVersion === undefined || semver.compare(currentVersion, minimumVersion) >= 0;
+    return minimumVersion === undefined || semverCompare(currentVersion, minimumVersion) >= 0;
+}
+
+/**
+ * Compare semver versions.
+ * @param currentVersion - assumed to be any valid semver version
+ * @param minimumVersion - must be [major].[minor].[patch], where major, minor, and patch are all numbers
+ *  as it complicates the algorithm if we allow comparisons against minimum pre-release versions.
+ * @returns
+ *  0 if the currentVersion equals the minimumVersion
+ *  1 if the currentVersion is greater than the minimumVersion
+ *  -1 if the minimumVersion is greater than the currentVersion
+ */
+export function semverCompare(currentVersion: string, minimumVersion: string): number {
+    const minimumValues = minimumVersion.split(".").map((value): number => {
+        assert(isNaN(+value) === false, 0x2fa /* Expected real numbers in minimum version! */);
+        return Number.parseInt(value, 10);
+    });
+    assert(minimumValues.length === 3, 0x2fb /* Expected minimumVersion to be [major].[minor].[patch] */);
+    const [minMajor, minMinor, minPatch] = minimumValues;
+
+    const currentValuesString = currentVersion.split(/\W/);
+    assert(currentValuesString.length >= 3, 0x2fc /* Expected version to match semver rules! */);
+    const currentValues = currentValuesString.slice(0, 3).map((value) => {
+        assert(isNaN(+value) === false, 0x2fd /* Expected real numbers in minimum version! */);
+        return Number.parseInt(value, 10);
+    });
+    const [cMajor, cMinor, cPatch] = currentValues;
+
+    if (cMajor > minMajor) {
+        return 1;
+    } else if (minMajor > cMajor) {
+        return -1;
+    }
+
+    if (cMinor > minMinor) {
+        return 1;
+    } else if (minMinor > cMinor) {
+        return -1;
+    }
+
+    if (cPatch > minPatch) {
+        return 1;
+    } else if (minPatch > cPatch) {
+        return -1;
+    }
+
+    if (currentValuesString.length === 3) {
+        return 0;
+    }
+
+    return -1;
 }

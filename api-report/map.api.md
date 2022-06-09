@@ -19,6 +19,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public @sealed
@@ -217,7 +218,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // @internal
     submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
 
@@ -245,10 +246,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
     set(key: string, value: any): this;
     get size(): number;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
 

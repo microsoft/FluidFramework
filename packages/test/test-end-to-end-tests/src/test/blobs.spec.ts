@@ -7,7 +7,11 @@ import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage } from "@fluidframework/container-loader";
-import { ContainerMessageType, ContainerRuntime } from "@fluidframework/container-runtime";
+import {
+    ContainerMessageType,
+    ContainerRuntime,
+    DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
@@ -28,8 +32,17 @@ import { getGCStateFromSummary } from "./mockSummarizerClient";
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
-            initialSummarizerDelayMs: 20,
-            summaryConfigOverrides: { maxOps: 1 },
+            initialSummarizerDelayMs: 20, // Previous Containers had this property under SummaryOptions.
+            summaryConfigOverrides: {
+                ...DefaultSummaryConfiguration,
+                ...{
+                    idleTime: 5000,
+                    maxTime: 5000 * 12,
+                    maxAckWaitTime: 120000,
+                    maxOps: 1,
+                    initialSummarizerDelayMs: 20,
+                },
+            },
         },
     },
     registry: [["sharedString", SharedString.getFactory()]],
@@ -436,7 +449,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
         const gcContainerConfig: ITestContainerConfig = {
             runtimeOptions: {
                 gcOptions: {
-                    gcAllowed: true, runGCInTestMode: deleteUnreferencedContent, writeDataAtRoot: true,
+                    gcAllowed: true, runGCInTestMode: deleteUnreferencedContent,
                 },
             },
         };

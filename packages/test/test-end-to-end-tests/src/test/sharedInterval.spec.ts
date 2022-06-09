@@ -24,7 +24,7 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 const assertIntervalsHelper = (
@@ -32,7 +32,10 @@ const assertIntervalsHelper = (
     intervalView: IntervalCollection<SequenceInterval>,
     expected: readonly { start: number; end: number; }[],
 ) => {
-    const actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    let actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    if (sharedString.getLength() === 0) {
+        actual = Array.from(intervalView);
+    }
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
 
@@ -198,7 +201,7 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
         intervalCollection.removeIntervalById(id);
     }
 }
-describeFullCompat("SharedInterval", (getTestObjectProvider) => {
+describeNoCompat("SharedInterval", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
@@ -246,6 +249,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             assertIntervals([{ start: 0, end: len - 1 }]);
 
             sharedString.removeRange(0, len);
+            await provider.ensureSynchronized();
             assertIntervals([{ start: LocalReference.DetachedPosition, end: LocalReference.DetachedPosition }]);
         });
 
@@ -778,7 +782,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const parsedContent = JSON.parse(summaryBlob.content as string);
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
             const serializedInterval1FromSnapshot =
-                (parsedContent["intervalCollections/comments"].value as ISerializedInterval[])[0];
+                (parsedContent.comments.value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             assert(serializedInterval1FromSnapshot.properties);
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string; };

@@ -14,8 +14,10 @@ export {
     ISerializableInterval,
     ISerializedInterval,
     SequenceInterval,
+    ISequenceIntervalEvents,
 } from "./intervalCollection";
 export {
+    IMapMessageLocalMetadata,
     IValueOpEmitter,
 } from "./defaultMapInterfaces";
 export * from "./sharedString";

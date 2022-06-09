@@ -156,6 +156,10 @@ export class MongoDb implements core.IDb {
         const collection = this.client.db("admin").collection<T>(name);
         return new MongoCollection<T>(collection);
     }
+
+    public async dropCollection(name: string): Promise<boolean> {
+        return this.client.db("admin").dropCollection(name);
+    }
 }
 
 interface IMongoDBConfig {
