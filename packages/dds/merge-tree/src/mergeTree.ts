@@ -1476,6 +1476,7 @@ export class MergeTree {
             newSegment.localRefs = new LocalReferenceCollection(newSegment);
         }
         for (const ref of refsToSlide) {
+            ref.emit("beforeSlide");
             const removedRef = segment.localRefs.removeLocalRef(ref);
             assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
             if (!newSegment) {
@@ -1488,6 +1489,7 @@ export class MergeTree {
                 assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
                 newSegment.localRefs.addLocalRef(ref);
             }
+            ref.emit("afterSlide");
         }
         // TODO is it required to update the path lengths?
         if (newSegment) {

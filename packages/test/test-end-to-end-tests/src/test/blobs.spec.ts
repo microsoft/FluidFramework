@@ -449,7 +449,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
         const gcContainerConfig: ITestContainerConfig = {
             runtimeOptions: {
                 gcOptions: {
-                    gcAllowed: true, runGCInTestMode: deleteUnreferencedContent, writeDataAtRoot: true,
+                    gcAllowed: true, runGCInTestMode: deleteUnreferencedContent,
                 },
             },
         };

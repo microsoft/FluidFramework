@@ -59,11 +59,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         runtimeOptions,
     );
 
-    const settings = {
-        "Fluid.GarbageCollection.LogUnknownOutboundRoutes": "true",
-        "Fluid.GarbageCollection.WriteDataAtRoot": "true",
-    };
-    const configProvider = mockConfigProvider(settings);
+    const configProvider = mockConfigProvider({});
 
     let mainContainer: IContainer;
     let mainDataStore: TestDataObject;

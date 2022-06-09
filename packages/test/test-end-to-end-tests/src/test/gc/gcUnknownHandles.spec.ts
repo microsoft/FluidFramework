@@ -67,7 +67,7 @@ describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
-        gcOptions: { gcAllowed: true, writeDataAtRoot: true },
+        gcOptions: { gcAllowed: true },
     };
     let mainContainer: IContainer;
     let dataStoreA: ITestDataObject;
@@ -83,7 +83,7 @@ describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
     const loadContainer = async () => {
         return provider.loadTestContainer({
             runtimeOptions,
-            loaderProps: { configProvider: mockConfigProvider({}) },
+            loaderProps: { configProvider: mockConfigProvider({ "Fluid.GarbageCollection.WriteDataAtRoot": "true" }) },
         });
     };
 
