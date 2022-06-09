@@ -144,7 +144,8 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * ```typescript
  * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
  * ```
- * - `path` -  The relative path to the subdirectory that is created. It is relative from the object which raises the event.
+ * - `path` -  The relative path to the subdirectory that is created.
+ *             It is relative from the object which raises the event.
  *
  * - `local` - Whether the create originated from the this client.
  *
@@ -159,7 +160,8 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * ```typescript
  * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
  * ```
- * - `path` - The relative path to the subdirectory that is deleted. It is relative from the object which raises the event.
+ * - `path` - The relative path to the subdirectory that is deleted.
+ *            It is relative from the object which raises the event.
  *
  * - `local` - Whether the delete originated from the this client.
  *
@@ -216,9 +218,10 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * ```typescript
  * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
  * ```
- * - `path` - The relative path to the key that is created. It is relative from the object which raises the event.
+ * - `path` - The relative path to the subdirectory that is created.
+ *            It is relative from the object which raises the event.
  *
- * - `local` - Whether the clear originated from the this client.
+ * - `local` - Whether the creation originated from the this client.
  *
  * - `target` - The ISharedDirectory itself.
  *
@@ -231,9 +234,10 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * ```typescript
  * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
  * ```
- * - `path` - The relative path to the key that is deleted. It is relative from the object which raises the event.
+ * - `path` - The relative path to the subdirectory that is deleted.
+ *            It is relative from the object which raises the event.
  *
- * - `local` - Whether the clear originated from the this client.
+ * - `local` - Whether the delete originated from the this client.
  *
  * - `target` - The ISharedDirectory itself.
  *
