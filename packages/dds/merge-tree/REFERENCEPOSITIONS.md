@@ -83,6 +83,47 @@ on the result. Call `Client.createLocalReferencePosition` with the result to cre
 
 ### Implementation Notes
 
+This is the state diagram for the implementation of Eventually Consistent References.
+
+```mermaid
+flowchart LR
+    subgraph StayOnRemove
+    localCreate[Local Create Ref]
+    pendingRef((Ref:StayOnRemove\nSegment:Normal))
+    pendingRefPendingRemove((Ref:StayOnRemove\nSegment:Pending Remove))
+    pendingRefRemoved((Ref:StayOnRemove\nSegment:Removed))
+    localCreate-->pendingRef
+    pendingRef--local remove-->pendingRefPendingRemove
+    pendingRef--remote remove-->pendingRefRemoved
+    end
+
+    subgraph SlideOnRemove
+    remoteCreate[Remote Create Ref]
+    remoteChoice{Segment Removed?}
+    ref((Ref:SlideOnRemove\nSegment:Normal))
+    refPendingRemove((Ref:SlideOnRemove\nSegment:Pending Remove))
+
+    remoteCreate-->remoteChoice
+    remoteChoice--no-->ref
+    remoteChoice--locally-->refPendingRemove
+    ref--local remove-->refPendingRemove
+    end
+
+    slide{Slide To}
+    detached((Ref:Detached))
+
+    pendingRef--create ack-->ref
+    pendingRefPendingRemove--create ack-->refPendingRemove
+    pendingRefRemoved--create ack-->slide
+    remoteChoice--yes-->slide
+    ref--remote remove-->slide
+    refPendingRemove--remove ack-->slide
+    refPendingRemove--remote remove-->slide
+    slide--segment-->ref
+    slide--locally removed segment-->refPendingRemove
+    slide--no segment-->detached
+```
+
 This algorithm works because it ensures that slid reference slide to the same segment.
 The slide only happens when both the creation of the reference and removal of the segment have been acknowledged.
 When sliding we do not consider any local (unacknowledged) ops.
