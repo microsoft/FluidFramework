@@ -146,7 +146,6 @@ export async function loadContainer(
                 state: "disabled",
             },
         },
-        gcOptions: { writeDataAtRoot: true },
     };
     const codeLoader = new ReplayCodeLoader(
         new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers),

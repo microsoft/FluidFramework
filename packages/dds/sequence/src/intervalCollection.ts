@@ -31,7 +31,14 @@ import {
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
-import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./defaultMapInterfaces";
+import {
+    IMapMessageLocalMetadata,
+    IValueFactory,
+    IValueOpEmitter,
+    IValueOperation,
+    IValueType,
+    IValueTypeOperationValue,
+} from "./defaultMapInterfaces";
 
 const reservedIntervalIdKey = "intervalId";
 
@@ -797,32 +804,7 @@ export class SequenceIntervalCollectionValueType
     private static readonly _factory: IValueFactory<IntervalCollection<SequenceInterval>> =
         new SequenceIntervalCollectionFactory();
 
-    private static readonly _ops: Map<string, IValueOperation<IntervalCollection<SequenceInterval>>> =
-        new Map<string, IValueOperation<IntervalCollection<SequenceInterval>>>(
-            [[
-                "add",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackAdd(params, local, op);
-                    },
-                },
-            ],
-            [
-                "delete",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackDelete(params, local, op);
-                    },
-                },
-            ],
-            [
-                "change",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackChange(params, local, op);
-                    },
-                },
-            ]]);
+    private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
 const compareIntervalEnds = (a: Interval, b: Interval) => a.end - b.end;
@@ -872,32 +854,52 @@ export class IntervalCollectionValueType
 
     private static readonly _factory: IValueFactory<IntervalCollection<Interval>> =
         new IntervalCollectionFactory();
-    private static readonly _ops: Map<string, IValueOperation<IntervalCollection<Interval>>> =
-        new Map<string, IValueOperation<IntervalCollection<Interval>>>(
-            [[
-                "add",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackAdd(params, local, op);
-                    },
+    private static readonly _ops = makeOpsMap<Interval>();
+}
+
+function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<IntervalCollection<T>>> {
+    const rebase = (
+        collection: IntervalCollection<T>,
+        op: IValueTypeOperationValue,
+        localOpMetadata: IMapMessageLocalMetadata,
+    ) => {
+        const { localSeq } = localOpMetadata;
+        const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
+        const rebasedOp = { ...op, value: rebasedValue };
+        return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
+    };
+
+    return new Map<string, IValueOperation<IntervalCollection<T>>>(
+        [[
+            "add",
+            {
+                process: (collection, params, local, op) => {
+                    collection.ackAdd(params, local, op);
                 },
-            ],
-            [
-                "delete",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackDelete(params, local, op);
-                    },
+                rebase,
+            },
+        ],
+        [
+            "delete",
+            {
+                process: (collection, params, local, op) => {
+                    collection.ackDelete(params, local, op);
                 },
-            ],
-            [
-                "change",
-                {
-                    process: (value, params, local, op) => {
-                        value.ackChange(params, local, op);
-                    },
+                rebase: (collection, op, localOpMetadata) => {
+                    // Deletion of intervals is based on id, so requires no rebasing.
+                    return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
                 },
-            ]]);
+            },
+        ],
+        [
+            "change",
+            {
+                process: (collection, params, local, op) => {
+                    collection.ackChange(params, local, op);
+                },
+                rebase,
+            },
+        ]]);
 }
 
 export type DeserializeCallback = (properties: PropertySet) => void;
@@ -952,6 +954,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return !!this.localCollection;
     }
 
+    /** @internal */
     constructor(private readonly helpers: IIntervalHelpers<TInterval>, private readonly requiresClient: boolean,
         private readonly emitter: IValueOpEmitter,
         serializedIntervals: ISerializedInterval[]) {
@@ -982,6 +985,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             }
         }
         this.savedSerializedIntervals = undefined;
+    }
+
+    /**
+     * Gets the next local sequence number, modifying this client's collab window in doing so.
+     */
+    private getNextLocalSeq(): number {
+        return ++this.client.getCollabWindow().localSeq;
     }
 
     public getIntervalById(id: string) {
@@ -1023,7 +1033,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 start,
             };
             // Local ops get submitted to the server. Remote ops have the deserializer run.
-            this.emitter.emit("add", undefined, serializedInterval);
+            this.emitter.emit("add", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
         }
 
         this.emit("addInterval", interval, true, undefined);
@@ -1038,7 +1048,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
-                this.emitter.emit("delete", undefined, interval.serialize(this.client));
+                this.emitter.emit(
+                    "delete",
+                    undefined,
+                    interval.serialize(this.client),
+                    { localSeq: this.getNextLocalSeq() },
+                );
             } else {
                 if (this.onDeserialize) {
                     this.onDeserialize(interval);
@@ -1078,7 +1093,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             serializedInterval.end = undefined;
             serializedInterval.properties = props;
             serializedInterval.properties[reservedIntervalIdKey] = interval.getIntervalId();
-            this.emitter.emit("change", undefined, serializedInterval);
+            this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
             this.emit("propertyChanged", interval, deltaProps);
         }
         this.emit("changeInterval", interval, true, undefined);
@@ -1104,7 +1119,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 {
                     [reservedIntervalIdKey]: interval.getIntervalId(),
                 };
-            this.emitter.emit("change", undefined, serializedInterval);
+            this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
             this.addPendingChange(id, serializedInterval);
         }
         this.emit("changeInterval", interval, true, undefined);
@@ -1264,6 +1279,37 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         });
     }
 
+    /** @internal */
+    public rebaseLocalInterval(
+        opName: string,
+        serializedInterval: ISerializedInterval,
+        localSeq: number,
+    ) {
+        if (!this.attached) {
+            throw new Error("attachSequence must be called");
+        }
+
+        const { start, end, intervalType, properties, sequenceNumber } = serializedInterval;
+        const startRebased = start === undefined ? undefined :
+            this.client.rebasePosition(start, sequenceNumber, localSeq);
+        const endRebased = end === undefined ? undefined :
+            this.client.rebasePosition(end, sequenceNumber, localSeq);
+
+        const intervalId = properties[reservedIntervalIdKey];
+        const rebased: ISerializedInterval = {
+            start: startRebased,
+            end: endRebased,
+            intervalType,
+            sequenceNumber: this.client?.getCurrentSeq() ?? 0,
+            properties,
+        };
+        if (opName === "change" && (this.hasPendingChangeStart(intervalId) || this.hasPendingChangeEnd(intervalId))) {
+            this.removePendingChange(serializedInterval);
+            this.addPendingChange(intervalId, rebased);
+        }
+        return rebased;
+    }
+
     private getSlideToSegment(lref: LocalReference) {
         const segoff = { segment: lref.segment, offset: lref.offset };
         const newSegoff = this.client.getSlideToSegment(segoff);
@@ -1285,11 +1331,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             return;
         }
 
-        if (!refTypeIncludesFlag(interval.start, ReferenceType.StayOnRemove)) {
+        if (!refTypeIncludesFlag(interval.start, ReferenceType.StayOnRemove) &&
+            !refTypeIncludesFlag(interval.end, ReferenceType.StayOnRemove)) {
             return;
         }
-        assert(refTypeIncludesFlag(interval.end, ReferenceType.StayOnRemove),
-            0x2f7 /* start and end must both be StayOnRemove */);
+
         const newStart = this.getSlideToSegment(interval.start);
         const newEnd = this.getSlideToSegment(interval.end);
 
