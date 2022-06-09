@@ -1629,7 +1629,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         const state = this.connectionState === ConnectionState.Connected;
-        if (this._context?.disposed === false) {
+        if (!this.closed && !this.context.disposed) {
             this.context.setConnectionState(state, this.clientId);
         }
         assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
