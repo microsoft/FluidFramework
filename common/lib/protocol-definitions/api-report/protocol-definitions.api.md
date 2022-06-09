@@ -87,8 +87,6 @@ export interface IClientConfiguration {
     maxMessageSize: number;
     noopCountFrequency?: number;
     noopTimeFrequency?: number;
-    // (undocumented)
-    summary: ISummaryConfiguration;
 }
 
 // @public (undocumented)
@@ -442,20 +440,6 @@ export interface ISummaryCommitter {
     email: string;
     // (undocumented)
     name: string;
-}
-
-// @public (undocumented)
-export interface ISummaryConfiguration {
-    // (undocumented)
-    disableSummaries?: boolean;
-    // (undocumented)
-    idleTime: number;
-    // (undocumented)
-    maxAckWaitTime: number;
-    // (undocumented)
-    maxOps: number;
-    // (undocumented)
-    maxTime: number;
 }
 
 // @public (undocumented)
