@@ -57,10 +57,17 @@
     "version": "1.0.0",
     "broken": {
       "InterfaceDeclaration_IFluidDataStoreContext": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IFluidDataStoreChannel":
+      {
+        "backCompat": false,
+        "forwardCompat": false
       },
       "InterfaceDeclaration_IFluidDataStoreContextDetached": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }
