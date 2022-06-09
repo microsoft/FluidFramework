@@ -129,6 +129,11 @@ interface IPendingConnection {
      * Used to cancel an in-progress connection attempt.
      */
     abortController: AbortController;
+
+    /**
+     * Desired ConnectionMode of this in-progress connection attempt.
+     */
+    connectionMode: ConnectionMode;
 }
 
 /**
@@ -426,16 +431,22 @@ export class ConnectionManager implements IConnectionManager {
         assert(!this.closed, 0x26a /* "not closed" */);
 
         if (this.connection !== undefined) {
-            return;  // Connection attempt already completed succesfully
+            return;  // Connection attempt already completed successfully
         }
 
+        let requestedMode = connectionMode;
         if (this.pendingConnection !== undefined) {
+            // If there is no specified ConnectionMode, then default to the previous mode
+            if (requestedMode === undefined) {
+                requestedMode = this.pendingConnection.connectionMode;
+            }
             this.cancelConnection();  // Throw out in-progress connection attempt in favor of new attempt
         }
-        this.pendingConnection = { abortController: new AbortController() };
-        const abortSignal = this.pendingConnection.abortController.signal;
 
-        let requestedMode = connectionMode ?? this.defaultReconnectionMode;
+        requestedMode = requestedMode ?? this.defaultReconnectionMode;
+
+        this.pendingConnection = { abortController: new AbortController(), connectionMode: requestedMode };
+        const abortSignal = this.pendingConnection.abortController.signal;
 
         // if we have any non-acked ops from last connection, reconnect as "write".
         // without that we would connect in view-only mode, which will result in immediate
