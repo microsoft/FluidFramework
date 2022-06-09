@@ -1,8 +1,0 @@
-# Query: bindToContext
-# Including: *.ts
-
-19 results - 8 files
-rm
-packages/runtime/container-runtime-definitions/src/containerRuntime.ts:
-  37: export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-  38:     fluidDataStoreChannel?: { bindToContext?(): void; };
