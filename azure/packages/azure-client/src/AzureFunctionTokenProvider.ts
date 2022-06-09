@@ -41,7 +41,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
                 documentId,
                 userId: this.user?.userId,
                 userName: this.user?.userName,
-                additionalDetails: this.user?.additionalDetails,
+                additionalDetails: this.user?.additionalDetails as unknown,
             },
         });
         return response.data as string;

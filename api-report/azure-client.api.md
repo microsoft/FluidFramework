@@ -103,6 +103,12 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
 }
 
 // @public
+export interface AzureUser<T = unknown> extends IUser {
+    additionalDetails?: T;
+    name: string;
+}
+
+// @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
 export { ITelemetryBaseEvent }

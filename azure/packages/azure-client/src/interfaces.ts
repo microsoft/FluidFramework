@@ -8,6 +8,7 @@ import {
     IMember,
     IServiceAudience,
 } from "@fluidframework/fluid-static";
+import { IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 // Re-export so developers can build loggers without pulling in common-definitions
@@ -118,6 +119,21 @@ export interface AzureContainerServices {
      * listeners for when the roster has any changes from users joining/leaving the session
      */
     audience: IAzureAudience;
+}
+
+/**
+ * Azure-client-specific User interface.
+ */
+export interface AzureUser<T = unknown> extends IUser {
+    /**
+     * The user's name.
+     */
+    name: string;
+
+    /**
+     * TODO
+     */
+    additionalDetails?: T;
 }
 
 /**
