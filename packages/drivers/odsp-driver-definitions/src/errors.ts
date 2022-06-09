@@ -73,7 +73,7 @@ export interface IOdspErrorAugmentations {
 
 /**
  * Base interface for all errors and warnings
- * Superset of IDriverErrorBase, but with Odsp-specific errorType
+ * Superset of IDriverErrorBase, but with Odsp-specific errorType and properties
  */
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     readonly errorType: OdspErrorType;
