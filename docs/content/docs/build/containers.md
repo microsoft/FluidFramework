@@ -120,7 +120,7 @@ A detached container is not connected to the Fluid service and no data is shared
 This is an ideal time to create initial data in your Fluid data model.
 
 An *attached* container, conversely, **is** connected to the Fluid service, and data changes are shared with the other clients.
-An existing container being loaded by a client will always be in an attached state.
+An existing container being loaded by a client will always initially be in an attached state.
 
 ### connected/disconnected
 
