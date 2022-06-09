@@ -12,6 +12,7 @@ import {
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
     MockStorage,
+    MockEmptyDeltaConnection,
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
@@ -32,8 +33,8 @@ const assertIntervals = (
         `findOverlappingIntervals() must return the expected number of intervals`);
 
     for (const actualInterval of actual) {
-        const start = sharedString.localRefToPos(actualInterval.start);
-        const end = sharedString.localRefToPos(actualInterval.end);
+        const start = sharedString.localReferencePositionToPosition(actualInterval.start);
+        const end = sharedString.localReferencePositionToPosition(actualInterval.end);
         let found = false;
 
         // console.log(`[${start},${end}): ${sharedString.getText().slice(start, end)}`);
@@ -54,8 +55,8 @@ function assertIntervalEquals(
     interval: SequenceInterval,
     endpoints: { start: number; end: number; },
 ): void {
-    assert.equal(string.localRefToPos(interval.start), endpoints.start, "mismatched start");
-    assert.equal(string.localRefToPos(interval.end), endpoints.end, "mismatched end");
+    assert.equal(string.localReferencePositionToPosition(interval.start), endpoints.start, "mismatched start");
+    assert.equal(string.localReferencePositionToPosition(interval.end), endpoints.end, "mismatched end");
 }
 
 describe("SharedString interval collections", () => {
@@ -653,8 +654,8 @@ describe("SharedString interval collections", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             const endpointsForCollection1: { start: number; end: number; }[] = [];
             const sequenceIntervalToEndpoints = (interval: SequenceInterval): { start: number; end: number; } => ({
-                start: sharedString.localRefToPos(interval.start),
-                end: sharedString.localRefToPos(interval.end),
+                start: sharedString.localReferencePositionToPosition(interval.start),
+                end: sharedString.localReferencePositionToPosition(interval.end),
             });
 
             collection1.on("addInterval", (interval) => {
@@ -688,6 +689,36 @@ describe("SharedString interval collections", () => {
                 { start: 2, end: 2 },
                 { start: 4, end: 4 },
             ]);
+        });
+
+        it("can round trip intervals", async () => {
+            sharedString.insertText(0, "ABCDEF");
+            const collection1 = sharedString.getIntervalCollection("test");
+
+            const id = collection1.add(2, 2, IntervalType.SlideOnRemove).getIntervalId();
+            containerRuntimeFactory.processAllMessages();
+
+            const summaryTree = await sharedString.summarize();
+
+            const services: IChannelServices = {
+                deltaConnection: new MockEmptyDeltaConnection(),
+                objectStorage: MockStorage.createFromSummary(summaryTree.summary),
+            };
+
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const sharedString3 = new SharedString(
+                dataStoreRuntime2,
+                "shared-string-3",
+                SharedStringFactory.Attributes,
+            );
+
+            await sharedString3.load(services);
+            await sharedString3.loaded;
+
+            const collection2 = sharedString3.getIntervalCollection("test");
+
+            assertIntervalEquals(sharedString, collection1.getIntervalById(id), { start: 2, end: 2 });
+            assertIntervalEquals(sharedString3, collection2.getIntervalById(id), { start: 2, end: 2 });
         });
 
         describe.skip("intervalCollection comparator consistency", () => {
