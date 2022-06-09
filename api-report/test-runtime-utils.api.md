@@ -116,8 +116,6 @@ export class MockContainerRuntimeFactory {
     processOneMessage(): void;
     processSomeMessages(count: number): void;
     // (undocumented)
-    processSomeMessages?(count: number): void;
-    // (undocumented)
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
