@@ -29,5 +29,6 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
  * @returns whether or not the message type is one listed below
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
-    return message.type === MessageType.Operation || message.type === MessageType.Summarize;
+    return message.type === MessageType.Operation || message.type === MessageType.Summarize
+    || message.type === "attach";
 }
