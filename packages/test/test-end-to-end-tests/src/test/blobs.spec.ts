@@ -180,7 +180,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         await Promise.all([dataStore._runtime.uploadBlob(blob), dataStore._runtime.uploadBlob(blob)]);
     });
 
-    it("uploadBlob() rejects when runtime is disposed", async () => {
+    it.skip("uploadBlob() rejects when runtime is disposed", async () => {
         const container = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
 
