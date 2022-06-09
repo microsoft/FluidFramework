@@ -22,7 +22,6 @@ import {
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
-import { IFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
@@ -34,6 +33,7 @@ import {
     HostStoragePolicy,
     InstrumentedStorageTokenFetcher,
     OdspErrorType,
+    IOdspErrorAugmentations,
 } from "@fluidframework/odsp-driver-definitions";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
@@ -341,7 +341,7 @@ export class OdspDocumentService implements IDocumentService {
         options: TokenFetchOptionsEx,
     ) {
         return this.joinSessionCore(requestSocketToken, options).catch((e) => {
-            const likelyFacetCodes = e as IFacetCodes;
+            const likelyFacetCodes = (e as IOdspErrorAugmentations);
             if (Array.isArray(likelyFacetCodes.facetCodes)) {
                 for (const code of likelyFacetCodes.facetCodes) {
                     switch (code) {
