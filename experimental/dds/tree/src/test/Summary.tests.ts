@@ -48,7 +48,7 @@ export function applyTestEdits(sharedTree: SharedTree): void {
 		sharedTree.applyEditInternal({ id: uuid.getNextEditId(), changes: internalChanges });
 	}
 
-	/**
+	/*
 	 * Build a tree that looks like the following:
 	 *
 	 *          ROOT
@@ -397,10 +397,6 @@ export function runSummaryTests(title: string): void {
 			});
 		});
 	});
-}
-
-export function expectAssert(condition: unknown, message?: string): asserts condition {
-	expect(condition, message);
 }
 
 async function expectSharedTreesEqual(

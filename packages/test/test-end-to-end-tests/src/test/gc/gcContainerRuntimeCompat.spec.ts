@@ -30,7 +30,8 @@ import { mockConfigProvider } from "./mockConfigProivder";
  * versions. A version of container runtime generates the summary and then we validate that another version can
  * read and process it successfully.
  */
-describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => {
+// Issue #10053
+describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider) => {
     const currentVersionNumber = 0;
     const oldVersionNumbers = [-1, -2];
 
@@ -46,7 +47,7 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
                 state: "disabled",
             },
         },
-        gcOptions: { gcAllowed: true, writeDataAtRoot: true },
+        gcOptions: { gcAllowed: true },
     };
 
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
@@ -63,8 +64,7 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
     const logger = new TelemetryNullLogger();
 
     // Enable config provider setting to write GC data at the root.
-    const settings = { "Fluid.GarbageCollection.WriteDataAtRoot": "true" };
-    const configProvider = mockConfigProvider(settings);
+    const configProvider = mockConfigProvider({});
 
     // Stores the latest summary uploaded to the server.
     let latestUploadedSummary: ISummaryTree | undefined;
@@ -161,6 +161,7 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
          */
         async function getUnreferencedTimestamps(
             summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
+            blobHandleExpected?: boolean,
         ) {
             const summary = await submitAndAckSummary(provider, summarizerClient, logger);
             latestAckedSummary = summary.ackedSummary;
@@ -172,7 +173,11 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
             );
             assert(latestUploadedSummary !== undefined, "Did not get a summary");
 
-            const gcState = getGCStateFromSummary(latestUploadedSummary);
+            const gcState = getGCStateFromSummary(latestUploadedSummary, blobHandleExpected);
+            if (blobHandleExpected === true && gcState === undefined) {
+                return true;
+            }
+
             assert(gcState !== undefined, "GC tree is not available in the summary");
             const nodeTimestamps: Map<string, number | undefined> = new Map();
             for (const [nodeId, nodeData] of Object.entries(gcState.gcNodes)) {
@@ -196,6 +201,7 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
 
             // Validate that the new data store does not have unreferenced timestamp.
             const timestamps1 = await getUnreferencedTimestamps(summarizerClient1);
+            assert(timestamps1 !== true, `expected a new gc blob to be generated for first summary`);
             const dsBTimestamp1 = timestamps1.get(dataStoreB.id);
             assert(dsBTimestamp1 === undefined, `new data store should not have unreferenced timestamp`);
 
@@ -203,6 +209,7 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
             // an unreferenced timestamp.
             dataStoreA._root.delete("dataStoreB");
             const timestamps2 = await getUnreferencedTimestamps(summarizerClient1);
+            assert(timestamps2 !== true, `expected a new gc blob to be generated after deleted handle`);
             const dsBTimestamp2 = timestamps2.get(dataStoreB.id);
             assert(dsBTimestamp2 !== undefined, `new data store should have unreferenced timestamp`);
 
@@ -213,10 +220,14 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
                 latestAckedSummary.summaryAck.contents.handle,
             );
 
-            const timestamps3 = await getUnreferencedTimestamps(summarizerClient2);
-            const dsBTimestamp3 = timestamps3.get(dataStoreB.id);
-            assert(dsBTimestamp3 !== undefined, `new data store should still have unreferenced timestamp`);
-            assert.strictEqual(dsBTimestamp3, dsBTimestamp2, "The unreferenced timestamp should not have changed");
+            const timestamps3 = await getUnreferencedTimestamps(summarizerClient2, true /* blobHandleExpected */);
+            if (timestamps3 !== true) {
+                const dsBTimestamp3 = timestamps3.get(dataStoreB.id);
+                assert(dsBTimestamp3 !== undefined, `new data store should still have unreferenced timestamp`);
+                assert.strictEqual(dsBTimestamp3, dsBTimestamp2, "The unreferenced timestamp should not have changed");
+            } else {
+                assert(timestamps3 === true, "Expected nothing had changed for the GC blob in the summary");
+            }
         }).timeout(20000);
     };
 

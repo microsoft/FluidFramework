@@ -282,14 +282,8 @@ export class MapKernel {
      * {@inheritDoc ISharedMap.get}
      */
     public get<T = any>(key: string): T | undefined {
-        if (!this.data.has(key)) {
-            return undefined;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const localValue = this.data.get(key)!;
-
-        return localValue.value as T;
+        const localValue = this.data.get(key);
+        return localValue === undefined ? undefined : localValue.value as T;
     }
 
     /**
@@ -433,22 +427,20 @@ export class MapKernel {
      * @returns True if the operation was submitted, false otherwise.
      */
     public trySubmitMessage(op: any, localOpMetadata: unknown): boolean {
-        const type: string = op.type;
-        if (this.messageHandlers.has(type)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.messageHandlers.get(type)!.submit(op as IMapOperation, localOpMetadata);
-            return true;
+        const handler = this.messageHandlers.get(op.type);
+        if (handler === undefined) {
+            return false;
         }
-        return false;
+        handler.submit(op as IMapOperation, localOpMetadata);
+        return true;
     }
 
     public tryGetStashedOpLocalMetadata(op: any): unknown {
-        const type: string = op.type;
-        if (this.messageHandlers.has(type)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.messageHandlers.get(type)!.getStashedOpLocalMetadata(op as IMapOperation);
+        const handler = this.messageHandlers.get(op.type);
+        if (handler === undefined) {
+            throw new Error("no apply stashed op handler");
         }
-        throw new Error("no apply stashed op handler");
+        return handler.getStashedOpLocalMetadata(op as IMapOperation);
     }
 
     /**
@@ -464,14 +456,12 @@ export class MapKernel {
         local: boolean,
         localOpMetadata: unknown,
     ): boolean {
-        if (this.messageHandlers.has(op.type)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.messageHandlers
-                .get(op.type)!
-                .process(op, local, localOpMetadata);
-            return true;
+        const handler = this.messageHandlers.get(op.type);
+        if (handler === undefined) {
+            return false;
         }
-        return false;
+        handler.process(op, local, localOpMetadata);
+        return true;
     }
 
     /**
@@ -536,7 +526,6 @@ export class MapKernel {
     /**
      * Clear implementation used for both locally sourced clears as well as incoming remote clears.
      * @param local - Whether the message originated from the local client
-     * @param op - The message if from a remote clear, or null if from a local clear
      */
     private clearCore(local: boolean): void {
         this.data.clear();
@@ -618,17 +607,22 @@ export class MapKernel {
             return false;
         }
 
-        if (this.pendingKeys.has(op.key)) {
+        const pendingKeyMessageId = this.pendingKeys.get(op.key);
+        if (pendingKeyMessageId !== undefined) {
             // Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
             // and don't process the op.
             if (local) {
                 assert(localOpMetadata !== undefined && isMapKeyLocalOpMetadata(localOpMetadata),
-                    0x014 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
+                    0x014 /* pendingMessageId is missing from the local client's operation */);
                 const pendingMessageIds = this.pendingKeys.get(op.key);
                 assert(pendingMessageIds !== undefined && pendingMessageIds[0] === localOpMetadata.pendingMessageId,
                     "Unexpected pending message received");
                 pendingMessageIds.shift();
                 if (pendingMessageIds.length === 0) {
+                assert(localOpMetadata !== undefined,
+                    0x014 /* pendingMessageId is missing from the local client's operation */);
+                const pendingMessageId = localOpMetadata as number;
+                if (pendingKeyMessageId === pendingMessageId) {
                     this.pendingKeys.delete(op.key);
                 }
             }

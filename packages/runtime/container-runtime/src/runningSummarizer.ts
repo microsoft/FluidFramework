@@ -120,7 +120,7 @@ export class RunningSummarizer implements IDisposable {
         );
 
         if (configuration.state !== "disableHeuristics") {
-            assert(this.configuration.state === "enabled", "Configuration state should be enabled");
+            assert(this.configuration.state === "enabled", 0x2ea /* "Configuration state should be enabled" */);
             this.heuristicRunner = new SummarizeHeuristicRunner(
                 heuristicData,
                 this.configuration,
@@ -128,7 +128,10 @@ export class RunningSummarizer implements IDisposable {
                 this.logger);
         }
 
-        assert(this.configuration.state !== "disabled", "Summary not supported with configuration disabled");
+        assert(
+            this.configuration.state !== "disabled",
+            0x2eb /* "Summary not supported with configuration disabled" */,
+        );
 
         // Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
         // configuration.maxAckWaitTime is composed from defaults, server values, and runtime overrides
@@ -346,7 +349,7 @@ export class RunningSummarizer implements IDisposable {
         }
 
         this.lockedSummaryAction(async () => {
-            const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
+            const attempts: (ISummarizeOptions & { delaySeconds?: number; })[] = [
                 { refreshLatestAck: false, fullTree: false },
                 { refreshLatestAck: true, fullTree: false },
                 { refreshLatestAck: true, fullTree: false, delaySeconds: 2 * 60 },
@@ -356,7 +359,7 @@ export class RunningSummarizer implements IDisposable {
             let summaryAttempts = 0;
             let summaryAttemptsPerPhase = 0;
 
-            let lastResult: { message: string; error: any } | undefined;
+            let lastResult: { message: string; error: any; } | undefined;
 
             for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length;) {
                 if (this.cancellationToken.cancelled) {

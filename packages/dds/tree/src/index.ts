@@ -3,4 +3,17 @@
  * Licensed under the MIT License.
  */
 
-export const _ = "Force index.d.ts generation from ApiExtractor.";
+export { FieldKey, TreeType } from "./tree";
+
+export { ITreeCursor, TreeNavigationResult } from "./forest";
+
+export {
+    Brand,
+    BrandedType,
+    Opaque,
+    extractFromOpaque,
+    MakeNominal,
+    Invariant,
+    Contravariant,
+    Covariant,
+} from "./util";

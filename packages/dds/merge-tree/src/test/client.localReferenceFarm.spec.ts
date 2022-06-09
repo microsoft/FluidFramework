@@ -6,7 +6,8 @@
 
 import { strict as assert } from "assert";
 import random from "random-js";
-import { LocalReference, ReferenceType } from "..";
+import { ReferencePosition } from "../referencePositions";
+import { ReferenceType } from "../ops";
 import {
     IMergeTreeOperationRunnerConfig,
     removeRange,
@@ -51,15 +52,15 @@ describe("MergeTree.Client", () => {
                     defaultOptions,
                 );
                 // add local references
-                const refs: LocalReference[][] = [];
+                const refs: ReferencePosition[][] = [];
 
                 const validateRefs = (reason: string, workload: () => void) => {
                     const preWorkload = TestClientLogger.toString(clients);
                     workload();
                     for (let c = 1; c < clients.length; c++) {
                         for (let r = 0; r < refs[c].length; r++) {
-                            const pos0 = refs[0][r].toPosition();
-                            const posC = refs[c][r].toPosition();
+                            const pos0 = clients[0].localReferencePositionToPosition(refs[0][r]);
+                            const posC = clients[c].localReferencePositionToPosition(refs[c][r]);
                             if (pos0 !== posC) {
                                 assert.equal(
                                     pos0, posC,
@@ -75,9 +76,8 @@ describe("MergeTree.Client", () => {
                         refs.push([]);
                         for (let t = 0; t < c.getLength(); t++) {
                             const seg = c.getContainingSegment(t);
-                            const lref = new LocalReference(c, seg.segment!, seg.offset, ReferenceType.SlideOnRemove);
-                            c.addLocalReference(lref);
-                            lref.addProperties({ t });
+                            const lref = c.createLocalReferencePosition(
+                                seg.segment!, seg.offset!, ReferenceType.SlideOnRemove, { t });
                             refs[i].push(lref);
                         }
                     });

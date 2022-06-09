@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent } from "@fluidframework/common-definitions";
 import { Stack } from "./collections";
 import { ISegment } from "./mergeTree";
 import { ReferenceType, ICombiningOp } from "./ops";
@@ -11,14 +12,19 @@ import { PropertySet, MapLike } from "./properties";
 export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
-export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
+export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean {
+    const refType = typeof refPosOrType === "number" ? refPosOrType : refPosOrType.refType;
     // eslint-disable-next-line no-bitwise
-    (refPos.refType & ReferenceType.Tile)
+    return (refType & flags) !== 0;
+}
+
+export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
+    refTypeIncludesFlag(refPos, ReferenceType.Tile)
         && refPos.properties ? refPos.properties[reservedTileLabelsKey] as string[] : undefined;
 
 export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefined =>
     // eslint-disable-next-line no-bitwise
-    (refPos.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd))
+    (refTypeIncludesFlag(refPos, ReferenceType.NestBegin | ReferenceType.NestEnd))
         && refPos.properties ? refPos.properties[reservedRangeLabelsKey] as string[] : undefined;
 
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
@@ -49,6 +55,14 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean {
 }
 export function refHasRangeLabels(refPos: ReferencePosition): boolean {
     return refGetRangeLabels(refPos) !== undefined;
+}
+
+/**
+ * IReferencePositionEvents are emitted before and after  a local reference slides.
+ * Currently the event emitter is only implemented on LocalReferences.
+ */
+export interface IReferencePositionEvents extends IEvent {
+    (event: "beforeSlide" | "afterSlide", listener: () => void);
 }
 
 export interface ReferencePosition {

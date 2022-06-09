@@ -5,6 +5,9 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        require.resolve("@fluidframework/eslint-config-fluid")
     ],
+    "rules": {
+        "@typescript-eslint/prefer-optional-chain": "off",
+    },
 }

@@ -9,10 +9,9 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import random from "random-js";
-import { LocalReference } from "../localReference";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
-import { ISegment, SegmentGroup } from "../mergeTree";
+import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTree";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -44,12 +43,14 @@ export const insertAtRefPos: TestOperation =
         if (segs.length > 0) {
             const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
             const seg = random.pick(mt, segs);
-            const lref = new LocalReference(
-                client, seg, random.integer(0, seg.cachedLength - 1)(mt),
-                random.pick(mt, [ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]));
-            if (lref.refType !== ReferenceType.Transient) {
-                client.addLocalReference(lref);
-            }
+            const lref = client.createLocalReferencePosition(
+                seg,
+                toRemovalInfo(seg) ? 0 : random.integer(0, seg.cachedLength - 1)(mt),
+                toRemovalInfo(seg)
+                    ? ReferenceType.SlideOnRemove
+                    : random.pick(mt, [ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]),
+                undefined);
+
             return client.insertAtReferencePositionLocal(lref, TextSegment.make(text));
         }
     };

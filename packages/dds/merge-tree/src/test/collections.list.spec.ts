@@ -16,7 +16,7 @@ describe("Collections.List", () => {
     beforeEach(() => {
         list = ListMakeHead<number>();
         for (let i = 0; i < listCount; i++) {
-            list.push(i);
+            list.unshift(i);
         }
     });
 
@@ -32,7 +32,7 @@ describe("Collections.List", () => {
 
     describe(".last", () => {
         it("Should return the last item in the list",
-            () => assert.equal(list.first(), listCount - 1, "last item not expected value"));
+            () => assert.equal(list.last(), 0, "last item not expected value"));
     });
 
     describe(".isHead", () => {
@@ -51,5 +51,32 @@ describe("Collections.List", () => {
                 i--;
             });
         });
+    });
+
+    describe(".iterator", () => {
+        it("Should walk all items of the list", () => {
+            let i = listCount - 1;
+            for (const item of list) {
+                assert.equal(item, i, "elemeted not expected value");
+                i--;
+            }
+        });
+    });
+
+    describe(".unshift", () => {
+        it("Should add item to the start of the list",
+            () => {
+                list.unshift(99);
+                assert.equal(list.first(), 99, "first item not expected value");
+                assert.equal(list.count(), listCount + 1, "The list count doesn't match the expected count.");
+            });
+    });
+    describe(".enqueue", () => {
+        it("Should add item to the end of the list",
+            () => {
+                list.enqueue(99);
+                assert.equal(list.last(), 99, "last item not expected value");
+                assert.equal(list.count(), listCount + 1, "The list count doesn't match the expected count.");
+            });
     });
 });

@@ -36,10 +36,14 @@ module.exports = {
         "@rushstack/eslint-plugin-security",
         // Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
         "@typescript-eslint/eslint-plugin",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-jsdoc
+        "eslint-plugin-jsdoc",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-promise
         "eslint-plugin-promise",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-tsdoc
         "eslint-plugin-tsdoc",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unused-imports
+        "unused-imports",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
         "react",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
@@ -95,6 +99,11 @@ module.exports = {
                 "ignoreEOLComments": true
             }
         ],
+
+        // Note: this can be replaced altogether by `@typescript-eslint/no-unused-vars`,
+        // but that rule covers many more scenarios than this one does, and there are many violations,
+        // currently in the repository, so it has not been enabled yet.
+        "unused-imports/no-unused-imports": "error",
 
         // Catches a common coding mistake where "resolve" and "reject" are confused.
         "promise/param-names": "warn",
@@ -188,6 +197,19 @@ module.exports = {
 
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",
+
+        /* eslint-plugin-jsdoc rules */
+        // Ensures that conflicting access tags don't exist in the same comment.
+        // See <https://github.com/gajus/eslint-plugin-jsdoc#check-access>.
+        "jsdoc/check-access": "error",
+
+        // Ensure function/method parameter comments include a `-` between name and description.
+        // Useful to ensure API-Extractor compatability.
+        // See <https://www.npmjs.com/package/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-hyphen-before-param-description>.
+        "jsdoc/require-hyphen-before-param-description": "error",
+
+        "@typescript-eslint/prefer-includes": "error",
+        "@typescript-eslint/prefer-optional-chain": "error",
     },
     "overrides": [
         {

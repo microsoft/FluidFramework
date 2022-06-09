@@ -98,10 +98,12 @@ export class AlfredResources implements core.IResources {
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+        const socketIoConfig = config.get("alfred:socketIo");
         this.webServerFactory = new services.SocketIoWebServerFactory(
             this.redisConfig,
             socketIoAdapterConfig,
-            httpServerConfig);
+            httpServerConfig,
+            socketIoConfig);
     }
 
     public async dispose(): Promise<void> {
@@ -327,7 +329,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
-        const appTenants = config.get("alfred:tenants") as { id: string, key: string }[];
+        const appTenants = config.get("alfred:tenants") as { id: string; key: string; }[];
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");

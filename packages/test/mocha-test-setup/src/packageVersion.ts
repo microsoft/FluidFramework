@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/mocha-test-setup";
-export const pkgVersion = "0.60.1000";
+export const pkgVersion = "1.1.0";

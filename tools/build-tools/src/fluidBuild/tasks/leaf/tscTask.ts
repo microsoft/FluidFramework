@@ -107,8 +107,13 @@ export class TscTask extends LeafTask {
         // Check dependencies file hashes
         const fileNames = tsBuildInfo.program.fileNames;
         const fileInfos = tsBuildInfo.program.fileInfos;
-        for (let i = 0; i < fileNames.length; i++) {
+        for (let i = 0; i < fileInfos.length; i++) {
+            const fileInfo = fileInfos[i];
             const fileName = fileNames[i];
+            if (fileName === undefined) {
+                this.logVerboseTrigger(`missing file name for file info id ${i}`);
+                return false;
+            }
             try {
                 // Resolve relative path based on the directory of the tsBuildInfo file
                 let fullPath = path.resolve(tsBuildInfoFileDirectory, fileName);
@@ -118,7 +123,6 @@ export class TscTask extends LeafTask {
                     fullPath = this._projectReference.remapSrcDeclFile(fullPath);
                 }
                 const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
-                const fileInfo = fileInfos[i];
                 const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
                 if (hash !== version) {
                     this.logVerboseTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);

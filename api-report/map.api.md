@@ -19,6 +19,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public @sealed
@@ -68,6 +69,10 @@ export interface IDirectoryEvents extends IEvent {
     // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
@@ -116,6 +121,10 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public
@@ -207,7 +216,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // @internal
     submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
 
@@ -240,7 +249,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     set(key: string, value: any): this;
     get size(): number;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
 
