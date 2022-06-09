@@ -687,7 +687,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 submit: (op: IDirectoryClearOperation, localOpMetadata: unknown) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (subdir) {
-                        // We don't reuse the metadata but send a new one on each submit.
                         subdir.resubmitClearMessage(op, localOpMetadata);
                     }
                 },
