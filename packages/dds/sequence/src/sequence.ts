@@ -55,8 +55,8 @@ import {
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
-import { IMapMessageLocalMetadata, DefaultMap } from "./defaultMap";
-import { IValueChanged } from "./defaultMapInterfaces";
+import { DefaultMap } from "./defaultMap";
+import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
@@ -442,13 +442,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalCollections.get(this.getIntervalCollectionPath(label));
+        return this.intervalCollections.get(label);
     }
 
     public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
-        const labelPath = this.getIntervalCollectionPath(label);
-        const sharedCollection = this.intervalCollections.get(labelPath);
-        return sharedCollection;
+        return this.intervalCollections.get(label);
     }
 
     /**
@@ -525,7 +523,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     protected onDisconnect() { }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        if (!this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
+        if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
                     content as IMergeTreeOp,
@@ -682,10 +680,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
             }
         }
-    }
-
-    private getIntervalCollectionPath(label: string) {
-        return `intervalCollections/${label}`;
     }
 
     private processMinSequenceNumberChanged(minSeq: number) {

@@ -481,6 +481,12 @@
         "import/order": [
             "error"
         ],
+        "jsdoc/check-access": [
+            "error"
+        ],
+        "jsdoc/require-hyphen-before-param-description": [
+            "error"
+        ],
         "jsx-quotes": [
             "error"
         ],
