@@ -1432,11 +1432,9 @@ export class MergeTree {
             return segoff;
         }
         let slideToSegment: ISegment | undefined;
-        let slideToSegmentLength = 0; // Storing this works around a Typescript bug
         const goFurtherToFindSlideToSegment = (seg) => {
             if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
                 slideToSegment = seg;
-                slideToSegmentLength = seg.cachedLength;
                 return false;
             }
             return true;
@@ -1448,9 +1446,14 @@ export class MergeTree {
         }
         // If no such segment is found, slide to the last valid segment.
         this.leftExcursion(segoff.segment, goFurtherToFindSlideToSegment);
+
+        // Workaround TypeScript issue (https://github.com/microsoft/TypeScript/issues/9998)
+        const identity = (seg: ISegment | undefined) => seg;
+        slideToSegment = identity(slideToSegment);
+
         if (slideToSegment) {
             // If slid nearer then offset should be at the end of the segment
-            return { segment: slideToSegment, offset: slideToSegmentLength - 1 };
+            return { segment: slideToSegment, offset: slideToSegment.cachedLength - 1 };
         }
 
         return { segment: undefined, offset: 0 };
