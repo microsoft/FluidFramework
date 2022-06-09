@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent } from "@fluidframework/common-definitions";
 import { Stack } from "./collections";
 import { ISegment } from "./mergeTree";
 import { ReferenceType, ICombiningOp } from "./ops";
@@ -54,6 +55,14 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean {
 }
 export function refHasRangeLabels(refPos: ReferencePosition): boolean {
     return refGetRangeLabels(refPos) !== undefined;
+}
+
+/**
+ * IReferencePositionEvents are emitted before and after  a local reference slides.
+ * Currently the event emitter is only implemented on LocalReferences.
+ */
+export interface IReferencePositionEvents extends IEvent {
+    (event: "beforeSlide" | "afterSlide", listener: () => void);
 }
 
 export interface ReferencePosition {

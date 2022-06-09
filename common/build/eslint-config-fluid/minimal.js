@@ -198,6 +198,16 @@ module.exports = {
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",
 
+        /* eslint-plugin-jsdoc rules */
+        // Ensures that conflicting access tags don't exist in the same comment.
+        // See <https://github.com/gajus/eslint-plugin-jsdoc#check-access>.
+        "jsdoc/check-access": "error",
+
+        // Ensure function/method parameter comments include a `-` between name and description.
+        // Useful to ensure API-Extractor compatability.
+        // See <https://www.npmjs.com/package/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-hyphen-before-param-description>.
+        "jsdoc/require-hyphen-before-param-description": "error",
+
         "@typescript-eslint/prefer-includes": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
     },
