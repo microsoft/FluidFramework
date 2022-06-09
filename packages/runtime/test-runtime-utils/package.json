@@ -102,10 +102,12 @@
         "forwardCompat": false
       },
       "ClassDeclaration_MockContainerRuntimeFactory": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "RemovedClassDeclaration_MockQuorum": {
         "backCompat": false,
