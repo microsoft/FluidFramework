@@ -920,7 +920,7 @@
             "error"
         ],
         "valid-typeof": [
-            "off"
+            "error"
         ],
         "yoda": [
             "off"
