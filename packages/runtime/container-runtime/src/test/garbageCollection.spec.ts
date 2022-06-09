@@ -30,7 +30,6 @@ import {
     trackGCStateMinimumVersionKey,
     runSessionExpiryKey,
     disableSessionExpiryKey,
-    logUnknownOutboundReferencesKey,
     semverCompare,
 } from "../garbageCollection";
 import { IContainerRuntimeMetadata } from "../summaryFormat";
@@ -635,7 +634,6 @@ describe("Garbage Collection Tests", () => {
 
         beforeEach(() => {
             closeCalled = false;
-            injectedSettings[logUnknownOutboundReferencesKey] = "true";
             defaultGCData.gcNodes = {};
             garbageCollector = createGarbageCollector();
         });

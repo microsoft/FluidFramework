@@ -66,6 +66,9 @@
       "ClassDeclaration_FluidContainer": {
         "backCompat": false
       },
+      "ClassDeclaration_IntervalCollection": {
+        "forwardCompat": false
+      },
       "ClassDeclaration_SequenceInterval": {
         "backCompat": false,
 	"forwardCompat": false
