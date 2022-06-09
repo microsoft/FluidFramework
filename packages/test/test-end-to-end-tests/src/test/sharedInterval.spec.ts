@@ -558,20 +558,20 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
                 for (interval1 of intervals1) {
                     const id: string = interval1.getIntervalId() as string;
                     assert.strictEqual(interval1.start.getOffset(),
-                                       intervals2.getIntervalById(id)?.start.getOffset(),
-                                       "Conflicting changes");
+                        intervals2.getIntervalById(id)?.start.getOffset(),
+                        "Conflicting changes");
                     assert.strictEqual(interval1.end.getOffset(),
-                                       intervals2.getIntervalById(id)?.end.getOffset(),
-                                       "Conflicting changes");
+                        intervals2.getIntervalById(id)?.end.getOffset(),
+                        "Conflicting changes");
                 }
                 for (interval2 of intervals2) {
                     const id: string = interval2.getIntervalId() as string;
                     assert.strictEqual(interval2.start.getOffset(),
-                                       intervals1.getIntervalById(id)?.start.getOffset(),
-                                       "Conflicting changes");
+                        intervals1.getIntervalById(id)?.start.getOffset(),
+                        "Conflicting changes");
                     assert.strictEqual(interval2.end.getOffset(),
-                                       intervals1.getIntervalById(id)?.end.getOffset(),
-                                       "Conflicting changes");
+                        intervals1.getIntervalById(id)?.end.getOffset(),
+                        "Conflicting changes");
                 }
 
                 intervals1.change(id1, 4, 4);
@@ -761,9 +761,9 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
             const serialized1 = intervalCollection1.serializeInternal();
             const serialized2 = intervalCollection2.serializeInternal();
             const serialized3 = intervalCollection3.serializeInternal();
-            assert.equal(serialized1.length, 3, "Incorrect interval collection size in container 1");
-            assert.equal(serialized2.length, 3, "Incorrect interval collection size in container 2");
-            assert.equal(serialized3.length, 3, "Incorrect interval collection size in container 3");
+            assert.equal(serialized1.intervals.length, 3, "Incorrect interval collection size in container 1");
+            assert.equal(serialized2.intervals.length, 3, "Incorrect interval collection size in container 2");
+            assert.equal(serialized3.intervals.length, 3, "Incorrect interval collection size in container 3");
 
             const interval1From3 = serialized3[0];
             assert(interval1From3.properties);
