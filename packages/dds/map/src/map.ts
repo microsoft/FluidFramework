@@ -368,4 +368,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             this.kernel.tryProcessMessage(message.contents, local, localOpMetadata);
         }
     }
+
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
+     * @internal
+    */
+   protected rollback(content: any, localOpMetadata: unknown) {
+       this.kernel.rollback(content, localOpMetadata);
+   }
 }
