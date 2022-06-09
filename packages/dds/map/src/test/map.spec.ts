@@ -436,9 +436,6 @@ describe("Map", () => {
                     map1.set("map1Key", "value1");
                     map2.clear();
 
-                    if (containerRuntimeFactory.processSomeMessages === undefined) {
-                        return;
-                    }
                     containerRuntimeFactory.processSomeMessages(2);
 
                     assert.equal(valuesChanged.length, 3);
@@ -467,9 +464,6 @@ describe("Map", () => {
                     map2.set("test", pending1);
                     map2.set("test", pending2);
 
-                    if (containerRuntimeFactory.processSomeMessages === undefined) {
-                        return;
-                    }
                     containerRuntimeFactory.processSomeMessages(1);
 
                     // Verify the SharedMap with processed message
@@ -499,9 +493,6 @@ describe("Map", () => {
                     map2.set(key, "map2value3");
                     map2.clear();
 
-                    if (containerRuntimeFactory.processSomeMessages === undefined) {
-                        return;
-                    }
                     // map1.set(key, "map1value1");
                     containerRuntimeFactory.processSomeMessages(1);
 

@@ -619,10 +619,6 @@ export class MapKernel {
                     "Unexpected pending message received");
                 pendingMessageIds.shift();
                 if (pendingMessageIds.length === 0) {
-                assert(localOpMetadata !== undefined,
-                    0x014 /* pendingMessageId is missing from the local client's operation */);
-                const pendingMessageId = localOpMetadata as number;
-                if (pendingKeyMessageId === pendingMessageId) {
                     this.pendingKeys.delete(op.key);
                 }
             }
