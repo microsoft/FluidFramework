@@ -9,6 +9,7 @@ import { IAttachment } from '@fluidframework/protocol-definitions';
 import { IBlob } from '@fluidframework/protocol-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateTreeEntry } from '@fluidframework/gitresources';
+import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IProcessMessageResult } from '@fluidframework/protocol-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -72,6 +73,29 @@ export function getGitType(value: SummaryObject): "blob" | "tree";
 // @public (undocumented)
 export function getQuorumTreeEntries(documentId: string, minimumSequenceNumber: number, sequenceNumber: number, term: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
 
+// @public (undocumented)
+export interface ILocalSequencedClient extends ISequencedClient {
+    shouldHaveLeft?: boolean;
+}
+
+// @public (undocumented)
+export interface IProtocolHandler {
+    // (undocumented)
+    readonly attributes: IDocumentAttributes;
+    // (undocumented)
+    close(): void;
+    // (undocumented)
+    getProtocolState(): IScribeProtocolState;
+    // (undocumented)
+    processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+    // (undocumented)
+    readonly quorum: IQuorum;
+    // (undocumented)
+    setConnectionState(connected: boolean, clientId: string | undefined): any;
+    // (undocumented)
+    snapshot(): IQuorumSnapshot;
+}
+
 // @public
 export interface IQuorumSnapshot {
     // (undocumented)
@@ -106,8 +130,10 @@ export function isSystemMessage(message: ISequencedDocumentMessage): boolean;
 export function mergeAppAndProtocolTree(appSummaryTree: ITree_2, protocolTree: ITree_2): ICreateTreeEntry[];
 
 // @public
-export class ProtocolOpHandler {
+export class ProtocolOpHandler implements IProtocolHandler {
     constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
+    // (undocumented)
+    get attributes(): IDocumentAttributes;
     // (undocumented)
     close(): void;
     getProtocolState(): IScribeProtocolState;
@@ -116,11 +142,23 @@ export class ProtocolOpHandler {
     // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)
-    readonly quorum: Quorum;
+    get quorum(): Quorum;
+    // (undocumented)
+    readonly _quorum: Quorum;
     // (undocumented)
     sequenceNumber: number;
     // (undocumented)
+    setConnectionState(connected: boolean, clientId: string | undefined): void;
+    // (undocumented)
+    snapshot(): IQuorumSnapshot;
+    // (undocumented)
     readonly term: number;
+}
+
+// @public (undocumented)
+export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
+    // (undocumented)
+    processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
 }
 
 // @public

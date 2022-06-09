@@ -378,11 +378,6 @@ implements ISerializableInterval {
         const startPos = start ?? this.start.toPosition();
         const endPos = end ?? this.end.toPosition();
 
-        if (this.start.toPosition() === startPos && this.end.toPosition() === endPos) {
-            // Return undefined to indicate that no change is necessary.
-            return;
-        }
-
         const newInterval =
             createSequenceInterval(label, startPos, endPos, this.start.getClient(), this.intervalType, op);
         if (this.properties) {
