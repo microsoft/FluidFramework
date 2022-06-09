@@ -48,6 +48,20 @@
                 },
                 "$tslint5"
             ]
+        },
+        {
+            "label": "Start tinylicious",
+            "type": "process",
+            "command": "npm",
+            "args": [
+                "run",
+                "start"
+            ],
+            "group": "none",
+            "options": {
+                "cwd": "${workspaceRoot}/server/tinylicious"
+            },
+            "problemMatcher": []
         }
     ]
 }

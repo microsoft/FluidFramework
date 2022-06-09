@@ -22,7 +22,7 @@ import {
     blobCountPropertyName,
     totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
+import { ChildLogger, EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
@@ -414,7 +414,29 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed(); // This will result in container closure.
         this.emit("pre-op", message, local, this);
-        this.processCore(message, local, localOpMetadata);
+
+        // If the client is interactive, capture performance data of processing the op. If it's not
+        // (e.g. summarizer) then just process the op.
+        if (this.runtime.deltaManager.clientDetails.capabilities.interactive === true) {
+            PerformanceEvent.timedExec(
+                this.logger,
+                {
+                    eventName: "ddsCallback",
+                    category: "performance",
+                    opType: message.type,
+                    opSeqNo: message.sequenceNumber,
+                },
+                (event) => {
+                    this.processCore(message, local, localOpMetadata);
+                },
+                {
+                    end: true,
+                    cancel: "error",
+                });
+        } else {
+            this.processCore(message, local, localOpMetadata);
+        }
+
         this.emit("op", message, local, this);
     }
 

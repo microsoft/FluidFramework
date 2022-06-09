@@ -87,6 +87,8 @@ export class DiceRoller extends DataObject implements IDiceRoller {
     protected async hasInitialized() {
         this.root.on("valueChanged", (changed: IValueChanged) => {
             if (changed.key === diceValueKey) {
+                // Spinning to emulate time spent
+                for (let i = 0; i < 1_000_000_000; i++) {}
                 this.emit("diceRolled");
             }
         });
