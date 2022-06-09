@@ -79,4 +79,4 @@ export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspEr
     readonly errorType: OdspErrorType;
 }
 
-export type OdspError = (DriverError | IOdspError) & IOdspErrorAugmentations;
+export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations)
