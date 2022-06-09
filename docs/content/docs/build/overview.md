@@ -49,11 +49,13 @@ For more information about these types and the differences between them, see [Da
 
 ## Library structure
 
-There are two primary libraries you'll use when building with Fluid. The basic Fluid Framework library and a service-specific client library such as the Tinylicious client library.
+There are two primary libraries you'll use when building with Fluid: the basic Fluid Framework library and a service-specific client library (such as Fluid Azure Relay or Tinylicious).
 
 ### The Fluid Framework library
 
-The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications. This library contains all the common type definitions as well as all the built-in shared objects. The library is in the package `fluid-framework`.
+The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications.
+This library contains all the common type definitions as well as all the built-in shared objects.
+The library is in the package [fluid-framework](https://www.npmjs.com/package/fluid-framework).
 
 ### Service-specific client libraries
 
@@ -61,7 +63,7 @@ Fluid works with multiple service implementations. Each service has a correspond
 
 For specifics about each service-specific client implementation see their corresponding documentation.
 
-- The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package `@fluidframework/tinylicious-client`.
-- The client library for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) is in the package `@fluidframework/azure-client`.
+- The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package [@fluidframework/tinylicious-client](https://www.npmjs.com/package/@fluidframework/tinylicious-client).
+- The client library for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) is in the package [@fluidframework/azure-client](https://www.npmjs.com/package/@fluidframework/azure-client).
 
 For more information see [Packages]({{< relref "packages.md" >}}).
