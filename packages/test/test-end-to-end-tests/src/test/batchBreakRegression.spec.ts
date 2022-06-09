@@ -287,7 +287,6 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         });
     });
     describe("server sends invalid batch", () => {
-        // if you make this test an only, it works, otherwise we see different error for some unknown reason
         itExpects("interleave system message",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
