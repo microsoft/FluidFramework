@@ -102,6 +102,31 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         );
     }
 
+    async function createConnectedContainer(): Promise<Container> {
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
+        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
+            TestDataObjectType,
+            getDataStoreFactory(),
+            {},
+            [innerRequestHandler]);
+        const localTestObjectProvider = new TestObjectProvider(
+            Loader,
+            provider.driver,
+            runtimeFactory);
+
+        const container = await localTestObjectProvider.makeTestContainer() as Container;
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "Container initial connection timeout" },
+        );
+        assert.strictEqual(
+            container.connectionState, ConnectionState.Connected,
+            "Container should be connected after creation",
+        );
+        return container;
+    }
+
     it("Load container successfully", async () => {
         const container = await loadContainer();
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
@@ -297,27 +322,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     });
 
     it("can call connect() and disconnect() on Container", async () => {
-        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            runtime.IFluidHandleContext.resolveHandle(request);
-        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
-            TestDataObjectType,
-            getDataStoreFactory(),
-            {},
-            [innerRequestHandler]);
-        const localTestObjectProvider = new TestObjectProvider(
-            Loader,
-            provider.driver,
-            runtimeFactory);
-
-        const container = await localTestObjectProvider.makeTestContainer() as Container;
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
-            { durationMs: timeoutMs, errorMsg: "container initial connection timeout" },
-        );
-        assert.strictEqual(
-            container.connectionState, ConnectionState.Connected,
-            "container is not connected when loaded",
-        );
+        const container = await createConnectedContainer();
 
         let disconnectedEventFired = false;
         container.once("disconnected", () => { disconnectedEventFired = true; });
@@ -405,27 +410,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     });
 
     it("can cancel connect() with disconnect()", async () => {
-        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            runtime.IFluidHandleContext.resolveHandle(request);
-        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
-            TestDataObjectType,
-            getDataStoreFactory(),
-            {},
-            [innerRequestHandler]);
-        const localTestObjectProvider = new TestObjectProvider(
-            Loader,
-            provider.driver,
-            runtimeFactory);
-
-        const container = await localTestObjectProvider.makeTestContainer() as Container;
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
-            { durationMs: timeoutMs, errorMsg: "container initial connection timeout" },
-        );
-        assert.strictEqual(
-            container.connectionState, ConnectionState.Connected,
-            "container is not connected when loaded",
-        );
+        const container = await createConnectedContainer();
 
         let disconnectedEventFired = false;
         container.once("disconnected", () => { disconnectedEventFired = true; });
@@ -451,27 +436,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     });
 
     it("can cancel call connect() twice", async () => {
-        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            runtime.IFluidHandleContext.resolveHandle(request);
-        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
-            TestDataObjectType,
-            getDataStoreFactory(),
-            {},
-            [innerRequestHandler]);
-        const localTestObjectProvider = new TestObjectProvider(
-            Loader,
-            provider.driver,
-            runtimeFactory);
-
-        const container = await localTestObjectProvider.makeTestContainer() as Container;
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
-            { durationMs: timeoutMs, errorMsg: "container initial connection timeout" },
-        );
-        assert.strictEqual(
-            container.connectionState, ConnectionState.Connected,
-            "container is not connected when loaded",
-        );
+        const container = await createConnectedContainer();
 
         let disconnectedEventFired = false;
         container.once("disconnected", () => { disconnectedEventFired = true; });
@@ -492,27 +457,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     });
 
     it("can cancel call connect() twice then cancel with disconnect()", async () => {
-        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            runtime.IFluidHandleContext.resolveHandle(request);
-        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
-            TestDataObjectType,
-            getDataStoreFactory(),
-            {},
-            [innerRequestHandler]);
-        const localTestObjectProvider = new TestObjectProvider(
-            Loader,
-            provider.driver,
-            runtimeFactory);
-
-        const container = await localTestObjectProvider.makeTestContainer() as Container;
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
-            { durationMs: timeoutMs, errorMsg: "container initial connection timeout" },
-        );
-        assert.strictEqual(
-            container.connectionState, ConnectionState.Connected,
-            "container is not connected when loaded",
-        );
+        const container = await createConnectedContainer();
 
         let disconnectedEventFired = false;
         container.once("disconnected", () => { disconnectedEventFired = true; });
@@ -539,27 +484,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     });
 
     it("can rapidly call connect() and disconnect()", async () => {
-        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            runtime.IFluidHandleContext.resolveHandle(request);
-        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
-            TestDataObjectType,
-            getDataStoreFactory(),
-            {},
-            [innerRequestHandler]);
-        const localTestObjectProvider = new TestObjectProvider(
-            Loader,
-            provider.driver,
-            runtimeFactory);
-
-        const container = await localTestObjectProvider.makeTestContainer() as Container;
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
-            { durationMs: timeoutMs, errorMsg: "container initial connection timeout" },
-        );
-        assert.strictEqual(
-            container.connectionState, ConnectionState.Connected,
-            "container is not connected when loaded",
-        );
+        const container = await createConnectedContainer();
 
         let disconnectedEventFired = false;
         container.once("disconnected", () => { disconnectedEventFired = true; });
