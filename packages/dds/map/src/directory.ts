@@ -1578,6 +1578,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         return this._storage.get(key) as T;
     }
 
+    /**
+     * Remove the pendingMessageId from the map tracking it on rollback
+     * @param map - map tracking the pending messages
+     * @param key - key of the edit in the op
+     */
     private rollbackPendingMessageId(map: Map<string, number[]>, key: string, pendingMessageId) {
         const pendingMessageIds = map.get(key);
         const lastPendingMessageId = pendingMessageIds?.pop();
