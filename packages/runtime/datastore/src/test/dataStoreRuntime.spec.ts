@@ -10,7 +10,7 @@ import {
     IGarbageCollectionData,
     IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
-import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreContext, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 
@@ -37,8 +37,8 @@ describe("FluidDataStoreRuntime Tests", () => {
         dataStoreContext = new MockFluidDataStoreContext(invalidId);
         const codeBlock = () => loadRuntime(dataStoreContext, sharedObjectRegistry);
         assert.throws(codeBlock,
-            (e) => e.errorType === ContainerErrorType.usageError
-                && e.message === `Data store context ID cannot contain slashes: ${invalidId}`);
+            (e) => validateAssertionError(e,
+                "Id cannot contain slashes. DataStoreContext should have validated this."));
     });
 
     it("constructor rejects ids with forward slashes", () => {
@@ -46,8 +46,8 @@ describe("FluidDataStoreRuntime Tests", () => {
         dataStoreContext = new MockFluidDataStoreContext(invalidId);
         const codeBlock = () => new FluidDataStoreRuntime(dataStoreContext, sharedObjectRegistry, false);
         assert.throws(codeBlock,
-            (e) => e.errorType === ContainerErrorType.usageError
-                && e.message === `Data store context ID cannot contain slashes: ${invalidId}`);
+            (e) => validateAssertionError(e,
+                "Id cannot contain slashes. DataStoreContext should have validated this."));
     });
 
     it("can create a data store runtime", () => {
@@ -85,6 +85,6 @@ describe("FluidDataStoreRuntime Tests", () => {
         const codeBlock = () => dataStoreRuntime.createChannel(invalidId, "SomeType");
         assert.throws(codeBlock,
             (e) => e.errorType === ContainerErrorType.usageError
-                && e.message === `Channel id cannot contain slashes: ${invalidId}`);
+                && e.message === `Id cannot contain slashes: ${invalidId}`);
     });
 });

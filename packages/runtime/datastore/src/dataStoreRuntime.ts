@@ -182,9 +182,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     ) {
         super();
 
-        if (dataStoreContext.id.includes("/")) {
-            throw new UsageError(`Data store context ID cannot contain slashes: ${dataStoreContext.id}`);
-        }
+        assert(!dataStoreContext.id.includes("/"),
+            "Id cannot contain slashes. DataStoreContext should have validated this.");
 
         this.logger = ChildLogger.create(
             dataStoreContext.logger,
@@ -355,7 +354,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public createChannel(id: string = uuid(), type: string): IChannel {
         if (id.includes("/")) {
-            throw new UsageError(`Channel id cannot contain slashes: ${id}`);
+            throw new UsageError(`Id cannot contain slashes: ${id}`);
         }
 
         this.verifyNotClosed();
