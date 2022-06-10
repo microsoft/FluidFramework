@@ -238,13 +238,13 @@ export interface ISummaryTreeAssemblerProps {
 
 // @public (undocumented)
 export class LocationRedirectionError extends LoggingError implements ILocationRedirectionError, IFluidErrorBase {
-    constructor(message: string, redirectUrl: IResolvedUrl | undefined, props: DriverErrorTelemetryProps);
+    constructor(message: string, redirectUrl: IResolvedUrl, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = DriverErrorType.locationRedirection;
     // (undocumented)
-    readonly redirectUrl: IResolvedUrl | undefined;
+    readonly redirectUrl: IResolvedUrl;
 }
 
 // @public (undocumented)
