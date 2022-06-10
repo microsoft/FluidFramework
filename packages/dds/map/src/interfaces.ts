@@ -299,7 +299,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 }
 
 /**
- * Events emitted in response to changes to the map data.
+ * Events emitted in response to changes to the {@link ISharedMap | map} data.
  *
  * ### "valueChanged"
  *
