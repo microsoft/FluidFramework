@@ -375,11 +375,29 @@ implements ISerializableInterval {
     }
 
     public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
-        const startPos = start ?? this.start.toPosition();
-        const endPos = end ?? this.end.toPosition();
+        const getRefType = (baseType: ReferenceType, op?: ISequencedDocumentMessage): ReferenceType => {
+            let refType = baseType;
+            if (op === undefined) {
+                refType &= ~ReferenceType.SlideOnRemove;
+                refType |= ReferenceType.StayOnRemove;
+            }
+            return refType;
+        }
 
-        const newInterval =
-            createSequenceInterval(label, startPos, endPos, this.start.getClient(), this.intervalType, op);
+        let startRef = this.start;
+        if (start !== undefined) {
+            startRef = createPositionReference(this.start.getClient(), start, getRefType(this.start.refType, op), op);
+        }
+
+        let endRef = this.end;
+        if (end !== undefined) {
+            endRef = createPositionReference(this.end.getClient(), end, getRefType(this.end.refType, op), op);
+        }
+
+        startRef.pairedRef = endRef;
+        endRef.pairedRef = startRef;
+
+        const newInterval = new SequenceInterval(startRef, endRef, this.intervalType);
         if (this.properties) {
             newInterval.addProperties(this.properties);
         }
