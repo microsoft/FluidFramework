@@ -36,6 +36,8 @@ alfred:
     enableCustomSocketIoAdapter: true
     shouldDisableDefaultNamespace: false
   enforceServerGeneratedDocumentId: false
+  socketIo:
+    perMessageDeflate: true
 storage:
   enableWholeSummaryUpload: false
   storageUrl: storage_url

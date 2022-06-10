@@ -99,7 +99,10 @@ data:
                 "enableCustomSocketIoAdapter": {{ .Values.alfred.socketIoAdapter.enableCustomSocketIoAdapter }},
                 "shouldDisableDefaultNamespace": {{ .Values.alfred.socketIoAdapter.shouldDisableDefaultNamespace }}
             },
-            "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }}
+            "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }},
+            "socketIo" : {
+                "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}}
+            }
         },
         "client": {
             "type": "browser",

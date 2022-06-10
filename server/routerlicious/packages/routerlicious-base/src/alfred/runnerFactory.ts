@@ -98,10 +98,12 @@ export class AlfredResources implements core.IResources {
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+        const socketIoConfig = config.get("alfred:socketIo");
         this.webServerFactory = new services.SocketIoWebServerFactory(
             this.redisConfig,
             socketIoAdapterConfig,
-            httpServerConfig);
+            httpServerConfig,
+            socketIoConfig);
     }
 
     public async dispose(): Promise<void> {

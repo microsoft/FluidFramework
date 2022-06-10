@@ -91,7 +91,6 @@ export class Integer64Property extends ValueProperty {
      * @protected
      * @extends property-properties.ValueProperty
      * @alias property-properties.Integer64Property
-     * @protected
      * @abstract
      * @category Value Properties
      */
