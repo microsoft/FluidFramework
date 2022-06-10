@@ -105,6 +105,10 @@
       "RemovedInterfaceDeclaration_IProxyLoaderFactory": {
         "backCompat": false,
         "forwardCompat": false
+      },
+      "RemovedEnumDeclaration_BindState": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
