@@ -1200,8 +1200,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     private checkIdleReadClients() {
         const currentTime = Date.now();
 
-        for (const [clientId, { exp }] of this.sequencedSignalClients) {
-            if (exp < currentTime) {
+        for (const [clientId, { client, exp }] of this.sequencedSignalClients) {
+            if (client.mode === "read" && exp < currentTime) {
                 const leaveMessage = this.createLeaveMessage(clientId);
                 void this.sendToRawDeltas(leaveMessage);
             }
