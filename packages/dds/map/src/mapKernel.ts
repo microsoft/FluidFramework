@@ -4,8 +4,9 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IFluidSerializer, IMessageEventEmitter, ValueType } from "@fluidframework/shared-object-base";
+import { assert } from "@fluidframework/common-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ISerializableValue,
     ISerializedValue,
@@ -32,6 +33,7 @@ interface IMapMessageHandler {
         op: IMapOperation,
         local: boolean,
         localOpMetadata: unknown,
+        msg?: ISequencedDocumentMessage,
     ): void;
 
     /**
@@ -200,7 +202,7 @@ export class MapKernel {
         private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
-        private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
+        private readonly eventEmitter: IMessageEventEmitter<ISharedMapEvents>,
     ) {
         this.localValueMaker = new LocalValueMaker(serializer);
         this.messageHandlers = this.getMessageHandlers();
@@ -455,12 +457,13 @@ export class MapKernel {
         op: IMapOperation,
         local: boolean,
         localOpMetadata: unknown,
+        message?: ISequencedDocumentMessage,
     ): boolean {
         const handler = this.messageHandlers.get(op.type);
         if (handler === undefined) {
             return false;
         }
-        handler.process(op, local, localOpMetadata);
+        handler.process(op, local, localOpMetadata, message);
         return true;
     }
 
@@ -515,11 +518,15 @@ export class MapKernel {
      * @param local - Whether the message originated from the local client
      * @returns Previous local value of the key, if any
      */
-    private setCore(key: string, value: ILocalValue, local: boolean): ILocalValue | undefined {
+    private setCore(
+        key: string,
+        value: ILocalValue,
+        local: boolean,
+        msg?: ISequencedDocumentMessage): ILocalValue | undefined {
         const previousLocalValue = this.data.get(key);
         const previousValue = previousLocalValue?.value;
         this.data.set(key, value);
-        this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
+        this.eventEmitter.emitForMessage("valueChanged", msg, { key, previousValue }, local, this.eventEmitter);
         return previousLocalValue;
     }
 
@@ -527,9 +534,9 @@ export class MapKernel {
      * Clear implementation used for both locally sourced clears as well as incoming remote clears.
      * @param local - Whether the message originated from the local client
      */
-    private clearCore(local: boolean): void {
+    private clearCore(local: boolean, msg?: ISequencedDocumentMessage): void {
         this.data.clear();
-        this.eventEmitter.emit("clear", local, this.eventEmitter);
+        this.eventEmitter.emitForMessage("clear", msg, local, this.eventEmitter);
     }
 
     /**
@@ -538,12 +545,12 @@ export class MapKernel {
      * @param local - Whether the message originated from the local client
      * @returns Previous local value of the key if it existed, undefined if it did not exist
      */
-    private deleteCore(key: string, local: boolean): ILocalValue | undefined {
+    private deleteCore(key: string, local: boolean, msg?: ISequencedDocumentMessage): ILocalValue | undefined {
         const previousLocalValue = this.data.get(key);
         const previousValue = previousLocalValue?.value;
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
-            this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
+            this.eventEmitter.emitForMessage("valueChanged", msg, { key, previousValue }, local, this.eventEmitter);
         }
         return previousLocalValue;
     }
@@ -638,7 +645,7 @@ export class MapKernel {
         messageHandlers.set(
             "clear",
             {
-                process: (op: IMapClearOperation, local, localOpMetadata) => {
+                process: (op: IMapClearOperation, local, localOpMetadata, msg: ISequencedDocumentMessage) => {
                     if (local) {
                         assert(isClearLocalOpMetadata(localOpMetadata),
                             0x015 /* "pendingMessageId is missing from the local client's clear operation" */);
@@ -651,7 +658,7 @@ export class MapKernel {
                         this.clearExceptPendingKeys();
                         return;
                     }
-                    this.clearCore(local);
+                    this.clearCore(local, msg);
                 },
                 submit: (op: IMapClearOperation, localOpMetadata: unknown) => {
                     assert(isClearLocalOpMetadata(localOpMetadata), "Invalid localOpMetadata for clear");
@@ -669,11 +676,11 @@ export class MapKernel {
         messageHandlers.set(
             "delete",
             {
-                process: (op: IMapDeleteOperation, local, localOpMetadata) => {
+                process: (op: IMapDeleteOperation, local, localOpMetadata, msg: ISequencedDocumentMessage) => {
                     if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
                         return;
                     }
-                    this.deleteCore(op.key, local);
+                    this.deleteCore(op.key, local, msg);
                 },
                 submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
                     this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -686,14 +693,14 @@ export class MapKernel {
         messageHandlers.set(
             "set",
             {
-                process: (op: IMapSetOperation, local, localOpMetadata) => {
+                process: (op: IMapSetOperation, local, localOpMetadata, msg: ISequencedDocumentMessage) => {
                     if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
                         return;
                     }
 
                     // needProcessKeyOperation should have returned false if local is true
                     const context = this.makeLocal(op.key, op.value);
-                    this.setCore(op.key, context, local);
+                    this.setCore(op.key, context, local, msg);
                 },
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
                     this.resubmitMapKeyMessage(op, localOpMetadata);

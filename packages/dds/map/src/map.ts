@@ -365,7 +365,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.kernel.tryProcessMessage(message.contents, local, localOpMetadata);
+            this.kernel.tryProcessMessage(message.contents, local, localOpMetadata, message);
         }
     }
 

@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IEvent, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -29,11 +29,18 @@ import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
+export interface IMessageEventEmitter<TEvent extends IEvent = IEvent> {
+    emitForMessage(
+        event: EventEmitterEventType,
+        message?: ISequencedDocumentMessage,
+        ...args: any[]): boolean;
+}
+
 /**
  *  Base class from which all shared objects derive
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
-    extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
+    extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent>, IMessageEventEmitter<TEvent> {
     public get IFluidLoadable() { return this; }
 
     /**
@@ -417,13 +424,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
         // If the client is interactive, capture performance data of processing the op. If it's not
         // (e.g. summarizer) then just process the op.
-        if (this.runtime.deltaManager.clientDetails.capabilities.interactive === true) {
+        if (this.runtime.deltaManager.clientDetails.capabilities.interactive === true && !local) {
             PerformanceEvent.timedExec(
                 this.logger,
                 {
                     eventName: "ddsCallback",
                     category: "performance",
-                    opType: message.type,
+                    opType: message.contents.type,
                     opSeqNo: message.sequenceNumber,
                 },
                 (event) => {
@@ -466,6 +473,34 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      * when the op is ACKed or resubmitted, respectively
      */
     protected abstract applyStashedOp(content: any): unknown;
+
+    public emitForMessage(
+        event: EventEmitterEventType,
+        message?: ISequencedDocumentMessage,
+        ...args: any[]): boolean {
+        const tmp: ITelemetryGenericEvent = {
+            eventName: event.toString(),
+            category: "performance",
+        };
+        if (message !== undefined) {
+            tmp.opType = message.contents.type;
+            tmp.opSeqNo = message.sequenceNumber;
+        }
+        if (this.runtime.deltaManager.clientDetails.capabilities.interactive === true) {
+        return PerformanceEvent.timedExec(
+            this.logger,
+            tmp,
+            (e) => {
+                return super.emit(event, ...args);
+            },
+            {
+                end: true,
+                cancel: "error",
+            });
+        } else {
+            return super.emit(event, ...args);
+        }
+    }
 }
 
 /**
