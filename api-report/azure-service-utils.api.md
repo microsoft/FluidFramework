@@ -4,14 +4,23 @@
 
 ```ts
 
-import { IUser } from '@fluidframework/protocol-definitions';
-import { ScopeType } from '@fluidframework/protocol-definitions';
-
 // @public
 export function generateToken(tenantId: string, key: string, scopes: ScopeType[], documentId?: string, user?: IUser, lifetime?: number, ver?: string): string;
 
-export { IUser }
+// @public
+export interface IUser {
+    // (undocumented)
+    id: string;
+}
 
-export { ScopeType }
+// @public (undocumented)
+export enum ScopeType {
+    // (undocumented)
+    DocRead = "doc:read",
+    // (undocumented)
+    DocWrite = "doc:write",
+    // (undocumented)
+    SummaryWrite = "summary:write"
+}
 
 ```
