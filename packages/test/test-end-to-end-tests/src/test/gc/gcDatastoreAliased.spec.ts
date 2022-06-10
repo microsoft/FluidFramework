@@ -85,21 +85,21 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     });
 
+    //* Remove this - duplicate of some other test now that it's been changed
     it("GC is notified when datastores are aliased.", async () => {
         const containerRuntime1 = mainDataStore1.containerRuntime;
         const aliasableDataStore1 = await containerRuntime1.createDataStore("TestDataObject");
         const response = await aliasableDataStore1.request({ url: "/" });
         const ds1 = response.value as TestDataObject;
 
-        (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
         await provider.ensureSynchronized();
 
         // We run the summary so await this.getInitialSnapshotDetails() is called before the datastore is aliased
         // and after the datastore is attached. This sets the isRootDataStore to false.
         let summaryWithStats = await summarizeOnContainer(container2);
         let gcState = getGCStateFromSummary(summaryWithStats.summary);
-        assert(gcState?.gcNodes[ds1.handle.absolutePath].unreferencedTimestampMs !== undefined,
-            "AliasableDataStore1 should be unreferenced as it is not aliased and not root!");
+        assert(gcState?.gcNodes[ds1.handle.absolutePath] === undefined,
+            "Not visible to Summarizer yet");
 
         // Alias a datastore
         const alias = "alias";
