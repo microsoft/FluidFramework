@@ -29,6 +29,7 @@ import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { SharedString } from "../sharedString";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
+import { PropertySet } from "@fluidframework/merge-tree";
 
 const testCount = 10;
 
@@ -74,7 +75,7 @@ interface AddInterval extends ClientSpec, IntervalCollectionSpec, RangeSpec {
     id: string;
 }
 
-interface ChangeInterval extends ClientSpec, IntervalCollectionSpec, RangeSpec {
+interface ChangeInterval extends ClientSpec, IntervalCollectionSpec, Partial<RangeSpec> {
     type: "changeInterval";
     id: string;
 }
@@ -82,6 +83,12 @@ interface ChangeInterval extends ClientSpec, IntervalCollectionSpec, RangeSpec {
 interface DeleteInterval extends ClientSpec, IntervalCollectionSpec {
     type: "deleteInterval";
     id: string;
+}
+
+interface ChangeProperties extends ClientSpec, IntervalCollectionSpec {
+    type: "changeProperties";
+    id: string;
+    properties: PropertySet
 }
 
 interface ChangeConnectionState extends ClientSpec {
@@ -93,7 +100,7 @@ interface Synchronize {
     type: "synchronize";
 }
 
-type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
+type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
 
 type TextOperation = AddText | RemoveRange;
 
@@ -117,6 +124,7 @@ interface OperationGenerationConfig {
     maxIntervals?: number;
     maxInsertLength?: number;
     intervalCollectionNamePool?: string[];
+    propertyNamePool?: string[];
     validateInterval?: number;
 }
 
@@ -125,6 +133,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
     maxIntervals: 100,
     maxInsertLength: 10,
     intervalCollectionNamePool: ["comments"],
+    propertyNamePool: ["prop1", "prop2", "prop3"],
     validateInterval: 100,
 };
 
@@ -155,6 +164,16 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         const start = position(state);
         const end = state.random.integer(start, state.sharedString.getLength() - 1);
         return { start, end };
+    }
+
+    function propertySet(state: ClientOpState): PropertySet {
+        const propNamesShuffled = state.random.shuffle(options.propertyNamePool);
+        const propsToChange = propNamesShuffled.slice(0, state.random.integer(1, propNamesShuffled.length));
+        const propSet: PropertySet = {};
+        for (const name of propsToChange) {
+            propSet[name] = state.random.string(5)
+        }
+        return propSet;
     }
 
     function nonEmptyIntervalCollection({ sharedString, random }: ClientOpState): string {
@@ -207,12 +226,23 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     }
 
     function changeInterval(state: ClientOpState): ChangeInterval {
+        const { start, end } = inclusiveRange(state);
         return {
             type: "changeInterval",
+            start: state.random.integer(0, 5) === 5 ? undefined : start,
+            end: state.random.integer(0, 5) === 5 ? undefined : end,
             ...interval(state),
-            ...inclusiveRange(state),
             stringId: state.sharedString.id,
         };
+    }
+
+    function changeProperties(state: ClientOpState): ChangeProperties {
+        return {
+            type: "changeProperties",
+            ...interval(state),
+            properties: propertySet(state),
+            stringId: state.sharedString.id
+        }
     }
 
     function changeConnectionState(state: ClientOpState): ChangeConnectionState {
@@ -259,6 +289,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         [addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
         [deleteInterval, 2, hasAnInterval],
         [changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
+        [changeProperties, 2, hasAnInterval],
         [changeConnectionState, 1],
     ]);
 
@@ -415,6 +446,11 @@ function runIntervalCollectionFuzz(
             changeConnectionState: statefully(({ clients }, { stringId, connected }) => {
                 const { containerRuntime } = clients.find((c) => c.sharedString.id === stringId);
                 containerRuntime.connected = connected;
+            }),
+            changeProperties: statefully(({ clients }, { stringId, id, properties, collectionName }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId):
+                const collection = sharedString.getIntervalCollection(collectionName);
+                collection.changeProperties(id, properties);
             }),
         },
         initialState,
