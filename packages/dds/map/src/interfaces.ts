@@ -389,6 +389,9 @@ export interface ISerializableValue {
     value: any;
 }
 
+/**
+ * TODO
+ */
 export interface ISerializedValue {
     /**
      * A type annotation to help indicate how the value serializes.
@@ -397,6 +400,7 @@ export interface ISerializedValue {
 
     /**
      * String representation of the value.
+     * TODO: what does it mean for this to be undefined?
      */
     value: string | undefined;
 }
