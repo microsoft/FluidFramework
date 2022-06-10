@@ -16,7 +16,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReference } from "./localReference";
+import { LocalReference, _validateReferenceType } from "./localReference";
 import {
     CollaborationWindow,
     compareStrings,
@@ -575,13 +575,14 @@ export class Client {
 
     /**
      * Gets the client args from the op if remote, otherwise uses the local clients info
-     * @param opArgs - The op arg to get the client sequence args for
+     * @param sequencedMessage - The sequencedMessage to get the client sequence args for
      */
-    private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
+     private getClientSequenceArgsForMessage(sequencedMessage: ISequencedDocumentMessage | undefined):
+        IMergeTreeClientSequenceArgs {
         // If there this no sequenced message, then the op is local
         // and unacked, so use this clients sequenced args
         //
-        if (!opArgs.sequencedMessage) {
+        if (!sequencedMessage) {
             const segWindow = this.getCollabWindow();
             return {
                 clientId: segWindow.clientId,
@@ -590,11 +591,19 @@ export class Client {
             };
         } else {
             return {
-                clientId: this.getShortClientId(opArgs.sequencedMessage.clientId),
-                referenceSequenceNumber: opArgs.sequencedMessage.referenceSequenceNumber,
-                sequenceNumber: opArgs.sequencedMessage.sequenceNumber,
+                clientId: this.getOrAddShortClientId(sequencedMessage.clientId),
+                referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
+                sequenceNumber: sequencedMessage.sequenceNumber,
             };
         }
+    }
+
+    /**
+     * Gets the client args from the op if remote, otherwise uses the local clients info
+     * @param opArgs - The op arg to get the client sequence args for
+     */
+    private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
+        return this.getClientSequenceArgsForMessage(opArgs.sequencedMessage);
     }
 
     private ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
@@ -1021,17 +1030,17 @@ export class Client {
     }
 
     getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage) {
-        let seq: number;
-        let clientId: number;
-        if (op) {
-            clientId = this.getOrAddShortClientId(op.clientId);
-            seq = op.referenceSequenceNumber;
-        } else {
-            const segWindow = this.mergeTree.getCollabWindow();
-            seq = segWindow.currentSeq;
-            clientId = segWindow.clientId;
-        }
-        return this.mergeTree.getContainingSegment<T>(pos, seq, clientId);
+        const args = this.getClientSequenceArgsForMessage(op);
+        return this.mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, args.clientId);
+    }
+
+    /**
+     * Returns the position to slide a reference to if a slide is required.
+     * @param segoff - The segment and offset to slide from
+     * @returns - segment and offset to slide the reference to
+     */
+    getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
+        return this.mergeTree._getSlideToSegment(segoff);
     }
 
     getPropertiesAtPosition(pos: number) {

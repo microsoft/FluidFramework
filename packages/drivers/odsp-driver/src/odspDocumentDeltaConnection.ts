@@ -127,8 +127,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             // comes in from "disconnect" listener below, before we close socket.
             this.isPendingInitialConnection = false;
 
-            // Explicitly cast error to the specified event args type to ensure type compatibility
-            this.emit("server_disconnect", error as IFluidErrorBase & OdspError);
+            this.emit("server_disconnect", error);
             this.closeSocket();
         });
     }
@@ -440,7 +439,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
-        this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect" }, error);
+        this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.clientId }, error);
         this.disposeCore(true, error);
     };
 
@@ -565,6 +564,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                                 type,
                                 message,
                                 retryAfterSeconds: retryAfter,
+                                clientId: this.clientId,
                             });
                         }
                         this.emit("nack", clientIdOrDocumentId, nacks);

@@ -152,6 +152,13 @@ export class Client {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
+    getSlideToSegment(segoff: {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    }): {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    };
     // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
@@ -1033,6 +1040,14 @@ export class MergeTree {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
+    // @internal
+    _getSlideToSegment(segoff: {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    }): {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    };
     // (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
@@ -1352,6 +1367,8 @@ export enum ReferenceType {
     // (undocumented)
     SlideOnRemove = 64,
     // (undocumented)
+    StayOnRemove = 128,
+    // (undocumented)
     Tile = 1,
     // (undocumented)
     Transient = 256
@@ -1376,7 +1393,7 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string): boole
 export function refHasTileLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
-export function refTypeIncludesFlag(refPos: ReferencePosition, flags: ReferenceType): boolean;
+export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
 // @public (undocumented)
 export const reservedMarkerIdKey = "markerId";

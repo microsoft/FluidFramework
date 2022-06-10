@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./urlResolver";
+export { FieldKind, ValueSchema } from "./Schema";

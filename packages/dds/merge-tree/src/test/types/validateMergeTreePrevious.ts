@@ -686,6 +686,7 @@ declare function get_current_InterfaceDeclaration_IConsensusInfo():
 declare function use_old_InterfaceDeclaration_IConsensusInfo(
     use: TypeOnly<old.IConsensusInfo>);
 use_old_InterfaceDeclaration_IConsensusInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusInfo());
 
 /*
@@ -807,6 +808,7 @@ declare function get_current_InterfaceDeclaration_IJSONMarkerSegment():
 declare function use_old_InterfaceDeclaration_IJSONMarkerSegment(
     use: TypeOnly<old.IJSONMarkerSegment>);
 use_old_InterfaceDeclaration_IJSONMarkerSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IJSONMarkerSegment());
 
 /*
@@ -879,6 +881,7 @@ declare function get_current_InterfaceDeclaration_IMarkerDef():
 declare function use_old_InterfaceDeclaration_IMarkerDef(
     use: TypeOnly<old.IMarkerDef>);
 use_old_InterfaceDeclaration_IMarkerDef(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMarkerDef());
 
 /*
@@ -1824,6 +1827,7 @@ declare function get_current_ClassDeclaration_LocalReference():
 declare function use_old_ClassDeclaration_LocalReference(
     use: TypeOnly<old.LocalReference>);
 use_old_ClassDeclaration_LocalReference(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocalReference());
 
 /*
@@ -1947,6 +1951,7 @@ declare function get_current_ClassDeclaration_Marker():
 declare function use_old_ClassDeclaration_Marker(
     use: TypeOnly<old.Marker>);
 use_old_ClassDeclaration_Marker(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Marker());
 
 /*
@@ -2670,6 +2675,7 @@ declare function get_current_EnumDeclaration_ReferenceType():
 declare function use_old_EnumDeclaration_ReferenceType(
     use: TypeOnly<old.ReferenceType>);
 use_old_EnumDeclaration_ReferenceType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_ReferenceType());
 
 /*

@@ -221,7 +221,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     /**
      * Defines the maximum allowed time in between summarizations.
      */
-     idleTime: number;
+    idleTime: number;
     /**
      * Defines the maximum allowed time, since the last received Ack,  before running the summary
      * with reason maxTime.
@@ -231,12 +231,24 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * Defines the maximum number of Ops, since the last received Ack, that can be allowed
      * before running the summary with reason maxOps.
      */
-     maxOps: number;
+    maxOps: number;
     /**
      * Defnines the minimum number of Ops, since the last received Ack, that can be allowed
      * before running the last summary.
      */
     minOpsForLastSummaryAttempt: number;
+    /**
+     * Runtime op weight to use in heuristic summarizing.
+     * This number is a multiplier on the number of runtime ops we process when running summarize heuristics.
+     * For example: (multiplier) * (number of runtime ops) = weighted number of runtime ops
+     */
+    runtimeOpWeight: number;
+    /**
+     * Non-runtime op weight to use in heuristic summarizing
+     * This number is a multiplier on the number of non-runtime ops we process when running summarize heuristics.
+     * For example: (multiplier) * (number of non-runtime ops) = weighted number of non-runtime ops
+     */
+    nonRuntimeOpWeight: number;
 }
 
 export interface ISummaryConfigurationDisableSummarizer {
@@ -255,21 +267,25 @@ export type ISummaryConfiguration =
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
 
-    idleTime: 5000 * 3,
+    idleTime: 15 * 1000, // 15 secs.
 
-    maxTime: 5000 * 12,
+    maxTime: 60 * 1000, // 1 min.
 
-    maxOps: 1000, // Summarize if 1000 ops received since last snapshot.
+    maxOps: 100, // Summarize if 100 weighted ops received since last snapshot.
 
     minOpsForLastSummaryAttempt: 10,
 
-    maxAckWaitTime: 6 * 10 * 1000, // 6 min.
+    maxAckWaitTime: 10 * 60 * 1000, // 10 mins.
 
     maxOpsSinceLastSummary: 7000,
 
-    initialSummarizerDelayMs: 5000, // 5 secs.
+    initialSummarizerDelayMs: 5 * 1000, // 5 secs.
 
     summarizerClientElection: false,
+
+    nonRuntimeOpWeight: 0.1,
+
+    runtimeOpWeight: 1.0,
 };
 
 export interface IGCRuntimeOptions {
@@ -606,7 +622,7 @@ class ScheduleManagerCore {
 
     private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
         const endBatch = messageEndBatch.sequenceNumber;
-        const duration = performance.now() - this.timePaused;
+        const duration = this.localPaused ? (performance.now() - this.timePaused) : undefined;
 
         this.batchCount++;
         if (this.batchCount % 1000 === 1) {
@@ -629,7 +645,7 @@ class ScheduleManagerCore {
         this.localPaused = false;
 
         // Random round number - we want to know when batch waiting paused op processing.
-        if (duration > latencyThreshold) {
+        if (duration !== undefined && duration > latencyThreshold) {
             this.logger.sendErrorEvent({
                 eventName: "MaxBatchWaitTimeExceeded",
                 duration,
@@ -1676,6 +1692,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.logger.sendTelemetryEvent({
                 eventName: "ReconnectsWithNoProgress",
                 attempts: this.consecutiveReconnects,
+                pendingMessages: this.pendingStateManager.pendingMessagesCount,
             });
         }
 
@@ -1750,7 +1767,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
                     "Runtime detected too many reconnects with no progress syncing local ops",
                     undefined, // error
-                    { attempts: this.consecutiveReconnects }));
+                    {
+                        attempts: this.consecutiveReconnects,
+                        pendingMessages: this.pendingStateManager.pendingMessagesCount,
+                    }));
                 return;
             }
         }

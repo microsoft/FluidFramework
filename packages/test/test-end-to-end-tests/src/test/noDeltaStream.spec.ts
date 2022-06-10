@@ -45,6 +45,8 @@ const testContainerConfig: ITestContainerConfig = {
                     maxTime: 1000 * 5,
                     initialSummarizerDelayMs: 0,
                     maxOps,
+                    nonRuntimeOpWeight: 1.0,
+                    runtimeOpWeight: 1.0,
                 },
             },
             initialSummarizerDelayMs: 0,
