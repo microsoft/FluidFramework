@@ -98,8 +98,8 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
 }
 
 /**
- * Events emitted in response to changes to the directory data.  These events only emit on the ISharedDirectory itself,
- * and not on subdirectories.
+ * Events emitted in response to changes to the directory data.
+ * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
  *
  * ### "valueChanged"
  *
