@@ -33,7 +33,9 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -m packages -v",
+    "typetests:prepare": "npm run typetests:gen -- -p"
   },
   "nyc": {
     "all": true,
@@ -64,10 +66,10 @@
     "@fluidframework/driver-utils": "^1.1.0",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/routerlicious-driver": "^1.1.0",
-    "@fluidframework/server-local-server": "^0.1036.4000",
-    "@fluidframework/server-services-client": "^0.1036.4000",
-    "@fluidframework/server-services-core": "^0.1036.4000",
-    "@fluidframework/server-test-utils": "^0.1036.4000",
+    "@fluidframework/server-local-server": "^0.1036.5000-0",
+    "@fluidframework/server-services-client": "^0.1036.5000-0",
+    "@fluidframework/server-services-core": "^0.1036.5000-0",
+    "@fluidframework/server-test-utils": "^0.1036.5000-0",
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },
@@ -92,6 +94,11 @@
   },
   "typeValidation": {
     "version": "1.0.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_LocalSessionStorageDbFactory": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
   }
 }
