@@ -120,6 +120,7 @@ module.exports = {
         ],
         "unicorn/no-new-buffer": "error",
         "unicorn/no-unsafe-regex": "error",
+        "unicorn/prefer-type-error": "error",
 
         // DISABLED INTENTIONALLY
         // Disabled because we don't require that all variable declarations be explicitly typed.
