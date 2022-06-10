@@ -8,6 +8,9 @@ import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
+/**
+ * TODO
+ */
 export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
