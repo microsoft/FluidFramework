@@ -379,7 +379,8 @@ implements ISerializableInterval {
         const newInterval =
             createSequenceInterval(label, startPos, endPos, this.start.getClient(), this.intervalType, op);
         if (this.properties) {
-            newInterval.addProperties(this.properties);
+            newInterval.properties = createMap<any>();
+            this.propertyManager.copyTo(this.properties, newInterval.properties, newInterval.propertyManager);
         }
         return newInterval;
     }

@@ -926,6 +926,23 @@ describe("SharedString interval collections", () => {
             assert.equal(sharedString.getText(), "ABC");
             assertIntervals(sharedString, collection1, [{ start: 1, end: 2 }]);
         });
+
+        describe("have eventually consistent property sets", () => {
+            it("when an interval is modified with a pending change", () => {
+                sharedString.insertText(0, "ABC");
+                const collection1 = sharedString.getIntervalCollection("test");
+                const collection2 = sharedString2.getIntervalCollection("test");
+                const interval = collection1.add(0, 0, IntervalType.SlideOnRemove);
+                containerRuntimeFactory.processAllMessages();
+                const id = interval.getIntervalId();
+                collection1.change(id, 1, 1);
+                collection1.changeProperties(id, { propName: "losing value" });
+                collection2.changeProperties(id, { propName: "winning value" });
+                containerRuntimeFactory.processAllMessages();
+                assert.equal(collection1.getIntervalById(id).properties.propName, "winning value");
+                assert.equal(collection2.getIntervalById(id).properties.propName, "winning value");
+            });
+        });
     });
 
     // TODO: Enable this test suite once correctness issues with reconnect are addressed.
