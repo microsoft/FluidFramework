@@ -1789,11 +1789,10 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                const modified = pendingSegment.ack(pendingSegmentGroup, opArgs, this);
-                // This computation of overwrite appears incorrect. Leaving as is to avoid breaking something.
-                overwrite = !modified || overwrite;
+                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, this);
+                overwrite = overlappingRemove || overwrite;
 
-                if (modified && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
+                if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
                     this.updateSegmentRefsAfterMarkRemoved(pendingSegment, false);
                 }
                 if (MergeTree.options.zamboniSegments) {

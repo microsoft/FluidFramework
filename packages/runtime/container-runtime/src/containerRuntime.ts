@@ -2041,6 +2041,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+        if (rootDataStoreId.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
+        }
         return this._aliasingEnabled === true ?
             this.createAndAliasDataStore(pkg, rootDataStoreId) :
             this.createRootDataStoreLegacy(pkg, rootDataStoreId);
@@ -2085,6 +2088,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
         rootDataStoreId: string): IFluidDataStoreContextDetached {
+        if (rootDataStoreId.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
+        }
         return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
     }
 
