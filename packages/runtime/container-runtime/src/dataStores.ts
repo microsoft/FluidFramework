@@ -329,6 +329,8 @@ export class DataStores implements IDisposable {
         pkg: Readonly<string[]>,
         isRoot: boolean,
         id = uuid()): IFluidDataStoreContextDetached {
+        assert(!id.includes("/"), "Id cannot contain slashes");
+
         const context = new LocalDetachedFluidDataStoreContext({
             id,
             pkg,
@@ -350,6 +352,7 @@ export class DataStores implements IDisposable {
     }
 
     public _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
+        assert(!id.includes("/"), "Id cannot contain slashes");
         const context = new LocalFluidDataStoreContext({
             id,
             pkg,

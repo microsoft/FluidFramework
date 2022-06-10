@@ -51,6 +51,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
                 readonly objectStorage: ChannelStorageService;
             }>,
     ) {
+        assert(!this.id.includes("/"), "Channel context ID cannot contain slashes");
     }
 
     public async getChannel(): Promise<IChannel> {

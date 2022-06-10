@@ -102,7 +102,10 @@
             "enableCustomSocketIoAdapter": true,
             "shouldDisableDefaultNamespace": false
         },
-        "enforceServerGeneratedDocumentId": false
+        "enforceServerGeneratedDocumentId": false,
+        "socketIo": {
+            "perMessageDeflate": true
+        }
     },
     "client": {
         "type": "browser",
