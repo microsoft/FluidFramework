@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
@@ -70,7 +71,7 @@ class DataStore implements IDataStore {
         }
 
         if (alias.includes("/")) {
-            return "UnsupportedAlias";
+            throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
         }
 
         this.aliasState = AliasState.Aliasing;

@@ -305,11 +305,17 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             const aliasResult1 = await ds1.trySetAlias(alias);
             const aliasResult2 = await ds1.trySetAlias(`${alias}/${alias}`);
-            const aliasResult3 = await ds2.trySetAlias(`${alias}/${alias}`);
+
+            let error: Error | undefined;
+            try {
+                await ds2.trySetAlias(`${alias}/${alias}`);
+            } catch (err) {
+                error = err as Error;
+            }
 
             assert.equal(aliasResult1, "Success");
             assert.equal(aliasResult2, "AlreadyAliased");
-            assert.equal(aliasResult3, "UnsupportedAlias");
+            assert.ok(error instanceof UsageError);
         });
 
         it("Aliasing a datastore is idempotent", async () => {

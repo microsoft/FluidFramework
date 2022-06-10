@@ -93,7 +93,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
 /**
  * Encapsulates the return codes of the aliasing API
  */
- export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased" | "UnsupportedAlias";
+ export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
 
 /**
  * A fluid router with the capability of being assigned an alias
