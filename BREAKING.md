@@ -19,11 +19,11 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 2.0.0 Upcoming changes
 
 ## 2.0.0 Breaking changes
-- [bindToContext removed from IFluidDataStoreChannel and IFluidDataStoreContext](#bindToContext-removed-from-IFluidDataStoreChannel-and IFluidDataStoreContext)
+- [bindToContext removed from IFluidDataStoreChannel](#bindToContext-removed-from-IFluidDataStoreChannel)
 
-### bindToContext removed from IFluidDataStoreChannel and IFluidDataStoreContext
-`bindToContext` has been removed from `IFluidDataStoreChannel` and `IFluidDataStoreChannel` in the next major release.
-Please use `IFluidDataStoreChannel.makeVisibleAndAttachGraph()` and `IFluidDataStoreChannel.makeLocallyVisible()` instead.
+### bindToContext removed from IFluidDataStoreChannel
+`bindToContext` has been removed from `IFluidDataStoreChannel` and `IFluidDataStoreChannel`.
+The related interface `IDataStoreWithBindToContext_Deprecated` has also been removed.
 See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for more info.
 
 # 1.0.0
