@@ -277,6 +277,7 @@ export interface IDirectoryEvents extends IEvent {
 
 /**
  * Interface describing a shared directory.
+ * TODO: what are the semantics of this?
  */
 export interface ISharedDirectory extends
     ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
@@ -288,7 +289,7 @@ export interface ISharedDirectory extends
 }
 
 /**
- * Type of "valueChanged" event parameter for SharedDirectory
+ * Type of "valueChanged" event parameter for {@link SharedDirectory}
  */
 export interface IDirectoryValueChanged extends IValueChanged {
     /**
