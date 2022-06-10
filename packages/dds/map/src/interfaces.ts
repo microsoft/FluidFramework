@@ -345,10 +345,11 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 
 /**
  * Shared map interface
+ * TODO: what are the semantics of this?
  */
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     /**
-     * Retrieves the given key from the map.
+     * Retrieves the given key from the map if it exists.
      * @param key - Key to retrieve from
      * @returns The stored value, or undefined if the key is not set
      */
@@ -356,9 +357,9 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 
     /**
      * Sets the value stored at key to the provided value.
-     * @param key - Key to set at
+     * @param key - Key to set
      * @param value - Value to set
-     * @returns The ISharedMap itself
+     * @returns The {@link ISharedMap} itself
      */
     set<T = any>(key: string, value: T): this;
 }
