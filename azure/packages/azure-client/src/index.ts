@@ -15,4 +15,4 @@ export * from "./AzureFunctionTokenProvider";
 export * from "./interfaces";
 
 export { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-export { ScopeType, ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
+export { IClient, ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";

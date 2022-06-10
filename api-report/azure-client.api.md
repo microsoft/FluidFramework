@@ -5,17 +5,11 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import { ITokenResponse } from '@fluidframework/routerlicious-driver';
-import { IUser } from '@fluidframework/protocol-definitions';
-import { ScopeType } from '@fluidframework/protocol-definitions';
 import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
@@ -105,18 +99,78 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
+// @public (undocumented)
+export interface IClient {
+    // Warning: (ae-forgotten-export) The symbol "IClientDetails" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    details: IClientDetails;
+    // Warning: (ae-forgotten-export) The symbol "ConnectionMode" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    mode: ConnectionMode;
+    // (undocumented)
+    permission: string[];
+    // (undocumented)
+    scopes: string[];
+    timestamp?: number;
+    // (undocumented)
+    user: IUser;
+}
+
 export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
 
-export { ITokenClaims }
+// @public (undocumented)
+export interface ITokenClaims {
+    // (undocumented)
+    documentId: string;
+    // (undocumented)
+    exp: number;
+    // (undocumented)
+    iat: number;
+    // (undocumented)
+    jti?: string;
+    // (undocumented)
+    scopes: string[];
+    // (undocumented)
+    tenantId: string;
+    // (undocumented)
+    user: IUser;
+    // (undocumented)
+    ver: string;
+}
 
-export { ITokenProvider }
+// @public
+export interface ITokenProvider {
+    documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
+    fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
+    fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
+}
 
-export { ITokenResponse }
+// @public (undocumented)
+export interface ITokenResponse {
+    // (undocumented)
+    fromCache?: boolean;
+    // (undocumented)
+    jwt: string;
+}
 
-export { IUser }
+// @public
+export interface IUser {
+    // (undocumented)
+    id: string;
+}
 
-export { ScopeType }
+// @public (undocumented)
+export enum ScopeType {
+    // (undocumented)
+    DocRead = "doc:read",
+    // (undocumented)
+    DocWrite = "doc:write",
+    // (undocumented)
+    SummaryWrite = "summary:write"
+}
 
 ```
