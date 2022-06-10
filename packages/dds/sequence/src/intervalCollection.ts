@@ -375,23 +375,23 @@ implements ISerializableInterval {
     }
 
     public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
-        const getRefType = (baseType: ReferenceType, op?: ISequencedDocumentMessage): ReferenceType => {
+        const getRefType = (baseType: ReferenceType): ReferenceType => {
             let refType = baseType;
             if (op === undefined) {
                 refType &= ~ReferenceType.SlideOnRemove;
                 refType |= ReferenceType.StayOnRemove;
             }
             return refType;
-        }
+        };
 
         let startRef = this.start;
         if (start !== undefined) {
-            startRef = createPositionReference(this.start.getClient(), start, getRefType(this.start.refType, op), op);
+            startRef = createPositionReference(this.start.getClient(), start, getRefType(this.start.refType), op);
         }
 
         let endRef = this.end;
         if (end !== undefined) {
-            endRef = createPositionReference(this.end.getClient(), end, getRefType(this.end.refType, op), op);
+            endRef = createPositionReference(this.end.getClient(), end, getRefType(this.end.refType), op);
         }
 
         startRef.pairedRef = endRef;
