@@ -32,13 +32,9 @@ import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { mockConfigProvider } from "./mockConfigProivder";
 
 /**
- * Validates that unchanged Fluid objects are not resummarized again. Basically, only objects that have changed since
- * the previous summary should be resummarized and for the rest, we add handles that refer to the previous summary.
- * A Fluid object is considered changed since the last summary if either or both of the following is true:
- * - It received an op.
- * - Its reference state changed, i.e., it was referenced and became unreferenced or vice-versa.
+ * Validates whether or not a GC Tree Summary Handle should be written to the summary.
  */
-describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
+describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
     const runtimeOptions: IContainerRuntimeOptions = {
