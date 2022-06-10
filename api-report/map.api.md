@@ -23,7 +23,7 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public @sealed
-export class DirectoryFactory {
+export class DirectoryFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
@@ -76,11 +76,9 @@ export interface IDirectoryEvents extends IEvent {
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
-// @public (undocumented)
+// @public
 export interface IDirectoryNewStorageFormat {
-    // (undocumented)
     blobs: string[];
-    // (undocumented)
     content: IDirectoryDataObject;
 }
 
@@ -101,7 +99,7 @@ export interface ISerializableValue {
     value: any;
 }
 
-// @public (undocumented)
+// @public
 export interface ISerializedValue {
     type: string;
     value: string | undefined;

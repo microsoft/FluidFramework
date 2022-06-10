@@ -64,7 +64,7 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
-// @public (undocumented)
+// @public
 export interface ISharedObjectEvents extends IErrorEvent {
     // (undocumented)
     (event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
