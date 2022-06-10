@@ -913,6 +913,9 @@
         "unicorn/no-unsafe-regex": [
             "error"
         ],
+        "unicorn/prefer-ternary": [
+            "error"
+        ],
         "unused-imports/no-unused-imports": [
             "error"
         ],
