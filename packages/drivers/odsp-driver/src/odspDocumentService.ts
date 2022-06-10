@@ -34,6 +34,7 @@ import {
     InstrumentedStorageTokenFetcher,
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
+import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
@@ -47,7 +48,6 @@ import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
