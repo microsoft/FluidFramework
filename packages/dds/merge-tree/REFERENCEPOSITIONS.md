@@ -94,6 +94,7 @@ flowchart LR
     pendingRefRemoved((Ref:StayOnRemove\nSegment:Removed))
     localCreate-->pendingRef
     pendingRef--local remove-->pendingRefPendingRemove
+    pendingRefPendingRemove--remote remove-->pendingRefRemoved
     pendingRef--remote remove-->pendingRefRemoved
     end
 
