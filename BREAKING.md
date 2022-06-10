@@ -19,12 +19,11 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 2.0.0 Upcoming changes
 
 ## 2.0.0 Breaking changes
-- [bindToContext removed from IFluidDataStoreChannel](#bindToContext-removed-from-IFluidDataStoreChannel)
+- [Removed IFluidDataStoreChannel.bindToContext and related types](#removed-ifluiddatastorechannelbindtocontext-and-related-types)
 
-### bindToContext removed from IFluidDataStoreChannel
-`bindToContext` has been removed from `IFluidDataStoreChannel` and `IFluidDataStoreChannel`.
-The related interface `IDataStoreWithBindToContext_Deprecated` has also been removed.
-See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for more info.
+### Removed IFluidDataStoreChannel.bindToContext and related types
+`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
+See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
 
 # 1.0.0
 
