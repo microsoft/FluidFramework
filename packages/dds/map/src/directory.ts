@@ -199,8 +199,18 @@ export interface IDirectoryDataObject {
     subdirectories?: { [subdirName: string]: IDirectoryDataObject; };
 }
 
+/**
+ * TODO
+ */
 export interface IDirectoryNewStorageFormat {
+    /**
+     * TODO
+     */
     blobs: string[];
+
+    /**
+     * TODO
+     */
     content: IDirectoryDataObject;
 }
 
