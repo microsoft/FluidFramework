@@ -1448,8 +1448,7 @@ export class MergeTree {
         this.leftExcursion(segoff.segment, goFurtherToFindSlideToSegment);
 
         // Workaround TypeScript issue (https://github.com/microsoft/TypeScript/issues/9998)
-        const identity = (seg: ISegment | undefined) => seg;
-        slideToSegment = identity(slideToSegment);
+        slideToSegment = slideToSegment as ISegment | undefined;
 
         if (slideToSegment) {
             // If slid nearer then offset should be at the end of the segment
