@@ -543,6 +543,9 @@ export class OdspDocumentService implements IDocumentService {
     }
 }
 
+/**
+ * IDocumentService implementation that provides explicit snapshot to the document storage service.
+ */
 export class LocalOdspDocumentService implements IDocumentService {
     public policies = { storageOnly: true };
 

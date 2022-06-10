@@ -42,6 +42,11 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
     }
 }
 
+/**
+ * Factory for creating sharepoint document service with a provided snapshot.
+ * Use if you don't want to connect to any kind of external/internal storages and want to provide
+ * content directly.
+ */
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
     private logger: TelemetryLogger | undefined;
 

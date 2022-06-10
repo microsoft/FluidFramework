@@ -822,6 +822,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
     }
 }
 
+/**
+ * ODSP document storage service that works on a provided snapshot for all its processing.
+ * Attempting to use unsupported actions/methods will result in errors being thrown.
+ */
 export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceBase {
     private snapshotTreeId: string | undefined;
 
