@@ -58,14 +58,14 @@
     "version": "0.1029.1000",
     "broken": {
       "InterfaceDeclaration_IConnected": {
-               "backCompat": false
+        "backCompat": false
       },
       "RemovedInterfaceDeclaration_ISummaryConfiguration": {
-              "forwardCompat": false,
-              "backCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "InterfaceDeclaration_IClientConfiguration": {
-          "backCompat": false
+        "backCompat": false
       }
     }
   }
