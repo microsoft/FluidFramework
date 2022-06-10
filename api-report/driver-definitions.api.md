@@ -224,7 +224,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
     // (undocumented)
     readonly errorType: DriverErrorType.locationRedirection;
     // (undocumented)
-    readonly redirectUrl?: IResolvedUrl;
+    readonly redirectUrl: IResolvedUrl;
 }
 
 // @public (undocumented)

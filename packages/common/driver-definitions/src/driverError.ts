@@ -120,7 +120,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
 
 export interface ILocationRedirectionError extends IDriverErrorBase {
     readonly errorType: DriverErrorType.locationRedirection;
-    readonly redirectUrl?: IResolvedUrl;
+    readonly redirectUrl: IResolvedUrl;
 }
 
 /**
