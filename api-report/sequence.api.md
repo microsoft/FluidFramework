@@ -77,6 +77,12 @@ export interface IJSONRunSegment<T> extends IJSONSegment {
     items: Serializable<T>[];
 }
 
+// @internal (undocumented)
+export interface IMapMessageLocalMetadata {
+    // (undocumented)
+    localSeq: number;
+}
+
 // @public (undocumented)
 export class Interval implements ISerializableInterval {
     constructor(start: number, end: number, props?: PropertySet);
@@ -122,6 +128,7 @@ export class Interval implements ISerializableInterval {
 export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
+    // @internal
     constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]);
     // @internal (undocumented)
     ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
@@ -168,6 +175,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     nextInterval(pos: number): TInterval;
     // (undocumented)
     previousInterval(pos: number): TInterval;
+    // @internal (undocumented)
+    rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
     // (undocumented)
     removeIntervalById(id: string): TInterval;
     // (undocumented)
@@ -203,6 +212,12 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     // (undocumented)
     propertyDeltas: PropertySet;
     segment: ISegment;
+}
+
+// @public
+export interface ISequenceIntervalEvents extends IEvent {
+    // (undocumented)
+    (event: "beforePositionChange" | "afterPositionChange", listener: () => void): any;
 }
 
 // @public (undocumented)
@@ -258,10 +273,9 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
     posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
-// @public
+// @internal
 export interface IValueOpEmitter {
-    // @alpha
-    emit(opName: string, previousValue: any, params: any): void;
+    emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
 }
 
 // @public @deprecated (undocumented)
@@ -372,7 +386,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 }
 
 // @public (undocumented)
-export class SequenceInterval implements ISerializableInterval {
+export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents> implements ISerializableInterval {
     constructor(start: LocalReference, end: LocalReference, intervalType: IntervalType, props?: PropertySet);
     // (undocumented)
     addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;

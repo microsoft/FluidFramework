@@ -1,0 +1,15 @@
+{
+    "folders": [
+      {
+        "name": "FluidFramework",
+        "path": "../../../../"
+      },
+      {
+        "name": "@fluid-internal/tree",
+        "path": ".."
+      }
+    ],
+    "settings": {
+      "terminal.integrated.cwd": "../../.."
+    }
+  }

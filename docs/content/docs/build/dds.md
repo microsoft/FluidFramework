@@ -59,9 +59,13 @@ generally fall into two broad categories: *optimistic* and *consensus-based*.
 
 ### Optimistic data structures
 
-Optimistic DDSes apply Fluid operations locally before they are sequenced by the Fluid service. The local
-changes are said to be applied *optimistically*, hence the name *optimistic DDSes*. The DDSes also apply remote
-operations as they are made in a consistent way.
+Optimistic DDSes apply Fluid operations locally before they are sequenced by the Fluid service.
+The local changes are said to be applied *optimistically* in that they are applied **before** receiving confirmation from the Fluid service, hence the name *optimistic DDSes*.
+
+The benefit to this approach is the user-perceived performance; operations made by the user are reflected immediately.
+The potential down-side to this approach is consistency; if another collaborator makes a concurrent edit that conflicts with, the DDS's merge resolution might end up changing the user's action after the fact.
+
+The DDSes will apply remote operations as they are made, and will always arrive at a consistent state.
 
 Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedSequence][], and [SharedString][].
 
