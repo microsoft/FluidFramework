@@ -335,6 +335,7 @@ declare function get_old_InterfaceDeclaration_IDataObjectProps():
 declare function use_current_InterfaceDeclaration_IDataObjectProps(
     use: TypeOnly<current.IDataObjectProps>);
 use_current_InterfaceDeclaration_IDataObjectProps(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDataObjectProps());
 
 /*
@@ -347,6 +348,7 @@ declare function get_current_InterfaceDeclaration_IDataObjectProps():
 declare function use_old_InterfaceDeclaration_IDataObjectProps(
     use: TypeOnly<old.IDataObjectProps>);
 use_old_InterfaceDeclaration_IDataObjectProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDataObjectProps());
 
 /*
