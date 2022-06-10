@@ -1690,12 +1690,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     /**
-     * Adds a sequenced signal client to the in-memory map
+     * Adds a sequenced signal client to the in-memory map.
+     * Alfred will periodically send ExtendClient control messages, which will extend the client expiration times.
      * @param clientJoinMessage - Client join message (from dataContent)
      * @param signalMessage - Ticketed join signal message
      */
     private addSequencedSignalClient(clientJoinMessage: IClientJoin, signalMessage: ISignalMessageOutput) {
-        // store the read client in-memory, including the signal sequence numbers
         const sequencedSignalClient: ISequencedSignalClient = {
             client: clientJoinMessage.detail,
             referenceSequenceNumber: (signalMessage.message.operation as any).referenceSequenceNumber,
