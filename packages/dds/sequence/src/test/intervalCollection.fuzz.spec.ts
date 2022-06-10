@@ -26,10 +26,10 @@ import {
     MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { PropertySet } from "@fluidframework/merge-tree";
 import { SharedString } from "../sharedString";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
-import { PropertySet } from "@fluidframework/merge-tree";
 
 const testCount = 10;
 
@@ -88,7 +88,7 @@ interface DeleteInterval extends ClientSpec, IntervalCollectionSpec {
 interface ChangeProperties extends ClientSpec, IntervalCollectionSpec {
     type: "changeProperties";
     id: string;
-    properties: PropertySet
+    properties: PropertySet;
 }
 
 interface ChangeConnectionState extends ClientSpec {
@@ -171,7 +171,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         const propsToChange = propNamesShuffled.slice(0, state.random.integer(1, propNamesShuffled.length));
         const propSet: PropertySet = {};
         for (const name of propsToChange) {
-            propSet[name] = state.random.string(5)
+            propSet[name] = state.random.string(5);
         }
         return propSet;
     }
@@ -241,8 +241,8 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
             type: "changeProperties",
             ...interval(state),
             properties: propertySet(state),
-            stringId: state.sharedString.id
-        }
+            stringId: state.sharedString.id,
+        };
     }
 
     function changeConnectionState(state: ClientOpState): ChangeConnectionState {
@@ -448,9 +448,9 @@ function runIntervalCollectionFuzz(
                 containerRuntime.connected = connected;
             }),
             changeProperties: statefully(({ clients }, { stringId, id, properties, collectionName }) => {
-                const { sharedString } = clients.find((c) => c.sharedString.id === stringId):
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 const collection = sharedString.getIntervalCollection(collectionName);
-                collection.changeProperties(id, properties);
+                collection.changeProperties(id, { ...properties });
             }),
         },
         initialState,
