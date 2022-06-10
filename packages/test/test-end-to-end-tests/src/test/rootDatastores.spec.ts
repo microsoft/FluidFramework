@@ -25,7 +25,7 @@ import {
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { Loader } from "@fluidframework/container-loader";
-import { GenericError } from "@fluidframework/container-utils";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
@@ -297,6 +297,19 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal(aliasResult2, "Conflict");
 
             assert.ok(await getRootDataStore(dataObject1, alias));
+        });
+
+        it("Slashes in aliases is not supported", async () => {
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
+
+            const aliasResult1 = await ds1.trySetAlias(alias);
+            const aliasResult2 = await ds1.trySetAlias(`${alias}/${alias}`);
+            const aliasResult3 = await ds2.trySetAlias(`${alias}/${alias}`);
+
+            assert.equal(aliasResult1, "Success");
+            assert.equal(aliasResult2, "AlreadyAliased");
+            assert.equal(aliasResult3, "UnsupportedAlias");
         });
 
         it("Aliasing a datastore is idempotent", async () => {

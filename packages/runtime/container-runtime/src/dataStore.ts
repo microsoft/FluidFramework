@@ -56,7 +56,7 @@ class DataStore implements IDataStore {
 
     async trySetAlias(alias: string): Promise<AliasResult> {
         switch (this.aliasState) {
-            // If we're already aliasing, throw an exception
+            // If we're already aliasing, do nothing
             case AliasState.Aliasing:
                 return "Aliasing";
             // If this datastore is already aliased, return true only if this
@@ -67,6 +67,10 @@ class DataStore implements IDataStore {
             // it is safe to continue execution
             case AliasState.None: break;
             default: unreachableCase(this.aliasState);
+        }
+
+        if (alias.includes("/")) {
+            return "UnsupportedAlias";
         }
 
         this.aliasState = AliasState.Aliasing;
