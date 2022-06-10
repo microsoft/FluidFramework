@@ -310,7 +310,7 @@ export function configureWebSocketServices(
             messageClient.user = claims.user;
             messageClient.scopes = claims.scopes;
 
-             // 1. Do not give SummaryWrite scope to clients that are not summarizers.
+            // 1. Do not give SummaryWrite scope to clients that are not summarizers.
             // 2. Store connection timestamp for all clients but the summarizer.
             // Connection timestamp is used (inside socket disconnect event) to
             // calculate the client connection time (i.e. for billing).
@@ -603,6 +603,7 @@ export function configureWebSocketServices(
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("disconnect", async () => {
             clearExpirationTimer();
+            const removeAndStoreP: Promise<void>[] = [];
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
@@ -616,18 +617,17 @@ export function configureWebSocketServices(
                 if (isClientConnectivityCountingEnabled && throttleAndUsageStorageManager) {
                     const connectionTimestamp = connectionTimeMap.get(clientId);
                     if (connectionTimestamp) {
-                        await storeClientConnectivityTime(
+                        removeAndStoreP.push(storeClientConnectivityTime(
                             clientId,
                             connection.documentId,
                             connection.tenantId,
                             connectionTimestamp,
                             throttleAndUsageStorageManager,
-                        );
+                        ));
                     }
                 }
             }
             // Send notification messages for all client IDs in the room map
-            const removeP: Promise<void>[] = [];
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
@@ -635,10 +635,10 @@ export function configureWebSocketServices(
                     `Disconnect of ${clientId} from room`,
                     getLumberBaseProperties(room.documentId, room.tenantId),
                 );
-                removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
+                removeAndStoreP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
                 socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
             }
-            await Promise.all(removeP);
+            await Promise.all(removeAndStoreP);
         });
     });
 }
