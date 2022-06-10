@@ -1,3 +1,4 @@
+
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -476,7 +477,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
                         if (sequencedMessage.type === MessageType.ClientJoin) {
                             this.addSequencedSignalClient(dataContent as IClientJoin, signalMessage);
-
                         } else {
                             this.sequencedSignalClients.delete(dataContent);
                         }
