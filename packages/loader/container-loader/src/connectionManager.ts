@@ -16,7 +16,7 @@ import {
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import {
-    GenericError,
+    GenericError, UsageError,
 } from "@fluidframework/container-utils";
 import {
     IDocumentService,
@@ -370,8 +370,7 @@ export class ConnectionManager implements IConnectionManager {
         this._forceReadonly = readonly;
 
         if (oldValue !== this.readonly) {
-            assert(this._reconnectMode !== ReconnectMode.Never,
-                0x279 /* "API is not supported for non-connecting or closed container" */);
+            throw new UsageError("API is not supported for non-connecting or closed container");
 
             let reconnect = false;
             if (this.readonly === true) {
