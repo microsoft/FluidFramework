@@ -219,7 +219,7 @@ export interface IDirectoryNewStorageFormat {
  * TODO: what are the semantics of this?
  * @sealed
  */
-export class DirectoryFactory {
+export class DirectoryFactory implements IChannelFactory {
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
