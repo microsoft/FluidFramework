@@ -65,8 +65,7 @@
         "forwardCompat": false
       },
       "EnumDeclaration_OdspErrorType": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": false
       }
     }
   }

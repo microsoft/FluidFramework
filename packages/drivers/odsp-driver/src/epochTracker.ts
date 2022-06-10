@@ -20,6 +20,7 @@ import {
     IFileEntry,
     IPersistedCache,
     IOdspError,
+    IOdspErrorAugmentations,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
@@ -233,20 +234,21 @@ export class EpochTracker implements IPersistedFileCache {
         }).catch((error) => {
             // If the error is about location redirection, then we need to generate new resolved url with correct
             // location info.
-            if (isFluidError(error) && error.errorType === DriverErrorType.locationRedirection) {
-                const redirectLocation = error.getTelemetryProperties().redirectLocation?.toString();
-                assert(redirectLocation !== undefined, "locationRedirection error should contain redirectLocation");
-                const patchedResolvedUrl = patchOdspResolvedUrl(
-                    this.fileEntry.resolvedUrl,
-                    redirectLocation,
-                );
-                const locationRedirectionError = new LocationRedirectionError(
-                    error.message,
-                    patchedResolvedUrl,
-                    { driverVersion, redirectLocation },
-                );
-                locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
-                throw locationRedirectionError;
+            if (isFluidError(error) && error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
+                const redirectLocation = (error as IOdspErrorAugmentations).redirectLocation;
+                if (redirectLocation !== undefined) {
+                    const patchedResolvedUrl = patchOdspResolvedUrl(
+                        this.fileEntry.resolvedUrl,
+                        redirectLocation,
+                    );
+                    const locationRedirectionError = new LocationRedirectionError(
+                        error.message,
+                        patchedResolvedUrl,
+                        { driverVersion, redirectLocation },
+                    );
+                    locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
+                    throw locationRedirectionError;
+                }
             }
             throw error;
         }).catch((error) => {
