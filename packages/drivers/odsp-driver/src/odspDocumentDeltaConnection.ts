@@ -127,8 +127,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             // comes in from "disconnect" listener below, before we close socket.
             this.isPendingInitialConnection = false;
 
-            // Explicitly cast error to the specified event args type to ensure type compatibility
-            this.emit("server_disconnect", error as IFluidErrorBase & OdspError);
+            this.emit("server_disconnect", error);
             this.closeSocket();
         });
     }
