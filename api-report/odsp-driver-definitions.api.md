@@ -150,7 +150,7 @@ export interface ISnapshotOptions {
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
 
 // @public (undocumented)
-export type OdspError = (DriverError | IOdspError) & IOdspErrorAugmentations;
+export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
 // @public (undocumented)
 export enum OdspErrorType {

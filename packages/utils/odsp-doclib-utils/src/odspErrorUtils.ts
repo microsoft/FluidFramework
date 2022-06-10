@@ -14,7 +14,7 @@ import {
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { OdspErrorType, OdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspErrorType, OdspError, IOdspErrorAugmentations } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
@@ -299,4 +299,8 @@ function numberFromHeader(header: string | null): number | undefined {
         return undefined;
     }
     return n;
+}
+
+export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
+    return Array.isArray(x?.facetCodes);
 }

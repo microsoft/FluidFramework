@@ -33,7 +33,6 @@ import {
     HostStoragePolicy,
     InstrumentedStorageTokenFetcher,
     OdspErrorType,
-    IOdspErrorAugmentations,
 } from "@fluidframework/odsp-driver-definitions";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
@@ -48,6 +47,7 @@ import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -341,9 +341,8 @@ export class OdspDocumentService implements IDocumentService {
         options: TokenFetchOptionsEx,
     ) {
         return this.joinSessionCore(requestSocketToken, options).catch((e) => {
-            const likelyFacetCodes = (e as IOdspErrorAugmentations);
-            if (Array.isArray(likelyFacetCodes.facetCodes)) {
-                for (const code of likelyFacetCodes.facetCodes) {
+            if (hasFacetCodes(e) && e.facetCodes !== undefined) {
+                for (const code of e.facetCodes) {
                     switch (code) {
                         case "sessionForbiddenOnPreservedFiles":
                         case "sessionForbiddenOnModerationEnabledLibrary":
