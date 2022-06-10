@@ -279,7 +279,7 @@ describe("Odsp Error", () => {
         };
         const error: any = createOdspNetworkErrorWithResponse(
             "The site has been moved to a new location.", 404, undefined, JSON.stringify(responseText));
-        assert.strictEqual(error.errorType, DriverErrorType.locationRedirection, "Error type should be locationRedirection");
+        assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError, "Error type should be locationRedirection");
         assert.strictEqual(error.redirectLocation, redirectLocation, "Site location should match");
         assert.strictEqual(error.statusCode, 404, "Status code should match");
     });

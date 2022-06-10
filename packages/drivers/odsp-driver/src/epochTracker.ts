@@ -21,6 +21,7 @@ import {
     IPersistedCache,
     IOdspError,
     IOdspErrorAugmentations,
+    IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
@@ -237,13 +238,13 @@ export class EpochTracker implements IPersistedFileCache {
             if (isFluidError(error) && error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
                 const redirectLocation = (error as IOdspErrorAugmentations).redirectLocation;
                 if (redirectLocation !== undefined) {
-                    const patchedResolvedUrl = patchOdspResolvedUrl(
+                    const redirectUrl: IOdspResolvedUrl = patchOdspResolvedUrl(
                         this.fileEntry.resolvedUrl,
                         redirectLocation,
                     );
                     const locationRedirectionError = new LocationRedirectionError(
                         error.message,
-                        patchedResolvedUrl,
+                        redirectUrl,
                         { driverVersion, redirectLocation },
                     );
                     locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
