@@ -1235,10 +1235,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         code: number,
         type: NackErrorType,
         reason: string,
-        retryAfter?: number): INackMessageOutput {
+        retryAfter?: number): INackMessageOutput | undefined {
+        const clientId = message.clientId;
+        if (!clientId) {
+            // message was sent by the system and not a client
+            // "nacking" the system is not supported
+            return undefined;
+        }
+
         const nackMessage: INackMessage = {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            clientId: message.clientId!,
+            clientId,
             documentId: this.documentId,
             operation: {
                 content: {

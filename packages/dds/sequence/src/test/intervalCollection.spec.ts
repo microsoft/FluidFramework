@@ -245,6 +245,31 @@ describe("SharedString interval collections", () => {
             ], false);
         });
 
+        it("remains consistent when a change to the same position but different segment is issued", () => {
+            // This is a regression test for an issue in LocalIntervalCollection, which avoided actually modifying
+            // intervals on change operations if it perceived them to already have the same position. That logic was
+            // invalid in 2 ways:
+            // 1. for remote ops, the position requested for change potentially refers to a different revision from
+            //    the local position.
+            // 2. for local ops, even if an interval appears to be at the position it's being changed to, it might
+            //    actually be associated with a removed segment and pending slide. In this case, failing to update
+            //    the interval locally but still emitting a change op causes inconsistent behavior, since subsequent
+            //    slides may be to different segments (in this test, the danger is that the client issuing the change
+            //    op may end up with their interval pointing to the "Y" if they fail to change it locally)
+            sharedString.insertText(0, "ABCDE");
+            const collection1 = sharedString.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+            const interval = collection1.add(1, 3, IntervalType.SlideOnRemove);
+            sharedString2.insertText(2, "XY");
+            sharedString2.removeRange(1, 3);
+            sharedString.removeRange(1, 4);
+            collection1.change(interval.getIntervalId(), 1, 1);
+            containerRuntimeFactory.processAllMessages();
+            assert.equal(sharedString.getText(), "AYE");
+            assertIntervals(sharedString, collection1, [{ start: 2, end: 2 }]);
+            assertIntervals(sharedString2, sharedString2.getIntervalCollection("test"), [{ start: 2, end: 2 }]);
+        });
+
         it("can slide intervals nearer to locally removed segment", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");
