@@ -151,6 +151,7 @@ export function createOdspNetworkError(
         }
     }
 
+    let redirectLocation: string | undefined;
     const driverProps = { driverVersion, statusCode, ...props };
 
     switch (statusCode) {
@@ -176,13 +177,7 @@ export function createOdspNetworkError(
                 // it returns 404 error instead of 308. Error thrown by server will contain the new redirect location.
                 // For reference we can look here: \packages\drivers\odsp-driver\src\fetchSnapshot.ts
                 const responseError = parseResult?.errorResponse?.error;
-                const redirectLocation = responseError?.["@error.redirectLocation"];
-                if (redirectLocation !== undefined) {
-                    const propsWithRedirectLocation = { ...driverProps, redirectLocation };
-                    error = new NonRetryableError(
-                        errorMessage, OdspErrorType.locationRedirection, propsWithRedirectLocation);
-                    break;
-                }
+                redirectLocation = responseError?.["@error.redirectLocation"];
             }
             error = new NonRetryableError(
                 errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, driverProps);
@@ -237,7 +232,7 @@ export function createOdspNetworkError(
                 errorMessage, { canRetry: true, retryAfterMs }, driverProps);
             break;
     }
-    enrichOdspError(error, response, facetCodes);
+    enrichOdspError(error, response, facetCodes, undefined, redirectLocation);
     return error;
 }
 
@@ -246,10 +241,15 @@ export function enrichOdspError(
     response?: Response,
     facetCodes?: string[],
     props: ITelemetryProperties = {},
+    redirectLocation?: string,
 ) {
     error.online = OnlineStatus[isOnline()];
     if (facetCodes !== undefined) {
         error.facetCodes = facetCodes;
+    }
+
+    if (redirectLocation !== undefined) {
+        error.redirectLocation = redirectLocation;
     }
 
     if (response) {

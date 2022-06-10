@@ -58,7 +58,14 @@
     "version": "1.0.0",
     "broken": {
       "TypeAliasDeclaration_OdspError": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IOdspError": {
+        "forwardCompat": false
+      },
+      "EnumDeclaration_OdspErrorType": {
+        "forwardCompat": false
       }
     }
   }
