@@ -21,7 +21,12 @@ import {
     IDocumentServicePolicies,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { DeltaStreamConnectionForbiddenError, NonRetryableError, UsageError } from "@fluidframework/driver-utils";
+import {
+    DeltaStreamConnectionForbiddenError,
+    NonRetryableError,
+    UsageError,
+    NoOpDocumentDeltaStorageService,
+} from "@fluidframework/driver-utils";
 import { IFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,
@@ -540,15 +545,13 @@ export class OdspDocumentService implements IDocumentService {
 }
 
 export class LocalOdspDocumentService implements IDocumentService {
-    policies?: IDocumentServicePolicies | undefined;
+    public policies = { storageOnly: true };
 
     constructor(
         private readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly logger: ITelemetryLogger,
         private readonly localSnapshot: Uint8Array | string,
-    ) {
-        this.policies = { storageOnly: true };
-    }
+    ) { }
 
     public get resolvedUrl(): IResolvedUrl {
         return this.odspResolvedUrl;
@@ -562,17 +565,16 @@ export class LocalOdspDocumentService implements IDocumentService {
     }
 
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        const toThrow = new UsageError("\"createContainer\" is not supported by LocalOdspDocumentServiceFactory");
+        return new NoOpDocumentDeltaStorageService();
+    }
+
+    public async connectToDeltaStream(_client: IClient): Promise<IDocumentDeltaConnection> {
+        const toThrow = new UsageError("\"connectToDeltaStream\" is not supported by LocalOdspDocumentService");
         this.logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
         throw toThrow;
     }
 
-    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-        // TODO: we expect this call to be made. see PR
-        throw new Error("Method not implemented.");
-    }
-
-    public dispose(error?: any): void {
+    public dispose(_error?: any): void {
         // Do nothing
     }
 }

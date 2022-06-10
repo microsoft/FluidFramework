@@ -50,21 +50,22 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
     ) {
         super(
             async (_options) => {
-                const toThrow = new UsageError(
-                    "Getting storage token is not supported by LocalOdspDocumentServiceFactory");
-                this.logger?.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
-                throw toThrow;
+                return this.throwUnsupportedUsage("Getting storage token");
             },
-            undefined,
+            async (_options) => {
+                return this.throwUnsupportedUsage("Getting websocket token");
+            },
             async () => {
-                const toThrow = new UsageError(
-                    "Getting SocketIO Client is not supported by LocalOdspDocumentServiceFactory");
-                this.logger?.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
-                throw toThrow;
+                return this.throwUnsupportedUsage("Getting SocketIO Client");
             },
-            undefined, // TODO: need to adjust constructor of base class
-            undefined, // TODO: need to adjust constructor of base class
         );
+    }
+
+    private throwUnsupportedUsage<T>(unsupportedFuncName: string): T {
+        const toThrow = new UsageError(
+            `${unsupportedFuncName} is not supported by LocalOdspDocumentServiceFactory`);
+        this.logger?.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+        throw toThrow;
     }
 
     public async createContainer(
