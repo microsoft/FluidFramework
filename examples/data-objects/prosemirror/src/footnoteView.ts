@@ -123,7 +123,7 @@ export class FootnoteView {
 
     stopEvent(event) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.innerView && this.innerView.dom.contains(event.target);
+        return this.innerView?.dom.contains(event.target);
     }
 
     ignoreMutation() { return true; }

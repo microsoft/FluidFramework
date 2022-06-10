@@ -85,8 +85,8 @@ export interface IClientConfiguration {
     blockSize: number;
     // (undocumented)
     maxMessageSize: number;
-    // (undocumented)
-    summary: ISummaryConfiguration;
+    noopCountFrequency?: number;
+    noopTimeFrequency?: number;
 }
 
 // @public (undocumented)
@@ -406,7 +406,7 @@ export interface ISummaryAck {
     summaryProposal: ISummaryProposal;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryAttachment {
     // (undocumented)
     id: string;
@@ -424,7 +424,7 @@ export interface ISummaryAuthor {
     name: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryBlob {
     // (undocumented)
     content: string | Uint8Array;
@@ -443,20 +443,6 @@ export interface ISummaryCommitter {
 }
 
 // @public (undocumented)
-export interface ISummaryConfiguration {
-    // (undocumented)
-    disableSummaries?: boolean;
-    // (undocumented)
-    idleTime: number;
-    // (undocumented)
-    maxAckWaitTime: number;
-    // (undocumented)
-    maxOps: number;
-    // (undocumented)
-    maxTime: number;
-}
-
-// @public (undocumented)
 export interface ISummaryContent {
     // (undocumented)
     details?: IUploadedSummaryDetails;
@@ -470,11 +456,9 @@ export interface ISummaryContent {
     parents: string[];
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryHandle {
-    // (undocumented)
     handle: string;
-    // (undocumented)
     handleType: SummaryTypeNoHandle;
     // (undocumented)
     type: SummaryType.Handle;
@@ -503,7 +487,7 @@ export interface ISummaryTokenClaims {
     sub: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryTree {
     // (undocumented)
     tree: {
@@ -662,7 +646,7 @@ export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISumm
 // @public (undocumented)
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
-// @public (undocumented)
+// @public
 export namespace SummaryType {
     // (undocumented)
     export type Attachment = 4;
@@ -672,14 +656,10 @@ export namespace SummaryType {
     export type Handle = 3;
     // (undocumented)
     export type Tree = 1;
-    const // (undocumented)
-    Tree: Tree;
-    const // (undocumented)
-    Blob: Blob;
-    const // (undocumented)
-    Handle: Handle;
-    const // (undocumented)
-    Attachment: Attachment;
+    const Tree: Tree;
+    const Blob: Blob;
+    const Handle: Handle;
+    const Attachment: Attachment;
 }
 
 // @public (undocumented)
@@ -697,7 +677,6 @@ export enum TreeEntry {
     // (undocumented)
     Tree = "Tree"
 }
-
 
 // (No @packageDocumentation comment for this package)
 

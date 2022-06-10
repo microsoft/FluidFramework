@@ -11,6 +11,7 @@ import { Router } from "express";
 import nconf from "nconf";
 import {
     getExternalWriterParams,
+    getRepoManagerFromWriteAPI,
     getRepoManagerParamsFromRequest,
     IRepositoryManagerFactory,
     logAndThrowApiError,
@@ -28,6 +29,7 @@ export function create(
     repoManagerFactory: IRepositoryManagerFactory,
 ): Router {
     const router: Router = Router();
+    const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
     // https://developer.github.com/v3/git/refs/
 
@@ -53,7 +55,7 @@ export function create(
     router.post("/repos/:owner/:repo/git/refs", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const createRefParams = request.body as ICreateRefParamsExternal;
-        const resultP = repoManagerFactory.open(repoManagerParams)
+        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
             .then(async (repoManager) => repoManager.createRef(
                 createRefParams,
                 createRefParams.config,
@@ -64,7 +66,7 @@ export function create(
     router.patch("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const patchRefParams = request.body as IPatchRefParamsExternal;
-        const resultP = repoManagerFactory.open(repoManagerParams)
+        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
             .then(async (repoManager) => repoManager.patchRef(
                 getRefId(request.params[0]),
                 patchRefParams,

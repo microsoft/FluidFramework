@@ -73,16 +73,16 @@ class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
 }
 
 /**
- * Manages the Undo and Redo stacks, and operations withing those stacks.
+ * Manages the Undo and Redo stacks, and operations within those stacks.
  * Allows adding items to the current operation on the stack, closing the current operation,
- * and issuing and undo or a redo.
+ * and issuing an undo or a redo.
  */
 export class UndoRedoStackManager {
     private static revert(
         revertStack: UndoRedoStack,
         pushStack: UndoRedoStack,
     ) {
-        // Close the pushStack, as it could get  new ops
+        // Close the pushStack, as it could get new ops
         // from the revert, and we don't want those combined
         // with any existing operation
         pushStack.closeCurrentOperationIfInProgress();
@@ -107,7 +107,6 @@ export class UndoRedoStackManager {
 
         // Make sure both stacks have any open operations
         // closed, since we won't want anything added to those
-        //
         revertStack.closeCurrentOperationIfInProgress();
         pushStack.closeCurrentOperationIfInProgress();
     }
@@ -191,10 +190,10 @@ export class UndoRedoStackManager {
 
     private clearRedoStack() {
         while (!this.redoStack.empty()) {
-            const redoOpertionStack = this.redoStack.pop();
-            if (redoOpertionStack !== undefined) {
-                while (!redoOpertionStack.empty()) {
-                    const redoOperation = redoOpertionStack.pop();
+            const redoOperationStack = this.redoStack.pop();
+            if (redoOperationStack !== undefined) {
+                while (!redoOperationStack.empty()) {
+                    const redoOperation = redoOperationStack.pop();
                     if (redoOperation !== undefined) {
                         redoOperation.discard();
                     }

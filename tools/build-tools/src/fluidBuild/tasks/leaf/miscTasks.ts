@@ -6,6 +6,7 @@
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
 import { logVerbose } from "../../../common/logging";
+import { ScriptDependencies } from "../../../common/npmPackage";
 import * as path from "path";
 import { BuildPackage } from "../../buildGraph";
 
@@ -47,8 +48,8 @@ export class CopyfilesTask extends LeafTask {
     private readonly copySrcArg: string = "";
     private readonly copyDstArg: string = "";
 
-    constructor(node: BuildPackage, command: string) {
-        super(node, command);
+    constructor(node: BuildPackage, command: string, scriptDeps: ScriptDependencies) {
+        super(node, command, scriptDeps);
 
         // TODO: something better
         const args = this.command.split(" ");

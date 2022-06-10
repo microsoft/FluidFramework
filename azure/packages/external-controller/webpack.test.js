@@ -5,6 +5,7 @@
 
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = env => {
     return ({
@@ -15,14 +16,12 @@ module.exports = env => {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{
-                test: /\.tsx?$/,
-                loader: require.resolve("ts-loader")
-            },
-            {
-                test: /\.css$/i,
-                use: [require.resolve('style-loader'), require.resolve('css-loader')],
-            }]
+            rules: [
+                {
+                    test: /\.tsx?$/,
+                    loader: require.resolve("ts-loader")
+                },
+            ]
         },
         output: {
             filename: "[name].bundle.js",
@@ -39,6 +38,9 @@ module.exports = env => {
             }
         },
         plugins: [
+            new webpack.ProvidePlugin({
+                process: 'process/browser'
+            }),
             new HtmlWebpackPlugin({
                 template: "./tests/index.html",
             }),

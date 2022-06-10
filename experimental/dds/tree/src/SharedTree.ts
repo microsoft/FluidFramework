@@ -25,7 +25,7 @@ import {
 import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { assert, assertNotUndefined, fail, copyPropertyIfDefined } from './Common';
+import { assert, assertNotUndefined, fail, copyPropertyIfDefined, noop } from './Common';
 import { EditHandle, EditLog, getNumberOfHandlesFromEditLogSummary, OrderedEditSet } from './EditLog';
 import {
 	EditId,
@@ -716,9 +716,19 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	/**
-	 * Uploads the edit chunk and sends the chunk starting revision along with the resulting handle as an op.
+	 * Uploads the edit chunk and submits a `SharedTreeHandleOp`.
+	 * This method is fire-and-forget and will swallow any errors that occur during upload or the `onUploadComplete` hook.
+	 * If the upload or op submission does fail then a future client will attempt the submission instead.
 	 */
-	private async uploadEditChunk(
+	private uploadEditChunk(
+		edits: readonly EditWithoutId<ChangeInternal>[],
+		startRevision: number,
+		onUploadComplete?: () => void
+	): void {
+		this.uploadEditChunkAsync(edits, startRevision).then(onUploadComplete).catch(noop);
+	}
+
+	private async uploadEditChunkAsync(
 		edits: readonly EditWithoutId<ChangeInternal>[],
 		startRevision: number
 	): Promise<void> {
@@ -1025,14 +1035,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	private uploadCatchUpBlobs(): void {
 		if (this.writeFormat !== WriteFormat.v0_0_2 && this.uploadEditChunks) {
 			for (const [startRevision, chunk] of this.editLog.getEditChunksReadyForUpload()) {
-				this.uploadEditChunk(chunk, startRevision)
-					.then(() => {
-						this.emit(SharedTreeDiagnosticEvent.CatchUpBlobUploaded);
-						this.logger.sendTelemetryEvent({ eventName: 'CatchUpBlobUpload', chunkSize: chunk.length });
-					})
-					// It is safe to swallow errors from edit chunk upload because the next summary load will
-					// do another attempt to upload the edit chunks that couldn't previously be uploaded
-					.catch((error) => {});
+				this.uploadEditChunk(chunk, startRevision, () => {
+					this.emit(SharedTreeDiagnosticEvent.CatchUpBlobUploaded);
+					this.logger.sendTelemetryEvent({ eventName: 'CatchUpBlobUpload', chunkSize: chunk.length });
+				});
 			}
 		}
 	}
@@ -1202,16 +1208,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					const [startRevision, chunk] = lastPair;
 					const edits = assertNotUndefined(chunk.edits);
 					if (edits.length === this.editLog.editsPerChunk) {
-						this.uploadEditChunk(edits, startRevision)
-							.then(() => {
-								this.logger.sendTelemetryEvent({
-									eventName: 'EditChunkUpload',
-									chunkSize: edits.length,
-								});
-							})
-							// It is safe to swallow errors from edit chunk upload because the next summary load will
-							// do another attempt to upload the edit chunks that couldn't previously be uploaded
-							.catch((error) => {});
+						this.uploadEditChunk(edits, startRevision, () => {
+							this.logger.sendTelemetryEvent({
+								eventName: 'EditChunkUpload',
+								chunkSize: edits.length,
+							});
+						});
 					}
 				}
 			}

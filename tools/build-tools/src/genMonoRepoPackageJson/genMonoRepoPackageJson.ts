@@ -19,10 +19,11 @@ Usage: fluid-gen-pkg-lock <options>
 Options:
 ${commonOptionString}
      --server         Generate package lock for server mono repo (default: client)
+     --azure          Generate package lock for azure mono repo (default: client)
 `);
 }
 
-let genServer = false;
+let kind = MonoRepoKind.Client;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -45,7 +46,12 @@ function parseOptions(argv: string[]) {
         }
 
         if (arg === "--server") {
-            genServer = true;
+            kind = MonoRepoKind.Server;
+            continue;
+        }
+
+        if (arg === "--azure") {
+            kind = MonoRepoKind.Azure;
             continue;
         }
 
@@ -216,10 +222,12 @@ async function main() {
     const repo = new FluidRepo(resolvedRoot, false);
     timer.time("Package scan completed");
 
-    if (!genServer) {
+    if (kind === MonoRepoKind.Client) {
         await generateMonoRepoInstallPackageJson(repo.clientMonoRepo);
-    } else if (repo.serverMonoRepo) {
+    } else if (kind === MonoRepoKind.Server && repo.serverMonoRepo) {
         await generateMonoRepoInstallPackageJson(repo.serverMonoRepo);
+    } else if (kind === MonoRepoKind.Azure && repo.azureMonoRepo) {
+        await generateMonoRepoInstallPackageJson(repo.azureMonoRepo);
     }
 };
 

@@ -90,8 +90,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         this.servicesGetter().value.deltaConnection.reSubmit(content, localOpMetadata);
     }
     public rollback(content: any, localOpMetadata: unknown) {
-        assert(this.isLoaded, "Channel should be loaded to rollback ops");
-        assert(this.globallyVisible, "Local channel must be globally visible when rolling back op");
+        assert(this.isLoaded, 0x2ee /* "Channel should be loaded to rollback ops" */);
+        assert(this.globallyVisible, 0x2ef /* "Local channel must be globally visible when rolling back op" */);
         this.servicesGetter().value.deltaConnection.rollback(content, localOpMetadata);
     }
 

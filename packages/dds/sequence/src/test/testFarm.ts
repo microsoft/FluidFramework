@@ -111,7 +111,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
         const segoff1 = client.getContainingSegment(pos1);
         const segoff2 = client.getContainingSegment(pos2);
 
-        if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
+        if (segoff1?.segment && segoff2?.segment) {
             const baseSegment1 = <MergeTree.BaseSegment>segoff1.segment;
             const baseSegment2 = <MergeTree.BaseSegment>segoff2.segment;
             const lref1 = new MergeTree.LocalReference(client, baseSegment1, segoff1.offset);
@@ -140,7 +140,7 @@ function makeReferences(client: TestClient, referenceCount: number) {
     for (let i = 0; i < referenceCount; i++) {
         const pos = random.integer(0, len - 1)(mt);
         const segoff = client.getContainingSegment(pos);
-        if (segoff && segoff.segment) {
+        if (segoff?.segment) {
             const baseSegment = <MergeTree.BaseSegment>segoff.segment;
             const lref = new MergeTree.LocalReference(client, baseSegment, segoff.offset);
             if (i & 1) {
@@ -587,7 +587,7 @@ export function TestPack(verbose = true) {
                         checkPos[i] = random.integer(0, len - 2)(mt2);
                         const segoff1 = testServer.getContainingSegment(checkPos[i]);
                         const segoff2 = testServer.getContainingSegment(checkPos[i] + 1);
-                        if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
+                        if (segoff1?.segment && segoff2?.segment) {
                             const lrefPos1 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             const lrefPos2 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
                             checkPosRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, SharedString.IntervalType.Simple);
@@ -605,7 +605,7 @@ export function TestPack(verbose = true) {
                         checkRange[i] = [b, b + rangeSize];
                         const segoff1 = testServer.getContainingSegment(checkRange[i][0]);
                         const segoff2 = testServer.getContainingSegment(checkRange[i][1]);
-                        if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
+                        if (segoff1?.segment && segoff2?.segment) {
                             const lrefPos1 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             const lrefPos2 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
                             checkRangeRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, SharedString.IntervalType.Simple);

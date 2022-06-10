@@ -99,7 +99,7 @@ function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats):
     }
 }
 
-export function calculateStats(summary: ISummaryTree): ISummaryStats {
+export function calculateStats(summary: SummaryObject): ISummaryStats {
     const stats = mergeStats();
     calculateStatsCore(summary, stats);
     return stats;
@@ -116,6 +116,15 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
 }
 
 export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void {
+    summary.summary.tree[key] = summarizeResult.summary;
+    summary.stats = mergeStats(summary.stats, summarizeResult.stats);
+}
+
+export function addSummarizeResultToSummary(
+    summary: ISummaryTreeWithStats,
+    key: string,
+    summarizeResult: ISummarizeResult,
+): void {
     summary.summary.tree[key] = summarizeResult.summary;
     summary.stats = mergeStats(summary.stats, summarizeResult.stats);
 }

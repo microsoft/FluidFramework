@@ -34,6 +34,7 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummarizeInternalFn } from '@fluidframework/runtime-definitions';
+import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 
@@ -41,10 +42,13 @@ import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
 
 // @public (undocumented)
+export function addSummarizeResultToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
+
+// @public (undocumented)
 export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
 
 // @public (undocumented)
-export function calculateStats(summary: ISummaryTree): ISummaryStats;
+export function calculateStats(summary: SummaryObject): ISummaryStats;
 
 // @public
 export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISummaryTreeWithStats;
@@ -109,7 +113,7 @@ export interface ISummarizerNodeRootContract {
 }
 
 // @public (undocumented)
-export function listBlobsAtTreePath(inputTree: ITree, path: string): Promise<string[]>;
+export function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]>;
 
 // @public
 export function mergeStats(...stats: ISummaryStats[]): ISummaryStats;

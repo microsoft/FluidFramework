@@ -16,7 +16,7 @@ import {
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { IOdspSnapshot, ISnapshotCachedEntry, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -323,7 +323,7 @@ async function fetchLatestSnapshotCore(
                     encodedBlobsSize,
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
-                    nonSysOps: snapshot.ops?.filter((op) => !isSystemMessage(op)).length ?? 0,
+                    userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
                     // Interval between the first fetch until the last byte of the last redirect.
                     redirectTime,
@@ -354,8 +354,6 @@ async function fetchLatestSnapshotCore(
         ).catch((error) => {
             // We hit these errors in stress tests, under load
             // It's useful to try one more time in such case.
-            // We might want to add DriverErrorType.offlineError in the future if we see evidence it happens
-            // (not in "real" offline) and it actually helps.
             if (typeof error === "object" && error !== null && (error.errorType === DriverErrorType.fetchFailure ||
                 error.errorType === OdspErrorType.fetchTimeout)) {
                 error[getWithRetryForTokenRefreshRepeat] = true;

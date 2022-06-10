@@ -28,6 +28,7 @@ export function executeOnInterval(
                 if (onErrorFn !== undefined) {
                     onErrorFn(error);
                 }
+                // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
                 if (shouldTerminateOnError !== undefined && shouldTerminateOnError(error)) {
                     Lumberjack.info(`Terminating job on error ${error} for ${callName}`);
                     scheduledJob.kill();

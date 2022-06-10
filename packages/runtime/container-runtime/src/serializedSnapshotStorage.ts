@@ -74,7 +74,7 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
         }
         for (const id of Object.values(tree.blobs)) {
             const blob = tree.blobsContents[id];
-            assert(!!blob, "Blob must be present in blobsContents");
+            assert(!!blob, 0x2ec /* "Blob must be present in blobsContents" */);
             // ArrayBufferLike will not survive JSON.stringify()
             blobs[id] = bufferToString(blob, "utf8");
         }

@@ -40,7 +40,7 @@ export function getCodeDetailsFromQuorumValues(
 ): IFluidCodeDetails {
     const qValuesMap = new Map(quorumValues);
     const proposal = qValuesMap.get("code");
-    assert(proposal !== undefined, "Cannot find code proposal");
+    assert(proposal !== undefined, 0x2dc /* "Cannot find code proposal" */);
     return proposal?.value as IFluidCodeDetails;
 }
 

@@ -45,6 +45,8 @@ const testContainerConfig: ITestContainerConfig = {
                     maxTime: 1000 * 5,
                     initialSummarizerDelayMs: 0,
                     maxOps,
+                    nonRuntimeOpWeight: 1.0,
+                    runtimeOpWeight: 1.0,
                 },
             },
             initialSummarizerDelayMs: 0,
@@ -142,7 +144,6 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
             const provider = getTestObjectProvider();
             switch (provider.driver.type) {
                 case "local":
-                case "tinylicious":
                     break;
                 default:
                     this.skip();
@@ -195,7 +196,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                     headers: { [LoaderHeader.loadMode]: testConfig.loadOptions },
                 }) as Container;
 
-                storageOnlyContainer.resume();
+                storageOnlyContainer.connect();
                 const deltaManager = storageOnlyContainer.deltaManager;
                 assert.strictEqual(deltaManager.active, false, "deltaManager.active");
                 assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");

@@ -6,7 +6,8 @@
 import type { IncomingMessage } from "http";
 import qs from "querystring";
 import { NetworkError, RestLessFieldNames } from "@fluidframework/server-services-client";
-import formidable from "formidable";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import inclusion = require("inclusion");
 
 export const decodeHeader = (
     header: string,
@@ -45,12 +46,16 @@ export class RestLessServer {
 
     private translateRequestFields(request: IncomingMessageEx, fields: Record<string, any>): void {
         // Parse and override HTTP Method
-        const methodOverride = fields[
+        const methodOverrideField = fields[
             RestLessFieldNames.Method
-        ] as string;
-        request.method = methodOverride;
+        ] as string[] | string;
+        if (methodOverrideField instanceof Array) {
+            request.method = methodOverrideField[0];
+        } else {
+            request.method = methodOverrideField;
+        }
         // Parse and add HTTP Headers
-        const headerField = fields[RestLessFieldNames.Header];
+        const headerField: string | string[] = fields[RestLessFieldNames.Header];
         let definedNewContentType: boolean = false;
         const parseAndSetHeader = (header: string) => {
             const { name, value } = decodeHeader(header);
@@ -71,10 +76,14 @@ export class RestLessServer {
             request.headers["content-type"] = "application/json";
         }
         // Parse and replace request body
-        const bodyField = fields[RestLessFieldNames.Body];
+        const bodyField: string[] | string = fields[RestLessFieldNames.Body];
         // Tell body-parser middleware not to parse the body
         (request as any)._body = true;
-        request.body = bodyField;
+        if (bodyField instanceof Array) {
+            request.body = bodyField[0];
+        } else {
+            request.body = bodyField;
+        }
     }
 
     private parseRequestBody(request: IncomingMessageEx): void {
@@ -99,8 +108,9 @@ export class RestLessServer {
     }
 
     private async parseStreamRequestFormBody(request: IncomingMessageEx): Promise<void> {
+        const formidable = (await inclusion("formidable")).default;
         return new Promise<void>((resolve, reject) => {
-            const form = formidable({ multiples: true });
+            const form = formidable();
 
             form.parse(request, (err, fields) => {
                 if (err) {

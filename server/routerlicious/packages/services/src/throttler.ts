@@ -51,6 +51,7 @@ export class Throttler implements IThrottler {
 
         // check cached throttle status, but allow operation through if status is not yet cached
         const cachedThrottlerResponse = this.throttlerResponseCache.get(id);
+        // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
         if (cachedThrottlerResponse && cachedThrottlerResponse.throttleStatus) {
             const retryAfterInSeconds = Math.ceil(cachedThrottlerResponse.retryAfterInMs / 1000);
             this.logger?.info(`Throttled: ${id}`, {

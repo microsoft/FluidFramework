@@ -22,3 +22,4 @@ export * from "./runWithRetry";
 export * from "./treeConversions";
 export * from "./treeUtils";
 export * from "./error";
+export * from "./messageRecognition";

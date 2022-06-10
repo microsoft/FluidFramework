@@ -5,7 +5,10 @@
 
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
+
+const defaultNoopTimeFrequency = 2000;
+const defaultNoopCountFrequency = 50;
 
 // Here are key considerations when deciding conditions for when to send non-immediate noops:
 // 1. Sending them too often results in increase in file size and bandwidth, as well as catch up performance
@@ -28,35 +31,28 @@ import { isSystemMessage } from "@fluidframework/protocol-base";
 //    Note that system ops (including noops themselves) are excluded, so it's 1 noop per 50 real ops.
 export class CollabWindowTracker {
     private opsCountSinceNoop = 0;
-    private readonly timer: Timer;
+    private readonly timer: Timer | undefined;
 
     constructor(
         private readonly submit: (type: MessageType, contents: any) => void,
-        private readonly activeConnection: () => boolean,
-        NoopTimeFrequency: number = 2000,
-        private readonly NoopCountFrequency: number = 50,
+        NoopTimeFrequency: number = defaultNoopTimeFrequency,
+        private readonly NoopCountFrequency: number = defaultNoopCountFrequency,
     ) {
-        this.timer = new Timer(NoopTimeFrequency, () => {
-            // Can get here due to this.stopSequenceNumberUpdate() not resetting timer.
-            // Also timer callback can fire even after timer cancellation if it was queued before cancellation.
-            if (this.opsCountSinceNoop !== 0) {
-                assert(this.activeConnection(),
-                    0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
-                this.submitNoop(false /* immediate */);
-            }
-        });
+        if (NoopTimeFrequency !== Infinity) {
+            this.timer = new Timer(NoopTimeFrequency, () => {
+                // Can get here due to this.stopSequenceNumberUpdate() not resetting timer.
+                // Also timer callback can fire even after timer cancellation if it was queued before cancellation.
+                if (this.opsCountSinceNoop !== 0) {
+                    this.submitNoop(false /* immediate */);
+                }
+            });
+        }
     }
 
     /**
      * Schedules as ack to the server to update the reference sequence number
      */
     public scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
-        // Exit early for inactive (not in quorum or not writers) clients.
-        // They don't take part in the minimum sequence number calculation.
-        if (!this.activeConnection()) {
-            return;
-        }
-
         // While processing a message, an immediate no-op can be requested.
         // i.e. to expedite approve or commit phase of quorum.
         if (immediateNoOp) {
@@ -65,22 +61,26 @@ export class CollabWindowTracker {
         }
 
         // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
-        // update, which updates the MSN, then ack the update, etc...). Also, don't
-        // count system messages in ops count.
-        if (isSystemMessage(message)) {
+        // update, which updates the MSN, then ack the update, etc...).
+        // Intent here is for runtime (and DDSs) not to keep too much tracking state / memory
+        // due to runtime ops from other clients.
+        if (!isRuntimeMessage(message)) {
             return;
         }
-        assert(message.type !== MessageType.NoOp, 0x0ce /* "Don't acknowledge no-ops" */);
 
         this.opsCountSinceNoop++;
         if (this.opsCountSinceNoop >= this.NoopCountFrequency) {
             this.submitNoop(false /* immediate */);
             return;
         }
-        if (this.opsCountSinceNoop === 1) {
-            this.timer.restart();
+
+        if (this.timer !== undefined) {
+            if (this.opsCountSinceNoop === 1) {
+                this.timer.restart();
+            }
+
+            assert(this.timer.hasTimer, 0x242 /* "has timer" */);
         }
-        assert(this.timer.hasTimer, 0x242 /* "has timer" */);
     }
 
     private submitNoop(immediate: boolean) {

@@ -76,6 +76,7 @@ Options:
      --reinstall      Same as --uninstall --install.
      --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
   -s --script <name>  npm script to execute (default:build)
+     --azure          Operate on the azure monorepo (default: client monorepo). Overridden by `--all`
      --server         Operate on the server monorepo (default: client monorepo). Overridden by `--all`
      --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
      --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks more things in the repo together: exactly what additional things it links is unclear, but it is not everything. CI does not ensure this configuration is functional, so it may or may not work.

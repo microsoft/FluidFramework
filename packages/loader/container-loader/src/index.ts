@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export { ConnectionState } from "./connectionState";
 export {
-    ConnectionState,
     Container,
     IContainerLoadOptions,
     IContainerConfig,

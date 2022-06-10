@@ -5,16 +5,11 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        require.resolve("@fluidframework/eslint-config-fluid")
     ],
     "parserOptions": {
         "project": [ "./tsconfig.json", "./src/test/mocha/tsconfig.json", "./src/test/jest/tsconfig.json", "./src/test/types/tsconfig.json" ]
     },
     "rules": {
-        "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/strict-boolean-expressions": "off",
-        "no-bitwise": "off",
-        "no-null/no-null": "off",
-        "prefer-rest-params": "off"
     }
 }

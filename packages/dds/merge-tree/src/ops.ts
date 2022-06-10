@@ -11,6 +11,7 @@ export enum ReferenceType {
     RangeBegin = 0x10,
     RangeEnd = 0x20,
     SlideOnRemove = 0x40,
+    StayOnRemove = 0x80,
     Transient = 0x100,
 }
 

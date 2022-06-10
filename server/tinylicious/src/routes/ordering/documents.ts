@@ -49,7 +49,9 @@ export function create(storage: IDocumentStorage): Router {
             defaultHash,
             `http://${request.hostname}`,
             `http://${request.hostname}`,
-            values);
+            values,
+            false,
+        );
 
         createP.then(
             () => {

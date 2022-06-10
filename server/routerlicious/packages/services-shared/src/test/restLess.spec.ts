@@ -17,14 +17,13 @@ describe("RestLess", () => {
         id: "one",
         content: "Hello",
     };
-    let app: express.Application;
     let supertest: request.SuperTest<request.Test>;
     let database: Map<string, any>;
-    const setupApp = () => {
+    const setupApp = (restLessBeforeBodyParser: boolean = false) => {
         /**
          * Set up example (simple) express server with "authentication"
          */
-        app = express();
+        const app = express();
         database = new Map();
         // initialize RestLess server translation
         const restLessMiddleware: () => express.RequestHandler = () => {
@@ -36,7 +35,6 @@ describe("RestLess", () => {
                     .catch(next);
             };
         };
-        app.use(restLessMiddleware());
         // set up rudimentary authentication
         const authMiddleware: () => express.RequestHandler = () => (req, res, next) => {
             if (req.get("Authorization") !== `Bearer ${authToken}`) {
@@ -44,9 +42,17 @@ describe("RestLess", () => {
             }
             next();
         };
-        app.use(authMiddleware());
+        if (restLessBeforeBodyParser) {
+            app.use(restLessMiddleware());
+            app.use(authMiddleware());
+        }
         app.use(json());
-        app.use(urlencoded({ extended: true }));
+        // urlencoded does not recognize content-type: application/x-www-form-urlencoded
+        app.use(urlencoded({ extended: true, type: (req) => req.headers["content-type"]?.startsWith("application/x-www-form-urlencoded") }));
+        if (!restLessBeforeBodyParser) {
+            app.use(restLessMiddleware());
+            app.use(authMiddleware());
+        }
         app.get("/resource/:id", (req, res) => {
             const content = database.get(req.params.id);
             if (!content) {
@@ -90,7 +96,6 @@ describe("RestLess", () => {
     };
     const superRequest = (requestConfig: AxiosRequestConfig, translate = false) => {
         const reqConf = translate ? new RestLessClient().translate(requestConfig) : requestConfig;
-        // const reqConf = requestConfig;
         const req: request.Test = supertest[reqConf.method?.toLowerCase() ?? "get"](reqConf.url ?? "");
         req.send(reqConf.data);
         for (const [headerKey, headerValue] of Object.entries(reqConf.headers as Record<string, string> | undefined ?? {})) {
@@ -98,162 +103,166 @@ describe("RestLess", () => {
         }
         return req;
     }
-    before(() => {
-        setupApp();
-    });
-    beforeEach(() => {
-        database = new Map();
-    });
-    describe("un-translated (backwards compatible)", () => {
-        it("404, GET /resource/:id", async () => {
-            const requestConfig: AxiosRequestConfig = {
-                method: "get",
-                url: `/resource/${resource1.id}`,
-                headers: {
-                    "Authorization": `Bearer ${authToken}`,
-                },
-            };
-            const req = superRequest(requestConfig);
-            await req.expect(404);
-        });
-        it("200, GET /resource", async () => {
-            database.set(resource1.id, resource1.content);
-            const requestConfig: AxiosRequestConfig = {
-                method: "get",
-                url: `/resource/${resource1.id}`,
-                headers: {
-                    "Authorization": `Bearer ${authToken}`,
-                },
-            };
-            const req = superRequest(requestConfig);
-            await req.expect((res) => {
-                assert.strictEqual(res.status, 200);
-                assert.deepStrictEqual(res.body, {
-                    id: resource1.id,
-                    content: resource1.content,
-                    query: {},
+    [true, false].forEach((variation) => {
+        describe(`RestLess middleware ${variation ? "before" : "after"} bodyParser middleware`, () => {
+            before(() => {
+                setupApp(variation);
+            });
+            beforeEach(() => {
+                database = new Map();
+            });
+            describe("un-translated (backwards compatible)", () => {
+                it("404, GET /resource/:id", async () => {
+                    const requestConfig: AxiosRequestConfig = {
+                        method: "get",
+                        url: `/resource/${resource1.id}`,
+                        headers: {
+                            "Authorization": `Bearer ${authToken}`,
+                        },
+                    };
+                    const req = superRequest(requestConfig);
+                    await req.expect(404);
+                });
+                it("200, GET /resource", async () => {
+                    database.set(resource1.id, resource1.content);
+                    const requestConfig: AxiosRequestConfig = {
+                        method: "get",
+                        url: `/resource/${resource1.id}`,
+                        headers: {
+                            "Authorization": `Bearer ${authToken}`,
+                        },
+                    };
+                    const req = superRequest(requestConfig);
+                    await req.expect((res) => {
+                        assert.strictEqual(res.status, 200);
+                        assert.deepStrictEqual(res.body, {
+                            id: resource1.id,
+                            content: resource1.content,
+                            query: {},
+                        });
+                    });
+                });
+                it("201, POST /resource", async () => {
+                    const requestConfig: AxiosRequestConfig = {
+                        method: "post",
+                        url: `/resource`,
+                        headers: {
+                            "Authorization": `Bearer ${authToken}`,
+                            "Content-type": "application/json",
+                        },
+                        data: resource1
+                    };
+                    const req = superRequest(requestConfig);
+                    await req.expect((res) => {
+                        assert.strictEqual(res.status, 201);
+                        assert.deepStrictEqual(res.body, {
+                            id: resource1.id,
+                            content: resource1.content,
+                            query: {},
+                        });
+                    });
+                });
+                it("200, PUT /resource", async () => {
+                    database.set(resource1.id, resource1.content);
+                    const newContent = "Goodbye";
+                    const requestConfig: AxiosRequestConfig = {
+                        method: "put",
+                        url: `/resource`,
+                        headers: {
+                            "Authorization": `Bearer ${authToken}`,
+                            "Content-type": "application/json",
+                        },
+                        data: {
+                            ...resource1,
+                            content: newContent,
+                        },
+                    };
+                    const req = superRequest(requestConfig);
+                    await req.expect((res) => {
+                        assert.strictEqual(res.status, 200);
+                        assert.deepStrictEqual(res.body, {
+                            id: resource1.id,
+                            content: newContent,
+                            query: {},
+                        });
+                    });
                 });
             });
-        });
-        it("201, POST /resource", async () => {
-            const requestConfig: AxiosRequestConfig = {
-                method: "post",
-                url: `/resource`,
-                headers: {
-                    "Authorization": `Bearer ${authToken}`,
-                    "Content-type": "application/json",
-                },
-                data: resource1
-            };
-            const req = superRequest(requestConfig);
-            await req.expect((res) => {
-                assert.strictEqual(res.status, 201);
-                assert.deepStrictEqual(res.body, {
-                    id: resource1.id,
-                    content: resource1.content,
-                    query: {},
+            describe("translated", () => {
+                it("404 /resource/:id", async () => {
+                    const requestConfig: AxiosRequestConfig = {
+                        method: "get",
+                        url: `/resource/${resource1.id}`,
+                        headers: {
+                            "Authorization": `Bearer ${authToken}`,
+                        },
+                    };
+                    const req = superRequest(requestConfig, true);
+                    await req.expect(404);
                 });
-            });
-        });
-        it("200, PUT /resource", async () => {
-            database.set(resource1.id, resource1.content);
-            const newContent = "Goodbye";
-            const requestConfig: AxiosRequestConfig = {
-                method: "put",
-                url: `/resource`,
-                headers: {
-                    "Authorization": `Bearer ${authToken}`,
-                    "Content-type": "application/json",
-                },
-                data: {
-                    ...resource1,
-                    content: newContent,
-                },
-            };
-            const req = superRequest(requestConfig);
-            await req.expect((res) => {
-                assert.strictEqual(res.status, 200);
-                assert.deepStrictEqual(res.body, {
-                    id: resource1.id,
-                    content: newContent,
-                    query: {},
+                it("200, GET /resource/:id", async () => {
+                    database.set(resource1.id, resource1.content);
+                    const requestConfig: AxiosRequestConfig = {
+                        method: "get",
+                        url: `/resource/${resource1.id}`,
+                        headers: {
+                            "Authorization": `Bearer ${authToken}`,
+                        },
+                    };
+                    const req = superRequest(requestConfig, true);
+                    await req.expect((res) => {
+                        assert.strictEqual(res.status, 200);
+                        assert.deepStrictEqual(res.body, {
+                            id: resource1.id,
+                            content: resource1.content,
+                            query: {},
+                        });
+                    });
                 });
-            });
-        });
-    });
-    describe("translated", () => {
-        it("404 /resource/:id", async () => {
-            const requestConfig: AxiosRequestConfig = {
-                method: "get",
-                url: `/resource/${resource1.id}`,
-                headers: {
-                    "Authorization": `Bearer ${authToken}`,
-                },
-            };
-            const req = superRequest(requestConfig, true);
-            await req.expect(404);
-        });
-        it("200, GET /resource/:id", async () => {
-            database.set(resource1.id, resource1.content);
-            const requestConfig: AxiosRequestConfig = {
-                method: "get",
-                url: `/resource/${resource1.id}`,
-                headers: {
-                    "Authorization": `Bearer ${authToken}`,
-                },
-            };
-            const req = superRequest(requestConfig, true);
-            await req.expect((res) => {
-                assert.strictEqual(res.status, 200);
-                assert.deepStrictEqual(res.body, {
-                    id: resource1.id,
-                    content: resource1.content,
-                    query: {},
+                it("201, POST /resource", async () => {
+                    const requestConfig: AxiosRequestConfig = {
+                        method: "post",
+                        url: `/resource`,
+                        headers: {
+                            "Authorization": `Bearer ${authToken}`,
+                            "Content-type": "application/json",
+                        },
+                        data: resource1
+                    };
+                    const req = superRequest(requestConfig, true);
+                    await req.expect((res) => {
+                        assert.strictEqual(res.status, 201);
+                        assert.deepStrictEqual(res.body, {
+                            id: resource1.id,
+                            content: resource1.content,
+                            query: {},
+                        });
+                    });
                 });
-            });
-        });
-        it("201, POST /resource", async () => {
-            const requestConfig: AxiosRequestConfig = {
-                method: "post",
-                url: `/resource`,
-                headers: {
-                    "Authorization": `Bearer ${authToken}`,
-                    "Content-type": "application/json",
-                },
-                data: resource1
-            };
-            const req = superRequest(requestConfig, true);
-            await req.expect((res) => {
-                assert.strictEqual(res.status, 201);
-                assert.deepStrictEqual(res.body, {
-                    id: resource1.id,
-                    content: resource1.content,
-                    query: {},
-                });
-            });
-        });
-        it("200, PUT /resource", async () => {
-            database.set(resource1.id, resource1.content);
-            const newContent = "Goodbye";
-            const requestConfig: AxiosRequestConfig = {
-                method: "put",
-                url: `/resource`,
-                headers: {
-                    "Authorization": `Bearer ${authToken}`,
-                    "Content-type": "application/json",
-                },
-                data: {
-                    ...resource1,
-                    content: newContent,
-                },
-            };
-            const req = superRequest(requestConfig, true);
-            await req.expect((res) => {
-                assert.strictEqual(res.status, 200);
-                assert.deepStrictEqual(res.body, {
-                    id: resource1.id,
-                    content: newContent,
-                    query: {},
+                it("200, PUT /resource", async () => {
+                    database.set(resource1.id, resource1.content);
+                    const newContent = "Goodbye";
+                    const requestConfig: AxiosRequestConfig = {
+                        method: "put",
+                        url: `/resource`,
+                        headers: {
+                            "Authorization": `Bearer ${authToken}`,
+                            "Content-type": "application/json",
+                        },
+                        data: {
+                            ...resource1,
+                            content: newContent,
+                        },
+                    };
+                    const req = superRequest(requestConfig, true);
+                    await req.expect((res) => {
+                        assert.strictEqual(res.status, 200);
+                        assert.deepStrictEqual(res.body, {
+                            id: resource1.id,
+                            content: newContent,
+                            query: {},
+                        });
+                    });
                 });
             });
         });

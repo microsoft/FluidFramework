@@ -399,10 +399,6 @@ export function runSummaryTests(title: string): void {
 	});
 }
 
-export function expectAssert(condition: unknown, message?: string): asserts condition {
-	expect(condition, message);
-}
-
 async function expectSharedTreesEqual(
 	sharedTreeA: SharedTree,
 	sharedTreeB: SharedTree,

@@ -31,6 +31,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
         headerName: string;
         logName: string;
     }
+
     // We rename headers so that otel doesn't scrub them away. Otel doesn't allow
     // certain characters in headers including '-'
     const headersToLog: LoggingHeader[] = [
@@ -39,6 +40,8 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
         { headerName: "client-request-id", logName: "clientRequestId" },
         { headerName: "x-msedge-ref", logName: "xMsedgeRef" },
         { headerName: "X-Fluid-Retries", logName: "serverRetries" },
+        { headerName: "content-encoding", logName: "contentEncoding" },
+        { headerName: "content-type", logName: "contentType" },
     ];
     const additionalProps: ITelemetryProperties = {
         sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
@@ -50,6 +53,32 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
             additionalProps[header.logName] = headerValue;
         }
     });
+
+    // x-fluid-telemetry contains a key value pair in the following format:
+    // x-fluid-telemetry:key1=value1,key2,key3=value3,
+    // Ex. x-fluid-telemetry:Origin=c
+    const fluidTelemetry = headers.get("x-fluid-telemetry");
+    if (fluidTelemetry !== undefined && fluidTelemetry !== null) {
+        const keyValueMap = fluidTelemetry.split(",").map((keyValuePair) => keyValuePair.split("="));
+        for (const [key, value] of keyValueMap) {
+            if ("Origin" === key.trim()) {
+                let fieldValue: string;
+                switch (value?.trim()) {
+                    case "c":
+                        fieldValue = "cache";
+                    break;
+                    case "g":
+                        fieldValue = "graph";
+                    break;
+                    default:
+                        fieldValue = value?.trim();
+                }
+                const logName = "responseOrigin";
+                additionalProps[logName] = fieldValue;
+                break;
+           }
+       }
+    }
     return additionalProps;
 }
 

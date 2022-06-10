@@ -19,6 +19,7 @@ export interface IPackageMatchedOptions {
     match: string[];
     all: boolean;
     server: boolean;
+    azure: boolean;
     dirs: string[];
 };
 
@@ -69,11 +70,22 @@ export class FluidRepoBuild extends FluidRepo {
         }
 
         if (options.all) {
-            return this.matchWithFilter(pkg => true);
+            return this.matchWithFilter(() => true);
         }
 
-        const matchMonoRepo = options.server ? MonoRepoKind.Server : MonoRepoKind.Client;
-        return this.matchWithFilter(pkg => pkg.monoRepo?.kind === matchMonoRepo);
+        const monoReposToConsider: MonoRepoKind[] = [];
+
+        if (options.azure) {
+            monoReposToConsider.push(MonoRepoKind.Azure);
+        }
+        if (options.server) {
+            monoReposToConsider.push(MonoRepoKind.Server);
+        }
+        if (!options.azure && !options.server) {
+            monoReposToConsider.push(MonoRepoKind.Client);
+        }
+
+        return this.matchWithFilter(pkg => pkg.monoRepo ? monoReposToConsider.includes(pkg.monoRepo.kind) : false);
     }
 
     public async checkPackages(fix: boolean) {

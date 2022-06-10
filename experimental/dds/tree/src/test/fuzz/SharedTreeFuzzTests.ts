@@ -130,7 +130,17 @@ export async function performFuzzActions(
 	);
 
 	if (synchronizeAtEnd) {
-		await finalState.testObjectProvider?.ensureSynchronized();
+		if (finalState.testObjectProvider !== undefined) {
+			await finalState.testObjectProvider.ensureSynchronized();
+			const events = finalState.testObjectProvider.logger.reportAndClearTrackedEvents();
+			expect(events.expectedNotFound.length).to.equal(0);
+			// Tolerate failed edit chunk uploads, because they are fire-and-forget and can fail (e.g. the uploading client leaves before upload completes).
+			expect(
+				events.unexpectedErrors.every(
+					(e) => e.eventName === 'fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure'
+				)
+			).to.be.true;
+		}
 		const trees = [
 			...finalState.activeCollaborators.map(({ tree }) => tree),
 			...finalState.passiveCollaborators.map(({ tree }) => tree),
@@ -269,8 +279,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 			runMixedVersionTests(false, testCount, testLength);
 		});
 
-		// TODO: fix these tests. See https://github.com/microsoft/FluidFramework/issues/10103
-		describe.skip('with history summarization', () => {
+		describe('with history summarization', () => {
 			runMixedVersionTests(true, testCount, testLength);
 		});
 	});

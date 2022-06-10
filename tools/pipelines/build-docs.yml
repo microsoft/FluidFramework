@@ -98,6 +98,8 @@ resources:
     source: Build - driver-definitions
   - pipeline: protocol_definitions
     source: Build - protocol-definitions
+  - pipeline: azure
+    source: Build - azure
   - pipeline: client
     source: Build - client packages
     trigger:

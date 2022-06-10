@@ -7,7 +7,7 @@ import { promises as fsPromises } from 'fs';
 import { getAllFilesInDirectory, decompressStatsFile } from '../utilities';
 import { BundleBuddyConfig } from '../BundleBuddyTypes';
 import { getBundleFilePathsFromFolder, BundleFileData } from './getBundleFilePathsFromFolder';
-import { Stats } from 'webpack';
+import { StatsCompilation } from 'webpack';
 
 /**
  * Returns a list of all the files relevant to bundle buddy from the given folder
@@ -33,7 +33,7 @@ export async function getBundleBuddyConfigFromFileSystem(path: string): Promise<
  * Gets a decompressed webpack stats file from the filesystem
  * @param path - the full path to the file in the filesystem
  */
-export async function getStatsFileFromFileSystem(path: string): Promise<Stats.ToJsonOutput> {
+export async function getStatsFileFromFileSystem(path: string): Promise<StatsCompilation> {
   const file = await fsPromises.readFile(path);
 
   return decompressStatsFile(file);

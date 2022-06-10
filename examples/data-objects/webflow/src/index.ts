@@ -4,12 +4,16 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+import React from "react";
 
 export { FlowDocument } from "./document";
 export { Editor } from "./editor";
 import { WebFlow, WebflowView } from "./host";
 export { htmlFormatter } from "./html/formatters";
 
-const webFlowViewCallback = (webFlow: WebFlow) => new WebflowView(webFlow.getFlowDocument());
+const webFlowViewCallback = (webFlow: WebFlow) => React.createElement(
+    WebflowView,
+    { docP: webFlow.getFlowDocument() },
+);
 
 export const fluidExport = new ContainerViewRuntimeFactory(WebFlow.getFactory(), webFlowViewCallback);

@@ -53,7 +53,7 @@ export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment;
 
     private getOrdinal(item: T): string {
         const maybeObject = item as { readonly segment: ISegment; };
-        if (maybeObject && maybeObject.segment) {
+        if (maybeObject?.segment) {
             return maybeObject.segment.ordinal;
         }
 
