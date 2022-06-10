@@ -1758,7 +1758,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (!connected) {
             this._perfSignalData.signalsLost = 0;
             this._perfSignalData.signalTimestamp = 0;
-            this._perfSignalData.trackingSignalSequenceNumber = 0;
+            this._perfSignalData.trackingSignalSequenceNumber = undefined;
         }
 
         if (reconnection) {
