@@ -34,6 +34,7 @@ const snapshotFileName = "header";
 
 /**
  * The factory that defines the map.
+ * TODO: what are the semantics of this?
  * @sealed
  */
 export class MapFactory implements IChannelFactory {

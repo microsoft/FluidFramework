@@ -195,6 +195,7 @@ export interface IChannelServices {
 
 /**
  * Definitions of a channel factory. Factories follow a common model but enable custom behavior.
+ * TODO: what are the semantics of this?
  */
 export interface IChannelFactory {
     /**
