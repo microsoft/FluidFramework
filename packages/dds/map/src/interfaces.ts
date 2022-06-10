@@ -289,7 +289,7 @@ export interface ISharedDirectory extends
 }
 
 /**
- * Type of "valueChanged" event parameter for {@link SharedDirectory}
+ * Type of "valueChanged" event parameter for {@link ISharedDirectory}
  */
 export interface IDirectoryValueChanged extends IValueChanged {
     /**
