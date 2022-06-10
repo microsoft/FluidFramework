@@ -858,19 +858,19 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
         return this.snapshotTreeId ? [{ id: this.snapshotTreeId, treeId: undefined! }] : [];
     }
 
-    protected async fetchTreeFromSnapshot(id: string): Promise<api.ISnapshotTree | undefined> {
+    protected async fetchTreeFromSnapshot(_id: string): Promise<api.ISnapshotTree | undefined> {
         throw this.getUsageErrorToThrow("fetchTreeFromSnapshot");
     }
 
-    protected async fetchBlobFromStorage(blobId: string, evicted: boolean): Promise<ArrayBuffer> {
+    protected async fetchBlobFromStorage(_blobId: string, _evicted: boolean): Promise<ArrayBuffer> {
         throw this.getUsageErrorToThrow("fetchBlobFromStorage");
     }
 
-    public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
+    public async uploadSummaryWithContext(_summary: api.ISummaryTree, _context: ISummaryContext): Promise<string> {
         throw this.getUsageErrorToThrow("uploadSummaryWithContext");
     }
 
-    public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
+    public async createBlob(_file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
         throw this.getUsageErrorToThrow("createBlob");
     }
 
