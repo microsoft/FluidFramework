@@ -1749,6 +1749,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(
+                    // pre-0.58 error message: MaxReconnectsWithNoProgress
                     DataProcessingError.create(
                         "Runtime detected too many reconnects with no progress syncing local ops",
                         "setConnectionState",
@@ -1757,7 +1758,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         dataLoss: 1,
                         attempts: this.consecutiveReconnects,
                         pendingMessages: this.pendingStateManager.pendingMessagesCount,
-                    }) as DataProcessingError);
+                    }));
                 return;
             }
         }
