@@ -15,13 +15,16 @@ This article will explain:
 
 ## Creating & loading
 
-Your code creates containers using APIs provided by a service-specific client library. Each service-specific client library implements a common API for manipulating containers. For example, the Tinylicious library provides these APIs for the Tinylicious Fluid service. These common APIs enable your code to define the container schema (which specifies what kinds of shared objects are in the container) and retrieve the `FluidContainer` object.
+Your code creates containers using APIs provided by a service-specific client library.
+Each service-specific client library implements a common API for manipulating containers.
+For example, the [Tinylicious library]({{< relref "Tinylicious" >}}) provides these APIs for the Tinylicious Fluid service.
+These common APIs enable your code to define the container schema (which specifies what kinds of shared objects are in the container) and retrieve the `FluidContainer` object.
 
 ### Container schema
 
 Your code must define a schema that represents the structure of the data within the container. A schema can specify:
 
-- Some initial shared objects that are created as soon as the container is, and are immediately and always available to all connected clients.
+- Some initial shared objects that are created as soon as the container is created, and are immediately and always available to all connected clients.
 - The types of shared objects that can be added to the container at runtime and persisted in the container for use by all connected clients.
 
 The same schema definition that is used to create the container must be provided when clients subsequently load the container. For more information about initial objects and dynamic object creation see [Data modeling]({{< relref "data-modeling.md" >}}).
@@ -40,7 +43,10 @@ const schema = {
 
 ### Creating a container
 
-Containers are created from the service-specific client's `createContainer` function. Your code must provide a configuration that is specific to the service and a schema object that defines the container schema. About this code note:
+Containers are created from the service-specific client's `createContainer` function.
+Your code must provide a configuration that is specific to the service and a schema object that defines the container schema.
+
+About this code note:
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
 - It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
@@ -63,8 +69,11 @@ const containerId = await container.attach();
 A newly created container is in a *detached* state. This is the point where you can create initial data to populate your
 shared objects if needed. A detached container is not connected to the Fluid service and no data is shared with other clients.
 
-In order to attach the container to a service, call its `attach` function. Once *attached*, the Fluid container is
-connected to the Fluid service and can be loaded by other clients.
+In order to attach the container to a service, call its `attach` method.
+Once *attached*, the Fluid container is connected to the Fluid service and can be loaded by other clients.
+
+Invoking the container's `attach` method returns the unique identifier for the container.
+To load an existing container, this value is used to identify the correct container to load.
 
 Note that once attached, a container cannot be detached. Attach is a one-way operation. When loading an existing
 container, the loaded container is always attached.
@@ -106,12 +115,20 @@ Deleting a container is a service-specific feature, so you should refer to the d
 
 ### attached/detached
 
-Newly created containers begin in a *detached* state. A detached container is not connected to the Fluid service and no
-data is shared with other clients. This is an ideal time to create initial data in your Fluid data model.
+Newly created containers begin in a *detached* state.
+A detached container is not connected to the Fluid service and no data is shared with other clients.
+This is an ideal time to create initial data in your Fluid data model.
+
+An *attached* container, conversely, **is** connected to the Fluid service, and data changes are shared with the other clients.
+An existing container being loaded by a client will always initially be in an attached state.
 
 ### connected/disconnected
 
-The container exposes the connected state of the client and emits connected and disconnected events to notify the caller if the underlying connection is disrupted. Fluid will by default attempt to reconnect in case of lost/intermittent connectivity. However, `connect()` and `disconnect()` can be used to manually control the connection policy. Note about this code:
+The container exposes the connected state of the client and emits connected and disconnected events to notify the caller if the underlying connection is disrupted.
+Fluid will by default attempt to reconnect in case of lost/intermittent connectivity.
+However, `connect()` and `disconnect()` can be used to manually control the connection policy.
+
+Note about this code:
 
 - `user.on("idle")` and `user.on("active")` are hypothetical event callbacks which fire if a user becomes idle or active respectively. They are for demonstration purposes only and are not provided by FluidFramework.
 
@@ -159,10 +176,15 @@ A container is considered **dirty** if it has local changes that have not yet be
 
 A container is considered dirty in the following cases:
 
-1. The container has been created in the detached state, and either it has not been attached yet or it is in the process of being attached (container is in `attaching` state). If container is closed prior to being attached, host may never know if the file was created or not.
-2. The container was attached, but it has local changes that have not yet been saved to service endpoint. This occurs as part of normal op flow where pending operation (changes) are awaiting acknowledgement from the service. In some cases this can be due to lack of network connection. If the network connection is down, it needs to be restored for the pending changes to be acknowledged.
+1. The container has been created in the detached state, and either it has not been attached yet or it is in the process of being attached (container is in `attaching` state).
+  If container is closed prior to being attached, the host may never know if the file was created or not.
+2. The container was attached, but it has local changes that have not yet been saved to the service endpoint.
+  This occurs as part of normal op flow where pending operation (changes) are awaiting acknowledgement from the service.
+  In some cases this can be due to lack of network connection.
+  If the network connection is down, it needs to be restored for the pending changes to be acknowledged.
 
-In terms of user experience, keep in mind that `isDirty` flag will flicker as pending changes are awaiting and being acknowledgement. Therefore, the host may choose to incorporate some delay before interpreting the flag again, when basing the user experience off of its state.
+In terms of user experience, keep in mind that the `isDirty` flag will flicker as pending changes are awaiting acknowledgement.
+Therefore, the host may choose to incorporate some delay before interpreting the flag again, when basing the user experience off of its state.
 
 ```typescript {linenos=inline}
 if(container.isDirty) {
@@ -174,7 +196,7 @@ if(container.isDirty) {
 
 ### saved
 
-The container emits the saved event to notify the caller that all the local changes have been acknowledged by the service and the document is marked as clean.
+The container emits the *saved* event to notify the caller that all the local changes have been acknowledged by the service and the document is marked as clean.
 
 ```typescript {linenos=inline}
 container.on("saved", () => {
@@ -184,7 +206,7 @@ container.on("saved", () => {
 
 ### dirty
 
-The container emits the dirty event to notify the caller that there are local changes that have not been acknowledged by the service yet and the document is still in a dirty state.
+The container emits the *dirty* event to notify the caller that there are local changes that have not been acknowledged by the service yet and the document is still in a dirty state.
 
 ```typescript {linenos=inline}
 container.on("dirty", () => {
@@ -215,7 +237,7 @@ For more information about initial objects see [Data modeling]({{< relref "data-
 
 ### create
 
-The container also exposes a create function that enables creation of shared objects at runtime.
+The container also exposes a `create` function that enables creation of shared objects at runtime.
 
 For more information about dynamic object creation see [Data modeling]({{< relref "data-modeling.md" >}}).
 
