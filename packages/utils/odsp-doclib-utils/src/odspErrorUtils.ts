@@ -14,7 +14,7 @@ import {
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspErrorType, OdspError, IOdspErrorAugmentations } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
@@ -82,10 +82,6 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     return additionalProps;
 }
 
-export interface IFacetCodes {
-    facetCodes?: string[];
-}
-
 /** Empirically-based model of error response inner error from ODSP */
 export interface OdspErrorResponseInnerError {
     code?: string;
@@ -139,8 +135,8 @@ export function createOdspNetworkError(
     response?: Response,
     responseText?: string,
     props: ITelemetryProperties = {},
-): IFluidErrorBase & OdspError & IFacetCodes {
-    let error: IFluidErrorBase & OdspError & IFacetCodes;
+): IFluidErrorBase & OdspError {
+    let error: IFluidErrorBase & OdspError;
     const parseResult = tryParseErrorResponse(responseText);
     let facetCodes: string[] | undefined;
     let innerMostErrorCode: string | undefined;
@@ -246,7 +242,7 @@ export function createOdspNetworkError(
 }
 
 export function enrichOdspError(
-    error: IFluidErrorBase & OdspError & IFacetCodes,
+    error: IFluidErrorBase & OdspError,
     response?: Response,
     facetCodes?: string[],
     props: ITelemetryProperties = {},
@@ -263,7 +259,7 @@ export function enrichOdspError(
             for (const key of Object.keys(headers)) {
                 props[key] = headers[key];
             }
-            (error as IOdspError).serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
+            error.serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
         }
     }
     error.addTelemetryProperties(props);
@@ -303,4 +299,8 @@ function numberFromHeader(header: string | null): number | undefined {
         return undefined;
     }
     return n;
+}
+
+export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
+    return Array.isArray(x?.facetCodes);
 }

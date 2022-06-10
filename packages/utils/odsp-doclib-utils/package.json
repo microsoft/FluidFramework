@@ -87,6 +87,11 @@
   },
   "typeValidation": {
     "version": "1.0.0",
-    "broken": {}
+    "broken": {
+      "RemovedInterfaceDeclaration_IFacetCodes": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
   }
 }

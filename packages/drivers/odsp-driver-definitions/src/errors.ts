@@ -52,19 +52,31 @@ export enum OdspErrorType {
     locationRedirection = "locationRedirection",
 }
 
-/**
- * Base interface for all errors and warnings
- * Superset of IDriverErrorBase, but with Odsp-specific errorType
- */
-export interface IOdspError extends Omit<IDriverErrorBase, "errorType"> {
-    readonly errorType: OdspErrorType;
+export interface IOdspErrorAugmentations {
     /**
      * Server epoch indicates when the file was last modified.
      * Used to detect modifications outside Fluid's services
      */
     serverEpoch?: string;
+
+    /**
+     * It is the redirection url at which the network call should have been made. It is due to change
+     * in site domain of the file on server.
+     */
+    redirectLocation?: string;
+
+    /**
+     * It is array of error codes included in error response from server.
+     */
+    facetCodes?: string[];
 }
 
-export type OdspError =
-    | DriverError
-    | IOdspError;
+/**
+ * Base interface for all errors and warnings
+ * Superset of IDriverErrorBase, but with Odsp-specific errorType and properties
+ */
+export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
+    readonly errorType: OdspErrorType;
+}
+
+export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
