@@ -299,7 +299,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        it("Slashes in aliases is not supported", async () => {
+        it("Aliases with slashes are not supported", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 
