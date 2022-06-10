@@ -30,5 +30,5 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
     return message.type === MessageType.Operation || message.type === MessageType.Summarize
-    || message.type === "attach";
+    || message.type === "attach" || message.type === "component";
 }
