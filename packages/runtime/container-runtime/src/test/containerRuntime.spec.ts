@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { createSandbox } from "sinon";
 import { AttachState, IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
-import { GenericError } from "@fluidframework/container-utils";
+import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     MessageType,
@@ -746,7 +746,7 @@ describe("Runtime", () => {
                     }
 
                     const error = getFirstContainerError();
-                    assert.ok(error instanceof GenericError);
+                    assert.ok(error instanceof DataProcessingError);
                     assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
                     assert.strictEqual(error.getTelemetryProperties().pendingMessages, maxReconnects);
                     mockLogger.assertMatchAny([{
@@ -842,7 +842,7 @@ describe("Runtime", () => {
                     }
 
                     const error = getFirstContainerError();
-                    assert.ok(error instanceof GenericError);
+                    assert.ok(error instanceof DataProcessingError);
                     assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
                     assert.strictEqual(error.getTelemetryProperties().pendingMessages, maxReconnects);
                     mockLogger.assertMatchAny([{
