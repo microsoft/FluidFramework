@@ -28,7 +28,7 @@ import {
     IOdspResponse,
     ISnapshotContents,
 } from "./odspUtils";
-import { convertOdspSnapshotToSnapsohtTreeAndBlobs } from "./odspSnapshotParser";
+import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
 import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { EpochTracker } from "./epochTracker";
@@ -83,7 +83,7 @@ export async function fetchSnapshot(
         },
         async () => snapshotDownloader(url, { headers }),
     ) as IOdspResponse<IOdspSnapshot>;
-    return convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
+    return convertOdspSnapshotToSnapshotTreeAndBlobs(response.content);
 }
 
 export async function fetchSnapshotWithRedeem(
@@ -491,7 +491,7 @@ export async function downloadSnapshot(
         const text = await response.content.text();
         const content: IOdspSnapshot = JSON.parse(text);
         response.propsToLog.bodySize = text.length;
-        const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(content);
+        const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
         finalSnapshotContents = { ...response, content: snapshotContents };
     } else {
         assert(contentType === "application/ms-fluid", 0x2c3 /* "Content type should be application/ms-fluid" */);

@@ -782,7 +782,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
             const parsedContent = JSON.parse(summaryBlob.content as string);
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
             const serializedInterval1FromSnapshot =
-                (parsedContent["intervalCollections/comments"].value as ISerializedInterval[])[0];
+                (parsedContent.comments.value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             assert(serializedInterval1FromSnapshot.properties);
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string; };
