@@ -16,7 +16,7 @@ import {
     SequenceInterval,
     SharedString,
     decompressInterval,
-    ISerializedIntervalV2
+    ISerializedIntervalV2,
 } from "@fluidframework/sequence";
 import {
     ITestObjectProvider,

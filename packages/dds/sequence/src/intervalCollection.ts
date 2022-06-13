@@ -81,6 +81,9 @@ export interface ISerializedIntervalV2 {
     intervals: CompressedSerializedInterval[];
 }
 
+/**
+ * @internal
+ */
 export function decompressInterval(interval: CompressedSerializedInterval, label?: string): ISerializedInterval {
     return {
         start: interval[0],
@@ -91,6 +94,9 @@ export function decompressInterval(interval: CompressedSerializedInterval, label
     };
 }
 
+/**
+ * @internal
+ */
 export function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
     // remove the `referenceRangeLabels` property as it is already stored in the
     // `label` field of the summary
