@@ -14,6 +14,26 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 2.0.0
+
+## 2.0.0 Upcoming changes
+
+TBD
+
+## 2.0.0 Breaking changes
+
+- [Remove parameter in SharedObject.summarizeCore](#Remove-parameter-in-SharedObject.summarizeCore)
+
+### Remove parameter in SharedObject.summarizeCore
+
+The second parameter of the `summarizeCore()` method in `SharedObject` was not used so it was removed. The method
+signature was unchanged besides that, so it now looks like this:
+
+```typescript
+protected abstract summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats
+```
+
+
 # 1.0.0
 
 ## 1.0.0 Upcoming changes
