@@ -4,7 +4,7 @@
  */
 
 /**
- * TODO
+ * Defines scope access for a Container/Document 
  */
 export enum ScopeType {
     /**
