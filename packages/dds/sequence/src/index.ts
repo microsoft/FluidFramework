@@ -3,6 +3,16 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * The **\@fluidframework/sequence** packages supports distributed data structures which are list-like.
+ * It includes {@link https://fluidframework.com/docs/data-structures/string/ | SharedString} for storing
+ * and simultaneously editing a sequence of text.
+ *
+ * @see {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/README.md}.
+ *
+ * @packageDocumentation
+ */
+
 export {
     DeserializeCallback,
     IIntervalCollectionEvent,
