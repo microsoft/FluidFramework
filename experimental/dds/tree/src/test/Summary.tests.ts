@@ -514,7 +514,9 @@ class DeterministicIdGenerator {
 	}
 
 	public getNextNodeId(): NodeId {
-		return this.writeFormat === WriteFormat.v0_0_2 ? this.sharedTree.generateNodeId(this.getNextStableId()) : this.sharedTree.generateNodeId();
+		return this.writeFormat === WriteFormat.v0_0_2
+			? this.sharedTree.generateNodeId(this.getNextStableId())
+			: this.sharedTree.generateNodeId();
 	}
 
 	private getNextStableId(): StableId {

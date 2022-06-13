@@ -135,15 +135,8 @@ export class SharedTreeEncoder_0_1_1 {
 		serializedIdCompressor: SerializedIdCompressorWithNoSession
 	): SharedTreeSummary {
 		return this.summarizeHistory
-            ? this.fullHistorySummarizer(edits, currentView, idNormalizer, interner, serializedIdCompressor)
-            : this.noHistorySummarizer(
-				edits,
-				currentView,
-				idContext,
-				idNormalizer,
-				interner,
-				serializedIdCompressor
-			);
+			? this.fullHistorySummarizer(edits, currentView, idNormalizer, interner, serializedIdCompressor)
+			: this.noHistorySummarizer(edits, currentView, idContext, idNormalizer, interner, serializedIdCompressor);
 	}
 
 	/**
@@ -362,7 +355,9 @@ export class SharedTreeEncoder_0_0_2 {
 		currentView: RevisionView,
 		idConverter: NodeIdConverter
 	): SharedTreeSummary_0_0_2 {
-		return this.summarizeHistory ? this.fullHistorySummarizer(edits, currentView, idConverter) : this.noHistorySummarizer(edits, currentView, idConverter);
+		return this.summarizeHistory
+			? this.fullHistorySummarizer(edits, currentView, idConverter)
+			: this.noHistorySummarizer(edits, currentView, idConverter);
 	}
 
 	/**

@@ -316,7 +316,10 @@ interface FuzzTestState extends BaseFuzzTestState {
 function makeOpGenerator(numOperations: number): Generator<Operation, FuzzTestState> {
 	function addLocalIdGenerator(state: FuzzTestState): AddLocalId {
 		const { locals, finals, random } = state;
-		state.currentLocal = locals.length < finals.length && random.bool() ? -locals.length - (finals.length - locals.length) - 1 : -locals.length - 1;
+		state.currentLocal =
+			locals.length < finals.length && random.bool()
+				? -locals.length - (finals.length - locals.length) - 1
+				: -locals.length - 1;
 		state.prevWasLocal = true;
 		return { type: 'addLocalId' };
 	}
