@@ -500,7 +500,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         trackState: boolean = false,
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
-        const result = this.summarizeCore(this.serializer, telemetryContext);
+        const result = this.summarizeCore(this.serializer);
         this.incrementTelemetryMetric(blobCountPropertyName, result.stats.blobNodeCount, telemetryContext);
         this.incrementTelemetryMetric(totalBlobSizePropertyName, result.stats.totalBlobSize, telemetryContext);
         return result;
@@ -514,7 +514,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         trackState: boolean = false,
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummaryTreeWithStats> {
-        const result = this.summarizeCore(this.serializer, telemetryContext);
+        const result = this.summarizeCore(this.serializer);
         this.incrementTelemetryMetric(blobCountPropertyName, result.stats.blobNodeCount, telemetryContext);
         this.incrementTelemetryMetric(totalBlobSizePropertyName, result.stats.totalBlobSize, telemetryContext);
         return result;
@@ -564,7 +564,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     protected abstract summarizeCore(
         serializer: IFluidSerializer,
-        telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats;
 
     private incrementTelemetryMetric(propertyName: string, incrementBy: number, telemetryContext?: ITelemetryContext) {

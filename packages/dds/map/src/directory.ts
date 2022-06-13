@@ -523,7 +523,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     protected summarizeCore(
         serializer: IFluidSerializer,
-        telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
         return this.serializeDirectory(this.root, serializer);
     }

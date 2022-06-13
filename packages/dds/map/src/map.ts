@@ -11,7 +11,7 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     IFluidSerializer,
@@ -247,7 +247,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      */
     protected summarizeCore(
         serializer: IFluidSerializer,
-        telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
         let currentSize = 0;
         let counter = 0;

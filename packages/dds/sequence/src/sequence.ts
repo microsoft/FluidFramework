@@ -48,7 +48,7 @@ import {
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 import {
     IntervalCollection,
@@ -465,7 +465,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
     protected summarizeCore(
         serializer: IFluidSerializer,
-        telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
 
