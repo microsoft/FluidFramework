@@ -27,13 +27,10 @@ import {
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
-    trackGCStateMinimumVersionKey,
     runSessionExpiryKey,
     disableSessionExpiryKey,
-    logUnknownOutboundReferencesKey,
 } from "../garbageCollection";
 import { IContainerRuntimeMetadata } from "../summaryFormat";
-import { pkgVersion } from "../packageVersion";
 
 describe("Garbage Collection Tests", () => {
     // Nodes in the reference graph.
@@ -634,7 +631,6 @@ describe("Garbage Collection Tests", () => {
 
         beforeEach(() => {
             closeCalled = false;
-            injectedSettings[logUnknownOutboundReferencesKey] = "true";
             defaultGCData.gcNodes = {};
             garbageCollector = createGarbageCollector();
         });
@@ -989,66 +985,6 @@ describe("Garbage Collection Tests", () => {
         };
 
         it("No changes to GC between summaries creates a blob handle when no version specified", async () => {
-            garbageCollector = createGarbageCollector();
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree1 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree1, SummaryType.Tree, "first");
-
-            await garbageCollector.latestSummaryStateRefreshed(
-                { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parseNothing,
-            );
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree2 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree2, SummaryType.Handle, "second");
-        });
-
-        it("No changes to GC between summaries creates a blob handle when greater than minimum version", async () => {
-            settings[trackGCStateMinimumVersionKey] = "0.59.1000";
-            garbageCollector = createGarbageCollector();
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree1 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree1, SummaryType.Tree, "first");
-
-            await garbageCollector.latestSummaryStateRefreshed(
-                { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parseNothing,
-            );
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree2 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree2, SummaryType.Handle, "second");
-        });
-
-        it("No changes to GC between summaries creates a blob when less than minimum version", async () => {
-            settings[trackGCStateMinimumVersionKey] = `1${pkgVersion}`;
-            garbageCollector = createGarbageCollector();
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree1 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree1, SummaryType.Tree, "first");
-
-            await garbageCollector.latestSummaryStateRefreshed(
-                { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parseNothing,
-            );
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree2 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree2, SummaryType.Tree, "second");
-        });
-
-        it("No changes to GC between summaries creates a blob handle when equal to minimum version", async () => {
-            settings[trackGCStateMinimumVersionKey] = `${pkgVersion}`;
             garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({ runGC: true });

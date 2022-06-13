@@ -148,6 +148,12 @@ export interface IDb {
     on(event: IDbEvents, listener: (...args: any[]) => void);
 
     collection<T>(name: string): ICollection<T>;
+
+    /**
+     * Removes a collection or view from the database.
+     * The method also removes any indexes associated with the dropped collection.
+     */
+    dropCollection?(name: string): Promise<boolean>;
 }
 
 export interface IDbFactory {

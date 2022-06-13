@@ -233,7 +233,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      */
     maxOps: number;
     /**
-     * Defnines the minimum number of Ops, since the last received Ack, that can be allowed
+     * Defines the minimum number of Ops, since the last received Ack, that can be allowed
      * before running the last summary.
      */
     minOpsForLastSummaryAttempt: number;
@@ -350,7 +350,7 @@ export interface ISummaryRuntimeOptions {
      * @deprecated - use `summaryConfigOverrides.maxOpsSinceLastSummary` instead.
      * Defaults to 7000 ops
      */
-     maxOpsSinceLastSummary?: number;
+    maxOpsSinceLastSummary?: number;
 
      /**
      * @deprecated - use `summaryConfigOverrides.summarizerClientElection` instead.
@@ -2018,6 +2018,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+        if (rootDataStoreId.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
+        }
         return this._aliasingEnabled === true ?
             this.createAndAliasDataStore(pkg, rootDataStoreId) :
             this.createRootDataStoreLegacy(pkg, rootDataStoreId);
@@ -2062,6 +2065,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
         rootDataStoreId: string): IFluidDataStoreContextDetached {
+        if (rootDataStoreId.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
+        }
         return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
     }
 
