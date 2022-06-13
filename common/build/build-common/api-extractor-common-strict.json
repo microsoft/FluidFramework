@@ -5,6 +5,9 @@
     * Configures how API Extractor reports error and warning messages produced during analysis.
     *
     * There are three sources of messages:  compiler messages, API Extractor messages, and TSDoc messages.
+    *
+    * By setting the 'addToApiReportFile' property to false, API Extractor will report console errors instead of
+    * silently writing errors into the report file. This in turn will cause build failures.
     */
     "messages": {
         "extractorMessageReporting": {
@@ -37,7 +40,9 @@
                 "logLevel": "error",
                 "addToApiReportFile": false
             },
-            // Disabled. All exported members should have an explicit release tag.
+            // Disabled. We don't require that all exported members have an explicit release tag. While being explicit
+            // is preferred and is a best practice, enabling this requires that we have explicit release tags all the
+            // way down, which makes it very tough to adopt this config for most of our packages.
             "ae-missing-release-tag": {
                 "logLevel": "none",
                 "addToApiReportFile": false
