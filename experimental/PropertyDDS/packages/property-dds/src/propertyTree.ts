@@ -69,7 +69,7 @@ interface ISnapshot {
 	useMH: boolean;
 	numChunks: number;
 }
-interface ISnapshotSummary {
+export interface ISnapshotSummary {
 	remoteTipView?: SerializedChangeSet;
 	remoteChanges?: IPropertyTreeMessage[];
 	unrebasedRemoteChanges?: Record<string, IRemotePropertyTreeMessage>;
@@ -205,6 +205,22 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
+    /**
+     * This method can be overriden in order to transform the pieces of the
+     * transfer message into transfer (more effective) format prior sending
+     * the message into the server.
+     * @param change The transfer message to be transformed.
+     */
+    protected toTransferChange(change: IPropertyTreeMessage) {}
+
+    /**
+     * This method can be overriden in order to transform the pieces of the
+     * transfer message obtained from teh server from the transfer (more effective)
+     * format into the locally understood format.
+     * @param change The transfer message to be transformed.
+     */
+    protected fromTransferChange(transferChange: IPropertyTreeMessage) {}
+
 	private applyChangeSet(changeSet: SerializedChangeSet, metadata: Metadata) {
 		const _changeSet = new ChangeSet(changeSet);
 		_changeSet._toReversibleChangeSet(this.tipView);
@@ -225,12 +241,13 @@ export class SharedPropertyTree extends SharedObject {
 			useMH: this.useMH,
 		};
 		this._applyLocalChangeSet(change);
-
 		// Queue the op for transmission to the Fluid service.
+        const transferChange = cloneDeep(change);
+        this.toTransferChange(transferChange);
 		if (this.transmissionsHaveBeenStopped) {
-			this.enqueuedMessages.push(cloneDeep(change));
+			this.enqueuedMessages.push(transferChange);
 		} else {
-			this.submitLocalMessage(cloneDeep(change));
+			this.submitLocalMessage(transferChange);
 		}
 	}
 
@@ -279,7 +296,9 @@ export class SharedPropertyTree extends SharedObject {
 	 */
 	protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
 		if (message.type === MessageType.Operation && message.sequenceNumber > this.skipSequenceNumber) {
-			const content: IRemotePropertyTreeMessage = { ...message.contents, sequenceNumber: message.sequenceNumber };
+            const change: IPropertyTreeMessage = cloneDeep(message.contents);
+            this.fromTransferChange(change);
+			const content: IRemotePropertyTreeMessage = { ...change, sequenceNumber: message.sequenceNumber };
 			switch (content.op) {
 				case OpKind.ChangeSet:
 					// If the op originated locally from this client, we've already accounted for it
@@ -386,6 +405,31 @@ export class SharedPropertyTree extends SharedObject {
 		this.remoteChanges = remoteChanges;
 		this.unrebasedRemoteChanges = unrebasedRemoteChanges;
 	}
+
+    /**
+     * This method converts the local summary (snapshot) object into the serialized form. It can be
+     * overriden and the format of the serialized summary can be changed (for example for compression reasons).
+     * @param summary The local summary (snapshot)representation.
+     * @returns The serialized summary representation.
+     */
+    protected serializeSummary(summary: ISnapshotSummary) {
+		const packr = new Packr();
+		const serializedSummary = packr.pack(summary);
+		return serializedSummary;
+	}
+
+    /**
+     * This method converts the serialized form of the summary into the local summary (snapshot) object.
+     * It can be overriden and another form of summary can be supported (for example compressed summary)
+     * @param serializedSummary  The serialized summary representation.
+     * @returns The local summary (snapshot)representation.
+     */
+	protected deserializeSummary(serializedSummary): ISnapshotSummary {
+		const packr = new Packr();
+		const snapshotSummary = packr.unpack(serializedSummary);
+		return snapshotSummary as ISnapshotSummary;
+	}
+
 	public summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		this.pruneHistory();
 		const snapshot: ISnapshot = {
@@ -405,9 +449,7 @@ export class SharedPropertyTree extends SharedObject {
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
 			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
-			const packr = new Packr();
-			const serializedSummary = packr.pack(summary);
-
+            const serializedSummary = this.serializeSummary(summary);
 			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
 				builder.addBlob(`summaryChunk_${i}`,
 								bufferToString(serializedSummary.slice(pos, pos + chunkSize), "base64"));
@@ -445,9 +487,7 @@ export class SharedPropertyTree extends SharedObject {
 					serializedSummary.set(new Uint8Array(chunk), offset);
 					return offset + chunk.byteLength;
 				}, 0);
-
-				const packr = new Packr();
-				const snapshotSummary = packr.unpack(serializedSummary);
+				const snapshotSummary = this.deserializeSummary(serializedSummary);
 				if (
 					snapshotSummary.remoteChanges === undefined ||
 					snapshotSummary.remoteTipView === undefined ||
