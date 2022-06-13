@@ -13,13 +13,13 @@ jobs:
   dequeue:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
         with:
           node-version: 14
       - run: npm ci
       - run: npm install -g @azure/storage-queue
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           script: |
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
@@ -35,7 +35,7 @@ jobs:
     if: ( $COMMIT_INFO.label == 'queued' )
     steps:
       - name: Create branch
-        uses: actions/github-script@v6
+        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           script: |
             git fetch origin
@@ -44,10 +44,11 @@ jobs:
             git merge $COMMIT_INFO.sha --no-ff
   reset-branch:
     runs-on: ubuntu-latest
-    if: ( $COMMIT_INFO.label == 'queued' && needs.create-branch.result == 'failure' )
+    if: ( $COMMIT_INFO.label == 'queued' && needs.create-branch.result == 'failure'
+      )
     steps:
       - name: Reset main to a commit
-        uses: actions/github-script@v6
+        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           script: |
             git fetch origin
@@ -62,7 +63,7 @@ jobs:
       )
     steps:
       - name: Create Pull Request
-        uses: actions/github-script@v6
+        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           script: |
             const { repo, owner } = context.repo;
@@ -88,13 +89,13 @@ jobs:
     needs: [ createPullRequest ]
     if: ( needs.createPullRequest.result == 'success' )
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
         with:
           node-version: 14
       - run: npm ci
       - run: npm install -g @azure/storage-queue
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           script: |
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
@@ -115,13 +116,13 @@ jobs:
       (needs.createPullRequest.result.action == 'closed' ||
       needs.createPullRequest.result.merged == 'true' )
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
         with:
           node-version: 14
       - run: npm ci
       - run: npm install -g @azure/storage-queue
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           script: |
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
