@@ -1102,7 +1102,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 this.emitter.emit(
                     "delete",
                     undefined,
-                    interval.serialize(this.client),
+                    decompressInterval(interval.serialize(this.client)),
                     { localSeq: this.getNextLocalSeq() },
                 );
             } else {

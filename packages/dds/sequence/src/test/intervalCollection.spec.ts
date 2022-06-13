@@ -706,6 +706,42 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
+        it("delete ", async () => {
+            containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+
+            // Connect the first SharedString.
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+            const services1: IChannelServices = {
+                deltaConnection: containerRuntime1.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            sharedString.initializeLocal();
+            sharedString.connect(services1);
+
+            // Create and connect a second SharedString.
+            const runtime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+            sharedString2 = new SharedString(runtime2, "shared-string-2", SharedStringFactory.Attributes);
+            const services2: IChannelServices = {
+                deltaConnection: containerRuntime2.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            sharedString2.initializeLocal();
+            sharedString2.connect(services2);
+
+            sharedString.insertText(0, "hello friend");
+            const collection1 = sharedString.getIntervalCollection("test");
+            const collection2 = sharedString2.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+
+            const interval = collection1.add(6, 8, IntervalType.SlideOnRemove); // the "fr" in "friend"
+
+            containerRuntimeFactory.processAllMessages();
+            collection1.removeIntervalById(interval.getIntervalId());
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString2, collection2, []);
+        });
+
         it("can round trip intervals", async () => {
             sharedString.insertText(0, "ABCDEF");
             const collection1 = sharedString.getIntervalCollection("test");
