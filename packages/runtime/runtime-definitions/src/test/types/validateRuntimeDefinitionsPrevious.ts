@@ -745,6 +745,7 @@ declare function get_old_InterfaceDeclaration_ISignalEnvelope():
 declare function use_current_InterfaceDeclaration_ISignalEnvelope(
     use: TypeOnly<current.ISignalEnvelope>);
 use_current_InterfaceDeclaration_ISignalEnvelope(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISignalEnvelope());
 
 /*
