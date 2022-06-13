@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-ordering-kafkanode",
-  "version": "0.1036.4000",
+  "version": "0.1036.5000",
   "description": "Fluid server services kafka-node orderer implementation",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -28,8 +28,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/server-services-core": "^0.1036.4000",
-    "@fluidframework/server-services-ordering-zookeeper": "^0.1036.4000",
+    "@fluidframework/server-services-core": "^0.1036.5000",
+    "@fluidframework/server-services-ordering-zookeeper": "^0.1036.5000",
     "kafka-node": "^5.0.0",
     "nconf": "^0.12.0",
     "sillyname": "^0.1.0"
@@ -37,27 +37,15 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/server-test-utils": "^0.1036.4000",
+    "@fluidframework/server-test-utils": "^0.1036.5000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/debug": "^4.1.5",
     "@types/lru-cache": "^5.1.0",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
     "@types/sinon": "^9.0.9",
-    "@typescript-eslint/eslint-plugin": "~5.9.0",
-    "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
-    "eslint-plugin-editorconfig": "~3.2.0",
-    "eslint-plugin-eslint-comments": "~3.2.0",
-    "eslint-plugin-import": "~2.25.4",
-    "eslint-plugin-jest": "~26.1.3",
-    "eslint-plugin-jsdoc": "~39.3.0",
-    "eslint-plugin-mocha": "~10.0.3",
-    "eslint-plugin-promise": "~6.0.0",
-    "eslint-plugin-react": "~7.28.0",
-    "eslint-plugin-tsdoc": "~0.2.14",
-    "eslint-plugin-unicorn": "~40.0.0",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",

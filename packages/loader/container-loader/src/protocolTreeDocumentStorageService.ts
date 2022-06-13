@@ -31,7 +31,6 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 
     getSnapshotTree = this.internalStorageService.getSnapshotTree.bind(this.internalStorageService);
     getVersions = this.internalStorageService.getVersions.bind(this.internalStorageService);
-    write = this.internalStorageService.write.bind(this.internalStorageService);
     createBlob = this.internalStorageService.createBlob.bind(this.internalStorageService);
     readBlob = this.internalStorageService.readBlob.bind(this.internalStorageService);
     downloadSummary = this.internalStorageService.downloadSummary.bind(this.internalStorageService);

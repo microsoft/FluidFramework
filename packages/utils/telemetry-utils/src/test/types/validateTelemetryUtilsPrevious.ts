@@ -923,6 +923,7 @@ declare function get_current_EnumDeclaration_TelemetryDataTag():
 declare function use_old_EnumDeclaration_TelemetryDataTag(
     use: TypeOnly<old.TelemetryDataTag>);
 use_old_EnumDeclaration_TelemetryDataTag(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_TelemetryDataTag());
 
 /*

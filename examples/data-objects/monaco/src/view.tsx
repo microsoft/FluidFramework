@@ -67,6 +67,9 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
     useEffect(() => {
         const codeModel = monaco.editor.createModel(sharedString.getText(), "typescript");
         const outputModel = monaco.editor.createModel("", "javascript");
+        if (viewElementRef.current === null) {
+            throw new Error("View element div is missing!");
+        }
         const codeEditor = monaco.editor.create(
             viewElementRef.current,
             { model: codeModel, automaticLayout: true },

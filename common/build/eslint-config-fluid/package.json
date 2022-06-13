@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/eslint-config-fluid",
-  "version": "0.28.3000",
+  "version": "0.29.1000",
   "description": "Shareable ESLint config for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -33,7 +33,8 @@
     "eslint-plugin-promise": "~6.0.0",
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
-    "eslint-plugin-unicorn": "~40.0.0"
+    "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0"
   },
   "devDependencies": {
     "concurrently": "^6.2.0",

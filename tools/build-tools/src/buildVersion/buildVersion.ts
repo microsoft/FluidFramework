@@ -17,8 +17,9 @@
  *      The computed version output to the console.
  */
 
-import fs from "fs";
 import child_process from "child_process";
+import fs from "fs";
+import { sort as sort_semver, gt as gt_semver, prerelease as prerelease_semver } from "semver";
 import { test } from "./buildVersionTests";
 
 function getFileVersion() {
@@ -33,10 +34,10 @@ function getFileVersion() {
 }
 
 function parseFileVersion(file_version: string, build_id?: number) {
-    let split = file_version.split("-");
+    const split = file_version.split("-");
     let release_version = split[0];
     split.shift();
-    let prerelease_version = split.join("-");
+    const prerelease_version = split.join("-");
 
     /**
      * Use the build id for patch number if given
@@ -90,8 +91,63 @@ export function getSimpleVersion(file_version: string, arg_build_num: string, ar
     return fullVersion;
 }
 
+type TagPrefix = string | "client" | "server" | "azure";
+
+/**
+ * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
+ * @param tags - an array of tags as strings.
+ * @returns an array of tags that match the prefix.
+ */
+const filterTags = (prefix: TagPrefix, tags: string[]): string[] => tags.filter(v => v.startsWith(`${prefix}_v`));
+
+/**
+ * Extracts versions from the output of `git tag -l` in the working directory. The returned array will be sorted
+ * ascending by semver version rules.
+ *
+ * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
+ * @returns an array of versions extracted from the output of `git tag -l`.
+ */
+function getVersions(prefix: TagPrefix) {
+    const raw_tags = child_process.execSync(`git tag -l`, { encoding: "utf8" });
+    const tags = raw_tags.split(/\s+/g).map(t => t.trim());
+    return getVersionsFromStrings(prefix, tags);
+}
+
+/**
+ * Extracts versions from an array of strings, sorts them according to semver rules, and returns the sorted array.
+ *
+ * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
+ * @param tags - an array of tags as strings.
+ * @returns an array of versions extracted from the provided tags.
+ */
+export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
+    const filtered = filterTags(prefix, tags);
+    let versions = filtered.map((tag) => tag.substring(`${prefix}_v`.length));
+    sort_semver(versions);
+    return versions;
+}
+
+/**
+ * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
+ * @param current_version  - the version to test; that is, the version to check for being the latest build.
+ * @returns true if the current version is to be considered the latest (higher than the tagged releases _and NOT_ a
+ * pre-release version).
+ */
+export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[]) {
+    const versions = input_tags !== undefined ? getVersionsFromStrings(prefix, input_tags) : getVersions(prefix);
+
+    // The last item in the array is the latest because the array is already sorted.
+    const latestTaggedRelease = versions.slice(-1)[0] ?? "0.0.0";
+
+    console.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
+    const currentIsGreater = gt_semver(current_version, latestTaggedRelease);
+    const currentIsPrerelease = prerelease_semver(current_version) !== null;
+    return currentIsGreater && !currentIsPrerelease;
+}
+
 function main() {
     let arg_build_num: string | undefined;
+    let arg_test_build = false;
     let arg_patch = false;
     let arg_release = false;
     let file_version: string | undefined;
@@ -100,6 +156,11 @@ function main() {
     for (let i = 2; i < process.argv.length; i++) {
         if (process.argv[i] === "--build") {
             arg_build_num = process.argv[++i];
+            continue;
+        }
+
+        if (process.argv[i] === "--testBuild") {
+            arg_test_build = true;
             continue;
         }
 
@@ -144,6 +205,10 @@ function main() {
         }
     }
 
+    if (!arg_test_build) {
+        arg_test_build = (process.env["TEST_BUILD"] === "true");
+    }
+
     if (!arg_patch) {
         arg_patch = (process.env["VERSION_PATCH"] === "true");
     }
@@ -154,6 +219,11 @@ function main() {
 
     if (!arg_tag) {
         arg_tag = process.env["VERSION_TAGNAME"];
+    }
+
+    if (arg_test_build && arg_release) {
+        console.error("ERROR: Test build shouldn't be released");
+        process.exit(2);
     }
 
     if (!file_version) {
@@ -177,25 +247,25 @@ function main() {
     }
 
     // Generate and print the version to console
-    const version = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
+    const simpleVersion = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
+    const version = arg_test_build ? `0.0.0-${arg_build_num}-test` : simpleVersion;
     console.log(`version=${version}`);
     console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
-    if (arg_release) {
-        let isLatest = true;
-        if (arg_tag) {
-            const split = version.split(".");
-            if (split.length !== 3) {
-                console.error(`ERROR: Invalid format for release version ${version}`);
-                process.exit(8);
-            }
-            const tagName = `${arg_tag}_v${split[0]}.${parseInt(split[1]) + 1}.*`;
-            const out = child_process.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
-            if (out.trim()) {
-                isLatest = false;
-            }
-        }
+
+    // Output the code version for test builds. This is used in the CI system.
+    // See common/build/build-common/gen_version.js
+    if (arg_test_build) {
+        const codeVersion = `${simpleVersion}-test`;
+        console.log(`codeVersion=${codeVersion}`);
+        console.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
+    }
+
+    if (arg_tag !== undefined) {
+        const isLatest = getIsLatest(arg_tag, version);
         console.log(`isLatest=${isLatest}`);
-        console.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
+        if (arg_release && isLatest) {
+            console.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
+        }
     }
 }
 

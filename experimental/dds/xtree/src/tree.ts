@@ -20,7 +20,7 @@ export class SharedXTree extends SharedObject {
     public static getFactory() { return new SharedXTreeFactory(); }
 
     constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_sharedXTree_");
     }
 
     /**
