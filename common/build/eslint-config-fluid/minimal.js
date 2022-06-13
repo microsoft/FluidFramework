@@ -120,6 +120,7 @@ module.exports = {
         ],
         "unicorn/no-new-buffer": "error",
         "unicorn/no-unsafe-regex": "error",
+        "unicorn/prefer-switch": "error",
 
         // DISABLED INTENTIONALLY
         // Disabled because we don't require that all variable declarations be explicitly typed.
@@ -198,8 +199,25 @@ module.exports = {
         // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
         "tsdoc/syntax": "error",
 
-        // eslint-plugin-jsdoc rules
-        "jsdoc/check-access": "error", // Ensures that conflicting access tags don't exist in the same comment. See <https://github.com/gajus/eslint-plugin-jsdoc#check-access>.
+        // #region eslint-plugin-jsdoc rules
+
+        // Ensures that conflicting access tags don't exist in the same comment.
+        // See <https://github.com/gajus/eslint-plugin-jsdoc#check-access>.
+        "jsdoc/check-access": "error",
+
+        // The syntax this validates does not accommodate the syntax used by API-Extractor
+        // See <https://api-extractor.com/pages/tsdoc/tag_example/>
+        'jsdoc/check-examples': 'off',
+
+        // Covered by `tsdoc/syntax`
+        'jsdoc/check-tag-names': 'off',
+
+        // Ensure function/method parameter comments include a `-` between name and description.
+        // Useful to ensure API-Extractor compatability.
+        // See <https://www.npmjs.com/package/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-hyphen-before-param-description>.
+        "jsdoc/require-hyphen-before-param-description": "error",
+
+        // #endregion
 
         "@typescript-eslint/prefer-includes": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
@@ -211,7 +229,12 @@ module.exports = {
             "rules": {
                 "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
                 "no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
-            }
+            },
+            "settings": {
+                "jsdoc": {
+                    "mode": "typescript",
+                },
+            },
         },
         {
             // Rules only for test files
@@ -257,6 +280,23 @@ module.exports = {
                     ".jsx"
                 ]
             }
+        },
+        "jsdoc": {
+            // The following are intended to keep js/jsx jsdoc comments in line with tsdoc syntax used in ts/tsx code.
+            "tagNamePreference": {
+                "arg": {
+                    "message": "Please use @param instead of @arg.",
+                    "replacement": "param",
+                },
+                "argument": {
+                    "message": "Please use @param instead of @argument.",
+                    "replacement": "param",
+                },
+                "return": {
+                    "message": "Please use @returns instead of @return.",
+                    "replacement": "returns",
+                },
+            },
         }
     }
 };

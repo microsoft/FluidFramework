@@ -55,8 +55,8 @@ import {
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
-import { IMapMessageLocalMetadata, DefaultMap } from "./defaultMap";
-import { IValueChanged } from "./defaultMapInterfaces";
+import { DefaultMap } from "./defaultMap";
+import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
@@ -523,7 +523,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     protected onDisconnect() { }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        if (!this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
+        if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
                     content as IMergeTreeOp,

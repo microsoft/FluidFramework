@@ -61,6 +61,9 @@
       },
       "InterfaceDeclaration_IFluidDataStoreContextDetached": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_ISignalEnvelope": {
+        "forwardCompat": false
       }
     }
   }
