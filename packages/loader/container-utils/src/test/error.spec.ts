@@ -7,7 +7,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { GenericFluidError, isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
+import { LoggingError, isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataCorruptionError, DataProcessingError } from "../error";
 
@@ -40,8 +40,8 @@ describe("Errors", () => {
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
         });
-        it("Should skip coercion for GenericFluidError", () => {
-            const originalError = new GenericFluidError(
+        it("Should coerce LoggingError", () => {
+            const originalError = new LoggingError(
                 "Inherited error message", {
                     otherProperty: "Considered PII-free property",
                 });

@@ -67,13 +67,6 @@ export function generateErrorWithStack(): Error;
 // @public (undocumented)
 export function generateStack(): string | undefined;
 
-// @public (undocumented)
-export class GenericFluidError extends LoggingError {
-    constructor(message: string, props?: ITelemetryProperties);
-    // (undocumented)
-    errorType: "genericError";
-}
-
 // @public
 export const getCircularReplacer: () => (key: string, value: any) => any;
 
@@ -163,13 +156,11 @@ export interface ITelemetryLoggerPropertyBags {
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L): MonitoringContext<L>;
 
 // @public
-export abstract class LoggingError extends Error implements ILoggingError, IFluidErrorBase {
-    protected constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
+export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
+    constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
     addTelemetryProperties(props: ITelemetryProperties): void;
     // (undocumented)
     get errorInstanceId(): string;
-    // (undocumented)
-    abstract errorType: string;
     getTelemetryProperties(): ITelemetryProperties;
     // (undocumented)
     overwriteErrorInstanceId(id: string): void;
@@ -215,9 +206,6 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 // @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
-
-// @public
-export function originatedAsExternalError(e: any): boolean;
 
 // @public
 export class PerformanceEvent {

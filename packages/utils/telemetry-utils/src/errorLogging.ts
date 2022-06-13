@@ -311,7 +311,6 @@ export const getCircularReplacer = () => {
             }
             seen.add(value);
         }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value;
     };
 };
@@ -373,15 +372,6 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
             message: this.message,
             errorInstanceId: this._errorInstanceId,
         };
-    }
-}
-
-//* Remove this and usages
-export class GenericFluidError extends LoggingError {
-    errorType: "genericError" = "genericError"; // Used ubiquitously to mean an unspecified fatal error
-
-    constructor(message: string, props?: ITelemetryProperties) {
-        super(message, props);
     }
 }
 
