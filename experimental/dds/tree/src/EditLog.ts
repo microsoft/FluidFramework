@@ -645,8 +645,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	public getEditLogSummary<TCompressedChange>(
 		compressEdit?: (edit: Pick<Edit<TChange>, 'changes'>) => Pick<Edit<TCompressedChange>, 'changes'>
 	): EditLogSummary<TChange, FluidEditHandle> | EditLogSummary<TCompressedChange, FluidEditHandle> {
-		if (compressEdit !== undefined) {
-			return {
+		return compressEdit !== undefined ? {
 				editChunks: this.editChunks.toArray().map(([startRevision, { handle, edits }]) => ({
 					startRevision,
 					chunk:
@@ -655,9 +654,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 						fail('An edit chunk must have either a handle or a list of edits.'),
 				})),
 				editIds: this.sequencedEditIds,
-			};
-		} else {
-			return {
+			} : {
 				editChunks: this.editChunks.toArray().map(([startRevision, { handle, edits }]) => ({
 					startRevision,
 					chunk:
@@ -667,7 +664,6 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 				})),
 				editIds: this.sequencedEditIds,
 			};
-		}
 	}
 
 	private addKeyToCache(newKey: number): void {

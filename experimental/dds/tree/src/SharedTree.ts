@@ -478,17 +478,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		uploadEditChunks: boolean;
 	} {
 		const noCompatOptions = options as SharedTreeOptions<WriteFormat, 'None'>;
-		if (typeof noCompatOptions.summarizeHistory === 'object') {
-			return {
+		return typeof noCompatOptions.summarizeHistory === 'object' ? {
 				summarizeHistory: true,
 				uploadEditChunks: noCompatOptions.summarizeHistory.uploadEditChunks,
-			};
-		} else {
-			return {
+			} : {
 				summarizeHistory: noCompatOptions.summarizeHistory ?? false,
 				uploadEditChunks: false,
 			};
-		}
 	}
 
 	/**

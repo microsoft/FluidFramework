@@ -1014,11 +1014,7 @@ export class IdCompressor {
 			// `localOverrides`s. Otherwise, it is a sequential allocation from the session UUID and can simply be negated and
 			// added to that UUID to obtain the stable ID associated with it.
 			const localOverride = this.localOverrides?.get(id);
-			if (localOverride !== undefined) {
-				return localOverride;
-			} else {
-				return stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
-			}
+			return localOverride !== undefined ? localOverride : stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
 		}
 	}
 
@@ -1056,14 +1052,10 @@ export class IdCompressor {
 			const [key, compressionMapping] = closestMatch;
 			if (!IdCompressor.isClusterInfo(compressionMapping)) {
 				if (key === inversionKey) {
-					if (IdCompressor.isUnfinalizedOverride(compressionMapping)) {
-						return compressionMapping;
-					} else {
-						return (
+					return IdCompressor.isUnfinalizedOverride(compressionMapping) ? compressionMapping : (
 							compressionMapping.associatedLocalId ??
 							(compressionMapping.originalOverridingFinal as SessionSpaceCompressedId)
 						);
-					}
 				}
 			} else {
 				if (!isStable) {
