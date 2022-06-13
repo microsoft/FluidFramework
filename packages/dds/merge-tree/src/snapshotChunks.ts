@@ -96,15 +96,13 @@ export function serializeAsMinSupportedVersion(
     }
 
     switch (chunk.version) {
-        case undefined:
+        case undefined: {
             targetChuck = chunk as MergeTreeChunkLegacy;
             targetChuck.headerMetadata = buildHeaderMetadataForLegacyChunk(path, targetChuck, options);
             break;
-
-        case "1":
-            // eslint-disable-next-line no-case-declarations
+        }
+        case "1": {
             const chunkV1 = chunk as MergeTreeChunkV1;
-            // eslint-disable-next-line no-case-declarations
             const headerMetadata = path === SnapshotLegacy.header ? chunkV1.headerMetadata : undefined;
             targetChuck = {
                 version: undefined,
@@ -119,7 +117,7 @@ export function serializeAsMinSupportedVersion(
                 headerMetadata,
             };
             break;
-
+        }
         default:
             throw new Error(`Unsupported chunk path: ${path} version: ${chunk.version}`);
     }
