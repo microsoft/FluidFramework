@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IncomingMessage } from "http";
+import type { IncomingMessage, ServerResponse } from "http";
 import qs from "querystring";
 import { NetworkError, RestLessFieldNames } from "@fluidframework/server-services-client";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import inclusion = require("inclusion");
+import { urlencoded } from "body-parser";
 
 export const decodeHeader = (
     header: string,
@@ -29,18 +28,30 @@ export class RestLessServer {
      */
     public async translate(
         request: IncomingMessageEx,
+        response: ServerResponse,
     ): Promise<IncomingMessageEx> {
         // Ensure it's intended to be RestLess
         if (!RestLessServer.isRestLess(request)) {
             return request;
         }
         // It is possible that body-parser.urlencoded has already parsed the body
-        if (typeof request.body === "object") {
-            this.translateRequestFields(request, request.body);
-            this.parseRequestBody(request);
-        } else if (!request.complete) {
-            await this.parseStreamRequestFormBody(request);
+        // If not, we must parse it ourselves.
+        if (!request.complete) {
+            await new Promise<void>((resolve, reject) =>
+                urlencoded(
+                    {
+                        extended: true,
+                        // urlencoded does not recognize content-type: application/x-www-form-urlencoded;restless
+                        type: (req) => req.headers["content-type"]?.startsWith("application/x-www-form-urlencoded"),
+                    },
+                )(request, response, () => resolve()),
+            );
         }
+        if (!request.body || typeof request.body !== "object") {
+            throw new Error("Could not parse RestLess request body");
+        }
+        this.translateRequestFields(request, request.body);
+        this.parseRequestBody(request);
         return request;
     }
 
@@ -105,23 +116,6 @@ export class RestLessServer {
                 }
             }
         }
-    }
-
-    private async parseStreamRequestFormBody(request: IncomingMessageEx): Promise<void> {
-        const formidable = (await inclusion("formidable")).default;
-        return new Promise<void>((resolve, reject) => {
-            const form = formidable();
-
-            form.parse(request, (err, fields) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                this.translateRequestFields(request, fields);
-                this.parseRequestBody(request);
-                resolve();
-            });
-        });
     }
 
     private static isRestLess(request: IncomingMessageEx) {
