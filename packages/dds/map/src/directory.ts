@@ -790,9 +790,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 const result: ISerializableValue = {
                     type: value.type,
                     // eslint-disable-next-line @typescript-eslint/ban-types
-                    value: value.value && JSON.parse(value.value) as object,
+                    value: value.value !== undefined && JSON.parse(value.value) as object,
                 };
-                if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+                if (value.value !== undefined && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
                     const extraContent: IDirectoryDataObject = {};
                     let largeContent = extraContent;
                     if (currentSubDir.absolutePath !== posix.sep) {
