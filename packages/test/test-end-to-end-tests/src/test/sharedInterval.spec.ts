@@ -13,9 +13,10 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     IntervalCollection,
     IntervalType,
-    ISerializedInterval,
     SequenceInterval,
     SharedString,
+    decompressInterval,
+    ISerializedIntervalV2
 } from "@fluidframework/sequence";
 import {
     ITestObjectProvider,
@@ -765,12 +766,12 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
             assert.equal(serialized2.intervals.length, 3, "Incorrect interval collection size in container 2");
             assert.equal(serialized3.intervals.length, 3, "Incorrect interval collection size in container 3");
 
-            const interval1From3 = serialized3[0];
+            const interval1From3 = decompressInterval(serialized3.intervals[0]);
             assert(interval1From3.properties);
             const comment1From3 = await (interval1From3.properties.story as IFluidHandle<SharedString>).get();
             assert.equal(
                 comment1From3.getText(0, 12), "a comment...", "Incorrect text in interval collection's shared string");
-            const interval3From3 = serialized3[2];
+            const interval3From3 = decompressInterval(serialized3.intervals[2]);
             assert(interval3From3.properties);
             const mapFrom3 = await (interval3From3.properties.story as IFluidHandle<SharedMap>).get();
             assert.equal(
@@ -780,9 +781,9 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
             // Since it's based on a map kernel, its contents parse as
             // an IMapDataObjectSerializable with the "comments" member we set
             const parsedContent = JSON.parse(summaryBlob.content as string);
-            // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
+            // LocalIntervalCollection serializes as an array of ISerializedIntervalV2, let's get the first comment
             const serializedInterval1FromSnapshot =
-                (parsedContent.comments.value as ISerializedInterval[])[0];
+                decompressInterval((parsedContent.comments.value as ISerializedIntervalV2).intervals[0]);
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             assert(serializedInterval1FromSnapshot.properties);
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string; };

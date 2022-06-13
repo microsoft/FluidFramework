@@ -116,8 +116,10 @@ export class Interval implements ISerializableInterval {
     properties: PropertySet;
     // (undocumented)
     propertyManager: PropertiesManager;
+    // Warning: (ae-forgotten-export) The symbol "CompressedSerializedInterval" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    serialize(client: Client): ISerializedInterval;
+    serialize(client: Client): CompressedSerializedInterval;
     // (undocumented)
     start: number;
     // (undocumented)
@@ -128,8 +130,10 @@ export class Interval implements ISerializableInterval {
 export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
+    // Warning: (ae-forgotten-export) The symbol "ISerializedIntervalV2" needs to be exported by the entry point index.d.ts
+    //
     // @internal
-    constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]);
+    constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalV2);
     // @internal (undocumented)
     ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
     // @internal (undocumented)
@@ -180,7 +184,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     removeIntervalById(id: string): TInterval;
     // (undocumented)
-    serializeInternal(): ISerializedInterval[];
+    serializeInternal(): ISerializedIntervalV2;
 }
 
 // @public (undocumented)
@@ -231,7 +235,7 @@ export interface ISerializableInterval extends IInterval {
     // (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
-    serialize(client: Client): ISerializedInterval;
+    serialize(client: Client): CompressedSerializedInterval;
 }
 
 // @public (undocumented)
@@ -415,7 +419,7 @@ export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents>
     // (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
-    serialize(client: Client): ISerializedInterval;
+    serialize(client: Client): CompressedSerializedInterval;
     // (undocumented)
     start: LocalReference;
     // (undocumented)

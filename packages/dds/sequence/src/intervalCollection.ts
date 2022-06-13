@@ -73,15 +73,15 @@ export interface ISerializedInterval {
  *
  * [start, end, sequenceNumber, intervalType, properties]
  */
-type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
+export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
 
-interface ISerializedIntervalV2 {
+export interface ISerializedIntervalV2 {
     label: string;
     version: 2;
     intervals: CompressedSerializedInterval[];
 }
 
-function decompressInterval(interval: CompressedSerializedInterval, label?: string): ISerializedInterval {
+export function decompressInterval(interval: CompressedSerializedInterval, label?: string): ISerializedInterval {
     return {
         start: interval[0],
         end: interval[1],
@@ -91,7 +91,7 @@ function decompressInterval(interval: CompressedSerializedInterval, label?: stri
     };
 }
 
-function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
+export function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
     // remove the `referenceRangeLabels` property as it is already stored in the
     // `label` field of the summary
     delete interval.properties?.referenceRangeLabels;
