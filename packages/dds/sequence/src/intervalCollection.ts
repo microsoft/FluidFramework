@@ -555,6 +555,10 @@ export function createIntervalIndex(conflict?: IntervalConflictResolver<Interval
     return lc;
 }
 
+/**
+ * TODO
+ * @typeParam TInterval - TODO
+ */
 export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     private readonly intervalTree = new IntervalTree<TInterval>();
     private readonly endIntervalTree: RedBlackTree<TInterval, TInterval>;
@@ -1004,6 +1008,10 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void);
 }
 
+/**
+ * TODO
+ * @typeParam TInterval - TODO
+ */
 export class IntervalCollection<TInterval extends ISerializableInterval>
     extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     private savedSerializedIntervals?: ISerializedInterval[];
@@ -1013,6 +1021,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     private pendingChangesStart: Map<string, ISerializedInterval[]>;
     private pendingChangesEnd: Map<string, ISerializedInterval[]>;
 
+    /**
+     * TODO
+     */
     public get attached(): boolean {
         return !!this.localCollection;
     }
@@ -1025,6 +1036,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.savedSerializedIntervals = serializedIntervals;
     }
 
+    /**
+     * TODO
+     * @param client - TODO
+     * @param label - TODO
+     */
     public attachGraph(client: Client, label: string) {
         if (this.attached) {
             throw new Error("Only supports one Sequence attach");
@@ -1057,6 +1073,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return ++this.client.getCollabWindow().localSeq;
     }
 
+    /**
+     * TODO
+     * @param id - TODO
+     */
     public getIntervalById(id: string) {
         if (!this.attached) {
             throw new Error("attach must be called before accessing intervals");
@@ -1127,6 +1147,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.emit("deleteInterval", interval, local, op);
     }
 
+    /**
+     * TODO
+     * @param id - TODO
+     */
     public removeIntervalById(id: string) {
         const interval = this.localCollection.getIntervalById(id);
         if (interval) {
@@ -1135,6 +1159,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return interval;
     }
 
+    /**
+     * TODO
+     * @param id - TODO
+     * @param props - TODO
+     */
     public changeProperties(id: string, props: PropertySet) {
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
@@ -1162,6 +1191,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.emit("changeInterval", interval, true, undefined);
     }
 
+    /**
+     * TODO
+     * @param id - TODO
+     * @param start - TODO
+     * @param end - TODO
+     */
     public change(id: string, start?: number, end?: number): TInterval | undefined {
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
@@ -1256,12 +1291,19 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return entries && entries.length !== 0;
     }
 
-    /** @deprecated - use ackChange */
+    /** @deprecated - use {@link IntervalCollection.ackChange} */
     public changeInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
         return this.ackChange(serializedInterval, local, op);
     }
 
-    /** @internal */
+    /**
+     * TODO
+     * @param serializedInterval - TODO
+     * @param local - TODO
+     * @param op - TODO
+     *
+     * @internal
+     */
     public ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
@@ -1326,6 +1368,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.localCollection.addConflictResolver(conflictResolver);
     }
 
+    /**
+     * TODO
+     * @param onDeserialize - TODO
+     */
     public attachDeserializer(onDeserialize: DeserializeCallback): void {
         // If no deserializer is specified can skip all processing work
         if (!onDeserialize) {
@@ -1341,7 +1387,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         });
     }
 
-    /** @internal */
+    /**
+     * TODO
+     * @param opName - TODO
+     * @param serializedInterval - TODO
+     * @param localSeq - TODO
+     * @internal
+     */
     public rebaseLocalInterval(
         opName: string,
         serializedInterval: ISerializedInterval,
@@ -1438,7 +1490,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
     }
 
-    /** @deprecated - use ackAdd */
+    /** @deprecated - use {@link IntervalCollection.ackAdd} */
     public addInternal(
         serializedInterval: ISerializedInterval,
         local: boolean,
@@ -1446,7 +1498,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.ackAdd(serializedInterval, local, op);
     }
 
-    /** @internal */
+    /**
+     * TODO
+     * @param serializedInterval - TODO
+     * @param local - TODO
+     * @param op - TODO
+     *
+     * @internal
+     */
     public ackAdd(
         serializedInterval: ISerializedInterval,
         local: boolean,
@@ -1484,7 +1543,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return interval;
     }
 
-    /** @deprecated - use ackDelete */
+    /** @deprecated - use {@link IntervalCollection.ackDelete} */
     public deleteInterval(
         serializedInterval: ISerializedInterval,
         local: boolean,
@@ -1492,7 +1551,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.ackDelete(serializedInterval, local, op);
     }
 
-    /** @internal */
+    /**
+     * TODO
+     * @param serializedInterval - TODO
+     * @param local - TODO
+     * @param op - TODO
+     *
+     * @internal
+     */
     public ackDelete(
         serializedInterval: ISerializedInterval,
         local: boolean,
@@ -1515,6 +1581,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
     }
 
+    /**
+     * TODO
+     */
     public serializeInternal() {
         if (!this.attached) {
             throw new Error("attachSequence must be called");
@@ -1523,31 +1592,58 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.localCollection.serialize();
     }
 
+    /**
+     * {@inheritDoc IntervalCollectionIterator}
+     */
     public [Symbol.iterator](): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this);
         return iterator;
     }
 
+    /**
+     * TODO
+     * @param startPosition - TODO
+     */
     public CreateForwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this, true, startPosition);
         return iterator;
     }
 
+    /**
+     * TODO
+     * @param startPosition - TODO
+     * @returns
+     */
     public CreateBackwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this, false, startPosition);
         return iterator;
     }
 
+    /**
+     * TODO
+     * @param endPosition - TODO
+     */
     public CreateForwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this, true, undefined, endPosition);
         return iterator;
     }
 
+    /**
+     * TODO
+     * @param endPosition - TODO
+     */
     public CreateBackwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this, false, undefined, endPosition);
         return iterator;
     }
 
+    /**
+     * TODO
+     * @param results - TODO
+     * @param iteratesForward - TODO
+     * @param start - TODO
+     * @param end - TODO
+     */
     public gatherIterationResults(
         results: TInterval[],
         iteratesForward: boolean,
@@ -1560,6 +1656,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.localCollection.gatherIterationResults(results, iteratesForward, start, end);
     }
 
+    /**
+     * Finds and returns all intervals that overlap the specified range (inclusive on both ends)
+     * @param startPosition - Start position of range to compare against (inclusive)
+     * @param endPosition - End position of range to compare against (inclusive)
+     */
     public findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[] {
         if (!this.attached) {
             throw new Error("attachSequence must be called");
@@ -1568,6 +1669,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.localCollection.findOverlappingIntervals(startPosition, endPosition);
     }
 
+    /**
+     * Maps each interval in the collection with the provided function.
+     */
     public map(fn: (interval: TInterval) => void) {
         if (!this.attached) {
             throw new Error("attachSequence must be called");
@@ -1576,6 +1680,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.localCollection.map(fn);
     }
 
+    /**
+     * TODO
+     * @param pos - TODO
+     */
     public previousInterval(pos: number): TInterval {
         if (!this.attached) {
             throw new Error("attachSequence must be called");
@@ -1584,6 +1692,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.localCollection.previousInterval(pos);
     }
 
+    /**
+     * TODO
+     * @param pos - TODO
+     */
     public nextInterval(pos: number): TInterval {
         if (!this.attached) {
             throw new Error("attachSequence must be called");
