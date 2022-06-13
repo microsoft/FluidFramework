@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../utils";
+import { fail } from "../util";
 import { allowsRepoSuperset, isNeverTree } from "./Comparison";
 import {
     FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, SchemaRepository, TreeSchema, TreeSchemaIdentifier,

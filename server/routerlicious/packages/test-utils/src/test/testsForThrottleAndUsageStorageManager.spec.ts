@@ -4,13 +4,13 @@
  */
 
 import assert from "assert";
-import { IThrottlingMetrics } from "@fluidframework/server-services-core";
-import { TestThrottleStorageManager } from "../testThrottleStorageManager";
+import { IThrottlingMetrics, IUsageData } from "@fluidframework/server-services-core";
+import { TestThrottleAndUsageStorageManager } from "../testThrottleAndUsageStorageManager";
 
 describe("Test for Test Utils", () => {
-    describe("ThrottleStorageManager", () => {
+    describe("ThrottleAndUsageStorageManager", () => {
         it("Creates and retrieves throttlingMetric", async () => {
-            const throttleManager = new TestThrottleStorageManager();
+            const throttleManager = new TestThrottleAndUsageStorageManager();
 
             const id = "test-id-1";
             const throttlingMetric: IThrottlingMetrics = {
@@ -27,7 +27,7 @@ describe("Test for Test Utils", () => {
         });
 
         it("Creates and overwrites throttlingMetric", async () => {
-            const throttleManager = new TestThrottleStorageManager();
+            const throttleManager = new TestThrottleAndUsageStorageManager();
 
             const id = "test-id-2";
             const originalThrottlingMetric: IThrottlingMetrics = {
@@ -55,12 +55,59 @@ describe("Test for Test Utils", () => {
         });
 
         it("Returns undefined when throttlingMetric does not exist", async () => {
-            const throttleManager = new TestThrottleStorageManager();
+            const throttleManager = new TestThrottleAndUsageStorageManager();
 
             const id = "test-id-2";
 
             const retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
             assert.strictEqual(retrievedThrottlingMetric, undefined);
+        });
+
+        it("Creates and retrieves throttlingMetric and usageData", async () => {
+            const throttleManager = new TestThrottleAndUsageStorageManager();
+
+            const id = "test-id-1";
+            const throttlingMetric: IThrottlingMetrics = {
+                count: 2,
+                lastCoolDownAt: Date.now(),
+                throttleStatus: false,
+                throttleReason: "N/A",
+                retryAfterInMs: 2500,
+            };
+
+            const usageId = "test-id-2";
+            const usageData: IUsageData = {
+                value: 2,
+                tenantId: "testTenant",
+                documentId: "testDocument",
+            };
+
+            await throttleManager.setThrottlingMetricAndUsageData(
+                id,
+                throttlingMetric,
+                usageId,
+                usageData);
+
+            const retrievedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
+            assert.deepStrictEqual(retrievedThrottlingMetric, throttlingMetric);
+            const retrievedUsageData = await throttleManager.getUsageData(usageId);
+            assert.deepStrictEqual(retrievedUsageData, usageData);
+        });
+
+        it("Creates and retrieves usageData", async () => {
+            const throttleManager = new TestThrottleAndUsageStorageManager();
+
+            const usageId = "test-id-1";
+            const usageData: IUsageData = {
+                value: 2,
+                tenantId: "testTenant",
+                documentId: "testDocument",
+            };
+
+            await throttleManager.setUsageData(usageId, usageData);
+
+            const retrievedUsageData = await throttleManager.getUsageData(usageId);
+            assert.deepStrictEqual(retrievedUsageData, usageData);
         });
     });
 });
