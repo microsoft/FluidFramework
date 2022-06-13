@@ -15,7 +15,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "npm run tsc && npm run build:test",
+    "build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -28,7 +28,8 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
@@ -55,10 +56,6 @@
   },
   "typeValidation": {
     "version": "1.1.0",
-    "broken": {
-      "InterfaceDeclaration_ISignalEnvelope": {
-        "forwardCompat": false
-      }
-    }
+    "broken": {}
   }
 }
