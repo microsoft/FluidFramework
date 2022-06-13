@@ -844,7 +844,6 @@ export interface AugmentedIntervalNode {
 
 export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
 
-
 /**
  * TODO
  */
