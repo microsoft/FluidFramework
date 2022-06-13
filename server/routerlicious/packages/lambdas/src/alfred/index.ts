@@ -371,7 +371,6 @@ export function configureWebSocketServices(
                     serviceConfiguration: {
                         blockSize: connection.serviceConfiguration.blockSize,
                         maxMessageSize: connection.serviceConfiguration.maxMessageSize,
-                        summary: connection.serviceConfiguration.summary,
                     },
                     initialClients: clients,
                     initialMessages: [],
@@ -389,7 +388,6 @@ export function configureWebSocketServices(
                     serviceConfiguration: {
                         blockSize: core.DefaultServiceConfiguration.blockSize,
                         maxMessageSize: core.DefaultServiceConfiguration.maxMessageSize,
-                        summary: core.DefaultServiceConfiguration.summary,
                     },
                     initialClients: clients,
                     initialMessages: [],
