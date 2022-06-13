@@ -78,7 +78,11 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
         []);
 
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+         },
         gcOptions: { gcAllowed: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(

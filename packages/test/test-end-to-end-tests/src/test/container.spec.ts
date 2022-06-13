@@ -163,7 +163,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         };
 
         const container = await loadContainer({ documentServiceFactory: mockFactory });
-        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(container.connectionState, ConnectionState.CatchingUp,
             "Container should be in Connecting state");
         // Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
         // Only closing container will break that cycle.
@@ -201,7 +201,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         container.on("error", () => {
             errorRaised = true;
         });
-        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(container.connectionState, ConnectionState.CatchingUp,
             "Container should be in Connecting state");
         const err: IAnyDriverError = {
             errorType: DriverErrorType.genericError,
@@ -240,7 +240,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         container.on("error", () => {
             assert.ok(false, "Error event should not be raised.");
         });
-        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(container.connectionState, ConnectionState.CatchingUp,
             "Container should be in Connecting state");
         container.close();
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
@@ -281,7 +281,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     it("closeAndGetPendingLocalState() called on container", async () => {
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
             TestDataObjectType,
-            getDataStoreFactory());
+            getDataStoreFactory(),
+            { enableOfflineLoad: true });
 
         const localTestObjectProvider = new TestObjectProvider(
             Loader,

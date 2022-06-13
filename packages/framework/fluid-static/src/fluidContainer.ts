@@ -73,14 +73,6 @@ export interface IFluidContainerEvents extends IEvent {
  */
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
-     * Whether the container is connected to the collaboration session.
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Check `connectionState === ConnectionState.Connected` instead
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    readonly connected: boolean;
-
-    /**
      * Provides the current connected state of the container
      */
     readonly connectionState: ConnectionState;
@@ -131,12 +123,12 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
      * Attempts to connect the container to the delta stream and process ops
      */
-    connect?(): void;
+    connect(): void;
 
     /**
      * Disconnects the container from the delta stream and stops processing ops
      */
-    disconnect?(): void;
+    disconnect(): void;
 
     /**
      * Create a new data object or DDS of the specified type.  In order to share the data object or DDS with other
@@ -193,13 +185,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      */
     public get disposed() {
         return this.container.closed;
-    }
-
-    /**
-     * {@inheritDoc IFluidContainer.connected}
-     */
-    public get connected() {
-        return this.container.connected;
     }
 
     /**

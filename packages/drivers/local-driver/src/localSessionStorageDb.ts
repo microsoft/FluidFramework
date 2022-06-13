@@ -293,6 +293,14 @@ class LocalSessionStorageDb extends EventEmitter implements IDb {
         }
         return this.collections.get(name) as LocalSessionStorageCollection<T>;
     }
+
+    public async dropCollection(name: string): Promise<boolean> {
+        if (!this.collections.has(name)) {
+            return true;
+        }
+        this.collections.delete(name);
+        return true;
+    }
 }
 
 /**

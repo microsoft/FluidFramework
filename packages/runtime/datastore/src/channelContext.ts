@@ -12,6 +12,7 @@ import {
     IGarbageCollectionData,
     ISummarizeResult,
     ISummaryTreeWithStats,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -26,11 +27,17 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummarizeResult>;
+    summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 
     applyStashedOp(content: any): unknown;
+
+    rollback(message: any, localOpMetadata: unknown): void;
 
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
@@ -78,8 +85,9 @@ export function summarizeChannel(
     channel: IChannel,
     fullTree: boolean = false,
     trackState: boolean = false,
+    telemetryContext?: ITelemetryContext,
 ): ISummaryTreeWithStats {
-    const summarizeResult = channel.getAttachSummary(fullTree, trackState);
+    const summarizeResult = channel.getAttachSummary(fullTree, trackState, telemetryContext);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
@@ -90,8 +98,9 @@ export async function summarizeChannelAsync(
     channel: IChannel,
     fullTree: boolean = false,
     trackState: boolean = false,
+    telemetryContext?: ITelemetryContext,
 ): Promise<ISummaryTreeWithStats> {
-    const summarizeResult = await channel.summarize(fullTree, trackState);
+    const summarizeResult = await channel.summarize(fullTree, trackState, telemetryContext);
 
     // Add the channel attributes to the returned result.
     addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
