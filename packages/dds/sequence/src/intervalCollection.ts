@@ -485,6 +485,7 @@ export function createIntervalIndex(conflict?: IntervalConflictResolver<Interval
 export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     private readonly intervalTree = new IntervalTree<TInterval>();
     private readonly endIntervalTree: RedBlackTree<TInterval, TInterval>;
+    private readonly intervalIdMap: Map<string, TInterval> = new Map();
     private conflictResolver: IntervalConflictResolver<TInterval>;
     private endConflictResolver: ConflictAction<TInterval, TInterval>;
 
@@ -662,6 +663,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     private removeIntervalFromIndex(interval: TInterval) {
         this.intervalTree.removeExisting(interval);
         this.endIntervalTree.remove(interval);
+        this.intervalIdMap.delete(interval.getIntervalId());
     }
 
     public removeExistingInterval(interval: TInterval) {
@@ -711,6 +713,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         });
         this.intervalTree.put(interval, this.conflictResolver);
         this.endIntervalTree.put(interval, interval, this.endConflictResolver);
+        this.intervalIdMap.set(interval.getIntervalId(), interval);
     }
 
     public add(interval: TInterval) {
@@ -719,15 +722,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     public getIntervalById(id: string) {
-        let result: TInterval | undefined;
-        this.mapUntil((interval: TInterval) => {
-            if (interval.getIntervalId() === id) {
-                result = interval;
-                return false;
-            }
-            return true;
-        });
-        return result;
+        return this.intervalIdMap.get(id);
     }
 
     public changeInterval(interval: TInterval, start: number, end: number, op?: ISequencedDocumentMessage) {
@@ -1205,7 +1200,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             // This is an ack from the server. Remove the pending change.
             this.removePendingChange(serializedInterval);
             const id: string = serializedInterval.properties[reservedIntervalIdKey];
-            // Could store the interval in the localOpMetadata to avoid the getIntervalById call
             interval = this.getIntervalById(id);
             if (interval) {
                 // Let the propertyManager prune its pending change-properties set.
@@ -1386,7 +1380,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         op: ISequencedDocumentMessage) {
         if (local) {
             const id: string = serializedInterval.properties[reservedIntervalIdKey];
-            // Could store the interval in the localOpMetadata to avoid the getIntervalById call
             const localInterval = this.getIntervalById(id);
             if (localInterval) {
                 this.ackInterval(localInterval, op);
