@@ -1902,7 +1902,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 envelope.clientSignalSequenceNumber > this._perfSignalData.trackingSignalSequenceNumber) {
                 this._perfSignalData.signalsLost++;
                 this._perfSignalData.trackingSignalSequenceNumber = undefined;
-            } else if (envelope.clientSignalSequenceNumber % this.defaultTelemetrySignalSampleCount === 1) {
+                this.logger.sendErrorEvent({
+                    eventName: "SignalLost",
+                    type: envelope.contents.type,
+                    signalsLost: this._perfSignalData.signalsLost,
+                    trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
+                    clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
+                });
+            } else if (envelope.clientSignalSequenceNumber === this._perfSignalData.trackingSignalSequenceNumber) {
                 this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
                 this._perfSignalData.trackingSignalSequenceNumber = undefined;
             }
