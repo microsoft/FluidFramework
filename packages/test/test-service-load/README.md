@@ -51,6 +51,10 @@ This URL can be passed as-is to Fluid Debugger as well as fetch-tool.
 
 Specifies which test driver to use: odsp, routerlicious, tinylicious. The config for the drivers is pulled from the environment. See [Test Driver](../test-drivers/README.md).
 
+#### --driverEndpoint, -e
+
+Specifies which endpoint of test driver to use: odsp, odsp-df for odsp driver or frs, r11s, docker for routerlicious driver.
+
 #### --profile, -p
 
 Specifies which test profile to use from [testConfig.json](./testConfig.json). Defaults to **ci**.

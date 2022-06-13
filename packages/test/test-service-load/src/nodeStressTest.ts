@@ -166,7 +166,11 @@ async function orchestratorProcess(
             const password = username !== undefined ? profile.testUsers?.credentials[username] : undefined;
             const envVar = { ...process.env };
             if (username !== undefined && password !== undefined) {
-                envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+                if (endpoint === "odsp") {
+                    envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+                } else if (endpoint === "odsp-df") {
+                    envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
+                }
             }
             const runnerProcess = child_process.spawn(
                 "node",

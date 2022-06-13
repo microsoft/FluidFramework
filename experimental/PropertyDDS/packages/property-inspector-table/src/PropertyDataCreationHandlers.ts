@@ -19,7 +19,7 @@ export const fetchRegisteredTemplates = () => {
   const primitiveLocalTemplates: string[] = [];
   const customLocalTemplates: string[] = [];
   Object.keys(localTemplates).forEach((item) => {
-    if (!TypeIdHelper.isTemplateTypeid(item) && EXCLUDE_PROPS.indexOf(item) === -1) {
+      if (!TypeIdHelper.isTemplateTypeid(item) && !EXCLUDE_PROPS.includes(item)) {
       primitiveLocalTemplates.push(item);
     } else if (TypeIdHelper.isTemplateTypeid(item)) {
       customLocalTemplates.push(item);

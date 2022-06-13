@@ -118,7 +118,7 @@ export class ConsensusRegisterCollection<T>
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_consensusRegisterCollection_");
     }
 
     /**

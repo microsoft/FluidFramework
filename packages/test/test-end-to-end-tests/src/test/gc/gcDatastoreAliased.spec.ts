@@ -33,7 +33,9 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
 
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            disableSummaries: true,
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
         },
         gcOptions: {
             gcAllowed: true,

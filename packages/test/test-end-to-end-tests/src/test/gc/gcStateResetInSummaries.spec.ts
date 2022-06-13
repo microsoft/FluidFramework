@@ -42,12 +42,14 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
         []);
 
     const defaultRuntimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+         },
     };
     const logger = new TelemetryNullLogger();
-    // Enable config provider setting to write GC data at the root.
-    const settings = { "Fluid.GarbageCollection.WriteDataAtRoot": "true" };
-    const configProvider = mockConfigProvider(settings);
+    const configProvider = mockConfigProvider({});
 
     // Stores the latest summary uploaded to the server.
     let latestUploadedSummary: ISummaryTree | undefined;
@@ -70,7 +72,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             ],
             undefined,
             [innerRequestHandler],
-            { ...defaultRuntimeOptions, gcOptions: { gcAllowed, writeDataAtRoot: true } },
+            { ...defaultRuntimeOptions, gcOptions: { gcAllowed } },
         );
         return provider.createContainer(runtimeFactory, { configProvider });
     };
@@ -84,7 +86,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             ],
             undefined,
             [innerRequestHandler],
-            { ...defaultRuntimeOptions, gcOptions: { gcAllowed, disableGC, writeDataAtRoot: true } },
+            { ...defaultRuntimeOptions, gcOptions: { gcAllowed, disableGC } },
         );
         return loadSummarizer(
             provider,
@@ -146,8 +148,20 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
         unreferencedDataStoreIds: string[] = [],
     ) {
         const channelsTree = await getSummaryChannelsTree(summarizerClient);
-        assert(latestUploadedSummary !== undefined, "Did not get a summary");
+        for (const [id, summaryObject] of Object.entries(channelsTree)) {
+            if (summaryObject.type !== SummaryType.Tree) {
+                assert(!shouldRegenerateSummary, `DataStore ${id}'s entry should be a tree if summary was regenerated`);
+                continue;
+            }
 
+            if (unreferencedDataStoreIds.includes(id)) {
+                assert(summaryObject.unreferenced === true, `DataStore ${id} should be unreferenced`);
+            } else {
+                assert(summaryObject.unreferenced !== true, `DataStore ${id} should be referenced`);
+            }
+        }
+
+        assert(latestUploadedSummary !== undefined, "Did not get a summary");
         const gcState = getGCStateFromSummary(latestUploadedSummary);
         if (gcState === undefined) {
             assert(!shouldGCRun, `If GC tree is not present in summary, GC should not have run.`);
@@ -170,31 +184,16 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
                 );
             }
         }
-
-        for (const [id, summaryObject] of Object.entries(channelsTree)) {
-            if (summaryObject.type !== SummaryType.Tree) {
-                assert(!shouldRegenerateSummary, `DataStore ${id}'s entry should be a tree if summary was regenerated`);
-                continue;
-            }
-
-            if (unreferencedDataStoreIds.includes(id)) {
-                assert(summaryObject.unreferenced === true, `DataStore ${id} should be unreferenced`);
-            } else {
-                assert(summaryObject.unreferenced !== true, `DataStore ${id} should be referenced`);
-            }
-        }
     }
 
-    before(function() {
+    beforeEach(async function() {
         provider = getTestObjectProvider();
         // These tests validate the end-to-end behavior of summaries when GC is enabled / disabled. This behavior
         // is not affected by the service. So, it doesn't need to run against real services.
         if (provider.driver.type !== "local") {
             this.skip();
         }
-    });
 
-    beforeEach(async () => {
         // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
         // time the summarizer client uploads a summary.
         (provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
@@ -254,18 +253,19 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             false /* shouldRegenerateSummary */,
         );
 
-        // Load a new summarizer from the last summary with GC still disabled.
+        // Load a new summarizer from the last summary with GC enabled.
         const summarizerClient3 = await getNewSummarizer(
-            true /* disableGC */,
+            false /* disableGC */,
             undefined /* gcAllowed */,
             latestAckedSummary.summaryAck.contents.handle,
         );
-        // Validate that GC does not run and the summary is not regenerated again in a new client as well. The
-        // summary is regenerated only the first time GC is disabled after it was enabled before.
+        // Validate that GC runs and the summary is regenerated because GC was disabled in the previous summary and
+        // is now enabled. Also, the unreferenced data stores should be marked as such.
         await validateGCState(
             summarizerClient3,
-            false /* shouldGCRun */,
-            false /* shouldRegenerateSummary */,
+            true /* shouldGCRun */,
+            true /* shouldRegenerateSummary */,
+            [newDataStore.id],
         );
     });
 
@@ -304,7 +304,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
         const newDataStore = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
         mainDataStore._root.set("newDataStore", newDataStore.handle);
 
-        // Validate that GC did not run even though gcAllowed is set to ture. Whether GC runs or not is determined by
+        // Validate that GC did not run even though gcAllowed is set to true. Whether GC runs or not is determined by
         // the gcAllowed flag when the document was created.
         await validateGCState(
             summarizerClient,

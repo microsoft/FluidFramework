@@ -107,7 +107,7 @@ export const codeToBytesMap = {
 
 export function getValueSafely(map: { [index: number]: number; }, key: number) {
     const val = map[key];
-    assert(val !== undefined, 0x287 /* `key= ${key} must exist in the map` */);
+    assert(val !== undefined, 0x287 /* key must exist in the map */);
     return val;
 }
 
@@ -123,7 +123,7 @@ export function getAndValidateNodeProps(node: NodeCore, props: string[], enforce
         }
     }
     if (enforceAllProps) {
-        assert(propSet.size === 0, 0x288 /* `All properties should exist, Not found: ${[...propSet.keys()]}` */);
+        assert(propSet.size === 0, 0x288 /* All properties should exist */);
     }
     return res;
 }

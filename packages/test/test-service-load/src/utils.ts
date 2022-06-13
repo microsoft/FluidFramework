@@ -69,7 +69,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     send(event: ITelemetryBaseEvent): void {
         if (typeof event.testCategoryOverride === "string") {
             event.category = event.testCategoryOverride;
-        } else if (typeof event.message === "string" && event.message.indexOf("FaultInjectionNack") > -1) {
+        } else if (typeof event.message === "string" && event.message.includes("FaultInjectionNack")) {
             event.category = "generic";
         }
         this.baseLogger?.send({ ...event, hostName: pkgName });
@@ -129,15 +129,17 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 export async function initialize(testDriver: ITestDriver, seed: number, testConfig: ILoadTestConfig, verbose: boolean) {
     const randEng = random.engines.mt19937();
     randEng.seed(seed);
+    const optionsOverride =
+        `${testDriver.type}${testDriver.endpointName !== undefined ? `-${testDriver.endpointName}` : ""}`;
     const loaderOptions = random.pick(
         randEng,
-        generateLoaderOptions(seed, testConfig.optionOverrides?.[testDriver.type]?.loader));
+        generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader));
     const containerOptions = random.pick(
         randEng,
-        generateRuntimeOptions(seed, testConfig.optionOverrides?.[testDriver.type]?.container));
+        generateRuntimeOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.container));
     const configurations = random.pick(
         randEng,
-        generateConfigurations(seed, testConfig?.optionOverrides?.[testDriver.type]?.configurations));
+        generateConfigurations(seed, testConfig?.optionOverrides?.[optionsOverride]?.configurations));
 
     // Construct the loader
     const loader = new Loader({

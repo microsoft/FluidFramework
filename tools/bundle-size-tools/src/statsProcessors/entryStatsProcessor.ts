@@ -5,6 +5,7 @@
 
 import { getChunkParsedSize } from '../utilities';
 import { BundleMetric, WebpackStatsProcessor } from '../BundleBuddyTypes';
+import { fail } from 'assert';
 
 export interface EntryStatsProcessorOptions {
   // Custom callback to customize what text will be used as the metric name
@@ -25,7 +26,7 @@ export function getEntryStatsProcessor(options: EntryStatsProcessorOptions): Web
     Object.entries(stats.entrypoints).forEach((value) => {
       const [chunkName, chunkGroupStats] = value;
       const metricName = options.metricNameProvider ? options.metricNameProvider(chunkName) : chunkName;
-      result.set(metricName, { parsedSize: getChunkParsedSize(stats, chunkGroupStats.chunks[0]) });
+      result.set(metricName, { parsedSize: getChunkParsedSize(stats, (chunkGroupStats.chunks ?? fail('missing chunk'))[0]) });
     });
 
     return result;

@@ -8,6 +8,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
+    IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
@@ -74,6 +75,10 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      */
     public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
+    }
+
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+        super(id, runtime, attributes, "fluid_counter_");
     }
 
     /**

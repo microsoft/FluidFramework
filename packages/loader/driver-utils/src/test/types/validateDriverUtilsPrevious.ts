@@ -184,6 +184,30 @@ use_old_FunctionDeclaration_configurableUrlResolver(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree():
+    TypeOnly<typeof old.convertSnapshotAndBlobsToSummaryTree>;
+declare function use_current_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
+    use: TypeOnly<typeof current.convertSnapshotAndBlobsToSummaryTree>);
+use_current_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
+    get_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree():
+    TypeOnly<typeof current.convertSnapshotAndBlobsToSummaryTree>;
+declare function use_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
+    use: TypeOnly<typeof old.convertSnapshotAndBlobsToSummaryTree>);
+use_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
+    get_current_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_convertSummaryTreeToSnapshotITree": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_convertSummaryTreeToSnapshotITree():
@@ -568,6 +592,30 @@ use_old_InterfaceDeclaration_IProgress(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isClientMessage": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isClientMessage():
+    TypeOnly<typeof old.isClientMessage>;
+declare function use_current_FunctionDeclaration_isClientMessage(
+    use: TypeOnly<typeof current.isClientMessage>);
+use_current_FunctionDeclaration_isClientMessage(
+    get_old_FunctionDeclaration_isClientMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isClientMessage": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isClientMessage():
+    TypeOnly<typeof current.isClientMessage>;
+declare function use_old_FunctionDeclaration_isClientMessage(
+    use: TypeOnly<typeof old.isClientMessage>);
+use_old_FunctionDeclaration_isClientMessage(
+    get_current_FunctionDeclaration_isClientMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isFluidResolvedUrl": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_isFluidResolvedUrl():
@@ -612,6 +660,54 @@ declare function use_old_FunctionDeclaration_isOnline(
     use: TypeOnly<typeof old.isOnline>);
 use_old_FunctionDeclaration_isOnline(
     get_current_FunctionDeclaration_isOnline());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isRuntimeMessage": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isRuntimeMessage():
+    TypeOnly<typeof old.isRuntimeMessage>;
+declare function use_current_FunctionDeclaration_isRuntimeMessage(
+    use: TypeOnly<typeof current.isRuntimeMessage>);
+use_current_FunctionDeclaration_isRuntimeMessage(
+    get_old_FunctionDeclaration_isRuntimeMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isRuntimeMessage": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isRuntimeMessage():
+    TypeOnly<typeof current.isRuntimeMessage>;
+declare function use_old_FunctionDeclaration_isRuntimeMessage(
+    use: TypeOnly<typeof old.isRuntimeMessage>);
+use_old_FunctionDeclaration_isRuntimeMessage(
+    get_current_FunctionDeclaration_isRuntimeMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummaryTreeAssemblerProps": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISummaryTreeAssemblerProps():
+    TypeOnly<old.ISummaryTreeAssemblerProps>;
+declare function use_current_InterfaceDeclaration_ISummaryTreeAssemblerProps(
+    use: TypeOnly<current.ISummaryTreeAssemblerProps>);
+use_current_InterfaceDeclaration_ISummaryTreeAssemblerProps(
+    get_old_InterfaceDeclaration_ISummaryTreeAssemblerProps());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummaryTreeAssemblerProps": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISummaryTreeAssemblerProps():
+    TypeOnly<current.ISummaryTreeAssemblerProps>;
+declare function use_old_InterfaceDeclaration_ISummaryTreeAssemblerProps(
+    use: TypeOnly<old.ISummaryTreeAssemblerProps>);
+use_old_InterfaceDeclaration_ISummaryTreeAssemblerProps(
+    get_current_InterfaceDeclaration_ISummaryTreeAssemblerProps());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1020,6 +1116,30 @@ declare function use_old_FunctionDeclaration_streamObserver(
     use: TypeOnly<typeof old.streamObserver>);
 use_old_FunctionDeclaration_streamObserver(
     get_current_FunctionDeclaration_streamObserver());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_SummaryTreeAssembler": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_SummaryTreeAssembler():
+    TypeOnly<old.SummaryTreeAssembler>;
+declare function use_current_ClassDeclaration_SummaryTreeAssembler(
+    use: TypeOnly<current.SummaryTreeAssembler>);
+use_current_ClassDeclaration_SummaryTreeAssembler(
+    get_old_ClassDeclaration_SummaryTreeAssembler());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_SummaryTreeAssembler": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_SummaryTreeAssembler():
+    TypeOnly<current.SummaryTreeAssembler>;
+declare function use_old_ClassDeclaration_SummaryTreeAssembler(
+    use: TypeOnly<old.SummaryTreeAssembler>);
+use_old_ClassDeclaration_SummaryTreeAssembler(
+    get_current_ClassDeclaration_SummaryTreeAssembler());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -1094,7 +1094,7 @@ export function runSharedTreeOperationsTests(
 				it('is logged for invalid locally generated edits when those edits are sequenced', async () => {
 					const events: ITelemetryBaseEvent[] = [];
 					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger: { send: (event) => !event.eventName.includes('IdCompressor') && events.push(event) },
 						allowInvalid: true,
 					});
 					useFailedSequencedEditTelemetry(sharedTree);
@@ -1118,7 +1118,7 @@ export function runSharedTreeOperationsTests(
 				it('can be disabled and re-enabled', async () => {
 					const events: ITelemetryBaseEvent[] = [];
 					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger: { send: (event) => !event.eventName.includes('IdCompressor') && events.push(event) },
 						allowInvalid: true,
 					});
 					const { disable } = useFailedSequencedEditTelemetry(sharedTree);
@@ -1164,7 +1164,7 @@ export function runSharedTreeOperationsTests(
 				it('is not logged for valid edits', async () => {
 					const events: ITelemetryBaseEvent[] = [];
 					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger: { send: (event) => !event.eventName.includes('IdCompressor') && events.push(event) },
 					});
 					useFailedSequencedEditTelemetry(sharedTree);
 
@@ -1177,7 +1177,7 @@ export function runSharedTreeOperationsTests(
 				it('is not logged for remote edits', async () => {
 					const events: ITelemetryBaseEvent[] = [];
 					const { sharedTree: sharedTree1, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger: { send: (event) => !event.eventName.includes('IdCompressor') && events.push(event) },
 						allowInvalid: true,
 						localMode: false,
 					});
@@ -1322,11 +1322,6 @@ export function runSharedTreeOperationsTests(
 				writeFormat,
 				summarizeHistory: false,
 			});
-			testObjectProvider.logger.registerExpectedEvent(
-				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' }
-			);
 
 			applyNoop(tree);
 			await testObjectProvider.ensureSynchronized();
