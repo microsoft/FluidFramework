@@ -343,7 +343,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 reason,
                 "factoryFromPackagePath",
                 undefined /* sequencedMessage */,
-                { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
+                { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
 
         if (packages === undefined) {
             throw failure("packages is undefined");

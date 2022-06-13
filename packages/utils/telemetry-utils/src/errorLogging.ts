@@ -323,13 +323,10 @@ export const getCircularReplacer = () => {
  *
  * PLEASE take care to avoid setting sensitive data on this object without proper tagging!
  */
-export abstract class LoggingError extends Error implements ILoggingError, IFluidErrorBase {
+export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
     private _errorInstanceId = uuid();
     get errorInstanceId() { return this._errorInstanceId; }
     overwriteErrorInstanceId(id: string) { this._errorInstanceId = id; }
-
-    /** @see IFluidErrorBase.errorType */
-    abstract errorType: string;
 
     /** Back-compat to appease isFluidError typeguard in old code that may handle this error */
     // @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
@@ -341,7 +338,7 @@ export abstract class LoggingError extends Error implements ILoggingError, IFlui
      * @param props - telemetry props to include on the error for when it's logged
      * @param omitPropsFromLogging - properties by name to omit from telemetry props
      */
-    protected constructor(
+    constructor(
         message: string,
         props?: ITelemetryProperties,
         private readonly omitPropsFromLogging: Set<string> = new Set(),
@@ -379,7 +376,7 @@ export abstract class LoggingError extends Error implements ILoggingError, IFlui
     }
 }
 
-/** A simple concrete implementation of LoggingError with errorType = genericError */
+//* Remove this and usages
 export class GenericFluidError extends LoggingError {
     errorType: "genericError" = "genericError"; // Used ubiquitously to mean an unspecified fatal error
 

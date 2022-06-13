@@ -24,6 +24,7 @@ import {
 import { hasErrorInstanceId, IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
 
+//* Unnecessary?
 class TestLoggingError extends LoggingError {
     errorType: string = "testError";
 
@@ -546,6 +547,10 @@ describe("normalizeError", () => {
             }),
             "Error object": () => ({
                 input: new NamedError("boom"),
+                expectedOutput: typicalOutput("boom", "<<stack from input>>"),
+            }),
+            "LoggingError": () => ({
+                input: new LoggingError("boom"),
                 expectedOutput: typicalOutput("boom", "<<stack from input>>"),
             }),
             "Empty object": () => ({

@@ -12,10 +12,9 @@ import {
     Timer,
 } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, ChildLogger } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { GenericError } from "@fluidframework/container-utils";
 import {
     IAckSummaryResult,
     INackSummaryResult,
@@ -393,7 +392,7 @@ export class SummaryGenerator {
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
                 // pre-0.58 error message prefix: summaryNack
-                const error = new GenericError(`Received summaryNack: ${message}`, { retryAfterSeconds });
+                const error = new LoggingError(`Received summaryNack: ${message}`, { retryAfterSeconds });
                 logger.sendErrorEvent(
                     { eventName: "SummaryNack", ...summarizeTelemetryProps, retryAfterSeconds }, error);
 
