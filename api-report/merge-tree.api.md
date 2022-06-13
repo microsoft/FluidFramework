@@ -384,21 +384,14 @@ export interface IIntegerRange {
     start: number;
 }
 
-// @public (undocumented)
+// @public
 export interface IInterval {
-    // (undocumented)
     clone(): IInterval;
-    // (undocumented)
     compare(b: IInterval): number;
-    // (undocumented)
     compareEnd(b: IInterval): number;
-    // (undocumented)
     compareStart(b: IInterval): number;
-    // (undocumented)
     modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
-    // (undocumented)
     overlaps(b: IInterval): boolean;
-    // (undocumented)
     union(b: IInterval): IInterval;
 }
 
