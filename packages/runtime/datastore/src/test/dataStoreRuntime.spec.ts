@@ -10,7 +10,8 @@ import {
     IGarbageCollectionData,
     IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
-import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreContext, validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 
 describe("FluidDataStoreRuntime Tests", () => {
@@ -29,6 +30,24 @@ describe("FluidDataStoreRuntime Tests", () => {
                 throw new Error("Not implemented");
             },
         };
+    });
+
+    it("loadRuntime rejects ids with forward slashes", () => {
+        const invalidId = "beforeSlash/afterSlash";
+        dataStoreContext = new MockFluidDataStoreContext(invalidId);
+        const codeBlock = () => loadRuntime(dataStoreContext, sharedObjectRegistry);
+        assert.throws(codeBlock,
+            (e) => validateAssertionError(e,
+                "Id cannot contain slashes. DataStoreContext should have validated this."));
+    });
+
+    it("constructor rejects ids with forward slashes", () => {
+        const invalidId = "beforeSlash/afterSlash";
+        dataStoreContext = new MockFluidDataStoreContext(invalidId);
+        const codeBlock = () => new FluidDataStoreRuntime(dataStoreContext, sharedObjectRegistry, false);
+        assert.throws(codeBlock,
+            (e) => validateAssertionError(e,
+                "Id cannot contain slashes. DataStoreContext should have validated this."));
     });
 
     it("can create a data store runtime", () => {
@@ -58,5 +77,14 @@ describe("FluidDataStoreRuntime Tests", () => {
         const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
         const gcData = await dataStoreRuntime.getGCData();
         assert.deepStrictEqual(gcData, expectedGCData, "The GC data is incorrect");
+    });
+
+    it("createChannel rejects ids with slashes", async () => {
+        const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
+        const invalidId = "beforeSlash/afterSlash";
+        const codeBlock = () => dataStoreRuntime.createChannel(invalidId, "SomeType");
+        assert.throws(codeBlock,
+            (e) => e.errorType === ContainerErrorType.usageError
+                && e.message === `Id cannot contain slashes: ${invalidId}`);
     });
 });
