@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/datastore-definitions",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Fluid data store definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -33,10 +33,10 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^1.0.0",
-    "@fluidframework/core-interfaces": "^1.0.0",
+    "@fluidframework/container-definitions": "^1.1.0",
+    "@fluidframework/core-interfaces": "^1.1.0",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/runtime-definitions": "^1.0.0",
+    "@fluidframework/runtime-definitions": "^1.1.0",
     "@types/node": "^14.18.0"
   },
   "devDependencies": {

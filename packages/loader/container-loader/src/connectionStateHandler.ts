@@ -167,7 +167,7 @@ export class ConnectionStateHandler {
         const quorumClients = this.handler.quorumClients();
         assert(quorumClients !== undefined, 0x236 /* "In all cases it should be already installed" */);
 
-        assert(this.prevClientLeftTimer.hasTimer === false ||
+        assert(this.waitingForLeaveOp === false ||
             (this.clientId !== undefined && quorumClients.getMember(this.clientId) !== undefined),
             0x2e2 /* "Must only wait for leave message when clientId in quorum" */);
 
@@ -225,7 +225,12 @@ export class ConnectionStateHandler {
     ) {
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.CatchingUp;
+
         const writeConnection = connectionMode === "write";
+        assert(writeConnection || !this.handler.shouldClientJoinWrite(),
+            "shouldClientJoinWrite should imply this is a writeConnection");
+        assert(writeConnection || !this.waitingForLeaveOp,
+            0x2a6 /* "waitingForLeaveOp should imply writeConnection (we need to be ready to flush pending ops)" */);
 
         // Note that this may be undefined since the connection is established proactively on load
         // and the quorum may still be under initialization.
@@ -239,28 +244,24 @@ export class ConnectionStateHandler {
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
-        // This pending clientId could be in the quorum already (i.e. join op already processed).
+        // IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
+        this.handler.logConnectionStateChangeTelemetry(ConnectionState.CatchingUp, oldState);
+
+        // For write connections, this pending clientId could be in the quorum already (i.e. join op already processed).
         // We are fetching ops from storage in parallel to connecting to Relay Service,
         // and given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         // If quorumClients itself is undefined, we expect it will process the join op after it's initialized.
-        const waitingForJoinOp = quorumClients?.getMember(this._pendingClientId) === undefined;
+        const waitingForJoinOp = writeConnection && quorumClients?.getMember(this._pendingClientId) === undefined;
 
-        // IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
-        this.handler.logConnectionStateChangeTelemetry(ConnectionState.CatchingUp, oldState);
-
-        if (writeConnection && waitingForJoinOp) {
+        if (waitingForJoinOp) {
             // Previous client left, and we are waiting for our own join op. When it is processed we'll join the quorum
             // and attempt to transition to Connected state via receivedAddMemberEvent.
             this.startJoinOpTimer();
-        } else if (this.waitingForLeaveOp) {
-            // Previous client left, and we are waiting for its leave op.
-            // Nothing to do now - when the previous client is removed from the quorum
-            // we will attempt to transition to Connected state via receivedRemoveMemberEvent
-            assert(writeConnection, 0x2a6 /* "there should be no timer for 'read' connections" */);
-        } else {
+        } else if (!this.waitingForLeaveOp) {
             // We're not waiting for Join or Leave op (if read-only connection those don't even apply),
             // go ahead and declare the state to be Connected!
+            // If we are waiting for Leave op still, do nothing for now, we will transition to Connected later.
             this.setConnectionState(ConnectionState.Connected);
         }
     }

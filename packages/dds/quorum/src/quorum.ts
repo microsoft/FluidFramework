@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable unicorn/numeric-separators-style */
+/* eslint-disable unicorn/number-literal-case */
+
 // eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 
@@ -351,8 +354,10 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     ): void => {
         const pending = this.values.get(key)?.pending;
         // We don't resubmit accepts on reconnect so this should only run for expected accepts.
-        assert(pending !== undefined, "Unexpected accept op, nothing pending");
-        assert(pending.expectedSignoffs.includes(clientId), "Unexpected accept op, client not in expectedSignoffs");
+        assert(pending !== undefined, 0x2f8 /* Unexpected accept op, nothing pending */);
+        assert(
+            pending.expectedSignoffs.includes(clientId),
+            0x2f9 /* Unexpected accept op, client not in expectedSignoffs */);
 
         // Remove the client from the expected signoffs
         pending.expectedSignoffs = pending.expectedSignoffs.filter(

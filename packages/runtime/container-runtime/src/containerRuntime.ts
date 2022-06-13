@@ -221,7 +221,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     /**
      * Defines the maximum allowed time in between summarizations.
      */
-     idleTime: number;
+    idleTime: number;
     /**
      * Defines the maximum allowed time, since the last received Ack,  before running the summary
      * with reason maxTime.
@@ -231,9 +231,9 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * Defines the maximum number of Ops, since the last received Ack, that can be allowed
      * before running the summary with reason maxOps.
      */
-     maxOps: number;
+    maxOps: number;
     /**
-     * Defnines the minimum number of Ops, since the last received Ack, that can be allowed
+     * Defines the minimum number of Ops, since the last received Ack, that can be allowed
      * before running the last summary.
      */
     minOpsForLastSummaryAttempt: number;
@@ -334,7 +334,7 @@ export interface ISummaryRuntimeOptions {
      * @deprecated - use `summaryConfigOverrides.maxOpsSinceLastSummary` instead.
      * Defaults to 7000 ops
      */
-     maxOpsSinceLastSummary?: number;
+    maxOpsSinceLastSummary?: number;
 
      /**
      * @deprecated - use `summaryConfigOverrides.summarizerClientElection` instead.
@@ -606,7 +606,7 @@ class ScheduleManagerCore {
 
     private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
         const endBatch = messageEndBatch.sequenceNumber;
-        const duration = performance.now() - this.timePaused;
+        const duration = this.localPaused ? (performance.now() - this.timePaused) : undefined;
 
         this.batchCount++;
         if (this.batchCount % 1000 === 1) {
@@ -629,7 +629,7 @@ class ScheduleManagerCore {
         this.localPaused = false;
 
         // Random round number - we want to know when batch waiting paused op processing.
-        if (duration > latencyThreshold) {
+        if (duration !== undefined && duration > latencyThreshold) {
             this.logger.sendErrorEvent({
                 eventName: "MaxBatchWaitTimeExceeded",
                 duration,
@@ -2002,6 +2002,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+        if (rootDataStoreId.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
+        }
         return this._aliasingEnabled === true ?
             this.createAndAliasDataStore(pkg, rootDataStoreId) :
             this.createRootDataStoreLegacy(pkg, rootDataStoreId);
@@ -2046,6 +2049,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
         rootDataStoreId: string): IFluidDataStoreContextDetached {
+        if (rootDataStoreId.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
+        }
         return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
     }
 
