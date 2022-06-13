@@ -67,12 +67,37 @@ export interface ISerializedInterval {
     properties?: PropertySet;
 }
 
+/**
+ * TODO
+ */
 export interface ISerializableInterval extends IInterval {
+    /**
+     * TODO
+     */
     properties: PropertySet;
+
+    /**
+     * TODO
+     */
     propertyManager: PropertiesManager;
+
+    /**
+     * TODO
+     * @param client - TODO
+     */
     serialize(client: Client): ISerializedInterval;
-    addProperties(props: PropertySet, collaborating?: boolean, seq?: number):
-        PropertySet | undefined;
+
+    /**
+     * TODO
+     * @param props - TODO
+     * @param collaborating - TODO
+     * @param seq - TODO
+     */
+    addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
+
+    /**
+     * TODO
+     */
     getIntervalId(): string | undefined;
 }
 
@@ -82,10 +107,25 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
         client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
 }
 
+/**
+ * TODO
+ */
 export class Interval implements ISerializableInterval {
+    /**
+     * {@inheritDoc ISerializableInterval.properties}
+     */
     public properties: PropertySet;
+
+    /**
+     * TODO
+     */
     public auxProps: PropertySet[];
+
+    /**
+     * {@inheritDoc ISerializableInterval.propertyManager}
+     */
     public propertyManager: PropertiesManager;
+
     constructor(
         public start: number,
         public end: number,
@@ -95,6 +135,9 @@ export class Interval implements ISerializableInterval {
         }
     }
 
+    /**
+     * {@inheritDoc ISerializableInterval.getIntervalId}
+     */
     public getIntervalId(): string | undefined {
         const id = this.properties?.[reservedIntervalIdKey];
         if (id === undefined) {
@@ -114,6 +157,9 @@ export class Interval implements ISerializableInterval {
         this.auxProps.push(props);
     }
 
+    /**
+     * {@inheritDoc ISerializableInterval.serialize}
+     */
     public serialize(client: Client) {
         let seq = 0;
         if (client) {
@@ -132,10 +178,16 @@ export class Interval implements ISerializableInterval {
         return serializedInterval;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/merge-tree#IInterval.clone}
+     */
     public clone() {
         return new Interval(this.start, this.end, this.properties);
     }
 
+    /**
+     * {@inheritDoc @fluidframework/merge-tree#IInterval.compare}
+     */
     public compare(b: Interval) {
         const startResult = this.compareStart(b);
         if (startResult === 0) {
@@ -158,29 +210,47 @@ export class Interval implements ISerializableInterval {
         }
     }
 
+    /**
+     * {@inheritDoc @fluidframework/merge-tree#IInterval.compareStart}
+     */
     public compareStart(b: Interval) {
         return this.start - b.start;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/merge-tree#IInterval.compareEnd}
+     */
     public compareEnd(b: Interval) {
         return this.end - b.end;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/merge-tree#IInterval.overlaps}
+     */
     public overlaps(b: Interval) {
         const result = (this.start <= b.end) &&
             (this.end >= b.start);
         return result;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/merge-tree#IInterval.union}
+     */
     public union(b: Interval) {
         return new Interval(Math.min(this.start, b.start),
             Math.max(this.end, b.end), this.properties);
     }
 
+    /**
+     * TODO
+     */
     public getProperties() {
         return this.properties;
     }
 
+    /**
+     * {@inheritDoc ISerializableInterval.addProperties}
+     */
     public addProperties(
         newProps: PropertySet,
         collaborating: boolean = false,
@@ -198,6 +268,9 @@ export class Interval implements ISerializableInterval {
         }
     }
 
+    /**
+     * {@inheritDoc @fluidframework/merge-tree#IInterval.modify}
+     */
     public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
         const startPos = start ?? this.start;
         const endPos = end ?? this.end;

@@ -844,13 +844,53 @@ export interface AugmentedIntervalNode {
 
 export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
 
-export interface IInterval {
+
+/**
+ * TODO
+ */
+ export interface IInterval {
+    /**
+     * TODO
+     */
     clone(): IInterval;
+
+    /**
+     * TODO
+     * @param b - TODO
+     */
     compare(b: IInterval): number;
+
+    /**
+     * TODO
+     * @param b - TODO
+     */
     compareStart(b: IInterval): number;
+
+    /**
+     * TODO
+     * @param b - TODO
+     */
     compareEnd(b: IInterval): number;
+
+    /**
+     * TODO
+     * @param label - TODO
+     * @param start - TODO
+     * @param end - TODO
+     * @param op - TODO
+     */
     modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
+
+    /**
+     * TODO
+     * @param b - TODO
+     */
     overlaps(b: IInterval): boolean;
+
+    /**
+     * TODO
+     * @param b - TODO
+     */
     union(b: IInterval): IInterval;
 }
 
