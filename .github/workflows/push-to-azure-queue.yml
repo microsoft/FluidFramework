@@ -19,12 +19,14 @@ jobs:
         with:
           script: |
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
-            const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
-            const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
+            const connectionString = 'DefaultEndpointsProtocol=https;AccountName=sonalideshpande;AccountKey=MjQlPAznKPTbFwOME9pw7yOB8vHkn+4TGAIi2fMs2+UG21EyT32Uqk3+mTt2xXMwpd4lKY5vxEuM+AStE9pX1w==;EndpointSuffix=core.windows.net';
+            const queueName = 'main-next-integration';
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueClient = queueServiceClient.getQueueClient(queueName);
+            console.log("SHA-----", `${{ github.sha }}`);
+            console.log("SHA-----", `${{ github.author }}`);
             const message = {
-              sha: `${{ github.event.pull_request.head.sha }}`,
+              sha: `${{ github.sha }}`,
               author: `${{ github.author }}`,
               label: `queued`,
             };
@@ -33,8 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [queue-pr]
     steps:
-      - name:  add-conflict-comment
-        uses: thollander/actions-comment-pull-request@v1
+      - name: Create commit comment
+        uses: peter-evans/commit-comment@v2
         with:
-          message: 'Commit queued for merging with the test_next branch! Please ignore the comment for now.'
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            'Commit queued for merging with the test_next branch! Please ignore the comment for now.'
