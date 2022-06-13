@@ -72,7 +72,7 @@ describe("Errors", () => {
 
             assert(testError.errorType === ContainerErrorType.genericError);
             assert(isILoggingError(testError));
-            assert(testError.getTelemetryProperties().foo === undefined, "telemetryProps shouldn't be copied when wrapping");
+            assert(testError.getTelemetryProperties().foo !== undefined, "telemetryProps should be copied when wrapping");
             assert(testError as any !== loggingError);
         });
 
@@ -174,7 +174,7 @@ describe("Errors", () => {
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "Inherited error message");
-            assert(coercedError.getTelemetryProperties().otherProperty === undefined, "telemetryProps shouldn't be copied when wrapping");
+            assert(coercedError.getTelemetryProperties().otherProperty !== undefined, "telemetryProps should be copied when wrapping");
         });
 
         it("Should not fail coercing malformed inputs", () => {
