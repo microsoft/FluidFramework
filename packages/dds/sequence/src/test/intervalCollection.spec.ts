@@ -31,22 +31,12 @@ const assertIntervals = (
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
 
-    for (const actualInterval of actual) {
-        const start = sharedString.localRefToPos(actualInterval.start);
-        const end = sharedString.localRefToPos(actualInterval.end);
-        let found = false;
-
-        // console.log(`[${start},${end}): ${sharedString.getText().slice(start, end)}`);
-
-        for (const expectedInterval of expected) {
-            if (expectedInterval.start === start && expectedInterval.end === end) {
-                found = true;
-                break;
-            }
-        }
-
-        assert(found, `Unexpected interval [${start}..${end}) (expected ${JSON.stringify(expected)})`);
-    }
+    const actualPos = actual.map((interval) => {
+        const start = sharedString.localRefToPos(interval.start);
+        const end = sharedString.localRefToPos(interval.end);
+        return { start, end };
+    });
+    assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
 function assertIntervalEquals(
@@ -253,6 +243,31 @@ describe("SharedString interval collections", () => {
             assertIntervals(sharedString2, collection2, [
                 { start: -1, end: -1 },
             ], false);
+        });
+
+        it("remains consistent when a change to the same position but different segment is issued", () => {
+            // This is a regression test for an issue in LocalIntervalCollection, which avoided actually modifying
+            // intervals on change operations if it perceived them to already have the same position. That logic was
+            // invalid in 2 ways:
+            // 1. for remote ops, the position requested for change potentially refers to a different revision from
+            //    the local position.
+            // 2. for local ops, even if an interval appears to be at the position it's being changed to, it might
+            //    actually be associated with a removed segment and pending slide. In this case, failing to update
+            //    the interval locally but still emitting a change op causes inconsistent behavior, since subsequent
+            //    slides may be to different segments (in this test, the danger is that the client issuing the change
+            //    op may end up with their interval pointing to the "Y" if they fail to change it locally)
+            sharedString.insertText(0, "ABCDE");
+            const collection1 = sharedString.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+            const interval = collection1.add(1, 3, IntervalType.SlideOnRemove);
+            sharedString2.insertText(2, "XY");
+            sharedString2.removeRange(1, 3);
+            sharedString.removeRange(1, 4);
+            collection1.change(interval.getIntervalId(), 1, 1);
+            containerRuntimeFactory.processAllMessages();
+            assert.equal(sharedString.getText(), "AYE");
+            assertIntervals(sharedString, collection1, [{ start: 2, end: 2 }]);
+            assertIntervals(sharedString2, sharedString2.getIntervalCollection("test"), [{ start: 2, end: 2 }]);
         });
 
         it("can slide intervals nearer to locally removed segment", () => {
@@ -690,7 +705,7 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
-        describe.skip("intervalCollection comparator consistency", () => {
+        describe("intervalCollection comparator consistency", () => {
             // This is a regression suite for an issue caught by fuzz testing:
             // if intervals A, B, C are created which initially compare A < B < C,
             // it's possible that string operations can change this order. Specifically,
@@ -711,7 +726,52 @@ describe("SharedString interval collections", () => {
                 collection.add(2, 5, IntervalType.SlideOnRemove);
                 const initiallyLargest = collection.add(3, 4, IntervalType.SlideOnRemove);
                 sharedString.removeRange(1, 4);
+                // Interval slide doesn't happen until creation is acked, so interval sort order
+                // is still by start position, which do not compare equal despite all appearing to be 1
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 3 },
+                    { start: 1, end: 2 },
+                    { start: 1, end: 1 },
+                ]);
                 collection.removeIntervalById(initiallyLargest.getIntervalId());
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 3 },
+                    { start: 1, end: 2 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                // After processing messages, intervals slide and order is as expected.
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 2 },
+                    { start: 1, end: 3 },
+                ]);
+            });
+
+            it("retains intervalTree coherency after slide when falling back to end comparison", () => {
+                collection.add(1, 6, IntervalType.SlideOnRemove);
+                collection.add(2, 5, IntervalType.SlideOnRemove);
+                const initiallyLargest = collection.add(3, 4, IntervalType.SlideOnRemove);
+                sharedString.removeRange(1, 4);
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 3 },
+                    { start: 1, end: 2 },
+                    { start: 1, end: 1 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 1 },
+                    { start: 1, end: 2 },
+                    { start: 1, end: 3 },
+                ]);
+                collection.removeIntervalById(initiallyLargest.getIntervalId());
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 2 },
+                    { start: 1, end: 3 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 2 },
+                    { start: 1, end: 3 },
+                ]);
             });
 
             it("retains intervalTree coherency when falling back to id comparison", () => {
@@ -720,7 +780,88 @@ describe("SharedString interval collections", () => {
                 collection.add(0, 2, IntervalType.SlideOnRemove, { intervalId: idMiddle });
                 collection.add(0, 3, IntervalType.SlideOnRemove, { intervalId: idLowest });
                 sharedString.removeRange(1, 4);
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
                 collection.removeIntervalById(idLowest);
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+            });
+
+            it("retains intervalTree coherency after slide when falling back to id comparison", () => {
+                const [idLowest, idMiddle, idLargest] = ["a", "b", "c"];
+                collection.add(0, 1, IntervalType.SlideOnRemove, { intervalId: idLargest });
+                collection.add(0, 2, IntervalType.SlideOnRemove, { intervalId: idMiddle });
+                collection.add(0, 3, IntervalType.SlideOnRemove, { intervalId: idLowest });
+                sharedString.removeRange(1, 4);
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+                collection.removeIntervalById(idLowest);
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 1 },
+                ]);
+            });
+
+            it("retains intervalTree coherency after slide on create ack", () => {
+                // The code in createAck needs to change the reference positions for an interval.
+                // The test verifies that is done correctly and that the listener is added
+                // to fix the interval position on subsequent slide.
+                containerRuntimeFactory.processAllMessages();
+                collection.add(4, 4, IntervalType.SlideOnRemove);
+                collection.add(4, 5, IntervalType.SlideOnRemove);
+
+                sharedString2.removeRange(1, 2);
+
+                const initiallySmallest = collection.add(1, 6, IntervalType.SlideOnRemove);
+
+                sharedString2.removeRange(1, 3);
+
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 6 },
+                    { start: 4, end: 4 },
+                    { start: 4, end: 5 },
+                ]);
+
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 1 },
+                    { start: 1, end: 2 },
+                    { start: 1, end: 3 },
+                ]);
+                collection.removeIntervalById(initiallySmallest.getIntervalId());
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 1 },
+                    { start: 1, end: 2 },
+                ]);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [
+                    { start: 1, end: 1 },
+                    { start: 1, end: 2 },
+                ]);
             });
         });
 
@@ -770,14 +911,14 @@ describe("SharedString interval collections", () => {
                 assert.equal(infoArray.length, createInfo.length, `Wrong number of create calls: ${i}`);
             };
             verifyCreateEvents(sharedString, createInfo1, [
-                { label: "intervalCollections/test1", local: true },
-                { label: "intervalCollections/test2", local: false },
-                { label: "intervalCollections/test3", local: false },
+                { label: "test1", local: true },
+                { label: "test2", local: false },
+                { label: "test3", local: false },
             ]);
             verifyCreateEvents(sharedString2, createInfo2, [
-                { label: "intervalCollections/test2", local: true },
-                { label: "intervalCollections/test3", local: true },
-                { label: "intervalCollections/test1", local: false },
+                { label: "test2", local: true },
+                { label: "test3", local: true },
+                { label: "test1", local: false },
             ]);
         });
 
@@ -812,9 +953,7 @@ describe("SharedString interval collections", () => {
         });
     });
 
-    // TODO: Enable this test suite once correctness issues with reconnect are addressed.
-    // See https://github.com/microsoft/FluidFramework/issues/8739 for more context.
-    describe.skip("reconnect", () => {
+    describe("reconnect", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
@@ -874,6 +1013,129 @@ describe("SharedString interval collections", () => {
             assertIntervals(sharedString, collection1, [
                 { start: 6, end: 22 },
             ]);
+        });
+
+        // This is useful to ensure rebasing reconnection ops doesn't take into account local string state
+        // that has been applied since the interval addition.
+        it("addInterval and string operations resubmitted with concurrent insert", async () => {
+            containerRuntime1.connected = false;
+
+            sharedString2.insertText(7, "amily its my f");
+            sharedString.removeText(0, 5);
+            sharedString.insertText(0, "hi");
+            containerRuntimeFactory.processAllMessages();
+
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+
+            assert.equal(sharedString2.getText(), "hi family its my friend");
+            assertIntervals(sharedString2, collection2, [
+                { start: 3, end: 19 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 3, end: 19 },
+            ]);
+        });
+
+        describe("correctly tracks pendingChanges for", () => {
+            // This is a regression suite for an issue involving faulty update of the pendingChange maps
+            // when both an add and a change op are rebased. Pending change tracking should only apply
+            // to "change" ops, but was also erroneously updated for "add" ops. Change tracking should also
+            // properly handle rebasing ops that only affect one endpoint.
+            const testCases = [
+                {
+                    name: "that changes both endpoints",
+                    start: 6,
+                    end: 7,
+                },
+                {
+                    name: "that changes only the start",
+                    start: 6,
+                    end: undefined,
+                },
+                {
+                    name: "that changes only the end",
+                    start: undefined,
+                    end: 7,
+                },
+            ];
+
+            describe("an add followed by a change", () => {
+                for (const { name, start, end } of testCases) {
+                    it(name, () => {
+                        collection1.removeIntervalById(interval.getIntervalId());
+                        containerRuntimeFactory.processAllMessages();
+                        containerRuntime1.connected = false;
+                        const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
+                        sharedString.insertText(2, "llo he");
+                        collection1.change(newInterval.getIntervalId(), start, end);
+                        // Previously would fail: rebase of the "add" op would cause "Mismatch in pending changes"
+                        // assert to fire (since the pending change wasn't actually the addition of the interval;
+                        // it was the change)
+                        containerRuntime1.connected = true;
+                        containerRuntimeFactory.processAllMessages();
+                        const expectedIntervals = [{ start: start ?? 0, end: end ?? 1 }];
+                        assertIntervals(sharedString, collection1, expectedIntervals);
+                        assertIntervals(sharedString2, collection2, expectedIntervals);
+                    });
+                }
+            });
+
+            describe("a change", () => {
+                // Like above, but the string-modifying operation is performed remotely. This means the pendingChange
+                // recorded prior to rebasing will have a different index from the pendingChange that would be generated
+                // upon rebasing (so failing to update would cause mismatch)
+                for (const { name, start, end } of testCases) {
+                    it(name, () => {
+                        collection1.removeIntervalById(interval.getIntervalId());
+                        containerRuntimeFactory.processAllMessages();
+                        containerRuntime1.connected = false;
+                        const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
+                        sharedString2.insertText(2, "llo he");
+                        collection1.change(newInterval.getIntervalId(), start, end);
+                        containerRuntimeFactory.processAllMessages();
+                        containerRuntime1.connected = true;
+                        containerRuntimeFactory.processAllMessages();
+                        const expectedStart = start === undefined ? 0 : start + "llo he".length;
+                        const expectedEnd = end === undefined ? 1 : end + "llo he".length;
+                        const expectedIntervals = [{ start: expectedStart ?? 0, end: expectedEnd }];
+                        assertIntervals(sharedString, collection1, expectedIntervals);
+                        assertIntervals(sharedString2, collection2, expectedIntervals);
+                    });
+                }
+            });
+        });
+
+        it("can rebase a change operation to positions that are invalid in the current view", () => {
+            // This is a regression test for an issue in which attempting to rebase an interval op could hit
+            // issues in local position validation. The root cause was that the rebase logic round-tripped its
+            // rebase positions through a SequenceInterval (i.e. constructed an interval with the desired rebase
+            // positions, then serialized it). The problem is that interval isn't always valid to construct on
+            // the state of the local client's merge tree.
+            containerRuntimeFactory.processAllMessages();
+            containerRuntime1.connected = false;
+            // Since there aren't any other ops, the idea is the rebased version of this op would be the same as
+            // the original version. However, at the time the client is rebasing, it only has a single character of
+            // text. So it's impossible to generate valid LocalReference_s with positions that evaluate to 8 and 9
+            // as the original problematic implementation did.
+            collection1.change(interval.getIntervalId(), 8, 9);
+            sharedString.removeRange(1, sharedString.getLength());
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [{ start: 0, end: 0 }]);
+            assertIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
+        });
+
+        it("can rebase changeProperty ops", () => {
+            containerRuntime1.connected = false;
+            collection1.changeProperties(interval.getIntervalId(), { foo: "prop" });
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [{ start: 6, end: 8 }]);
+            assertIntervals(sharedString2, collection2, [{ start: 6, end: 8 }]);
+            const interval2 = collection2.getIntervalById(interval.getIntervalId());
+            assert.equal(interval2.properties.foo, "prop");
+            assert.equal(interval.properties.foo, "prop");
         });
 
         it("addInterval resubmitted with concurrent delete", async () => {
