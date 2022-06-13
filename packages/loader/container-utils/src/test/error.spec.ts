@@ -40,15 +40,16 @@ describe("Errors", () => {
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
         });
-        it("Should coerce LoggingError", () => {
+        it("Should skip coercion for LoggingError with errorType", () => {
             const originalError = new LoggingError(
                 "Inherited error message", {
+                    errorType: "Some error type",
                     otherProperty: "Considered PII-free property",
                 });
             const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
 
             assert(coercedError as any === originalError);
-            assert(coercedError.errorType === "genericError");
+            assert(coercedError.errorType === "Some error type");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
         });
@@ -76,6 +77,22 @@ describe("Errors", () => {
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "[object Object]");
+        });
+        it("Should coerce LoggingError missing errorType", () => {
+            const originalError = new LoggingError(
+                "Inherited error message", {
+                    otherProperty: "Considered PII-free property",
+                });
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
+
+            assert(coercedError as any !== originalError);
+            assert(coercedError instanceof DataProcessingError);
+            assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
+            assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
+            assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
+            assert(coercedError.message === "Inherited error message");
+            assert(coercedError.getTelemetryProperties().otherProperty === undefined, "telemetryProps shouldn't be copied when wrapping");
         });
 
         it("Should not fail coercing malformed inputs", () => {
