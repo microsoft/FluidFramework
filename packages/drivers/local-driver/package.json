@@ -33,9 +33,7 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -m packages -v",
-    "typetests:prepare": "npm run typetests:gen -- -p"
+    "tsfmt:fix": "tsfmt --replace"
   },
   "nyc": {
     "all": true,
@@ -94,11 +92,6 @@
   },
   "typeValidation": {
     "version": "1.0.0",
-    "broken": {
-      "ClassDeclaration_LocalSessionStorageDbFactory": {
-        "backCompat": false,
-        "forwardCompat": false
-      }
-    }
+    "broken": {}
   }
 }
