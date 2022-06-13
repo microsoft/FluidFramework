@@ -60,7 +60,11 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
         []);
 
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+         },
         gcOptions: { gcAllowed: true },
     };
 

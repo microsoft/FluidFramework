@@ -88,6 +88,30 @@ use_old_ClassDeclaration_DocumentDeltaStorageService(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DocumentPostCreateError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_DocumentPostCreateError():
+    TypeOnly<old.DocumentPostCreateError>;
+declare function use_current_ClassDeclaration_DocumentPostCreateError(
+    use: TypeOnly<current.DocumentPostCreateError>);
+use_current_ClassDeclaration_DocumentPostCreateError(
+    get_old_ClassDeclaration_DocumentPostCreateError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DocumentPostCreateError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_DocumentPostCreateError():
+    TypeOnly<current.DocumentPostCreateError>;
+declare function use_old_ClassDeclaration_DocumentPostCreateError(
+    use: TypeOnly<old.DocumentPostCreateError>);
+use_old_ClassDeclaration_DocumentPostCreateError(
+    get_current_ClassDeclaration_DocumentPostCreateError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DocumentService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DocumentService():

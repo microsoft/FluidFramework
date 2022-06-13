@@ -21,10 +21,11 @@ Your code must define at least one `initialObject`. In many cases one or more in
 
 ### Example usage
 
-The example below creates a new container with a `SharedMap` and a `SharedCell` as `initialObjects`. About this code note:
+The example below creates a new container with a `SharedMap` and a `SharedCell` as `initialObjects`.
+
+About this code note:
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
-- The placeholder `/*service config*/` stands for a service-specific configuration object.
 - It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 ```typescript
@@ -86,7 +87,7 @@ All shared objects supported by Fluid have a `handle` property that can be used 
 
 Dynamically created objects need to be stored on an already connected shared object, so the most common case is to store references to them in an initial object property, because initial objects are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense shared objects are arbitrarily nestable. But the hierarchy of referenced objects must rest in an initial object that holds the references to the first level of dynamic objects. So, there is always at least one initial object in every container.
 
-When retrieving dynamically created objects your code needs to first get the object's handle then get the object from the handle. This reference based approach enables the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
+When retrieving dynamically created objects, your code needs to first get the object's handle then get the object from the handle. This reference-based approach enables the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
 The following example demonstrates dynamically creating a `SharedCell` and storing it in the `SharedMap` initial object
 using the handle. It also demonstrates retrieving the `SharedCell` object from the `SharedMap` and listening for the new

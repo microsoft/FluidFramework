@@ -185,55 +185,6 @@ export fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
 );
 ```
 
-## Provider entries development
-
-The container developer can optionally provide a registry of `ProviderEntry` objects into the container. A ProviderEntry
-is defined as follows:
-
-```typescript
-interface ProviderEntry<T extends keyof IFluidObject> {
-    type: T;
-    provider: FluidProvider<T>
-}
-```
-
-The `type` must be a keyof `IFluidObject`. This basically means that it needs to be the name of an interfaces that
-extends off of `IFluidObject`. The `provider` must be something that provides the interface defined in `type`. The
-`DependencyContainer` we use in the `@fluidframework/synthesize` package defines the following `FluidObjectProvider`
-types:
-
-```typescript
-type FluidObjectProvider<T extends keyof IFluidObject> =
-    IFluidObject[T]
-    | Promise<IFluidObject[T]>
-    | ((dependencyContainer: DependencyContainer) => IFluidObject[T])
-    | ((dependencyContainer: DependencyContainer) => Promise<IFluidObject[T]>);
-```
-
-```typescript
-IFluidObject[T]
-```
-
-An object that implements the interface.
-
-```typescript
-Promise<IFluidObject[T]>
-```
-
-A Promise to an object that implements the interface
-
-```typescript
-(dependencyContainer: DependencyContainer) => IFluidObject[T]
-```
-
-A factory that will return the object.
-
-```typescript
-(dependencyContainer: DependencyContainer) => Promise<IFluidObject[T]>
-```
-
-A factory that will return a Promise to the object.
-
 ## Container-level request handlers
 
 You can provide custom request handlers to the container. These request handlers are injected after system handlers but
