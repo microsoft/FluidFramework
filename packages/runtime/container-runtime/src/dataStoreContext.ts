@@ -324,7 +324,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.realizeCore(this.existing).catch((error) => {
                 const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
                 errorWrapped.addTelemetryProperties(
-                    { fluidDataStoreId: { value: this.id, tag: TelemetryDataTag.PackageData } });
+                    { fluidDataStoreId: { value: this.id, tag: TelemetryDataTag.CodeArtifact } });
 
                 this.channelDeferred?.reject(errorWrapped);
                 this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
@@ -338,12 +338,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Classify failures here as DataProcessingErrors
         // The Container was likely misconfigured such that the necessary packages are not available
-        const failure = (reason: string, packageName?: string) =>
-            DataProcessingError.create(
-                reason,
-                "factoryFromPackagePath",
-                undefined /* sequencedMessage */,
-                { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
+        const failure = (reason: string, packageName?: string) => {
+            const props = packageName === undefined
+                ? undefined
+                : { packageName: { value: packageName, tag: TelemetryDataTag.CodeArtifact } };
+
+            return DataProcessingError.create(
+                reason, "factoryFromPackagePath", undefined /* sequencedMessage */, props);
+        };
 
         if (packages === undefined) {
             throw failure("packages is undefined");

@@ -7,7 +7,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { LoggingError, isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataCorruptionError, DataProcessingError } from "../error";
 
