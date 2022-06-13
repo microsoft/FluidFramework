@@ -401,7 +401,7 @@ export function runSharedTreeOperationsTests(
 				};
 			}
 
-            if (writeFormat === WriteFormat.v0_0_2) {
+			if (writeFormat === WriteFormat.v0_0_2) {
 				it('applies unversioned ops in the 0.0.2 format', () => {
 					const { tree: sharedTree1, containerRuntimeFactory } = setUpTestSharedTree(tree1Options);
 					const { sharedTree: sharedTree2, testTree: testTree2 } = createSimpleTestTree(
@@ -411,12 +411,12 @@ export function runSharedTreeOperationsTests(
 					containerRuntimeFactory.processAllMessages();
 					const originalPushMessage = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
 					containerRuntimeFactory.pushMessage = (msg) => {
-                        // Drop the version property to replicate ops created before the version property existed
+						// Drop the version property to replicate ops created before the version property existed
 						msg.contents.version = undefined;
 						originalPushMessage(msg);
 					};
 
-                    // Ensure that an edit can be passed and processed between two trees as normal
+					// Ensure that an edit can be passed and processed between two trees as normal
 					sharedTree2.applyEdit(Change.delete(StableRange.only(testTree2.right)));
 
 					const getTestTreeRoot = (sharedTree: SharedTree) =>

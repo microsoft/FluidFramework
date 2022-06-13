@@ -1093,10 +1093,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		};
 		this.cachingLogViewer.setMinimumSequenceNumber(typedMessage.minimumSequenceNumber);
 		const op = typedMessage.contents;
-        if (op.version === undefined) {
-            // Back-compat: some legacy documents may contain trailing ops with an unstamped version; normalize them.
+		if (op.version === undefined) {
+			// Back-compat: some legacy documents may contain trailing ops with an unstamped version; normalize them.
 			(op as { version: WriteFormat | undefined }).version = WriteFormat.v0_0_2;
-        }
+		}
 		const { type, version } = op;
 		const sameVersion = version === this.writeFormat;
 
