@@ -195,7 +195,7 @@ export function wrapError<T extends LoggingError>(
     }
 
     // Mark external errors with untrustedOrigin flag
-    if (originatedAsExternalError(innerError)) {
+    if (isExternalError(innerError)) {
         newError.addTelemetryProperties({ untrustedOrigin: 1 });
     }
 
@@ -208,6 +208,7 @@ export function wrapError<T extends LoggingError>(
     }
 
     // Lastly, copy over all other telemetry properties. Note these will not overwrite existing properties
+    // This will include the untrustedOrigin property if the inner error itself was created from an external error
     if (isILoggingError(innerError)) {
         newError.addTelemetryProperties(innerError.getTelemetryProperties());
     }
@@ -245,14 +246,6 @@ function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
     } catch (errorSettingStack) {
         error.addTelemetryProperties({ stack2: stack });
     }
-}
-
-/**
- * True for any error object that is either external itself or is a wrapped/normalized external error
- * False for any error we created and raised within the FF codebase.
- */
-export function originatedAsExternalError(e: any): boolean {
-    return !isValidLegacyError(e) || (e.getTelemetryProperties().untrustedOrigin === 1);
 }
 
 /**

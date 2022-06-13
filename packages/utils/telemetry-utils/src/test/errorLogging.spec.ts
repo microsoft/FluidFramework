@@ -19,7 +19,6 @@ import {
     wrapErrorAndLog,
     extractLogSafeErrorProperties,
     isExternalError,
-    originatedAsExternalError,
 } from "../errorLogging";
 import { hasErrorInstanceId, IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
@@ -743,16 +742,6 @@ describe("Error Discovery", () => {
         const wrappedError = wrapError("wrap me", createTestError);
         assert(!isExternalError(wrappedError));
         assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
-    });
-    it("originatedAsExternalError", () => {
-        assert(originatedAsExternalError("some string"));
-        assert(originatedAsExternalError(createExternalError("error message")));
-        assert(originatedAsExternalError(normalizeError("normalize me but I'm still external")));
-
-        assert(!originatedAsExternalError(createTestError("hello")));
-
-        const wrappedError = wrapError("wrap me", createTestError);
-        assert(originatedAsExternalError(wrappedError));
     });
     it("isValidLegacyError", () => {
         assert(!isValidLegacyError(createExternalError("hello")));
