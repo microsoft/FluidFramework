@@ -18,6 +18,7 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 
 // @public
@@ -83,16 +84,16 @@ export function serializeHandles(value: any, serializer: IFluidSerializer, bind:
 
 // @public
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
     // (undocumented)
-    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     protected processGCDataCore(serializer: SummarySerializer): void;
     // (undocumented)
     protected get serializer(): IFluidSerializer;
     // (undocumented)
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
-    protected abstract summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
 }
 
 // @public
@@ -108,7 +109,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected didAttach(): void;
     protected dirty(): void;
     // (undocumented)
-    abstract getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly handle: IFluidHandle;
     protected handleDecoded(decodedHandle: IFluidHandle): void;
@@ -128,11 +129,12 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected abstract onDisconnect(): any;
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected rollback(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     // (undocumented)
-    abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
 }
 
 // @public

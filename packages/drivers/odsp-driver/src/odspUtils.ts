@@ -340,3 +340,7 @@ export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICach
     };
     return cacheEntry;
 }
+
+// 80KB is the max body size that we can put in ump post body for server to be able to accept it.
+// Keeping it 78KB to be a little cautious. As per the telemetry 99p is less than 78KB.
+export const maxUmpPostBodySize = 79872;

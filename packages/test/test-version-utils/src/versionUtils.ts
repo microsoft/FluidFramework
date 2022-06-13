@@ -116,10 +116,23 @@ export function resolveVersion(requested: string, installed: boolean) {
         }
         throw new Error(`No matching version found in ${baseModulePath}`);
     } else {
-        const result = execSync(
+        let result = execSync(
             `npm v @fluidframework/container-loader@"${requested}" version --json`,
             { encoding: "utf8" },
         );
+        // if we are requesting an x.x.0-0 prerelease and failed the first try, try
+        // again using the virtualPatch schema
+        if (result === "") {
+            const requestedVersion = new semver.SemVer(requested.substring(requested.indexOf("^") + 1));
+            if (requestedVersion.patch === 0 && requestedVersion.prerelease.length > 0) {
+                const retryVersion = `^${requestedVersion.major}.${requestedVersion.minor}.1000-0`;
+                result = execSync(
+                    `npm v @fluidframework/container-loader@"${retryVersion}" version --json`,
+                    { encoding: "utf8" },
+                );
+            }
+        }
+
         try {
             const versions: string | string[] = JSON.parse(result);
             const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
@@ -216,10 +229,24 @@ export const loadPackage = (modulePath: string, pkg: string) =>
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-return
     require(path.join(modulePath, "node_modules", pkg));
 
+/**
+ * Used to get the major version number above or below the baseVersion.
+ * @param baseVersion - The base version to move from (eg. "0.60.0")
+ * @param requested - Number representing the major version to move from. These are
+ * generally negative to move back versions (eg. -1).
+ * Note: If the requested number is a string then that will be the returned value
+ */
 export function getRequestedRange(baseVersion: string, requested?: number | string): string {
     if (requested === undefined || requested === 0) { return baseVersion; }
     if (typeof requested === "string") { return requested; }
     const version = new semver.SemVer(baseVersion);
-    // ask for prerelease in case we just bumpped the version and haven't release the previous version yet.
+    // ask for prerelease in case we just bumped the version and haven't release the previous version yet.
+    if (version.major === 1) {
+        if (requested === -1) {
+            return "^0.59.0-0";
+        } else if (requested === -2) {
+            return "^0.58.0-0";
+        }
+    }
     return `^${version.major}.${version.minor + requested}.0-0`;
 }

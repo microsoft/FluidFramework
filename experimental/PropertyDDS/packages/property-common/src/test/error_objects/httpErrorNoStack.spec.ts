@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
-/* globals assert */
+
 /**
  * @fileoverview Tests the functions exported by error_objects/http_error_no_stack.js
  */

@@ -26,7 +26,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         } else if (server === "www.office.com") {
             const getRequiredParam = (name: string): string => {
                 const value = reqUrl.searchParams.get(name);
-                assert(!!value, 0x097 /* `Missing ${name} from office.com URL parameter` */);
+                assert(!!value, 0x097 /* Missing param from office.com URL parameter */);
                 return value;
             };
             contents = {
@@ -57,7 +57,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
 async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlParts | undefined> {
     const pathname = urlSource.pathname;
     // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-    const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes)\/([^/]*)\/([^/]*)\/([^/]*)/);
+    const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/);
     if (siteDriveItemMatch === null) {
         return undefined;
     }

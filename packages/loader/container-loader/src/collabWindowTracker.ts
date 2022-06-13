@@ -5,7 +5,7 @@
 
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 
 const defaultNoopTimeFrequency = 2000;
 const defaultNoopCountFrequency = 50;
@@ -61,12 +61,12 @@ export class CollabWindowTracker {
         }
 
         // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
-        // update, which updates the MSN, then ack the update, etc...). Also, don't
-        // count system messages in ops count.
-        if (isSystemMessage(message)) {
+        // update, which updates the MSN, then ack the update, etc...).
+        // Intent here is for runtime (and DDSs) not to keep too much tracking state / memory
+        // due to runtime ops from other clients.
+        if (!isRuntimeMessage(message)) {
             return;
         }
-        assert(message.type !== MessageType.NoOp, 0x0ce /* "Don't acknowledge no-ops" */);
 
         this.opsCountSinceNoop++;
         if (this.opsCountSinceNoop >= this.NoopCountFrequency) {

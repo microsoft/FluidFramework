@@ -24,8 +24,9 @@ import {
     IntervalCollectionValueType,
     ISerializableInterval,
 } from "./intervalCollection";
-import { IMapMessageLocalMetadata, DefaultMap } from "./defaultMap";
+import { DefaultMap } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";
+import { IMapMessageLocalMetadata } from "./defaultMapInterfaces";
 
 const snapshotFileName = "header";
 
@@ -117,7 +118,7 @@ export class SharedIntervalCollection
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_sharedIntervalCollection_");
         this.intervalCollections = new DefaultMap(
             this.serializer,
             this.handle,
@@ -147,7 +148,7 @@ export class SharedIntervalCollection
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata);
+        this.intervalCollections.tryResubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata);
     }
 
     protected onDisconnect() { }

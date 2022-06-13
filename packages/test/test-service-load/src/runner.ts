@@ -9,7 +9,7 @@ import {
     TestDriverTypes,
     DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { Loader, ConnectionState } from "@fluidframework/container-loader";
 import random from "random-js";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -199,9 +199,7 @@ async function runnerProcess(
             });
 
             const container: IContainer = await loader.resolve({ url, headers });
-            // TODO: Remove null check after next release #8523
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            container.resume!();
+            container.connect();
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
             if (enableOpsMetrics) {
@@ -262,8 +260,7 @@ function scheduleFaultInjection(
         const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs)(runConfig.randEng);
         printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0, 4)} min`);
         setTimeout(() => {
-            // TODO: Remove null check after next release #8523
-            if (container.connected !== undefined && container.connected && container.resolvedUrl !== undefined) {
+            if (container.connectionState === ConnectionState.Connected && container.resolvedUrl !== undefined) {
                 const deltaConn =
                     ds.documentServices.get(container.resolvedUrl)?.documentDeltaConnection;
                 if (deltaConn !== undefined) {
@@ -309,8 +306,7 @@ function scheduleContainerClose(
     new Promise<void>((resolve) => {
         // wait for the container to connect write
         container.once("closed", () => resolve);
-        // TODO: Remove null check after next release #8523
-        if (container.connected !== undefined && !container.connected && !container.closed) {
+        if (container.connectionState !== ConnectionState.Connected && !container.closed) {
             container.once("connected", () => {
                 resolve();
                 container.off("closed", () => resolve);

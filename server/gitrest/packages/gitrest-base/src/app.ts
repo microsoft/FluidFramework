@@ -8,6 +8,7 @@ import { json, urlencoded } from "body-parser";
 import cors from "cors";
 import express, { Express } from "express";
 import nconf from "nconf";
+import { ICreateRepoParams } from "@fluidframework/gitresources";
 import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, HttpProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
@@ -19,8 +20,13 @@ import * as routes from "./routes";
 import {
     getRepoManagerParamsFromRequest,
     IFileSystemManagerFactory,
+    IRepoManagerParams,
     IRepositoryManagerFactory,
 } from "./utils";
+
+function getTenantIdForGitRestRequest(params: IRepoManagerParams, request: express.Request) {
+    return params.storageRoutingId?.tenantId ?? (request.body as ICreateRepoParams)?.name;
+}
 
 export function create(
     store: nconf.Provider,
@@ -39,7 +45,7 @@ export function create(
                 const params = getRepoManagerParamsFromRequest(req);
                 return {
                     [HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
-                    [BaseTelemetryProperties.tenantId]: params.storageRoutingId?.tenantId ?? params.repoName,
+                    [BaseTelemetryProperties.tenantId]: getTenantIdForGitRestRequest(params, req),
                     [BaseTelemetryProperties.documentId]: params.storageRoutingId?.documentId,
                 };
             }));

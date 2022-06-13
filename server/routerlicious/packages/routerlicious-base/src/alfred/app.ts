@@ -52,7 +52,7 @@ export function create(
         const restLessServer = new RestLessServer();
         return (req, res, next) => {
             restLessServer
-                .translate(req)
+                .translate(req, res)
                 .then(() => next())
                 .catch(next);
         };
