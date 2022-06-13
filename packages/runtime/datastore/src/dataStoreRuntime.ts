@@ -754,7 +754,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // Craft the .attributes file for each shared object
         for (const [contextId, context] of this.contexts) {
             if (!(context instanceof LocalChannelContextBase)) {
-                throw new Error("Should only be called with local channel handles");
+                throw new TypeError("Should only be called with local channel handles");
             }
 
             if (!this.notBoundedChannelContextSet.has(contextId)) {

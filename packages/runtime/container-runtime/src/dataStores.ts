@@ -145,7 +145,7 @@ export class DataStores implements IDisposable {
                 });
             } else {
                 if (typeof value !== "object") {
-                    throw new Error("Snapshot should be there to load from!!");
+                    throw new TypeError("Snapshot should be there to load from!!");
                 }
                 const snapshotTree = value;
                 dataStoreContext = new LocalFluidDataStoreContext({

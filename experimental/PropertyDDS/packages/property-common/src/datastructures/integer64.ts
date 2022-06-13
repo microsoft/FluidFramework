@@ -100,6 +100,7 @@ function _stringToInt64(in_signed: boolean, in_string: string, in_radix = 10): n
     while (position < string.length) {
         const digit = parseInt(string[position++], in_radix);
         if (isNaN(digit)) {
+            // eslint-disable-next-line unicorn/prefer-type-error
             throw new Error(MSG.CANNOT_PARSE_INVALID_CHARACTERS + string);
         }
         low = low * in_radix + digit;

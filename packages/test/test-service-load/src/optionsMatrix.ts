@@ -35,7 +35,7 @@ export function applyOverrides<T>(options: OptionsMatrix<T>, optionsOverrides: P
                 if (Array.isArray(override)) {
                     realOptions[key] = override;
                 } else {
-                    throw new Error(`Override for ${key} is not array: ${JSON.stringify(optionsOverrides)}`);
+                    throw new TypeError(`Override for ${key} is not array: ${JSON.stringify(optionsOverrides)}`);
                 }
             }
         }

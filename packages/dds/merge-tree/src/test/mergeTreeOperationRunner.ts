@@ -223,7 +223,7 @@ export function applyMessages(
             e.message += `\n${logger.toString()}`;
         }
         if (typeof e === "string") {
-            throw new Error(`${e}\n${logger.toString()}`);
+            throw new TypeError(`${e}\n${logger.toString()}`);
         }
         throw e;
     }

@@ -35,7 +35,7 @@ export interface IParsedUrl {
 export function parseUrl(url: string): IParsedUrl | undefined {
     const parsed = parse(url, true);
     if (typeof parsed.pathname !== "string") {
-        throw new Error("Failed to parse pathname");
+        throw new TypeError("Failed to parse pathname");
     }
     const query = parsed.search ?? "";
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
