@@ -318,6 +318,19 @@ export class Client {
         }
         return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
     }
+    /**
+     * @deprecated - use createReferencePosition instead
+     */
+    public addLocalReference(lref: LocalReference) {
+        return this.mergeTree.addLocalReference(lref);
+    }
+
+    /**
+     * @deprecated - use removeReferencePosition instead
+     */
+    public removeLocalReference(lref: LocalReference) {
+        return this.removeLocalReferencePosition(lref);
+    }
 
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
