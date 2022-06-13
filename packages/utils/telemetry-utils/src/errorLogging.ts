@@ -116,11 +116,6 @@ export function normalizeError(
         stack,
     });
 
-    fluidError.addTelemetryProperties({
-        ...annotations.props,
-        untrustedOrigin: 1, // This will let us filter to errors not originated by our own code
-    });
-
     // We need to preserve these properties which are used in a non-typesafe way throughout driver code (see #8743)
     // Anywhere they are set should be on a valid Fluid Error that would have been returned above,
     // but we can't prove it with the types, so adding this defensive measure.
@@ -133,6 +128,14 @@ export function normalizeError(
         // This is only interesting for non-objects
         fluidError.addTelemetryProperties({ typeofError: typeof (error) });
     }
+
+    const originalErrorTelemetryProps = isILoggingError(error) ? error.getTelemetryProperties() : {};
+    fluidError.addTelemetryProperties({
+        ...originalErrorTelemetryProps,
+        ...annotations.props,
+        untrustedOrigin: 1, // This will let us filter to errors not originated by our own code
+    });
+
     return fluidError;
 }
 
@@ -170,9 +173,8 @@ export function generateStack(): string | undefined {
 }
 
 /**
- * Create a new error, wrapping and caused by the given unknown error.
- * Copies the inner error's message and stack over but otherwise uses newErrorFn to define the error.
- * The inner error's instance id will also be logged for telemetry analysis.
+ * Create a new error using newErrorFn, wrapping and caused by the given unknown error.
+ * Copies the inner error's stack, errorInstanceId and telemetry props over to the new error if present
  * @param innerError - An error from untrusted/unknown origins
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
@@ -203,6 +205,11 @@ export function wrapError<T extends LoggingError>(
 
         // For "back-compat" in the logs
         newError.addTelemetryProperties({ innerErrorInstanceId: innerError.errorInstanceId });
+    }
+
+    // Lastly, copy over all other telemetry properties. Note these will not overwrite existing properties
+    if (isILoggingError(innerError)) {
+        newError.addTelemetryProperties(innerError.getTelemetryProperties());
     }
 
     return newError;
