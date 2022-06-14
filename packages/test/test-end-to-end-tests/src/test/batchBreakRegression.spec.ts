@@ -118,7 +118,7 @@ async function runAndValidateBatch(
         for (let i = 0; i < 10; i++) {
             assert.equal(testObject.root.get(i.toString()), i, i.toString());
         }
-        assert.equal(testObject.root.get("foo"), "bar");
+        assert.equal(testObject.root.get("foo"), "bar", "validate after batch op");
     }
 }
 
