@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { IEvent, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -29,18 +29,11 @@ import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
-export interface IMessageEventEmitter<TEvent extends IEvent = IEvent> {
-    emitForMessage(
-        event: EventEmitterEventType,
-        message?: ISequencedDocumentMessage,
-        ...args: any[]): boolean;
-}
-
 /**
  *  Base class from which all shared objects derive
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
-    extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent>, IMessageEventEmitter<TEvent> {
+    extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     public get IFluidLoadable() { return this; }
 
     /**
@@ -475,19 +468,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      */
     protected abstract applyStashedOp(content: any): unknown;
 
-    public emitForMessage(
+    public emit(
         event: EventEmitterEventType,
-        message?: ISequencedDocumentMessage,
         ...args: any[]): boolean {
         const tmp: ITelemetryGenericEvent = {
             eventName: event.toString(),
             category: "performance",
             dds: this.attributes.type,
         };
-        if (message !== undefined) {
-            tmp.opType = message.contents.type;
-            tmp.opSeqNo = message.sequenceNumber;
-        }
         if (this.runtime.deltaManager.clientDetails.capabilities.interactive === true) {
             return PerformanceEvent.timedExec(
                 this.logger,

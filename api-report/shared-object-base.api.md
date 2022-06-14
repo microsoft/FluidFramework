@@ -11,7 +11,6 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -50,12 +49,6 @@ export interface IFluidSerializer {
     encode(value: any, bind: IFluidHandle): any;
     parse(value: string): any;
     stringify(value: any, bind: IFluidHandle): string;
-}
-
-// @public (undocumented)
-export interface IMessageEventEmitter<TEvent extends IEvent = IEvent> {
-    // (undocumented)
-    emitForMessage(event: EventEmitterEventType, message?: ISequencedDocumentMessage, ...args: any[]): boolean;
 }
 
 // @public
@@ -105,7 +98,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 }
 
 // @public
-export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent>, IMessageEventEmitter<TEvent> {
+export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     protected abstract applyStashedOp(content: any): unknown;
     // (undocumented)
@@ -117,7 +110,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected didAttach(): void;
     protected dirty(): void;
     // (undocumented)
-    emitForMessage(event: EventEmitterEventType, message?: ISequencedDocumentMessage, ...args: any[]): boolean;
+    emit(event: EventEmitterEventType, ...args: any[]): boolean;
     // (undocumented)
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
