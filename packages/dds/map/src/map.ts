@@ -35,6 +35,7 @@ const snapshotFileName = "header";
 /**
  * The factory that defines the map.
  * TODO: what are the semantics of this?
+ *
  * @sealed
  */
 export class MapFactory implements IChannelFactory {
@@ -338,7 +339,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      * @internal
      */
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
@@ -371,7 +372,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
      * @internal
     */
-   protected rollback(content: any, localOpMetadata: unknown) {
-       this.kernel.rollback(content, localOpMetadata);
-   }
+    protected rollback(content: any, localOpMetadata: unknown) {
+        this.kernel.rollback(content, localOpMetadata);
+    }
 }
