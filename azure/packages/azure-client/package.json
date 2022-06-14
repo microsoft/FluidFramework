@@ -83,6 +83,21 @@
   "typeValidation": {
     "version": "1.0.0",
     "broken": {
+      "ClassDeclaration_AzureClient": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_AzureClientProps": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_AzureConnectionConfig": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_LOCAL_MODE_TENANT_ID": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
     }
   }
 }
