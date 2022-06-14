@@ -114,17 +114,14 @@ export function benchmark(args: BenchmarkArguments): Test {
                 defer: isAsync,
             };
 
-            let benchmarkFunction: (deferred: { resolve: Mocha.Done; }) => void | Promise<unknown>;
-            if (isAsync) {
-                // We have to do a little translation because the Benchmark library expects callback-based
-                // asynchronicity.
-                benchmarkFunction = async (deferred: { resolve: Mocha.Done; }) => {
+            const benchmarkFunction: (deferred: { resolve: Mocha.Done; }) => void | Promise<unknown> = isAsync
+                ? async (deferred: { resolve: Mocha.Done; }) => {
+                    // We have to do a little translation because the Benchmark library expects callback-based
+                    // asynchronicity.
                     await argsBenchmarkFn();
                     deferred.resolve();
-                };
-            } else {
-                benchmarkFunction = argsBenchmarkFn;
-            }
+                }
+                : argsBenchmarkFn;
 
             await new Promise<void>((resolve) => {
                 const benchmarkInstance = new Benchmark(args.title, benchmarkFunction, benchmarkOptions);
