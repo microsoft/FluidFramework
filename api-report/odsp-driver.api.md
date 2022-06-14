@@ -86,7 +86,7 @@ export function isOdcUrl(url: string | URL): boolean;
 // @public
 export function isSpoUrl(url: string): boolean;
 
-// @public (undocumented)
+// @public
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
     constructor(localSnapshot: Uint8Array | string);
     // (undocumented)

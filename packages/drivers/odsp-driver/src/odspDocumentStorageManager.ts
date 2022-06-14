@@ -836,13 +836,17 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
         super();
     }
 
+    private calledGetVersions = false;
+
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
         assert(blobid === null, "Invalid usage. \"blobid\" should always be null");
         assert(count === 1, "Invalid usage. \"count\" should always be 1");
 
-        if (this.snapshotTreeId) {
-            return [{ id: this.snapshotTreeId, treeId: undefined! }];
+        // No reason to re-parse the data since it will never change
+        if (this.calledGetVersions) {
+            return this.getSnapshotVersion();
         }
+        this.calledGetVersions = true;
 
         let snapshotContents: ISnapshotContents;
 
@@ -855,6 +859,10 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
         }
 
         this.snapshotTreeId = this.initializeFromSnapshot(snapshotContents);
+        return this.getSnapshotVersion();
+    }
+
+    private getSnapshotVersion(): api.IVersion[] {
         return this.snapshotTreeId ? [{ id: this.snapshotTreeId, treeId: undefined! }] : [];
     }
 
