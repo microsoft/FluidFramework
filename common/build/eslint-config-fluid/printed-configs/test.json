@@ -913,6 +913,9 @@
         "unicorn/no-unsafe-regex": [
             "error"
         ],
+        "unicorn/prefer-switch": [
+            "error"
+        ],
         "unused-imports/no-unused-imports": [
             "error"
         ],
@@ -920,7 +923,7 @@
             "error"
         ],
         "valid-typeof": [
-            "off"
+            "error"
         ],
         "yoda": [
             "off"
