@@ -40,6 +40,7 @@ import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { ClpCompliantAppHeader } from "./contractsPublic";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -59,6 +60,7 @@ export async function createNewFluidFile(
     fileEntry: IFileEntry,
     createNewCaching: boolean,
     forceAccessTokenViaAuthorizationHeader: boolean,
+    isClpCompliantApp?: boolean,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
@@ -91,7 +93,10 @@ export async function createNewFluidFile(
 
     const odspUrl = createOdspUrl({ ... newFileInfo, itemId, dataStorePath: "/" });
     const resolver = new OdspDriverUrlResolver();
-    const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
+    const odspResolvedUrl = await resolver.resolve({
+        url: odspUrl,
+        headers: { [ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp },
+    });
     fileEntry.docId = odspResolvedUrl.hashedDocumentId;
     fileEntry.resolvedUrl = odspResolvedUrl;
 

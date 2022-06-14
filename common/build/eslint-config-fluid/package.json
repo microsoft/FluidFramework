@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/eslint-config-fluid",
-  "version": "0.28.3000",
+  "version": "0.29.1000",
   "description": "Shareable ESLint config for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -13,8 +13,11 @@
   "main": "index.js",
   "scripts": {
     "cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
-    "print-config": "concurrently npm:print-config:default npm:print-config:test && npm run cleanup-printed-configs",
+    "print-config": "concurrently npm:print-config:default npm:print-config:test npm:print-config:minimal npm:print-config:recommended npm:print-config:strict && npm run cleanup-printed-configs",
     "print-config:default": "eslint --config ./index.js --print-config ./src/file.ts > ./printed-configs/default.json",
+    "print-config:minimal": "eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json",
+    "print-config:recommended": "eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json",
+    "print-config:strict": "eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json",
     "print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json"
   },
   "dependencies": {
@@ -30,7 +33,8 @@
     "eslint-plugin-promise": "~6.0.0",
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-tsdoc": "~0.2.14",
-    "eslint-plugin-unicorn": "~40.0.0"
+    "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0"
   },
   "devDependencies": {
     "concurrently": "^6.2.0",

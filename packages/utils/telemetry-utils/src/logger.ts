@@ -31,9 +31,14 @@ import {
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
  * Please do not modify existing entries for backwards compatibility.
  */
- export enum TelemetryDataTag {
-    /** Data containing terms from code packages that may have been dynamically loaded */
+export enum TelemetryDataTag {
+    /**
+     * Data containing terms from code packages that may have been dynamically loaded
+     * @deprecated 1.0, will be removed in next release (see issue #6603). Use `TelemetryDataTag.CodeArtifact` instead.
+     */
     PackageData = "PackageData",
+    /** Data containing terms or IDs from code packages that may have been dynamically loaded */
+    CodeArtifact = "CodeArtifact",
     /** Personal data of a variety of classifications that pertains to the user */
     UserData = "UserData",
 }

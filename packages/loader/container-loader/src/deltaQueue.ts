@@ -85,9 +85,13 @@ export class DeltaQueue<T>
     }
 
     public push(task: T) {
-        this.q.push(task);
-        this.emit("push", task);
-        this.ensureProcessing();
+        try {
+            this.q.push(task);
+            this.emit("push", task);
+            this.ensureProcessing();
+        } catch (error) {
+            this.emit("error", error);
+        }
     }
 
     public async pause(): Promise<void> {

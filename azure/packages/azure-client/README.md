@@ -16,7 +16,7 @@ Fluid requires a backing service to enable collaborative communication. The `Azu
 
 NOTE: You can use one instance of the `AzureClient` to create/fetch multiple containers from the same Azure Fluid Relay service instance.
 
-In the example below we will walk through both connecting to a a live Azure Fluid Relay service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as using a tenant ID of "local" for development purposes to run our application against the local service. We make use of `AzureFunctionTokenProvider` for token generation while running against a live Azure Fluid Relay instance and `InsecureTokenProvider`, from the `@fluidframework/test-client-utils` package, to authenticate a given user for access to the service locally. The `AzureFunctionTokenProvider` is an implementation that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
+In the example below we will walk through both connecting to a a live Azure Fluid Relay service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as an example of running our application against the local service. We make use of `AzureFunctionTokenProvider` for token generation while running against a live Azure Fluid Relay instance and `InsecureTokenProvider`, from the `@fluidframework/test-client-utils` package, to authenticate a given user for access to the service locally. The `AzureFunctionTokenProvider` is an implementation that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
 
 ### Backed Locally
 
@@ -26,18 +26,17 @@ To run the local Azure Fluid Relay service with the default values of `localhost
 npx @fluidframework/azure-local-service@latest
 ```
 
-Now, with our local service running in the background, we need to connect the application to it. For this, we first need to create our `ITokenProvider` instance to authenticate the current user to the service. For this, we can use the `InsecureTokenProvider` where we can pass anything into the key (since we are running locally) and an object identifying the current user. Both our orderer and storage URLs will point to the domain and port that our local Azure Fluid Relay service instance is running at. Lastly, to differentiate local mode from remote mode, we are passing in `LOCAL_MODE_TENANT_ID` as tenant ID.
+Now, with our local service running in the background, we need to connect the application to it. For this, we first need to create our `ITokenProvider` instance to authenticate the current user to the service. For this, we can use the `InsecureTokenProvider` where we can pass anything into the key (since we are running locally) and an object identifying the current user. Our endpoint URL will point to the domain and port that our local Azure Fluid Relay service instance is running at. Lastly, to differentiate local mode from remote mode, we set the `type` to `"local"` or `"remote"` respectively.
 
 ```typescript
-import { AzureClient, AzureConnectionConfig, LOCAL_MODE_TENANT_ID } from "@fluidframework/azure-client";
+import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 
 const clientProps = {
     connection: {
-        tenantId: LOCAL_MODE_TENANT_ID,
+        type: "local",
         tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
-        orderer: "http://localhost:7070",
-        storage: "http://localhost:7070",
+        endpoint: "http://localhost:7070",
     },
 };
 const azureClient = new AzureClient(clientProps);
@@ -52,13 +51,13 @@ import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client
 
 const clientProps = {
     connection: {
+        type: "remote",
         tenantId: "YOUR-TENANT-ID-HERE",
         tokenProvider: new AzureFunctionTokenProvider(
             "AZURE-FUNCTION-URL"+"/api/GetAzureToken",
             { userId: "test-user",userName: "Test User" }
         ),
-        orderer: "ENTER-ORDERER-URL-HERE",
-        storage: "ENTER-STORAGE-URL-HERE",
+        endpoint: "ENTER-SERVICE-DISCOVERY-URL-HERE",
     },
 };
 const azureClient = new AzureClient(clientProps);

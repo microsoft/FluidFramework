@@ -19,17 +19,17 @@ import { assert, performance } from "@fluidframework/common-utils";
 export const latencyThreshold = 5000;
 
 // Phases in OpPerfTelemetry:
-// 1.	Op sits in a buffer in DeltaManager (DM) queue, then in outbound queue for some time.
-// 	 - Note: We do not differentiate these two today in telemetry, but first one is due to batches,
-//           second one might happen due to outbound queue being paused.
-// 2.	Op is sent to service and back.
-// 3.	Op sits in inbound queue.
+// 1.	Op is added to DeltaManager (DM) buffer.
+// 2.	Op is sent to service (op leaves outbound queue).
+// 	 - Note: We do not know for sure when op is sent, we only track when it is added to outbound queue.
+//     If outbound queue is paused, time queue is paused is counted as network time.
+// 3.	Op received from service back (pushed to inbound queue).
 // 4.	Op is processed.
 interface IOpPerfTelemetryProperties {
     /** Measure time between (1) and (2) - Measure time outbound op is sitting in queue due to active batch */
-    durationOutboundQueue: number;
-    /** Measure time between (2) and (3) - Track how long op is sitting in inbound queue until it is processed */
-    durationInboundQueue: number;
+    durationOutboundBatching: number; // was durationOutboundQueue in previous versions
+    /** Measure time between (2) and (3) - Track how long it took for op to be acked by service */
+    durationNetwork: number; // was durationInboundQueue
     /** Measure time between (3) and (4) - Time between DM's inbound "push" event until DM's "op" event */
     durationInboundToProcessing: number;
     /** Length of the DeltaManager's inbound queue at the time of the DM's inbound "push" event (3) */
@@ -41,11 +41,11 @@ interface IOpPerfTelemetryProperties {
  */
  interface IOpPerfTimings {
      /** Starting time for (1) */
-    opStartTimeForLatencyStatistics: number;
+    submitOpEventTime: number;
      /** Starting time for (2) */
-     opStartTimeSittingInboundQueue: number;
+     outboundPushEventTime: number;
      /** Starting time for (3) */
-     opStartTimeInboundPushEvent: number;
+     inboundPushEventTime: number;
 }
 
 class OpPerfTelemetry {
@@ -102,26 +102,27 @@ class OpPerfTelemetry {
             this.opPerfData = {};
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
+            this.pongCount = 0;
         });
 
         this.deltaManager.outbound.on("push", (messages) => {
             for (const msg of messages) {
                 if (msg.type === MessageType.Operation &&
                     this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber) {
-                    assert(this.opProcessingTimes.opStartTimeSittingInboundQueue === undefined,
-                        0x2c8 /* "opStartTimeSittingInboundQueue should be undefined" */);
-                    assert(this.opPerfData.durationInboundQueue === undefined,
-                        0x2c9 /* "durationInboundQueue should be undefined" */);
-                    this.opProcessingTimes.opStartTimeSittingInboundQueue = Date.now();
+                    assert(this.opProcessingTimes.outboundPushEventTime === undefined,
+                        0x2c8 /* "outboundPushEventTime should be undefined" */);
+                    assert(this.opPerfData.durationNetwork === undefined,
+                        0x2c9 /* "durationNetwork should be undefined" */);
+                    this.opProcessingTimes.outboundPushEventTime = Date.now();
 
-                    assert(this.opPerfData.durationOutboundQueue === undefined,
-                        0x2ca /* "durationOutboundQueue should be undefined" */);
+                    assert(this.opPerfData.durationOutboundBatching === undefined,
+                        0x2ca /* "durationOutboundBatching should be undefined" */);
 
-                    assert(this.opProcessingTimes.opStartTimeForLatencyStatistics !== undefined,
-                        0x2cb /* "opStartTimeForLatencyStatistics should be undefined" */);
+                    assert(this.opProcessingTimes.submitOpEventTime !== undefined,
+                        0x2cb /* "submitOpEventTime should be undefined" */);
 
-                    this.opPerfData.durationOutboundQueue = this.opProcessingTimes.opStartTimeSittingInboundQueue
-                        - this.opProcessingTimes.opStartTimeForLatencyStatistics;
+                    this.opPerfData.durationOutboundBatching = this.opProcessingTimes.outboundPushEventTime
+                        - this.opProcessingTimes.submitOpEventTime;
                 }
             }
         });
@@ -130,11 +131,11 @@ class OpPerfTelemetry {
             if (this.clientId === message.clientId &&
                 message.type === MessageType.Operation &&
                 this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber &&
-                this.opProcessingTimes.opStartTimeSittingInboundQueue !== undefined) {
-                this.opProcessingTimes.opStartTimeInboundPushEvent = Date.now();
-                this.opPerfData.durationInboundQueue = this.opProcessingTimes.opStartTimeInboundPushEvent
-                                     - this.opProcessingTimes.opStartTimeSittingInboundQueue;
-                this.opProcessingTimes.opStartTimeSittingInboundQueue = undefined;
+                this.opProcessingTimes.outboundPushEventTime !== undefined) {
+                this.opProcessingTimes.inboundPushEventTime = Date.now();
+                this.opPerfData.durationNetwork = this.opProcessingTimes.inboundPushEventTime
+                                     - this.opProcessingTimes.outboundPushEventTime;
+                this.opProcessingTimes.outboundPushEventTime = undefined;
                 this.opPerfData.lengthInboundQueue = this.deltaManager.inbound.length;
             }
         });
@@ -171,27 +172,26 @@ class OpPerfTelemetry {
     }
 
     private recordPingTime(latency: number) {
-        this.pongCount++;
         this.pingLatency = latency;
-        // logging one in every 100 pongs
-        if (this.pongCount === 100) {
+        // logging one in every 1000 pongs, including the first time, if it is a "write" client.
+        if (this.pongCount % 100 === 0 && this.deltaManager.active) {
             this.logger.sendPerformanceEvent({
                 eventName: "DeltaLatency",
                 duration: latency,
             });
-            this.pongCount = 0;
         }
+        this.pongCount++;
     }
 
     private beforeOpSubmit(message: IDocumentMessage) {
         // start with first client op and measure latency every 500 client ops
         if (this.clientSequenceNumberForLatencyStatistics === undefined &&
             message.clientSequenceNumber % 500 === 1) {
-            assert(this.opProcessingTimes.opStartTimeSittingInboundQueue === undefined,
+            assert(this.opProcessingTimes.outboundPushEventTime === undefined,
                 0x2cc /* "OpTimeSittingInboundQueue should be undefined" */);
-            assert(this.opPerfData.durationInboundQueue === undefined,
-                0x2cd /* "durationInboundQueue should be undefined" */);
-            this.opProcessingTimes.opStartTimeForLatencyStatistics = Date.now();
+            assert(this.opPerfData.durationNetwork === undefined,
+                0x2cd /* "durationNetwork should be undefined" */);
+            this.opProcessingTimes.submitOpEventTime = Date.now();
             this.clientSequenceNumberForLatencyStatistics = message.clientSequenceNumber;
         }
     }
@@ -223,16 +223,16 @@ class OpPerfTelemetry {
 
         if (this.clientId === message.clientId &&
             this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
-            assert(this.opProcessingTimes.opStartTimeForLatencyStatistics !== undefined,
+            assert(this.opProcessingTimes.submitOpEventTime !== undefined,
                 0x120 /* "Undefined latency statistics (op send time)" */);
             const currentTime = Date.now();
 
-            if (this.opProcessingTimes.opStartTimeInboundPushEvent !== undefined) {
+            if (this.opProcessingTimes.inboundPushEventTime !== undefined) {
                 this.opPerfData.durationInboundToProcessing = currentTime
-                - this.opProcessingTimes.opStartTimeInboundPushEvent;
+                - this.opProcessingTimes.inboundPushEventTime;
             }
 
-            const duration = currentTime - this.opProcessingTimes.opStartTimeForLatencyStatistics;
+            const duration = currentTime - this.opProcessingTimes.submitOpEventTime;
 
             // One of the core expectations for Fluid service is to be fast.
             // When it's not the case, we want to learn about it and be able to investigate, so
@@ -257,6 +257,27 @@ class OpPerfTelemetry {
             this.opPerfData = {};
         }
     }
+}
+export interface IPerfSignalReport {
+    /**
+     * Identifier for the signal being submitted in order to
+     * allow collection of data around the roundtrip of signal messages.
+     */
+    signalSequenceNumber: number;
+    /**
+     * Number of signals that were expected but not received.
+     */
+    signalsLost: number;
+
+    /**
+     * Timestamp before submitting the signal we will trace.
+     */
+    signalTimestamp: number;
+
+    /**
+     * Expected Signal Sequence to be received.
+     */
+    trackingSignalSequenceNumber: number | undefined;
 }
 
 export function ReportOpPerfTelemetry(

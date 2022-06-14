@@ -256,6 +256,30 @@ use_old_InterfaceDeclaration_ILoaderServices(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPendingContainerState": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IPendingContainerState():
+    TypeOnly<old.IPendingContainerState>;
+declare function use_current_InterfaceDeclaration_IPendingContainerState(
+    use: TypeOnly<current.IPendingContainerState>);
+use_current_InterfaceDeclaration_IPendingContainerState(
+    get_old_InterfaceDeclaration_IPendingContainerState());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPendingContainerState": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IPendingContainerState():
+    TypeOnly<current.IPendingContainerState>;
+declare function use_old_InterfaceDeclaration_IPendingContainerState(
+    use: TypeOnly<old.IPendingContainerState>);
+use_old_InterfaceDeclaration_IPendingContainerState(
+    get_current_InterfaceDeclaration_IPendingContainerState());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_Loader": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Loader():

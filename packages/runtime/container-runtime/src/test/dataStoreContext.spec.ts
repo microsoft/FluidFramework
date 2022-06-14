@@ -24,7 +24,7 @@ import {
     CreateSummarizerNodeSource,
     channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
@@ -91,6 +91,26 @@ describe("Data Store Context Tests", () => {
         });
 
         describe("Initialization", () => {
+            it("rejects ids with forward slashes", async () => {
+                const invalidId = "beforeSlash/afterSlash";
+                const codeBlock = () => new LocalFluidDataStoreContext({
+                    id: invalidId,
+                    pkg: ["TestDataStore1"],
+                    runtime: containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    makeLocallyVisibleFn,
+                    snapshotTree: undefined,
+                    isRootDataStore: true,
+                    writeGCDataAtRoot: true,
+                    disableIsolatedChannels: false,
+                });
+
+                assert.throws(codeBlock,
+                    (e: Error) => validateAssertionError(e, "Data store ID contains slash"));
+            });
+
             it("can initialize correctly and generate attributes", async () => {
                 localDataStoreContext = new LocalFluidDataStoreContext({
                     id: dataStoreId,
@@ -434,6 +454,25 @@ describe("Data Store Context Tests", () => {
                     pkg: pkgName,
                 }));
             }
+
+            it("rejects ids with forward slashes", async () => {
+                const invalidId = "beforeSlash/afterSlash";
+                const codeBlock = () => new RemoteFluidDataStoreContext({
+                    id: invalidId,
+                    pkg: ["TestDataStore1"],
+                    runtime: containerRuntime,
+                    storage: storage as IDocumentStorageService,
+                    scope,
+                    createSummarizerNodeFn,
+                    snapshotTree: undefined,
+                    writeGCDataAtRoot: true,
+                    disableIsolatedChannels: false,
+                    getBaseGCDetails: async () => undefined as unknown as IGarbageCollectionDetailsBase,
+                });
+
+                assert.throws(codeBlock,
+                    (e: Error) => validateAssertionError(e, "Data store ID contains slash"));
+            });
 
             describe("writing with isolated channels disabled", () => testGenerateAttributes(
                 false, /* writeIsolatedChannels */
