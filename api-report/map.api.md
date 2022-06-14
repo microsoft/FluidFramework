@@ -244,6 +244,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
     set(key: string, value: any): this;
     get size(): number;
     // @internal (undocumented)

@@ -43,7 +43,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
                 state: "disabled",
             },
          },
-        gcOptions: { gcAllowed: true, writeDataAtRoot: true },
+        gcOptions: { gcAllowed: true },
     };
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
@@ -57,10 +57,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         runtimeOptions,
     );
     const logger = new TelemetryNullLogger();
-
-    // Enable config provider setting to write GC data at the root.
-    const settings = { "Fluid.GarbageCollection.WriteDataAtRoot": "true" };
-    const configProvider = mockConfigProvider(settings);
+    const configProvider = mockConfigProvider({});
 
     // Stores the latest summary uploaded to the server.
     let latestUploadedSummary: ISummaryTree | undefined;

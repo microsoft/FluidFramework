@@ -18,6 +18,7 @@ import {
     INack,
     INackContent,
     NackErrorType,
+    IClient,
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
@@ -27,6 +28,7 @@ import * as services from "@fluidframework/server-services";
 import { defaultHash } from "@fluidframework/server-services-client";
 import { generateToken } from "@fluidframework/server-services-utils";
 import {
+    clientConnectivityStorageId,
     DefaultMetricClient,
     DefaultServiceConfiguration,
     IClientManager,
@@ -36,6 +38,7 @@ import {
     MongoDatabaseManager,
     MongoManager,
     RawOperationType,
+    signalUsageStorageId,
 } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
@@ -46,8 +49,11 @@ import {
     TestTenantManager,
     DebugLogger,
     TestThrottler,
+    TestThrottleAndUsageStorageManager,
 } from "@fluidframework/server-test-utils";
 import { OrdererManager } from "../../alfred";
+import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
+import Sinon from "sinon";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -118,8 +124,12 @@ describe("Routerlicious", () => {
                         undefined,
                         undefined,
                         false,
+                        false,
+                        false,
                         testConnectionThrottler,
-                        testSubmitOpThrottler);
+                        testSubmitOpThrottler,
+                        undefined,
+                        undefined);
                 });
 
                 function connectToServer(
@@ -310,7 +320,197 @@ describe("Routerlicious", () => {
                     });
                 });
             });
-        });
+
+            describe("UsageCounting", () => {
+                const testTenantId = "test";
+                const testSecret = "test";
+                const testId = "test";
+                const url = "http://test";
+
+                let webSocketServer: LocalWebSocketServer;
+                let deliKafka: TestKafka;
+                let testOrderer: IOrdererManager;
+                let testTenantManager: TestTenantManager;
+                let testClientManager: IClientManager;
+
+                const throttleLimit = 5;
+                const minThrottleCheckInterval = 100;
+                const testThrottleAndUsageStorageManager = new TestThrottleAndUsageStorageManager();
+
+                beforeEach(() => {
+                    // use fake timers to have full control over the passage of time
+                    Sinon.useFakeTimers(Date.now());
+
+                    const collectionNames = "test";
+                    const testData: { [key: string]: any[] } = {};
+
+                    deliKafka = new TestKafka();
+                    const producer = deliKafka.createProducer();
+                    testTenantManager = new TestTenantManager(url);
+                    testClientManager = new TestClientManager();
+                    const testDbFactory = new TestDbFactory(testData);
+                    const mongoManager = new MongoManager(testDbFactory);
+                    const globalDbEnabled = false;
+                    const databaseManager = new MongoDatabaseManager(
+                        globalDbEnabled,
+                        mongoManager,
+                        mongoManager,
+                        collectionNames,
+                        collectionNames,
+                        collectionNames,
+                        collectionNames);
+                    const testStorage = new services.DocumentStorage(
+                        databaseManager,
+                        testTenantManager,
+                        false,
+                    );
+                    const kafkaOrderer = new KafkaOrdererFactory(
+                        producer,
+                        1024 * 1024,
+                        DefaultServiceConfiguration);
+                    testOrderer = new OrdererManager(false, url, testTenantManager, null, kafkaOrderer);
+
+                    const pubsub = new PubSub();
+                    webSocketServer = new LocalWebSocketServer(pubsub);
+
+                    const testConnectionThrottler = new TestThrottler(throttleLimit);
+                    const testSubmitOpThrottler = new TestThrottler(throttleLimit);
+                    const throttlerHelper = new ThrottlerHelper(testThrottleAndUsageStorageManager);
+
+                    const testSubmitSignalThrottler = new Throttler(throttlerHelper, minThrottleCheckInterval);
+
+                    configureWebSocketServices(
+                        webSocketServer,
+                        testOrderer,
+                        testTenantManager,
+                        testStorage,
+                        testClientManager,
+                        new DefaultMetricClient(),
+                        DebugLogger.create("fluid-server:TestAlfredIO"),
+                        undefined,
+                        undefined,
+                        false,
+                        true,
+                        true,
+                        testConnectionThrottler,
+                        testSubmitOpThrottler,
+                        testSubmitSignalThrottler,
+                        testThrottleAndUsageStorageManager);
+                });
+
+                afterEach(() => {
+                    Sinon.restore();
+                });
+
+                function connectToServer(
+                    id: string,
+                    tenantId: string,
+                    clientType: string,
+                    secret: string,
+                    socket: LocalWebSocket): Promise<IConnected> {
+                    const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+                    const token = generateToken(tenantId, id, secret, scopes);
+
+                    const client: IClient = {
+                        mode: undefined,
+                        permission: undefined,
+                        user: undefined,
+                        scopes: undefined,
+                        details: {
+                            capabilities: undefined,
+                            type: clientType,
+                        }
+                    };
+                    const connectMessage: IConnect = {
+                        client: client,
+                        id,
+                        mode: "write",
+                        tenantId,
+                        token,
+                        versions: ["^0.3.0", "^0.2.0", "^0.1.0"],
+                    };
+
+                    const deferred = new Deferred<IConnected>();
+
+                    socket.on("connect_document_success", (connectedMessage: IConnected) => {
+                        deferred.resolve(connectedMessage);
+                    });
+
+                    socket.on("connect_document_error", (error: any) => {
+                        deferred.reject(error);
+                    });
+
+                    socket.on("nack", (reason: string, nackMessages: INack[]) => {
+                        deferred.reject(nackMessages);
+                    });
+
+                    socket.send(
+                        "connect_document",
+                        connectMessage,
+                        (error: any, connectedMessage: IConnected) => {
+                            if (error) {
+                                deferred.reject(error);
+                            } else {
+                                deferred.resolve(connectedMessage);
+                            }
+                        });
+
+
+                    return deferred.promise;
+                }
+
+                describe("connection time", () => {
+                    it("Should not store the summarizer client connection time upon disconnect", async () => {
+                        const clientConnectionTime = 100;
+                        const socket = webSocketServer.createConnection();
+                        await connectToServer(testId, testTenantId, "summarizer", testSecret, socket);
+                        Sinon.clock.tick(clientConnectionTime);
+                        socket.send("disconnect");
+
+                        const usageData = await testThrottleAndUsageStorageManager.getUsageData(clientConnectivityStorageId);
+                        assert.equal(usageData, undefined);
+                    });
+
+                    it("Should store the client connection time upon disconnect", async () => {
+                        const clientConnectionTime = 100;
+                        const socket = webSocketServer.createConnection();
+                        const connectMessage = await connectToServer(testId, testTenantId, "client", testSecret, socket);
+                        Sinon.clock.tick(clientConnectionTime);
+                        socket.send("disconnect");
+
+                        const usageData = await testThrottleAndUsageStorageManager.getUsageData(clientConnectivityStorageId);
+                        assert.equal(usageData.value, clientConnectionTime/60000);
+                        assert.equal(usageData.clientId, connectMessage.clientId);
+                        assert.equal(usageData.tenantId, testTenantId);
+                        assert.equal(usageData.documentId, testId);
+                    });
+                });
+
+                describe("signal count", () => {
+                    it("Should store the signal count when throttler is invoked", async () => {
+                        const socket = webSocketServer.createConnection();
+                        const connectMessage = await connectToServer(testId, testTenantId, "client", testSecret, socket);
+
+                        let i = 0;
+                        const signalCount = 10;
+                        const message = "testSignalMessage";
+                        for (; i < signalCount; i++) {
+                            socket.send("submitSignal", connectMessage.clientId, [message]);
+                        }
+                        Sinon.clock.tick(minThrottleCheckInterval+1);
+                        socket.send("submitSignal", connectMessage.clientId, [message]);
+                        // wait for throttler to be checked
+                        await Sinon.clock.nextAsync();
+
+                        const usageData = await testThrottleAndUsageStorageManager.getUsageData(signalUsageStorageId);
+                        assert.equal(usageData.value, signalCount+1);
+                        assert.equal(usageData.clientId, connectMessage.clientId);
+                        assert.equal(usageData.tenantId, testTenantId);
+                        assert.equal(usageData.documentId, testId);
+                    });
+                });
+            });
+        });        
     });
 
     describe("storage", () => {

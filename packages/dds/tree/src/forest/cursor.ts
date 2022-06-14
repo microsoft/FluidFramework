@@ -4,7 +4,7 @@
  */
 
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { TreeKey, TreeType } from "../tree";
+import { FieldKey, TreeType } from "../tree";
 
 export const enum TreeNavigationResult {
     /** Attempt to navigate cursor to a key or index that is outside the client's view. */
@@ -17,23 +17,31 @@ export const enum TreeNavigationResult {
     Ok = 1,
 }
 
-/** A stateful low-level interface for reading tree data. */
+/**
+ * A stateful low-level interface for reading tree data.
+ *
+ * TODO: Needs rules around invalidation/mutation of the underlying tree.
+ * Should either be documented here, or each producer should document them
+ * (and likely via returning a sub-interface with documentation on the subject).
+ *
+ * TODO: Needs a way to efficiently clone Cursor so patterns like lazy tree reification can be implemented efficiently.
+ */
 export interface ITreeCursor {
     /** Select the child located at the given key and index. */
-    down(key: TreeKey, index: number): TreeNavigationResult;
+    down(key: FieldKey, index: number): TreeNavigationResult;
 
     /** Select the parent of the currently selected node. */
     up(): TreeNavigationResult;
 
-    /** Returns the type of the currently selected node. */
-    type: TreeType;
+    /** The type of the currently selected node. */
+    readonly type: TreeType;
 
-    /** Returns the keys of the currently selected node. */
-    keys: Iterable<TreeKey>;
+    /** @returns the keys of the currently selected node. */
+    keys: Iterable<FieldKey>;
 
-    /** Returns the number of immediate children for the given key of the currently selected node. */
-    length(key: TreeKey): number;
+    /** @returns the number of immediate children for the given key of the currently selected node. */
+    length(key: FieldKey): number;
 
-    /** Returns the value associated with the currently selected node. */
-    value: undefined | Serializable;
+    /** value associated with the currently selected node. */
+    readonly value: undefined | Serializable;
 }
