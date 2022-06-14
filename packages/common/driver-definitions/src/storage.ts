@@ -118,12 +118,12 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     /**
      * Returns the snapshot tree.
      */
-    getSnapshotTree(version?: IVersion, fetchReason?: string): Promise<ISnapshotTree | null>;
+    getSnapshotTree(version?: IVersion, callReason?: string): Promise<ISnapshotTree | null>;
 
     /**
      * Retrieves all versions of the document starting at the specified versionId - or null if from the head
      */
-    getVersions(versionId: string | null, count: number, fetchReason?: string): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, callReason?: string): Promise<IVersion[]>;
 
     /**
      * Creates a blob out of the given buffer

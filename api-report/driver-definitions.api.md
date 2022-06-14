@@ -151,8 +151,8 @@ export interface IDocumentServicePolicies {
 export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
-    getSnapshotTree(version?: IVersion, fetchReason?: string): Promise<ISnapshotTree | null>;
-    getVersions(versionId: string | null, count: number, fetchReason?: string): Promise<IVersion[]>;
+    getSnapshotTree(version?: IVersion, callReason?: string): Promise<ISnapshotTree | null>;
+    getVersions(versionId: string | null, count: number, callReason?: string): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
     readBlob(id: string): Promise<ArrayBufferLike>;
     // (undocumented)

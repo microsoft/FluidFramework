@@ -343,14 +343,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return this.readBlobCore(blobId);
     }
 
-    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+    public async getSnapshotTree(version?: api.IVersion, callReason?: string): Promise<api.ISnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
         }
 
         let id: string;
         if (!version || !version.id) {
-            const versions = await this.getVersions(null, 1);
+            const versions = await this.getVersions(null, 1, callReason);
             if (!versions || versions.length === 0) {
                 return null;
             }
@@ -359,7 +359,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             id = version.id;
         }
 
-        const snapshotTree = await this.readTree(id);
+        const snapshotTree = await this.readTree(id, callReason);
         if (!snapshotTree) {
             return null;
         }
@@ -379,7 +379,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
     }
 
-    public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
+    public async getVersions(blobid: string | null, count: number, callReason?: string): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
         if (blobid !== this.documentId && blobid) {
             // FluidFetch & FluidDebugger tools use empty sting to query for versions
@@ -444,7 +444,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     // or grab the cache value and then the network value if the cache value returns undefined.
                     let method: string;
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                        const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions);
+                        const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions, callReason);
 
                         // Ensure that failures on both paths are ignored initially.
                         // I.e. if cache fails for some reason, we will proceed with network result.
@@ -478,7 +478,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         method = retrievedSnapshot !== undefined ? "cache" : "network";
 
                         if (retrievedSnapshot === undefined) {
-                            retrievedSnapshot = await this.fetchSnapshot(hostSnapshotOptions);
+                            retrievedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, callReason);
                         }
                     }
                     if (method === "network") {
@@ -524,7 +524,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     eventName: "getVersions",
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
-                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, "versions"),
+                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, "versions", undefined, callReason),
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
@@ -548,8 +548,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshot(hostSnapshotOptions: ISnapshotOptions | undefined) {
-        return this.fetchSnapshotCore(hostSnapshotOptions).catch((error) => {
+    private async fetchSnapshot(hostSnapshotOptions: ISnapshotOptions | undefined, callReason?: string) {
+        return this.fetchSnapshotCore(hostSnapshotOptions, callReason).catch((error) => {
             // Issue #5895:
             // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
             // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
@@ -562,7 +562,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshotCore(hostSnapshotOptions: ISnapshotOptions | undefined) {
+    private async fetchSnapshotCore(hostSnapshotOptions: ISnapshotOptions | undefined, callReason?: string) {
         const snapshotOptions: ISnapshotOptions = {
             mds: this.maxSnapshotSizeLimit,
             ...hostSnapshotOptions,
@@ -589,6 +589,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.snapshotFormatFetchType,
                 controller,
                 this.epochTracker,
+                callReason,
             );
         };
         const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
@@ -720,7 +721,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
     }
 
-    private async readTree(id: string): Promise<api.ISnapshotTree | null> {
+    private async readTree(id: string, callReason?: string): Promise<api.ISnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
         }
@@ -733,6 +734,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         url,
                         fetchOptions,
                         "snapshotTree",
+                        undefined,
+                        callReason,
                     );
                 };
                 const snapshot = await fetchSnapshot(
