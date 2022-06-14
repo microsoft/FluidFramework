@@ -14,7 +14,7 @@ import {
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat, describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 
