@@ -2500,6 +2500,8 @@ export class FlowView extends ui.Component {
             e.returnValue = false;
         };
 
+        // The logic below is complex enough that using switches makes the code far less readable.
+        /* eslint-disable unicorn/prefer-switch */
         const keydownHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keydownHandler!(e);
@@ -2509,122 +2511,118 @@ export class FlowView extends ui.Component {
                 this.lastVerticalX = -1;
                 if (e.ctrlKey && (e.keyCode !== 17)) {
                     this.keyCmd(e.keyCode, e.shiftKey);
-                } else {
-                    if (e.keyCode === KeyCode.TAB) {
-                        this.onTAB(e.shiftKey);
-                    } else if (e.keyCode === KeyCode.esc) {
+                } else if (e.keyCode === KeyCode.TAB) {
+                    this.onTAB(e.shiftKey);
+                } else if (e.keyCode === KeyCode.esc) {
+                    this.clearSelection();
+                } else if (e.keyCode === KeyCode.backspace) {
+                    let toRemove = this.cursor.getSelection();
+                    if (toRemove) {
+                        // If there was a selected range, use it as range to remove below.  In preparation, clear
+                        // the FlowView's selection and set the cursor to the start of the range to be deleted.
                         this.clearSelection();
-                    } else if (e.keyCode === KeyCode.backspace) {
-                        let toRemove = this.cursor.getSelection();
-                        if (toRemove) {
-                            // If there was a selected range, use it as range to remove below.  In preparation, clear
-                            // the FlowView's selection and set the cursor to the start of the range to be deleted.
-                            this.clearSelection();
-                            this.cursor.pos = toRemove.start;
-                        } else {
-                            // Otherwise, construct the range to remove by moving the cursor once in the reverse
-                            // direction. Below we will remove the positions spanned by the current and previous cursor
-                            // positions.
-                            const removeEnd = this.cursor.pos;
-                            this.cursorRev();
-                            toRemove = {
-                                end: removeEnd,
-                                start: this.cursor.pos,
-                            };
-                        }
-                        this.sharedString.removeText(toRemove.start, toRemove.end);
-                    } else if (
-                        ((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown))
-                        && (!this.ticking)) {
-                        setTimeout(() => {
-                            this.scroll(e.keyCode === KeyCode.pageUp);
-                            this.ticking = false;
-                        }, 20);
-                        this.ticking = true;
-                    } else if (e.keyCode === KeyCode.home) {
-                        this.cursor.pos = FlowView.docStartPosition;
-                        this.render(FlowView.docStartPosition);
-                    } else if (e.keyCode === KeyCode.end) {
-                        const halfport = Math.floor(this.viewportCharCount() / 2);
-                        const topChar = this.sharedString.getLength() - halfport;
-                        this.cursor.pos = topChar;
-                        this.broadcastPresence();
-                        this.render(topChar);
-                    } else if (e.keyCode === KeyCode.rightArrow) {
-                        this.undoRedoManager.closeCurrentOperation();
-                        if (this.cursor.pos < (this.sharedString.getLength() - 1)) {
-                            if (this.cursor.pos === this.viewportEndPos) {
-                                this.scroll(false, true);
-                            }
-                            if (e.shiftKey) {
-                                this.cursor.tryMark();
-                            } else {
-                                this.clearSelection();
-                            }
-                            this.cursorFwd();
-                            this.broadcastPresence();
-                            this.cursor.updateView(this);
-                        }
-                    } else if (e.keyCode === KeyCode.leftArrow) {
-                        this.undoRedoManager.closeCurrentOperation();
-                        if (this.cursor.pos > FlowView.docStartPosition) {
-                            if (this.cursor.pos === this.viewportStartPos) {
-                                this.scroll(true, true);
-                            }
-                            if (e.shiftKey) {
-                                this.cursor.tryMark();
-                            } else {
-                                this.clearSelection();
-                            }
-                            this.cursorRev();
-                            this.broadcastPresence();
-                            this.cursor.updateView(this);
-                        }
-                    } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
-                        this.undoRedoManager.closeCurrentOperation();
-                        this.lastVerticalX = saveLastVertX;
-                        let lineCount = 1;
-                        if (e.keyCode === KeyCode.upArrow) {
-                            lineCount = -1;
+                        this.cursor.pos = toRemove.start;
+                    } else {
+                        // Otherwise, construct the range to remove by moving the cursor once in the reverse
+                        // direction. Below we will remove the positions spanned by the current and previous cursor
+                        // positions.
+                        const removeEnd = this.cursor.pos;
+                        this.cursorRev();
+                        toRemove = {
+                            end: removeEnd,
+                            start: this.cursor.pos,
+                        };
+                    }
+                    this.sharedString.removeText(toRemove.start, toRemove.end);
+                } else if (
+                    ((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown))
+                    && (!this.ticking)) {
+                    setTimeout(() => {
+                        this.scroll(e.keyCode === KeyCode.pageUp);
+                        this.ticking = false;
+                    }, 20);
+                    this.ticking = true;
+                } else if (e.keyCode === KeyCode.home) {
+                    this.cursor.pos = FlowView.docStartPosition;
+                    this.render(FlowView.docStartPosition);
+                } else if (e.keyCode === KeyCode.end) {
+                    const halfport = Math.floor(this.viewportCharCount() / 2);
+                    const topChar = this.sharedString.getLength() - halfport;
+                    this.cursor.pos = topChar;
+                    this.broadcastPresence();
+                    this.render(topChar);
+                } else if (e.keyCode === KeyCode.rightArrow) {
+                    this.undoRedoManager.closeCurrentOperation();
+                    if (this.cursor.pos < (this.sharedString.getLength() - 1)) {
+                        if (this.cursor.pos === this.viewportEndPos) {
+                            this.scroll(false, true);
                         }
                         if (e.shiftKey) {
                             this.cursor.tryMark();
                         } else {
                             this.clearSelection();
                         }
-                        const maxPos = this.sharedString.getLength() - 1;
-                        if (this.viewportEndPos! > maxPos) {
-                            this.viewportEndPos = maxPos;
-                        }
-                        const vpEnd = this.viewportEndPos;
-                        if ((this.cursor.pos < maxPos) || (lineCount < 0)) {
-                            if (!this.verticalMove(lineCount)) {
-                                if (((this.viewportStartPos! > 0) && (lineCount < 0)) ||
-                                    ((this.viewportEndPos! < maxPos) && (lineCount > 0))) {
-                                    this.scroll(lineCount < 0, true);
-                                    if (lineCount > 0) {
-                                        while (vpEnd === this.viewportEndPos) {
-                                            if (this.cursor.pos > maxPos) {
-                                                this.cursor.pos = maxPos;
-                                                break;
-                                            }
-                                            this.scroll(lineCount < 0, true);
-                                        }
-                                    }
-                                    this.verticalMove(lineCount);
-                                }
-                            }
-                            if (this.cursor.pos > maxPos) {
-                                this.cursor.pos = maxPos;
-                            }
-                            this.broadcastPresence();
-                            this.cursor.updateView(this);
-                        }
-                    } else {
-                        if (!e.ctrlKey) {
-                            specialKey = false;
-                        }
+                        this.cursorFwd();
+                        this.broadcastPresence();
+                        this.cursor.updateView(this);
                     }
+                } else if (e.keyCode === KeyCode.leftArrow) {
+                    this.undoRedoManager.closeCurrentOperation();
+                    if (this.cursor.pos > FlowView.docStartPosition) {
+                        if (this.cursor.pos === this.viewportStartPos) {
+                            this.scroll(true, true);
+                        }
+                        if (e.shiftKey) {
+                            this.cursor.tryMark();
+                        } else {
+                            this.clearSelection();
+                        }
+                        this.cursorRev();
+                        this.broadcastPresence();
+                        this.cursor.updateView(this);
+                    }
+                } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
+                    this.undoRedoManager.closeCurrentOperation();
+                    this.lastVerticalX = saveLastVertX;
+                    let lineCount = 1;
+                    if (e.keyCode === KeyCode.upArrow) {
+                        lineCount = -1;
+                    }
+                    if (e.shiftKey) {
+                        this.cursor.tryMark();
+                    } else {
+                        this.clearSelection();
+                    }
+                    const maxPos = this.sharedString.getLength() - 1;
+                    if (this.viewportEndPos! > maxPos) {
+                        this.viewportEndPos = maxPos;
+                    }
+                    const vpEnd = this.viewportEndPos;
+                    if ((this.cursor.pos < maxPos) || (lineCount < 0)) {
+                        if (!this.verticalMove(lineCount)) {
+                            if (((this.viewportStartPos! > 0) && (lineCount < 0)) ||
+                                ((this.viewportEndPos! < maxPos) && (lineCount > 0))) {
+                                this.scroll(lineCount < 0, true);
+                                if (lineCount > 0) {
+                                    while (vpEnd === this.viewportEndPos) {
+                                        if (this.cursor.pos > maxPos) {
+                                            this.cursor.pos = maxPos;
+                                            break;
+                                        }
+                                        this.scroll(lineCount < 0, true);
+                                    }
+                                }
+                                this.verticalMove(lineCount);
+                            }
+                        }
+                        if (this.cursor.pos > maxPos) {
+                            this.cursor.pos = maxPos;
+                        }
+                        this.broadcastPresence();
+                        this.cursor.updateView(this);
+                    }
+                } else if (!e.ctrlKey) {
+                    specialKey = false;
                 }
                 if (specialKey) {
                     e.preventDefault();
@@ -2632,6 +2630,7 @@ export class FlowView extends ui.Component {
                 }
             }
         };
+        /* eslint-enable unicorn/prefer-switch */
 
         const keypressHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
