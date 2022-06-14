@@ -14,9 +14,9 @@ import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerH
 import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";
 
-describe("Runtime", () => {
-    describe("Summarization", () => {
-        describe("Summarize Heuristic Runner", () => {
+describe.only("Runtime", () => {
+    describe.only("Summarization", () => {
+        describe.only("Summarize Heuristic Runner", () => {
             let clock: sinon.SinonFakeTimers;
             before(() => { clock = sinon.useFakeTimers(); });
             after(() => { clock.restore(); });
@@ -239,33 +239,59 @@ describe("Runtime", () => {
             });
 
             it("Idle time value should change based on op counts", () => {
-                const lastSummary = 1000;
                 const minIdleTime = 0;
                 const maxIdleTime = 1;
                 const maxTime = 1000;
                 const maxOps = 1000;
-                initialize({ refSequenceNumber: lastSummary, minIdleTime, maxIdleTime, maxTime, maxOps });
+                const runtimeOpWeight = 1.0;
+                const nonRuntimeOpWeight = 1.0;
+                initialize({ minIdleTime, maxIdleTime, maxTime, maxOps, runtimeOpWeight, nonRuntimeOpWeight });
 
-                data.lastOpSequenceNumber = lastSummary;
+                data.lastOpSequenceNumber = maxOps;
                 assert.strictEqual(runner.idleTime, maxIdleTime, "should start at the maxIdleTime");
 
-                data.lastOpSequenceNumber += 50;
+                data.numRuntimeOps += 50;
                 assert.strictEqual(runner.idleTime, maxIdleTime - 0.05);
 
-                data.lastOpSequenceNumber += 123;
+                data.numRuntimeOps += 123;
                 assert.strictEqual(runner.idleTime, maxIdleTime - 0.173);
 
-                data.lastOpSequenceNumber += 500;
+                data.numRuntimeOps += 500;
                 assert.strictEqual(runner.idleTime, maxIdleTime - 0.673);
 
-                data.lastOpSequenceNumber += 326;
+                data.numRuntimeOps += 326;
                 assert.strictEqual(runner.idleTime, maxIdleTime - 0.999);
 
-                data.lastOpSequenceNumber += 1;
+                data.numRuntimeOps += 1;
                 assert.strictEqual(runner.idleTime, minIdleTime);
 
-                data.lastOpSequenceNumber += 100;
+                data.numRuntimeOps += 100;
                 assert.strictEqual(runner.idleTime, minIdleTime, "should never go below the minIdleTime");
+            });
+
+            it("Idle time should change based on op weights", () => {
+                const minIdleTime = 0;
+                const maxIdleTime = 1000;
+                const maxTime = 1000;
+                const maxOps = 1000;
+                const runtimeOpWeight = 0.1;
+                const nonRuntimeOpWeight = 1.1;
+                initialize({ minIdleTime, maxIdleTime, maxTime, maxOps, runtimeOpWeight, nonRuntimeOpWeight });
+
+                data.lastOpSequenceNumber = maxOps;
+                assert.strictEqual(runner.idleTime, maxIdleTime, "should start at the maxIdleTime");
+
+                data.numRuntimeOps += 50;
+                assert.strictEqual(runner.idleTime, maxIdleTime - 5);
+
+                data.numRuntimeOps += 123;
+                assert.strictEqual(runner.idleTime, maxIdleTime - 17.3);
+
+                data.numNonRuntimeOps += 500;
+                assert.strictEqual(runner.idleTime, maxIdleTime - 567.3);
+
+                data.numNonRuntimeOps += 1;
+                assert.strictEqual(runner.idleTime, maxIdleTime - 568.4);
             });
 
             it("Weights ops properly", () => {

@@ -107,7 +107,13 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     public get idleTime(): number {
         const maxIdleTime = this.configuration.maxIdleTime;
         const minIdleTime = this.configuration.minIdleTime;
-        const pToMaxOps = this.opsSinceLastAck / this.configuration.maxOps;
+        const weightedNumOfOps = getWeightedNumberOfOps(
+            this.heuristicData.numRuntimeOps,
+            this.heuristicData.numNonRuntimeOps,
+            this.configuration.runtimeOpWeight,
+            this.configuration.nonRuntimeOpWeight,
+        );
+        const pToMaxOps = weightedNumOfOps * 1.0 / this.configuration.maxOps;
 
         if (pToMaxOps >= 1) {
             return minIdleTime;
@@ -166,6 +172,16 @@ class MaxTimeSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     }
 }
 
+function getWeightedNumberOfOps(
+    runtimeOpCount: number,
+    nonRuntimeOpCount: number,
+    runtimeOpWeight: number,
+    nonRuntimeOpWeight: number,
+): number {
+    return (runtimeOpWeight * runtimeOpCount)
+         + (nonRuntimeOpWeight * nonRuntimeOpCount);
+}
+
 /** Strategy used to do a weighted analysis on the ops we've processed since the last successful summary */
 class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxOps";
@@ -174,8 +190,12 @@ class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
         configuration: ISummaryConfigurationHeuristics,
         heuristicData: ISummarizeHeuristicData,
     ): boolean {
-        const weightedNumOfOps = (configuration.runtimeOpWeight * heuristicData.numRuntimeOps)
-                               + (configuration.nonRuntimeOpWeight * heuristicData.numNonRuntimeOps);
+        const weightedNumOfOps = getWeightedNumberOfOps(
+            heuristicData.numRuntimeOps,
+            heuristicData.numNonRuntimeOps,
+            configuration.runtimeOpWeight,
+            configuration.nonRuntimeOpWeight,
+        );
         return weightedNumOfOps > configuration.maxOps;
     }
 }
