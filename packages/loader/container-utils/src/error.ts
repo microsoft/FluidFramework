@@ -16,7 +16,6 @@ import {
     wrapError,
     wrapErrorAndLog,
     isExternalError,
-    isILoggingError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -158,10 +157,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         dataProcessingCodepath: string,
         sequencedMessage?: ISequencedDocumentMessage,
     ): IFluidErrorBase {
-        const originalProps = isILoggingError(originalError) ? originalError.getTelemetryProperties() : undefined;
-
         const props = {
-            ...originalProps,
             dataProcessingError: 1,
             dataProcessingCodepath,
             ...(sequencedMessage === undefined ? undefined : extractSafePropertiesFromMessage(sequencedMessage)),
