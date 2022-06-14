@@ -432,6 +432,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
                     category: "performance",
                     opType: message.contents.type,
                     opSeqNo: message.sequenceNumber,
+                    dds: this.attributes.type,
                 },
                 (event) => {
                     this.processCore(message, local, localOpMetadata);
@@ -481,22 +482,23 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         const tmp: ITelemetryGenericEvent = {
             eventName: event.toString(),
             category: "performance",
+            dds: this.attributes.type,
         };
         if (message !== undefined) {
             tmp.opType = message.contents.type;
             tmp.opSeqNo = message.sequenceNumber;
         }
         if (this.runtime.deltaManager.clientDetails.capabilities.interactive === true) {
-        return PerformanceEvent.timedExec(
-            this.logger,
-            tmp,
-            (e) => {
-                return super.emit(event, ...args);
-            },
-            {
-                end: true,
-                cancel: "error",
-            });
+            return PerformanceEvent.timedExec(
+                this.logger,
+                tmp,
+                (e) => {
+                    return super.emit(event, ...args);
+                },
+                {
+                    end: true,
+                    cancel: "error",
+                });
         } else {
             return super.emit(event, ...args);
         }
