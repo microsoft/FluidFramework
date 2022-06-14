@@ -34,15 +34,14 @@ export interface ITokenClaims {
     /**
      * "Issued At"
      * Indicates when the authentication for this token occurred.
+     * Expressed in {@link https://en.wikipedia.org/wiki/Unix_time | Unix Time}.
      */
     iat: number;
 
     /**
      * "Expiration Time"
      * Identifies the expiration time on or after which the token must not be accepted for processing.
-     * The token lifetime can't be more than 1 hour. (TODO: is this an Azure-specific policy, or universal?)
-     *
-     * TODO: units?
+     * Expressed in {@link https://en.wikipedia.org/wiki/Unix_time | Unix Time}.
      */
     exp: number;
 

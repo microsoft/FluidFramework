@@ -41,7 +41,8 @@ import { v4 as uuid } from "uuid";
  * @see {@link @fluidframework/protocol-definitions#ITokenClaims.user}
  * @param lifetime - Used to generate the {@link @fluidframework/protocol-definitions#ITokenClaims.exp | expiration}.
  * Expiration = now + lifetime.
- * Default: 3600.
+ * Expressed in seconds.
+ * Default: 3600 (1 hour).
  * @param ver - @see {@link @fluidframework/protocol-definitions#ITokenClaims.ver}.
  * Default: `1.0`.
  */
