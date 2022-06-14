@@ -530,7 +530,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		);
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
-		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId);
+		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, this.logger);
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
 			{
 				editChunks: [],
@@ -1262,7 +1262,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		this.interner = new MutableStringInterner([initialTree.definition]);
 		const oldIdCompressor = this.idCompressor;
 		// Create the IdCompressor that will be used after the upgrade
-		const newIdCompressor = new IdCompressor(createSessionId(), reservedIdCount, this.attributionId);
+		const newIdCompressor = new IdCompressor(createSessionId(), reservedIdCount, this.attributionId, this.logger);
 		const newContext = getNodeIdContext(newIdCompressor);
 		// Generate all local IDs in the new compressor that were in the old compressor and preserve their UUIDs.
 		// This will allow the client to continue to use local IDs that were allocated pre-upgrade

@@ -22,7 +22,7 @@ contained within itself, as well as to inspect the state of the collaboration se
 
 ### Shared object packages
 
-You'll use one or more shared objects in your container to model your collaborative data.  The `fluid-framework` package includes
+You'll use one or more shared objects in your container to model your collaborative data. The `fluid-framework` package includes
 three data structures that cover a broad range of scenarios:
 
 1. [SharedMap]({{< relref "/docs/data-structures/map.md" >}}), a map-like data structure for storing key/value pair data.
@@ -38,7 +38,7 @@ Fluid Framework packages are published under one of the following npm scopes:
 - @fluid-internal
 - @fluid-tools
 
-In addition to the scoped packages, two unscoped packages are published: the `fluid-framework` package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious]({{< relref "tinylicious.md" >}}.
+In addition to the scoped packages, two unscoped packages are published: the `fluid-framework` package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious]({{< relref "tinylicious.md" >}}).
 
 Unless you are contributing to the Fluid Framework, you should only need the unscoped packages and packages from the **@fluidframework** scope.
 You can [read more about the scopes and their intent][scopes] in the Fluid Framework wiki.
