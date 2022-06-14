@@ -675,11 +675,13 @@ export class GarbageCollector implements IGarbageCollector {
             runSweep?: boolean;
             /** True to generate full GC data */
             fullGC?: boolean;
+            testMode?: boolean;
         },
     ): Promise<IGCStats> {
         const {
             runSweep = this.shouldRunSweep,
             fullGC = this.gcOptions.runFullGC === true || this.summaryStateNeedsReset,
+            testMode = this.testMode,
         } = options;
 
         const logger = options.logger
@@ -713,7 +715,7 @@ export class GarbageCollector implements IGarbageCollector {
 
             // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
             // involving access to deleted data.
-            if (this.testMode) {
+            if (testMode) {
                 this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
             }
 
