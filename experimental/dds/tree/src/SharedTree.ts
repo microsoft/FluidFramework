@@ -939,9 +939,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		};
 		this.cachingLogViewer.setMinimumSequenceNumber(typedMessage.minimumSequenceNumber);
 		const op = typedMessage.contents;
+		if (op.version === undefined) {
+			// Back-compat: some legacy documents may contain trailing ops with an unstamped version; normalize them.
+			(op as { version: WriteFormat | undefined }).version = WriteFormat.v0_0_2;
+		}
 		const { type, version } = op;
-		const resolvedVersion = version ?? WriteFormat.v0_0_2;
-		const sameVersion = resolvedVersion === this.writeFormat;
+		const sameVersion = version === this.writeFormat;
 
 		// Edit and handle ops should only be processed if they're the same version as the tree write version.
 		// Update ops should only be processed if they're not the same version.
@@ -976,7 +979,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			}
 		} else if (type === SharedTreeOpType.Update) {
 			this.processVersionUpdate(op.version);
-		} else if (compareSummaryFormatVersions(resolvedVersion, this.writeFormat) === 1) {
+		} else if (compareSummaryFormatVersions(version, this.writeFormat) === 1) {
 			// An op version newer than our current version should not be received. If this happens, either an
 			// incorrect op version has been written or an update op was skipped.
 			const error = 'Newer op version received by a client that has yet to be updated.';
