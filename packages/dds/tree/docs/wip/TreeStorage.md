@@ -131,8 +131,9 @@ Other heuristics in practice might result in good spacing of indirections, but i
 
 We enforce two properties:
 
-1. To ensure that update costs are bounded by O(log(n)): there are not chains of chunks deeper than log(n) chunks without an indirection
-   a. The cost of maintaining these invariants during update also has to be kept O(log(n)).
+1. To ensure that update costs are bounded by O(log(n)):
+    - there are no chains of chunks deeper than log(n) chunks without an indirection.
+    - The cost of maintaining these invariants during update also has to be kept O(log(n)).
 2. Amortized blob dereference is bounded by O(1) overhead from indirections: there is on average O(n/log(n)) indirections total which are somewhat uniformly distributed.
 
 To reason about this, we will think of the tree of data blobs (blobs containing tree content, not the ones forming the indirection table) as a set of islands,
