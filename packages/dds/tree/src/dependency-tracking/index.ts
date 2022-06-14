@@ -7,3 +7,5 @@ export * from "./cleanable";
 export * from "./dependencies";
 export * from "./disposingDependee";
 export * from "./simpleDependee";
+export * from "./simpleObservingDependent";
+export * from "./incrementalObservation";
