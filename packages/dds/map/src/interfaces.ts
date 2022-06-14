@@ -372,7 +372,8 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 
 /**
  * The _ready-for-serialization_ format of values contained in DDS contents.  This allows us to use
- * {@link ISerializableValue.type} to understand whether they're storing a Plain JS object, a SharedObject, or a value type.
+ * {@link ISerializableValue."type"} to understand whether they're storing a Plain JS object, a SharedObject,
+ * or a value type.
  * Note that the in-memory equivalent of ISerializableValue is ILocalValue (similarly holding a type, but with
  * the _in-memory representation_ of the value instead).  An ISerializableValue is what gets passed to
  * JSON.stringify and comes out of JSON.parse.  This format is used both for snapshots (loadCore/populate)
