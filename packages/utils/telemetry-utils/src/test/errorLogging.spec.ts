@@ -777,6 +777,9 @@ describe("Error Discovery", () => {
             assert(isFluidErrorImpl(
                     createTestError("hello"),
                 ), "Valid Fluid Error is a Fluid Error");
+            assert.equal(!isOld, isFluidErrorImpl(
+                    Object.assign(createTestError("hello"), { fluidErrorCode: undefined }),
+                ), "Old isFluidError impl should require fluidErrorCode but New should not");
         });
     }
     testFluidError(isFluidError, false /* isOld */);
