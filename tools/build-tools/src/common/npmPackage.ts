@@ -24,6 +24,8 @@ import {
 import { MonoRepo } from "./monoRepo";
 import { options } from "../fluidBuild/options";
 
+export type ScriptDependencies = { [key: string]: string[] };
+
 interface IPerson {
     name: string;
     email: string;
@@ -59,6 +61,14 @@ interface IPackage {
     os: string[];
     cpu: string[];
     [key: string]: any;
+
+    fluidBuild?: {
+        buildDependencies: {
+            merge?: {
+                [key: string]: ScriptDependencies
+            }
+        }
+    };
 };
 
 export class Package {
@@ -248,7 +258,7 @@ export class Packages {
     public constructor(public readonly packages: Package[]) {
     }
 
-    public static loadDir(dirFullPath: string, group: string, ignoredDirFullPaths: string[] | undefined, monoRepo?: MonoRepo, ) {
+    public static loadDir(dirFullPath: string, group: string, ignoredDirFullPaths: string[] | undefined, monoRepo?: MonoRepo,) {
         const packageJsonFileName = path.join(dirFullPath, "package.json");
         if (existsSync(packageJsonFileName)) {
             return [new Package(packageJsonFileName, group, monoRepo)];

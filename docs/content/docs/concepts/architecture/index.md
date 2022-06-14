@@ -34,24 +34,25 @@ The Fluid loader connects to the Fluid service and loads a Fluid container.
 | | +--------------------------+  +----------------+  +----------------+ |  |  +---------------------+
 | | |                          |  |                |  |                | |  |  |                     |
 | | |                          |  |                |  |                | |  |  |    Fluid Service    |
-| | |   Fluid Object           |  | Fluid Object   |  | Fluid Object   | |  |  |                     |
+| | |   Shared Object          |  | Shared Object  |  | Shared Object  | |  |  |                     |
 | | |                          |  |                |  |                | |  |  +---------------------+
 | | |                          |  |                |  |                | |  |
+| | |                          |  |                |  |                | |  |
+| | |                          |  |                |  |                | |  |
+| | |  +-----+   +-----+       |  |    +-----+     |  |   +-----+      | |  |
+| | |  |     |   |     |       |  |    |     |     |  |   |     |      | |  |
+| | |  | DDS |   | DDS |       |  |    | DDS |     |  |   | DDS |      | |  |
+| | |  |     |   |     |       |  |    |     |     |  |   |     |      | |  |
+| | |  +-----+   +-----+       |  |    +-----+     |  |   +-----+      | |  |
 | | +--------------------------+  +----------------+  +----------------+ |  |
-| |                                                                      |  |
-| | +-----+   +-----+    +-----+       +-----+             +-----+       |  |
-| | |     |   |     |    |     |       |     |             |     |       |  |
-| | | DDS |   | DDS |    | DDS |       | DDS |             | DDS |       |  |
-| | |     |   |     |    |     |       |     |             |     |       |  |
-| | +-----+   +-----+    +-----+       +-----+             +-----+       |  |
-| |                                                                      |  |
 | +----------------------------------------------------------------------+  |
 |                                                                           |
 +---------------------------------------------------------------------------+
 ```
+
 The Fluid architecture consists of a client and service. The
 client contains the Fluid loader and the Fluid container. The Fluid loader contains a document service factory, code
-loader, scopes, and a URL resolver. The Fluid runtime is encapsulated within a container, which is built using Fluid
+loader, scopes, and a URL resolver. The Fluid runtime is encapsulated within a container, which is built using Shared
 objects and distributed data structures.
 
 If you want to load a Fluid container on your app or website, you'll load the container with the Fluid loader. If you
@@ -136,12 +137,12 @@ the service knows nothing about the contents of any Fluid container.
                                                          v
                                              +-----------+-------------+
                                              |    Fluid Container or   |
-                                             |       Fluid Object      |
+                                             |       Shared Object     |
                                              |                         |
                                              +-------------------------+
 ```
 
-\Clients send operations to the Fluid service, which are assigned an order and then broadcast to the other connected
+Clients send operations to the Fluid service, which are assigned an order and then broadcast to the other connected
 clients. The client sending the operation also receives an acknowledgement from the service with the assigned order of
 the operation.
 

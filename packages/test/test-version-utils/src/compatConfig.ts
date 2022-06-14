@@ -21,13 +21,13 @@ import {
  * NOTE: Please update this packages README.md if the default versions and config combination changes
  */
 interface CompatConfig {
-    name: string,
-    kind: CompatKind,
-    compatVersion: number | string,
-    loader?: string | number,
-    driver?: string | number,
-    containerRuntime?: string | number,
-    dataRuntime?: string | number,
+    name: string;
+    kind: CompatKind;
+    compatVersion: number | string;
+    loader?: string | number;
+    driver?: string | number;
+    containerRuntime?: string | number;
+    dataRuntime?: string | number;
 }
 
 // N, N - 1, and N - 2

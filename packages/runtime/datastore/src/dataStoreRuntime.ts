@@ -50,6 +50,7 @@ import {
     IInboundSignalMessage,
     ISummaryTreeWithStats,
     VisibilityState,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
@@ -69,6 +70,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import {
     GCDataBuilder,
+    removeRouteFromAllNodes,
     unpackChildNodesGCDetails,
     unpackChildNodesUsedRoutes,
 } from "@fluidframework/garbage-collector";
@@ -675,6 +677,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         let channelBaseGCDetails = (await this.channelsBaseGCDetails).get(channelId);
         if (channelBaseGCDetails === undefined) {
             channelBaseGCDetails = {};
+        } else if (channelBaseGCDetails.gcData?.gcNodes !== undefined) {
+            // Note: if the child channel has an explicit handle route to its parent, it will be removed here and
+            // expected to be added back by the parent when getGCData is called.
+            removeRouteFromAllNodes(channelBaseGCDetails.gcData.gcNodes, this.absolutePath);
         }
 
         // Currently, channel context's are always considered used. So, it there are no used routes for it, we still
@@ -689,8 +695,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to summarize
@@ -703,20 +714,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // (i.e. it has a base mapping) - then we go ahead and summarize
                 return isAttached;
             }).map(async ([contextId, context]) => {
-                // If BlobAggregationStorage is engaged, we have to write full summary for data stores
-                // BlobAggregationStorage relies on this behavior, as it aggregates blobs across DDSs.
-                // Not generating full summary will mean data loss, as we will overwrite aggregate blob in new summary,
-                // and any virtual blobs that stayed (for unchanged DDSs) will need aggregate blob in previous summary
-                // that is no longer present in this summary.
-                // This is temporal limitation that can be lifted in future once BlobAggregationStorage becomes smarter.
-                const contextSummary = await context.summarize(true /* fullTree */, trackState);
+                const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
                 summaryBuilder.addWithStats(contextId, contextSummary);
             }));
 
         return summaryBuilder.getSummaryTree();
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         /**
          * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
          * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
@@ -748,7 +753,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             if (!this.notBoundedChannelContextSet.has(contextId)) {
                 let summaryTree: ISummaryTreeWithStats;
                 if (context.isLoaded) {
-                    const contextSummary = context.getAttachSummary();
+                    const contextSummary = context.getAttachSummary(telemetryContext);
                     assert(
                         contextSummary.summary.type === SummaryType.Tree,
                         0x180 /* "getAttachSummary should always return a tree" */);
@@ -871,7 +876,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
-                    assert(!!channelContext, "There should be a channel context for the op");
+                    assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
                     channelContext.rollback(envelope.contents, localOpMetadata);
                     break;
                 }
@@ -981,7 +986,7 @@ export const mixinRequestHandler = (
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 export const mixinSummaryHandler = (
-    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string } | undefined >,
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[]; content: string; } | undefined >,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithSummarizerHandler extends Base {
         private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {

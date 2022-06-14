@@ -108,7 +108,7 @@ export class PartitionManager extends EventEmitter {
     /**
      * Called when rebalancing starts
      * Note: The consumer may decide to only emit "rebalanced" if it wants to skip closing existing partitions
-     * @param partitions Assigned partitions before the rebalance
+     * @param partitions - Assigned partitions before the rebalance
      */
     private rebalancing(partitions: IPartition[]) {
         this.logger?.info(`Rebalancing partitions: ${JSON.stringify(partitions)}`);
@@ -127,7 +127,7 @@ export class PartitionManager extends EventEmitter {
 
     /**
      * Called when rebalanced occurs
-     * @param partitions Assigned partitions after the rebalance.
+     * @param partitions - Assigned partitions after the rebalance.
      * May contain partitions that have been previously assigned to this consumer
      */
     private rebalanced(partitions: IPartitionWithEpoch[]) {

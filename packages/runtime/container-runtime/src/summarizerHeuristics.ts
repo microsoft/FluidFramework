@@ -6,11 +6,11 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Timer } from "@fluidframework/common-utils";
 import { ISummaryConfigurationHeuristics } from "./containerRuntime";
-
 import {
     ISummarizeHeuristicData,
     ISummarizeHeuristicRunner,
     ISummarizeAttempt,
+    ISummaryHeuristicStrategy,
 } from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
@@ -25,6 +25,20 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
     public get lastSuccessfulSummary(): Readonly<ISummarizeAttempt> {
         return this._lastSuccessfulSummary;
     }
+
+    public numNonRuntimeOps: number = 0;
+    /**
+     * Number of system ops at beginning of attempting to summarize.
+     * Is used to adjust numSystemOps appropriately after successful summarization.
+     */
+    private numSystemOpsBefore: number = 0;
+
+    public numRuntimeOps: number = 0;
+    /**
+     * Number of non-system ops at beginning of attempting to summarize.
+     * Is used to adjust numNonSystemOps appropriately after successful summarization.
+     */
+    private numNonSystemOpsBefore: number = 0;
 
     constructor(
         public lastOpSequenceNumber: number,
@@ -45,10 +59,19 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
             refSequenceNumber: refSequenceNumber ?? this.lastOpSequenceNumber,
             summaryTime: Date.now(),
         };
+
+        this.numSystemOpsBefore = this.numNonRuntimeOps;
+        this.numNonSystemOpsBefore = this.numRuntimeOps;
     }
 
     public markLastAttemptAsSuccessful() {
         this._lastSuccessfulSummary = { ...this.lastAttempt };
+
+        this.numNonRuntimeOps -= this.numSystemOpsBefore;
+        this.numSystemOpsBefore = 0;
+
+        this.numRuntimeOps -= this.numNonSystemOpsBefore;
+        this.numNonSystemOpsBefore = 0;
     }
 }
 
@@ -56,24 +79,31 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
  * This class contains the heuristics for when to summarize.
  */
 export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
-    private readonly idleTimer: Timer;
-    private readonly minOpsForLastSummaryAttempt: number;
+    private readonly idleTimer: Timer | undefined;
+    private readonly runSummarize: (reason: SummarizeReason) => void;
 
     public constructor(
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly configuration: ISummaryConfigurationHeuristics,
-        private readonly trySummarize: (reason: SummarizeReason) => void,
+        trySummarize: (reason: SummarizeReason) => void,
         private readonly logger: ITelemetryLogger,
+        private readonly summarizeStrategies: ISummaryHeuristicStrategy[] = getDefaultSummaryHeuristicStrategies(),
     ) {
         this.idleTimer = new Timer(
             this.idleTime,
-            () => this.trySummarize("idle"));
-        this.minOpsForLastSummaryAttempt = this.configuration.minOpsForLastSummaryAttempt;
+            () => this.runSummarize("idle"));
+
+        this.runSummarize = (reason: SummarizeReason) => {
+            this.idleTimer?.clear();
+
+            // We shouldn't attempt a summary if there are no new processed ops
+            const opsSinceLastAck = this.opsSinceLastAck;
+            if (opsSinceLastAck > 0) {
+                trySummarize(reason);
+            }
+        };
     }
 
-    /**
-     * !!! TODO: call this getter when merging in new "start()" method
-     */
     public get idleTime(): number {
         const maxIdleTime = this.configuration.maxIdleTime;
         const minIdleTime = this.configuration.minIdleTime;
@@ -91,23 +121,23 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         return this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
     }
 
+    public start() {
+        this.idleTimer?.start(this.idleTime);
+    }
+
     public run() {
-        const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
-        const opsSinceLastAck = this.opsSinceLastAck;
-        if (timeSinceLastSummary > this.configuration.maxTime) {
-            this.idleTimer.clear();
-            this.trySummarize("maxTime");
-        } else if (opsSinceLastAck > this.configuration.maxOps) {
-            this.idleTimer.clear();
-            this.trySummarize("maxOps");
-        } else {
-            this.idleTimer.restart(this.idleTime);
+        for (const strategy of this.summarizeStrategies) {
+            if (strategy.shouldRunSummary(this.configuration, this.heuristicData)) {
+                return this.runSummarize(strategy.summarizeReason);
+            }
         }
+
+        this.idleTimer?.restart(this.idleTime);
     }
 
     public shouldRunLastSummary(): boolean {
         const opsSinceLastAck = this.opsSinceLastAck;
-        const minOpsForLastSummaryAttempt = this.minOpsForLastSummaryAttempt;
+        const minOpsForLastSummaryAttempt = this.configuration.minOpsForLastSummaryAttempt;
 
         this.logger.sendTelemetryEvent({
             eventName: "ShouldRunLastSummary",
@@ -119,6 +149,40 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 
     public dispose() {
-        this.idleTimer.clear();
+        this.idleTimer?.clear();
     }
+}
+
+/** Strategy used to run a summary when it's been a while since our last successful summary */
+class MaxTimeSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
+    public readonly summarizeReason: Readonly<SummarizeReason> = "maxTime";
+
+    public shouldRunSummary(
+        configuration: ISummaryConfigurationHeuristics,
+        heuristicData: ISummarizeHeuristicData,
+    ): boolean {
+        const timeSinceLastSummary = Date.now() - heuristicData.lastSuccessfulSummary.summaryTime;
+        return timeSinceLastSummary > configuration.maxTime;
+    }
+}
+
+/** Strategy used to do a weighted analysis on the ops we've processed since the last successful summary */
+class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
+    public readonly summarizeReason: Readonly<SummarizeReason> = "maxOps";
+
+    public shouldRunSummary(
+        configuration: ISummaryConfigurationHeuristics,
+        heuristicData: ISummarizeHeuristicData,
+    ): boolean {
+        const weightedNumOfOps = (configuration.runtimeOpWeight * heuristicData.numRuntimeOps)
+                               + (configuration.nonRuntimeOpWeight * heuristicData.numNonRuntimeOps);
+        return weightedNumOfOps > configuration.maxOps;
+    }
+}
+
+function getDefaultSummaryHeuristicStrategies() {
+    return [
+        new MaxTimeSummaryHeuristicStrategy(),
+        new WeightedOpsSummaryHeuristicStrategy(),
+    ];
 }

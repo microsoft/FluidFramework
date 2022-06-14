@@ -105,9 +105,9 @@ export const codeToBytesMap = {
     36: 8,
 };
 
-export function getValueSafely(map: { [index: number]: number }, key: number) {
+export function getValueSafely(map: { [index: number]: number; }, key: number) {
     const val = map[key];
-    assert(val !== undefined, 0x287 /* `key= ${key} must exist in the map` */);
+    assert(val !== undefined, 0x287 /* key must exist in the map */);
     return val;
 }
 
@@ -123,7 +123,7 @@ export function getAndValidateNodeProps(node: NodeCore, props: string[], enforce
         }
     }
     if (enforceAllProps) {
-        assert(propSet.size === 0, 0x288 /* `All properties should exist, Not found: ${[...propSet.keys()]}` */);
+        assert(propSet.size === 0, 0x288 /* All properties should exist */);
     }
     return res;
 }
@@ -148,7 +148,7 @@ export function iteratePairs<T>(it: IterableIterator<T>) {
  * Helper function that returns iterator from an object
  * @param obj - object that supports iteration
  */
-export function iterate<T>(obj: { [Symbol.iterator]: () => IterableIterator<T> }) {
+export function iterate<T>(obj: { [Symbol.iterator]: () => IterableIterator<T>; }) {
     return obj[Symbol.iterator]();
 }
 

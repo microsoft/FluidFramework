@@ -18,6 +18,13 @@ module.exports = env => {
             entry: './src/index.ts',
             resolve: {
                 extensions: [".mjs", ".ts", ".tsx", ".js"],
+                fallback: {
+                    dgram: false,
+                    fs: false,
+                    net: false,
+                    tls: false,
+                    child_process: false,
+                }
             },
             devtool: 'source-map',
             mode: "production",
@@ -64,13 +71,6 @@ module.exports = env => {
                         loader: require.resolve('html-loader')
                     }
                 ]
-            },
-            node: {
-                dgram: 'empty',
-                fs: 'empty',
-                net: 'empty',
-                tls: 'empty',
-                child_process: 'empty',
             },
             output: {
                 filename: '[name].bundle.js',

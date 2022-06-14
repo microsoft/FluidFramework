@@ -40,7 +40,7 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
         ? error.message as string
         : String(error);
 
-    const safeProps: { message: string; errorType?: string; stack?: string } = {
+    const safeProps: { message: string; errorType?: string; stack?: string; } = {
         message,
     };
 
@@ -134,9 +134,9 @@ export function normalizeError(
         Object.assign(normalizeError, { canRetry, retryAfterSeconds });
     }
 
-    if (typeof(error) !== "object") {
+    if (typeof (error) !== "object") {
         // This is only interesting for non-objects
-        fluidError.addTelemetryProperties({ typeofError: typeof(error) });
+        fluidError.addTelemetryProperties({ typeofError: typeof (error) });
     }
     return fluidError;
 }
@@ -267,7 +267,7 @@ export function isExternalError(e: any): boolean {
  * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
  */
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
-    return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
+    return (typeof (x?.value) !== "object" && typeof (x?.tag) === "string");
 }
 
 /**

@@ -49,6 +49,7 @@ import { ISummaryNack } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
@@ -101,7 +102,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     // (undocumented)
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
-    createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
+    createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -357,11 +358,10 @@ export interface IGarbageCollectionRuntime {
 // @public (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;
-    // (undocumented)
     disableGC?: boolean;
     gcAllowed?: boolean;
     runFullGC?: boolean;
-    runSweep?: boolean;
+    sweepAllowed?: boolean;
 }
 
 // @public
@@ -385,8 +385,8 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcTotalBlobsSize?: number;
     readonly nonSystemOpsSinceLastSummary: number;
     readonly opsSizesSinceLastSummary: number;
-    readonly quorumSize?: number;
     readonly summarizedDataStoreCount: number;
+    readonly summaryNumber: number;
 }
 
 // @public
@@ -534,9 +534,9 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     closeFn(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // (undocumented)
+    // @deprecated (undocumented)
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     readonly summarizerClientId: string | undefined;
 }
@@ -610,6 +610,8 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     maxTime: number;
     minIdleTime: number;
     minOpsForLastSummaryAttempt: number;
+    nonRuntimeOpWeight: number;
+    runtimeOpWeight: number;
     // (undocumented)
     state: "enabled";
 }

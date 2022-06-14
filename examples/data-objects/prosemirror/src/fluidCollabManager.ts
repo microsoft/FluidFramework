@@ -19,12 +19,9 @@ import {
 import { SharedString } from "@fluidframework/sequence";
 import { buildMenuItems, exampleSetup } from "prosemirror-example-setup";
 import { MenuItem } from "prosemirror-menu";
-import { DOMSerializer, Fragment, NodeSpec, Schema, Slice } from "prosemirror-model";
+import { DOMSerializer, Fragment, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { EditorState, NodeSelection, Plugin, Transaction } from "prosemirror-state";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import OrderedMap = require("orderedmap");
 
 import { insertPoint } from "prosemirror-transform";
 import { EditorView } from "prosemirror-view";
@@ -68,7 +65,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
         });
 
         const fluidSchema = new Schema({
-            nodes: addListNodes(schema.spec.nodes as OrderedMap<NodeSpec>, "paragraph block*", "block"),
+            nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
             marks: schema.spec.marks,
         });
         this.schema = fluidSchema;
@@ -159,16 +156,19 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                 openPrompt({
                     title: "Insert component",
                     fields: {
-                        src: new TextField({ label: "Url", required: true, value: nodeAttrs && nodeAttrs.src }),
-                        title: new TextField({ label: "Title", value: nodeAttrs && nodeAttrs.title }),
+                        src: new TextField({ label: "Url", required: true, value: nodeAttrs?.src }),
+                        title: new TextField({ label: "Title", value: nodeAttrs?.title }),
                         alt: new TextField({
                             label: "Description",
                             value: nodeAttrs ? nodeAttrs.alt : state.doc.textBetween(from, to, " "),
                         }),
                     },
                     callback(attrs) {
-                        view.dispatch(view.state.tr.replaceSelectionWith(fluidSchema.nodes.fluid.createAndFill(attrs)));
-                        view.focus();
+                        const node = fluidSchema.nodes.fluid.createAndFill(attrs);
+                        if (node) {
+                            view.dispatch(view.state.tr.replaceSelectionWith(node));
+                            view.focus();
+                        }
                     },
                 });
             },

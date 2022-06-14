@@ -6,7 +6,7 @@
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require('path');
 const { merge } = require("webpack-merge");
-// const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = env => {
     const isProduction = env && env.production;
@@ -94,7 +94,7 @@ module.exports = env => {
             ignored: "**/node_modules/**",
         },
         plugins: [
-            // new MonacoWebpackPlugin()
+            new MonacoWebpackPlugin()
             // new BundleAnalyzerPlugin()
         ]
     }, isProduction

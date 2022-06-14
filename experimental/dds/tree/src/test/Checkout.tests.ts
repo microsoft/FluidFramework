@@ -39,8 +39,8 @@ export function checkoutTests(
 	/**
 	 * Counts the number of times ViewChange occurs while performing `action`.
 	 * Checks arguments to ViewChange are correct as well.
-	 * @param action Action to perform
-	 * @param options Options object used to construct the initial SharedTree
+	 * @param action - Action to perform
+	 * @param options - Options object used to construct the initial SharedTree
 	 */
 	async function countViewChange(
 		action: (checkout: Checkout, simpleTestTree: TestTree, data: { changeCount: number }) => void | Promise<void>,

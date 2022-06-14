@@ -4,9 +4,34 @@
 
 ```ts
 
-// @public (undocumented)
-export const _ = "Force index.d.ts generation from ApiExtractor.";
+import { Serializable } from '@fluidframework/datastore-definitions';
 
+// @public
+export interface ITreeCursor {
+    down(key: TreeKey, index: number): TreeNavigationResult;
+    keys: Iterable<TreeKey>;
+    length(key: TreeKey): number;
+    type: TreeType;
+    up(): TreeNavigationResult;
+    value: undefined | Serializable;
+}
+
+// @public (undocumented)
+export type TreeKey = (number | string) & {
+    readonly TreeKey: symbol;
+};
+
+// @public (undocumented)
+export const enum TreeNavigationResult {
+    NotFound = -1,
+    Ok = 1,
+    Pending = 0
+}
+
+// @public (undocumented)
+export type TreeType = (number | string) & {
+    readonly TreeType: symbol;
+};
 
 // (No @packageDocumentation comment for this package)
 

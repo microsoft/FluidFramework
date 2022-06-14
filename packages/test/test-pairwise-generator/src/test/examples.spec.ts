@@ -11,7 +11,7 @@ describe("generatePairwiseOptions.examples", () => {
         const myFunction =
             (param1: boolean, param2: "string1" | "string2", param3?: number) => {};
 
-        const options = generatePairwiseOptions<{ p1: boolean, p2: "string1" | "string2", p3?: number }>({
+        const options = generatePairwiseOptions<{ p1: boolean; p2: "string1" | "string2"; p3?: number; }>({
             p1: [true, false],
             p2: ["string1", "string2"],
             p3: [undefined, 0, 10, 100],
@@ -24,9 +24,9 @@ describe("generatePairwiseOptions.examples", () => {
 
     it("Testing an object", () => {
         interface MyObject{
-            prop1: boolean,
-            prop2?: number,
-            prop3?: string,
+            prop1: boolean;
+            prop2?: number;
+            prop3?: string;
         }
 
         const myObjectMatrix: OptionsMatrix<MyObject> = {
@@ -72,14 +72,14 @@ describe("generatePairwiseOptions.examples", () => {
         };
 
         interface MyComplexObject {
-            numbers?: number[],
-            subObject: { str: string }
+            numbers?: number[];
+            subObject: { str: string; };
         }
         // in this example we generate pairwise options for keys on the main object to
         // create the values which will then be pairwise matched with eachother
         const complexObjectMatrix: OptionsMatrix<MyComplexObject> = {
             numbers: [undefined, ... generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a) => Array.from(a))],
-            subObject: generatePairwiseOptions<{ str: string }>({ str: ["a", "b", "c"] }),
+            subObject: generatePairwiseOptions<{ str: string; }>({ str: ["a", "b", "c"] }),
         };
 
         const complexObjects = generatePairwiseOptions<MyComplexObject>(complexObjectMatrix);

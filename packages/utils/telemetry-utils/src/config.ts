@@ -220,7 +220,7 @@ export class CachedConfigProvider implements IConfigProvider {
  * A type containing both a telemetry logger and a configuration provider
  */
 export interface MonitoringContext<
-    L extends ITelemetryBaseLogger = ITelemetryLogger
+    L extends ITelemetryBaseLogger = ITelemetryLogger,
 > {
     config: IConfigProvider;
     logger: L;

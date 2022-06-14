@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 /* globals should, sinon, expect */
-import { DataBinder } from '../../src/data_binder/dataBinder';
+import { DataBinder } from '../data_binder/dataBinder';
 import {
   DataBinding,
   onValuesChanged,
   onPathChanged,
   onPropertyChanged
-} from '../../src/data_binder/dataBinding';
+} from '../data_binder/dataBinding';
 import { catchConsoleErrors } from './catchConsoleError';
-import { ModificationContext } from '../../src/data_binder/modificationContext';
+import { ModificationContext } from '../data_binder/modificationContext';
 import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-properties';
 

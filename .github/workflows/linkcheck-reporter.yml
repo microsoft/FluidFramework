@@ -1,7 +1,7 @@
 name: Update link report
 on:
   workflow_run:
-    workflows: ["Website validation"]
+    workflows: [ "Website validation" ]
     types:
       - completed
 
@@ -9,27 +9,22 @@ jobs:
   load_report:
     runs-on: ubuntu-latest
     steps:
-    - name: Download results
-      uses: dawidd6/action-download-artifact@v2
-      with:
-        workflow: website-validation.yml
-        # workflow_conclusion: completed
-        run_id: ${{ github.event.workflow_run.id }}
-        name: website-validation-results
-        path: ./results
-    - name: Load PR number
-      id: load_pr
-      run: echo "::set-output name=pr::$(cat pr)"
-      working-directory: ./results
-    # - name: Load link report
-    #   run: |
-    #     export REPORT_MESSAGE="$(cat linkcheck)"
-    #   working-directory: ./results
-
-    - name: Post report in comment
-      uses: marocchino/sticky-pull-request-comment@v2
-      with:
-        header: linkreport
-        recreate: true
-        number: ${{ steps.load_pr.outputs.pr }}
-        path: ./results/linkcheck
+      - name: Download results
+        uses: dawidd6/action-download-artifact@b2abf1705491048a2d7074f7d90513044fd25d39 # pin@v2
+        with:
+          workflow: website-validation.yml
+          # workflow_conclusion: completed
+          run_id: ${{ github.event.workflow_run.id }}
+          name: website-validation-results
+          path: ./results
+      - name: Load PR number
+        id: load_pr
+        run: echo "::set-output name=pr::$(cat pr)"
+        working-directory: ./results
+      - name: Post report in comment
+        uses: marocchino/sticky-pull-request-comment@39c5b5dc7717447d0cba270cd115037d32d28443 # pin@v2
+        with:
+          header: linkreport
+          recreate: true
+          number: ${{ steps.load_pr.outputs.pr }}
+          path: ./results/linkcheck

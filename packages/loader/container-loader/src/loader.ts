@@ -18,7 +18,6 @@ import {
     IHostLoader,
     ILoader,
     ILoaderOptions as ILoaderOptions1,
-    IProxyLoaderFactory,
     LoaderHeader,
     IProvideFluidCodeDetailsComparer,
     IFluidCodeDetails,
@@ -127,8 +126,8 @@ function createCachedResolver(resolver: IUrlResolver) {
     return cacheResolver;
 }
 
-export interface ILoaderOptions extends ILoaderOptions1{
-    summarizeProtocolTree?: boolean,
+export interface ILoaderOptions extends ILoaderOptions1 {
+    summarizeProtocolTree?: boolean;
 }
 
 /**
@@ -200,12 +199,6 @@ export interface ILoaderProps {
     readonly scope?: FluidObject;
 
     /**
-     * Proxy loader factories for loading containers via proxy in other contexts,
-     * like web workers, or worker threads.
-     */
-    readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
-
-    /**
      * The logger that all telemetry should be pushed to.
      */
     readonly logger?: ITelemetryBaseLogger;
@@ -254,12 +247,6 @@ export interface ILoaderServices {
      * services for container's to integrate with their host environment.
      */
     readonly scope: FluidObject;
-
-    /**
-     * Proxy loader factories for loading containers via proxy in other contexts,
-     * like web workers, or worker threads.
-     */
-    readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
 
     /**
      * The logger downstream consumers should construct their loggers from
@@ -315,7 +302,6 @@ export class Loader implements IHostLoader {
             options: loaderProps.options ?? {},
             scope,
             subLogger: subMc.logger,
-            proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
             detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
         this.mc = loggerToMonitoringContext(
@@ -392,7 +378,7 @@ export class Loader implements IHostLoader {
     private async resolveCore(
         request: IRequest,
         pendingLocalState?: IPendingContainerState,
-    ): Promise<{ container: Container; parsed: IParsedUrl }> {
+    ): Promise<{ container: Container; parsed: IParsedUrl; }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 

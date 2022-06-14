@@ -14,7 +14,7 @@ export class Collection<T> implements ICollection<T> {
     constructor() {
     }
 
-    public aggregate(group: any, options?: any): any {
+    public aggregate(pipeline: any, options?: any): any {
         throw new Error("Method Not Implemented");
     }
 
@@ -64,7 +64,7 @@ export class Collection<T> implements ICollection<T> {
         return this.insertOneInternal(value);
     }
 
-    public async findOrCreate(query: any, value: any): Promise<{ value: any, existing: boolean }> {
+    public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean; }> {
         const existing = this.findOneInternal(query);
         if (existing) {
             return { value: existing, existing: true };

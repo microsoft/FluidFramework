@@ -45,10 +45,12 @@ import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
+export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
+
 /* eslint-disable max-len */
 
 // An implementation of Promise.race that gives you the winner of the promise race
-async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index: number, value: T }> {
+async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index: number; value: T; }> {
     return new Promise((resolve, reject) => {
         promises.forEach((p, index) => {
             p.then((v) => resolve({ index, value: v })).catch(reject);
@@ -152,6 +154,10 @@ class BlobCache {
     }
 }
 
+interface GetVersionsTelemetryProps {
+    cacheEntryAge?: number;
+    cacheSummarizerExpired?: boolean;
+}
 export class OdspDocumentStorageService implements IDocumentStorageService {
     readonly policies = {
         // By default, ODSP tells the container not to prefetch/cache.
@@ -401,7 +407,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
-                    const props = {};
+                    const props: GetVersionsTelemetryProps = {};
                     let retrievedSnapshot: ISnapshotContents | undefined;
                     // Here's the logic to grab the persistent cache snapshot implemented by the host
                     // Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
@@ -413,9 +419,21 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     const age = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
                                         (Date.now() - 30 * 24 * 60 * 60 * 1000));
 
+                                    // In order to decrease the number of times we have to execute a snapshot refresh,
+                                    // if this is the summarizer and we have a cache entry but it is past the defaultSummarizerCacheExpiryTimeout,
+                                    // force the network retrieval instead as there might be a more recent snapshot available.
+                                    // See: https://github.com/microsoft/FluidFramework/issues/8995 for additional information.
+                                    if (this.hostPolicy.summarizerClient) {
+                                        if (age > defaultSummarizerCacheExpiryTimeout) {
+                                            props.cacheSummarizerExpired = true;
+                                            return undefined;
+                                        } else {
+                                            props.cacheSummarizerExpired = false;
+                                        }
+                                    }
+
                                     // Record the cache age
-                                    // eslint-disable-next-line @typescript-eslint/dot-notation
-                                    props["cacheEntryAge"] = age;
+                                    props.cacheEntryAge = age;
                                 }
 
                                 return snapshotCachedEntry;
@@ -464,8 +482,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         }
                     }
                     if (method === "network") {
-                        // eslint-disable-next-line @typescript-eslint/dot-notation
-                        props["cacheEntryAge"] = undefined;
+                        props.cacheEntryAge = undefined;
                     }
                     event.end({ ...props, method });
                     return retrievedSnapshot;
@@ -495,7 +512,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "GetVersions");
             const { url, headers } = getUrlAndHeadersWithAuth(
-                `${this.snapshotUrl}/versions?count=${count}`,
+                `${this.snapshotUrl}/versions?top=${count}`,
                 storageToken,
                 !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
             );
@@ -523,17 +540,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     { driverVersion });
             }
             return versionsResponse.value.map((version) => {
-                // Parse the date from the message
-                let date: string | undefined;
-                for (const rec of version.message.split("\n")) {
-                    const index = rec.indexOf(":");
-                    if (index !== -1 && rec.substr(0, index) === "Date") {
-                        date = rec.substr(index + 1).trim();
-                        break;
-                    }
-                }
                 return {
-                    date,
                     id: version.id,
                     treeId: undefined!,
                 };
@@ -721,7 +728,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "ReadCommit");
-                const snapshotDownloader = async (url: string, fetchOptions: { [index: string]: any }) => {
+                const snapshotDownloader = async (url: string, fetchOptions: { [index: string]: any; }) => {
                     return this.epochTracker.fetchAndParseAsJSON(
                         url,
                         fetchOptions,

@@ -122,7 +122,7 @@ function applyMessagesWithReconnect(
     return seq;
 }
 
-export const defaultOptions: IMergeTreeOperationRunnerConfig & { minLength: number, clients: IConfigRange } = {
+export const defaultOptions: IMergeTreeOperationRunnerConfig & { minLength: number; clients: IConfigRange; } = {
     minLength: 16,
     clients: { min: 3, max: 12 },
     opsPerRoundRange: { min: 40, max: 120 },

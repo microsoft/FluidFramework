@@ -14,19 +14,21 @@ export class MongoCollection<T> implements core.ICollection<T> {
     constructor(private readonly collection: Collection<T>) {
     }
 
-    public aggregate(group: any, options?: any): AggregationCursor<T> {
-        const pipeline: any = [];
-        pipeline.$group = group;
+    public aggregate(pipeline: any, options?: any): AggregationCursor<T> {
         return this.collection.aggregate(pipeline, options);
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
-    public find(query: object, sort: any, limit = MaxFetchSize): Promise<T[]> {
-        return this.collection
+    public find(query: object, sort: any, limit = MaxFetchSize, skip?: number): Promise<T[]> {
+        let queryCursor = this.collection
             .find(query)
             .sort(sort)
-            .limit(limit)
-            .toArray();
+            .limit(limit);
+
+        if (skip) {
+            queryCursor = queryCursor.skip(skip);
+        }
+        return queryCursor.toArray();
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
@@ -88,7 +90,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
         await this.collection.createIndex(index, { expireAfterSeconds });
     }
 
-    public async findOrCreate(query: any, value: T): Promise<{ value: T, existing: boolean }> {
+    public async findOrCreate(query: any, value: T): Promise<{ value: T; existing: boolean; }> {
         const result = await this.collection.findOneAndUpdate(
             query,
             {
@@ -168,7 +170,7 @@ export class MongoDbFactory implements core.IDbFactory {
     private readonly bufferMaxEntries?: number;
     private readonly globalDbEndpoint?: string;
     constructor(config: IMongoDBConfig) {
-        const {operationsDbEndpoint, bufferMaxEntries, globalDbEnabled, globalDbEndpoint} = config;
+        const { operationsDbEndpoint, bufferMaxEntries, globalDbEnabled, globalDbEndpoint } = config;
         if (globalDbEnabled) {
             this.globalDbEndpoint = globalDbEndpoint;
         }
@@ -178,7 +180,7 @@ export class MongoDbFactory implements core.IDbFactory {
     }
 
     public async connect(global = false): Promise<core.IDb> {
-        assert(!global || !!this.globalDbEndpoint,`No global endpoint provided
+        assert(!global || !!this.globalDbEndpoint, `No global endpoint provided
                  when trying to connect to global db.`);
         // Need to cast to any before MongoClientOptions due to missing properties in d.ts
         const options: MongoClientOptions = {

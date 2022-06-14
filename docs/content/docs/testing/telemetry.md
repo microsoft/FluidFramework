@@ -130,8 +130,9 @@ either tagged (`ITaggedTelemetryPropertyType`) or untagged (`TelemetryEventPrope
 
 ### Understanding Tags
 
-Tags are strings used to classify the properties on telemetry events. In the course of operation,
-the Fluid Framework may emit events with tagged properties, so implementations of `ITelemetryBaseLogger` must be
+Tags are strings used to classify the properties on telemetry events. By default, telemetry properties are untagged
+and untagged properties can be considered safe for general logging. However,
+the Fluid Framework may emit events with some properties tagged, so implementations of `ITelemetryBaseLogger` must be
 prepared to check for and interpret any tags.  Generally speaking, when logging to the user's console, tags can
 be ignored and tagged values logged plainly, but when transmitting tagged properties to a telemetry service,
 care should be taken to only log tagged properties where the tag is explicitly understood to indicate the value
@@ -273,15 +274,14 @@ The purpose of `ConsoleLogger` is to demonstrate how the `ITelemetryBaseLogger` 
 
 The `DebugLogger` offers a convenient way to output all telemetry events to the console. `DebugLogger` is present by default when creating/getting a container, and no extra steps are required to use it.
 
-```suggestion
 Under the hood, `DebugLogger` uses the [debug](https://github.com/visionmedia/debug) library. The `debug` library enables Fluid to send to a unique 'namespace,' `fluid`. By default these messages are hidden but they can be enabled
 in both Node.js and a web browser.
 
 **To enable Fluid Framework logging in the browser,** set the `localStorage.debug` variable in the JavaScript console, after which you will need to reload the page.
 
-\`\`\`js
+```js
 localStorage.debug = 'fluid:*'
-\`\`\`
+```
+It's not recommended to set this in code; your users will see a very spammy console window if you do.
 
 **To enable Fluid Framework logging in a Node.js application,** set the `DEBUG` environment variable when running the app.
-

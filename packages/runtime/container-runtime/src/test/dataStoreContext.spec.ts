@@ -157,7 +157,7 @@ describe("Data Store Context Tests", () => {
             });
 
             it("can initialize and generate attributes when correctly created with array of packages", async () => {
-                const registryWithSubRegistries: { [key: string]: any } = {};
+                const registryWithSubRegistries: { [key: string]: any; } = {};
                 registryWithSubRegistries.IFluidDataStoreFactory = registryWithSubRegistries;
                 registryWithSubRegistries.IFluidDataStoreRegistry = registryWithSubRegistries;
                 registryWithSubRegistries.get = async (pkg) => Promise.resolve(registryWithSubRegistries);
@@ -316,11 +316,11 @@ describe("Data Store Context Tests", () => {
                 0);
             summarizerNode.startSummary(0, new TelemetryNullLogger());
 
-            const factory: { [key: string]: any } = {};
+            const factory: { [key: string]: any; } = {};
             factory.IFluidDataStoreFactory = factory;
             factory.instantiateDataStore =
                 (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime();
-            const registry: { [key: string]: any } = {};
+            const registry: { [key: string]: any; } = {};
             registry.IFluidDataStoreRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);
 

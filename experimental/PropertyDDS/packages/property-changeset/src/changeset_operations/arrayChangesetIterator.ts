@@ -17,7 +17,7 @@ import { ArrayIteratorOperationTypes } from "./operationTypes";
 
 const { MSG } = constants;
 
-type genericArray = (number | string | (SerializedChangeSet & { typeid: string }))[];
+type genericArray = (number | string | (SerializedChangeSet & { typeid: string; }))[];
 export type arrayInsertList = [number, string | genericArray];
 export type arrayModifyList = [number, string | genericArray] | [number, string, string] | [number, genericArray, genericArray];
 export type arrayRemoveList = [number, number | string | genericArray];
@@ -27,8 +27,8 @@ export type arrayRemoveList = [number, number | string | genericArray];
  */
 export interface OperationDescription {
     _absoluteBegin?: number;
-    type?: ArrayIteratorOperationTypes,
-    offset?: number,
+    type?: ArrayIteratorOperationTypes;
+    offset?: number;
 }
 
 /**

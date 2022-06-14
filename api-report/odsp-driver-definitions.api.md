@@ -17,7 +17,7 @@ export interface HostStoragePolicy {
     // (undocumented)
     concurrentOpsBatches?: number;
     concurrentSnapshotFetch?: boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     enableRedeemFallback?: boolean;
     enableShareLinkWithCreate?: boolean;
     // @deprecated (undocumented)
@@ -38,6 +38,7 @@ export interface ICacheEntry extends IEntry {
 
 // @public (undocumented)
 export interface ICollabSessionOptions {
+    // @deprecated (undocumented)
     forceAccessTokenViaAuthorizationHeader?: boolean;
     unauthenticatedUserDisplayName?: string;
 }
@@ -61,9 +62,15 @@ export interface IFileEntry {
 export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
 
 // @public
-export interface IOdspError extends Omit<IDriverErrorBase, "errorType"> {
+export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     // (undocumented)
     readonly errorType: OdspErrorType;
+}
+
+// @public (undocumented)
+export interface IOdspErrorAugmentations {
+    facetCodes?: string[];
+    redirectLocation?: string;
     serverEpoch?: string;
 }
 
@@ -143,7 +150,7 @@ export interface ISnapshotOptions {
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
 
 // @public (undocumented)
-export type OdspError = DriverError | IOdspError;
+export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
 // @public (undocumented)
 export enum OdspErrorType {
@@ -156,8 +163,6 @@ export enum OdspErrorType {
     // (undocumented)
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
-    // (undocumented)
-    locationRedirection = "locationRedirection",
     outOfStorageError = "outOfStorageError",
     // (undocumented)
     serviceReadOnly = "serviceReadOnly",

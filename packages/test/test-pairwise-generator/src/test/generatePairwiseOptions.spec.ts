@@ -7,10 +7,10 @@ import { strict as assert } from "assert";
 import { generatePairwiseOptions, OptionsMatrix } from "../index";
 
 interface SimpleOptions{
-    oBoolean?: boolean,
-    rBoolean: boolean,
-    number?: number,
-    string?: string,
+    oBoolean?: boolean;
+    rBoolean: boolean;
+    number?: number;
+    string?: string;
     array?: number[];
 
 }
@@ -52,7 +52,7 @@ const simpleValues = generatePairwiseOptions<SimpleOptions>(simpleOptionsMatrix)
 interface ComplexOptions {
     oSimple?: SimpleOptions;
     rSimple: SimpleOptions;
-    boolean?: boolean
+    boolean?: boolean;
 }
 
 const complexOptionsMatrix: OptionsMatrix<ComplexOptions> = {

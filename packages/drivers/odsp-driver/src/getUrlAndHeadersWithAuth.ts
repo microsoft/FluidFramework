@@ -7,7 +7,7 @@ export function getUrlAndHeadersWithAuth(
     url: string,
     token: string | null,
     forceAccessTokenViaAuthorizationHeader: boolean,
-): { url: string, headers: { [index: string]: string } } {
+): { url: string; headers: { [index: string]: string; }; } {
     if (!token || token.length === 0) {
         return { url, headers: {} };
     }

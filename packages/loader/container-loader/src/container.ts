@@ -89,6 +89,7 @@ import {
     normalizeError,
     MonitoringContext,
     loggerToMonitoringContext,
+    wrapError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -101,10 +102,11 @@ import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionState
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
-import { getSnapshotTreeFromSerializedContainer } from "./utils";
-import { QuorumProxy } from "./quorum";
+import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
+import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
+import { ConnectionState } from "./connectionState";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -144,46 +146,40 @@ export interface IContainerConfig {
     serializedContainerState?: IPendingContainerState;
 }
 
-export enum ConnectionState {
-    /**
-     * The document is no longer connected to the delta server
-     */
-    Disconnected,
-
-    /**
-     * The document has an inbound connection but is still pending for outbound deltas
-     */
-    Connecting,
-
-    /**
-     * The document is fully connected
-     */
-    Connected,
-}
-
 /**
  * Waits until container connects to delta storage and gets up-to-date
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
  * up to date. Host may chose to wait in such case and retry resolving URI.
  * Warning: Will wait infinitely for connection to establish if there is no connection.
- * May result in deadlock if Container.setAutoReconnect(false) is called and never switched back to auto-reconnect.
+ * May result in deadlock if Container.disconnect() is called and never followed by a call to Container.connect().
  * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
  *          false: storage does not provide indication of how far the client is. Container processed
  *          all the ops known to it, but it maybe still behind.
+ * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
  */
 export async function waitContainerToCatchUp(container: IContainer) {
     // Make sure we stop waiting if container is closed.
     if (container.closed) {
-        throw new Error("Container is closed");
+        throw new UsageError("waitContainerToCatchUp: Container closed");
     }
 
     return new Promise<boolean>((resolve, reject) => {
         const deltaManager = container.deltaManager;
 
-        container.on("closed", reject);
+        const closedCallback = (err?: ICriticalContainerError | undefined) => {
+            container.off("closed", closedCallback);
+            const baseMessage = "Container closed while waiting to catch up";
+            reject(
+                err !== undefined
+                    ? wrapError(err, (innerMessage) => new GenericError(`${baseMessage}: ${innerMessage}`))
+                    : new GenericError(baseMessage),
+            );
+        };
+        container.on("closed", closedCallback);
 
         const waitForOps = () => {
-            assert(container.connectionState !== ConnectionState.Disconnected,
+            assert(container.connectionState === ConnectionState.CatchingUp
+                || container.connectionState === ConnectionState.Connected,
                 0x0cd /* "Container disconnected while waiting for ops!" */);
             const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
@@ -191,11 +187,13 @@ export async function waitContainerToCatchUp(container: IContainer) {
             assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
                 0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
             if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
+                container.off("closed", closedCallback);
                 resolve(hasCheckpointSequenceNumber);
                 return;
             }
             const callbackOps = (message: ISequencedDocumentMessage) => {
                 if (connectionOpSeqNumber <= message.sequenceNumber) {
+                    container.off("closed", closedCallback);
                     resolve(hasCheckpointSequenceNumber);
                     deltaManager.off("op", callbackOps);
                 }
@@ -218,9 +216,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on(connectedEventName, callback);
 
-        // TODO: Remove null check after next release #8523
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        container.resume!();
+        container.connect();
     });
 }
 
@@ -427,12 +423,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private setAutoReconnectTime = performance.now();
 
-    private readonly collabWindowTracker = new CollabWindowTracker(
-        (type, contents) => this.submitMessage(type, contents),
-        () => this.activeConnection(),
-        this.loader.services.options?.noopTimeFrequency,
-        this.loader.services.options?.noopCountFrequency,
-    );
+    private collabWindowTracker: CollabWindowTracker | undefined;
 
     private get connectionMode() { return this._deltaManager.connectionManager.connectionMode; }
 
@@ -622,7 +613,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
-                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
+                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
                     });
                 },
                 connectionStateChanged: () => {
@@ -774,7 +765,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
-        assert(!!this._protocolHandler, "Must have a valid protocol handler instance");
+        assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -930,30 +921,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
     }
 
-    /**
-     * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
-     * after receiving a disconnect event
-     * @param reconnect - Boolean indicating if reconnect should automatically occur
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` and `disconnect()` instead of `setAutoReconnect(true)` and `setAutoReconnect(false)` respectively
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    public setAutoReconnect(reconnect: boolean) {
-        if (this.closed) {
-            throw new Error("Attempting to setAutoReconnect() a closed Container");
-        }
-
-        const mode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
-        this.setAutoReconnectInternal(mode);
-
-        // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
-        // manual reconnection flag to true as we haven't made the initial connection yet.
-        if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
-            // Ensure connection to web socket
-            this.connectToDeltaStream({ reason: "autoReconnect" });
-        }
-    }
-
     private setAutoReconnectInternal(mode: ReconnectMode) {
         const currentMode = this._deltaManager.connectionManager.reconnectMode;
 
@@ -1017,23 +984,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.setAutoReconnectInternal(mode);
     }
 
-    /**
-     * Have the container attempt to resume processing ops
-     * @deprecated - 0.58, This API will be removed in 1.0
-     * Use `connect()` instead
-     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
-     */
-    public resume() {
-        if (!this.closed) {
-            // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
-            // If there is gap, we will learn about it once connected, but the gap should be small (if any),
-            // assuming that resume() is called quickly after initial container boot.
-            this.resumeInternal({ reason: "DocumentOpenResume", fetchOpsFromStorage: false });
-        }
-    }
-
     private resumeInternal(args: IConnectionArgs) {
-        assert(!this.closed, 0x0d9 /* "Attempting to setAutoReconnect() a closed DeltaManager" */);
+        assert(!this.closed, 0x0d9 /* "Attempting to connect() a closed DeltaManager" */);
 
         // Resume processing ops
         if (!this.resumedOpProcessingAfterLoad) {
@@ -1199,7 +1151,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // ...load in the existing quorum
         // Initialize the protocol handler
         this._protocolHandler = pendingLocalState === undefined
-            ? await this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot)
+            ? await this.initializeProtocolStateFromSnapshot(attributes, this.storageService, snapshot)
             : await this.initializeProtocolState(
                 attributes,
                 pendingLocalState.protocol.members,
@@ -1236,7 +1188,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             switch (loadMode.deltaConnection) {
                 case undefined:
-                    this.resume();
+                    // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
+                    // If there is gap, we will learn about it once connected, but the gap should be small (if any),
+                    // assuming that resumeInternal() is called quickly after initial container boot.
+                    this.resumeInternal({ reason: "DocumentLoad", fetchOpsFromStorage: false });
                     break;
                 case "delayed":
                     this.resumedOpProcessingAfterLoad = true;
@@ -1272,27 +1227,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             minimumSequenceNumber: 0,
         };
 
-        // Seed the base quorum to be an empty list with a code quorum set
-        const committedCodeProposal: ICommittedProposal = {
-            key: "code",
-            value: source,
-            approvalSequenceNumber: 0,
-            commitSequenceNumber: 0,
-            sequenceNumber: 0,
-        };
-
-        const members: [string, ISequencedClient][] = [];
-        const proposals: [number, ISequencedProposal, string[]][] = [];
-        const values: [string, ICommittedProposal][] = [["code", committedCodeProposal]];
-
         await this.attachDeltaManagerOpHandler(attributes);
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
+        const qValues = initQuorumValuesFromCodeDetails(source);
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
-            members,
-            proposals,
-            values);
+            [], // members
+            [], // proposals
+            qValues,
+        );
 
         // The load context - given we seeded the quorum - will be great
         await this.instantiateContextDetached(
@@ -1314,13 +1258,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         this._storage.loadSnapshotForRehydratingContainer(snapshotTree);
         const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
-        assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
+
         await this.attachDeltaManagerOpHandler(attributes);
 
-        // ...load in the existing quorum
         // Initialize the protocol handler
+        const baseTree = getProtocolSnapshotTree(snapshotTree);
+        const qValues = await readAndParse<[string, ICommittedProposal][]>(
+            this._storage,
+            baseTree.blobs.quorumValues,
+        );
+        const codeDetails = getCodeDetailsFromQuorumValues(qValues);
         this._protocolHandler =
-            await this.loadAndInitializeProtocolState(attributes, this._storage, snapshotTree);
+            await this.initializeProtocolState(
+                attributes,
+                [], // members
+                [], // proposals
+                codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : []);
 
         await this.instantiateContextDetached(
             true, // existing
@@ -1381,7 +1334,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return attributes;
     }
 
-    private async loadAndInitializeProtocolState(
+    private async initializeProtocolStateFromSnapshot(
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
@@ -1391,7 +1344,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let values: [string, any][] = [];
 
         if (snapshot !== undefined) {
-            const baseTree = ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
+            const baseTree = getProtocolSnapshotTree(snapshot);
             [members, proposals, values] = await Promise.all([
                 readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
                 readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals),
@@ -1567,7 +1520,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("disconnect", (reason: string) => {
-            this.collabWindowTracker.stopSequenceNumberUpdate();
+            this.collabWindowTracker?.stopSequenceNumberUpdate();
             this.connectionStateHandler.receivedDisconnectEvent(reason);
         });
 
@@ -1724,7 +1677,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.messageCountAfterDisconnection += 1;
-        this.collabWindowTracker.stopSequenceNumberUpdate();
+        this.collabWindowTracker?.stopSequenceNumberUpdate();
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
@@ -1759,7 +1712,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
-        this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+        // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
+        if (this.activeConnection()) {
+            if (this.collabWindowTracker === undefined) {
+                // Note that config from first connection will be used for this container's lifetime.
+                // That means that if relay service changes settings, such changes will impact only newly booted
+                // clients.
+                // All existing will continue to use settings they got earlier.
+                assert(
+                    this.serviceConfiguration !== undefined,
+                    0x2e4 /* "there should be service config for active connection" */);
+                this.collabWindowTracker = new CollabWindowTracker(
+                    (type, contents) => {
+                        assert(this.activeConnection(),
+                            0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
+                        this.submitMessage(type, contents);
+                    },
+                    this.serviceConfiguration?.noopTimeFrequency,
+                    this.serviceConfiguration?.noopCountFrequency,
+                );
+            }
+            this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+        }
 
         this.emit("op", message);
 
@@ -1773,7 +1747,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
         if (message.clientId === null) {
-            const innerContent = message.content as { content: any; type: string };
+            const innerContent = message.content as { content: any; type: string; };
             if (innerContent.type === MessageType.ClientJoin) {
                 const newClient = innerContent.content as ISignalClient;
                 this._audience.addMember(newClient.clientId, newClient.client);
@@ -1793,7 +1767,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
     private async fetchSnapshotTree(specifiedVersion: string | undefined):
-        Promise<{ snapshot?: ISnapshotTree; versionId?: string }> {
+        Promise<{ snapshot?: ISnapshotTree; versionId?: string; }> {
         const version = await this.getVersion(specifiedVersion ?? null);
 
         if (version === undefined && specifiedVersion !== undefined) {

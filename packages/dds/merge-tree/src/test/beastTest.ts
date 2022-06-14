@@ -35,8 +35,6 @@ import {
     Marker,
     MergeTree,
     reservedMarkerIdKey,
-    reservedRangeLabelsKey,
-    reservedTileLabelsKey,
 } from "../mergeTree";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { createRemoveRangeOp } from "../opBuilder";
@@ -51,6 +49,7 @@ import {
     MergeTreeTextHelper,
     TextSegment,
 } from "../textSegment";
+import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions";
 import { specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
@@ -1473,11 +1472,11 @@ function docNodeToString(docNode: DocumentNode) {
 export type DocumentNode = string | DocumentTree;
 /**
  * Generate and model documents from the following tree grammar:
- * Row -> row[Box*];
- * Box -> box[Content];
- * Content -> (Row|Paragraph)*;
- * Paragraph -> pgtile text;
- * Document-> Content
+ * Row -\> row[Box*];
+ * Box -\> box[Content];
+ * Content -\> (Row|Paragraph)*;
+ * Paragraph -\> pgtile text;
+ * Document -\> Content
  */
 export class DocumentTree {
     pos = 0;

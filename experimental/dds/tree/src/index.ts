@@ -35,6 +35,7 @@ export type {
 	SessionUnique,
 	TraitLabel,
 	UuidString,
+	AttributionId,
 } from './Identifiers';
 export { isDetachedSequenceId } from './Identifiers';
 export type { OrderedEditSet, EditHandle } from './EditLog';
@@ -90,6 +91,10 @@ export {
 	TraitLocationInternal,
 } from './persisted-types';
 export {
+	SharedTreeArgs,
+	SharedTreeOptions,
+	SharedTreeOptions_0_0_2,
+	SharedTreeOptions_0_1_1,
 	SharedTreeFactory,
 	SharedTree,
 	EditCommittedHandler,

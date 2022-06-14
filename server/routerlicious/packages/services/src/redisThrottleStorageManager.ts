@@ -48,7 +48,7 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
         return executeRedisMultiWithHmsetExpire(
             this.client,
             key,
-            throttlingMetric as { [key: string]: any },
+            throttlingMetric as { [key: string]: any; },
             this.expireAfterSeconds);
     }
 

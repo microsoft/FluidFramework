@@ -3,56 +3,61 @@
  * Licensed under the MIT License.
  */
 
+import { AsyncLocalStorage } from "async_hooks";
 import { json, urlencoded } from "body-parser";
 import cors from "cors";
 import express, { Express } from "express";
-import morgan from "morgan";
 import nconf from "nconf";
-import split from "split";
-import winston from "winston";
-import { bindCorrelationId } from "@fluidframework/server-services-utils";
+import { ICreateRepoParams } from "@fluidframework/gitresources";
+import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
+import { BaseTelemetryProperties, HttpProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+    alternativeMorganLoggerMiddleware,
+    bindCorrelationId,
+    jsonMorganLoggerMiddleware,
+} from "@fluidframework/server-services-utils";
 import * as routes from "./routes";
-import { IFileSystemManagerFactory, IRepositoryManagerFactory } from "./utils";
+import {
+    getRepoManagerParamsFromRequest,
+    IFileSystemManagerFactory,
+    IRepoManagerParams,
+    IRepositoryManagerFactory,
+} from "./utils";
 
-/**
- * Basic stream logging interface for libraries that require a stream to pipe output to
- */
-const stream = split().on("data", (message) => {
-    winston.info(message);
-});
+function getTenantIdForGitRestRequest(params: IRepoManagerParams, request: express.Request) {
+    return params.storageRoutingId?.tenantId ?? (request.body as ICreateRepoParams)?.name;
+}
 
 export function create(
     store: nconf.Provider,
     fileSystemManagerFactory: IFileSystemManagerFactory,
     repositoryManagerFactory: IRepositoryManagerFactory,
+    asyncLocalStorage?: AsyncLocalStorage<string>,
 ) {
     // Express app configuration
     const app: Express = express();
 
     const loggerFormat = store.get("logger:morganFormat");
     if (loggerFormat === "json") {
-        app.use(morgan((tokens, req, res) => {
-            const messageMetaData = {
-                method: tokens.method(req, res),
-                url: tokens.url(req, res),
-                status: tokens.status(req, res),
-                contentLength: tokens.res(req, res, "content-length"),
-                responseTime: tokens["response-time"](req, res),
-                serviceName: "gitrest",
-                eventName: "http_requests",
-             };
-             winston.info("request log generated", { messageMetaData });
-             return undefined;
-        }, { stream }));
+        app.use(jsonMorganLoggerMiddleware(
+            "gitrest",
+            (tokens, req, res) => {
+                const params = getRepoManagerParamsFromRequest(req);
+                return {
+                    [HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
+                    [BaseTelemetryProperties.tenantId]: getTenantIdForGitRestRequest(params, req),
+                    [BaseTelemetryProperties.documentId]: params.storageRoutingId?.documentId,
+                };
+            }));
     } else {
-        app.use(morgan(loggerFormat, { stream }));
+        app.use(alternativeMorganLoggerMiddleware(loggerFormat));
     }
 
     const requestSize = store.get("requestSizeLimit");
     app.use(json({ limit: requestSize }));
     app.use(urlencoded({ limit: requestSize, extended: false }));
 
-    app.use(bindCorrelationId());
+    app.use(bindCorrelationId(asyncLocalStorage));
 
     app.use(cors());
 
@@ -80,7 +85,7 @@ export function create(
     // will print stacktrace
     if (app.get("env") === "development") {
         app.use((err, req, res, next) => {
-            winston.error({ status: err.status, error: err, message: err.message });
+            Lumberjack.error(err.message, { status: err.status }, err);
             res.status(err.status || 500);
             res.json({
                 error: err,
@@ -92,7 +97,7 @@ export function create(
     // production error handler
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
-        winston.error({ status: err.status, error: err, message: err.message });
+        Lumberjack.error(err.message, { status: err.status }, err);
         res.status(err.status || 500);
         res.json({
             error: {},

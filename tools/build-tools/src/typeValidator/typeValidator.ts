@@ -5,7 +5,7 @@
 
 import program from "commander";
 import { generateTests } from "./testGeneration";
-import { findPackagesUnderPath, getPackageDetails } from "./packageJson";
+import { findPackagesUnderPath, getAndUpdatePackageDetails } from "./packageJson";
 
 /**
  * argument parsing
@@ -54,9 +54,9 @@ async function run(): Promise<boolean>{
         const output = [`${(i+1).toString()}/${packageDirs.length}`,`${packageName}`];
         try{
             const start = Date.now();
-            const updateOptions: Parameters<typeof getPackageDetails>[1] =
+            const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
                 program.generateOnly ? undefined : {cwd: program.monoRepoDir};
-            const packageData = await getPackageDetails(packageDir, updateOptions)
+            const packageData = await getAndUpdatePackageDetails(packageDir, updateOptions)
                 .finally(()=>output.push(`Loaded(${Date.now() - start}ms)`));
             if(packageData.skipReason !== undefined){
                 output.push(packageData.skipReason)

@@ -234,8 +234,8 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 
   const cancelBtn = (
     <Button
-      color='primary'
-      variant='outlined'
+      color="primary"
+      variant="outlined"
       className={classNames(classes.button, classes.cancelButton)}
       onClick={onCancelCreate}
     >
@@ -243,12 +243,12 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
     </Button>
   );
 
-  const isSiblingFound = siblingIds.indexOf(inputName) >= 0;
+  const isSiblingFound = siblingIds.includes(inputName);
   const createBtn = (
     <Button
-      id='createDataButton'
-      variant='contained'
-      color='primary'
+      id="createDataButton"
+      variant="contained"
+      color="primary"
       style={{ minWidth: "0px" }}
       className={classNames(classes.button, classes.createButton)}
       disabled={isSiblingFound || (!notNamedCollections.includes(rowData.parent!.getContext()) && !inputName.trim())}
@@ -262,7 +262,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
   const decoratedSelects = (
     <div className={classes.decoratedSelects}>
       <DecoratedSelect
-        id='propertyTypeSelector'
+        id="propertyTypeSelector"
         defaultValue={defaultTypeOption}
         value={selectedTypeOption}
         options={typeOptions}
@@ -271,7 +271,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
         }}
       />
       <DecoratedSelect
-        id='contextSelector'
+        id="contextSelector"
         options={isNamedProp ? listOfContextOptions.concat(setContext) : listOfContextOptions}
         defaultValue={defaultContainerOption}
         value={selectedContainerOption}
@@ -296,11 +296,11 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
         isSiblingFound ?
           (
             <ErrorTooltip
-              title='A property with this name already exists'
-              placement='top'
+              title="A property with this name already exists"
+              placement="top"
             >
               <InputAdornment
-                position='end'
+                position="end"
                 classes={{ positionStart: classes.inputAdornment }}
               >
                 <div>
@@ -312,7 +312,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
       ),
       startAdornment: (
         <InputAdornment
-          position='start'
+          position="start"
           classes={{ positionStart: classes.inputAdornment }}
         >
           <div style={{ opacity: 0.5 }}>
@@ -329,7 +329,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
         <TextField
           fullWidth={true}
           error={isSiblingFound}
-          variant='outlined'
+          variant="outlined"
           autoFocus={true}
           className={classes.inputBox}
           placeholder={`Name of the ${ selectedTypeOrCollectionLabel }`}

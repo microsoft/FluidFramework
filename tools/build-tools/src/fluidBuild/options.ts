@@ -58,35 +58,38 @@ export const options: FastBuildOptions = {
     fix: false,
     all: false,
     server: false,
+    azure: false,
     services: false,
     worker: false,
     workerThreads: false,
     workerMemoryLimit: -1,
 };
 
+// This string is duplicated in the readme: update readme if changing this.
+
 function printUsage() {
     console.log(
         `
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
-  [<package regexp> ...] Regexp to match the package name (default: all packages)
+    [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
-     --all            Operate on all packages/monorepo (default: client monorepo)
-  -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
-  -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
-     --dir <path>     Directory to build
-     --fix            Auto fix warning from package check if possible
-  -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
-  -? --help           Print this message
-     --install        Run npm install for all packages/monorepo
-  -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
-     --reinstall      Same as --uninstall --install
-     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-  -s --script <name>  npm script to execute (default:build)
-     --server         Operate on the server monorepo
-     --symlink        Fix symlink between packages within monorepo (isolate mode)
-     --symlink:full   Fix symlink between packages across monorepo (full mode)
-     --uninstall      Clean all node_modules
-     --vscode         Output error message to work with default problem matcher in vscode
+       --all            Operate on all packages/monorepo (default: client monorepo). See also "--server".
+    -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
+    -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+       --fix            Auto fix warning from package check if possible
+    -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
+    -? --help           Print this message
+       --install        Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
+    -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
+       --reinstall      Same as --uninstall --install.
+       --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
+    -s --script <name>  npm script to execute (default:build)
+       --azure          Operate on the azure monorepo (default: client monorepo). Overridden by "--all"
+       --server         Operate on the server monorepo (default: client monorepo). Overridden by "--all"
+       --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
+       --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
+       --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
+       --vscode         Output error message to work with default problem matcher in vscode
 ${commonOptionString}
 `);
 }
@@ -208,6 +211,11 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--all") {
             options.all = true;
+            continue;
+        }
+
+        if (arg === "--azure") {
+            options.azure = true;
             continue;
         }
 

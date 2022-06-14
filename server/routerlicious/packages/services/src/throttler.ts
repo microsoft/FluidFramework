@@ -42,7 +42,7 @@ export class Throttler implements IThrottler {
     /**
      * Increments operation count and calculates throttle status of given operation id.
      * Uses most recently calculated throttle status to determine current throttling, while updating in the background.
-     * @throws {ThrottlingError} if throttled
+     * @throws {@link ThrottlingError} if throttled
      */
     public incrementCount(id: string, weight: number = 1): void {
         this.updateCountDelta(id, weight);
@@ -51,6 +51,7 @@ export class Throttler implements IThrottler {
 
         // check cached throttle status, but allow operation through if status is not yet cached
         const cachedThrottlerResponse = this.throttlerResponseCache.get(id);
+        // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
         if (cachedThrottlerResponse && cachedThrottlerResponse.throttleStatus) {
             const retryAfterInSeconds = Math.ceil(cachedThrottlerResponse.retryAfterInMs / 1000);
             this.logger?.info(`Throttled: ${id}`, {

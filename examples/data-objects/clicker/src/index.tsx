@@ -29,7 +29,7 @@ export interface IClickerEvents extends IEvent {
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends DataObject<{ Events: IClickerEvents }> {
+export class Clicker extends DataObject<{ Events: IClickerEvents; }> {
     private _counter: SharedCounter | undefined;
     private _taskManager: TaskManager | undefined;
 

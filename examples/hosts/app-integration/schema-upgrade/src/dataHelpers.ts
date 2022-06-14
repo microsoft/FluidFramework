@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IInventoryList } from "./inventoryList";
+import type { IInventoryList } from "./interfaces";
 
 export const fetchData = async () => {
     const inventoryData =

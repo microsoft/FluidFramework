@@ -12,7 +12,7 @@ import { serializeError } from "serialize-error";
 export class WinstonLumberjackEngine implements ILumberjackEngine {
     public emit(lumber: Lumber<string>) {
         try {
-            const propObj: { [key: string]: any } = {};
+            const propObj: { [key: string]: any; } = {};
             lumber.properties.forEach((value, key) => { propObj[key] = value; });
             const obj = {
                 eventName: lumber.eventName,

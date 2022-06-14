@@ -21,6 +21,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
+import { SummarizeReason } from "./summaryGenerator";
+import { ISummaryConfigurationHeuristics } from ".";
 
 /**
  * @deprecated - This will be removed in a later release.
@@ -98,23 +100,25 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     /** clientId of parent (non-summarizing) container that owns summarizer container */
     readonly summarizerClientId: string | undefined;
     closeFn(): void;
+    /** @deprecated 1.0, please remove all implementations and usage */
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    /** @deprecated 1.0, please remove all implementations and usage */
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
 /** Options affecting summarize behavior. */
 export interface ISummarizeOptions {
     /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-    readonly fullTree?: boolean,
+    readonly fullTree?: boolean;
     /** True to ask the server what the latest summary is first; defaults to false */
-    readonly refreshLatestAck?: boolean,
+    readonly refreshLatestAck?: boolean;
 }
 
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
-    readonly summaryLogger: ITelemetryLogger,
+    readonly summaryLogger: ITelemetryLogger;
     /** Tells when summary process should be cancelled */
-    readonly cancellationToken: ISummaryCancellationToken,
+    readonly cancellationToken: ISummaryCancellationToken;
 }
 
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
@@ -154,8 +158,8 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly opsSizesSinceLastSummary: number;
     /** Number of non-system ops since the last summary @see isSystemMessage */
     readonly nonSystemOpsSinceLastSummary: number;
-    /** Number of members in the quorum at when summary was generated. */
-    readonly quorumSize?: number;
+    /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
+    readonly summaryNumber: number;
 }
 
 /** Base results for all submitSummary attempts. */
@@ -361,6 +365,12 @@ export interface ISummarizeHeuristicData {
     /** Most recent summary that received an ack */
     readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
 
+    /** Number of runtime ops since last summary */
+    numRuntimeOps: number;
+
+    /** Number of non-runtime ops since last summary */
+    numNonRuntimeOps: number;
+
     /**
      * Updates lastAttempt and lastSuccessfulAttempt based on the last summary.
      * @param lastSummary - last ack summary
@@ -381,7 +391,10 @@ export interface ISummarizeHeuristicData {
 
 /** Responsible for running heuristics determining when to summarize. */
 export interface ISummarizeHeuristicRunner {
-    /** Runs the heuristic to determine if it should try to summarize */
+    /** Start specific heuristic trackers (ex: idle timer) */
+    start(): void;
+
+    /** Runs the heuristics to determine if it should try to summarize */
     run(): void;
 
     /** Runs a different heuristic to check if it should summarize before closing */
@@ -407,6 +420,19 @@ type ISummarizeTelemetryOptionalProperties =
 export type ISummarizeTelemetryProperties =
     Pick<ITelemetryProperties, ISummarizeTelemetryRequiredProperties> &
     Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
+
+/** Strategy used to heuristically determine when we should run a summary */
+export interface ISummaryHeuristicStrategy {
+    /** Summarize reason for this summarize heuristic strategy (ex: "maxTime") */
+    summarizeReason: Readonly<SummarizeReason>;
+
+    /**
+     * Determines if this strategy's summarize criteria been met
+     * @param configuration - summary configuration we are to check against
+     * @param heuristicData - heuristic data used to confirm conditions are met
+     */
+    shouldRunSummary(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean;
+}
 
 type SummaryGeneratorRequiredTelemetryProperties =
     /** True to generate the full tree with no handle reuse optimizations */

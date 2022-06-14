@@ -27,7 +27,7 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             public dataStoreFactory: IFluidDataStoreFactory,
             public runtimeOptions: IContainerRuntimeOptions = {
                 summaryOptions: {
-                    summaryConfigOverrides:  {
+                    summaryConfigOverrides: {
                         ...DefaultSummaryConfiguration,
                         ...{
                             initialSummarizerDelayMs: 0,

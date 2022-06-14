@@ -55,8 +55,17 @@ export function compareWithReferenceSnapshot(
     /**
      * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
      * package versions with X before we compare them. This is how it will looks like:
-     * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
-     * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
+     * Before replace -
+     *
+     * ```
+     * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
+     * ```
+     *
+     * After replace  -
+     *
+     * ```
+     * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
+     * ```
      */
     const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";

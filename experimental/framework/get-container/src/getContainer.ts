@@ -18,7 +18,7 @@ import {
 export interface IGetContainerParams {
     documentServiceFactory: IDocumentServiceFactory;
     urlResolver: IUrlResolver;
-    containerRuntimeFactory: IRuntimeFactory
+    containerRuntimeFactory: IRuntimeFactory;
     request: IRequest;
 }
 

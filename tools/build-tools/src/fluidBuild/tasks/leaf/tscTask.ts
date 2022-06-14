@@ -15,7 +15,8 @@ const isEqual = require("lodash.isequal");
 
 interface ITsBuildInfo {
     program: {
-        fileInfos: { [key: string]: { version: string, signature: string } },
+        fileNames: string[],
+        fileInfos: (string | { version: string, affectsGlobalScope: true })[],
         semanticDiagnosticsPerFile?: any[],
         options: any
     }
@@ -104,23 +105,31 @@ export class TscTask extends LeafTask {
             return false;
         }
         // Check dependencies file hashes
+        const fileNames = tsBuildInfo.program.fileNames;
         const fileInfos = tsBuildInfo.program.fileInfos;
-        for (const key of Object.keys(fileInfos)) {
+        for (let i = 0; i < fileInfos.length; i++) {
+            const fileInfo = fileInfos[i];
+            const fileName = fileNames[i];
+            if (fileName === undefined) {
+                this.logVerboseTrigger(`missing file name for file info id ${i}`);
+                return false;
+            }
             try {
                 // Resolve relative path based on the directory of the tsBuildInfo file
-                let fullPath = path.resolve(tsBuildInfoFileDirectory, key);
+                let fullPath = path.resolve(tsBuildInfoFileDirectory, fileName);
 
                 // If we have project reference, see if this is in reference to one of the file, and map it to the d.ts file instead
                 if (this._projectReference) {
                     fullPath = this._projectReference.remapSrcDeclFile(fullPath);
                 }
                 const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
-                if (hash !== fileInfos[key].version) {
-                    this.logVerboseTrigger(`version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`);
+                const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
+                if (hash !== version) {
+                    this.logVerboseTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
                     return false;
                 }
             } catch (e: any) {
-                this.logVerboseTrigger(`exception generating hash for ${key}`);
+                this.logVerboseTrigger(`exception generating hash for ${fileName}`);
                 logVerbose(e.stack);
                 return false;
             }
@@ -155,8 +164,8 @@ export class TscTask extends LeafTask {
         if (!configFileFullPath) { assert.fail(); };
 
         // Patch relative path based on the file directory where the config comes from
-        const configOptions =
-            TscUtils.convertToOptionsWithAbsolutePath(options.options, path.dirname(configFileFullPath));
+        const configOptions = TscUtils.filterIncrementalOptions(
+            TscUtils.convertToOptionsWithAbsolutePath(options.options, path.dirname(configFileFullPath)));
         const tsBuildInfoOptions =
             TscUtils.convertToOptionsWithAbsolutePath(tsBuildInfo.program.options, tsBuildInfoFileDirectory);
 
@@ -301,10 +310,10 @@ export class TscTask extends LeafTask {
             if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
                 try {
                     const tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
-                    if (tsBuildInfo.program) {
+                    if (tsBuildInfo.program && tsBuildInfo.program.fileNames) {
                         this._tsBuildInfo = tsBuildInfo;
                     } else {
-                        logVerbose(`${this.node.pkg.nameColored}: Missing program property ${tsBuildInfoFileFullPath}`);
+                        logVerbose(`${this.node.pkg.nameColored}: Missing program or fileNames property ${tsBuildInfoFileFullPath}`);
                     }
                 } catch {
                     logVerbose(`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`);

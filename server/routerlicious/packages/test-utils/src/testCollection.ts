@@ -11,7 +11,7 @@ export class TestCollection implements ICollection<any> {
     constructor(public collection: any[]) {
     }
 
-    public async aggregate(group: any, options?: any) {
+    public async aggregate(pipeline: any, options?: any) {
         throw new Error("Method not implemented.");
     }
 
@@ -67,7 +67,7 @@ export class TestCollection implements ICollection<any> {
         return this.insertOneInternal(value);
     }
 
-    public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
+    public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean; }> {
         const existing = this.findOneInternal(query);
         if (existing) {
             return { value: existing, existing: true };
@@ -185,7 +185,7 @@ export class TestCollection implements ICollection<any> {
 export class TestDb implements IDb {
     private readonly emitter = new EventEmitter();
 
-    constructor(private collections: { [key: string]: any[] }) {
+    constructor(private collections: { [key: string]: any[]; }) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -213,7 +213,7 @@ export interface ITestDbFactory extends IDbFactory {
 
 export class TestDbFactory implements ITestDbFactory {
     public readonly testDatabase: IDb;
-    constructor(collections: { [key: string]: any[] }) {
+    constructor(collections: { [key: string]: any[]; }) {
         this.testDatabase = new TestDb(collections);
     }
 

@@ -93,6 +93,8 @@ export function create(
             // Protocol state
             const { sequenceNumber, values, generateToken = false } = request.body;
 
+            const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
+
             const createP = storage.createDocument(
                 tenantId,
                 id,
@@ -102,9 +104,8 @@ export function create(
                 crypto.randomBytes(4).toString("hex"),
                 ordererUrl,
                 historianUrl,
-                values);
-
-            const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
+                values,
+                enableDiscovery);
 
             // Handle backwards compatibility for older driver versions.
             // TODO: remove condition once old drivers are phased out and all clients can handle object response

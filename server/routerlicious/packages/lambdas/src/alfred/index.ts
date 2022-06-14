@@ -82,7 +82,7 @@ const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientI
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     // Trace sampling.
-    if (message.operation && message.operation.traces && getRandomInt(100) === 0) {
+    if (message.operation?.traces && getRandomInt(100) === 0) {
         message.operation.traces.push(
             {
                 action: "start",
@@ -115,8 +115,8 @@ function selectProtocolVersion(connectVersions: string[]): string | undefined {
 }
 
 /**
- * Converts a relayUserAgent string into a <key,value> map.
- * @param relayUserAgent user agent string in the format "prop1:val1;prop2:val2;prop3:val3"
+ * Converts a relayUserAgent string into a \<key,value\> map.
+ * @param relayUserAgent - user agent string in the format "prop1:val1;prop2:val2;prop3:val3"
  */
 function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string, string> {
     if (!relayUserAgent) {
@@ -371,7 +371,6 @@ export function configureWebSocketServices(
                     serviceConfiguration: {
                         blockSize: connection.serviceConfiguration.blockSize,
                         maxMessageSize: connection.serviceConfiguration.maxMessageSize,
-                        summary: connection.serviceConfiguration.summary,
                     },
                     initialClients: clients,
                     initialMessages: [],
@@ -389,7 +388,6 @@ export function configureWebSocketServices(
                     serviceConfiguration: {
                         blockSize: core.DefaultServiceConfiguration.blockSize,
                         maxMessageSize: core.DefaultServiceConfiguration.maxMessageSize,
-                        summary: core.DefaultServiceConfiguration.summary,
                     },
                     initialClients: clients,
                     initialMessages: [],

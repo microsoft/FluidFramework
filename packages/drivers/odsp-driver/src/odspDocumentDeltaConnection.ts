@@ -58,7 +58,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         const socketReference = SocketReference.socketIoSockets.get(key);
 
         // Verify the socket is healthy before reusing it
-        if (socketReference && socketReference.disconnected) {
+        if (socketReference?.disconnected) {
             // The socket is in a bad state. fully remove the reference
             socketReference.closeSocket();
             return undefined;
@@ -127,8 +127,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             // comes in from "disconnect" listener below, before we close socket.
             this.isPendingInitialConnection = false;
 
-            // Explicitly cast error to the specified event args type to ensure type compatibility
-            this.emit("server_disconnect", error as IFluidErrorBase & OdspError);
+            this.emit("server_disconnect", error);
             this.closeSocket();
         });
     }
@@ -279,7 +278,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
     private readonly requestOpsNoncePrefix: string;
     private pushCallCounter = 0;
-    private readonly getOpsMap: Map<string, { start: number, from: number, to: number }> = new Map();
+    private readonly getOpsMap: Map<string, { start: number; from: number; to: number; }> = new Map();
     private flushOpNonce: string | undefined;
     private flushDeferred: Deferred<FlushResult> | undefined;
 
@@ -440,6 +439,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
+        this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.clientId }, error);
         this.disposeCore(true, error);
     };
 
@@ -551,11 +551,23 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
             case "nack":
                 // per client / document nack handling
-                super.addTrackedListener(event, (clientIdOrDocumentId: string, message: INack[]) => {
+                super.addTrackedListener(event, (clientIdOrDocumentId: string, nacks: INack[]) => {
                     if (clientIdOrDocumentId.length === 0 ||
                         clientIdOrDocumentId === this.documentId ||
                         (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
-                        this.emit("nack", clientIdOrDocumentId, message);
+                        const nackContent = nacks[0]?.content;
+                        if (nackContent !== undefined) {
+                            const { code, type, message, retryAfter } = nackContent;
+                            this.logger.sendTelemetryEvent({
+                                eventName: "ServerNack",
+                                code,
+                                type,
+                                message,
+                                retryAfterSeconds: retryAfter,
+                                clientId: this.clientId,
+                            });
+                        }
+                        this.emit("nack", clientIdOrDocumentId, nacks);
                     }
                 });
                 break;

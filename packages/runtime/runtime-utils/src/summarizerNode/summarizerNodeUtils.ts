@@ -28,14 +28,14 @@ const maxDecodeDepth = 100;
  *    latest summary is updated based on the downloaded snapshot which is also returned.
  */
 export type RefreshSummaryResult = {
-    latestSummaryUpdated: false,
+    latestSummaryUpdated: false;
 } | {
-    latestSummaryUpdated: true,
-    wasSummaryTracked: true,
+    latestSummaryUpdated: true;
+    wasSummaryTracked: true;
 } | {
-    latestSummaryUpdated: true,
-    wasSummaryTracked: false,
-    snapshot: ISnapshotTree,
+    latestSummaryUpdated: true;
+    wasSummaryTracked: false;
+    snapshot: ISnapshotTree;
 };
 
 export interface ISummarizerNodeRootContract {
@@ -103,10 +103,10 @@ export class SummaryNode {
         this.summary.additionalPath = additionalPath;
     }
     constructor(private readonly summary: {
-        readonly referenceSequenceNumber: number,
-        readonly basePath: EscapedPath | undefined,
-        readonly localPath: EscapedPath,
-        additionalPath?: EscapedPath,
+        readonly referenceSequenceNumber: number;
+        readonly basePath: EscapedPath | undefined;
+        readonly localPath: EscapedPath;
+        additionalPath?: EscapedPath;
     }) { }
 
     /** Gets the full path to this node, to be used when sending a handle */
@@ -293,9 +293,9 @@ export interface ICreateChildDetails {
 
 export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
     /** Tree to use to find children subtrees */
-    childrenTree: T,
+    childrenTree: T;
     /** Additional path part where children are isolated */
-    childrenPathPart: string | undefined,
+    childrenPathPart: string | undefined;
 }
 
 /**

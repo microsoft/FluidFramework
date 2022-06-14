@@ -57,10 +57,10 @@ export interface OperationRangeDescription<T = GenericOperation> {
     removeInsertOperationB?: arrayRemoveList | arrayInsertList;
     removeInsertOperation?: arrayRemoveList | arrayInsertList;
     removeInsertOperationA?: arrayRemoveList | arrayInsertList;
-    op?: T,
-    begin?: number,
-    end?: number,
-    flag?: ArrayChangeSetRangeType
+    op?: T;
+    begin?: number;
+    end?: number;
+    flag?: ArrayChangeSetRangeType;
 
 }
 

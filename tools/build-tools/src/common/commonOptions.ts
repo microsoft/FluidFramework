@@ -19,6 +19,8 @@ export const commonOptions : CommonOptions = {
     verbose: false,
 }
 
+// This string is duplicated in the readme (multiple times): update readme if changing this.
+
 export const commonOptionString =
 `     --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
      --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)

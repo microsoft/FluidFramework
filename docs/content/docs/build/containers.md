@@ -111,10 +111,12 @@ data is shared with other clients. This is an ideal time to create initial data 
 
 ### connected/disconnected
 
-The container exposes the connected state of the client and emits connected and disconnected events to notify the caller if the underlying connection is disrupted. Fluid will by default attempt to reconnect in case of lost/intermittent connectivity.
+The container exposes the connected state of the client and emits connected and disconnected events to notify the caller if the underlying connection is disrupted. Fluid will by default attempt to reconnect in case of lost/intermittent connectivity. However, `connect()` and `disconnect()` can be used to manually control the connection policy. Note about this code:
+
+- `user.on("idle")` and `user.on("active")` are hypothetical event callbacks which fire if a user becomes idle or active respectively. They are for demonstration purposes only and are not provided by FluidFramework.
 
 ```typescript {linenos=inline}
-const connected = container.connected;
+const connectionState = container.connectionState;
 
 container.on("disconnected", () => {
     // handle disconnected
@@ -124,6 +126,16 @@ container.on("disconnected", () => {
 container.on("connected", () => {
     // handle connected
     // enable editing if disabled
+});
+
+user.on("idle", () => {
+    // Disconnect the container when idle to prevent unnecessary network traffic/COGS
+    container.disconnect();
+});
+
+user.on("active", () => {
+    // Connect the container when active to resume op processing
+    container.connect();
 });
 ```
 

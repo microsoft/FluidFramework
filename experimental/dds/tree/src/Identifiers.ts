@@ -16,6 +16,11 @@
 export type UuidString = string & { readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465' };
 
 /**
+ * An identifier associated with a session for the purpose of attributing its created content to some user/entity.
+ */
+export type AttributionId = UuidString;
+
+/**
  * A version 4, variant 2 uuid (https://datatracker.ietf.org/doc/html/rfc4122).
  * @internal
  */

@@ -8,7 +8,7 @@ import assert from "assert";
 import { stub } from "sinon";
 import * as fetchModule from "node-fetch";
 
-export const createResponse = async (headers: { [key: string]: string }, response: any | undefined, status: number) =>
+export const createResponse = async (headers: { [key: string]: string; }, response: any | undefined, status: number) =>
     Promise.resolve({
         ok: response !== undefined,
         status,
@@ -18,9 +18,9 @@ export const createResponse = async (headers: { [key: string]: string }, respons
         json: async () => Promise.resolve(response),
     });
 
-export const okResponse = async (headers: { [key: string]: string }, response: any) =>
+export const okResponse = async (headers: { [key: string]: string; }, response: any) =>
     createResponse(headers, response, 200);
-export const notFound = async (headers: { [key: string]: string } = {}) => createResponse(headers, undefined, 404);
+export const notFound = async (headers: { [key: string]: string; } = {}) => createResponse(headers, undefined, 404);
 
 export type FetchCallType = "internal" | "external" | "single";
 
@@ -59,7 +59,7 @@ export async function mockFetchSingle<T>(
 export async function mockFetchOk<T>(
     callback: () => Promise<T>,
     response: object = {},
-    headers: { [key: string]: string } = {},
+    headers: { [key: string]: string; } = {},
 ): Promise<T> {
     return mockFetchSingle(
         callback,

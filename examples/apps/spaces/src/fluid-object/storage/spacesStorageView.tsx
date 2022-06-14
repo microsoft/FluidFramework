@@ -14,7 +14,7 @@ import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
     clickCallback(): void;
-    title: string,
+    title: string;
 }
 
 const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
@@ -90,7 +90,7 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
 
 // Stronger typing here maybe?
 interface ISpacesStorageViewProps<T = any> {
-    getViewForItem: (item: Serializable<T>) => Promise<JSX.Element | undefined>,
+    getViewForItem: (item: Serializable<T>) => Promise<JSX.Element | undefined>;
     getUrlForItem: (itemId: string) => string;
     storage: ISpacesStorage<T>;
     editable: boolean;

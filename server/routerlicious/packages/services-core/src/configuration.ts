@@ -13,6 +13,9 @@ export interface IDeliServerConfiguration {
     // Enables hashing of sequenced ops
     enableOpHashing: boolean;
 
+    // Enables automatically updating the DNS when sequencing a summaryAck
+    enableAutoDSNUpdate: boolean;
+
     // Enables creating join/leave signals for write clients
     enableWriteClientSignals: boolean;
 
@@ -156,15 +159,10 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     maxMessageSize: 16 * 1024,
     enableTraces: true,
     enableLumberjack: true,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
     deli: {
         enableNackMessages: true,
         enableOpHashing: true,
+        enableAutoDSNUpdate: false,
         enableWriteClientSignals: false,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,

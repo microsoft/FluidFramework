@@ -545,7 +545,7 @@ export class MapKernel {
             // and don't process the op.
             if (local) {
                 assert(localOpMetadata !== undefined,
-                    0x014 /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
+                    0x014 /* pendingMessageId is missing from the local client's operation */);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
                 if (pendingKeyMessageId === pendingMessageId) {

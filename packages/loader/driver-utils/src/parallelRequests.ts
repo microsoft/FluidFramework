@@ -52,7 +52,7 @@ export class ParallelRequests<T> {
             from: number,
             to: number,
             strongTo: boolean,
-            props: ITelemetryProperties) => Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
+            props: ITelemetryProperties) => Promise<{ partial: boolean; cancel: boolean; payload: T[]; }>,
         private readonly responseCallback: (payload: T[]) => void) {
         this.latestRequested = from;
         this.nextToDeliver = from;
@@ -363,7 +363,7 @@ async function getSingleOpBatch(
     logger: ITelemetryLogger,
     signal?: AbortSignal,
     fetchReason?: string):
-        Promise<{ partial: boolean, cancel: boolean, payload: ISequencedDocumentMessage[] }> {
+        Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[]; }> {
     let lastSuccessTime: number | undefined;
 
     let retry: number = 0;

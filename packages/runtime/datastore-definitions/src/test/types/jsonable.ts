@@ -54,27 +54,27 @@ declare const a2: IA2;
 foo(a2);
 
 // text complex indexed interface
-declare const a3: { [key: string]: Jsonable<string> };
+declare const a3: { [key: string]: Jsonable<string>; };
 foo(a3);
 
 // test interface with multiple properties
 interface A5 {
-    a: "a",
-    b: "b",
+    a: "a";
+    b: "b";
 }
 declare const a5: A5;
 foo(a5);
 
 // test interface with optional property
 interface A6 {
-    a?: "a",
+    a?: "a";
 }
 declare const a6: A6;
 foo(a6);
 
 // test simple type
 interface A7 {
-    a: "a",
+    a: "a";
 }
 
 declare const a7: A7;
@@ -111,7 +111,7 @@ foo(a11);
 
 // test interface with optional method
 interface A12 {
-    foo?: () => void,
+    foo?: () => void;
 }
 declare const a12: A12;
 // @ts-expect-error should not be jsonable
@@ -119,7 +119,7 @@ foo(a12);
 
 // test type with method
 interface A13 {
-    foo: () => void,
+    foo: () => void;
 }
 declare const a13: A13;
 // @ts-expect-error should not be jsonable
@@ -143,7 +143,7 @@ foo(new bar());
 
 // test class with complex property
 interface MapProp{
-    m: Map<string, string>
+    m: Map<string, string>;
 }
 const mt: MapProp = {
     m: new Map(),
@@ -164,7 +164,7 @@ foo(nmt);
 // test class with symbol indexer for property
 const sym = Symbol.for("test");
 interface ISymbol{
-    [sym]: string,
+    [sym]: string;
 }
 const isym: ISymbol = {
     [sym]: "foo",

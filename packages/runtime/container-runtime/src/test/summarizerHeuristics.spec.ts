@@ -33,6 +33,8 @@ describe("Runtime", () => {
                 summarizerClientElection: false,
                 minIdleTime: 5000, // 5 sec (idle)
                 maxIdleTime: 5000, // 5 sec (idle)
+                nonRuntimeOpWeight: 0.1,
+                runtimeOpWeight: 1.0,
             };
             let summaryConfig: Readonly<ISummaryConfiguration>;
             let data: ISummarizeHeuristicData;
@@ -64,6 +66,8 @@ describe("Runtime", () => {
                 run = true,
                 minIdleTime = defaultSummaryConfig.minIdleTime,
                 maxIdleTime = defaultSummaryConfig.maxIdleTime,
+                nonRuntimeOpWeight = defaultSummaryConfig.nonRuntimeOpWeight,
+                runtimeOpWeight = defaultSummaryConfig.runtimeOpWeight,
             }: Partial<ISummaryConfigurationHeuristics & ISummarizeAttempt & {
                 lastOpSequenceNumber: number;
                 run: boolean;
@@ -81,7 +85,9 @@ describe("Runtime", () => {
                     summarizerClientElection,
                     minOpsForLastSummaryAttempt,
                     minIdleTime,
-                    maxIdleTime } as const;
+                    maxIdleTime,
+                    nonRuntimeOpWeight,
+                    runtimeOpWeight } as const;
 
                 runner = new SummarizeHeuristicRunner(
                     data,
@@ -102,10 +108,12 @@ describe("Runtime", () => {
                 initialize({ maxOps });
 
                 data.lastOpSequenceNumber = maxOps;
+                data.numRuntimeOps = maxOps;
                 runner.run();
                 assertAttemptCount(0, "should not run yet");
 
                 data.lastOpSequenceNumber++;
+                data.numRuntimeOps++;
                 runner.run();
                 assertAttemptCount(1, "should run now");
                 assert(getLastAttempt() === "maxOps");
@@ -117,10 +125,12 @@ describe("Runtime", () => {
                 initialize({ refSequenceNumber: lastSummary, maxOps });
 
                 data.lastOpSequenceNumber = lastSummary + maxOps;
+                data.numRuntimeOps = maxOps;
                 runner.run();
                 assertAttemptCount(0, "should not run yet");
 
                 data.lastOpSequenceNumber++;
+                data.numRuntimeOps++;
                 runner.run();
                 assertAttemptCount(1, "should run now");
                 assert(getLastAttempt() === "maxOps");
@@ -133,6 +143,8 @@ describe("Runtime", () => {
                 const idlesPerActive = Math.floor((maxTime + 1) / (idleTime - 1));
                 const remainingTime = (maxTime + 1) % (idleTime - 1);
                 initialize({ refSequenceNumber: lastSummary, minIdleTime: idleTime, maxIdleTime: idleTime, maxTime });
+
+                data.lastOpSequenceNumber = lastSummary + 1;
 
                 for (let i = 0; i < idlesPerActive; i++) {
                     // Prevent idle timer from triggering with periodic "ops" (heuristic runs)
@@ -155,6 +167,8 @@ describe("Runtime", () => {
                 const maxTime = 1000;
                 initialize({ refSequenceNumber: lastSummary, minIdleTime: idleTime, maxIdleTime: idleTime, maxTime });
 
+                data.lastOpSequenceNumber = lastSummary + 1;
+
                 clock.tick(idleTime - 1);
                 assertAttemptCount(0, "should not run yet");
 
@@ -168,6 +182,8 @@ describe("Runtime", () => {
                 const idleTime = 101;
                 const maxTime = 1000;
                 initialize({ refSequenceNumber: lastSummary, minIdleTime: idleTime, maxIdleTime: idleTime, maxTime });
+
+                data.lastOpSequenceNumber = lastSummary + 1;
 
                 clock.tick(idleTime - 1);
                 assertAttemptCount(0, "should not run yet");
@@ -210,6 +226,8 @@ describe("Runtime", () => {
                 const maxTime = 1000;
                 initialize({ refSequenceNumber: lastSummary, minIdleTime: idleTime, maxIdleTime: idleTime, maxTime });
 
+                data.lastOpSequenceNumber = lastSummary + 1;
+
                 clock.tick(idleTime - 1);
                 runner.run();
                 assertAttemptCount(0, "should not run yet");
@@ -248,6 +266,28 @@ describe("Runtime", () => {
 
                 data.lastOpSequenceNumber += 100;
                 assert.strictEqual(runner.idleTime, minIdleTime, "should never go below the minIdleTime");
+            });
+
+            it("Weights ops properly", () => {
+                const maxOps = 2;
+                const runtimeOpWeight = 0.1;
+                const nonRuntimeOpWeight = 1.1;
+                initialize({ maxOps, runtimeOpWeight, nonRuntimeOpWeight });
+
+                data.lastOpSequenceNumber = maxOps;
+
+                data.numRuntimeOps += 9;
+                runner.run();
+                assertAttemptCount(0, "should not run yet");
+
+                data.numNonRuntimeOps += 1;
+                runner.run();
+                assertAttemptCount(0, "should not run yet");
+
+                data.numRuntimeOps += 1;
+                runner.run();
+                assertAttemptCount(1, "should run");
+                assert(getLastAttempt() === "maxOps");
             });
         });
     });

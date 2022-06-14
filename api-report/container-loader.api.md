@@ -28,7 +28,6 @@ import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
 import { IProtocolState } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
-import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -43,9 +42,12 @@ import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
 export enum ConnectionState {
+    CatchingUp = 1,
     Connected = 2,
+    // @deprecated (undocumented)
     Connecting = 1,
-    Disconnected = 0
+    Disconnected = 0,
+    EstablishingConnection = 3
 }
 
 // @public (undocumented)
@@ -101,21 +103,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)
     get resolvedUrl(): IResolvedUrl | undefined;
-    // @deprecated
-    resume(): void;
     get scopes(): string[] | undefined;
     // (undocumented)
     serialize(): string;
     get serviceConfiguration(): IClientConfiguration | undefined;
-    // @deprecated
-    setAutoReconnect(reconnect: boolean): void;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
     subLogger: TelemetryLogger;
     // (undocumented)
     static version: string;
-    }
+}
 
 // @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
@@ -168,7 +166,6 @@ export interface ILoaderProps {
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
-    readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
     readonly scope?: FluidObject;
     readonly urlResolver: IUrlResolver;
 }
@@ -179,7 +176,6 @@ export interface ILoaderServices {
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
-    readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
     readonly scope: FluidObject;
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
@@ -229,7 +225,6 @@ export class RelativeLoader implements ILoader {
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
-
 
 // (No @packageDocumentation comment for this package)
 

@@ -193,7 +193,7 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
  * users to get an ISignaler without a custom DO.  Where possible, consumers should instead
  * create a Signaler themselves instead of using the DO wrapper to avoid the DO overhead.
  */
-export class SignalManager extends DataObject<{ Events: IErrorEvent }> implements EventEmitter, ISignaler {
+export class SignalManager extends DataObject<{ Events: IErrorEvent; }> implements EventEmitter, ISignaler {
     private _manager: Signaler | undefined;
     private get manager(): Signaler {
         assert(this._manager !== undefined, 0x24b /* "internal signaler should be defined" */);

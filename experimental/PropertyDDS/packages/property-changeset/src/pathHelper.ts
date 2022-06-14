@@ -459,8 +459,8 @@ export namespace PathHelper {
     }
 
     interface BasePathCoverage {
-        coverageExtent: CoverageExtent,
-        pathList: string[],
+        coverageExtent: CoverageExtent;
+        pathList: string[];
     }
 
     /**

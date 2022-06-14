@@ -15,9 +15,9 @@ import { getPropertyValue } from "../utils";
 type ValType = string | number | boolean;
 
 type EnumProps = (IEditableValueCellProps & {
-  onSubmit: (val: ValType, props: IEditableValueCellProps) => void,
-  SelectProps: SelectProps,
-  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>,
+  onSubmit: (val: ValType, props: IEditableValueCellProps) => void;
+  SelectProps: SelectProps;
+  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>;
 });
 
 type GetOptionsType = (

@@ -4,7 +4,6 @@
  */
 
 import { parse } from "url";
-import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -48,7 +47,9 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        assert(!!createNewSummary, 0x202 /* "create empty file not supported" */);
+        if (createNewSummary === undefined) {
+            throw new Error("Empty file summary creation isn't supported in this driver.");
+        }
         const pathName = new URL(resolvedUrl.url).pathname;
         const pathArr = pathName.split("/");
         const tenantId = pathArr[pathArr.length - 2];
@@ -76,6 +77,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             resolvedUrl.endpoints.ordererUrl ?? "",
             resolvedUrl.endpoints.storageUrl ?? "",
             quorumValues,
+            false,
         );
         return this.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
     }

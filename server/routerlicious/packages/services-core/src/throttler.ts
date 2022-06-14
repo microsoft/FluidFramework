@@ -69,7 +69,7 @@ export interface IThrottlerHelper {
 export interface IThrottler {
     /**
      * Increment the current processing count of operations by `weight`.
-     * @throws {ThrottlingError} when throttled.
+     * @throws {@link ThrottlingError} when throttled.
      */
     incrementCount(id: string, weight?: number): void;
 

@@ -110,7 +110,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ### Get the Fluid Data
 
-1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the component layer. Add the following code inside the `AppComponent` class. This function will be called when the application loads the first time, and the value it returns is assigned to the `sharedTimestamp` component level property.
+1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper function to get the Fluid data, from the SharedMap object, into the component layer. Add the following code inside the `AppComponent` class. This function will be called when the application loads the first time, and the value it returns is assigned to the `sharedTimestamp` component level property.
 
     ```js
     async getFluidData() {
@@ -200,7 +200,7 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
 1. In order to update the Fluid Data across all clients, we need to define an additional function in the `AppComponent`. This function will be called to update the time of the `sharedTimestamp` object whenever a user clicks the "Get Time" button in the UI. Add the following code under the perviously defined `syncData` function. Note about this code:
 
-    - The `sharedTimestamp.set` method sets the `sharedTimestamp` object's "time" *key's* *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`.
+    - The `sharedTimestamp.set` function sets the `sharedTimestamp` object's "time" *key's* *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`.
     - All other clients update too because the Fluid server propagates the change to the `sharedTimestamp` on all of them and this `valueChanged` event updates the `localTimestamp` state on all of them.
 
     ```js

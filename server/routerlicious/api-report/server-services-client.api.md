@@ -45,7 +45,7 @@ export const choose: () => string;
 export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | undefined, tree: ISummaryTree, path?: string, rootNodeName?: string): IWholeSummaryTree;
 
 // @public
-export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary): INormalizedWholeSummary;
+export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary, treePrefixToRemove?: string): INormalizedWholeSummary;
 
 // @public (undocumented)
 export const CorrelationIdHeaderName = "x-correlation-id";

@@ -4,6 +4,7 @@
  */
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require('path');
+const webpack = require("webpack");
 
 module.exports = env => {
     const htmlTemplate = "./src/index.html";
@@ -37,9 +38,12 @@ module.exports = env => {
             ]
         },
         output: {
-            filename: "[name].[hash].js",
+            filename: "[name].[contenthash].js",
         },
         plugins: [
+            new webpack.DefinePlugin({
+                'process.env.NODE_DEBUG': undefined,
+            }),
             new HtmlWebpackPlugin({
                 template: htmlTemplate
             })

@@ -121,6 +121,7 @@ export class DocumentStorage implements IDocumentStorage {
         ordererUrl: string,
         historianUrl: string,
         values: [string, ICommittedProposal][],
+        enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
@@ -197,8 +198,9 @@ export class DocumentStorage implements IDocumentStorage {
             isSessionAlive: true,
         };
 
-        winston.info(`Session: ${JSON.stringify(session)}`, { messageMetaData });
-        Lumberjack.info(`Session: ${JSON.stringify(session)}`, lumberjackProperties);
+        const message: string = `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`;
+        winston.info(message, { messageMetaData });
+        Lumberjack.info(message, lumberjackProperties);
 
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
@@ -251,7 +253,7 @@ export class DocumentStorage implements IDocumentStorage {
         return gitManager.getCommit(sha);
     }
 
-    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }> {
+    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string; }> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const versions = await tenant.gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {
@@ -266,7 +268,7 @@ export class DocumentStorage implements IDocumentStorage {
             for (const blob of fullTree.blobs) {
                 if (blob.sha === fullTree.quorumValues) {
                     quorumValues = JSON.parse(toUtf8(blob.content, blob.encoding)) as
-                        [string, { value: string }][];
+                        [string, { value: string; }][];
 
                     for (const quorumValue of quorumValues) {
                         if (quorumValue[0] === "code") {

@@ -8,6 +8,7 @@ import * as assert from "assert";
 import * as path from "path";
 import { BuildResult, BuildPackage, summarizeBuildResult } from "../../buildGraph";
 import { logStatus, logVerbose } from "../../../common/logging";
+import { ScriptDependencies } from "../../../common/npmPackage";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync, ExecAsyncResult } from "../../../common/utils";
@@ -16,12 +17,13 @@ import chalk from "chalk";
 interface TaskExecResult extends ExecAsyncResult {
     worker?: boolean
 }
+
 export abstract class LeafTask extends Task {
 
     private dependentTasks?: LeafTask[];
     private parentCount: number = 0;
 
-    constructor(node: BuildPackage, command: string) {
+    constructor(node: BuildPackage, command: string, private scriptDeps: ScriptDependencies) {
         super(node, command);
         if (!this.isDisabled) {
             this.node.buildContext.taskStats.leafTotalCount++;
@@ -42,6 +44,18 @@ export abstract class LeafTask extends Task {
 
     public initializeDependentTask() {
         this.dependentTasks = new Array<LeafTask>();
+        if (Object.keys(this.scriptDeps).length) {
+            for (const depPackage of this.node.dependentPackages) {
+                const depScripts = this.scriptDeps[depPackage.pkg.name];
+                if (depScripts) {
+                    for (const depScript of depScripts) {
+                        if (this.addChildTask(this.dependentTasks, depPackage, `npm run ${depScript}`)) {
+                            this.logVerboseDependency(depPackage, depScript);
+                        }
+                    }
+                }
+            }
+        }
         this.addDependentTasks(this.dependentTasks);
     }
 
@@ -72,7 +86,7 @@ export abstract class LeafTask extends Task {
         const ret = await this.execCore();
 
         if (ret.error) {
-            const codeStr = ret.error.code !== undefined? ` (exit code ${ret.error.code})` : "";
+            const codeStr = ret.error.code !== undefined ? ` (exit code ${ret.error.code})` : "";
             console.error(`${this.node.pkg.nameColored}: error during command '${this.command}'`)
             console.error(this.getExecErrors(ret));
             return this.execDone(startTime, BuildResult.Failed);
@@ -93,9 +107,9 @@ export abstract class LeafTask extends Task {
             const workerResult = await workerPool.runOnWorker(this.executable, this.command, this.node.pkg.directory);
             if (workerResult.code === 0 || !workerResult.error) {
                 return {
-                    error: workerResult.code === 0? null : { name: "Worker error", message: "Worker error", cmd: this.command, code: workerResult.code },
-                    stdout: workerResult.stdout?? "",
-                    stderr: workerResult.stderr?? "",
+                    error: workerResult.code === 0 ? null : { name: "Worker error", message: "Worker error", cmd: this.command, code: workerResult.code },
+                    stdout: workerResult.stdout ?? "",
+                    stderr: workerResult.stderr ?? "",
                     worker: true,
                 }
             }
@@ -157,7 +171,7 @@ export abstract class LeafTask extends Task {
             const taskNum = this.node.buildContext.taskStats.leafBuiltCount.toString().padStart(3, " ");
             const totalTask = this.node.buildContext.taskStats.leafTotalCount - this.node.buildContext.taskStats.leafUpToDateCount;
             const elapsedTime = (Date.now() - startTime) / 1000;
-            const workerMsg = worker? "[worker] " : "";
+            const workerMsg = worker ? "[worker] " : "";
             const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${this.node.pkg.nameColored}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
             logStatus(statusString);
             if (status === BuildResult.Failed) {

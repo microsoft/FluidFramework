@@ -48,15 +48,15 @@ import {
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
 import {
     IntervalCollection,
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
-import { MapKernel } from "./mapKernel";
-import { IValueChanged } from "./mapKernelInterfaces";
+import { IMapMessageLocalMetadata, DefaultMap } from "./defaultMap";
+import { IValueChanged } from "./defaultMapInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
@@ -166,14 +166,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-    private readonly intervalMapKernel: MapKernel;
+    private readonly intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>;
     constructor(
         private readonly dataStoreRuntime: IFluidDataStoreRuntime,
         public id: string,
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
     ) {
-        super(id, dataStoreRuntime, attributes);
+        super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
         this.loadedDeferred.promise.catch((error) => {
             this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
@@ -220,12 +220,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             }
         });
 
-        this.intervalMapKernel = new MapKernel(
+        this.intervalCollections = new DefaultMap(
             this.serializer,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isAttached(),
-            [new SequenceIntervalCollectionValueType()]);
+            new SequenceIntervalCollectionValueType(),
+        );
     }
 
     /**
@@ -294,6 +294,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.client.getRangeExtentsOfPosition(pos);
     }
 
+    /**
+     * @deprecated - use createLocalReferencePosition
+     */
     public createPositionReference(
         segment: T,
         offset: number,
@@ -305,12 +308,27 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return lref;
     }
 
+    public createLocalReferencePosition(
+        segment: T,
+        offset: number,
+        refType: ReferenceType,
+        properties: PropertySet | undefined): ReferencePosition {
+        return this.client.createLocalReferencePosition(
+            segment,
+            offset,
+            refType,
+            properties);
+    }
+
+    /**
+     * @deprecated - use localReferencePositionToPosition
+     */
     public localRefToPos(localRef: LocalReference) {
-        if (localRef.segment) {
-            return localRef.offset + this.getPosition(localRef.segment);
-        } else {
-            return -1;
-        }
+        return this.client.localReferencePositionToPosition(localRef);
+    }
+
+    public localReferencePositionToPosition(lref: ReferencePosition): number {
+        return this.client.localReferencePositionToPosition(lref);
     }
 
     /**
@@ -355,12 +373,22 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
+    /**
+     * @deprecated - use createLocalReferencePosition
+     */
     public addLocalReference(lref: LocalReference) {
         return this.client.addLocalReference(lref);
     }
 
+    /**
+     * @deprecated - use removeLocalReferencePosition
+     */
     public removeLocalReference(lref: LocalReference) {
-        return this.client.removeLocalReference(lref);
+        return this.client.removeLocalReferencePosition(lref);
+    }
+
+    public removeLocalReferencePosition(lref: ReferencePosition) {
+        return this.client.removeLocalReferencePosition(lref);
     }
 
     /**
@@ -407,25 +435,19 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
+    /**
+     * @deprecated - IntervalCollections are created on a first-write wins basis, and concurrent creates
+     * are supported. Use `getIntervalCollection` instead.
+     */
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalMapKernel.wait<IntervalCollection<SequenceInterval>>(
-            this.getIntervalCollectionPath(label));
+        return this.intervalCollections.get(this.getIntervalCollectionPath(label));
     }
 
-    // TODO: fix race condition on creation by putting type on every operation
     public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
         const labelPath = this.getIntervalCollectionPath(label);
-        if (!this.intervalMapKernel.has(labelPath)) {
-            this.intervalMapKernel.createValueType(
-                labelPath,
-                SequenceIntervalCollectionValueType.Name,
-                undefined);
-        }
-
-        const sharedCollection =
-            this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(labelPath);
+        const sharedCollection = this.intervalCollections.get(labelPath);
         return sharedCollection;
     }
 
@@ -438,16 +460,19 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      *     ...
     */
     public getIntervalCollectionLabels(): IterableIterator<string> {
-        return this.intervalMapKernel.keys();
+        return this.intervalCollections.keys();
     }
 
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
 
         // conditionally write the interval collection blob
         // only if it has entries
-        if (this.intervalMapKernel.size > 0) {
-            builder.addBlob(snapshotFileName, this.intervalMapKernel.serialize(serializer));
+        if (this.intervalCollections.size > 0) {
+            builder.addBlob(snapshotFileName, this.intervalCollections.serialize(serializer));
         }
 
         builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
@@ -460,8 +485,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      * All the IFluidHandle's represent routes to other objects.
      */
     protected processGCDataCore(serializer: SummarySerializer) {
-        if (this.intervalMapKernel.size > 0) {
-            this.intervalMapKernel.serialize(serializer);
+        if (this.intervalCollections.size > 0) {
+            this.intervalCollections.serialize(serializer);
         }
 
         this.client.serializeGCData(this.handle, serializer);
@@ -497,10 +522,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
     }
 
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {
+        if (!this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
                     content as IMergeTreeOp,
@@ -515,7 +540,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         if (await storage.contains(snapshotFileName)) {
             const blob = await storage.readBlob(snapshotFileName);
             const header = bufferToString(blob, "utf8");
-            this.intervalMapKernel.populate(header);
+            this.intervalCollections.populate(header);
         }
 
         try {
@@ -537,18 +562,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                             || m.referenceSequenceNumber < collabWindow.minSeq
                             || m.sequenceNumber <= collabWindow.minSeq
                             || m.sequenceNumber <= collabWindow.currentSeq) {
-                            throw new Error(`Invalid catchup operations in snapshot: ${
-                                JSON.stringify({
-                                    op: {
-                                        seq: m.sequenceNumber,
-                                        minSeq: m.minimumSequenceNumber,
-                                        refSeq: m.referenceSequenceNumber,
-                                    },
-                                    collabWindow: {
-                                        seq: collabWindow.currentSeq,
-                                        minSeq: collabWindow.minSeq,
-                                    },
-                                })}`);
+                            throw new Error(`Invalid catchup operations in snapshot: ${JSON.stringify({
+                                op: {
+                                    seq: m.sequenceNumber,
+                                    minSeq: m.minimumSequenceNumber,
+                                    refSeq: m.referenceSequenceNumber,
+                                },
+                                collabWindow: {
+                                    seq: collabWindow.currentSeq,
+                                    minSeq: collabWindow.minSeq,
+                                },
+                            })}`);
                         }
                         this.processMergeTreeMsg(m);
                     });
@@ -576,7 +600,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         } else {
             assert(message.type === MessageType.Operation, 0x073 /* "Sequence message not operation" */);
 
-            const handled = this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
+            const handled = this.intervalCollections.tryProcessMessage(
+                message.contents,
+                local,
+                message,
+                localOpMetadata,
+            );
 
             if (!handled) {
                 this.processMergeTreeMsg(message, local);
@@ -639,7 +668,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 // shallow clone the message as we only overwrite top level properties,
                 // like referenceSequenceNumber and content only
                 stashMessage = {
-                    ... message,
+                    ...message,
                     referenceSequenceNumber: stashMessage.sequenceNumber - 1,
                     contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
                 };
@@ -700,18 +729,18 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
     private initializeIntervalCollections() {
         // Listen and initialize new SharedIntervalCollections
-        this.intervalMapKernel.eventEmitter.on("create", (ev: IValueChanged, local: boolean) => {
-            const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(ev.key);
+        this.intervalCollections.eventEmitter.on("create", ({ key, previousValue }: IValueChanged, local: boolean) => {
+            const intervalCollection = this.intervalCollections.get(key);
             if (!intervalCollection.attached) {
-                intervalCollection.attachGraph(this.client, ev.key);
+                intervalCollection.attachGraph(this.client, key);
             }
-            assert(ev.previousValue === undefined, 0x2c1 /* "Creating an interval that already exists?" */);
-            this.emit("createIntervalCollection", ev.key, local, this);
+            assert(previousValue === undefined, 0x2c1 /* "Creating an interval collection that already exists?" */);
+            this.emit("createIntervalCollection", key, local, this);
         });
 
         // Initialize existing SharedIntervalCollections
-        for (const key of this.intervalMapKernel.keys()) {
-            const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(key);
+        for (const key of this.intervalCollections.keys()) {
+            const intervalCollection = this.intervalCollections.get(key);
             intervalCollection.attachGraph(this.client, key);
         }
     }

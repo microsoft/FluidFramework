@@ -277,7 +277,7 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
                 sharedCell.set(0);
                 throw new Error(errorMessage);
             });
-        } catch(err) {
+        } catch (err) {
             error = err as Error;
         }
 

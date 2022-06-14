@@ -5,7 +5,7 @@
 
 import { ScopeType, IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-import { generateToken } from "@fluidframework/azure-service-utils";
+import { generateToken } from "./generateToken";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier

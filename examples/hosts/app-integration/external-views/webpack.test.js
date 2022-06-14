@@ -5,6 +5,7 @@
 
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = env => {
     return ({
@@ -39,6 +40,9 @@ module.exports = env => {
             }
         },
         plugins: [
+            new webpack.ProvidePlugin({
+                process: 'process/browser'
+            }),
             new HtmlWebpackPlugin({
                 template: "./tests/index.html",
             }),

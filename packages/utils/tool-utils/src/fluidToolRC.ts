@@ -21,11 +21,11 @@ export interface IResources {
         version?: number;
         data: {
             [key: string]: {
-                storage?: IOdspTokens,
-                push?: IOdspTokens
-            }
-        }
-    }
+                storage?: IOdspTokens;
+                push?: IOdspTokens;
+            };
+        };
+    };
 }
 
 const getRCFileName = () => path.join(os.homedir(), ".fluidtoolrc");

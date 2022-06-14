@@ -14,7 +14,7 @@ export interface IHTMLAttributes {
 export function getAttrs(segment: ISegment): Readonly<IHTMLAttributes> {
     const properties = segment.properties;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return (properties && properties.attr) || emptyObject;
+    return properties?.attr || emptyObject;
 }
 
 export function syncAttrs(element: HTMLElement, attrs: IHTMLAttributes) {

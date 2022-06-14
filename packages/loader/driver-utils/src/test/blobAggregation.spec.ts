@@ -12,7 +12,7 @@ import { BlobAggregationStorage } from "../blobAggregationStorage";
 import { buildSnapshotTree } from "../buildSnapshotTree";
 
 export class FlattenedStorageService {
-    private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
+    private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string; }) {
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const path in tree.trees) {
             FlattenedStorageService.flattenTree(`${base}${path}/`, tree.trees[path], results);
@@ -24,7 +24,7 @@ export class FlattenedStorageService {
         }
     }
 
-    public readonly flattenedTree: { [path: string]: string } = {};
+    public readonly flattenedTree: { [path: string]: string; } = {};
 
     constructor(
         tree: ISnapshotTree,

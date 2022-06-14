@@ -70,9 +70,9 @@ export class FluidPackageCheck {
         const testScriptName = testMochaScript ? "test:mocha" : "test";
         const testScript = testMochaScript ?? pkg.getScript(testScriptName);
         if (testScript && /(ts-)?mocha/.test(testScript)) {
-            const isClient = pkg.monoRepo?.kind === MonoRepoKind.Client;
+            const shouldHaveConfig = pkg.monoRepo?.kind === MonoRepoKind.Client || pkg.monoRepo?.kind === MonoRepoKind.Azure;
             const hasConfig = testScript.includes(" --config ");
-            if (isClient) {
+            if (shouldHaveConfig) {
                 const pkgstring = "@fluidframework/mocha-test-setup";
                 if (this.ensureDevDependency(pkg, fix, pkgstring)) {
                     fixed = true;

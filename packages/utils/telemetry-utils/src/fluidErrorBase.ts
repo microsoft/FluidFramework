@@ -44,7 +44,7 @@ const hasTelemetryPropFunctions = (x: any): boolean =>
     typeof x?.getTelemetryProperties === "function" &&
     typeof x?.addTelemetryProperties === "function";
 
-export const hasErrorInstanceId = (x: any): x is { errorInstanceId: string } =>
+export const hasErrorInstanceId = (x: any): x is { errorInstanceId: string; } =>
     typeof x?.errorInstanceId === "string";
 
 /** type guard for IFluidErrorBase interface */

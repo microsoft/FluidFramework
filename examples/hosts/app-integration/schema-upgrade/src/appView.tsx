@@ -5,8 +5,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-import { IContainerKillBit } from "./containerKillBit";
-import { IInventoryList } from "./inventoryList";
+import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
 export interface IAppViewProps {

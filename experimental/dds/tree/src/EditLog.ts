@@ -331,7 +331,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public isLocalEdit(editId: EditId): boolean {
 		const entry = this.allEditIds.get(editId);
-		return entry !== undefined && entry.isLocal;
+		return entry?.isLocal ?? false;
 	}
 
 	/**

@@ -74,7 +74,7 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
         }
         for (const id of Object.values(tree.blobs)) {
             const blob = tree.blobsContents[id];
-            assert(!!blob, "Blob must be present in blobsContents");
+            assert(!!blob, 0x2ec /* "Blob must be present in blobsContents" */);
             // ArrayBufferLike will not survive JSON.stringify()
             blobs[id] = bufferToString(blob, "utf8");
         }
@@ -106,6 +106,7 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
     /**
      * Returns the snapshot tree.
      */
+    // eslint-disable-next-line @rushstack/no-new-null
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         return this.storage.getSnapshotTree(version);
     }
@@ -113,6 +114,7 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
     /**
      * Retrieves all versions of the document starting at the specified versionId - or null if from the head
      */
+    // eslint-disable-next-line @rushstack/no-new-null
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return this.storage.getVersions(versionId, count);
     }

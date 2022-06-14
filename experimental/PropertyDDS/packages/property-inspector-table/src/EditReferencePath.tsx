@@ -13,9 +13,6 @@ import { ErrorPopup } from "./ErrorPopup";
 import { iconHeight, iconWidth } from "./constants";
 
 const useStyles = makeStyles((theme: Theme) => ({
-  bold: {
-    fontWeight: theme.typography.fontWeightBold,
-  },
   bottomMargin: {
     marginBottom: theme.spacing(1),
   },
@@ -92,9 +89,9 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
         <SvgIcon
           width={iconWidth}
           height={iconHeight}
-          svgId='reference-24'
+          svgId="reference-24"
         />
-        <span className={classes.bold}>
+        <span>
           Modifying the reference path for <span className={classes.italic}>{name}</span>
         </span>
       </div>
@@ -103,7 +100,7 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
           inputRef={inputRef}
           classes={{ root: classes.root }}
           className={classes.textField}
-          id='outlined-bare'
+          id="outlined-bare"
           onChange={handleInputChange}
           onKeyPress={(event) => {
             if (event.key === "Enter") {
@@ -112,23 +109,23 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
             }
           }}
           placeholder={path}
-          margin='normal'
-          variant='outlined'
+          margin="normal"
+          variant="outlined"
           InputProps={{
             className: classes.textFieldInput,
           }}
         />
         <Button
-          color='primary'
-          variant='outlined'
+          color="primary"
+          variant="outlined"
           className={classes.cancelButton}
           onClick={onCancel}
         >
           Cancel
         </Button>
         <LoadingButton
-          variant='contained'
-          color='primary'
+          variant="contained"
+          color="primary"
           onClick={handleEdit}
         >
           Edit

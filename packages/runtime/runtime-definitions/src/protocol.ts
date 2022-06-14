@@ -70,4 +70,4 @@ export interface IAttachMessage {
  * so this gives correct typings for writing backward compatible code.
  */
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot">
-    & { snapshot: IAttachMessage["snapshot"] | null };
+    & { snapshot: IAttachMessage["snapshot"] | null; };

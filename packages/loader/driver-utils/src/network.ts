@@ -8,6 +8,8 @@ import {
     IDriverErrorBase,
     IAuthorizationError,
     DriverErrorType,
+    ILocationRedirectionError,
+    IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
@@ -42,7 +44,7 @@ export function isOnline(): OnlineStatus {
 }
 
 /** Telemetry props with driver-specific required properties */
-export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string | undefined };
+export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string | undefined; };
 
 /**
  * Generic network error class.
@@ -88,6 +90,19 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     ) {
         // don't log claims or tenantId
         super(message, props, new Set(["claims", "tenantId"]));
+    }
+}
+
+export class LocationRedirectionError extends LoggingError implements ILocationRedirectionError, IFluidErrorBase {
+    readonly errorType = DriverErrorType.locationRedirection;
+    readonly canRetry = false;
+
+    constructor(
+        message: string,
+        readonly redirectUrl: IResolvedUrl,
+        props: DriverErrorTelemetryProps,
+    ) {
+        super(message, props);
     }
 }
 
@@ -143,7 +158,7 @@ export const createWriteError = (message: string, props: DriverErrorTelemetryPro
 
 export function createGenericNetworkError(
     message: string,
-    retryInfo: { canRetry: boolean, retryAfterMs?: number },
+    retryInfo: { canRetry: boolean; retryAfterMs?: number; },
     props: DriverErrorTelemetryProps,
 ): ThrottlingError | GenericNetworkError {
     if (retryInfo.retryAfterMs !== undefined && retryInfo.canRetry) {

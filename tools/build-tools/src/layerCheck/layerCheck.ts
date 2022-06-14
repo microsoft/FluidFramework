@@ -11,6 +11,9 @@ import { writeFileAsync } from "../common/utils";
 import { FluidRepo } from "../common/fluidRepo";
 import path from "path";
 
+
+// This string is duplicated in the readme: update readme if changing this.
+
 function printUsage() {
     console.log(
         `

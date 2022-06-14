@@ -18,11 +18,11 @@ export interface TinyliciousClientProps {
     /**
      * Optional. Configuration for establishing a connection with the Tinylicious.
      */
-    connection?: TinyliciousConnectionConfig,
+    connection?: TinyliciousConnectionConfig;
     /**
      * Optional. A logger instance to receive diagnostic messages.
      */
-    logger?: ITelemetryBaseLogger,
+    logger?: ITelemetryBaseLogger;
 }
 
 /**
@@ -38,7 +38,7 @@ export interface TinyliciousConnectionConfig {
      * Optional. Override of the domain
      * @defaultValue - http://localhost
      */
-    domain?: string
+    domain?: string;
 }
 
 /**

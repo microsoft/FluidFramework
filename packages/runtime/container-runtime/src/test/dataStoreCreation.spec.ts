@@ -31,8 +31,8 @@ describe("Data Store Creation Tests", () => {
          *                     |
          *                     |
          *                DataStore A
-         *                   /   \
-         *                  /     \
+         *                   /   \\
+         *                  /     \\
          *        DataStore B     DataStore C
          */
 

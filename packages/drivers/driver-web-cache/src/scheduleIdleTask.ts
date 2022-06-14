@@ -3,25 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// Older versions of Typescript considered this API experimental and not in Typescript included types.
-// This can be removed when FF updates to Typescript 4.4 or later
-declare global {
-    interface Window {
-        requestIdleCallback:
-        | ((
-            callback: (deadline: {
-                readonly didTimeout: boolean;
-                timeRemaining: () => number;
-            }) => void,
-            opts?: {
-                timeout: number;
-            }
-        ) => number)
-        | undefined;
-        cancelIdleCallback: ((handle: number) => void) | undefined;
-    }
-}
-
 interface TaskQueueItem {
     /** The task to run */
     task: () => void;

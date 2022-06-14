@@ -32,9 +32,9 @@ import {
 import { IClientSummaryWatcher } from "./summaryCollection";
 
 export type raceTimerResult<T> =
-    { result: "done"; value: T } |
-    { result: IPromiseTimerResult["timerResult"] } |
-    { result: "cancelled" };
+    { result: "done"; value: T; } |
+    { result: IPromiseTimerResult["timerResult"]; } |
+    { result: "cancelled"; };
 
 /** Helper function to wait for a promise or PromiseTimer to elapse. */
 export async function raceTimer<T>(
