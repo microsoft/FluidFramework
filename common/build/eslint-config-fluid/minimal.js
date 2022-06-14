@@ -105,6 +105,8 @@ module.exports = {
         // currently in the repository, so it has not been enabled yet.
         "unused-imports/no-unused-imports": "error",
 
+        "valid-typeof": "error",
+
         // Catches a common coding mistake where "resolve" and "reject" are confused.
         "promise/param-names": "warn",
 
