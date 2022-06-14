@@ -66,7 +66,7 @@ export function getTextWidth(text: string, font: string) {
 
 export function getTextHeight(elm: HTMLDivElement) {
     const computedStyle = getComputedStyle(elm);
-    return computedStyle.lineHeight && (computedStyle.lineHeight.length > 0) && (computedStyle.lineHeight !== "normal")
+    return computedStyle?.lineHeight.length > 0 && computedStyle.lineHeight !== "normal"
         ? parseInt(computedStyle.lineHeight, 10)
         : parseInt(computedStyle.fontSize, 10);
 }
