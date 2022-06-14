@@ -66,7 +66,7 @@ export interface IInspectorModalProps extends React.HTMLAttributes<HTMLDivElemen
  * This function is a workaround to set the style of the div that wraps whatever one
  * passes to the `title` prop of the `SimpleModal`. If the text in the title is too long
  * wrapping div expands beyond the flex container. To prevent this min-width must be set to 0.
- * @param element The element this ref callback is passed to.
+ * @param element - The element this ref callback is passed to.
  */
 const setStyleOfTitleParentDiv = (element) => {
   if (element) {

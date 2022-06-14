@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import { List, ListMakeHead, ListRemoveEntry } from "./collections";
@@ -24,6 +24,7 @@ import {
     refHasRangeLabel,
     refHasTileLabel,
     refTypeIncludesFlag,
+    IReferencePositionEvents,
 } from "./referencePositions";
 
 /**
@@ -49,7 +50,8 @@ export function _validateReferenceType(refType: ReferenceType) {
 /**
  * @deprecated - Use ReferencePosition
  */
-export class LocalReference implements ReferencePosition {
+export class LocalReference
+extends TypedEventEmitter<IReferencePositionEvents> implements ReferencePosition {
     /**
      * @deprecated - use DetachedReferencePosition
      */
@@ -78,6 +80,7 @@ export class LocalReference implements ReferencePosition {
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
     ) {
+        super();
         _validateReferenceType(refType);
         this.segment = initSegment;
         this.properties = properties;
@@ -166,9 +169,6 @@ export class LocalReference implements ReferencePosition {
     }
 
     public getOffset() {
-        if (this.segment?.removedSeq) {
-            return 0;
-        }
         return this.offset;
     }
 

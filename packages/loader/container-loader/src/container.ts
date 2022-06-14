@@ -53,7 +53,8 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
-    ProtocolOpHandler,
+    IProtocolHandler,
+    ProtocolOpHandlerWithClientValidation,
 } from "@fluidframework/protocol-base";
 import {
     IClient,
@@ -98,7 +99,7 @@ import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
+import { ConnectionStateHandler } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
@@ -400,7 +401,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         return this._context;
     }
-    private _protocolHandler: ProtocolOpHandler | undefined;
+    private _protocolHandler: IProtocolHandler | undefined;
     private get protocolHandler() {
         if (this._protocolHandler === undefined) {
             throw new Error("Attempted to access protocolHandler before it was defined");
@@ -765,12 +766,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
-        assert(!!this._protocolHandler, "Must have a valid protocol handler instance");
+        assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
+        assert(this._protocolHandler.attributes.term !== undefined, "Must have a valid protocol handler instance");
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
-            protocol: this._protocolHandler.getProtocolState(),
-            term: this._protocolHandler.term,
+            protocol: this.protocolHandler.getProtocolState(),
+            term: this._protocolHandler.attributes.term,
             clientId: this.clientId,
         };
 
@@ -1338,7 +1340,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
-    ): Promise<ProtocolOpHandler> {
+    ): Promise<IProtocolHandler> {
         let members: [string, ISequencedClient][] = [];
         let proposals: [number, ISequencedProposal, string[]][] = [];
         let values: [string, any][] = [];
@@ -1366,8 +1368,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, any][],
-    ): Promise<ProtocolOpHandler> {
-        const protocol = new ProtocolOpHandler(
+    ): Promise<IProtocolHandler> {
+        const protocol = new ProtocolOpHandlerWithClientValidation(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
             attributes.term,
@@ -1412,19 +1414,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private captureProtocolSummary(): ISummaryTree {
-        const quorumSnapshot = this.protocolHandler.quorum.snapshot();
-
-        // Save attributes for the document
-        const documentAttributes: IDocumentAttributes = {
-            minimumSequenceNumber: this.protocolHandler.minimumSequenceNumber,
-            sequenceNumber: this.protocolHandler.sequenceNumber,
-            term: this.protocolHandler.term,
-        };
-
+        const quorumSnapshot = this.protocolHandler.snapshot();
         const summary: ISummaryTree = {
             tree: {
                 attributes: {
-                    content: JSON.stringify(documentAttributes),
+                    content: JSON.stringify(this.protocolHandler.attributes),
                     type: SummaryType.Blob,
                 },
                 quorumMembers: {
@@ -1629,11 +1623,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         const state = this.connectionState === ConnectionState.Connected;
-        if (!this.context.disposed) {
+        if (this._context?.disposed === false) {
             this.context.setConnectionState(state, this.clientId);
         }
         assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
-        this.protocolHandler.quorum.setConnectionState(state, this.clientId);
+        this.protocolHandler.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
 
         if (logOpsOnReconnect) {
@@ -1682,36 +1676,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
-        // Check and report if we're getting messages from a clientId that we previously
-        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
-        if (message.clientId != null) {
-            let errorMsg: string | undefined;
-            const client: ILocalSequencedClient | undefined =
-                this.getQuorum().getMember(message.clientId);
-            if (client === undefined && message.type !== MessageType.ClientJoin) {
-                // pre-0.58 error message: messageClientIdMissingFromQuorum
-                errorMsg = "Remote message's clientId is missing from the quorum";
-            } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
-                // pre-0.58 error message: messageClientIdShouldHaveLeft
-                errorMsg = "Remote message's clientId already should have left";
-            }
-            if (errorMsg !== undefined) {
-                const error = new DataCorruptionError(
-                    errorMsg,
-                    extractSafePropertiesFromMessage(message));
-                this.close(normalizeError(error));
-            }
-        }
-
         const local = this.clientId === message.clientId;
+
+        // Allow the protocol handler to process the message
+        let result: IProcessMessageResult = { immediateNoOp: false };
+        try {
+            result = this.protocolHandler.processMessage(message, local);
+        } catch (error) {
+            this.close(wrapError(error, (errorMessage) =>
+                new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
+        }
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
             this.context.process(message, local, undefined);
         }
 
-        // Allow the protocol handler to process the message
-        const result = this.protocolHandler.processMessage(message, local);
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {
             if (this.collabWindowTracker === undefined) {
@@ -1719,7 +1699,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // That means that if relay service changes settings, such changes will impact only newly booted
                 // clients.
                 // All existing will continue to use settings they got earlier.
-                assert(this.serviceConfiguration !== undefined, "there should be service config for active connection");
+                assert(
+                    this.serviceConfiguration !== undefined,
+                    0x2e4 /* "there should be service config for active connection" */);
                 this.collabWindowTracker = new CollabWindowTracker(
                     (type, contents) => {
                         assert(this.activeConnection(),

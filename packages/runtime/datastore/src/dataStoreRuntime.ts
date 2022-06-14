@@ -17,7 +17,7 @@ import {
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import {
     assert,
     Deferred,
@@ -181,6 +181,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         existing: boolean,
     ) {
         super();
+
+        assert(!dataStoreContext.id.includes("/"),
+            "Id cannot contain slashes. DataStoreContext should have validated this.");
 
         this.logger = ChildLogger.create(
             dataStoreContext.logger,
@@ -350,6 +353,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public createChannel(id: string = uuid(), type: string): IChannel {
+        if (id.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: ${id}`);
+        }
+
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
@@ -876,7 +883,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
-                    assert(!!channelContext, "There should be a channel context for the op");
+                    assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
                     channelContext.rollback(envelope.contents, localOpMetadata);
                     break;
                 }

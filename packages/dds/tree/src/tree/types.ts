@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export type TreeKey = (number | string) & { readonly TreeKey: symbol; };
-export type TreeType = (number | string) & { readonly TreeType: symbol; };
+import { Brand } from "../util";
+
+export type FieldKey = Brand<number | string, "FieldKey">;
+export type TreeType = Brand<number | string, "TreeType">;
