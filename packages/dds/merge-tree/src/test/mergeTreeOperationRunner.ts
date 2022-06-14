@@ -8,6 +8,7 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import random from "random-js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
@@ -223,7 +224,7 @@ export function applyMessages(
             e.message += `\n${logger.toString()}`;
         }
         if (typeof e === "string") {
-            throw new TypeError(`${e}\n${logger.toString()}`);
+            throw new LoggingError(`${e}\n${logger.toString()}`);
         }
         throw e;
     }
