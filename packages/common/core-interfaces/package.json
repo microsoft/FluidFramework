@@ -54,23 +54,6 @@
   },
   "typeValidation": {
     "version": "1.1.0",
-    "broken": {
-      "RemovedInterfaceDeclaration_IFluidSerializer": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedVariableDeclaration_IFluidSerializer": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_IProvideFluidSerializer": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_ISerializedHandle": {
-        "backCompat": false,
-        "forwardCompat": false
-      }
-    }
+    "broken": {}
   }
 }
