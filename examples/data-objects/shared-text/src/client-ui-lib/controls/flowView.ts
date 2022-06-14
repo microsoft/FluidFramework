@@ -1259,14 +1259,24 @@ function makeSegSpan(
                 }
                 const textErrorInfo = textSegment.properties[key] as ITextErrorInfo;
                 span.textErrorRun = textErrorRun;
-                if (textErrorInfo.color === "paul") {
-                    span.style.background = underlinePaulStringURL;
-                } else if (textErrorInfo.color === "paulgreen") {
-                    span.style.background = underlinePaulGrammarStringURL;
-                } else if (textErrorInfo.color === "paulgolden") {
-                    span.style.background = underlinePaulGoldStringURL;
-                } else {
-                    span.style.background = underlineStringURL;
+
+                switch (textErrorInfo.color) {
+                    case "paul": {
+                        span.style.background = underlinePaulStringURL;
+                        break;
+                    }
+                    case "paulgreen": {
+                        span.style.background = underlinePaulGrammarStringURL;
+                        break;
+                    }
+                    case "paulgolden": {
+                        span.style.background = underlinePaulGoldStringURL;
+                        break;
+                    }
+                    default: {
+                        span.style.background = underlineStringURL;
+                        break;
+                    }
                 }
             } else {
                 span.style[key] = textSegment.properties[key];
@@ -2490,6 +2500,8 @@ export class FlowView extends ui.Component {
             e.returnValue = false;
         };
 
+        // The logic below is complex enough that using switches makes the code far less readable.
+        /* eslint-disable unicorn/prefer-switch */
         const keydownHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keydownHandler!(e);
@@ -2522,7 +2534,9 @@ export class FlowView extends ui.Component {
                         };
                     }
                     this.sharedString.removeText(toRemove.start, toRemove.end);
-                } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
+                } else if (
+                    ((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown))
+                    && (!this.ticking)) {
                     setTimeout(() => {
                         this.scroll(e.keyCode === KeyCode.pageUp);
                         this.ticking = false;
@@ -2607,10 +2621,8 @@ export class FlowView extends ui.Component {
                         this.broadcastPresence();
                         this.cursor.updateView(this);
                     }
-                } else {
-                    if (!e.ctrlKey) {
-                        specialKey = false;
-                    }
+                } else if (!e.ctrlKey) {
+                    specialKey = false;
                 }
                 if (specialKey) {
                     e.preventDefault();
@@ -2618,6 +2630,7 @@ export class FlowView extends ui.Component {
                 }
             }
         };
+        /* eslint-enable unicorn/prefer-switch */
 
         const keypressHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
