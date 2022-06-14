@@ -7,23 +7,23 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverErrorType, ILocationRedirectionError, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /**
- * Checks if the error is domain move error.
+ * Checks if the error is location redirection error.
  * @param error - error whose type is to be determined.
- * @returns - True is the error is domain move error.
+ * @returns - True is the error is location redirection error.
  */
-export function isDomainMoveError(error: any): error is ILocationRedirectionError {
+export function isLocationRedirectionError(error: any): error is ILocationRedirectionError {
     return typeof error === "object" && error !== null
         && error.errorType === DriverErrorType.locationRedirection;
 }
 
 /**
- * Handles odsp domain change handling while fulfilling the loader request.
+ * Handles location redirection while fulfilling the loader request.
  * @param api - Callback in which user can wrap the loader.resolve or loader.request call.
  * @param request - request to be resolved.
  * @param urlResolver - resolver used to resolve the url.
  * @returns - Response from the api call.
  */
-export async function resolveWithDomainChangeHandling<T>(
+export async function resolveWithLocationRedirectionHandling<T>(
     api: (request: IRequest) => Promise<T>,
     request: IRequest,
     urlResolver: IUrlResolver,
@@ -33,7 +33,7 @@ export async function resolveWithDomainChangeHandling<T>(
         try {
             return await api(req);
         } catch (error: any) {
-            if (!isDomainMoveError(error)) {
+            if (!isLocationRedirectionError(error)) {
                 throw error;
             }
             const resolvedUrl = error.redirectUrl;
