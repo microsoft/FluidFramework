@@ -1053,7 +1053,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             }
 
             const lineStart = breakInfo.posInPG + pgStartPos;
-            const lineEnd: number | undefined = breakIndex < (len - 1)
+            const lineEnd = breakIndex < (len - 1)
                 ? pgBreaks[breakIndex + 1].posInPG + pgStartPos
                 : undefined;
             const lineOK = (layoutContext.deferUntilHeight! <= deferredHeight);
