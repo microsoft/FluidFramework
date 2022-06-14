@@ -2498,6 +2498,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             runSweep?: boolean;
             /** True to generate full GC data */
             fullGC?: boolean;
+            testMode?: boolean;
         },
     ): Promise<IGCStats> {
         return this.garbageCollector.collectGarbage(options);

@@ -793,7 +793,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
         // involving access to deleted data.
-        if (this.testMode) {
+        if (testMode) {
             this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
         }
 
