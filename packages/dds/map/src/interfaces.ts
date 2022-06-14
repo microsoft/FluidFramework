@@ -344,8 +344,10 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 }
 
 /**
- * Shared map interface
- * TODO: what are the semantics of this?
+ * The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting
+ * and retrieving values that JavaScript developers are accustomed to with the
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
+ * However, the keys of a SharedMap must be strings.
  */
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     /**
