@@ -403,6 +403,45 @@ export function runSharedTreeOperationsTests(
 				};
 			}
 
+			if (writeFormat === WriteFormat.v0_0_2) {
+				it('applies unversioned ops in the 0.0.2 format', () => {
+					const { tree: sharedTree1, containerRuntimeFactory } = setUpTestSharedTree(tree1Options);
+					const { sharedTree: sharedTree2, testTree: testTree2 } = createSimpleTestTree(
+						createSecondTreeOptions(containerRuntimeFactory)
+					);
+
+					containerRuntimeFactory.processAllMessages();
+					const originalPushMessage = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+					containerRuntimeFactory.pushMessage = (msg) => {
+						// Drop the version property to replicate ops created before the version property existed
+						msg.contents.version = undefined;
+						originalPushMessage(msg);
+					};
+
+					// Ensure that an edit can be passed and processed between two trees as normal
+					sharedTree2.applyEdit(Change.delete(StableRange.only(testTree2.right)));
+
+					const getTestTreeRoot = (sharedTree: SharedTree) =>
+						new TreeNodeHandle(
+							sharedTree.currentView,
+							sharedTree.convertToNodeId(sharedTree2.convertToStableNodeId(testTree2.identifier))
+						);
+
+					let root1 = getTestTreeRoot(sharedTree1);
+					let root2 = getTestTreeRoot(sharedTree2);
+
+					expect(Array.from(root1.traits[testTree2.right.traitLabel])).to.have.length(1);
+					expect(Array.from(root2.traits[testTree2.right.traitLabel] ?? [])).to.have.length(0);
+
+					containerRuntimeFactory.processAllMessages();
+
+					root1 = getTestTreeRoot(sharedTree1);
+					root2 = getTestTreeRoot(sharedTree2);
+					expect(Array.from(root1.traits[testTree2.right.traitLabel] ?? [])).to.have.length(0);
+					expect(Array.from(root2.traits[testTree2.right.traitLabel] ?? [])).to.have.length(0);
+				});
+			}
+
 			it('should apply remote changes and converge', () => {
 				const { tree: sharedTree1, containerRuntimeFactory } = setUpTestSharedTree(tree1Options);
 				const { tree: sharedTree2 } = setUpTestSharedTree(createSecondTreeOptions(containerRuntimeFactory));
