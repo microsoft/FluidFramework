@@ -14,7 +14,7 @@ import {
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 
@@ -63,7 +63,7 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
     return JSON.parse(json);
 }
 
-describeFullCompat("Summaries", (getTestObjectProvider) => {
+describeNoCompat("Summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
