@@ -79,8 +79,8 @@ export function generateToken(
 }
 
 /**
- * Generates an arbitrary ("random") {@link IUser} by generating a random UUID for its
- * {@link IUser.id} and `name` properties.
+ * Generates an arbitrary ("random") {@link @fluidframework/protocol-definitions#IUser} by generating a
+ * random UUID for its {@link @fluidframework/protocol-definitions#IUser.id} and `name` properties.
  */
 export function generateUser(): IUser {
     const randomUser = {
