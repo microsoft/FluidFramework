@@ -52,6 +52,15 @@ import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
+// @public
+export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
+
+// @internal (undocumented)
+export function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval;
+
+// @internal (undocumented)
+export function decompressInterval(interval: CompressedSerializedInterval, label?: string): ISerializedInterval;
+
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
@@ -116,8 +125,6 @@ export class Interval implements ISerializableInterval {
     properties: PropertySet;
     // (undocumented)
     propertyManager: PropertiesManager;
-    // Warning: (ae-forgotten-export) The symbol "CompressedSerializedInterval" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     serialize(client: Client): CompressedSerializedInterval;
     // (undocumented)
@@ -130,8 +137,6 @@ export class Interval implements ISerializableInterval {
 export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
-    // Warning: (ae-forgotten-export) The symbol "ISerializedIntervalV2" needs to be exported by the entry point index.d.ts
-    //
     // @internal
     constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalV2);
     // @internal (undocumented)
@@ -250,6 +255,16 @@ export interface ISerializedInterval {
     sequenceNumber: number;
     // (undocumented)
     start: number;
+}
+
+// @public (undocumented)
+export interface ISerializedIntervalV2 {
+    // (undocumented)
+    intervals: CompressedSerializedInterval[];
+    // (undocumented)
+    label: string;
+    // (undocumented)
+    version: 2;
 }
 
 // @public (undocumented)
