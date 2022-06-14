@@ -92,7 +92,7 @@ describe("Errors", () => {
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "Inherited error message");
-            assert(coercedError.getTelemetryProperties().otherProperty === undefined, "telemetryProps shouldn't be copied when wrapping");
+            assert(coercedError.getTelemetryProperties().otherProperty === "Considered PII-free property", "telemetryProps should be copied when wrapping");
         });
 
         it("Should not fail coercing malformed inputs", () => {
