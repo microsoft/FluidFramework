@@ -4,7 +4,7 @@
 # Override this by setting the REGISTRY argument when calling docker build
 # to use a different registry than docker hub
 # docker build . REGISTRY=<custom registry>
-ARG REGISTRY=docker.io
+ARG REGISTRY=mcr.microsoft.com/mirror/docker/library
 
 FROM ${REGISTRY}/node:14
 

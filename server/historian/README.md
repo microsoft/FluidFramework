@@ -9,7 +9,7 @@ For consistency we recommend building and developing within a container
 
 You can build the production container by running.
 
-`docker build -t historian .`
+`docker build --build-arg REGISTRY=docker.io -t historian .`
 
 And then mount it for development by running.
 

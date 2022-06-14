@@ -13,7 +13,7 @@ specific container.
 
 You can build the container by running.
 
-`docker build -t gitrest .`
+`docker build --build-arg REGISTRY=docker.io -t gitrest .`
 
 And then mount it for development by running.
 
