@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
+<<<<<<< HEAD
     "@fluidframework/gitresources": "^0.1037.1000",
     "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/server-kafka-orderer": "^0.1037.1000",
@@ -65,6 +66,22 @@
     "@fluidframework/server-services-ordering-zookeeper": "^0.1037.1000",
     "@fluidframework/server-services-telemetry": "^0.1037.1000",
     "@fluidframework/server-services-utils": "^0.1037.1000",
+=======
+    "@fluidframework/gitresources": "^0.1036.5000",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/server-kafka-orderer": "^0.1036.5000",
+    "@fluidframework/server-lambdas": "^0.1036.5000",
+    "@fluidframework/server-lambdas-driver": "^0.1036.5000",
+    "@fluidframework/server-memory-orderer": "^0.1036.5000",
+    "@fluidframework/server-services": "^0.1036.5000",
+    "@fluidframework/server-services-client": "^0.1036.5000",
+    "@fluidframework/server-services-core": "^0.1036.5000",
+    "@fluidframework/server-services-ordering-kafkanode": "^0.1036.5000",
+    "@fluidframework/server-services-ordering-rdkafka": "^0.1036.5000",
+    "@fluidframework/server-services-ordering-zookeeper": "^0.1036.5000",
+    "@fluidframework/server-services-telemetry": "^0.1036.5000",
+    "@fluidframework/server-services-utils": "^0.1036.5000",
+>>>>>>> 31cdfa7274e62737f740fd124379e927a457a61b
     "@types/node": "^14.18.0",
     "body-parser": "^1.17.1",
     "bytes": "^3.0.0",
@@ -86,8 +103,8 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/server-local-server": "^0.1037.1000",
-    "@fluidframework/server-test-utils": "^0.1037.1000",
+    "@fluidframework/server-local-server": "^0.1036.5000",
+    "@fluidframework/server-test-utils": "^0.1036.5000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/bytes": "^3.0.0",
     "@types/compression": "0.0.33",

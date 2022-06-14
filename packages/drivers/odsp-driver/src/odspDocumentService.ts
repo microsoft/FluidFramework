@@ -21,7 +21,12 @@ import {
     IDocumentServicePolicies,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
+<<<<<<< HEAD
 import { DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
+=======
+import { canRetryOnError, DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
+import { IFacetCodes } from "@fluidframework/odsp-doclib-utils";
+>>>>>>> 31cdfa7274e62737f740fd124379e927a457a61b
 import {
     IClient,
     ISequencedDocumentMessage,
@@ -414,12 +419,16 @@ export class OdspDocumentService implements IDocumentService {
             if (response.refreshAfterDeltaMs > 0) {
                 this.scheduleJoinSessionRefresh(response.refreshAfterDeltaMs)
                     .catch((error) => {
-                        this.mc.logger.sendErrorEvent({
+                        const canRetry = canRetryOnError(error);
+                        // Only record error event in case it is non retriable.
+                        if (!canRetry) {
+                            this.mc.logger.sendErrorEvent({
                                 eventName: "JoinSessionRefreshError",
                                 details: JSON.stringify(props),
                             },
                             error,
-                        );
+                            );
+                        }
                     });
             } else {
                 // Logging just for informational purposes to help with debugging as this is a new feature.

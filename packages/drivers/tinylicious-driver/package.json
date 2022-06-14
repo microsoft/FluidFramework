@@ -36,8 +36,13 @@
     "@fluidframework/driver-definitions": "^2.0.0",
     "@fluidframework/driver-utils": "^2.0.0",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
+<<<<<<< HEAD
     "@fluidframework/routerlicious-driver": "^2.0.0",
     "@fluidframework/server-services-client": "^0.1036.4000",
+=======
+    "@fluidframework/routerlicious-driver": "^1.1.0",
+    "@fluidframework/server-services-client": "^0.1036.5000-0",
+>>>>>>> 31cdfa7274e62737f740fd124379e927a457a61b
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },
@@ -46,7 +51,7 @@
     "@fluidframework/build-tools": "^0.2.71273",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@^0.59.0",
+    "@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@^1.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^9.1.1",
@@ -59,7 +64,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "broken": {}
   }
 }

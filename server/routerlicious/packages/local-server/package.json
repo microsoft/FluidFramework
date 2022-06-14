@@ -56,6 +56,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
+<<<<<<< HEAD
     "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/server-lambdas": "^0.1037.1000",
     "@fluidframework/server-memory-orderer": "^0.1037.1000",
@@ -63,6 +64,15 @@
     "@fluidframework/server-services-core": "^0.1037.1000",
     "@fluidframework/server-services-telemetry": "^0.1037.1000",
     "@fluidframework/server-test-utils": "^0.1037.1000",
+=======
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/server-lambdas": "^0.1036.5000",
+    "@fluidframework/server-memory-orderer": "^0.1036.5000",
+    "@fluidframework/server-services-client": "^0.1036.5000",
+    "@fluidframework/server-services-core": "^0.1036.5000",
+    "@fluidframework/server-services-telemetry": "^0.1036.5000",
+    "@fluidframework/server-test-utils": "^0.1036.5000",
+>>>>>>> 31cdfa7274e62737f740fd124379e927a457a61b
     "debug": "^4.1.1",
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
