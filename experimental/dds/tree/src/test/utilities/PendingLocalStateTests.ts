@@ -13,28 +13,16 @@ import type { EditLog } from '../../EditLog';
 import { SharedTree } from '../../SharedTree';
 import { Change, StablePlace } from '../../ChangeTypes';
 import { TreeView } from '../../TreeView';
-import { NodeId, TraitLabel } from '../../Identifiers';
+import { EditId, NodeId, TraitLabel } from '../../Identifiers';
 import {
 	getEditLogInternal,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
 	setUpTestTree,
 	stabilizeEdit,
+	withContainerOffline,
 } from './TestUtilities';
 import { SimpleTestTree } from './TestNode';
-
-async function withContainerOffline<TReturn>(
-	provider: ITestObjectProvider,
-	container: IContainer,
-	action: () => TReturn
-): Promise<{ actionReturn: TReturn; pendingLocalState: string }> {
-	await provider.ensureSynchronized();
-	await provider.opProcessingController.pauseProcessing(container);
-	const actionReturn = action();
-	const pendingLocalState = container.closeAndGetPendingLocalState();
-	provider.opProcessingController.resumeProcessing(container);
-	return { actionReturn, pendingLocalState };
-}
 
 /**
  * Runs a test suite for SharedTree's ability to apply pending local state stashed by the host.
@@ -196,5 +184,106 @@ export function runPendingLocalStateTests(
 			expect(observerTree.edits.length).to.equal(initialEditLogLength + 1);
 			expect(stashingTree2.edits.length).to.equal(initialEditLogLength + 1);
 		}
+
+		it('works across summaries', async () => {
+			// 1. Create a client
+			const { testObjectProvider } = await setUpLocalServerTestSharedTree({
+				id: documentId,
+				writeFormat: WriteFormat.v0_0_2,
+			});
+
+			// 2. A second client joins
+			let tree: SharedTree;
+			let container: IContainer;
+			({ container, tree } = await setUpLocalServerTestSharedTree({
+				id: documentId,
+				testObjectProvider,
+				writeFormat: WriteFormat.v0_0_2,
+			}));
+
+			// 3. The second client creates stashed ops and rejoins multiple times
+			({ tree, container } = await stash(container, () => {
+				insertSmallTree(tree);
+				insertSmallTree(tree);
+				insertSmallTree(tree);
+			}));
+			({ tree, container } = await stash(container, () => insertSmallTree(tree)));
+
+			// 4. A third client joins and also stashes and rejoins
+			await stash(
+				(
+					await setUpLocalServerTestSharedTree({
+						id: documentId,
+						testObjectProvider,
+						writeFormat: WriteFormat.v0_0_2,
+					})
+				).container,
+				() => insertSmallTree(tree)
+			);
+
+			/** Go offline, do something, then rejoin with pending local state */
+			async function stash(
+				container: IContainer,
+				action: () => void
+			): Promise<{ tree: SharedTree; container: IContainer }> {
+				const { pendingLocalState } = await withContainerOffline(testObjectProvider, container, () => {
+					action();
+				});
+				return setUpLocalServerTestSharedTree({
+					id: documentId,
+					testObjectProvider,
+					writeFormat: WriteFormat.v0_0_2,
+					pendingLocalState,
+				});
+			}
+
+			/** Insert some arbitrary data */
+			function insertSmallTree(tree: SharedTree): EditId {
+				return tree.applyEdit(
+					Change.insertTree(
+						[
+							{
+								definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
+								traits: {
+									'e0901ba4-14c4-48e4-91a7-22a3068dc274': [
+										{
+											definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
+											traits: {
+												'e0901ba4-14c4-48e4-91a7-22a3068dc274': [
+													{
+														definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
+													},
+												],
+											},
+										},
+									],
+								},
+							},
+							{
+								definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
+								traits: {
+									'e0901ba4-14c4-48e4-91a7-22a3068dc274': [
+										{
+											definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
+											traits: {
+												'e0901ba4-14c4-48e4-91a7-22a3068dc274': [
+													{
+														definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
+													},
+												],
+											},
+										},
+									],
+								},
+							},
+						],
+						StablePlace.atEndOf({
+							label: '3b9e2dd8-def4-45fb-88bc-0df48df62314' as TraitLabel,
+							parent: tree.currentView.root,
+						})
+					)
+				).id;
+			}
+		});
 	});
 }

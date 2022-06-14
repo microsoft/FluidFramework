@@ -100,7 +100,11 @@ const defaultEditConfig: Required<EditGenerationConfig> = {
 	traitLabelPoolSize: 20,
 };
 
-const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<Operation, FuzzTestState> => {
+const makeEditGenerator = (
+	passedConfig: EditGenerationConfig,
+	passedJoinConfig: JoinGenerationConfig,
+	type: 'edit' | 'stash'
+): AsyncGenerator<Operation, FuzzTestState> => {
 	const config = { ...defaultEditConfig, ...passedConfig };
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
 	const poolRand = makeRandom(0);
@@ -374,17 +378,29 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		if (contents === done) {
 			return done;
 		}
-		return { type: 'edit', contents, index };
+		if (type === 'stash') {
+			const joinConfig = { ...defaultJoinConfig, ...passedJoinConfig };
+			return {
+				type,
+				contents,
+				index,
+				summarizeHistory: random.pick(joinConfig.summarizeHistory),
+				writeFormat: random.pick(joinConfig.writeFormat),
+			};
+		}
+
+		return { type, contents, index };
 	};
 };
 
 const defaultOpConfig: Required<OperationGenerationConfig> = {
 	editConfig: defaultEditConfig,
 	joinConfig: defaultJoinConfig,
-	editWeight: 10,
-	joinWeight: 1,
-	leaveWeight: 1,
-	synchronizeWeight: 1,
+	editWeight: 100,
+	joinWeight: 10,
+	leaveWeight: 10,
+	stashWeight: 1,
+	synchronizeWeight: 10,
 };
 
 export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncGenerator<Operation, FuzzTestState> {
@@ -404,13 +420,14 @@ export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncG
 	const atLeastOneActiveClient: AcceptanceCondition<FuzzTestState> = ({ activeCollaborators }) =>
 		activeCollaborators.length > 0;
 	const opWeights: AsyncWeights<Operation, FuzzTestState> = [
-		[makeEditGenerator(config.editConfig), config.editWeight, atLeastOneActiveClient],
+		[makeEditGenerator(config.editConfig, config.joinConfig, 'edit'), config.editWeight, atLeastOneActiveClient],
 		[
 			makeJoinGenerator(config.joinConfig),
 			config.joinWeight,
 			collaboratorsMatches((count) => count < maximumCollaborators),
 		],
 		[leaveGenerator, config.leaveWeight, atLeastOneClient],
+		[makeEditGenerator(config.editConfig, config.joinConfig, 'stash'), config.stashWeight, atLeastOneActiveClient],
 		[{ type: 'synchronize' }, config.synchronizeWeight, atLeastOneClient],
 	];
 	return createWeightedAsyncGenerator(opWeights);
