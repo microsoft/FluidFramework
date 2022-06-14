@@ -86,12 +86,11 @@ services:
             - git:/home/git
         restart: always
     zookeeper:
-        image: ${REGISTRY:-wurstmeister}/zookeeper:3.18
+        image: wurstmeister/zookeeper:latest
         ports:
             - "2181:2181"
         restart: always
     kafka:
-        # TODO: no image available in MCR
         image: wurstmeister/kafka:2.11-1.1.1
         ports:
             - "9092:9092"
@@ -103,12 +102,10 @@ services:
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
         restart: always
     redis:
-        image: "${REGISTRY:-docker.io}/redis:7"
+        image: "redis:alpine"
     mongodb:
-        # TODO: no image available in MCR
         image: "mongo:3.4.3"
     rabbitmq:
-        # TODO: no image available in MCR
         image: "rabbitmq:alpine"
 volumes:
   git:

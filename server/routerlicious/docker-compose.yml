@@ -1,7 +1,7 @@
 version: '3.4'
 services:
     proxy:
-        image: ${REGISTRY:-docker.io}/nginx:1.21
+        image: nginx:latest
         volumes:
             - ./nginx.conf:/etc/nginx/nginx.conf
         ports:
@@ -107,12 +107,11 @@ services:
             - git:/home/git
         restart: always
     zookeeper:
-        image: ${REGISTRY:-wurstmeister}/zookeeper:3.8
+        image: wurstmeister/zookeeper:latest
         ports:
             - "2181:2181"
         restart: always
     kafka:
-        # TODO: no image available in MCR
         image: wurstmeister/kafka:2.11-1.1.1
         ports:
             - "9092:9092"
@@ -124,12 +123,10 @@ services:
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
         restart: always
     redis:
-        image: "${REGISTRY:-docker.io}/redis:7"
+        image: "redis:alpine"
     mongodb:
-        # TODO: no image available in MCR
         image: "mongo:3.4.3"
     rabbitmq:
-        # TODO: no image available in MCR
         image: "rabbitmq:alpine"
 volumes:
   git:
