@@ -104,7 +104,7 @@ describe("LocalDeltaConnectionServer", () => {
 
         socket.on(
             "disconnect",
-            (id: string, msgs: ISequencedDocumentMessage[]) => messageP.reject("socket was disconnected"));
+            () => messageP.reject("socket was disconnected"));
 
         return messageP.promise;
     }
