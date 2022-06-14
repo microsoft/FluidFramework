@@ -85,7 +85,7 @@ describe("Data Store Context Tests", () => {
             };
             const registry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return registry; },
-                get: async (pkg) => Promise.resolve(factory),
+                get: async (pkg) => (pkg === "BOGUS" ? undefined : factory),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
@@ -119,7 +119,7 @@ describe("Data Store Context Tests", () => {
             it("Errors thrown during realize are wrapped as DataProcessingError", async () => {
                 localDataStoreContext = new LocalFluidDataStoreContext({
                     id: dataStoreId,
-                    pkg: [], // This will cause an error when calling `realizeCore`
+                    pkg: ["BOGUS"], // This will cause an error when calling `realizeCore`
                     runtime: containerRuntime,
                     storage,
                     scope,
@@ -136,9 +136,12 @@ describe("Data Store Context Tests", () => {
                     assert.fail("realize should have thrown an error due to empty pkg array");
                 } catch (e) {
                     assert(isFluidError(e), "Expected a valid Fluid Error to be thrown");
-                    assert(e.errorType === ContainerErrorType.dataProcessingError, "Error should be a DataProcessingError");
-                    assert((e.getTelemetryProperties().packageName as ITaggedTelemetryPropertyType).value === "CodeArtifact",
+                    assert.equal(e.errorType, ContainerErrorType.dataProcessingError, "Error should be a DataProcessingError");
+                    const props = e.getTelemetryProperties();
+                    assert.equal((props.packageName as ITaggedTelemetryPropertyType)?.value, "BOGUS",
                         "The error should have the packageName in its telemetry properties");
+                    assert.equal((props.fluidDataStoreId as ITaggedTelemetryPropertyType)?.value, "Test1",
+                        "The error should have the fluidDataStoreId in its telemetry properties");
                 }
             });
 
