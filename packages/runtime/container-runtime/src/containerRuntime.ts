@@ -252,9 +252,9 @@ export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConf
 }
 
 export type ISummaryConfiguration =
-| ISummaryConfigurationDisableSummarizer
-| ISummaryConfigurationDisableHeuristics
-| ISummaryConfigurationHeuristics;
+    | ISummaryConfigurationDisableSummarizer
+    | ISummaryConfigurationDisableHeuristics
+    | ISummaryConfigurationHeuristics;
 
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
@@ -340,11 +340,11 @@ export interface ISummaryRuntimeOptions {
      */
     maxOpsSinceLastSummary?: number;
 
-     /**
-     * @deprecated - use `summaryConfigOverrides.summarizerClientElection` instead.
-     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-     * This defaults to false (disabled) and must be explicitly set to true to enable.
-     */
+    /**
+    * @deprecated - use `summaryConfigOverrides.summarizerClientElection` instead.
+    * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
+    * This defaults to false (disabled) and must be explicitly set to true to enable.
+    */
     summarizerClientElection?: boolean;
 
     /**
@@ -1041,7 +1041,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get summarizerClientId(): string | undefined {
         return this.summarizerClientElection?.electedClientId;
     }
-      
+
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
@@ -1175,9 +1175,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private readonly summaryConfiguration: ISummaryConfiguration = {
             // the defaults
-            ... DefaultSummaryConfiguration,
+            ...DefaultSummaryConfiguration,
             // the runtime configuration overrides
-            ... runtimeOptions.summaryOptions?.summaryConfigOverrides,
+            ...runtimeOptions.summaryOptions?.summaryConfigOverrides,
         },
     ) {
         super();
@@ -2234,7 +2234,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public submitDataStoreSignal(address: string, type: string, content: any) {
         const envelope = this.createNewSignalEnvelope(address, type, content);
-         return this.context.submitSignalFn(envelope);
+        return this.context.submitSignalFn(envelope);
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
@@ -3159,7 +3159,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // because it is a misuse of the API rather than an expected failure.
             throw new UsageError(
                 `Can't summarize, disableSummaries: ${this.summariesDisabled}`,
-                );
+            );
         }
     };
 
