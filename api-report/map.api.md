@@ -93,7 +93,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
 
-// @public
+// @public @deprecated
 export interface ISerializableValue {
     type: string;
     value: any;
