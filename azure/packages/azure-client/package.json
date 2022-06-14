@@ -81,7 +81,7 @@
     "fluid-framework": "^1.0.0"
   },
   "typeValidation": {
-    "version": "0.60.1000",
+    "version": "1.0.0",
     "broken": {
       "ClassDeclaration_AzureClient": {
         "forwardCompat": false
