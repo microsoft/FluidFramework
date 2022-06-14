@@ -37,6 +37,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 import { LocalReference } from '@fluidframework/merge-tree';
+import { LocalReferencePosition } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree';
@@ -600,9 +601,9 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: SummarySerializer): void;
     // @deprecated (undocumented)
-    removeLocalReference(lref: LocalReference): ReferencePosition;
+    removeLocalReference(lref: LocalReference): LocalReferencePosition;
     // (undocumented)
-    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition;
+    removeLocalReferencePosition(lref: ReferencePosition): LocalReferencePosition;
     // (undocumented)
     removeRange(start: number, end: number): IMergeTreeRemoveMsg;
     protected replaceRange(start: number, end: number, segment: ISegment): void;

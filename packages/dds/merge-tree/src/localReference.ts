@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import { List, ListMakeHead, ListRemoveEntry } from "./collections";
@@ -24,7 +24,6 @@ import {
     refHasRangeLabel,
     refHasTileLabel,
     refTypeIncludesFlag,
-    IReferencePositionEvents,
 } from "./referencePositions";
 
 /**
@@ -47,11 +46,14 @@ export function _validateReferenceType(refType: ReferenceType) {
     }
 }
 
+export interface LocalReferencePosition extends ReferencePosition {
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+}
+
 /**
- * @deprecated - Use ReferencePosition
+ * @deprecated - Use LocalReferencePosition
  */
-export class LocalReference
-extends TypedEventEmitter<IReferencePositionEvents> implements ReferencePosition {
+export class LocalReference implements LocalReferencePosition {
     /**
      * @deprecated - use DetachedReferencePosition
      */
@@ -67,6 +69,8 @@ extends TypedEventEmitter<IReferencePositionEvents> implements ReferencePosition
      */
     public segment: ISegment | undefined;
 
+    public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
+
     /**
      * @deprecated - use createReferencePosition
      */
@@ -80,7 +84,6 @@ extends TypedEventEmitter<IReferencePositionEvents> implements ReferencePosition
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
     ) {
-        super();
         _validateReferenceType(refType);
         this.segment = initSegment;
         this.properties = properties;
