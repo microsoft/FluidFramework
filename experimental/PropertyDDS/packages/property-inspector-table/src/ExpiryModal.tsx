@@ -161,7 +161,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 
     /**
      * Transform expiry information to a state object.
-     * @param expiryInfo The expiry information object.
+     * @param expiryInfo - The expiry information object.
      */
     const expiryInfoToState = (expiryInfo: IExpiryInfo): IModalExpiryState => {
         const newState = {} as IModalExpiryState;
@@ -176,7 +176,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 
     /**
      * Set the expiration state of this modal.
-     * @param newState If present, it will be set as the new state of the modal. Otherwise, {{getExpiryInfo}} will be
+     * @param newState - If present, it will be set as the new state of the modal. Otherwise, {{getExpiryInfo}} will be
      *  called and its return values will be used to fill the state.
      */
     const setExpiryState = (newState?: IModalExpiryState) => {
@@ -195,7 +195,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 
     /**
      * Set the expiry of the current repository to the provided retention policy
-     * @param expiryTime The new retention policy/expiry time.
+     * @param expiryTime - The new retention policy/expiry time.
      */
     const setExpiry = async (expiryTime: ExpiryTimeType): Promise<void> => {
         setPolicyState({ ...policyState, updating: true });
