@@ -276,8 +276,9 @@ export interface IDirectoryEvents extends IEvent {
 }
 
 /**
- * Interface describing a shared directory.
- * TODO: what are the semantics of this?
+ * Provides a hierarchical organization of map-like data structures as SubDirectories.
+ * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
+ * SubDirectories can be retrieved for use as working directories.
  */
 export interface ISharedDirectory extends
     ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
