@@ -126,7 +126,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * @param id - Unique ID for the Ink
      */
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_ink_");
     }
 
     /**

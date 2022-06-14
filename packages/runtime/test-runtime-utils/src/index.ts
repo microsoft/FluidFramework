@@ -10,3 +10,4 @@ export * from "./mockHandle";
 export * from "./mocks";
 export * from "./mocksForReconnection";
 export * from "./mockStorage";
+export * from "./validateAssertionError";

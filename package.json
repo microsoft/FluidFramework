@@ -110,7 +110,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.66793",
+    "@fluidframework/build-tools": "^0.2.71273",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
@@ -127,10 +127,7 @@
       "build": "common/build",
       "common-def": "common/lib/common-definitions",
       "common-utils": "common/lib/common-utils",
-      "core-interfaces": "common/lib/core-interfaces",
       "protocol-def": "common/lib/protocol-definitions",
-      "driver-def": "common/lib/driver-definitions",
-      "container-def": "common/lib/container-definitions",
       "azure": "azure",
       "server": "server/routerlicious",
       "client": {

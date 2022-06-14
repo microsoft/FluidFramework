@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TelemetryEventPropertyType } from "@fluidframework/common-definitions";
 import {
     bufferToString,
     fromBase64ToUtf8,
@@ -21,7 +22,12 @@ import {
     ITreeEntry,
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryStats, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    ISummaryStats,
+    ISummarizeResult,
+    ISummaryTreeWithStats,
+    ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -93,7 +99,7 @@ function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats):
     }
 }
 
-export function calculateStats(summary: ISummaryTree): ISummaryStats {
+export function calculateStats(summary: SummaryObject): ISummaryStats {
     const stats = mergeStats();
     calculateStatsCore(summary, stats);
     return stats;
@@ -110,6 +116,15 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
 }
 
 export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void {
+    summary.summary.tree[key] = summarizeResult.summary;
+    summary.stats = mergeStats(summary.stats, summarizeResult.stats);
+}
+
+export function addSummarizeResultToSummary(
+    summary: ISummaryTreeWithStats,
+    key: string,
+    summarizeResult: ISummarizeResult,
+): void {
     summary.summary.tree[key] = summarizeResult.summary;
     summary.stats = mergeStats(summary.stats, summarizeResult.stats);
 }
@@ -328,4 +343,29 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
         entries,
         unreferenced: summaryTree.unreferenced,
     };
+}
+
+export class TelemetryContext implements ITelemetryContext {
+    private readonly telemetry = new Map<string, TelemetryEventPropertyType>();
+
+    /**
+     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
+     */
+    set(prefix: string, property: string, value: TelemetryEventPropertyType): void {
+        this.telemetry.set(`${prefix}${property}`, value);
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
+     */
+    get(prefix: string, property: string): TelemetryEventPropertyType {
+        return this.telemetry.get(`${prefix}${property}`);
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.serialize}
+     */
+    serialize(): string {
+        return JSON.stringify(this.telemetry);
+    }
 }
