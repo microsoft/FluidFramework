@@ -39,7 +39,7 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluidframework/azure-client": "^1.0.0",
+    "@fluidframework/azure-client": "^1.1.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "fluid-framework": "^1.0.0"
   },
