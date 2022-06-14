@@ -88,7 +88,7 @@ function fetchBlobs(prefix: string,
             // Use the blobIdMap to assign a number for each unique blob
             // and use it as a prefix for files to avoid case-insensitive fs
             let index = blobIdMap.get(blobId);
-            if (index !== undefined) {
+            if (index === undefined) {
                 index = blobIdMap.size;
                 blobIdMap.set(blobId, index);
             }
