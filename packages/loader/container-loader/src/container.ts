@@ -54,7 +54,6 @@ import {
     isLegacyRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
-    isSystemMessage,
     IProtocolHandler,
     ProtocolOpHandlerWithClientValidation,
 } from "@fluidframework/protocol-base";
