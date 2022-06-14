@@ -274,9 +274,7 @@ export class DirectoryFactory implements IChannelFactory {
 }
 
 /**
- * SharedDirectory provides a hierarchical organization of map-like data structures as SubDirectories.
- * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
- * SubDirectories can be retrieved for use as working directories.
+ * {@inheritDoc ISharedDirectory}
  *
  * @example
  * ```ts
@@ -554,7 +552,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      * @internal
      */
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
