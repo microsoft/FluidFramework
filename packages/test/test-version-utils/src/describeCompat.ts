@@ -42,9 +42,12 @@ function createCompatSuite(
                     );
                     Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
                 });
-                tests.bind(this)((reset: boolean = true) => {
+                tests.bind(this)((reset: boolean = true, syncSummarizer: boolean = false) => {
                     if (reset) {
                         resetAfterEach = true;
+                    }
+                    if (syncSummarizer) {
+                        provider.resetLoaderContainerTracker(syncSummarizer);
                     }
                     return provider;
                 });
@@ -64,7 +67,12 @@ export type DescribeCompatSuite =
     (name: string,
     tests: (
         this: Mocha.Suite,
-        provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void
+        provider: (
+            /** If true, resets all state after each test completes. */
+            resetAfterEach?: boolean,
+            /** If true, synchronizes summarizer client as well when ensureSynchronized() is called. */
+            syncSummarizerClients?: boolean,
+        ) => ITestObjectProvider) => void
     ) => Mocha.Suite | void;
 
 export type DescribeCompat = DescribeCompatSuite & Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
