@@ -670,11 +670,7 @@ function renderTree(
         layoutContext.startingPosStack = startingPosStack;
     } else {
         const previousTileInfo = findTile(flowView.sharedString, requestedPosition, "pg", true);
-        if (previousTileInfo) {
-            layoutContext.startPos = previousTileInfo.pos + 1;
-        } else {
-            layoutContext.startPos = 0;
-        }
+        layoutContext.startPos = previousTileInfo ? previousTileInfo.pos + 1 : 0;
     }
     return renderFlow(layoutContext);
 }
@@ -820,11 +816,7 @@ class Viewport {
 
     public findClosestLineDiv(up = true, y: number) {
         let bestIndex = -1;
-        if (up) {
-            bestIndex = closestNorth(this.lineDivs, y);
-        } else {
-            bestIndex = closestSouth(this.lineDivs, y);
-        }
+        bestIndex = up ? closestNorth(this.lineDivs, y) : closestSouth(this.lineDivs, y);
         if (bestIndex >= 0) {
             return this.lineDivs[bestIndex];
         }
@@ -863,11 +855,7 @@ function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
     const glh = (fontstr: string, lineHeight?: string) => domutils.getLineHeight(fontstr, lineHeight);
 
     function getFont(pg: Paragraph.IParagraphMarker) {
-        if (pg.properties!.header) {
-            return docContext.headerFontstr;
-        } else {
-            return docContext.fontstr;
-        }
+        return pg.properties!.header ? docContext.headerFontstr : docContext.fontstr;
     }
 
     return {
@@ -1065,12 +1053,9 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             }
 
             const lineStart = breakInfo.posInPG + pgStartPos;
-            let lineEnd: number | undefined;
-            if (breakIndex < (len - 1)) {
-                lineEnd = pgBreaks[breakIndex + 1].posInPG + pgStartPos;
-            } else {
-                lineEnd = undefined;
-            }
+            const lineEnd = breakIndex < (len - 1)
+                ? pgBreaks[breakIndex + 1].posInPG + pgStartPos
+                : undefined;
             const lineOK = (layoutContext.deferUntilHeight! <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > layoutContext.requestedPosition!))) {
                 lineDiv = makeLineDiv(new ui.Rectangle(lineX, lineY, lineWidth, lineHeight), lineFontstr);
@@ -1905,11 +1890,9 @@ export class FlowView extends ui.Component {
     private updatePresencePosition(localPresenceInfo: ILocalPresenceInfo) {
         if (localPresenceInfo) {
             localPresenceInfo.xformPos = getLocalRefPos(this.sharedString, localPresenceInfo.localRef!);
-            if (localPresenceInfo.markLocalRef) {
-                localPresenceInfo.markXformPos = getLocalRefPos(this.sharedString, localPresenceInfo.markLocalRef);
-            } else {
-                localPresenceInfo.markXformPos = localPresenceInfo.xformPos;
-            }
+            localPresenceInfo.markXformPos = localPresenceInfo.markLocalRef
+                ? getLocalRefPos(this.sharedString, localPresenceInfo.markLocalRef)
+                : localPresenceInfo.xformPos;
         }
     }
 
@@ -2137,21 +2120,13 @@ export class FlowView extends ui.Component {
                 } else if (targetLineDiv === elm) {
                     if (targetLineDiv.indentWidth !== undefined) {
                         const relX = x - targetLineBounds.left;
-                        if (relX <= targetLineDiv.indentWidth) {
-                            position = targetLineDiv.linePos;
-                        } else {
-                            position = targetLineDiv.lineEnd;
-                        }
+                        position = relX <= targetLineDiv.indentWidth ? targetLineDiv.linePos : targetLineDiv.lineEnd;
                     } else {
                         position = targetLineDiv.lineEnd;
                     }
                 } else {
                     // Content div
-                    if (x <= targetLineBounds.left) {
-                        position = targetLineDiv.linePos;
-                    } else {
-                        position = targetLineDiv.lineEnd;
-                    }
+                    position = x <= targetLineBounds.left ? targetLineDiv.linePos : targetLineDiv.lineEnd;
                 }
             } else if (elm.tagName === "SPAN") {
                 const span = this.getSegSpan(elm as ISegSpan);
@@ -2305,11 +2280,7 @@ export class FlowView extends ui.Component {
                 if (rowDiv.rowView) {
                     const cell = rowDiv.rowView.findClosestCell(x) as ICellView;
                     if (cell) {
-                        if (up) {
-                            targetLineDiv = cell.viewport.lastLineDiv();
-                        } else {
-                            targetLineDiv = cell.viewport.firstLineDiv();
-                        }
+                        targetLineDiv = up ? cell.viewport.lastLineDiv() : cell.viewport.firstLineDiv();
                         rowDiv = targetLineDiv as IRowDiv;
                     } else {
                         break;
@@ -2328,29 +2299,20 @@ export class FlowView extends ui.Component {
             if (rowDiv && rowDiv.rowView) {
                 const rowView = rowDiv.rowView;
                 const tableView = rowView.table!;
-                let targetRow: Table.Row | undefined;
-                if (up) {
-                    targetRow = tableView.findPrecedingRow(rowView);
-                } else {
-                    targetRow = tableView.findNextRow(rowView);
-                }
+                const targetRow: Table.Row | undefined = up
+                    ? tableView.findPrecedingRow(rowView)
+                    : tableView.findNextRow(rowView);
                 if (targetRow) {
                     const cell = targetRow.findClosestCell(x) as ICellView;
                     if (cell) {
-                        if (up) {
-                            targetLineDiv = cell.viewport.lastLineDiv();
-                        } else {
-                            targetLineDiv = cell.viewport.firstLineDiv();
-                        }
+                        targetLineDiv = up ? cell.viewport.lastLineDiv() : cell.viewport.firstLineDiv();
                     }
                     return this.setCursorPosFromPixels(targetLineDiv, x);
                 } else {
                     // Top or bottom row of table
-                    if (up) {
-                        targetLineDiv = rowDiv.previousElementSibling as ILineDiv;
-                    } else {
-                        targetLineDiv = rowDiv.nextElementSibling as ILineDiv;
-                    }
+                    targetLineDiv = up
+                        ? rowDiv.previousElementSibling as ILineDiv
+                        : rowDiv.nextElementSibling as ILineDiv;
                     if (targetLineDiv) {
                         checkInTable();
                         return this.setCursorPosFromPixels(targetLineDiv, x);
@@ -2392,12 +2354,7 @@ export class FlowView extends ui.Component {
                 const elm = document.elementFromPoint(prevX, prevY);
                 if (elm) {
                     const span = elm as ISegSpan;
-                    let segspan: ISegSpan;
-                    if (span.seg) {
-                        segspan = span;
-                    } else {
-                        segspan = span.parentElement as ISegSpan;
-                    }
+                    const segspan: ISegSpan = span.seg ? span : span.parentElement as ISegSpan;
                     if (segspan && segspan.seg) {
                         this.clickSpan(e.clientX, e.clientY, segspan);
                     }
@@ -2442,12 +2399,7 @@ export class FlowView extends ui.Component {
                 freshDown = false;
                 const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
                 const span = elm as ISegSpan;
-                let segspan: ISegSpan;
-                if (span.seg) {
-                    segspan = span;
-                } else {
-                    segspan = span.parentElement as ISegSpan;
-                }
+                const segspan: ISegSpan = span.seg ? span : span.parentElement as ISegSpan;
                 if (segspan && segspan.seg) {
                     this.clickSpan(e.clientX, e.clientY, segspan);
                     if (this.cursor.emptySelection()) {
@@ -2480,11 +2432,7 @@ export class FlowView extends ui.Component {
             if (!this.wheelTicking) {
                 const factor = 20;
                 let inputDelta = e.wheelDelta;
-                if (Math.abs(e.wheelDelta) === 120) {
-                    inputDelta = e.wheelDelta / 6;
-                } else {
-                    inputDelta = e.wheelDelta / 2;
-                }
+                inputDelta = Math.abs(e.wheelDelta) === 120 ? e.wheelDelta / 6 : e.wheelDelta / 2;
                 const delta = factor * inputDelta;
                 // eslint-disable-next-line max-len
                 // console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
@@ -2727,12 +2675,9 @@ export class FlowView extends ui.Component {
             const tableView = tableMarker.table!;
             if (cursorContext.cell && (!cursorContext.cell.empty())) {
                 const cell = cursorContext.cell.top() as Table.ICellMarker;
-                let toCell: Table.Cell | undefined;
-                if (shift) {
-                    toCell = tableView.prevcell(cell.cell!);
-                } else {
-                    toCell = tableView.nextcell(cell.cell!);
-                }
+                const toCell: Table.Cell | undefined = shift
+                    ? tableView.prevcell(cell.cell!)
+                    : tableView.nextcell(cell.cell!);
                 if (toCell) {
                     const position = this.sharedString.getPosition(toCell.marker);
                     this.cursor.pos = position + 1;
