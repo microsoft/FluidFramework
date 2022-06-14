@@ -1259,14 +1259,24 @@ function makeSegSpan(
                 }
                 const textErrorInfo = textSegment.properties[key] as ITextErrorInfo;
                 span.textErrorRun = textErrorRun;
-                if (textErrorInfo.color === "paul") {
-                    span.style.background = underlinePaulStringURL;
-                } else if (textErrorInfo.color === "paulgreen") {
-                    span.style.background = underlinePaulGrammarStringURL;
-                } else if (textErrorInfo.color === "paulgolden") {
-                    span.style.background = underlinePaulGoldStringURL;
-                } else {
-                    span.style.background = underlineStringURL;
+
+                switch (textErrorInfo.color) {
+                    case "paul": {
+                        span.style.background = underlinePaulStringURL;
+                        break;
+                    }
+                    case "paulgreen": {
+                        span.style.background = underlinePaulGrammarStringURL;
+                        break;
+                    }
+                    case "paulgolden": {
+                        span.style.background = underlinePaulGoldStringURL;
+                        break;
+                    }
+                    default: {
+                        span.style.background = underlineStringURL;
+                        break;
+                    }
                 }
             } else {
                 span.style[key] = textSegment.properties[key];
