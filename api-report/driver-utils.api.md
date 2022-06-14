@@ -229,6 +229,9 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)
+export function isLegacyRuntimeMessage(message: ISequencedDocumentMessage): boolean;
+
+// @public (undocumented)
 export function isOnline(): OnlineStatus;
 
 // @public (undocumented)

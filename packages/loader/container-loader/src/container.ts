@@ -36,7 +36,7 @@ import {
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
- } from "@fluidframework/container-utils";
+} from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -52,6 +52,7 @@ import {
     runWithRetry,
     isFluidResolvedUrl,
     isRuntimeMessage,
+    isLegacyRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
     ProtocolOpHandler,
@@ -286,14 +287,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end({ ...props, ...loadOptions.loadMode });
                         resolve(container);
                     },
-                    (error) => {
-                        const err = normalizeError(error);
-                        // Depending where error happens, we can be attempting to connect to web socket
-                        // and continuously retrying (consider offline mode)
-                        // Host has no container to close, so it's prudent to do it here
-                        container.close(err);
-                        onClosed(err);
-                    });
+                        (error) => {
+                            const err = normalizeError(error);
+                            // Depending where error happens, we can be attempting to connect to web socket
+                            // and continuously retrying (consider offline mode)
+                            // Host has no container to close, so it's prudent to do it here
+                            container.close(err);
+                            onClosed(err);
+                        });
             }),
             { start: true, end: true, cancel: "generic" },
         );
@@ -542,7 +543,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     name: typeof name === "string" ? name : undefined,
                 },
                 error);
-            });
+        });
         this._audience = new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
@@ -682,10 +683,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         }
                         break;
                     case connectedEventName:
-                         if (this.connected) {
+                        if (this.connected) {
                             listener(this.clientId);
-                         }
-                         break;
+                        }
+                        break;
                     case disconnectedEventName:
                         if (!this.connected) {
                             listener();
@@ -904,7 +905,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 throw newError;
             }
         },
-        { start: true, end: true, cancel: "generic" });
+            { start: true, end: true, cancel: "generic" });
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -1415,7 +1416,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (key === "code" || key === "code2") {
                     if (!isFluidCodeDetails(value)) {
                         this.mc.logger.sendErrorEvent({
-                                eventName: "CodeProposalNotIFluidCodeDetails",
+                            eventName: "CodeProposalNotIFluidCodeDetails",
                         });
                     }
                     this.processCodeProposal().catch((error) => {
@@ -1721,10 +1722,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const local = this.clientId === message.clientId;
 
-        console.log("message is a ", message.type);
-
         // Forward non system messages to the loaded runtime for processing
-        if (isRuntimeMessage(message)) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (isRuntimeMessage(message) || isLegacyRuntimeMessage(message)) {
             this.context.process(message, local, undefined);
         }
 

@@ -48,7 +48,7 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse, isLegacyRuntimeMessage } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
     GenericError,
@@ -397,7 +397,7 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
-        assert(isRuntimeMessage(message), 0x122 /* "Message to unpack is not proper runtime message" */);
+        assert(isLegacyRuntimeMessage(message), 0x122 /* "Message to unpack is not proper runtime message" */);
     } else {
         // Legacy format, but it's already "unpacked",
         // i.e. message.type is actually ContainerMessageType.
@@ -469,7 +469,7 @@ class ScheduleManagerCore {
      * The only public function in this class - called when we processed an op,
      * to make decision if op processing should be paused or not afer that.
      */
-     public afterOpProcessing(sequenceNumber: number) {
+    public afterOpProcessing(sequenceNumber: number) {
         assert(!this.localPaused, 0x294 /* "can't have op processing paused if we are processing an op" */);
 
         // If the inbound queue is ever empty, nothing to do!
@@ -554,7 +554,7 @@ class ScheduleManagerCore {
         const batchMetadata = metadata?.batch;
 
         // Protocol messages are never part of a runtime batch of messages
-        if (!isRuntimeMessage(message)) {
+        if (!isLegacyRuntimeMessage(message)) {
             // Protocol messages should never show up in the middle of the batch!
             assert(this.currentBatchClientId === undefined, 0x29a /* "System message in the middle of batch!" */);
             assert(batchMetadata === undefined, 0x29b /* "system op in a batch?" */);
@@ -707,11 +707,11 @@ export function getDeviceSpec() {
  */
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements
-        IContainerRuntime,
-        IGarbageCollectionRuntime,
-        IRuntime,
-        ISummarizerRuntime,
-        ISummarizerInternalsProvider {
+    IContainerRuntime,
+    IGarbageCollectionRuntime,
+    IRuntime,
+    ISummarizerRuntime,
+    ISummarizerInternalsProvider {
     public get IContainerRuntime() { return this; }
     public get IFluidRouter() { return this; }
 
@@ -925,7 +925,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private get summaryConfiguration() {
         return {
             // the defaults
-            ... DefaultSummaryConfiguration,
+            ...DefaultSummaryConfiguration,
             // the runtime configuration overrides
             ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
         };
@@ -1061,17 +1061,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
-                    summarizeInternal: SummarizeInternalFn,
-                    getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
-                ) => this.summarizerNode.createChild(
-                    summarizeInternal,
-                    id,
-                    createParam,
-                    undefined,
-                    getGCDataFn,
-                    getBaseGCDetailsFn,
-                ),
+                summarizeInternal: SummarizeInternalFn,
+                getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+                getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+            ) => this.summarizerNode.createChild(
+                summarizeInternal,
+                id,
+                createParam,
+                undefined,
+                getGCDataFn,
+                getBaseGCDetailsFn,
+            ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
             async () => this.garbageCollector.getBaseGCDetails(),
@@ -1599,7 +1599,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.verifyNotClosed();
 
         // If it's not message for runtime, bail out right away.
-        if (!isRuntimeMessage(messageArg)) {
+        if (!isLegacyRuntimeMessage(messageArg)) {
             return;
         }
 
@@ -2374,16 +2374,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
-                ? {
-                    proposalHandle: undefined,
-                    ackHandle: this.context.getLoadedFromVersion()?.id,
-                    referenceSequenceNumber: summaryRefSeqNum,
-                }
-                : {
-                    proposalHandle: lastAck.summaryOp.contents.handle,
-                    ackHandle: lastAck.summaryAck.contents.handle,
-                    referenceSequenceNumber: summaryRefSeqNum,
-                };
+                    ? {
+                        proposalHandle: undefined,
+                        ackHandle: this.context.getLoadedFromVersion()?.id,
+                        referenceSequenceNumber: summaryRefSeqNum,
+                    }
+                    : {
+                        proposalHandle: lastAck.summaryOp.contents.handle,
+                        ackHandle: lastAck.summaryAck.contents.handle,
+                        referenceSequenceNumber: summaryRefSeqNum,
+                    };
 
             let handle: string;
             try {
@@ -2777,20 +2777,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 end: (arg0: {
                     getVersionDuration?: number | undefined;
                     getSnapshotDuration?: number | undefined;
-                }) => void; }) => {
-                    const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
-                    const trace = Trace.start();
+                }) => void;
+            }) => {
+            const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
+            const trace = Trace.start();
 
-                    const versions = await this.storage.getVersions(versionId, 1);
-                    assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
-                    stats.getVersionDuration = trace.trace().duration;
+            const versions = await this.storage.getVersions(versionId, 1);
+            assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
+            stats.getVersionDuration = trace.trace().duration;
 
-                    const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-                    assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
-                    stats.getSnapshotDuration = trace.trace().duration;
+            const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
+            assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+            stats.getSnapshotDuration = trace.trace().duration;
 
-                    perfEvent.end(stats);
-                    return maybeSnapshot;
+            perfEvent.end(stats);
+            return maybeSnapshot;
         });
     }
 
