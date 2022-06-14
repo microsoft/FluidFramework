@@ -205,7 +205,7 @@ async function* saveOps(
         if (files.length === 0) {
             curr = firstAvailableDelta;
         }
-        if (result.done === true) {
+        if (result.done !== true) {
             let messages = result.value;
             yield messages;
             if (messages[messages.length - 1].sequenceNumber < curr) {

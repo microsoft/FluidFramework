@@ -199,7 +199,7 @@ function checkArgs() {
         paramNumSnapshotVersions = Math.max(paramSnapshotVersionIndex + 1, paramNumSnapshotVersions);
     }
 
-    if (paramURL !== undefined) {
+    if (paramURL === undefined) {
         if (paramSaveDir !== undefined) {
             const file = `${paramSaveDir}/info.json`;
             if (fs.existsSync(file)) {
