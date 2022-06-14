@@ -6,7 +6,8 @@ editor: sdeshpande3
 
 ## What is Tinylicious?
 
-**Tinylicious** is a local, in-memory Fluid service intended for prototyping and development purpose. The [TinyliciousClient]({{< relref "tinyliciousclient.md" >}}) is designed to work specifically with the Tinylicious service.
+**Tinylicious** is a local, in-memory Fluid service intended for prototyping and development purpose.
+The `TinyliciousClient` is designed to work specifically with the Tinylicious service.
 
 ## Using Tinylicious locally
 
@@ -71,7 +72,7 @@ To use Tinylicious with ngrok, use the following steps. If you do not have an ng
     ngrok http PORT_NUMBER
     ```
 
-After completing the final step, you will see the *Forwarding URL* in your terminal, which can be used to access Tinylicious. By default,
+After completing the final step, you will see the *Forwarding URL* in your terminal, which can be used to access Tinylicious.
 
 Note that the ngrok URL supports both HTTP and HTTPS tunneling through to your local server.
 
