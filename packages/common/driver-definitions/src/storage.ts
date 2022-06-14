@@ -128,12 +128,12 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: ArrayBufferLike, fetchReason?: string): Promise<ICreateBlobResponse>;
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
 
     /**
      * Reads the object with the given ID, returns content in arrayBufferLike
      */
-    readBlob(id: string, fetchReason?: string): Promise<ArrayBufferLike>;
+    readBlob(id: string): Promise<ArrayBufferLike>;
 
     /**
      * Uploads a summary tree to storage using the given context for reference of previous summary handle.
@@ -141,13 +141,13 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * referencing from the previously acked summary.
      * Returns the uploaded summary handle.
      */
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext, fetchReason?: string): Promise<string>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
      * server has deleted it this call may result in a broken promise.
      */
-    downloadSummary(handle: ISummaryHandle, fetchReason?: string): Promise<ISummaryTree>;
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
