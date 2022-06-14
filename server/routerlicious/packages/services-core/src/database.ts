@@ -153,7 +153,7 @@ export interface IDb {
      * Removes a collection or view from the database.
      * The method also removes any indexes associated with the dropped collection.
      */
-    dropCollection(name: string): Promise<boolean>;
+    dropCollection?(name: string): Promise<boolean>;
 }
 
 export interface IDbFactory {

@@ -258,6 +258,27 @@ class OpPerfTelemetry {
         }
     }
 }
+export interface IPerfSignalReport {
+    /**
+     * Identifier for the signal being submitted in order to
+     * allow collection of data around the roundtrip of signal messages.
+     */
+    signalSequenceNumber: number;
+    /**
+     * Number of signals that were expected but not received.
+     */
+    signalsLost: number;
+
+    /**
+     * Timestamp before submitting the signal we will trace.
+     */
+    signalTimestamp: number;
+
+    /**
+     * Expected Signal Sequence to be received.
+     */
+    trackingSignalSequenceNumber: number | undefined;
+}
 
 export function ReportOpPerfTelemetry(
     clientId: string | undefined,

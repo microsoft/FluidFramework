@@ -79,6 +79,8 @@ const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocket
 
 const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
+const getSubmitSignalThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitSignal`;
+
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     // Trace sampling.
@@ -132,19 +134,53 @@ function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string,
 }
 
 /**
+ * Stores client connectivity time in a Redis list.
+ */
+ async function storeClientConnectivityTime(
+    clientId: string,
+    documentId: string,
+    tenantId: string,
+    connectionTimestamp: number,
+    throttleAndUsageStorageManager: core.IThrottleAndUsageStorageManager) {
+    try {
+        const now = Date.now();
+        const connectionTimeInMinutes = (now - connectionTimestamp) / 60000;
+        const storageId = core.clientConnectivityStorageId;
+        const usageData = {
+            value: connectionTimeInMinutes,
+            tenantId,
+            documentId,
+            clientId,
+            startTime: connectionTimestamp,
+            endTime: now,
+        };
+        await throttleAndUsageStorageManager.setUsageData(storageId, usageData);
+    } catch (error) {
+        Lumberjack.error(`ClientConnectivity data storage failed`, {
+            [CommonProperties.clientId]: clientId,
+            [BaseTelemetryProperties.tenantId]: tenantId,
+            [BaseTelemetryProperties.documentId]: documentId,
+        },
+        error);
+    }
+}
+
+/**
  * @returns ThrottlingError if throttled; undefined if not throttled or no throttler provided.
  */
-function checkThrottle(
+function checkThrottleAndUsage(
     throttler: core.IThrottler | undefined,
     throttleId: string,
     tenantId: string,
-    logger?: core.ILogger): core.ThrottlingError | undefined {
+    logger?: core.ILogger,
+    usageStorageId?: string,
+    usageData?: core.IUsageData): core.ThrottlingError | undefined {
     if (!throttler) {
         return;
     }
 
     try {
-        throttler.incrementCount(throttleId);
+        throttler.incrementCount(throttleId, 1, usageStorageId, usageData);
     } catch (error) {
         if (error instanceof core.ThrottlingError) {
             return error;
@@ -176,8 +212,12 @@ export function configureWebSocketServices(
     maxNumberOfClientsPerDocument: number = 1000000,
     maxTokenLifetimeSec: number = 60 * 60,
     isTokenExpiryEnabled: boolean = false,
+    isClientConnectivityCountingEnabled: boolean = false,
+    isSignalUsageCountingEnabled: boolean = false,
     connectThrottler?: core.IThrottler,
-    submitOpThrottler?: core.IThrottler) {
+    submitOpThrottler?: core.IThrottler,
+    submitSignalThrottler?: core.IThrottler,
+    throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
@@ -185,6 +225,8 @@ export function configureWebSocketServices(
         const roomMap = new Map<string, IRoom>();
         // Map from client Ids to scope.
         const scopeMap = new Map<string, string[]>();
+        // Map from client Ids to connection time.
+        const connectionTimeMap = new Map<string, number>();
 
         // Timer to check token expiry for this socket connection
         let expirationTimer: NodeJS.Timer | undefined;
@@ -214,7 +256,7 @@ export function configureWebSocketServices(
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-            const throttleError = checkThrottle(
+            const throttleError = checkThrottleAndUsage(
                 connectThrottler,
                 getSocketConnectThrottleId(message.tenantId),
                 message.tenantId,
@@ -268,9 +310,13 @@ export function configureWebSocketServices(
             messageClient.user = claims.user;
             messageClient.scopes = claims.scopes;
 
-            // Do not give SummaryWrite scope to clients that are not summarizers
+            // 1. Do not give SummaryWrite scope to clients that are not summarizers.
+            // 2. Store connection timestamp for all clients but the summarizer.
+            // Connection timestamp is used (inside socket disconnect event) to
+            // calculate the client connection time (i.e. for billing).
             if (!isSummarizer) {
                 messageClient.scopes = claims.scopes.filter((scope) => scope !== ScopeType.SummaryWrite);
+                connectionTimeMap.set(clientId, connectedTimestamp);
             }
 
             // back-compat: remove cast to any once new definition of IClient comes through.
@@ -463,7 +509,7 @@ export function configureWebSocketServices(
 
                     socket.emit("nack", "", [nackMessage]);
                 } else {
-                    const throttleError = checkThrottle(
+                    const throttleError = checkThrottleAndUsage(
                         submitOpThrottler,
                         getSubmitOpThrottleId(clientId, connection.tenantId),
                         connection.tenantId,
@@ -517,6 +563,28 @@ export function configureWebSocketServices(
                     const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                     socket.emit("nack", "", [nackMessage]);
                 } else {
+                    const signalUsageData: core.IUsageData = {
+                        value: 0,
+                        tenantId: room.tenantId,
+                        documentId: room.documentId,
+                        clientId,
+                    };
+                    const throttleError = checkThrottleAndUsage(
+                        submitSignalThrottler,
+                        getSubmitSignalThrottleId(clientId, room.tenantId),
+                        room.tenantId,
+                        logger,
+                        isSignalUsageCountingEnabled ? core.signalUsageStorageId : undefined,
+                        isSignalUsageCountingEnabled ? signalUsageData : undefined);
+                    if (throttleError) {
+                        const nackMessage = createNackMessage(
+                            throttleError.code,
+                            NackErrorType.ThrottlingError,
+                            throttleError.message,
+                            throttleError.retryAfter);
+                        socket.emit("nack", "", [nackMessage]);
+                        return;
+                    }
                     contentBatches.forEach((contentBatche) => {
                         const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
 
@@ -535,6 +603,7 @@ export function configureWebSocketServices(
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("disconnect", async () => {
             clearExpirationTimer();
+            const removeAndStoreP: Promise<void>[] = [];
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
@@ -545,9 +614,20 @@ export function configureWebSocketServices(
                 );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
+                if (isClientConnectivityCountingEnabled && throttleAndUsageStorageManager) {
+                    const connectionTimestamp = connectionTimeMap.get(clientId);
+                    if (connectionTimestamp) {
+                        removeAndStoreP.push(storeClientConnectivityTime(
+                            clientId,
+                            connection.documentId,
+                            connection.tenantId,
+                            connectionTimestamp,
+                            throttleAndUsageStorageManager,
+                        ));
+                    }
+                }
             }
             // Send notification messages for all client IDs in the room map
-            const removeP: Promise<void>[] = [];
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
@@ -555,10 +635,10 @@ export function configureWebSocketServices(
                     `Disconnect of ${clientId} from room`,
                     getLumberBaseProperties(room.documentId, room.tenantId),
                 );
-                removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
+                removeAndStoreP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
                 socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
             }
-            await Promise.all(removeP);
+            await Promise.all(removeAndStoreP);
         });
     });
 }
