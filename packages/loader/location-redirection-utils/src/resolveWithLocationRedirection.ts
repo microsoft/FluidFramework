@@ -29,10 +29,10 @@ export async function resolveWithDomainChangeHandling<T>(
     urlResolver: IUrlResolver,
 ): Promise<T> {
     let req: IRequest = request;
-    for(;;) {
+    for (;;) {
         try {
             return await api(req);
-        } catch(error: any) {
+        } catch (error: any) {
             if (!isDomainMoveError(error)) {
                 throw error;
             }
