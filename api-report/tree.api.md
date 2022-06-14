@@ -4,9 +4,70 @@
 
 ```ts
 
-// @public (undocumented)
-export const _ = "Force index.d.ts generation from ApiExtractor.";
+import { Serializable } from '@fluidframework/datastore-definitions';
 
+// @public
+export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
+
+// @public
+export abstract class BrandedType<ValueType, Name extends string> {
+    protected readonly _type_brand: Name;
+    // (undocumented)
+    protected _typeCheck?: Invariant<ValueType>;
+}
+
+// @public
+export interface Contravariant<T> {
+    // (undocumented)
+    _removeCovariance?: (_: T) => void;
+}
+
+// @public
+export interface Covariant<T> {
+    // (undocumented)
+    _removeContravariance?: T;
+}
+
+// Warning: (ae-forgotten-export) The symbol "ExtractFromOpaque" needs to be exported by the entry point index.d.ts
+//
+// @public
+export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
+
+// @public (undocumented)
+export type FieldKey = Brand<number | string, "FieldKey">;
+
+// @public
+export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
+}
+
+// @public
+export interface ITreeCursor {
+    down(key: FieldKey, index: number): TreeNavigationResult;
+    // (undocumented)
+    keys: Iterable<FieldKey>;
+    // (undocumented)
+    length(key: FieldKey): number;
+    readonly type: TreeType;
+    up(): TreeNavigationResult;
+    readonly value: undefined | Serializable;
+}
+
+// @public
+export interface MakeNominal {
+}
+
+// @public
+export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
+
+// @public (undocumented)
+export const enum TreeNavigationResult {
+    NotFound = -1,
+    Ok = 1,
+    Pending = 0
+}
+
+// @public (undocumented)
+export type TreeType = Brand<number | string, "TreeType">;
 
 // (No @packageDocumentation comment for this package)
 

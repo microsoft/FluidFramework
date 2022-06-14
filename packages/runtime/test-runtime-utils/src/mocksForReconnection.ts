@@ -5,6 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
 import {
     IMockContainerRuntimePendingMessage,
     MockContainerRuntime,
@@ -16,6 +17,11 @@ import {
  * Specalized implementation of MockContainerRuntime for testing ops during reconnection.
  */
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
+    /**
+     * Contains messages from other clients that were sequenced while this runtime was marked as disconnected.
+     */
+    private readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -28,20 +34,26 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         this._connected = connected;
 
         if (connected) {
+            for (const remoteMessage of this.pendingRemoteMessages) {
+                this.process(remoteMessage);
+            }
+            this.pendingRemoteMessages.length = 0;
             this.clientSequenceNumber = 0;
             // We should get a new clientId on reconnection.
             this.clientId = uuid();
             // Update the clientId in FluidDataStoreRuntime.
             this.dataStoreRuntime.clientId = this.clientId;
+            this.factory.quorum.addMember(this.clientId, {});
             // On reconnection, ask the DDSes to resubmit pending messages.
             this.reSubmitMessages();
         } else {
             const factory = this.factory as MockContainerRuntimeFactoryForReconnection;
             // On disconnection, clear any outstanding messages for this client because it will be resent.
             factory.clearOutstandingClientMessages(this.clientId);
+            this.factory.quorum.removeMember(this.clientId);
         }
 
-        // Let the DDSes know that the connection state changed.s
+        // Let the DDSes know that the connection state changed.
         this.deltaConnections.forEach((dc) => {
             dc.setConnectionState(this.connected);
         });
@@ -53,6 +65,14 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         dataStoreRuntime: MockFluidDataStoreRuntime,
         factory: MockContainerRuntimeFactoryForReconnection) {
         super(dataStoreRuntime, factory);
+    }
+
+    public process(message: ISequencedDocumentMessage) {
+        if (this.connected) {
+            super.process(message);
+        } else {
+            this.pendingRemoteMessages.push(message);
+        }
     }
 
     public submit(messageContent: any, localOpMetadata: unknown) {
@@ -68,7 +88,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     private reSubmitMessages() {
         let messageCount = this.pendingMessages.length;
         while (messageCount > 0) {
-            const pendingMessage: IMockContainerRuntimePendingMessage = this.pendingMessages.shift();
+            const pendingMessage: IMockContainerRuntimePendingMessage | undefined = this.pendingMessages.shift();
+            assert(pendingMessage !== undefined, "this is impossible due to the above length check");
             this.deltaConnections.forEach((dc) => {
                 dc.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
             });

@@ -5,7 +5,11 @@
 
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    IGarbageCollectionData,
+    ISummaryTreeWithStats,
+    ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -20,17 +24,43 @@ export interface IChannel extends IFluidLoadable {
     readonly attributes: IChannelAttributes;
 
     /**
-     * Generates summary of the channel synchronously.
-     * @returns A tree representing the summary of the channel.
+     * Generates summary of the channel synchronously. It is called when an `attach message`
+     * for a local channel is generated. In other words, when the channel is being attached
+     * to make it visible to other clients.
+     * Note: Since Attach Summary is generated for local channels when making them visible to
+     * remote clients, they don't have any previous summaries to compare against. For this reason,
+     * The attach summary cannot contain summary handles (paths to sub-trees or blobs).
+     * It can, however, contain ISummaryAttachment (handles to blobs uploaded async via the blob manager).
+     * @param fullTree - flag indicating whether the attempt should generate a full
+     * summary tree without any handles for unchanged subtrees.
+     * @param trackState - optimization for tracking state of objects across summaries. If the state
+     * of an object did not change since last successful summary, an ISummaryHandle can be used
+     * instead of re-summarizing it. If this is false, the expectation is that you should never
+     * send an ISummaryHandle since you are not expected to track state.
+     * Note: The goal is to remove the trackState and automatically decided whether the
+     * handles will be used or not: https://github.com/microsoft/FluidFramework/issues/10455
+     * @returns A summary capturing the current state of the channel.
      */
-    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    getAttachSummary(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
 
     /**
      * Generates summary of the channel asynchronously.
      * This should not be called where the channel can be modified while summarization is in progress.
-     * @returns A tree representing the summary of the channel.
+     * @param fullTree - flag indicating whether the attempt should generate a full
+     * summary tree without any handles for unchanged subtrees. It is only set to true when generating
+     * a summary from the entire container.
+     * @param trackState - This tells whether we should track state from this summary.
+     * @returns A summary capturing the current state of the channel.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats>;
 
     /**
      * Checks if the channel is attached to storage.
@@ -90,6 +120,13 @@ export interface IDeltaHandler {
      * when the op is ACKed or resubmitted, respectively
      */
     applyStashedOp(message: any): unknown;
+
+    /**
+     * Revert a local op.
+     * @param message - The original message that was submitted.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    rollback?(message: any, localOpMetadata: unknown): void;
 }
 
 /**

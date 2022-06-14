@@ -190,6 +190,7 @@ export class OdspTestDriver implements ITestDriver {
             options,
             tenantName,
             userIndex,
+            endpointName,
         );
     }
 
@@ -216,6 +217,7 @@ export class OdspTestDriver implements ITestDriver {
         options?: HostStoragePolicy,
         tenantName?: string,
         userIndex?: number,
+        endpointName?: string,
     ) {
         const tokenConfig: TokenConfig = {
             ...loginConfig,
@@ -244,6 +246,7 @@ export class OdspTestDriver implements ITestDriver {
             api,
             tenantName,
             userIndex,
+            endpointName,
         );
     }
 
@@ -290,6 +293,7 @@ export class OdspTestDriver implements ITestDriver {
         private readonly api = OdspDriverApi,
         public readonly tenantName?: string,
         public readonly userIndex?: number,
+        public readonly endpointName?: string,
     ) {
 
     }

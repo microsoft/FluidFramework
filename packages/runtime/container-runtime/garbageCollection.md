@@ -24,6 +24,12 @@ In this phase, the GC algorithm identifies all Fluid objects that are unreferenc
 - It finds the handles stored in DDSs from #2 and marks the objects corresponding to the handles as referenced and so on until it has scanned all objects.
 - All the objects in the system that are not marked as referenced in the above steps are marked as unreferenced.
 
+Mark phase is enabled by default for a container. It is enabled during creation of the container runtime and remains enabled throughout its lifetime. Basically, this setting is persisted in the summary and cannot be changed.
+
+If you wish to disable this, set the `gcAllowed` option to `false` in `IGCRuntimeOptions`. These options are under `IContainerRuntimeOptions` and are passed to the container runtime during its creation. Note that this will disable GC permanently (including the sweep phase) for the container during its lifetime.
+
+See `IGCRuntimeOptions` in [containerRuntime.ts](./src/containerRuntime.ts) for more options to control GC behavior.
+
 ### Sweep phase
 In this phase, the GC algorithm identifies all Fluid objects that have been unreferenced for a specific amount of time (`deleteTimeout`) and deletes them:
 - For the objects marked as unreferenced in the mark phase, a timer is started which runs for `deleteTimeout` amount of time.
@@ -31,3 +37,5 @@ In this phase, the GC algorithm identifies all Fluid objects that have been unre
 - If an object becomes referenced before the timer expires, the timer is cleared, and the object's unreferenced state is removed.
 - When sweep runs, it finds all `expired` objects and deletes them.
 - Deleted objects are removed from the Fluid file and cannot be brought back (revived).
+
+GC sweep phase has not been enabled yet.
