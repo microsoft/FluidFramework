@@ -706,7 +706,7 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
-        it("delete ", async () => {
+        it("propagates delete op to second runtime", async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Connect the first SharedString.
