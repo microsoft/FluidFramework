@@ -252,14 +252,18 @@ implements ISerializableInterval {
             switch (event) {
                 case "beforePositionChange":
                     if (super.listenerCount(event) === 0) {
-                        this.start.on("beforeSlide", beforeSlide);
-                        this.end.on("beforeSlide", beforeSlide);
+                        const startCb = this.start.callbacks ??= {};
+                        startCb.beforeSlide = beforeSlide;
+                        const endCb = this.end.callbacks ??= {};
+                        endCb.beforeSlide = beforeSlide;
                     }
                     break;
                 case "afterPositionChange":
                     if (super.listenerCount(event) === 0) {
-                        this.start.on("afterSlide", afterSlide);
-                        this.end.on("afterSlide", afterSlide);
+                        const startCb = this.start.callbacks ??= {};
+                        startCb.afterSlide = afterSlide;
+                        const endCb = this.end.callbacks ??= {};
+                        endCb.afterSlide = afterSlide;
                     }
                     break;
                 default:
@@ -269,14 +273,22 @@ implements ISerializableInterval {
             switch (event) {
                 case "beforePositionChange":
                     if (super.listenerCount(event) === 0) {
-                        this.start.off("beforeSlide", beforeSlide);
-                        this.end.off("beforeSlide", beforeSlide);
+                        if (this.start.callbacks) {
+                            this.start.callbacks.beforeSlide = undefined;
+                        }
+                        if (this.end.callbacks) {
+                            this.end.callbacks.beforeSlide = undefined;
+                        }
                     }
                     break;
                 case "afterPositionChange":
                     if (super.listenerCount(event) === 0) {
-                        this.start.off("afterSlide", afterSlide);
-                        this.end.off("afterSlide", afterSlide);
+                        if (this.start.callbacks) {
+                            this.start.callbacks.afterSlide = undefined;
+                        }
+                        if (this.end.callbacks) {
+                            this.end.callbacks.afterSlide = undefined;
+                        }
                     }
                     break;
                 default:
