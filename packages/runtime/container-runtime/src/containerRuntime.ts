@@ -219,13 +219,14 @@ export interface ISummaryBaseConfiguration {
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
     state: "enabled";
     /**
-     * Defines the maximum allowed time in between summarizations.
      * @deprecated - please move all implementation to minIdleTime and maxIdleTime
      */
     idleTime: number;
     /**
-     * Defines the maximum allowed time, since the last received Ack,  before running the summary
+     * Defines the maximum allowed time, since the last received Ack, before running the summary
      * with reason maxTime.
+     * For example, say we receive ops one by one just before the idle time is triggered.
+     * In this case, we still want to run a summary since it's been a while since the last summary.
      */
     maxTime: number;
     /**
@@ -239,13 +240,19 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      */
     minOpsForLastSummaryAttempt: number;
     /**
-     * Defines the minimum for the allowed time in between summarizations.
+     * Defines the lower boundary for the allowed time in between summarizations.
      * Pairs with maxIdleTime to form a range.
+     * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
+     * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
+     * linearly depending on the number of ops we receive.
      */
     minIdleTime: number;
     /**
-     * Defines the maximum for the allowed time in between summarizations.
+     * Defines the upper boundary for the allowed time in between summarizations.
      * Pairs with minIdleTime to form a range.
+     * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
+     * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
+     * linearly depending on the number of ops we receive.
      */
     maxIdleTime: number;
     /**
