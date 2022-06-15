@@ -111,7 +111,7 @@ describeLoaderCompat("FlowDocument", (getTestObjectProvider) => {
                 });
             });
         });
-        describe("LocalReference after last position", () => {
+        describe("LocalReferencePosition after last position", () => {
             it("can create", () => {
                 const localRef = doc.addLocalRef(doc.length);
                 assert.strictEqual(doc.localRefToPosition(localRef), doc.length);

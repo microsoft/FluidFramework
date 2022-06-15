@@ -32,8 +32,8 @@ const assertIntervals = (
         `findOverlappingIntervals() must return the expected number of intervals`);
 
     const actualPos = actual.map((interval) => {
-        const start = sharedString.localRefToPos(interval.start);
-        const end = sharedString.localRefToPos(interval.end);
+        const start = sharedString.localReferencePositionToPosition(interval.start);
+        const end = sharedString.localReferencePositionToPosition(interval.end);
         return { start, end };
     });
     assert.deepEqual(actualPos, expected, "intervals are not as expected");
@@ -44,8 +44,8 @@ function assertIntervalEquals(
     interval: SequenceInterval,
     endpoints: { start: number; end: number; },
 ): void {
-    assert.equal(string.localRefToPos(interval.start), endpoints.start, "mismatched start");
-    assert.equal(string.localRefToPos(interval.end), endpoints.end, "mismatched end");
+    assert.equal(string.localReferencePositionToPosition(interval.start), endpoints.start, "mismatched start");
+    assert.equal(string.localReferencePositionToPosition(interval.end), endpoints.end, "mismatched end");
 }
 
 describe("SharedString interval collections", () => {
@@ -668,8 +668,8 @@ describe("SharedString interval collections", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             const endpointsForCollection1: { start: number; end: number; }[] = [];
             const sequenceIntervalToEndpoints = (interval: SequenceInterval): { start: number; end: number; } => ({
-                start: sharedString.localRefToPos(interval.start),
-                end: sharedString.localRefToPos(interval.end),
+                start: sharedString.localReferencePositionToPosition(interval.start),
+                end: sharedString.localReferencePositionToPosition(interval.end),
             });
 
             collection1.on("addInterval", (interval) => {
