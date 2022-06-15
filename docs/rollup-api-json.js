@@ -15,7 +15,6 @@
  * create copies.
  */
 
-
 const colors = require("colors");
 const cpy = require("cpy");
 const findValue = require("deepdash/findValueDeep");
