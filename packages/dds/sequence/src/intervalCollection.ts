@@ -11,6 +11,7 @@ import { UsageError } from "@fluidframework/container-utils";
 import {
     addProperties,
     Client,
+    compareReferencePositions,
     ConflictAction,
     createMap,
     ICombiningOp,
@@ -19,11 +20,12 @@ import {
     IntervalNode,
     IntervalTree,
     ISegment,
-    LocalReference,
     MergeTreeDeltaType,
+    minReferencePosition,
     PropertiesManager,
     PropertySet,
     RedBlackTree,
+    LocalReferencePosition,
     ReferenceType,
     refTypeIncludesFlag,
     reservedRangeLabelsKey,
@@ -225,8 +227,9 @@ implements ISerializableInterval {
     public propertyManager: PropertiesManager;
 
     constructor(
-        public start: LocalReference,
-        public end: LocalReference,
+        public readonly client: Client,
+        public start: LocalReferencePosition,
+        public end: LocalReferencePosition,
         public intervalType: IntervalType,
         props?: PropertySet) {
         super();
@@ -252,14 +255,14 @@ implements ISerializableInterval {
             switch (event) {
                 case "beforePositionChange":
                     if (super.listenerCount(event) === 0) {
-                        this.start.on("beforeSlide", beforeSlide);
-                        this.end.on("beforeSlide", beforeSlide);
+                        this.start.callbacks.beforeSlide = beforeSlide;
+                        this.end.callbacks.beforeSlide = beforeSlide;
                     }
                     break;
                 case "afterPositionChange":
                     if (super.listenerCount(event) === 0) {
-                        this.start.on("afterSlide", afterSlide);
-                        this.end.on("afterSlide", afterSlide);
+                        this.start.callbacks.afterSlide = afterSlide;
+                        this.end.callbacks.afterSlide = afterSlide;
                     }
                     break;
                 default:
@@ -269,14 +272,14 @@ implements ISerializableInterval {
             switch (event) {
                 case "beforePositionChange":
                     if (super.listenerCount(event) === 0) {
-                        this.start.off("beforeSlide", beforeSlide);
-                        this.end.off("beforeSlide", beforeSlide);
+                        this.start.callbacks.beforeSlide = undefined;
+                        this.end.callbacks.beforeSlide = undefined;
                     }
                     break;
                 case "afterPositionChange":
                     if (super.listenerCount(event) === 0) {
-                        this.start.off("afterSlide", afterSlide);
-                        this.end.off("afterSlide", afterSlide);
+                        this.start.callbacks.afterSlide = undefined;
+                        this.end.callbacks.afterSlide = undefined;
                     }
                     break;
                 default:
@@ -286,8 +289,8 @@ implements ISerializableInterval {
     }
 
     public serialize(client: Client) {
-        const startPosition = this.start.toPosition();
-        const endPosition = this.end.toPosition();
+        const startPosition = client.localReferencePositionToPosition(this.start);
+        const endPosition = client.localReferencePositionToPosition(this.end);
         const serializedInterval: ISerializedInterval = {
             end: endPosition,
             intervalType: this.intervalType,
@@ -301,7 +304,7 @@ implements ISerializableInterval {
     }
 
     public clone() {
-        return new SequenceInterval(this.start, this.end, this.intervalType, this.properties);
+        return new SequenceInterval(this.client, this.start, this.end, this.intervalType, this.properties);
     }
 
     public compare(b: SequenceInterval) {
@@ -327,16 +330,16 @@ implements ISerializableInterval {
     }
 
     public compareStart(b: SequenceInterval) {
-        return this.start.compare(b.start);
+        return compareReferencePositions(this.start, b.start);
     }
 
     public compareEnd(b: SequenceInterval) {
-        return this.end.compare(b.end);
+        return compareReferencePositions(this.end, b.end);
     }
 
     public overlaps(b: SequenceInterval) {
-        const result = (this.start.compare(b.end) <= 0) &&
-            (this.end.compare(b.start) >= 0);
+        const result = (compareReferencePositions(this.start, b.end) <= 0) &&
+            (compareReferencePositions(this.end, b.start) >= 0);
         return result;
     }
 
@@ -349,8 +352,8 @@ implements ISerializableInterval {
     }
 
     public union(b: SequenceInterval) {
-        return new SequenceInterval(this.start.min(b.start),
-            this.end.max(b.end), this.intervalType);
+        return new SequenceInterval(this.client, minReferencePosition(this.start, b.start),
+            minReferencePosition(this.end, b.end), this.intervalType);
     }
 
     public addProperties(
@@ -369,17 +372,17 @@ implements ISerializableInterval {
     }
 
     public overlapsPos(bstart: number, bend: number) {
-        const startPos = this.start.toPosition();
-        const endPos = this.start.toPosition();
+        const startPos = this.client.localReferencePositionToPosition(this.start);
+        const endPos = this.client.localReferencePositionToPosition(this.start);
         return (endPos > bstart) && (startPos < bend);
     }
 
     public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
-        const startPos = start ?? this.start.toPosition();
-        const endPos = end ?? this.end.toPosition();
+        const startPos = start ?? this.client.localReferencePositionToPosition(this.start);
+        const endPos = end ?? this.client.localReferencePositionToPosition(this.end);
 
         const newInterval =
-            createSequenceInterval(label, startPos, endPos, this.start.getClient(), this.intervalType, op);
+            createSequenceInterval(label, startPos, endPos, this.client, this.intervalType, op);
         if (this.properties) {
             newInterval.addProperties(this.properties);
         }
@@ -391,15 +394,14 @@ function createPositionReferenceFromSegoff(
     client: Client,
     segoff: { segment: ISegment | undefined; offset: number | undefined; },
     refType: ReferenceType,
-    op?: ISequencedDocumentMessage): LocalReference {
+    op?: ISequencedDocumentMessage): LocalReferencePosition {
     if (segoff.segment) {
         const ref = client.createLocalReferencePosition(segoff.segment, segoff.offset, refType, undefined);
-        return ref as LocalReference;
+        return ref;
     } else {
         if (!op && !refTypeIncludesFlag(refType, ReferenceType.Transient)) {
             throw new UsageError("Non-transient references need segment");
         }
-        return new LocalReference(client, undefined, 0, refType);
     }
 }
 
@@ -407,7 +409,7 @@ function createPositionReference(
     client: Client,
     pos: number,
     refType: ReferenceType,
-    op?: ISequencedDocumentMessage): LocalReference {
+    op?: ISequencedDocumentMessage): LocalReferencePosition {
     let segoff;
     if (op) {
         assert((refType & ReferenceType.SlideOnRemove) !== 0, 0x2f5 /* op create references must be SlideOnRemove */);
@@ -451,15 +453,13 @@ function createSequenceInterval(
 
     const startLref = createPositionReference(client, start, beginRefType, op);
     const endLref = createPositionReference(client, end, endRefType, op);
-    startLref.pairedRef = endLref;
-    endLref.pairedRef = startLref;
     const rangeProp = {
         [reservedRangeLabelsKey]: [label],
     };
     startLref.addProperties(rangeProp);
     endLref.addProperties(rangeProp);
 
-    const ival = new SequenceInterval(startLref, endLref, intervalType, rangeProp);
+    const ival = new SequenceInterval(client, startLref, endLref, intervalType, rangeProp);
     return ival;
 }
 
@@ -755,7 +755,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 }
 
-const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number => a.end.compare(b.end);
+const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
+    compareReferencePositions(a.end, b.end);
 
 class SequenceIntervalCollectionFactory
     implements IValueFactory<IntervalCollection<SequenceInterval>> {
@@ -1299,15 +1300,15 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return rebased;
     }
 
-    private getSlideToSegment(lref: LocalReference) {
-        const segoff = { segment: lref.segment, offset: lref.offset };
+    private getSlideToSegment(lref: LocalReferencePosition) {
+        const segoff = { segment: lref.getSegment(), offset: lref.getOffset() };
         const newSegoff = this.client.getSlideToSegment(segoff);
         const value: { segment: ISegment | undefined; offset: number | undefined; } | undefined
             = (segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset) ? undefined : newSegoff;
         return value;
     }
 
-    private setSlideOnRemove(lref: LocalReference) {
+    private setSlideOnRemove(lref: LocalReferencePosition) {
         let refType = lref.refType;
         refType = refType & ~ReferenceType.StayOnRemove;
         refType = refType | ReferenceType.SlideOnRemove;
@@ -1346,7 +1347,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (needsStartUpdate || needsEndUpdate) {
             // In this case, where we change the start or end of an interval,
             // it is necessary to remove and re-add the interval listeners.
-            // This ensures that the correct listeners are added to the ReferencePosition.
+            // This ensures that the correct listeners are added to the LocalReferencePosition.
             this.localCollection.removeExistingInterval(interval);
 
             if (needsStartUpdate) {

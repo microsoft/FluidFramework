@@ -73,31 +73,6 @@ export interface ReferencePosition {
     getOffset(): number;
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
     isLeaf(): boolean;
-
-    /**
-     * @deprecated - use refHasTileLabels
-     */
-    hasTileLabels(): boolean;
-    /**
-     * @deprecated - use refHasRangeLabels
-     */
-    hasRangeLabels(): boolean;
-    /**
-     * @deprecated - use refHasTileLabel
-     */
-    hasTileLabel(label: string): boolean;
-    /**
-     * @deprecated - use refHasRangeLabel
-     */
-    hasRangeLabel(label: string): boolean;
-    /**
-     * @deprecated - use refGetTileLabels
-     */
-    getTileLabels(): string[] | undefined;
-    /**
-     * @deprecated - use refGetRangeLabels
-     */
-    getRangeLabels(): string[] | undefined;
 }
 
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;

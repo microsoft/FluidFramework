@@ -11,12 +11,15 @@ import {
     createRemoveRangeOp,
     IMergeTreeRemoveMsg,
     ISegment,
-    LocalReference,
+    LocalReferencePosition,
     Marker,
     MergeTreeDeltaType,
     PropertySet,
     ReferencePosition,
     ReferenceType,
+    refGetRangeLabels,
+    refGetTileLabels,
+    refHasRangeLabels,
     reservedMarkerIdKey,
     reservedRangeLabelsKey,
     reservedTileLabelsKey,
@@ -44,7 +47,7 @@ export const enum DocSegmentKind {
     beginTags = "<t>",
     endTags = "</>",
 
-    // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+    // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
     endOfText = "eot",
 }
 
@@ -58,7 +61,7 @@ export const enum DocTile {
 }
 
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
-    // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+    // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
     if (segment === endOfTextSegment) {
         return DocSegmentKind.endOfText;
     }
@@ -71,8 +74,8 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
             case ReferenceType.Tile:
             case ReferenceType.Tile | ReferenceType.NestBegin:
 
-                const kind = (segment.hasRangeLabels() ? segment.getRangeLabels()[0] :
-                    segment.getTileLabels()[0]) as DocSegmentKind;
+                const kind = (refHasRangeLabels(segment) ? refGetRangeLabels(segment)[0] :
+                    refGetTileLabels(segment)[0]) as DocSegmentKind;
 
                 assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
 
@@ -83,7 +86,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
                 // Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
                 // will not close the range.)
-                assert(segment.getRangeLabels()[0] === DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
+                assert(refGetRangeLabels(segment)[0] === DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
                 return DocSegmentKind.endTags;
         }
     }
@@ -111,7 +114,7 @@ const accumAsLeafAction = (
 ) => (accum)(position, segment, startOffset, endOffset);
 
 // TODO: We need the ability to create LocalReferences to the end of the document. Our
-//       workaround creates a LocalReference with an 'undefined' segment that is never
+//       workaround creates a LocalReferencePosition with an 'undefined' segment that is never
 //       inserted into the MergeTree.  We then special case this segment in localRefToPosition,
 //       addLocalRef, removeLocalRef, etc.
 //
@@ -182,47 +185,46 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public getSegmentAndOffset(position: number) {
-        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         return position === this.length
             ? { segment: endOfTextSegment, offset: 0 }
             : this.sharedString.getContainingSegment(position);
     }
 
     public getPosition(segment: ISegment) {
-        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         return segment === endOfTextSegment
             ? this.length
             : this.sharedString.getPosition(segment);
     }
 
     public addLocalRef(position: number) {
-        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         if (position >= this.length) {
-            return this.sharedString.createPositionReference(endOfTextSegment, 0, ReferenceType.Transient);
+            return this.sharedString.createLocalReferencePosition(endOfTextSegment, 0, ReferenceType.Transient, undefined);
         }
 
         const { segment, offset } = this.getSegmentAndOffset(position);
-        const localRef = this.sharedString.createPositionReference(segment, offset, ReferenceType.SlideOnRemove);
+        const localRef = this.sharedString.createLocalReferencePosition(segment, offset, ReferenceType.SlideOnRemove, undefined);
 
         return localRef;
     }
 
-    public removeLocalRef(localRef: LocalReference) {
+    public removeLocalRef(localRef: LocalReferencePosition) {
         const segment = localRef.getSegment();
 
-        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         if (segment !== endOfTextSegment) {
-            this.sharedString.removeLocalReference(localRef);
+            this.sharedString.removeLocalReferencePosition(localRef);
         }
     }
 
-    public localRefToPosition(localRef: LocalReference) {
-        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+    public localRefToPosition(localRef: LocalReferencePosition) {
+        // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         if (localRef.getSegment() === endOfTextSegment) {
             return this.length;
         }
-
-        return localRef.toPosition();
+        return this.sharedString.localReferencePositionToPosition(localRef);
     }
 
     public insertText(position: number, text: string) {
