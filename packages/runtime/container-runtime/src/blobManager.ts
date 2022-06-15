@@ -65,9 +65,6 @@ export interface IBlobManagerLoadInfo {
 export type IBlobManagerRuntime =
     Pick<IContainerRuntime, "attachState" | "connected" | "logger"> & TypedEventEmitter<IContainerRuntimeEvents>;
 
-// OnlinePendingUpload -> OnlinePendingOp -> (fin)
-// OnlinePendingUpload -> (disconnect) -> OfflinePendingUpload -> OfflinePendingOp -> (fin)
-// OfflinePendingUpload -> OfflinePendingOp -> (fin)
 // Note that while offline we "submit" an op before uploading the blob, but we always
 // expect blobs to be uploaded before we actually see the op round-trip
 enum PendingBlobStatus {
@@ -79,8 +76,10 @@ enum PendingBlobStatus {
 
 interface PendingBlob {
     blob: ArrayBufferLike;
-    storageId?: string;
     status: PendingBlobStatus;
+    storageId?: string;
+    // resolved when the online flow is complete (i.e. BlobAttach op round-tripped) or when we
+    // disonnect and transition everything to offline flow
     deferred: Deferred<string>;
 }
 
@@ -150,10 +149,12 @@ export class BlobManager {
     private onDisconnected() {
         // switch all blobs that haven't been uploaded yet to offline (local ID) flow
         for (const [id, entry] of this.pendingBlobs) {
-            if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
+            if (entry.status === PendingBlobStatus.OnlinePendingUpload ||
+                entry.status === PendingBlobStatus.OnlinePendingOp) {
                 this.transitionToOffline(id);
             }
         }
+        this.opsInFlight.clear();
     }
 
     /**
@@ -225,7 +226,7 @@ export class BlobManager {
         );
     }
 
-    public getBlobHandle(id: string): IFluidHandle<ArrayBufferLike> {
+    private getBlobHandle(id: string): IFluidHandle<ArrayBufferLike> {
         assert(this.redirectTable.has(id) || this.pendingBlobs.has(id) || this.opsInFlight.has(id),
             "requesting handle for unknown blob");
         return new BlobHandle(
@@ -241,14 +242,16 @@ export class BlobManager {
      */
     private transitionToOffline(id: string) {
         const pendingEntry = this.pendingBlobs.get(id);
-        assert(!!pendingEntry && pendingEntry.status === PendingBlobStatus.OnlinePendingUpload,
-            "Blob must not be uploaded or already transitioned to offline flow");
-        pendingEntry.status = PendingBlobStatus.OfflinePendingUpload;
-        pendingEntry.deferred.resolve(id);
+        assert(pendingEntry?.status === PendingBlobStatus.OnlinePendingUpload ||
+            pendingEntry?.status === PendingBlobStatus.OnlinePendingOp,
+            "Blob must not have already transitioned to offline flow");
+        pendingEntry.status = pendingEntry.status === PendingBlobStatus.OnlinePendingUpload ?
+            PendingBlobStatus.OfflinePendingUpload : PendingBlobStatus.OfflinePendingUpload;
 
         assert(this.runtime.connected === false, "Must not transition to offline when connected");
         // since we are offline, we will have a chance to add the storage ID when reSubmit() is called
         this.sendBlobAttachOp(undefined, id);
+        pendingEntry.deferred.resolve(id);
         return this.getBlobHandle(id);
     }
 
@@ -310,29 +313,25 @@ export class BlobManager {
         pendingEntry.status = PendingBlobStatus.OnlinePendingOp;
 
         // storage may dedupe blobs; check for a BlobAttach op in flight with the same storageId
-        const inFlight = this.opsInFlight.get(storageId);
-        if (inFlight) {
-            this.opsInFlight.set(storageId, inFlight.concat(localId));
-            return this.getBlobHandle(storageId);
+        if (!this.opsInFlight.has(storageId)) {
+            this.sendBlobAttachOp(storageId);
         }
+        this.opsInFlight.set(storageId, (this.opsInFlight.get(storageId) ?? []).concat(localId));
 
-        // submit a BlobAttach op and return a handle
-        this.opsInFlight.set(storageId, [localId]);
-        this.sendBlobAttachOp(storageId);
-        return this.getBlobHandle(storageId);
+        return this.getBlobHandle(await pendingEntry.deferred.promise);
     }
 
     public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
         assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
         if (local) {
             if (message.metadata.localId === undefined) {
-                const waitingIds = this.opsInFlight.get(message.metadata.blobId);
-                assert(!!waitingIds && waitingIds.length > 0, "Unexpected local BlobAttach op");
-                for (const id of waitingIds) {
-                    const entry = this.pendingBlobs.get(id);
+                const waitingIds = this.opsInFlight.get(message.metadata.blobId) ?? [];
+                for (const localId of waitingIds) {
+                    const entry = this.pendingBlobs.get(localId);
                     assert(!!entry && entry.status === PendingBlobStatus.OnlinePendingOp,
                         "Unexpected pending blob status");
-                    this.pendingBlobs.delete(id);
+                    entry.deferred.resolve(message.metadata.blobId);
+                    this.pendingBlobs.delete(localId);
                 }
                 this.opsInFlight.delete(message.metadata.blobId);
             } else {

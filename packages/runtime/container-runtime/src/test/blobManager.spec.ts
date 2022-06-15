@@ -112,11 +112,17 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
         await Promise.all(handlePs);
     }
 
-    public async processAll() {
-        await this.processBlobs();
-        await this.processHandles();
-        this.processOps();
-    }
+   public async processAll() {
+        while (this.blobPs.length + this.handlePs.length + this.ops.length > 0) {
+            const p1 = this.processBlobs();
+            const p2 = this.processHandles();
+            this.processOps();
+            await Promise.race([p1, p2]);
+            await new Promise<void>((r) => setTimeout(r, 0));
+            this.processOps();
+            await Promise.all([p1, p2]);
+        }
+   }
 
     public async attach() {
         if (this.detachedStorage.blobs.size > 0) {
@@ -181,9 +187,6 @@ const validateSummary = (runtime: MockRuntime) => {
 };
 
 describe("BlobManager", () => {
-    beforeEach(() => {
-    });
-
     it("empty snapshot", () => {
         const runtime = new MockRuntime();
         const summaryData = validateSummary(runtime);
@@ -266,19 +269,18 @@ describe("BlobManager", () => {
         await runtime.connect();
 
         const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-        await runtime.processBlobs();
         const handleP2 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processBlobs();
-        await handleP;
-        await handleP2;
 
         runtime.disconnect();
         await runtime.connect();
         await runtime.processAll();
+        await handleP;
+        await handleP2;
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable, undefined);
+        assert.strictEqual(summaryData.redirectTable.size, 2);
     });
 
     it("multiple disconnect/connects", async () => {
@@ -292,15 +294,15 @@ describe("BlobManager", () => {
 
         const handleP2 = runtime.createBlob(IsoBuffer.from("blob2", "utf8"));
         await runtime.processBlobs();
-        await Promise.all([handleP, handleP2]);
 
         runtime.disconnect();
         await runtime.connect();
         await runtime.processAll();
+        await Promise.all([handleP, handleP2]);
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 2);
-        assert.strictEqual(summaryData.redirectTable.size, 1);
+        assert.strictEqual(summaryData.redirectTable.size, 2);
     });
 
     it("handles deduped IDs", async () => {
@@ -316,15 +318,15 @@ describe("BlobManager", () => {
         const handleP3 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
         const handleP4 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processBlobs();
-        await Promise.all([handleP, handleP2, handleP3, handleP4]);
 
         runtime.disconnect();
         await runtime.connect();
         await runtime.processAll();
+        await Promise.all([handleP, handleP2, handleP3, handleP4]);
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable.size, 2);
+        assert.strictEqual(summaryData.redirectTable.size, 4);
     });
 
     it("handles deduped IDs in detached", async () => {
@@ -420,9 +422,9 @@ describe("BlobManager", () => {
 
         const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processBlobs();
-        await handleP;
         await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
+        await handleP;
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
