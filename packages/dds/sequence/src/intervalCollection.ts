@@ -83,6 +83,9 @@ export interface ISerializedIntervalV2 {
 
 /**
  * @internal
+ *
+ * Decompress an interval after loading a summary from JSON. The exact format
+ * of this compression is unspecified and subject to change
  */
 export function decompressInterval(interval: CompressedSerializedInterval, label?: string): ISerializedInterval {
     return {
@@ -96,6 +99,9 @@ export function decompressInterval(interval: CompressedSerializedInterval, label
 
 /**
  * @internal
+ *
+ * Compress an interval prior to serialization as JSON. The exact format of this
+ * compression is unspecified and subject to change
  */
 export function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
     // remove the `referenceRangeLabels` property as it is already stored in the

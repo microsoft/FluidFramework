@@ -55,10 +55,10 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public
 export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
 
-// @internal (undocumented)
+// @internal
 export function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval;
 
-// @internal (undocumented)
+// @internal
 export function decompressInterval(interval: CompressedSerializedInterval, label?: string): ISerializedInterval;
 
 // @public (undocumented)
