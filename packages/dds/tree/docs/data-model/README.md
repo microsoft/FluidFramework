@@ -95,15 +95,14 @@ In practice, node values are Fluid [*serializable*](https://github.com/microsoft
 ### Field
 
 Each tree node has a set of zero or more fields.
-Fields are used to model map-like composite type, where each  ***field*** represents one relationship between a parent node and an ordered ***sequence*** of one or more children.
+Fields are used to model map-like composite types, where each  ***field*** represents one relationship between a parent node and an ordered ***sequence*** of one or more children.
 
 <figure align="center">
   <img src="./assets/children.drawio.svg" alt=""/>
   <figcaption>Figure: A parent node with two fields</figcaption>
 </figure>
 
-The fields of a node are distinguished by a ***key***.
-Fields of the same node are distinguished by a field key.
+The fields of a node are distinguished by a field ***key***.
 From the data model's perspective, field keys are opaque byte sequences.
 In practice, dynamic keys are string literals and static keys are identifiers that correspond to a schema field declaration.
 
@@ -112,11 +111,27 @@ In practice, dynamic keys are string literals and static keys are identifiers th
 In the SharedTree data model abstraction, there is no distinction between a field that always contain a single child and a field that can contain multiple children.
 Instead, SharedTree treats all fields as ordered collections and uses schema to restrict which fields are optional, must contain a single value, or may contain multiple values.
 
+#### Implicit Sequences
+
 When mapping the SharedTree data model to conventional programming languages, it is sometimes helpful to think of the sequence as being distinct from the field, as if each field points to an ***implicit sequence*** object.
+
+<figure align="center">
+  <img src="./assets/implicit-sequence.drawio.svg" alt=""/>
+  <figcaption>Figure: Visualizing implicit sequence of 'key' field</figcaption>
+</figure>
 
 However, it is important to remember that sequences are not tree nodes.
 This means that sequences are not directly addressable.
 The combination of the field + sequences is implicitly created when the first item is inserted, implicitly deleted when the last item is removed, and may only be referenced indirectly via the combination of parent node + field key.
+
+#### Explicit Arrays
+
+Most languages represent sequences with an explicit array object.  As opposed to an implicit sequence, these explicit array objects have identity, are directly addressable, and can be moved within the tree.  To model explicit array objects in the SharedTree data model, one introduces a node between the parent and items.
+
+<figure align="center">
+  <img src="./assets/explicit-sequence.drawio.svg" alt=""/>
+  <figcaption>Figure: 'key' field points to an explicit array node</figcaption>
+</figure>
 
 ### Special Fields
 
@@ -137,9 +152,10 @@ However, there is a set of well-known types (*boolean*, *number*, etc.) that are
 
 #### Id
 
-The SharedTree data model supports durable references to tree nodes via a special *id* field.
-The *id* field is used by SharedTree to provide a bidirectional *id* ⟷ *node* index that provides efficient lookup of nodes by id.
+The SharedTree data model optionally supports durable references to tree nodes via a special *id* field.
+When present, the *id* field is used by SharedTree to provide a bidirectional *id* ⟷ *node* index that provides efficient lookup of nodes by their id.
 This is the underlying building block for features like "share link" URLs and graph-like references within the tree.
+Because there is a cost to maintaining with the *id* ⟷ *node* index, the application may choose which nodes are assigned ids.
 
 ## JSON Comparison
 
@@ -148,8 +164,8 @@ The below diagram highlights the differences between the JSON data model and the
 ```json
 {
     "visible": true,
-    "text": "cat",
-    "dashStyle": [0.5, 3]
+    "text": "cat",          // String uses an implicit sequence
+    "dashStyle": [0.5, 3]   // Array uses an explicit tree node
 }
 ```
 
