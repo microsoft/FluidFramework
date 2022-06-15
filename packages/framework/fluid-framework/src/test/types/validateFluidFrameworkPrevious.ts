@@ -472,6 +472,30 @@ use_old_InterfaceDeclaration_IJSONRunSegment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMapMessageLocalMetadata": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IMapMessageLocalMetadata():
+    TypeOnly<old.IMapMessageLocalMetadata>;
+declare function use_current_InterfaceDeclaration_IMapMessageLocalMetadata(
+    use: TypeOnly<current.IMapMessageLocalMetadata>);
+use_current_InterfaceDeclaration_IMapMessageLocalMetadata(
+    get_old_InterfaceDeclaration_IMapMessageLocalMetadata());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMapMessageLocalMetadata": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IMapMessageLocalMetadata():
+    TypeOnly<current.IMapMessageLocalMetadata>;
+declare function use_old_InterfaceDeclaration_IMapMessageLocalMetadata(
+    use: TypeOnly<old.IMapMessageLocalMetadata>);
+use_old_InterfaceDeclaration_IMapMessageLocalMetadata(
+    get_current_InterfaceDeclaration_IMapMessageLocalMetadata());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IMember": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IMember():
@@ -527,7 +551,6 @@ declare function get_old_ClassDeclaration_IntervalCollection():
 declare function use_current_ClassDeclaration_IntervalCollection(
     use: TypeOnly<current.IntervalCollection<any>>);
 use_current_ClassDeclaration_IntervalCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_IntervalCollection());
 
 /*
@@ -613,6 +636,30 @@ declare function use_old_InterfaceDeclaration_ISequenceDeltaRange(
     use: TypeOnly<old.ISequenceDeltaRange>);
 use_old_InterfaceDeclaration_ISequenceDeltaRange(
     get_current_InterfaceDeclaration_ISequenceDeltaRange());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISequenceIntervalEvents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISequenceIntervalEvents():
+    TypeOnly<old.ISequenceIntervalEvents>;
+declare function use_current_InterfaceDeclaration_ISequenceIntervalEvents(
+    use: TypeOnly<current.ISequenceIntervalEvents>);
+use_current_InterfaceDeclaration_ISequenceIntervalEvents(
+    get_old_InterfaceDeclaration_ISequenceIntervalEvents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISequenceIntervalEvents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISequenceIntervalEvents():
+    TypeOnly<current.ISequenceIntervalEvents>;
+declare function use_old_InterfaceDeclaration_ISequenceIntervalEvents(
+    use: TypeOnly<old.ISequenceIntervalEvents>);
+use_old_InterfaceDeclaration_ISequenceIntervalEvents(
+    get_current_InterfaceDeclaration_ISequenceIntervalEvents());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1464,7 +1511,6 @@ declare function get_old_ClassDeclaration_SequenceInterval():
 declare function use_current_ClassDeclaration_SequenceInterval(
     use: TypeOnly<current.SequenceInterval>);
 use_current_ClassDeclaration_SequenceInterval(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceInterval());
 
 /*
