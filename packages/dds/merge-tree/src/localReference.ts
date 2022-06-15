@@ -46,11 +46,6 @@ export interface LocalReferencePosition extends ReferencePosition{
 }
 
 class LocalReference implements LocalReferencePosition {
-    /**
-     * @deprecated - use DetachedReferencePosition
-     */
-    public static readonly DetachedPosition: number = -1;
-
     public properties: PropertySet | undefined;
 
     public segment: ISegment | undefined;
