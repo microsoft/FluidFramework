@@ -1570,11 +1570,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private internalId(maybeAlias: string): string {
+        return this.dataStores.aliases().get(maybeAlias) ?? maybeAlias;
+    }
+
     private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
         const wait = typeof request.headers?.[RuntimeHeaders.wait] === "boolean"
             ? request.headers?.[RuntimeHeaders.wait]
             : true;
-        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
+
+        const internalId = this.internalId(id);
+        const dataStoreContext = await this.dataStores.getDataStore(internalId, wait);
 
         /**
          * If GC should run and this an external app request with "externalRequest" header, we need to return
@@ -1929,7 +1935,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        const context = await this.dataStores.getDataStore(id, wait);
+        const internalId = this.internalId(id);
+        const context = await this.dataStores.getDataStore(internalId, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
