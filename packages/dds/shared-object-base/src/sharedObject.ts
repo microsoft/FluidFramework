@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -22,12 +22,13 @@ import {
     blobCountPropertyName,
     totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions";
-import { ChildLogger, EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
+import { TelemetryHelper } from "./telemetryHelper";
 
 /**
  *  Base class from which all shared objects derive
@@ -35,6 +36,9 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     public get IFluidLoadable() { return this; }
+
+    private static readonly OpCountTelemetryThreshold = 100;
+    private static readonly EventCountTelemetryThreshold = 100;
 
     /**
      * The handle referring to this SharedObject
@@ -74,6 +78,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         return this._connected;
     }
 
+    private readonly processOpTelemetryHelper: TelemetryHelper;
+    private readonly eventsTelemetryHelper: TelemetryHelper;
+
     /**
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
@@ -96,6 +103,25 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             runtime.logger,
             undefined,
             { all: { sharedObjectId: uuid() } },
+        );
+
+        this.processOpTelemetryHelper = new TelemetryHelper(
+            this.logger,
+            SharedObjectCore.OpCountTelemetryThreshold,
+            {
+                eventName: "ddsOpProcessing",
+                category: "performance",
+                dds: this.attributes.type,
+            },
+        );
+        this.eventsTelemetryHelper = new TelemetryHelper(
+            this.logger,
+            SharedObjectCore.EventCountTelemetryThreshold,
+            {
+                eventName: "ddsCallbacks",
+                category: "performance",
+                dds: this.attributes.type,
+            },
         );
 
         this.attachListeners();
@@ -415,25 +441,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.verifyNotClosed(); // This will result in container closure.
         this.emit("pre-op", message, local, this);
 
-        // If the client is interactive, capture performance data of processing the op. If it's not
-        // (e.g. summarizer) then just process the op.
-        if (this.runtime.deltaManager.clientDetails.capabilities.interactive === true && !local) {
-            PerformanceEvent.timedExec(
-                this.logger,
-                {
-                    eventName: "ddsCallback",
-                    category: "performance",
-                    opType: message.contents.type,
-                    opSeqNo: message.sequenceNumber,
-                    dds: this.attributes.type,
-                },
-                (event) => {
-                    this.processCore(message, local, localOpMetadata);
-                },
-                {
-                    end: true,
-                    cancel: "error",
-                });
+        if (!local) {
+            this.processOpTelemetryHelper.ExecCode(() => { this.processCore(message, local, localOpMetadata); });
         } else {
             this.processCore(message, local, localOpMetadata);
         }
@@ -471,25 +480,17 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     public emit(
         event: EventEmitterEventType,
         ...args: any[]): boolean {
-        const tmp: ITelemetryGenericEvent = {
-            eventName: event.toString(),
-            category: "performance",
-            dds: this.attributes.type,
-        };
-        if (this.runtime.deltaManager.clientDetails.capabilities.interactive === true) {
-            return PerformanceEvent.timedExec(
-                this.logger,
-                tmp,
-                (e) => {
-                    return super.emit(event, ...args);
-                },
-                {
-                    end: true,
-                    cancel: "error",
-                });
+        let returnValue: boolean;
+
+        // Do not include the events emmited by SharedObject itself, we only care
+        // about the events from child classes.
+        if (["op", "pre-op"].includes(event.toString())) {
+            returnValue = super.emit(event, ...args);
         } else {
-            return super.emit(event, ...args);
+            returnValue = this.eventsTelemetryHelper.ExecCode(() => super.emit(event, ...args));
         }
+
+        return returnValue;
     }
 }
 
