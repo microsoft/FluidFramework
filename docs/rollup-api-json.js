@@ -15,6 +15,8 @@
  * create copies.
  */
 
+
+const colors = require("colors");
 const cpy = require("cpy");
 const findValue = require("deepdash/findValueDeep");
 const fs = require("fs-extra");
@@ -59,7 +61,7 @@ const extractMembersFromApiObject = (sourceApiObj, members) =>
 const extractMembers = async (sourceFile, members) => {
     // First load the source API file...
     console.log(`Extracting members from ${path.basename(sourceFile)}`);
-    const sourceApiObj = JSON.parse(fs.readFileSync(sourceFile, { encoding: "utf8" }));
+    const sourceApiObj = JSON.parse(await fs.readFile(sourceFile, { encoding: "utf8" }));
 
     // ... then check if all members should be extracted, and if so, return them all...
     if (members.length === 1 && members[0] === "*") {
