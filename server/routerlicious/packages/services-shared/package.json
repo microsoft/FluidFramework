@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-shared",
-  "version": "0.1037.1000",
+  "version": "0.1036.5000",
   "description": "Fluid server shared services",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -61,8 +61,6 @@
     "@socket.io/redis-adapter": "^7.0.0",
     "body-parser": "^1.17.1",
     "debug": "^4.1.1",
-    "formidable": "3.2.4",
-    "inclusion": "^1.0.1",
     "ioredis": "^4.24.2",
     "lodash": "^4.17.21",
     "nconf": "^0.12.0",
@@ -78,8 +76,8 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@rushstack/eslint-config": "^2.5.1",
+    "@types/body-parser": "^1.19.2",
     "@types/debug": "^4.1.5",
-    "@types/formidable": "2.0.5",
     "@types/ioredis": "^4.22.0",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^9.1.1",
