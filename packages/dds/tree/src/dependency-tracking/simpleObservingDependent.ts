@@ -1,4 +1,7 @@
-// Copyright (C) Microsoft Corporation. All rights reserved.
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 import { assert } from "@fluidframework/common-utils";
 import { Dependee, InvalidationToken } from "./dependencies";
