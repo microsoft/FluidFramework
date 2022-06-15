@@ -197,6 +197,7 @@ export class Client {
     set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
+    rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     // @deprecated (undocumented)
     removeLocalReference(lref: LocalReference): ReferencePosition | undefined;
