@@ -111,11 +111,7 @@
         "forwardCompat": false
       },
       "ClassDeclaration_SequenceInterval": {
-        "backCompat": false,
         "forwardCompat": false
-      },
-      "TypeAliasDeclaration_SharedStringSegment": {
-        "backCompat": false
       }
     }
   }

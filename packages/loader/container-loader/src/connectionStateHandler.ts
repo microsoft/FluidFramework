@@ -24,6 +24,10 @@ export interface IConnectionStateHandler {
     connectionStateChanged: () => void;
 }
 
+export interface ILocalSequencedClient extends ISequencedClient {
+    shouldHaveLeft?: boolean;
+}
+
 const JoinOpTimer = 45000;
 
 export class ConnectionStateHandler {

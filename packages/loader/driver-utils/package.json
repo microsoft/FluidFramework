@@ -95,18 +95,6 @@
   "typeValidation": {
     "version": "1.0.0",
     "broken": {
-      "ClassDeclaration_BlobAggregationStorage": {
-        "backCompat": false
-      },
-      "ClassDeclaration_BlobCacheStorageService": {
-        "backCompat": false
-      },
-      "ClassDeclaration_DocumentStorageServiceProxy": {
-        "backCompat": false
-      },
-      "ClassDeclaration_PrefetchDocumentStorageService": {
-        "backCompat": false
-      },
       "RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {
         "forwardCompat": false,
         "backCompat": false
