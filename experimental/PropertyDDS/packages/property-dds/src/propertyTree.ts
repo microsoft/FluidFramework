@@ -179,11 +179,9 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	public get activeCommit(): IPropertyTreeMessage {
-		if (this.localChanges.length > 0) {
-			return this.localChanges[this.localChanges.length - 1];
-		} else {
-			return this.remoteChanges[this.remoteChanges.length - 1];
-		}
+		return this.localChanges.length > 0
+            ? this.localChanges[this.localChanges.length - 1]
+            : this.remoteChanges[this.remoteChanges.length - 1];
 	}
 	public get root(): NodeProperty {
 		return this._root as NodeProperty;

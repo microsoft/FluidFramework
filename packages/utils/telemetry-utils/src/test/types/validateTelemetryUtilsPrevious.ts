@@ -760,26 +760,14 @@ use_old_FunctionDeclaration_normalizeError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_originatedAsExternalError": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_originatedAsExternalError": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_originatedAsExternalError():
-    TypeOnly<typeof old.originatedAsExternalError>;
-declare function use_current_FunctionDeclaration_originatedAsExternalError(
-    use: TypeOnly<typeof current.originatedAsExternalError>);
-use_current_FunctionDeclaration_originatedAsExternalError(
-    get_old_FunctionDeclaration_originatedAsExternalError());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_originatedAsExternalError": {"backCompat": false}
+* "RemovedFunctionDeclaration_originatedAsExternalError": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_originatedAsExternalError():
-    TypeOnly<typeof current.originatedAsExternalError>;
-declare function use_old_FunctionDeclaration_originatedAsExternalError(
-    use: TypeOnly<typeof old.originatedAsExternalError>);
-use_old_FunctionDeclaration_originatedAsExternalError(
-    get_current_FunctionDeclaration_originatedAsExternalError());
 
 /*
 * Validate forward compat by using old type in place of current type
