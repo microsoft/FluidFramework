@@ -430,7 +430,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             ExecuteWithAggregatedTelemetry(
                 SharedObjectCore.DdsOpProcessingTelemetrySymbol,
                 () => { this.processCore(message, local, localOpMetadata); },
-                10,
+                100,
                 {
                     eventName: "ddsOpProcessing",
                     category: "performance",
@@ -481,7 +481,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             returnValue = ExecuteWithAggregatedTelemetry(
                 SharedObjectCore.DdsCallbacksTelemetrySymbol,
                 () => super.emit(event, ...args),
-                10,
+                100,
                 {
                     eventName: "ddsEventCallbacks",
                     category: "performance",
