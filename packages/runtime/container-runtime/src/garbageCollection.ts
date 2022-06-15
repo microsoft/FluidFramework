@@ -1345,16 +1345,16 @@ function meetsMinimumVersionRequirement(currentVersion: string, minimumVersion: 
  */
 export function semverCompare(currentVersion: string, minimumVersion: string): number {
     const minimumValues = minimumVersion.split(".").map((value): number => {
-        assert(isNaN(+value) === false, "Expected real numbers in minimum version!");
+        assert(isNaN(+value) === false, 0x2f8 /* Expected real numbers in minimum version! */);
         return Number.parseInt(value, 10);
     });
-    assert(minimumValues.length === 3, "Expected minimumVersion to be [major].[minor].[patch]");
+    assert(minimumValues.length === 3, 0x2f9 /* Expected minimumVersion to be [major].[minor].[patch] */);
     const [minMajor, minMinor, minPatch] = minimumValues;
 
     const currentValuesString = currentVersion.split(/\W/);
-    assert(currentValuesString.length >= 3, "Expected version to match semver rules!");
+    assert(currentValuesString.length >= 3, 0x2fa /* Expected version to match semver rules! */);
     const currentValues = currentValuesString.slice(0, 3).map((value) => {
-        assert(isNaN(+value) === false, "Expected real numbers in minimum version!");
+        assert(isNaN(+value) === false, 0x2fb /* Expected real numbers in minimum version! */);
         return Number.parseInt(value, 10);
     });
     const [cMajor, cMinor, cPatch] = currentValues;
