@@ -144,7 +144,7 @@ These fields are special because:
 
 #### Type
 
-The SharedTree data model optionally supports nominal typing via a special *type* field.
+The SharedTree data model optionally supports nominal typing via an optional special *type* field.
 The value of the *type* field is the unique identifier of the corresponding schema type.
 
 In the data model abstraction, the value of the type field is an opaque byte sequence.
