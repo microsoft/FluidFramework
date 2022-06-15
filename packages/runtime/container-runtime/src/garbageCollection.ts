@@ -1120,7 +1120,7 @@ export class GarbageCollector implements IGarbageCollector {
             const pkg = this.getNodePackagePath(event.id);
             logger.sendErrorEvent({
                 ...event,
-                pkg: pkg ? { value: `/${pkg.join("/")}`, tag: TelemetryDataTag.PackageData } : undefined,
+                pkg: pkg ? { value: `/${pkg.join("/")}`, tag: TelemetryDataTag.CodeArtifact } : undefined,
             });
             event = this.pendingEventsQueue.shift();
         }
@@ -1235,7 +1235,7 @@ export class GarbageCollector implements IGarbageCollector {
             if (pkg !== undefined) {
                 this.mc.logger.sendErrorEvent({
                     ...event,
-                    pkg: { value: `/${pkg.join("/")}`, tag: TelemetryDataTag.PackageData },
+                    pkg: { value: `/${pkg.join("/")}`, tag: TelemetryDataTag.CodeArtifact },
                 });
             } else {
                 this.pendingEventsQueue.push(event);

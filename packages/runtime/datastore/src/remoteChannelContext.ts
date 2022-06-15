@@ -194,11 +194,11 @@ export class RemoteChannelContext implements IChannelContext {
                 throw new DataCorruptionError("channelTypeNotAvailable", {
                     channelId: {
                         value: this.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                 });
@@ -209,11 +209,11 @@ export class RemoteChannelContext implements IChannelContext {
                 throw new DataCorruptionError("channelFactoryNotRegisteredForAttachMessageType", {
                     channelId: {
                         value: this.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: this.attachMessageType,
@@ -227,11 +227,11 @@ export class RemoteChannelContext implements IChannelContext {
                 throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
                     channelId: {
                         value: this.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: attributes.type,
@@ -245,14 +245,14 @@ export class RemoteChannelContext implements IChannelContext {
                 this.subLogger.sendTelemetryEvent(
                     {
                         eventName: "ChannelAttributesVersionMismatch",
-                        channelType: { value: attributes.type, tag: TelemetryDataTag.PackageData },
+                        channelType: { value: attributes.type, tag: TelemetryDataTag.CodeArtifact },
                         channelSnapshotVersion: {
                             value: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
-                            tag: TelemetryDataTag.PackageData,
+                            tag: TelemetryDataTag.CodeArtifact,
                         },
                         channelCodeVersion: {
                             value: `${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`,
-                            tag: TelemetryDataTag.PackageData,
+                            tag: TelemetryDataTag.CodeArtifact,
                         },
                     },
                 );

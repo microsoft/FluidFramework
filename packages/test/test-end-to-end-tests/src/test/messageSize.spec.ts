@@ -103,7 +103,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             error.getTelemetryProperties().limit,
             {
                 value: maxMessageSizeInBytes,
-                tag: TelemetryDataTag.PackageData,
+                tag: TelemetryDataTag.CodeArtifact,
             });
     });
 

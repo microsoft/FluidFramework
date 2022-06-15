@@ -19,10 +19,10 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 2.0.0 Upcoming changes
 
 ## 2.0.0 Breaking changes
-- [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
+- [Remove TelemetryDataTag.CodeArtifact](#Remove-TelemetryDataTagPackageData)
 
-### Remove TelemetryDataTag.PackageData
-`TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
+### Remove TelemetryDataTag.CodeArtifact
+`TelemetryDataTag.CodeArtifact` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
 
 # 1.0.0
 
@@ -52,7 +52,7 @@ For more details on GC and options for controlling its behavior, please see [thi
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
-- [Deprecate TelemetryDataTag.PackageData](#Deprecate-TelemetryDataTagPackageData)
+- [Deprecate TelemetryDataTag.CodeArtifact](#Deprecate-TelemetryDataTagPackageData)
 - [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
 - [Remove IDeltaManager.close()](#remove-ideltamanagerclose)
 - [Deprecated Fields from ISummaryRuntimeOptions](#Deprecated-fields-from-ISummaryRuntimeOptions)
@@ -79,8 +79,8 @@ For more details on GC and options for controlling its behavior, please see [thi
 ### Remove IFluidSerializer from IFluidObject
 `IFluidSerializer` in `IFluidObject` was deprecated in 0.52 and is now removed. Use `FluidObject` instead of `IFluidObject`.
 
-### Deprecate TelemetryDataTag.PackageData
-`TelemetryDataTag.PackageData` is deprecated and will be removed in a future release. Use `TelemetryDataTag.CodeArtifact` instead.
+### Deprecate TelemetryDataTag.CodeArtifact
+`TelemetryDataTag.CodeArtifact` is deprecated and will be removed in a future release. Use `TelemetryDataTag.CodeArtifact` instead.
 
 ### Remove Write Method from IDocumentStorageService
 The `IDocumentStorageService.write(...)` method within the `@fluidframework/driver-definitions` package has been removed. Please remove all usage/implementation of this method if present.

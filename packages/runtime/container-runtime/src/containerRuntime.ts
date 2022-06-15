@@ -2107,7 +2107,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     },
                     internalId: {
                         value: internalId,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     aliasResult: result,
                 });
@@ -2894,11 +2894,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 {
                     length: {
                         value: serializedContent.length,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     limit: {
                         value: this._maxOpSizeInBytes,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                 }));
             return -1;
