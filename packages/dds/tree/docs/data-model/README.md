@@ -5,7 +5,7 @@
 This document discusses how tree data is conceptually organized within the SharedTree DDS.
 It is primarily of interest to Fluid developers working on SharedTree.
 Most SharedTree users will interact with tree data through a pre-existing API layer.
-However, the data model may be of interest to advanced users who are implementing a specialized API (see #8989).
+However, the data model may be of interest to advanced users who are implementing a specialized API (see [#8989](https://github.com/microsoft/FluidFramework/issues/8989)).
 
 The SharedTree data model is closely related to, but not precisely the same as:
 
@@ -13,7 +13,7 @@ The SharedTree data model is closely related to, but not precisely the same as:
 - The serialized tree data sent across the network
 - The format used to persist tree data in storage
 
-While each of the above involve specific encodings of the SharedTree data model, the SharedTree data model itself is not concerned with the byte-level representation (see #10034).
+While each of the above involve specific encodings of the SharedTree data model, the SharedTree data model itself is not concerned with the byte-level representation (see [#10034](https://github.com/microsoft/FluidFramework/issues/10034)).
 
 ## Requirements
 
