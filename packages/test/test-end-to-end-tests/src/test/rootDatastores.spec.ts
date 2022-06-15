@@ -304,7 +304,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 
             const aliasResult1 = await ds1.trySetAlias(alias);
-            const aliasResult2 = await ds1.trySetAlias(`${alias}/${alias}`);
 
             let error: Error | undefined;
             try {
@@ -314,7 +313,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             }
 
             assert.equal(aliasResult1, "Success");
-            assert.equal(aliasResult2, "AlreadyAliased");
             assert.ok(error instanceof UsageError);
         });
 

@@ -56,6 +56,10 @@ class DataStore implements IDataStore {
     private alias: string | undefined;
 
     async trySetAlias(alias: string): Promise<AliasResult> {
+        if (alias.includes("/")) {
+            throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
+        }
+
         switch (this.aliasState) {
             // If we're already aliasing, do nothing
             case AliasState.Aliasing:
@@ -68,10 +72,6 @@ class DataStore implements IDataStore {
             // it is safe to continue execution
             case AliasState.None: break;
             default: unreachableCase(this.aliasState);
-        }
-
-        if (alias.includes("/")) {
-            throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
         }
 
         this.aliasState = AliasState.Aliasing;
