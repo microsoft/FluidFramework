@@ -6,8 +6,8 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
-import { ILocalSequencedClient, IProtocolHandler } from "@fluidframework/protocol-base";
-import { ConnectionMode, IQuorumClients } from "@fluidframework/protocol-definitions";
+import { ProtocolOpHandler } from "@fluidframework/protocol-base";
+import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 
@@ -145,7 +145,7 @@ export class ConnectionStateHandler {
 
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
-        // or timeout has occurred while doing so.
+        // or timeout has occured while doing so.
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
             && quorumClients.getMember(this.pendingClientId) !== undefined
@@ -286,8 +286,8 @@ export class ConnectionStateHandler {
         this.handler.connectionStateChanged();
     }
 
-    public initProtocol(protocol: IProtocolHandler) {
-        protocol.quorum.on("addMember", (clientId, _details) => {
+    public initProtocol(protocol: ProtocolOpHandler) {
+        protocol.quorum.on("addMember", (clientId, details) => {
             this.receivedAddMemberEvent(clientId);
         });
 
