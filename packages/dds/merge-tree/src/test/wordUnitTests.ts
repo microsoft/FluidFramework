@@ -124,7 +124,8 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
         if (i & 1) {
             refType = ReferenceType.SlideOnRemove;
         }
-        const lref = client.mergeTree.createLocalReferencePosition(segoff.segment!, segoff.offset!, refType, undefined);
+        const lref = client.mergeTree.createLocalReferencePosition(
+             segoff.segment!, segoff.offset!, refType, undefined);
         bookmarks.push(lref);
     }
     return bookmarks;

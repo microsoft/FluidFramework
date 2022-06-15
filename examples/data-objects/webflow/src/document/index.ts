@@ -11,7 +11,6 @@ import {
     createRemoveRangeOp,
     IMergeTreeRemoveMsg,
     ISegment,
-    LocalReferencePosition,
     Marker,
     MergeTreeDeltaType,
     PropertySet,
@@ -47,7 +46,7 @@ export const enum DocSegmentKind {
     beginTags = "<t>",
     endTags = "</>",
 
-    // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
+    // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
     endOfText = "eot",
 }
 
@@ -61,7 +60,7 @@ export const enum DocTile {
 }
 
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
-    // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
+    // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
     if (segment === endOfTextSegment) {
         return DocSegmentKind.endOfText;
     }
@@ -114,7 +113,7 @@ const accumAsLeafAction = (
 ) => (accum)(position, segment, startOffset, endOffset);
 
 // TODO: We need the ability to create LocalReferences to the end of the document. Our
-//       workaround creates a LocalReferencePosition with an 'undefined' segment that is never
+//       workaround creates a ReferencePosition with an 'undefined' segment that is never
 //       inserted into the MergeTree.  We then special case this segment in localRefToPosition,
 //       addLocalRef, removeLocalRef, etc.
 //
@@ -185,21 +184,21 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public getSegmentAndOffset(position: number) {
-        // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         return position === this.length
             ? { segment: endOfTextSegment, offset: 0 }
             : this.sharedString.getContainingSegment(position);
     }
 
     public getPosition(segment: ISegment) {
-        // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         return segment === endOfTextSegment
             ? this.length
             : this.sharedString.getPosition(segment);
     }
 
     public addLocalRef(position: number) {
-        // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         if (position >= this.length) {
             return this.sharedString.createLocalReferencePosition(endOfTextSegment, 0, ReferenceType.Transient, undefined);
         }
@@ -210,17 +209,17 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         return localRef;
     }
 
-    public removeLocalRef(localRef: LocalReferencePosition) {
+    public removeLocalRef(localRef: ReferencePosition) {
         const segment = localRef.getSegment();
 
-        // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         if (segment !== endOfTextSegment) {
             this.sharedString.removeLocalReferencePosition(localRef);
         }
     }
 
-    public localRefToPosition(localRef: LocalReferencePosition) {
-        // Special case for LocalReferencePosition to end of document.  (See comments on 'endOfTextSegment').
+    public localRefToPosition(localRef: ReferencePosition) {
+        // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         if (localRef.getSegment() === endOfTextSegment) {
             return this.length;
         }

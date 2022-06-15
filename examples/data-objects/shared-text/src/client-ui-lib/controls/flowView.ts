@@ -1465,8 +1465,8 @@ interface IRemotePresenceBase {
     type: string;
 }
 interface ILocalPresenceInfo {
-    localRef?: MergeTree.LocalReferencePosition;
-    markLocalRef?: MergeTree.LocalReferencePosition;
+    localRef?: MergeTree.ReferencePosition;
+    markLocalRef?: MergeTree.ReferencePosition;
     xformPos?: number;
     markXformPos?: number;
     clientId: string;
@@ -1562,7 +1562,7 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
     }
 }
 
-function getLocalRefPos(sharedString: Sequence.SharedString, localRef: MergeTree.LocalReferencePosition) {
+function getLocalRefPos(sharedString: Sequence.SharedString, localRef: MergeTree.ReferencePosition) {
     return sharedString.localReferencePositionToPosition(localRef);
 }
 
