@@ -320,7 +320,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         await defPromise.promise;
     });
 
-    it.only("Fire dataStore attach ops during container attach", async () => {
+    it("Fire dataStore attach ops during container attach", async () => {
         const testDataStoreType = "default";
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
