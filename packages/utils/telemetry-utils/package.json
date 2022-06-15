@@ -94,6 +94,11 @@
   },
   "typeValidation": {
     "version": "2.0.0",
-    "broken": {}
+    "broken": {
+      "RemovedFunctionDeclaration_originatedAsExternalError": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }

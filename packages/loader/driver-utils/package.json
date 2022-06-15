@@ -95,6 +95,18 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
+      "RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_SummaryTreeAssembler": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
       "ClassDeclaration_ThrottlingError": {
         "backCompat": false
       },
