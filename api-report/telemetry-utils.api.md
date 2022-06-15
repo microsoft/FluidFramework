@@ -55,6 +55,9 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
 }
 
 // @public
+export function ExecuteWithAggregatedTelemetry(codeBlockId: symbol, codeToMeasure: () => any, countThreshold: number, eventBase: any, logger: ITelemetryLogger): any;
+
+// @public
 export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean): {
     message: string;
     errorType?: string | undefined;

@@ -22,13 +22,16 @@ import {
     blobCountPropertyName,
     totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    EventEmitterWithErrorHandling,
+    ExecuteWithAggregatedTelemetry,
+} from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
-import { TelemetryHelper } from "./telemetryHelper";
 
 /**
  *  Base class from which all shared objects derive
@@ -37,8 +40,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     public get IFluidLoadable() { return this; }
 
-    private static readonly OpCountTelemetryThreshold = 100;
-    private static readonly EventCountTelemetryThreshold = 100;
+    private static readonly DdsOpProcessingTelemetrySymbol: symbol = Symbol("DdsOpProcessingTelemetrySymbol");
+    private static readonly DdsCallbacksTelemetrySymbol: symbol = Symbol("DdsCallbacksTelemetrySymbol");
 
     /**
      * The handle referring to this SharedObject
@@ -78,9 +81,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         return this._connected;
     }
 
-    private readonly processOpTelemetryHelper: TelemetryHelper;
-    private readonly eventsTelemetryHelper: TelemetryHelper;
-
     /**
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
@@ -103,25 +103,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             runtime.logger,
             undefined,
             { all: { sharedObjectId: uuid() } },
-        );
-
-        this.processOpTelemetryHelper = new TelemetryHelper(
-            this.logger,
-            SharedObjectCore.OpCountTelemetryThreshold,
-            {
-                eventName: "ddsOpProcessing",
-                category: "performance",
-                dds: this.attributes.type,
-            },
-        );
-        this.eventsTelemetryHelper = new TelemetryHelper(
-            this.logger,
-            SharedObjectCore.EventCountTelemetryThreshold,
-            {
-                eventName: "ddsCallbacks",
-                category: "performance",
-                dds: this.attributes.type,
-            },
         );
 
         this.attachListeners();
@@ -441,10 +422,20 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.verifyNotClosed(); // This will result in container closure.
         this.emit("pre-op", message, local, this);
 
-        if (!local) {
-            this.processOpTelemetryHelper.ExecCode(() => { this.processCore(message, local, localOpMetadata); });
-        } else {
+        // Do not measure for local ops, because callbacks are not invoked for them in this codepath
+        // and including them in the measurements would skew the numbers.
+        if (local) {
             this.processCore(message, local, localOpMetadata);
+        } else {
+            ExecuteWithAggregatedTelemetry(
+                SharedObjectCore.DdsOpProcessingTelemetrySymbol,
+                () => { this.processCore(message, local, localOpMetadata); },
+                10,
+                {
+                    eventName: "ddsOpProcessing",
+                    category: "performance",
+                },
+                this.logger);
         }
 
         this.emit("op", message, local, this);
@@ -487,7 +478,15 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         if (["op", "pre-op"].includes(event.toString())) {
             returnValue = super.emit(event, ...args);
         } else {
-            returnValue = this.eventsTelemetryHelper.ExecCode(() => super.emit(event, ...args));
+            returnValue = ExecuteWithAggregatedTelemetry(
+                SharedObjectCore.DdsCallbacksTelemetrySymbol,
+                () => super.emit(event, ...args),
+                10,
+                {
+                    eventName: "ddsEventCallbacks",
+                    category: "performance",
+                },
+                this.logger);
         }
 
         return returnValue;
