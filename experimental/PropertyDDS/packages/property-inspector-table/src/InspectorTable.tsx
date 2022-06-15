@@ -155,7 +155,7 @@ const styles = (theme: Theme) => createStyles({
 });
 
 /**
- * @param inSkeleton basic skeleton
+ * @param inSkeleton - basic skeleton
  * @returns Custom skeleton
  */
 const themedSkeleton = (inSkeleton: JSX.Element) => {
@@ -167,7 +167,7 @@ const themedSkeleton = (inSkeleton: JSX.Element) => {
 };
 
 /**
- * @param width width of the table
+ * @param width - width of the table
  * @returns random width which fits half of the table
  */
 const getRandomWidth = (width: number) => {
@@ -175,7 +175,7 @@ const getRandomWidth = (width: number) => {
 };
 
 /**
- * @param width width of the table
+ * @param width - width of the table
  * @returns random width which fits half of the table
  */
 const getRandomRowsNum = () => {
@@ -183,28 +183,28 @@ const getRandomRowsNum = () => {
 };
 
 /**
- * @param width width of the table
+ * @param width - width of the table
  * @returns custom skeleton fitting the table with specified width
  */
 const getCellSkeleton = (width: number) => themedSkeleton(<Skeleton width={getRandomWidth(width)} />);
 
 /**
  * The default implementation for the InspectorTable `childGetter` callback.
- * @param child The hierarchical child of the property the row represents.
+ * @param child - The hierarchical child of the property the row represents.
  * @returns The passed in child.
  */
 export const defaultInspectorTableChildGetter = (child: any): any => child;
 
 /**
  * The default implementation for the InspectorTable `nameGetter` callback.
- * @param name The id of the property the row represents.
+ * @param name - The id of the property the row represents.
  * @returns The passed in id.
  */
 export const defaultInspectorTableNameGetter = (name: string): any => name;
 
 /**
  * The default implementation of the `dataGetter` callback for the Inspector table
- * @param params function handle
+ * @param params - function handle
  */
 export const defaultInspectorTableDataGetter = (params: IDataGetterParameter): React.ReactNode | null => null;
 
@@ -972,5 +972,5 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
   }
 
-const StyledInspectorTable = withStyles(styles, { name: "InspectorTable" })(InspectorTable);
+const StyledInspectorTable = withStyles(styles, { name: "InspectorTable" })(InspectorTable as any);
 export { StyledInspectorTable as InspectorTable };

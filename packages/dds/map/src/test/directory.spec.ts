@@ -85,6 +85,8 @@ describe("Directory", () => {
                 let containedValueChangedExpected: boolean = true;
                 let clearExpected: boolean = false;
                 let previousValue: any;
+                let directoryCreationExpected: boolean = true;
+                let directoryDeletedExpected: boolean = true;
 
                 directory.on("op", (arg1, arg2, arg3) => {
                     assert.fail("shouldn't receive an op event");
@@ -99,6 +101,23 @@ describe("Directory", () => {
 
                     assert.equal(local, true, "local should be true for local action for valueChanged event");
                     assert.equal(target, directory, "target should be the directory for valueChanged event");
+                });
+                directory.on("subDirectoryCreated", (path, local, target) => {
+                    assert.equal(directoryCreationExpected, true, "subDirectoryCreated event not expected");
+                    directoryCreationExpected = false;
+
+                    assert.equal(path, "rock");
+
+                    assert.equal(local, true, "local should be true for local action for subDirectoryCreated event");
+                    assert.equal(target, directory, "target should be the directory for subDirectoryCreated event");
+                });
+                directory.on("subDirectoryDeleted", (path, local, target) => {
+                    assert.equal(directoryDeletedExpected, true, "subDirectoryDeleted event not expected");
+                    directoryDeletedExpected = false;
+                    assert.equal(path, "rock");
+
+                    assert.equal(local, true, "local should be true for local action for subDirectoryDeleted event");
+                    assert.equal(target, directory, "target should be the directory for subDirectoryDeleted event");
                 });
                 directory.on("containedValueChanged", (changed, local, target) => {
                     assert.equal(containedValueChangedExpected, true,
@@ -137,10 +156,61 @@ describe("Directory", () => {
                 assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
                 assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
 
+                // Test createSubDirectory
+                directory.createSubDirectory("rock");
+                assert.equal(directoryCreationExpected, false, "missing subDirectoryCreated event");
+
+                // Test deleteSubDirectory
+                previousValue = directory.getSubDirectory("rock");
+                directory.deleteSubDirectory("rock");
+                assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
+                assert.equal(containedValueChangedExpected, false, "missing containedValueChanged event");
+
                 // Test clear
                 clearExpected = true;
                 directory.clear();
                 assert.equal(clearExpected, false, "missing clearExpected event");
+            });
+
+            it("should fire create/delete sub directory events", async () => {
+                const subDirectory = directory.createSubDirectory("rock");
+                const subDirectory1 = subDirectory.createSubDirectory("rockChild");
+                // Check Creation events
+                let directoryCreationExpected1 = false;
+                let directoryCreationExpected2 = false;
+                subDirectory.on("subDirectoryCreated", (relativePath, local, target) => {
+                    directoryCreationExpected1 = true;
+                    assert.equal(relativePath, "rockChild/rockChildChild", "Path should match");
+                });
+                subDirectory1.on("subDirectoryCreated", (relativePath, local, target) => {
+                    directoryCreationExpected2 = true;
+                    assert.equal(relativePath, "rockChildChild", "Path should match");
+                });
+                subDirectory1.createSubDirectory("rockChildChild");
+                assert(directoryCreationExpected1, "Create event should fire");
+                assert(directoryCreationExpected2, "Create event should fire");
+
+                // Check Deletion Events
+                let directoryDeletionExpected = false;
+                let directoryDeletionExpected1 = false;
+                let directoryDeletionExpected2 = false;
+                directory.on("subDirectoryDeleted", (relativePath, local, target) => {
+                    directoryDeletionExpected = true;
+                    assert.equal(relativePath, "rock/rockChild/rockChildChild", "Path should match");
+                });
+                subDirectory.on("subDirectoryDeleted", (relativePath, local, target) => {
+                    directoryDeletionExpected1 = true;
+                    assert.equal(relativePath, "rockChild/rockChildChild", "Path should match");
+                });
+                subDirectory1.on("subDirectoryDeleted", (relativePath, local, target) => {
+                    directoryDeletionExpected2 = true;
+                    assert.equal(relativePath, "rockChildChild", "Path should match");
+                });
+                subDirectory1.deleteSubDirectory("rockChildChild");
+                assert(directoryDeletionExpected, "Delete event should fire on root");
+                assert(directoryDeletionExpected1, "Delete event should fire on child1");
+                assert(directoryDeletionExpected2, "Delete event should fire on child2");
+                subDirectory1.deleteSubDirectory("rockChildChild");
             });
 
             it("Should fire dispose event correctly", () => {

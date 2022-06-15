@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import BTree from 'sorted-btree';
 import {
 	assert,
@@ -31,7 +32,7 @@ import {
 	AttributionId,
 } from '../Identifiers';
 import { assertIsStableId, assertIsUuidString, isStableId } from '../UuidUtilities';
-import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from './AppendOnlySortedMap';
+import { AppendOnlySortedMap } from './AppendOnlySortedMap';
 import { getIds } from './IdRange';
 import {
 	numericUuidEquals,
@@ -384,7 +385,8 @@ export class IdCompressor {
 	public constructor(
 		public readonly localSessionId: SessionId,
 		public readonly reservedIdCount: number,
-		attributionId?: AttributionId
+		attributionId?: AttributionId,
+		private readonly logger?: ITelemetryLogger
 	) {
 		assert(reservedIdCount >= 0, 'reservedIdCount must be non-negative');
 		if (attributionId !== undefined) {
@@ -565,6 +567,7 @@ export class IdCompressor {
 		const finalizeCount = normalizedLastFinalizedLocal - newLastFinalizedLocal;
 		assert(finalizeCount >= 1, 'Cannot finalize an empty range.');
 
+		let eagerFinalIdCount = 0;
 		let initialClusterCount = 0;
 		let remainingCount = finalizeCount;
 		let newBaseUuid: NumericUuid | undefined;
@@ -577,6 +580,7 @@ export class IdCompressor {
 					Math.min(currentCluster.count + finalizeCount, currentCluster.capacity) -
 					1) as FinalCompressedId;
 				if (lastFinalInCluster > lastKnownFinal) {
+					eagerFinalIdCount = lastFinalInCluster - (lastKnownFinal + 1);
 					this.sessionIdNormalizer.addFinalIds(
 						(lastKnownFinal + 1) as FinalCompressedId,
 						lastFinalInCluster,
@@ -596,6 +600,7 @@ export class IdCompressor {
 					// The cluster is full but is the last in the list of clusters.
 					// This allows it to be expanded instead of allocating a new one.
 					const expansionAmount = this.newClusterCapacity + overflow;
+					const previousCapacity = currentCluster.capacity;
 					currentCluster.capacity += expansionAmount;
 					this.nextClusterBaseFinalId = (this.nextClusterBaseFinalId + expansionAmount) as FinalCompressedId;
 					assert(
@@ -617,6 +622,13 @@ export class IdCompressor {
 						const lastFinalizedFinal = (currentBaseFinalId + currentCluster.count - 1) as FinalCompressedId;
 						const finalPivot = (lastFinalizedFinal - overflow + 1) as FinalCompressedId;
 						this.sessionIdNormalizer.addFinalIds(finalPivot, lastFinalizedFinal, currentCluster);
+						this.logger?.sendTelemetryEvent({
+							eventName: 'IdCompressor:ClusterExpansion',
+							sessionId: this.localSessionId,
+							previousCapacity,
+							newCapacity: currentCluster.capacity,
+							overflow,
+						});
 					}
 				}
 			} else {
@@ -625,10 +637,18 @@ export class IdCompressor {
 				newBaseUuid = incrementUuid(currentCluster.baseUuid, currentCluster.capacity);
 				currentCluster.count += remainingCapacity;
 				remainingCount -= remainingCapacity;
+				this.logger?.sendTelemetryEvent({
+					eventName: 'IdCompressor:OverfilledCluster',
+					sessionId: this.localSessionId,
+				});
 			}
 		} else {
 			// Session has never made a cluster, form a new one with the session UUID as the baseUuid
 			newBaseUuid = session.sessionUuid;
+			this.logger?.sendTelemetryEvent({
+				eventName: 'IdCompressor:FirstCluster',
+				sessionId: this.localSessionId,
+			});
 		}
 
 		// Finalizing a range results in one of three cases:
@@ -652,9 +672,10 @@ export class IdCompressor {
 			}
 
 			newBaseFinalId = this.nextClusterBaseFinalId;
+			const newCapacity = Math.max(this.newClusterCapacity, remainingCount);
 			newCluster = {
 				baseUuid: newBaseUuid,
-				capacity: Math.max(this.newClusterCapacity, remainingCount),
+				capacity: newCapacity,
 				count: remainingCount,
 				session,
 			};
@@ -663,6 +684,12 @@ export class IdCompressor {
 			localIdPivot = (newFirstFinalizedLocal - usedCapacity) as LocalCompressedId;
 
 			if (isLocal) {
+				this.logger?.sendTelemetryEvent({
+					eventName: 'IdCompressor:NewCluster',
+					sessionId: this.localSessionId,
+					clusterCapacity: newCapacity,
+					clusterCount: remainingCount,
+				});
 				const lastFinalizedFinal = (newBaseFinalId + newCluster.count - 1) as FinalCompressedId;
 				this.sessionIdNormalizer.addFinalIds(newBaseFinalId, lastFinalizedFinal, newCluster);
 			}
@@ -777,6 +804,16 @@ export class IdCompressor {
 					this.clustersAndOverridesInversion.set(inversionKey, finalizedOverride);
 				}
 			}
+		}
+
+		if (isLocal) {
+			this.logger?.sendTelemetryEvent({
+				eventName: 'IdCompressor:IdCompressorStatus',
+				eagerFinalIdCount,
+				localIdCount: remainingCount,
+				overridesCount: overrides?.length ?? 0,
+				sessionId: this.localSessionId,
+			});
 		}
 
 		session.lastFinalizedLocalId = newLastFinalizedLocal;
@@ -1014,11 +1051,9 @@ export class IdCompressor {
 			// `localOverrides`s. Otherwise, it is a sequential allocation from the session UUID and can simply be negated and
 			// added to that UUID to obtain the stable ID associated with it.
 			const localOverride = this.localOverrides?.get(id);
-			if (localOverride !== undefined) {
-				return localOverride;
-			} else {
-				return stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
-			}
+			return localOverride !== undefined
+				? localOverride
+				: stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
 		}
 	}
 
@@ -1056,14 +1091,10 @@ export class IdCompressor {
 			const [key, compressionMapping] = closestMatch;
 			if (!IdCompressor.isClusterInfo(compressionMapping)) {
 				if (key === inversionKey) {
-					if (IdCompressor.isUnfinalizedOverride(compressionMapping)) {
-						return compressionMapping;
-					} else {
-						return (
-							compressionMapping.associatedLocalId ??
-							(compressionMapping.originalOverridingFinal as SessionSpaceCompressedId)
-						);
-					}
+					return IdCompressor.isUnfinalizedOverride(compressionMapping)
+						? compressionMapping
+						: compressionMapping.associatedLocalId ??
+								(compressionMapping.originalOverridingFinal as SessionSpaceCompressedId);
 				}
 			} else {
 				if (!isStable) {

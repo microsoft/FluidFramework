@@ -156,7 +156,7 @@ export interface ITelemetryLoggerPropertyBags {
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L): MonitoringContext<L>;
 
 // @public
-export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
+export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
     addTelemetryProperties(props: ITelemetryProperties): void;
     // (undocumented)
@@ -208,9 +208,6 @@ export class MultiSinkLogger extends TelemetryLogger {
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
 
 // @public
-export function originatedAsExternalError(e: any): boolean;
-
-// @public
 export class PerformanceEvent {
     protected constructor(logger: ITelemetryLogger, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers);
     // (undocumented)
@@ -248,6 +245,8 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 
 // @public
 export enum TelemetryDataTag {
+    CodeArtifact = "CodeArtifact",
+    // @deprecated
     PackageData = "PackageData",
     UserData = "UserData"
 }

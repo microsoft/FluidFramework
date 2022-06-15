@@ -67,7 +67,7 @@ export class Utils {
 
   /**
    * Checks if the property is a collection
-   * @param property the metadata
+   * @param property - the metadata
    * @return true if collection , false if not
    */
   public static isCollectionProperty(property: BaseProperty): boolean {

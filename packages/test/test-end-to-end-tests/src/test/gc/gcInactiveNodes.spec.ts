@@ -11,12 +11,13 @@ import {
 import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
-import { TestDataObject } from "../mockSummarizerClient";
+import { loadSummarizer, TestDataObject } from "../mockSummarizerClient";
 
 /**
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
@@ -29,18 +30,20 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
         TestDataObject,
         [],
         []);
-    const deleteTimeoutMs = 100;
+    const inactiveTimeoutMs = 100;
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
-        gcOptions: { gcAllowed: true, deleteTimeoutMs },
+        gcOptions: { gcAllowed: true, inactiveTimeoutMs },
     };
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
         [
             [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
         ],
         undefined,
-        undefined,
+        [innerRequestHandler],
         runtimeOptions,
     );
     const summaryLogger = new TelemetryNullLogger();
@@ -54,10 +57,10 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
     let summarizerDefaultDataStore: TestDataObject;
     let mockLogger: MockLogger;
 
-    /** Waits for the delete timeout to expire. */
-    async function waitForDeleteTimeout(): Promise<void> {
+    /** Waits for the inactive timeout to expire. */
+    async function waitForInactiveTimeout(): Promise<void> {
         await new Promise<void>((resolve) => {
-            setTimeout(resolve, deleteTimeoutMs + 10);
+            setTimeout(resolve, inactiveTimeoutMs + 10);
         });
     }
 
@@ -98,15 +101,21 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
 
         await provider.ensureSynchronized();
-        const summarizerContainer = await provider.loadContainer(runtimeFactory, { logger: mockLogger }) as Container;
-        summarizerDefaultDataStore = await requestFluidObject<TestDataObject>(summarizerContainer, "/");
-        summarizerRuntime = (await requestFluidObject<TestDataObject>(summarizerContainer, "/")).containerRuntime;
+        const summarizerClient = await loadSummarizer(
+            provider,
+            runtimeFactory,
+            container.deltaManager.lastSequenceNumber,
+            undefined /* summaryVersion */,
+            { logger: mockLogger },
+        );
+        summarizerRuntime = summarizerClient.containerRuntime;
+        summarizerDefaultDataStore = await requestFluidObject<TestDataObject>(summarizerRuntime, "/");
     });
 
     itExpects("can generate events when unreferenced data store is accessed after it's inactive", [
-        { eventName: changedEvent, timeout: deleteTimeoutMs },
-        { eventName: loadedEvent, timeout: deleteTimeoutMs },
-        { eventName: revivedEvent, timeout: deleteTimeoutMs },
+        { eventName: changedEvent, timeout: inactiveTimeoutMs },
+        { eventName: loadedEvent, timeout: inactiveTimeoutMs },
+        { eventName: revivedEvent, timeout: inactiveTimeoutMs },
     ], async () => {
         const dataStore1 = await dataObjectFactory.createInstance(defaultDataStore.containerRuntime);
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
@@ -128,8 +137,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
         await summarize();
         validateNoInactiveEvents();
 
-        // Wait for delete timeout. This will ensure that the unreferenced data store is inactive.
-        await waitForDeleteTimeout();
+        // Wait for inactive timeout. This will ensure that the unreferenced data store is inactive.
+        await waitForInactiveTimeout();
 
         // Make changes to the inactive data store and validate that we get the changedEvent.
         dataStore1._root.set("key", "value");
@@ -138,7 +147,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             mockLogger.matchEvents([
                 {
                     eventName: changedEvent,
-                    timeout: deleteTimeoutMs,
+                    timeout: inactiveTimeoutMs,
                     id: `/${dataStore1.id}`,
                     pkg: { value: `/${pkg}`, tag: TelemetryDataTag.PackageData },
                 },
@@ -152,7 +161,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             mockLogger.matchEvents([
                 {
                     eventName: loadedEvent,
-                    timeout: deleteTimeoutMs,
+                    timeout: inactiveTimeoutMs,
                     id: `/${dataStore1.id}`,
                 },
             ]),
@@ -172,7 +181,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             mockLogger.matchEvents([
                 {
                     eventName: revivedEvent,
-                    timeout: deleteTimeoutMs,
+                    timeout: inactiveTimeoutMs,
                     id: `/${dataStore1.id}`,
                     pkg: { value: `/${pkg}`, tag: TelemetryDataTag.PackageData },
                 },
@@ -182,8 +191,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
     });
 
     itExpects("can generate events when unreferenced attachment blob is accessed after it's inactive", [
-        { eventName: loadedEvent, timeout: deleteTimeoutMs },
-        { eventName: revivedEvent, timeout: deleteTimeoutMs },
+        { eventName: loadedEvent, timeout: inactiveTimeoutMs },
+        { eventName: revivedEvent, timeout: inactiveTimeoutMs },
     ], async () => {
         // Upload an attachment blobs and mark them referenced.
         const blobContents = "Blob contents";
@@ -206,8 +215,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
         await summarize();
         validateNoInactiveEvents();
 
-        // Wait for delete timeout. This will ensure that the unreferenced blob is inactive.
-        await waitForDeleteTimeout();
+        // Wait for inactive timeout. This will ensure that the unreferenced blob is inactive.
+        await waitForInactiveTimeout();
 
         // Retrieve the blob in the summarizer client now and validate that we get the loadedEvent.
         await summarizerBlobHandle.get();
@@ -215,7 +224,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             mockLogger.matchEvents([
                 {
                     eventName: loadedEvent,
-                    timeout: deleteTimeoutMs,
+                    timeout: inactiveTimeoutMs,
                     id: summarizerBlobHandle.absolutePath,
                 },
             ]),
@@ -229,7 +238,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             mockLogger.matchEvents([
                 {
                     eventName: revivedEvent,
-                    timeout: deleteTimeoutMs,
+                    timeout: inactiveTimeoutMs,
                     id: summarizerBlobHandle.absolutePath,
                 },
             ]),

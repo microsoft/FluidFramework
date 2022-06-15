@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-binder",
-  "version": "0.59.4000",
+  "version": "1.1.0",
   "description": "Data Binder for Fluid PropertyDDS",
   "keywords": [],
   "homepage": "https://fluidframework.com",
@@ -65,9 +65,9 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.13.7",
-    "@fluid-experimental/property-changeset": "^0.59.4000",
-    "@fluid-experimental/property-dds": "^0.59.4000",
-    "@fluid-experimental/property-properties": "^0.59.4000",
+    "@fluid-experimental/property-changeset": "^1.1.0",
+    "@fluid-experimental/property-dds": "^1.1.0",
+    "@fluid-experimental/property-properties": "^1.1.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
@@ -76,8 +76,8 @@
     "@babel/plugin-transform-runtime": "^7.2.0",
     "@babel/preset-env": "^7.2.0",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/test-runtime-utils": "^0.59.4000",
-    "@fluidframework/test-utils": "^0.59.4000",
+    "@fluidframework/test-runtime-utils": "^1.1.0",
+    "@fluidframework/test-utils": "^1.1.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jest": "22.2.3",
     "async": "^3.2.0",

@@ -87,11 +87,13 @@ export interface IRepoManagerParams {
 
 export interface IRepositoryManagerFactory {
     /**
-     * Create a new repository and return its manager instance.
+     * Tries to create a new repository and return its manager instance.
+     * If the repository already exists, then it is returned.
      */
     create(params: IRepoManagerParams): Promise<IRepositoryManager>;
     /**
      * Open an existing repository and return its manager instance.
+     * If the repository does not exist, throws an error.
      */
     open(params: IRepoManagerParams): Promise<IRepositoryManager>;
 }

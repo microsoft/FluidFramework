@@ -112,6 +112,30 @@ use_old_InterfaceDeclaration_ContainerRuntimeMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DefaultSummaryConfiguration": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_DefaultSummaryConfiguration():
+    TypeOnly<typeof old.DefaultSummaryConfiguration>;
+declare function use_current_VariableDeclaration_DefaultSummaryConfiguration(
+    use: TypeOnly<typeof current.DefaultSummaryConfiguration>);
+use_current_VariableDeclaration_DefaultSummaryConfiguration(
+    get_old_VariableDeclaration_DefaultSummaryConfiguration());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DefaultSummaryConfiguration": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_DefaultSummaryConfiguration():
+    TypeOnly<typeof current.DefaultSummaryConfiguration>;
+declare function use_old_VariableDeclaration_DefaultSummaryConfiguration(
+    use: TypeOnly<typeof old.DefaultSummaryConfiguration>);
+use_old_VariableDeclaration_DefaultSummaryConfiguration(
+    get_current_VariableDeclaration_DefaultSummaryConfiguration());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DeltaScheduler": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DeltaScheduler():
@@ -760,6 +784,30 @@ use_old_InterfaceDeclaration_IPendingMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPendingRuntimeState": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IPendingRuntimeState():
+    TypeOnly<old.IPendingRuntimeState>;
+declare function use_current_InterfaceDeclaration_IPendingRuntimeState(
+    use: TypeOnly<current.IPendingRuntimeState>);
+use_current_InterfaceDeclaration_IPendingRuntimeState(
+    get_old_InterfaceDeclaration_IPendingRuntimeState());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPendingRuntimeState": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IPendingRuntimeState():
+    TypeOnly<current.IPendingRuntimeState>;
+declare function use_old_InterfaceDeclaration_IPendingRuntimeState(
+    use: TypeOnly<old.IPendingRuntimeState>);
+use_old_InterfaceDeclaration_IPendingRuntimeState(
+    get_current_InterfaceDeclaration_IPendingRuntimeState());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IPendingState": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IPendingState():
@@ -1048,30 +1096,6 @@ use_old_InterfaceDeclaration_ISummarizerInternalsProvider(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummarizerOptions": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_ISummarizerOptions():
-    TypeOnly<old.ISummarizerOptions>;
-declare function use_current_InterfaceDeclaration_ISummarizerOptions(
-    use: TypeOnly<current.ISummarizerOptions>);
-use_current_InterfaceDeclaration_ISummarizerOptions(
-    get_old_InterfaceDeclaration_ISummarizerOptions());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummarizerOptions": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_ISummarizerOptions():
-    TypeOnly<current.ISummarizerOptions>;
-declare function use_old_InterfaceDeclaration_ISummarizerOptions(
-    use: TypeOnly<old.ISummarizerOptions>);
-use_old_InterfaceDeclaration_ISummarizerOptions(
-    get_current_InterfaceDeclaration_ISummarizerOptions());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummarizerRuntime": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummarizerRuntime():
@@ -1168,6 +1192,30 @@ use_old_InterfaceDeclaration_ISummaryAckMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummaryBaseConfiguration": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISummaryBaseConfiguration():
+    TypeOnly<old.ISummaryBaseConfiguration>;
+declare function use_current_InterfaceDeclaration_ISummaryBaseConfiguration(
+    use: TypeOnly<current.ISummaryBaseConfiguration>);
+use_current_InterfaceDeclaration_ISummaryBaseConfiguration(
+    get_old_InterfaceDeclaration_ISummaryBaseConfiguration());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummaryBaseConfiguration": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISummaryBaseConfiguration():
+    TypeOnly<current.ISummaryBaseConfiguration>;
+declare function use_old_InterfaceDeclaration_ISummaryBaseConfiguration(
+    use: TypeOnly<old.ISummaryBaseConfiguration>);
+use_old_InterfaceDeclaration_ISummaryBaseConfiguration(
+    get_current_InterfaceDeclaration_ISummaryBaseConfiguration());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ISummaryCancellationToken": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ISummaryCancellationToken():
@@ -1212,6 +1260,102 @@ declare function use_old_InterfaceDeclaration_ISummaryCollectionOpEvents(
     use: TypeOnly<old.ISummaryCollectionOpEvents>);
 use_old_InterfaceDeclaration_ISummaryCollectionOpEvents(
     get_current_InterfaceDeclaration_ISummaryCollectionOpEvents());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ISummaryConfiguration": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ISummaryConfiguration():
+    TypeOnly<old.ISummaryConfiguration>;
+declare function use_current_TypeAliasDeclaration_ISummaryConfiguration(
+    use: TypeOnly<current.ISummaryConfiguration>);
+use_current_TypeAliasDeclaration_ISummaryConfiguration(
+    get_old_TypeAliasDeclaration_ISummaryConfiguration());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ISummaryConfiguration": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ISummaryConfiguration():
+    TypeOnly<current.ISummaryConfiguration>;
+declare function use_old_TypeAliasDeclaration_ISummaryConfiguration(
+    use: TypeOnly<old.ISummaryConfiguration>);
+use_old_TypeAliasDeclaration_ISummaryConfiguration(
+    get_current_TypeAliasDeclaration_ISummaryConfiguration());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummaryConfigurationDisableHeuristics": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics():
+    TypeOnly<old.ISummaryConfigurationDisableHeuristics>;
+declare function use_current_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics(
+    use: TypeOnly<current.ISummaryConfigurationDisableHeuristics>);
+use_current_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics(
+    get_old_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummaryConfigurationDisableHeuristics": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics():
+    TypeOnly<current.ISummaryConfigurationDisableHeuristics>;
+declare function use_old_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics(
+    use: TypeOnly<old.ISummaryConfigurationDisableHeuristics>);
+use_old_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics(
+    get_current_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummaryConfigurationDisableSummarizer": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISummaryConfigurationDisableSummarizer():
+    TypeOnly<old.ISummaryConfigurationDisableSummarizer>;
+declare function use_current_InterfaceDeclaration_ISummaryConfigurationDisableSummarizer(
+    use: TypeOnly<current.ISummaryConfigurationDisableSummarizer>);
+use_current_InterfaceDeclaration_ISummaryConfigurationDisableSummarizer(
+    get_old_InterfaceDeclaration_ISummaryConfigurationDisableSummarizer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummaryConfigurationDisableSummarizer": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISummaryConfigurationDisableSummarizer():
+    TypeOnly<current.ISummaryConfigurationDisableSummarizer>;
+declare function use_old_InterfaceDeclaration_ISummaryConfigurationDisableSummarizer(
+    use: TypeOnly<old.ISummaryConfigurationDisableSummarizer>);
+use_old_InterfaceDeclaration_ISummaryConfigurationDisableSummarizer(
+    get_current_InterfaceDeclaration_ISummaryConfigurationDisableSummarizer());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummaryConfigurationHeuristics": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISummaryConfigurationHeuristics():
+    TypeOnly<old.ISummaryConfigurationHeuristics>;
+declare function use_current_InterfaceDeclaration_ISummaryConfigurationHeuristics(
+    use: TypeOnly<current.ISummaryConfigurationHeuristics>);
+use_current_InterfaceDeclaration_ISummaryConfigurationHeuristics(
+    get_old_InterfaceDeclaration_ISummaryConfigurationHeuristics());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISummaryConfigurationHeuristics": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISummaryConfigurationHeuristics():
+    TypeOnly<current.ISummaryConfigurationHeuristics>;
+declare function use_old_InterfaceDeclaration_ISummaryConfigurationHeuristics(
+    use: TypeOnly<old.ISummaryConfigurationHeuristics>);
+use_old_InterfaceDeclaration_ISummaryConfigurationHeuristics(
+    get_current_InterfaceDeclaration_ISummaryConfigurationHeuristics());
 
 /*
 * Validate forward compat by using old type in place of current type

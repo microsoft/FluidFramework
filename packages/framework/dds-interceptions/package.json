@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/dds-interceptions",
-  "version": "0.59.4000",
+  "version": "1.1.0",
   "description": "Distributed Data Structures that support an interception callback",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -62,41 +62,29 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/map": "^0.59.4000",
-    "@fluidframework/merge-tree": "^0.59.4000",
-    "@fluidframework/runtime-definitions": "^0.59.4000",
-    "@fluidframework/sequence": "^0.59.4000"
+    "@fluidframework/map": "^1.1.0",
+    "@fluidframework/merge-tree": "^1.1.0",
+    "@fluidframework/runtime-definitions": "^1.1.0",
+    "@fluidframework/sequence": "^1.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66793",
-    "@fluidframework/dds-interceptions-previous": "npm:@fluidframework/dds-interceptions@0.59.3000",
+    "@fluidframework/build-tools": "^0.2.71273",
+    "@fluidframework/dds-interceptions-previous": "npm:@fluidframework/dds-interceptions@^1.0.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^0.59.4000",
-    "@fluidframework/test-runtime-utils": "^0.59.4000",
+    "@fluidframework/mocha-test-setup": "^1.1.0",
+    "@fluidframework/test-runtime-utils": "^1.1.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
     "@types/random-js": "^1.0.31",
-    "@typescript-eslint/eslint-plugin": "~5.9.0",
-    "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "diff": "^3.5.0",
     "eslint": "~8.6.0",
-    "eslint-plugin-editorconfig": "~3.2.0",
-    "eslint-plugin-eslint-comments": "~3.2.0",
-    "eslint-plugin-import": "~2.25.4",
-    "eslint-plugin-jest": "~26.1.3",
-    "eslint-plugin-jsdoc": "~39.3.0",
-    "eslint-plugin-mocha": "~10.0.3",
-    "eslint-plugin-promise": "~6.0.0",
-    "eslint-plugin-react": "~7.28.0",
-    "eslint-plugin-tsdoc": "~0.2.14",
-    "eslint-plugin-unicorn": "~40.0.0",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",
@@ -105,7 +93,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4000",
+    "version": "1.1.0",
     "broken": {}
   }
 }

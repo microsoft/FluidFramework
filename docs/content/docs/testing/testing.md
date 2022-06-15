@@ -41,16 +41,19 @@ Your automation can connect to a test tenant for Azure Fluid Relay in the same w
 
 The Azure Fluid Relay client can also connect to a local Tinylicious instance.  This allows you to use a single client type between tests against live and local service instances, where the only difference is the configuration used to create the client.
 
+About this code note:
+
+* The values for `tenantId`, `endpoint`, and `type` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious.
+
 ```javascript
 const user = {
     id: "UserId",
     name: "Test User",
 };
 const config = {
-    tenantId: LOCAL_MODE_TENANT_ID,
+    type: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", user),
-    orderer: "http://localhost:7070",
-    storage: "http://localhost:7070",
+    endpoint: "http://localhost:7070",
 };
 
 const clientProps = {
@@ -62,13 +65,13 @@ const clientProps = {
 const client = new AzureClient(clientProps);
 ```
 
-These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious. `LOCAL_MODE_TENANT_ID` is imported from `@fluidframework/azure-client`.
-
 ## Automation example
 
 This example combines the concepts from this document to show how you can write one test suite that runs against both Tinylicious or Azure Fluid Relay.
 
-First you need to create a client that can adapt to the test scenario.  This example uses an environment variable to determine which service to target and for the tenant key.  The target service variable can be set as part of the test script, while secrets can be set by individual users or provided by your CI pipeline.
+First you need to create a client that can adapt to the test scenario.
+This example uses an environment variable to determine which service to target, as well as the tenant key.
+The target service variable can be set as part of the test script, while secrets can be set by individual users or provided by your CI pipeline.
 
 ```typescript
 function createAzureClient(): AzureClient {
@@ -77,15 +80,14 @@ function createAzureClient(): AzureClient {
     const user = { id: "userId", name: "Test User" };
 
     const connectionConfig = useAzure ? {
+        type: "remote",
         tenantId: "myTenantId",
         tokenProvider: new InsecureTokenProvider(tenantKey, user),
-        orderer: "https://myOrdererUrl",
-        storage: "https://myStorageUrl",
+        endpoint: "https://myOrdererUrl",
     } : {
-        tenantId: LOCAL_MODE_TENANT_ID,
+        type: "local",
         tokenProvider: new InsecureTokenProvider("fooBar", user),
-        orderer: "http://localhost:7070",
-        storage: "http://localhost:7070",
+        endpoint: "http://localhost:7070",
     };
     return new AzureClient({ connection:connectionConfig });
 }
@@ -96,7 +98,7 @@ Your test can then call this function to create a client object without concerni
 ```typescript
 import { v4 as uuid } from "uuid";
 
-...
+// ...
 
 describe("ClientTest", () => {
     const client = createAzureClient();
