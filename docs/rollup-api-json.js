@@ -174,11 +174,11 @@ const main = async () => {
 
 main().then(
     () => {
-        console.log(colors.green('SUCCESS: API log files staged!'));
+        console.log(colors.green("SUCCESS: API log files staged!"));
         process.exit(0);
     },
     (error) => {
-        console.error('FAILURE: API log files could not be staged due to an error.', error);
+        console.error("FAILURE: API log files could not be staged due to an error.", error);
         process.exit(1);
     }
 );
