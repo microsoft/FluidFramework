@@ -16,7 +16,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReference, _validateReferenceType } from "./localReference";
+import { LocalReference } from "./localReference";
 import {
     CollaborationWindow,
     compareStrings,

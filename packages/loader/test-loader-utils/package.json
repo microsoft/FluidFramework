@@ -38,7 +38,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@^0.59.0",
+    "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@^1.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
@@ -47,7 +47,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "broken": {
       "ClassDeclaration_MockDocumentDeltaConnection": {
         "backCompat": false

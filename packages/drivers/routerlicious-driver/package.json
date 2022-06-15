@@ -82,7 +82,7 @@
     "@fluidframework/build-tools": "^0.2.71273",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^2.0.0",
-    "@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@^0.59.0",
+    "@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -102,14 +102,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.0.0",
-    "broken": {
-      "ClassDeclaration_DocumentStorageService": {
-        "backCompat": false
-      },
-      "ClassDeclaration_NullBlobStorageService": {
-        "backCompat": false
-      }
-    }
+    "version": "1.1.0",
+    "broken": {}
   }
 }
