@@ -56,7 +56,7 @@ const extractMembersFromApiObject = (sourceApiObj, members) =>
  * @param {string} sourceFile path to the source API JSON file to extract members from.
  * @param {string[]} members array of members to extract.
  */
-const extractMembers = (sourceFile, members) => {
+const extractMembers = async (sourceFile, members) => {
     // First load the source API file...
     console.log(`Extracting members from ${path.basename(sourceFile)}`);
     const sourceApiObj = JSON.parse(fs.readFileSync(sourceFile, { encoding: "utf8" }));
@@ -83,7 +83,7 @@ const extractMembers = (sourceFile, members) => {
  * @param {string} targetPath Path where the combined API JSON files will be output.
  * @param {object} instructions Array of 'member combine data' objects.
  */
-const combineMembers = (sourcePath, targetPath, instructions) => {
+const combineMembers = async (sourcePath, targetPath, instructions) => {
     // Iterate through the "instructions."
     for (const { package, sourceImports, cleanOrigMembers } of instructions) {
         /** The path to the API JSON file. */
@@ -97,12 +97,12 @@ const combineMembers = (sourcePath, targetPath, instructions) => {
         for (const [sourcePackage, members] of sourceImports) {
             // Extract the members from the source API JSON file and save them for later.
             const sourceFile = path.join(sourcePath, `${packageName(sourcePackage)}.api.json`);
-            extractedMembers = extractedMembers.concat(extractMembers(sourceFile, members));
+            extractedMembers = extractedMembers.concat(await extractMembers(sourceFile, members));
         }
 
         // Load the input API JSON file (the one that will be rewritten).
         console.log(`Parsing ${inputPackagePath}`);
-        let jsonStr = fs.readFileSync(inputPackagePath, { encoding: "utf8" });
+        let jsonStr = await fs.readFile(inputPackagePath, { encoding: "utf8" });
         const rewrittenApiObj = JSON.parse(jsonStr);
 
         // Optionally, delete original package members.
@@ -118,14 +118,14 @@ const combineMembers = (sourcePath, targetPath, instructions) => {
 
         jsonStr = JSON.stringify(rewrittenApiObj, null, 2);
         console.log(`Writing output file ${outputPackagePath}\n`);
-        fs.writeFileSync(outputPackagePath, jsonStr);
+        await fs.writeFile(outputPackagePath, jsonStr);
     }
 };
 
 const main = async () => {
     // Clear output folders.
-    fs.emptyDirSync(stagingPath);
-    fs.emptyDirSync(outputPath);
+    await fs.emptyDir(stagingPath);
+    await fs.emptyDir(outputPath);
 
     const websitePackageFiles = data.websitePackages.map(
         (p) => `${packageName(p)}.api.json`
@@ -172,4 +172,13 @@ const main = async () => {
         });
 };
 
-main();
+main().then(
+    () => {
+        console.log(colors.green('SUCCESS: API log files staged!'));
+        process.exit(0);
+    },
+    (error) => {
+        console.error('FAILURE: API log files could not be staged due to an error.', error);
+        process.exit(1);
+    }
+);
