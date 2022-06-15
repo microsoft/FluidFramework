@@ -40,10 +40,8 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 
-import * as semver from "semver";
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
-import { pkgVersion } from "./packageVersion";
 import {
     getGCVersion,
     GCVersion,
@@ -74,12 +72,8 @@ const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 // Feature gate key to disable expiring session after a set period of time, even if expiry value is present
 export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
-// Feature gate key to log error messages if GC reference validation fails.
-export const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 // Feature gate key to write the gc blob as a handle if the data is the same.
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
-// Feature gate key to limit which versions can write the gc blob as a handle if the data is the same.
-export const trackGCStateMinimumVersionKey = "Fluid.GarbageCollection.TrackGCState.MinVersion";
 
 const defaultInactiveTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -333,7 +327,7 @@ export class GarbageCollector implements IGarbageCollector {
     /**
      * Tells whether the GC data should be written to the root of the summary tree.
      */
-    private _writeDataAtRoot: boolean = false;
+    private _writeDataAtRoot: boolean = true;
     public get writeDataAtRoot(): boolean {
         return this._writeDataAtRoot;
     }
@@ -479,10 +473,7 @@ export class GarbageCollector implements IGarbageCollector {
             && !gcOptions.disableGC
         );
 
-        const minimumVersion = this.mc.config.getString(trackGCStateMinimumVersionKey);
-        const shouldTrackStateForVersion = meetsMinimumVersionRequirement(pkgVersion, minimumVersion);
-
-        this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true && shouldTrackStateForVersion;
+        this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -503,19 +494,15 @@ export class GarbageCollector implements IGarbageCollector {
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
 
-        /**
-         * Enable resetting initial state once the following issue is resolved:
-         * https://github.com/microsoft/FluidFramework/issues/8878.
-         * Currently, the GC tree is not written at root, so we don't know if the base snapshot contains GC tree or not.
-         */
-        // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't contain
-        // GC tree and GC is enabled.
-        // const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
-        // this.initialStateNeedsReset = gcTreePresent ? !this.shouldRunGC : this.shouldRunGC;
+        // GC state is written into root of the summary tree by default. Can be overridden via feature flag for now.
+        this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? true;
 
-        // If `writeDataAtRoot` setting is true, write the GC data into the root of the summary tree. We do this so that
-        // the roll out can be staged. Once its rolled out everywhere, we will start writing at root by default.
-        this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? this.gcOptions.writeDataAtRoot === true;
+        if (this._writeDataAtRoot) {
+            // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
+            // contain GC tree and GC is enabled.
+            const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
+            this.initialStateNeedsReset = gcTreePresent !== this.shouldRunGC;
+        }
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
@@ -1008,10 +995,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.newReferencesSinceLastRun,
         );
 
-        // The following log will be enabled once this issue is resolved:
-        // https://github.com/microsoft/FluidFramework/issues/8878.
-        if (this.mc.config.getBoolean(logUnknownOutboundReferencesKey) === true
-            && missingExplicitReferences.length > 0) {
+        if (this.writeDataAtRoot && missingExplicitReferences.length > 0) {
             missingExplicitReferences.forEach((missingExplicitReference) => {
                 const event: ITelemetryPerformanceEvent = {
                     eventName: "gcUnknownOutboundReferences",
@@ -1155,11 +1139,10 @@ export class GarbageCollector implements IGarbageCollector {
 
         const updateNodeStats = (nodeId: string, referenced: boolean) => {
             gcStats.nodeCount++;
-            /**
-             * `this.unreferencedNodesState` has the previous unreferenced state of all nodes. `referenced` flag passed
-             * here is current state of the give node. Check if the reference state of the changed.
-             */
-            const stateUpdated = this.unreferencedNodesState.has(nodeId) ? referenced : !referenced;
+            // If there is no previous GC data, every node's state is generated and is considered as updated.
+            // Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
+            const stateUpdated = this.previousGCDataFromLastRun === undefined ||
+                this.unreferencedNodesState.has(nodeId) === referenced;
             if (stateUpdated) {
                 gcStats.updatedNodeCount++;
             }
@@ -1320,16 +1303,4 @@ function setLongTimeout(
         timer = setTimeout(() => timeoutFn(), timeoutMs);
     }
     setTimerFn(timer);
-}
-
-/**
- * meetsMinimumVersionRequirement is used determining if a feature version should be run. This is similar to feature
- * flags. The advantage of this is that if we ship a bug in version 0.1.1 and fix it in version 0.2.1. We can keep this
- * feature disabled for version 0.1.1 and enabled for 0.2.1. Older versions will run without the feature and new
- * versions will run with the feature.
- * @param currentVersion - the total time the timeout needs to last in ms
- * @param minimumVersion - the function to execute when the timer ends
- */
-function meetsMinimumVersionRequirement(currentVersion: string, minimumVersion: string | undefined) {
-    return minimumVersion === undefined || semver.compare(currentVersion, minimumVersion) >= 0;
 }

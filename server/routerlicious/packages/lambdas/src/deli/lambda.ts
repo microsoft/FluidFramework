@@ -266,7 +266,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         private readonly serviceConfiguration: IServiceConfiguration,
         private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
         private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
-        private readonly readClients: Map<string, ISequencedSignalClient> = new Map()) {
+        private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map()) {
         super();
 
         // Instantiate existing clients
@@ -467,10 +467,19 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                             (sequencedMessage.serverMetadata &&
                                 typeof (sequencedMessage.serverMetadata) === "object" &&
                                 sequencedMessage.serverMetadata.createSignal))) {
+                        const dataContent = this.extractDataContent(message as IRawOperationMessage);
+
                         const signalMessage = this.createSignalMessage(
                             message as IRawOperationMessage,
                             sequencedMessage.sequenceNumber - 1,
-                            this.extractDataContent(message as IRawOperationMessage));
+                            dataContent);
+
+                        if (sequencedMessage.type === MessageType.ClientJoin) {
+                            this.addSequencedSignalClient(dataContent as IClientJoin, signalMessage);
+                        } else {
+                            this.sequencedSignalClients.delete(dataContent);
+                        }
+
                         this.produceMessage(this.signalsProducer, signalMessage.message);
                     }
 
@@ -700,11 +709,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         // Handle client join/leave messages.
         if (!message.clientId) {
             if (message.operation.type === MessageType.ClientLeave) {
-                const readClient = this.readClients.get(dataContent);
-                if (readClient) {
-                    this.readClients.delete(dataContent);
-                    return this.createSignalMessage(message, this.sequenceNumber, dataContent);
-                } else if (!this.clientSeqManager.removeClient(dataContent)) {
+                if (!this.clientSeqManager.removeClient(dataContent)) {
+                    // not a write client. check if it was a read client
+                    const readClient = this.sequencedSignalClients.get(dataContent);
+                    if (readClient) {
+                        this.sequencedSignalClients.delete(dataContent);
+                        return this.createSignalMessage(message, this.sequenceNumber, dataContent);
+                    }
+
                     // Return if the client has already been removed due to a prior leave message.
                     return;
                 }
@@ -712,7 +724,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 const clientJoinMessage = dataContent as IClientJoin;
 
                 if (clientJoinMessage.detail.mode === "read") {
-                    if (this.readClients.has(clientJoinMessage.clientId)) {
+                    if (this.sequencedSignalClients.has(clientJoinMessage.clientId)) {
                         // Return if the client has already been added due to a prior join message.
                         return;
                     }
@@ -720,15 +732,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     // create the signal message
                     const signalMessage = this.createSignalMessage(message, this.sequenceNumber, dataContent);
 
-                    // store the read client in-memory, including the signal sequence numbers
-                    const readClient: ISequencedSignalClient = {
-                        client: clientJoinMessage.detail,
-                        referenceSequenceNumber: (signalMessage.message.operation as any).referenceSequenceNumber,
-                        clientConnectionNumber: (signalMessage.message.operation as any).clientConnectionNumber,
-                        exp: Date.now() + this.serviceConfiguration.deli.clientTimeout,
-                    };
-
-                    this.readClients.set(clientJoinMessage.clientId, readClient);
+                    this.addSequencedSignalClient(clientJoinMessage, signalMessage);
 
                     return signalMessage;
                 } else {
@@ -951,7 +955,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         const clientIds = controlContents.clientIds ??
                             (controlContents.clientId ? [controlContents.clientId] : []);
                         for (const clientId of clientIds) {
-                            const client = this.readClients.get(clientId);
+                            const client = this.sequencedSignalClients.get(clientId);
                             if (client) {
                                 clientsToExtend.set(clientId, client);
                             }
@@ -1195,8 +1199,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     private checkIdleReadClients() {
         const currentTime = Date.now();
 
-        for (const [clientId, { exp }] of this.readClients) {
-            if (exp < currentTime) {
+        for (const [clientId, { client, exp }] of this.sequencedSignalClients) {
+            // only handle read clients here
+            // write client idle is handled by checkIdleWriteClients
+            if (client.mode === "read" && exp < currentTime) {
                 const leaveMessage = this.createLeaveMessage(clientId);
                 void this.sendToRawDeltas(leaveMessage);
             }
@@ -1235,10 +1241,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         code: number,
         type: NackErrorType,
         reason: string,
-        retryAfter?: number): INackMessageOutput {
+        retryAfter?: number): INackMessageOutput | undefined {
+        const clientId = message.clientId;
+        if (!clientId) {
+            // message was sent by the system and not a client
+            // "nacking" the system is not supported
+            return undefined;
+        }
+
         const nackMessage: INackMessage = {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            clientId: message.clientId!,
+            clientId,
             documentId: this.documentId,
             operation: {
                 content: {
@@ -1682,5 +1694,22 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         }
 
         this.emit("updatedNackMessages", type, contents);
+    }
+
+    /**
+     * Adds a sequenced signal client to the in-memory map.
+     * Alfred will periodically send ExtendClient control messages, which will extend the client expiration times.
+     * @param clientJoinMessage - Client join message (from dataContent)
+     * @param signalMessage - Ticketed join signal message
+     */
+    private addSequencedSignalClient(clientJoinMessage: IClientJoin, signalMessage: ISignalMessageOutput) {
+        const sequencedSignalClient: ISequencedSignalClient = {
+            client: clientJoinMessage.detail,
+            referenceSequenceNumber: (signalMessage.message.operation as any).referenceSequenceNumber,
+            clientConnectionNumber: (signalMessage.message.operation as any).clientConnectionNumber,
+            exp: Date.now() + this.serviceConfiguration.deli.clientTimeout,
+        };
+
+        this.sequencedSignalClients.set(clientJoinMessage.clientId, sequencedSignalClient);
     }
 }

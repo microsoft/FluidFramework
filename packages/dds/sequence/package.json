@@ -83,7 +83,7 @@
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/gitresources": "^0.1036.4000",
     "@fluidframework/mocha-test-setup": "^2.0.0",
-    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@^0.58.0",
+    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@^1.0.0",
     "@fluidframework/server-services-client": "^0.1036.4000",
     "@fluidframework/test-runtime-utils": "^2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -105,37 +105,13 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "broken": {
-      "InterfaceDeclaration_ISharedString": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedNumberSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedObjectSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedSegmentSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedSequence": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SharedString": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SparseMatrix": {
-        "forwardCompat": false
-      },
       "ClassDeclaration_IntervalCollection": {
         "forwardCompat": false
       },
       "ClassDeclaration_SequenceInterval": {
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_SharedStringSegment": {
-        "backCompat": false
+        "forwardCompat": false
       }
     }
   }
