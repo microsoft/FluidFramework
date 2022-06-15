@@ -342,23 +342,13 @@ export function TestPack(verbose = true) {
 
         function clientProcessSome(client: TestClient, all = false) {
             const cliMsgCount = client.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = cliMsgCount;
-            } else {
-                countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
-            }
+            const countToApply: number = all ? cliMsgCount : random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
             client.applyMessages(countToApply);
         }
 
         function serverProcessSome(server: TestClient, all = false) {
             const svrMsgCount = server.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = svrMsgCount;
-            } else {
-                countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
-            }
+            const countToApply: number = all ? svrMsgCount : random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
             return server.applyMessages(countToApply);
         }
 
@@ -412,15 +402,12 @@ export function TestPack(verbose = true) {
                 }
                 const pos = word2.pos + word2.text.length;
 
-                let insertOp;
                 const segOff = client.getContainingSegment(pos);
-                if (!insertAsRefPos && segOff.segment) {
-                    insertOp = client.insertAtReferencePositionLocal(
+                const insertOp = !insertAsRefPos && segOff.segment
+                    ? client.insertAtReferencePositionLocal(
                         new MergeTree.LocalReference(client, segOff.segment, segOff.offset, MergeTree.ReferenceType.Transient),
-                        TextSegment.make(word1.text));
-                } else {
-                    insertOp = client.insertTextLocal(pos, word1.text);
-                }
+                        TextSegment.make(word1.text))
+                    : client.insertTextLocal(pos, word1.text);
 
                 if (!useGroupOperationsForMoveWord) {
                     testServer.enqueueMsg(
@@ -1264,11 +1251,7 @@ export class RandomPack {
 }
 
 function docNodeToString(docNode: DocumentNode) {
-    if (typeof docNode === "string") {
-        return docNode;
-    } else {
-        return docNode.name;
-    }
+    return typeof docNode === "string" ? docNode : docNode.name;
 }
 
 export type DocumentNode = string | DocumentTree;
