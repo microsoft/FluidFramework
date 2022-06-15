@@ -56,7 +56,7 @@
     "@fluidframework/gitresources": "^0.1037.1000-0",
     "@fluidframework/protocol-base": "^0.1037.1000-0",
     "@fluidframework/protocol-definitions": "^0.1029.1000-0",
-    "@fluidframework/server-lambdas-driver": "^0.1037.1000",
+    "@fluidframework/server-lambdas-driver": "^0.1037.1000-0",
     "@fluidframework/server-services-client": "^0.1037.1000-0",
     "@fluidframework/server-services-core": "^0.1037.1000-0",
     "@fluidframework/server-services-telemetry": "^0.1037.1000-0",
