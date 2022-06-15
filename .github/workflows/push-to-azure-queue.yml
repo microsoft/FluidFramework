@@ -24,10 +24,10 @@ jobs:
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueClient = queueServiceClient.getQueueClient(queueName);
             console.log("SHA-----", `${{ github.sha }}`);
-            console.log("SHA-----", `${{ github.author }}`);
+            console.log("SHA-----", `${{ github.actor }}`);
             const message = {
               sha: `${{ github.sha }}`,
-              author: `${{ github.author }}`,
+              author: `${{ github.actor }}`,
               label: `queued`,
             };
             await queueClient.sendMessage(JSON.stringify(message));
