@@ -387,11 +387,13 @@ implements ISerializableInterval {
         let startRef = this.start;
         if (start !== undefined) {
             startRef = createPositionReference(this.start.getClient(), start, getRefType(this.start.refType), op);
+            startRef.addProperties(this.start.properties);
         }
 
         let endRef = this.end;
         if (end !== undefined) {
             endRef = createPositionReference(this.end.getClient(), end, getRefType(this.end.refType), op);
+            endRef.addProperties(this.end.properties);
         }
 
         startRef.pairedRef = endRef;
