@@ -94,11 +94,11 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
         if (container.getSpecifiedCodeDetails !== undefined) {
             assert.strictEqual(container.getSpecifiedCodeDetails()?.package, provider.defaultCodeDetails.package,
-            "Specified package should be same as provided");
+                "Specified package should be same as provided");
         }
         if (container.getLoadedCodeDetails !== undefined) {
             assert.strictEqual(container.getLoadedCodeDetails()?.package, provider.defaultCodeDetails.package,
-            "Loaded package should be same as provided");
+                "Loaded package should be same as provided");
         }
         assert.strictEqual((container as Container).clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
@@ -320,9 +320,8 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         await defPromise.promise;
     });
 
-    it.skip("Fire dataStore attach ops during container attach", async () => {
+    it.only("Fire dataStore attach ops during container attach", async () => {
         const testDataStoreType = "default";
-        const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         // Get the root dataStore from the detached container.
@@ -334,24 +333,17 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
 
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            try {
-                assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
-                assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
-                assert.strictEqual(contents.contents.id,
-                    comp2.context.id, "DataStore id should match");
-                assert.strictEqual(contents.contents.type,
-                    testDataStoreType, "DataStore type should match");
-                defPromise.resolve();
-            } catch (e) {
-                defPromise.reject(e);
-            }
-            return 0;
+            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
+            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
+            assert.strictEqual(contents.contents.id,
+                comp2.context.id, "DataStore id should match");
+            assert.strictEqual(contents.contents.type,
+                testDataStoreType, "DataStore type should match");
         };
 
         // Fire attach op
         dataStore.root.set("attachComp", comp2.handle);
         await containerP;
-        await defPromise.promise;
     });
 
     it("Fire ops during container attach for consensus register collection", async () => {
