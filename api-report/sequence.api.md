@@ -547,7 +547,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     protected client: Client;
     // (undocumented)
-    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined): ReferencePosition;
+    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // @deprecated (undocumented)
     createPositionReference(segment: T, offset: number, refType: ReferenceType): LocalReference;
     // (undocumented)
@@ -603,7 +603,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // @deprecated (undocumented)
     removeLocalReference(lref: LocalReference): LocalReferencePosition;
     // (undocumented)
-    removeLocalReferencePosition(lref: ReferencePosition): LocalReferencePosition;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition;
     // (undocumented)
     removeRange(start: number, end: number): IMergeTreeRemoveMsg;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
