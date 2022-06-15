@@ -204,7 +204,7 @@ export class ReferenceProperty extends ValueProperty {
         } else if (in_value instanceof String) {
             path = String(in_value);
         } else {
-            throw new Error(MSG.PROPERTY_OR_UNDEFINED + '(' + typeof in_value + ') ' + in_value);
+            throw new TypeError(MSG.PROPERTY_OR_UNDEFINED + '(' + typeof in_value + ') ' + in_value);
         }
         return path;
     }

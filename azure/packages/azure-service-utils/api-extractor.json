@@ -8,6 +8,6 @@
   "bundledPackages": ["@fluidframework/protocol-definitions"],
   "docModel": {
     "enabled": true,
-    "apiJsonFilePath": "<projectFolder>/../../_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
+    "apiJsonFilePath": "<projectFolder>/../../../_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
   }
 }

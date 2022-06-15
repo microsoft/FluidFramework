@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -27,6 +29,9 @@ import {
 import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { isFluidError } from "@fluidframework/telemetry-utils";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
 import {
     LocalFluidDataStoreContext,
     RemoteFluidDataStoreContext,
@@ -80,7 +85,7 @@ describe("Data Store Context Tests", () => {
             };
             const registry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return registry; },
-                get: async (pkg) => Promise.resolve(factory),
+                get: async (pkg) => (pkg === "BOGUS" ? undefined : factory),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
@@ -109,6 +114,35 @@ describe("Data Store Context Tests", () => {
 
                 assert.throws(codeBlock,
                     (e: Error) => validateAssertionError(e, "Data store ID contains slash"));
+            });
+
+            it("Errors thrown during realize are wrapped as DataProcessingError", async () => {
+                localDataStoreContext = new LocalFluidDataStoreContext({
+                    id: dataStoreId,
+                    pkg: ["BOGUS"], // This will cause an error when calling `realizeCore`
+                    runtime: containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    makeLocallyVisibleFn,
+                    snapshotTree: undefined,
+                    isRootDataStore: true,
+                    writeGCDataAtRoot: true,
+                    disableIsolatedChannels: false,
+                });
+
+                try {
+                    await localDataStoreContext.realize();
+                    assert.fail("realize should have thrown an error due to empty pkg array");
+                } catch (e) {
+                    assert(isFluidError(e), "Expected a valid Fluid Error to be thrown");
+                    assert.equal(e.errorType, ContainerErrorType.dataProcessingError, "Error should be a DataProcessingError");
+                    const props = e.getTelemetryProperties();
+                    assert.equal((props.packageName as ITaggedTelemetryPropertyType)?.value, "BOGUS",
+                        "The error should have the packageName in its telemetry properties");
+                    assert.equal((props.fluidDataStoreId as ITaggedTelemetryPropertyType)?.value, "Test1",
+                        "The error should have the fluidDataStoreId in its telemetry properties");
+                }
             });
 
             it("can initialize correctly and generate attributes", async () => {

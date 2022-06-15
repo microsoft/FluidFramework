@@ -47,11 +47,11 @@ interface IShowNextResultResult {
  * required to make desired match visible and where this match is located
  *
  * Parameters:
- * @data List of all @type{IInspectorRow} items, which have to be displayed in the table
- * @param currentlyExpanded List of hashes of nodes, which are currently expanded (for example by user)
- * @param filteredExpanded List of hashes of nodes, which have to be expanded to make matching elements visible
- * @param allMatches List of @type{IInspectorSearchMatch} containing information about matching rows
- * @param resultIndex Index of desired matching item, starting from 0
+ * @param data - List of all @type{IInspectorRow} items, which have to be displayed in the table
+ * @param currentlyExpanded - List of hashes of nodes, which are currently expanded (for example by user)
+ * @param filteredExpanded - List of hashes of nodes, which have to be expanded to make matching elements visible
+ * @param allMatches - List of @type{IInspectorSearchMatch} containing information about matching rows
+ * @param resultIndex - Index of desired matching item, starting from 0
  */
 export const showNextResult = (
   data: IInspectorRow[], currentlyExpanded: IExpandedMap, allMatches: IInspectorSearchMatch[],
@@ -84,10 +84,10 @@ export const showNextResult = (
  * - flag whether the element was found
  *
  * Parameters:
- * @param data List of all @type{IInspectorRow} items of the dataset
- * @param currentlyExpanded List of hashes of nodes, which are currently expanded
- * @param matchingElement @type{IInspectorSearchMatch} object, containing information about match
- * @param rowCounter (default value 0) aggregation counter, used during recursive process
+ * @param data - List of all @type{IInspectorRow} items of the dataset
+ * @param currentlyExpanded - List of hashes of nodes, which are currently expanded
+ * @param matchingElement - @type{IInspectorSearchMatch} object, containing information about match
+ * @param rowCounter - (default value 0) aggregation counter, used during recursive process
  */
 function findMatchingElementIndexInDataSet(data: IInspectorRow[], currentlyExpanded: IExpandedMap,
                                            matchingElement: IInspectorSearchMatch, rowCounter = 0):
@@ -153,20 +153,20 @@ const updateHandler = (callback: IInspectorSearchCallback, searchState: IInspect
  * After processing `chunksSize` amount of rows, it will return control to the main thread and queue a follow-up run if
  * necessary, until the whole data set has been searched through. Incomplete table rows will be filled on the fly. In
  * order to avoid infinite search, the function will not follow references.
- * @param searchExpression The term to search for.
- * @param data The data set to search.
- * @param dataGetter The data getter function that is used to determine cell values.
- * @param columns An array of columns to search.
- * @param handleUpdate A callback that will be invoked for every search result, or when the search is completed.
- * @param toTableRowsProps A subset of the inspector table props that is passed on to the toTableRows method.
- * @param toTableRowsOptions Options that influence the behaviour of the toTableRows method.
- * @param searchState An object storing the (intermediate) search results and information on how to proceed in
+ * @param searchExpression - The term to search for.
+ * @param data - The data set to search.
+ * @param dataGetter - The data getter function that is used to determine cell values.
+ * @param columns - An array of columns to search.
+ * @param handleUpdate - A callback that will be invoked for every search result, or when the search is completed.
+ * @param toTableRowsProps - A subset of the inspector table props that is passed on to the toTableRows method.
+ * @param toTableRowsOptions - Options that influence the behaviour of the toTableRows method.
+ * @param searchState - An object storing the (intermediate) search results and information on how to proceed in
  *  subsequent calls. Users don't need to mind this.
- * @param chunkSize The size of the chunk (number of rows) to search in each pass.
- * @param recursive A flag indicating whether the search function has been called recursively by itself. Users don't
- *  need to mind this.
- * @param entryPoint A flag indicating whether this functions was the entry point of a recursive traversal. Users don't
- *  need to mind this.
+ * @param chunkSize - The size of the chunk (number of rows) to search in each pass.
+ * @param recursive - A flag indicating whether the search function has been called recursively by itself.
+ * Users don't need to mind this.
+ * @param entryPoint - A flag indicating whether this functions was the entry point of a recursive traversal.
+ * Users don't need to mind this.
  * @return An object that gives access to the search state and abort handler. While the state object needs to be passed
  *  to future search calls, the abort handler is a function that can be used to abort the search process at any time.
  */
@@ -351,10 +351,10 @@ const getShortId = (parentPath: string, childId: string | undefined = undefined)
 
 /**
  * Checks if a row is expandable.
- * @param data The data of the current row.
- * @param context The specified context of the row. Will only be used if data is primitive.
- * @param typeid The specified typeid of the row.
- * @param dataCreation Indicates if data creation is enabled
+ * @param data - The data of the current row.
+ * @param context - The specified context of the row. Will only be used if data is primitive.
+ * @param typeid - The specified typeid of the row.
+ * @param dataCreation - Indicates if data creation is enabled
  */
 const isExpandable = (data: any, context: string, typeid: string, dataCreation: boolean): boolean => {
   context = (data && data.getProperty) ? data.getProperty().getContext() : context;
@@ -765,8 +765,8 @@ const invalidReference = (parentProxy: BaseProxifiedProperty, id: string | numbe
 
 /**
  * Extracts the value from a property and returns it.
- * @param parent The parent of the property in question.
- * @param id The id of the child property that we want to extract the value from.
+ * @param parent - The parent of the property in question.
+ * @param id - The id of the child property that we want to extract the value from.
  * @return The property value.
  */
 export const getPropertyValue = (parent: ContainerProperty | BaseProxifiedProperty,
