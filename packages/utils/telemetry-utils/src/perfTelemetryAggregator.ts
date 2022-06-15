@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
+import { performance } from "@fluidframework/common-utils";
 
 class Measurements {
     public executionCount: number = 0;
