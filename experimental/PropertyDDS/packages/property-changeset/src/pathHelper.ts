@@ -338,7 +338,7 @@ export namespace PathHelper {
      */
     export const unquotePathSegment = function(in_quotedPathSegment: string): string {
         if (typeof in_quotedPathSegment !== "string") {
-            throw new Error(`Expecting a string as a path: ${in_quotedPathSegment}`);
+            throw new TypeError(`Expecting a string as a path: ${in_quotedPathSegment}`);
         }
 
         if (in_quotedPathSegment[0] === '"' && in_quotedPathSegment[in_quotedPathSegment.length - 1] === '"') {
