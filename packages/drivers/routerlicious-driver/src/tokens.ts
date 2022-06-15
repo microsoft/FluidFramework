@@ -53,7 +53,7 @@ export interface ITokenProvider {
      * Notes:
      * * Using the callback may have performance impact on the document creation process.
      * * Any exceptions thrown in the callback would fail the creation workflow
-     * (see {@link RouterliciousDocumentServiceFactory.createContainer} for more details).
+     * (see `RouterliciousDocumentServiceFactory.createContainer` for more details).
      * @param documentId - Document ID.
      * @param creationToken - A special token that doesn't provide any kind of access, but it has the user's payload
      * and document id. It can be used to validate the identity of the document creator.
