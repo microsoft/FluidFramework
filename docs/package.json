@@ -37,6 +37,7 @@
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "@vscode/codicons": "0.0.28",
     "broken-link-checker": "^0.7.8",
+    "colors": "^1.2.1",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "cpy": "^8.1.2",
