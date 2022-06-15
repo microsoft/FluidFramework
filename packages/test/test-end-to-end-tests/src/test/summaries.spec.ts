@@ -26,7 +26,7 @@ const testContainerConfig: ITestContainerConfig = {
             initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without this.
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
-                ...{ maxOps: 10, initialSummarizerDelayMs: 0, idleTime: 10 },
+                ...{ maxOps: 10, initialSummarizerDelayMs: 0, minIdleTime: 10, maxIdleTime: 10 },
              },
         },
     },
