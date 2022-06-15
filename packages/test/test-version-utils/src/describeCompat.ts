@@ -43,10 +43,8 @@ function createCompatSuite(
                     Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
                 });
                 tests.bind(this)((options?: ITestObjectProviderOptions) => {
-                    if (options?.resetAfterEach) {
-                        resetAfterEach = true;
-                    }
-                    if (options?.syncSummarizer) {
+                    resetAfterEach = options?.resetAfterEach ?? true;
+                    if (options?.syncSummarizer === true) {
                         provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
                     }
                     return provider;
