@@ -230,6 +230,7 @@ declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: TypeOnly<old.IDocumentDeltaConnection>);
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
 
 /*

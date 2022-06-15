@@ -39,7 +39,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/core-interfaces": "^2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000"
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -80,6 +80,9 @@
         "backCompat": false
       },
       "InterfaceDeclaration_IAuthorizationError": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IDocumentDeltaConnection": {
         "backCompat": false
       }
     }

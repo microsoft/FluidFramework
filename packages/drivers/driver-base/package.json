@@ -37,7 +37,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/driver-definitions": "^2.0.0",
     "@fluidframework/driver-utils": "^2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/telemetry-utils": "^2.0.0"
   },
   "devDependencies": {

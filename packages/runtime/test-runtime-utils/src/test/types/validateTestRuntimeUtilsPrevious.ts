@@ -207,6 +207,7 @@ declare function get_current_ClassDeclaration_MockDeltaManager():
 declare function use_old_ClassDeclaration_MockDeltaManager(
     use: TypeOnly<old.MockDeltaManager>);
 use_old_ClassDeclaration_MockDeltaManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockDeltaManager());
 
 /*
@@ -414,3 +415,27 @@ declare function use_old_ClassDeclaration_MockStorage(
     use: TypeOnly<old.MockStorage>);
 use_old_ClassDeclaration_MockStorage(
     get_current_ClassDeclaration_MockStorage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_validateAssertionError": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_validateAssertionError():
+    TypeOnly<typeof old.validateAssertionError>;
+declare function use_current_FunctionDeclaration_validateAssertionError(
+    use: TypeOnly<typeof current.validateAssertionError>);
+use_current_FunctionDeclaration_validateAssertionError(
+    get_old_FunctionDeclaration_validateAssertionError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_validateAssertionError": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_validateAssertionError():
+    TypeOnly<typeof current.validateAssertionError>;
+declare function use_old_FunctionDeclaration_validateAssertionError(
+    use: TypeOnly<typeof old.validateAssertionError>);
+use_old_FunctionDeclaration_validateAssertionError(
+    get_current_FunctionDeclaration_validateAssertionError());
