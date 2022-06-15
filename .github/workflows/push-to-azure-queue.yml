@@ -19,8 +19,8 @@ jobs:
         with:
           script: |
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
-            const connectionString = 'DefaultEndpointsProtocol=https;AccountName=sonalideshpande;AccountKey=MjQlPAznKPTbFwOME9pw7yOB8vHkn+4TGAIi2fMs2+UG21EyT32Uqk3+mTt2xXMwpd4lKY5vxEuM+AStE9pX1w==;EndpointSuffix=core.windows.net';
-            const queueName = 'main-next-integration';
+            const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
+            const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueClient = queueServiceClient.getQueueClient(queueName);
             console.log("SHA-----", `${{ github.sha }}`);
