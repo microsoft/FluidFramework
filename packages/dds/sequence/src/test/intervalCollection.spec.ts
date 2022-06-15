@@ -931,6 +931,21 @@ describe("SharedString interval collections", () => {
             assert.equal(Array.from(collection2).length, 0);
         });
 
+        it("Can correctly interpret ack of single-endpoint changes", () => {
+            sharedString.insertText(0, "ABCDEF");
+            const collection1 = sharedString.getIntervalCollection("test");
+            const collection2 = sharedString2.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+            const interval = collection1.add(2, 5, IntervalType.SlideOnRemove);
+            sharedString2.removeRange(4, 6);
+            collection1.change(interval.getIntervalId(), 1 /* only change start */);
+            sharedString2.insertText(2, "123");
+            containerRuntimeFactory.processAllMessages();
+            assert.equal(sharedString.getText(), "AB123CD");
+            assertIntervals(sharedString, collection1, [{ start: 1, end: 6 }]);
+            assertIntervals(sharedString2, collection2, [{ start: 1, end: 6 }]);
+        });
+
         it("doesn't slide references on ack if there are pending remote changes", () => {
             sharedString.insertText(0, "ABCDEF");
             const collection1 = sharedString.getIntervalCollection("test");
@@ -950,6 +965,23 @@ describe("SharedString interval collections", () => {
 
             assert.equal(sharedString.getText(), "ABC");
             assertIntervals(sharedString, collection1, [{ start: 1, end: 2 }]);
+        });
+
+        describe("have eventually consistent property sets", () => {
+            it("when an interval is modified with a pending change", () => {
+                sharedString.insertText(0, "ABC");
+                const collection1 = sharedString.getIntervalCollection("test");
+                const collection2 = sharedString2.getIntervalCollection("test");
+                const interval = collection1.add(0, 0, IntervalType.SlideOnRemove);
+                containerRuntimeFactory.processAllMessages();
+                const id = interval.getIntervalId();
+                collection1.change(id, 1, 1);
+                collection1.changeProperties(id, { propName: "losing value" });
+                collection2.changeProperties(id, { propName: "winning value" });
+                containerRuntimeFactory.processAllMessages();
+                assert.equal(collection1.getIntervalById(id).properties.propName, "winning value");
+                assert.equal(collection2.getIntervalById(id).properties.propName, "winning value");
+            });
         });
     });
 

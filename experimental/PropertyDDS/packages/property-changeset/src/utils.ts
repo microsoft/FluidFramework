@@ -1772,7 +1772,7 @@ export namespace Utils {
         } else if (in_paths instanceof Map) {
             pathsToObj = in_paths;
         } else {
-            throw new Error("in_paths must be a list of paths or a map of the tokenized paths");
+            throw new TypeError("in_paths must be a list of paths or a map of the tokenized paths");
         }
 
         const rootChangeSet = {};

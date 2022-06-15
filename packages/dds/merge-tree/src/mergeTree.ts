@@ -24,7 +24,7 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "./constants";
-import { LocalReference, LocalReferenceCollection } from "./localReference";
+import { LocalReference, LocalReferenceCollection, LocalReferencePosition } from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -1475,7 +1475,7 @@ export class MergeTree {
             newSegment.localRefs = new LocalReferenceCollection(newSegment);
         }
         for (const ref of refsToSlide) {
-            ref.emit("beforeSlide");
+            ref.callbacks?.beforeSlide?.();
             const removedRef = segment.localRefs.removeLocalRef(ref);
             assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
             if (!newSegment) {
@@ -1488,7 +1488,7 @@ export class MergeTree {
                 assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
                 newSegment.localRefs.addLocalRef(ref);
             }
-            ref.emit("afterSlide");
+            ref.callbacks?.afterSlide?.();
         }
         // TODO is it required to update the path lengths?
         if (newSegment) {
@@ -2533,7 +2533,7 @@ export class MergeTree {
         }
     }
 
-    public removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined {
+    public removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         const segment = lref.getSegment();
         if (segment) {
             const removedRefs = segment?.localRefs?.removeLocalRef(lref);
@@ -2547,7 +2547,7 @@ export class MergeTree {
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
         client: Client,
-    ): ReferencePosition {
+    ): LocalReferencePosition {
         if (isRemoved(segment)) {
             if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
                 throw new UsageError("Can only create SlideOnRemove local reference position on a removed segment");
