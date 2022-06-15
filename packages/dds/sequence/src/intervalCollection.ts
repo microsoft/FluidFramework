@@ -198,7 +198,12 @@ export class Interval implements ISerializableInterval {
             // Return undefined to indicate that no change is necessary.
             return;
         }
-        return new Interval(startPos, endPos, this.properties);
+        const newInterval = new Interval(startPos, endPos);
+        if (this.properties) {
+            newInterval.properties = createMap<any>();
+            this.propertyManager.copyTo(this.properties, newInterval.properties, newInterval.propertyManager);
+        }
+        return newInterval;
     }
 }
 
