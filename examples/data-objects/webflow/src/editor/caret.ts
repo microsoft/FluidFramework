@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition } from "@fluidframework/merge-tree";
+import { ReferencePosition } from "@fluidframework/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp, Dom, hasTagName, TagName } from "../util";
 import { updateRef } from "../util/localref";
@@ -30,8 +30,8 @@ export class Caret {
             ? { start, end }
             : { start: end, end: start };
     }
-    private startRef: LocalReferencePosition;
-    private endRef: LocalReferencePosition;
+    private startRef: ReferencePosition;
+    private endRef: ReferencePosition;
 
     public constructor(private readonly layout: Layout) {
         this.startRef = this.doc.addLocalRef(0);
@@ -90,7 +90,7 @@ export class Caret {
         this.setSelection(start, end);
     };
 
-    private positionToNodeOffset(ref: LocalReferencePosition) {
+    private positionToNodeOffset(ref: ReferencePosition) {
         let result: { node: Node; nodeOffset: number; };
 
         const position = this.doc.localRefToPosition(ref);
