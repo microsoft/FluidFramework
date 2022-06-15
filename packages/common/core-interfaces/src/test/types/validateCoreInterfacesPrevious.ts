@@ -496,30 +496,6 @@ use_old_InterfaceDeclaration_IFluidRunnable(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_IFluidSerializer": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_IFluidSerializer": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFluidSerializer": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFluidSerializer": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidCodeDetailsComparer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer():
@@ -664,18 +640,6 @@ use_old_InterfaceDeclaration_IProvideFluidRunnable(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IProvideFluidSerializer": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IProvideFluidSerializer": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRequest": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRequest():
@@ -744,18 +708,6 @@ declare function use_old_InterfaceDeclaration_IResponse(
     use: TypeOnly<old.IResponse>);
 use_old_InterfaceDeclaration_IResponse(
     get_current_InterfaceDeclaration_IResponse());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISerializedHandle": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISerializedHandle": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
