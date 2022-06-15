@@ -389,7 +389,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly id: string = uuid();
     public readonly existing: boolean = undefined as any;
     public options: ILoaderOptions = {};
-    public clientId: string | undefined = uuid();
+    public clientId: string = uuid();
     public readonly path = "";
     public readonly connected = true;
     public deltaManager = new MockDeltaManager();
