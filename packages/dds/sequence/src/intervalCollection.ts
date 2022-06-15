@@ -68,8 +68,6 @@ export interface ISerializedInterval {
 }
 
 /**
- * @internal
- *
  * A size optimization to avoid redundantly storing keys when serializing intervals
  * as JSON. Intervals are of the format:
  *
@@ -77,9 +75,6 @@ export interface ISerializedInterval {
  */
 export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
 
-/**
- * @internal
- */
 export interface ISerializedIntervalV2 {
     label: string;
     version: 2;
