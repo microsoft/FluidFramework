@@ -38,7 +38,14 @@ export function _validateReferenceType(refType: ReferenceType) {
     }
 }
 
-export interface LocalReferencePosition extends ReferencePosition{
+export interface LocalReferencePosition extends ReferencePosition {
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+}
+
+/**
+ * @deprecated - Use LocalReferencePosition
+ */
+export class LocalReference implements LocalReferencePosition {
     /**
      * Lifecycle callbacks called on the local reference positions when the reference is slid.
      */
@@ -50,6 +57,11 @@ class LocalReference implements LocalReferencePosition {
 
     public segment: ISegment | undefined;
 
+    public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
+
+    /**
+     * @deprecated - use createReferencePosition
+     */
     constructor(
         initSegment: ISegment,
         public offset: number = 0,

@@ -297,7 +297,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         segment: T,
         offset: number,
         refType: ReferenceType,
-        properties: PropertySet | undefined): ReferencePosition {
+        properties: PropertySet | undefined): LocalReferencePosition {
         return this.client.createLocalReferencePosition(
             segment,
             offset,

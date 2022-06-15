@@ -101,34 +101,8 @@
     "version": "2.0.0",
     "broken": {
       "ClassDeclaration_Client": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_LocalReference": {
         "forwardCompat": false
-      },
-      "ClassDeclaration_BaseSegment": {"backCompat": false},
-      "ClassDeclaration_List": {"backCompat": false},
-      "InterfaceDeclaration_IHierBlock": {"backCompat": false},
-      "InterfaceDeclaration_IMergeBlock": {"backCompat": false},
-      "TypeAliasDeclaration_IMergeNode": {"backCompat": false},
-      "InterfaceDeclaration_IMergeNodeCommon": {"backCompat": false},
-      "ClassDeclaration_IncrementalMapState": {"backCompat": false},
-      "InterfaceDeclaration_InsertContext": {"backCompat": false},
-      "InterfaceDeclaration_ISegmentChanges": {"backCompat": false},
-      "ClassDeclaration_LocalReferenceCollection": {"backCompat": false},
-      "RemovedTypeAliasDeclaration_LocalReferenceMapper": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_LRUSegment": {"backCompat": false},
-      "ClassDeclaration_Marker": {"backCompat": false},
-      "ClassDeclaration_MergeBlock": {"backCompat": false},
-      "ClassDeclaration_MergeNode": {"backCompat": false},
-      "TypeAliasDeclaration_RangeStackMap": {"backCompat": false},
-      "InterfaceDeclaration_ReferencePosition": {"backCompat": false},
-      "ClassDeclaration_SnapshotLegacy": {"backCompat": false},
-      "ClassDeclaration_TextSegment": {"backCompat": false},
-      "InterfaceDeclaration_IConsensusInfo": {"backCompat": false},
-      "RemovedClassDeclaration_LocalReference": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_MergeTree": {"backCompat": false}
+      }
     }
   }
 }

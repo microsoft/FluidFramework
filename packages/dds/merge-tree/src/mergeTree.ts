@@ -24,7 +24,7 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "./constants";
-import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
+import { LocalReference, LocalReferenceCollection, LocalReferencePosition } from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -2483,7 +2483,7 @@ export class MergeTree {
         }
     }
 
-    public removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined {
+    public removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         const segment = lref.getSegment();
         if (segment) {
             const removedRefs = segment?.localRefs?.removeLocalRef(lref);
@@ -2496,7 +2496,8 @@ export class MergeTree {
     }
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
-    ): ReferencePosition {
+        client: Client,
+    ): LocalReferencePosition {
         if (isRemoved(segment)) {
             if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)) {
                 throw new UsageError(
