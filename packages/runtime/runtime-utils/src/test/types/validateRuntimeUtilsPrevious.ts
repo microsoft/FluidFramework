@@ -784,6 +784,30 @@ use_old_ClassDeclaration_SummaryTreeBuilder(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TelemetryContext": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_TelemetryContext():
+    TypeOnly<old.TelemetryContext>;
+declare function use_current_ClassDeclaration_TelemetryContext(
+    use: TypeOnly<current.TelemetryContext>);
+use_current_ClassDeclaration_TelemetryContext(
+    get_old_ClassDeclaration_TelemetryContext());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TelemetryContext": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_TelemetryContext():
+    TypeOnly<current.TelemetryContext>;
+declare function use_old_ClassDeclaration_TelemetryContext(
+    use: TypeOnly<old.TelemetryContext>);
+use_old_ClassDeclaration_TelemetryContext(
+    get_current_ClassDeclaration_TelemetryContext());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_utf8ByteLength": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_utf8ByteLength():
