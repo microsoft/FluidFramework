@@ -10,6 +10,7 @@ import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
+import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
@@ -277,6 +278,12 @@ export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
     readonly errorType: T;
 }
 
+// @public
+export class NoOpDocumentDeltaStorageService implements IDocumentDeltaStorageService {
+    // (undocumented)
+    fetchMessages(from: number, _to: number | undefined, _abortSignal?: AbortSignal, _cachedOnly?: boolean, _fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
+}
+
 // @public (undocumented)
 export enum OnlineStatus {
     // (undocumented)
@@ -404,6 +411,13 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
     readonly errorType = DriverErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
+}
+
+// @public
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    constructor(message: string);
+    // (undocumented)
+    readonly errorType = "usageError";
 }
 
 // @public

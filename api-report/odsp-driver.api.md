@@ -6,10 +6,13 @@
 
 import { DriverPreCheckInfo } from '@fluidframework/driver-definitions';
 import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
+import { IConnected } from '@fluidframework/protocol-definitions';
 import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
 import { IdentityType } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
+import { IEntry } from '@fluidframework/odsp-driver-definitions';
+import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import type { io } from 'socket.io-client';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
@@ -19,9 +22,14 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
+import { PromiseCache } from '@fluidframework/common-utils';
+import { RateLimiter } from '@fluidframework/driver-utils';
 import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
+import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 
 // @public
@@ -32,6 +40,9 @@ export enum ClpCompliantAppHeader {
     // (undocumented)
     isClpCompliantApp = "X-CLP-Compliant-App"
 }
+
+// @public (undocumented)
+export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @public
 export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createLinkType?: ShareLinkTypes): IRequest;
@@ -75,6 +86,17 @@ export function isOdcUrl(url: string | URL): boolean;
 // @public
 export function isSpoUrl(url: string): boolean;
 
+// @public
+export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
+    constructor(localSnapshot: Uint8Array | string);
+    // (undocumented)
+    createContainer(_createNewSummary: ISummaryTree | undefined, _createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, _clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    // Warning: (ae-forgotten-export) The symbol "ICacheAndTracker" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, _cacheAndTrackerArg?: ICacheAndTracker, _clientIsSummarizer?: boolean): Promise<IDocumentService>;
+}
+
 // @public (undocumented)
 export const locatorQueryParamName = "nav";
 
@@ -85,7 +107,7 @@ export const OdcApiSiteOrigin = "https://api.onedrive.com";
 export const OdcFileSiteOrigin = "https://1drv.ms";
 
 // @public
-export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
 }
 
@@ -96,6 +118,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    // (undocumented)
+    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)

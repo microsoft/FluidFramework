@@ -19,7 +19,7 @@ import {
     LoaderCachingPolicy,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
+import { RateLimiter, NonRetryableError, UsageError } from "@fluidframework/driver-utils";
 import {
     IOdspResolvedUrl,
     ISnapshotOptions,
@@ -31,6 +31,7 @@ import {
     HostStoragePolicyInternal,
     IVersionedValueWithEpoch,
     ISnapshotCachedEntry,
+    IOdspSnapshot,
 } from "./contracts";
 import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem, SnapshotFormatSupportType } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -44,6 +45,9 @@ import { defaultCacheExpiryTimeoutMs, EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
+import { ReadBuffer } from "./ReadBufferUtils";
+import { parseCompactSnapshotResponse } from "./compactSnapshotParser";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 
@@ -158,7 +162,8 @@ interface GetVersionsTelemetryProps {
     cacheEntryAge?: number;
     cacheSummarizerExpired?: boolean;
 }
-export class OdspDocumentStorageService implements IDocumentStorageService {
+
+export abstract class OdspDocumentStorageServiceBase implements IDocumentStorageService {
     readonly policies = {
         // By default, ODSP tells the container not to prefetch/cache.
         caching: LoaderCachingPolicy.NoCaching,
@@ -177,15 +182,149 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         maximumCacheDurationMs: defaultCacheExpiryTimeoutMs,
     };
 
-    private readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
+    protected readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();
 
-    private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
     private _ops: api.ISequencedDocumentMessage[] | undefined;
 
-    private firstVersionCall = true;
     private _snapshotSequenceNumber: number | undefined;
+
+    protected readonly blobCache = new BlobCache();
+
+    public set ops(ops: api.ISequencedDocumentMessage[] | undefined) {
+        assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
+        this._ops = ops;
+    }
+
+    public get ops(): api.ISequencedDocumentMessage[] | undefined {
+        return this._ops;
+    }
+
+    public get snapshotSequenceNumber() {
+        return this._snapshotSequenceNumber;
+    }
+
+    public get repositoryUrl(): string {
+        return "";
+    }
+
+    public abstract createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
+
+    private async readBlobCore(blobId: string): Promise<ArrayBuffer> {
+        const { blobContent, evicted } = this.blobCache.getBlob(blobId);
+        return blobContent ?? this.fetchBlobFromStorage(blobId, evicted);
+    }
+
+    protected abstract fetchBlobFromStorage(blobId: string, evicted: boolean): Promise<ArrayBuffer>;
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        return this.readBlobCore(blobId);
+    }
+
+    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+        let id: string;
+        if (!version || !version.id) {
+            const versions = await this.getVersions(null, 1);
+            if (!versions || versions.length === 0) {
+                return null;
+            }
+            id = versions[0].id;
+        } else {
+            id = version.id;
+        }
+
+        const snapshotTree = await this.readTree(id);
+        if (!snapshotTree) {
+            return null;
+        }
+
+        if (snapshotTree.blobs) {
+            const attributesBlob = snapshotTree.blobs.attributes;
+            if (attributesBlob) {
+                this.attributesBlobHandles.add(attributesBlob);
+            }
+        }
+
+        // When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
+        // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
+        const appTree = snapshotTree.trees[".app"];
+        const protocolTree = snapshotTree.trees[".protocol"];
+
+        return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
+    }
+
+    public abstract getVersions(blobid: string | null, count: number): Promise<api.IVersion[]>;
+
+    public abstract uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
+
+    public async downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
+        throw new Error("Not implemented yet");
+    }
+
+    protected setRootTree(id: string, tree: api.ISnapshotTree) {
+        this.commitCache.set(id, tree);
+    }
+
+    protected initBlobsCache(blobs: Map<string, ArrayBuffer>) {
+        this.blobCache.addBlobs(blobs);
+    }
+
+    private async readTree(id: string): Promise<api.ISnapshotTree | null> {
+        let tree = this.commitCache.get(id);
+        if (!tree) {
+            tree = await this.fetchTreeFromSnapshot(id);
+        }
+
+        return tree ?? null;
+    }
+
+    protected abstract fetchTreeFromSnapshot(id: string): Promise<api.ISnapshotTree | undefined>;
+
+    private combineProtocolAndAppSnapshotTree(
+        hierarchicalAppTree: api.ISnapshotTree,
+        hierarchicalProtocolTree: api.ISnapshotTree,
+    ) {
+        const summarySnapshotTree: api.ISnapshotTree = {
+            blobs: {
+                ...hierarchicalAppTree.blobs,
+            },
+            trees: {
+                ...hierarchicalAppTree.trees,
+                // the app tree could have a .protocol
+                // in that case we want to server protocol to override it
+                ".protocol": hierarchicalProtocolTree,
+            },
+        };
+
+        return summarySnapshotTree;
+    }
+
+    protected initializeFromSnapshot(odspSnapshotCacheValue: ISnapshotContents): string | undefined {
+        this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
+        const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
+
+        // id should be undefined in case of just ops in snapshot.
+        let id: string | undefined;
+        if (snapshotTree) {
+            id = snapshotTree.id;
+            assert(id !== undefined, 0x221 /* "Root tree should contain the id" */);
+            this.setRootTree(id, snapshotTree);
+        }
+
+        if (blobs) {
+            this.initBlobsCache(blobs);
+        }
+
+        this.ops = ops;
+        return id;
+    }
+}
+
+export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
+    private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
+
+    private firstVersionCall = true;
 
     private readonly documentId: string;
     private readonly snapshotUrl: string | undefined;
@@ -203,21 +342,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     // limits the amount of parallel "attachment" blob uploads
     private readonly createBlobRateLimiter = new RateLimiter(1);
 
-    private readonly blobCache = new BlobCache();
-
-    public set ops(ops: api.ISequencedDocumentMessage[] | undefined) {
-        assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
-        this._ops = ops;
-    }
-
-    public get ops(): api.ISequencedDocumentMessage[] | undefined {
-        return this._ops;
-    }
-
-    public get snapshotSequenceNumber() {
-        return this._snapshotSequenceNumber;
-    }
-
     constructor(
         private readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
@@ -229,10 +353,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly flushCallback: () => Promise<FlushResult>,
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
+        super();
+
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
         this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
+
         this.odspSummaryUploadManager = new OdspSummaryUploadManager(
             this.snapshotUrl,
             getStorageToken,
@@ -240,10 +367,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             epochTracker,
             !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
         );
-    }
-
-    public get repositoryUrl(): string {
-        return "";
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
@@ -288,95 +411,56 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return response.content;
     }
 
-    private async readBlobCore(blobId: string): Promise<ArrayBuffer> {
-        const { blobContent, evicted } = this.blobCache.getBlob(blobId);
-        let blob = blobContent;
+    protected async fetchBlobFromStorage(blobId: string, evicted: boolean): Promise<ArrayBuffer> {
+        this.checkAttachmentGETUrl();
 
-        if (blob === undefined) {
-            this.checkAttachmentGETUrl();
+        const blob = await getWithRetryForTokenRefresh(async (options) => {
+            const storageToken = await this.getStorageToken(options, "GetBlob");
+            const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
+            const { url, headers } = getUrlAndHeadersWithAuth(
+                unAuthedUrl,
+                storageToken,
+                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+            );
 
-            blob = await getWithRetryForTokenRefresh(async (options) => {
-                const storageToken = await this.getStorageToken(options, "GetBlob");
-                const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
-                const { url, headers } = getUrlAndHeadersWithAuth(
-                    unAuthedUrl,
-                    storageToken,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-                );
-
-                return PerformanceEvent.timedExecAsync(
-                    this.logger,
-                    {
-                        eventName: "readDataBlob",
-                        blobId,
-                        evicted,
-                        headers: Object.keys(headers).length !== 0 ? true : undefined,
+            return PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "readDataBlob",
+                    blobId,
+                    evicted,
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                },
+                async (event) => {
+                    const res = await this.epochTracker.fetchArray(url, { headers }, "blob");
+                    event.end({
                         waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
-                    },
-                    async (event) => {
-                        const res = await this.epochTracker.fetchArray(url, { headers }, "blob");
-                        event.end({
-                            waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
+                        ...res.propsToLog,
+                        attempts: options.refresh ? 2 : 1,
+                    });
+                    const cacheControl = res.headers.get("cache-control");
+                    if (cacheControl === undefined || !(cacheControl.includes("private") || cacheControl.includes("public"))) {
+                        this.logger.sendErrorEvent({
+                            eventName: "NonCacheableBlob",
+                            cacheControl,
+                            blobId,
                             ...res.propsToLog,
-                            attempts: options.refresh ? 2 : 1,
                         });
-                        const cacheControl = res.headers.get("cache-control");
-                        if (cacheControl === undefined || !(cacheControl.includes("private") || cacheControl.includes("public"))) {
-                            this.logger.sendErrorEvent({
-                                eventName: "NonCacheableBlob",
-                                cacheControl,
-                                blobId,
-                                ...res.propsToLog,
-                            });
-                        }
-                        return res.content;
-                    },
-                );
-            });
-            this.blobCache.setBlob(blobId, blob);
-        }
-
+                    }
+                    return res.content;
+                },
+            );
+        });
+        this.blobCache.setBlob(blobId, blob);
         return blob;
-    }
-
-    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        return this.readBlobCore(blobId);
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
         }
-
-        let id: string;
-        if (!version || !version.id) {
-            const versions = await this.getVersions(null, 1);
-            if (!versions || versions.length === 0) {
-                return null;
-            }
-            id = versions[0].id;
-        } else {
-            id = version.id;
-        }
-
-        const snapshotTree = await this.readTree(id);
-        if (!snapshotTree) {
-            return null;
-        }
-
-        if (snapshotTree.blobs) {
-            const attributesBlob = snapshotTree.blobs.attributes;
-            if (attributesBlob) {
-                this.attributesBlobHandles.add(attributesBlob);
-            }
-        }
-
-        // When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
-        // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
-        const appTree = snapshotTree.trees[".app"];
-        const protocolTree = snapshotTree.trees[".protocol"];
-
-        return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
+        return super.getSnapshotTree(version);
     }
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
@@ -491,21 +575,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
             // Successful call, make network calls only
             this.firstVersionCall = false;
+            const id = this.initializeFromSnapshot(odspSnapshotCacheValue);
 
-            this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
-            const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
-            // id should be undefined in case of just ops in snapshot.
-            let id: string | undefined;
-            if (snapshotTree) {
-                id = snapshotTree.id;
-                assert(id !== undefined, 0x221 /* "Root tree should contain the id" */);
-                this.setRootTree(id, snapshotTree);
-            }
-            if (blobs) {
-                this.initBlobsCache(blobs);
-            }
-
-            this.ops = ops;
             return id ? [{ id, treeId: undefined! }] : [];
         }
 
@@ -647,7 +718,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         // Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
         if (".protocol" in summary.tree && context.ackHandle !== undefined) {
-            let retry = 0;
+            let retry = 1;
             for (;;) {
                 const result = await this.flushCallback();
                 const seq = result.lastPersistedSequenceNumber;
@@ -655,7 +726,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
 
-                retry++;
                 if (retry > 3) {
                     this.logger.sendErrorEvent({
                         eventName: "FlushFailure",
@@ -673,24 +743,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     referenceSequenceNumber: context.referenceSequenceNumber,
                 });
 
+                retry++;
                 await delay(1000 * (result.retryAfter ?? 1));
             }
         }
 
         const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
         return id;
-    }
-
-    public async downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
-        throw new Error("Not implemented yet");
-    }
-
-    private setRootTree(id: string, tree: api.ISnapshotTree) {
-        this.commitCache.set(id, tree);
-    }
-
-    private initBlobsCache(blobs: Map<string, ArrayBuffer>) {
-        this.blobCache.addBlobs(blobs);
     }
 
     private checkSnapshotUrl() {
@@ -720,69 +779,105 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
     }
 
-    private async readTree(id: string): Promise<api.ISnapshotTree | null> {
-        if (!this.snapshotUrl) {
-            return null;
-        }
-        let tree = this.commitCache.get(id);
-        if (!tree) {
-            tree = await getWithRetryForTokenRefresh(async (options) => {
-                const storageToken = await this.getStorageToken(options, "ReadCommit");
-                const snapshotDownloader = async (url: string, fetchOptions: { [index: string]: any; }) => {
-                    return this.epochTracker.fetchAndParseAsJSON(
-                        url,
-                        fetchOptions,
-                        "snapshotTree",
-                    );
-                };
-                const snapshot = await fetchSnapshot(
-                    this.snapshotUrl!,
-                    storageToken,
-                    id,
-                    this.fetchFullSnapshot,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-                    this.logger,
-                    snapshotDownloader,
+    protected async fetchTreeFromSnapshot(id: string): Promise<api.ISnapshotTree | undefined> {
+        return getWithRetryForTokenRefresh(async (options) => {
+            const storageToken = await this.getStorageToken(options, "ReadCommit");
+            const snapshotDownloader = async (url: string, fetchOptions: { [index: string]: any; }) => {
+                return this.epochTracker.fetchAndParseAsJSON(
+                    url,
+                    fetchOptions,
+                    "snapshotTree",
                 );
-                let treeId = "";
-                if (snapshot.snapshotTree) {
-                    assert(snapshot.snapshotTree.id !== undefined, 0x222 /* "Root tree should contain the id!!" */);
-                    treeId = snapshot.snapshotTree.id;
-                    this.setRootTree(treeId, snapshot.snapshotTree);
-                }
-                if (snapshot.blobs) {
-                    this.initBlobsCache(snapshot.blobs);
-                }
-                // If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
-                // will be the actual id of tree to be fetched.
-                return this.commitCache.get(id) ?? this.commitCache.get(treeId);
-            });
-        }
+            };
+            const snapshot = await fetchSnapshot(
+                this.snapshotUrl!,
+                storageToken,
+                id,
+                this.fetchFullSnapshot,
+                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                this.logger,
+                snapshotDownloader,
+            );
+            let treeId = "";
+            if (snapshot.snapshotTree) {
+                assert(snapshot.snapshotTree.id !== undefined, 0x222 /* "Root tree should contain the id!!" */);
+                treeId = snapshot.snapshotTree.id;
+                this.setRootTree(treeId, snapshot.snapshotTree);
+            }
+            if (snapshot.blobs) {
+                this.initBlobsCache(snapshot.blobs);
+            }
+            // If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
+            // will be the actual id of tree to be fetched.
+            return this.commitCache.get(id) ?? this.commitCache.get(treeId);
+        });
+    }
+}
 
-        if (!tree) {
-            return null;
-        }
+/**
+ * ODSP document storage service that works on a provided snapshot for all its processing.
+ * Attempting to use unsupported actions/methods will result in errors being thrown.
+ */
+ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceBase {
+    private snapshotTreeId: string | undefined;
 
-        return tree;
+    constructor(
+        private readonly logger: ITelemetryLogger,
+        private readonly localSnapshot: Uint8Array | string,
+    ) {
+        super();
     }
 
-    private combineProtocolAndAppSnapshotTree(
-        hierarchicalAppTree: api.ISnapshotTree,
-        hierarchicalProtocolTree: api.ISnapshotTree,
-    ) {
-        const summarySnapshotTree: api.ISnapshotTree = {
-            blobs: {
-                ...hierarchicalAppTree.blobs,
-            },
-            trees: {
-                ...hierarchicalAppTree.trees,
-                // the app tree could have a .protocol
-                // in that case we want to server protocol to override it
-                ".protocol": hierarchicalProtocolTree,
-            },
-        };
+    private calledGetVersions = false;
 
-        return summarySnapshotTree;
+    public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
+        assert(blobid === null, "Invalid usage. \"blobid\" should always be null");
+        assert(count === 1, "Invalid usage. \"count\" should always be 1");
+
+        // No reason to re-parse the data since it will never change
+        if (this.calledGetVersions) {
+            return this.getSnapshotVersion();
+        }
+        this.calledGetVersions = true;
+
+        let snapshotContents: ISnapshotContents;
+
+        if (typeof this.localSnapshot === "string") {
+            const content: IOdspSnapshot = JSON.parse(this.localSnapshot);
+            snapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
+        } else {
+            snapshotContents = parseCompactSnapshotResponse(
+                new ReadBuffer(this.localSnapshot));
+        }
+
+        this.snapshotTreeId = this.initializeFromSnapshot(snapshotContents);
+        return this.getSnapshotVersion();
+    }
+
+    private getSnapshotVersion(): api.IVersion[] {
+        return this.snapshotTreeId ? [{ id: this.snapshotTreeId, treeId: undefined! }] : [];
+    }
+
+    protected async fetchTreeFromSnapshot(_id: string): Promise<api.ISnapshotTree | undefined> {
+        throw this.getUsageErrorToThrow("fetchTreeFromSnapshot");
+    }
+
+    protected async fetchBlobFromStorage(_blobId: string, _evicted: boolean): Promise<ArrayBuffer> {
+        throw this.getUsageErrorToThrow("fetchBlobFromStorage");
+    }
+
+    public async uploadSummaryWithContext(_summary: api.ISummaryTree, _context: ISummaryContext): Promise<string> {
+        throw this.getUsageErrorToThrow("uploadSummaryWithContext");
+    }
+
+    public async createBlob(_file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
+        throw this.getUsageErrorToThrow("createBlob");
+    }
+
+    private getUsageErrorToThrow(methodName: string): UsageError {
+        const toThrow = new UsageError(`"${methodName}" is not supported by LocalOdspDocumentStorageService`);
+        this.logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+        return toThrow;
     }
 }
 
