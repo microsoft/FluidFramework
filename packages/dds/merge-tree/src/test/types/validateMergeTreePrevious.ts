@@ -1872,7 +1872,6 @@ declare function get_old_ClassDeclaration_LocalReference():
 declare function use_current_ClassDeclaration_LocalReference(
     use: TypeOnly<current.LocalReference>);
 use_current_ClassDeclaration_LocalReference(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalReference());
 
 /*
