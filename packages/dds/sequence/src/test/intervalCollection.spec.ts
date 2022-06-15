@@ -931,21 +931,6 @@ describe("SharedString interval collections", () => {
             assert.equal(Array.from(collection2).length, 0);
         });
 
-        it("Can correctly interpret ack of single-endpoint changes", () => {
-            sharedString.insertText(0, "ABCDEF");
-            const collection1 = sharedString.getIntervalCollection("test");
-            const collection2 = sharedString2.getIntervalCollection("test");
-            containerRuntimeFactory.processAllMessages();
-            const interval = collection1.add(2, 5, IntervalType.SlideOnRemove);
-            sharedString2.removeRange(4, 6);
-            collection1.change(interval.getIntervalId(), 1 /* only change start */);
-            sharedString2.insertText(2, "123");
-            containerRuntimeFactory.processAllMessages();
-            assert.equal(sharedString.getText(), "AB123CD");
-            assertIntervals(sharedString, collection1, [{ start: 1, end: 6 }]);
-            assertIntervals(sharedString2, collection2, [{ start: 1, end: 6 }]);
-        });
-
         it("doesn't slide references on ack if there are pending remote changes", () => {
             sharedString.insertText(0, "ABCDEF");
             const collection1 = sharedString.getIntervalCollection("test");
