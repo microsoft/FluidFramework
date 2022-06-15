@@ -87,10 +87,10 @@ Values are used to store scalar data, such as numbers and booleans.
   <figcaption>Figure: Nodes with values</figcaption>
 </figure>
 
-From the perspective of the SharedTree data model, values are opaque byte sequences.
+From the perspective of the SharedTree data model, values are [***opaque***](https://en.wikipedia.org/wiki/Opaque_data_type) byte sequences.
 The only tree operation that affects a node's value is 'setValue', which overwrites a node's value with a new immutable value.
 
-In practice, node values are Fluid [*serializable*](https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/datastore-definitions/src/serializable.ts) types and can be interpreted us such using schema information.
+In practice, node values are Fluid [***serializable***](https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/datastore-definitions/src/serializable.ts) types and can be interpreted us such using schema information.
 
 ### Field
 
