@@ -22,16 +22,13 @@ import { Serializable } from "@fluidframework/datastore-definitions";
 import { Snapshot } from "../forest";
 
 import { areSafelyAssignable, requireTrue } from "../typeCheck";
-import { OrderedEditSet } from "../EditLog";
-import { initialTree } from "../InitialTree";
-import { LogViewer } from "../LogViewer";
 // This file uses these as opaque id types:
 // the user of these APIs should not know or care if they are short IDs or not,
 // other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
 import { Definition, NodeId, TraitLabel, EditId } from "./Identifiers";
 
-import { Change, ConstraintEffect } from "./edits";
+import { Change, ConstraintEffect, OrderedEditSet, initialTree, LogViewer } from "./edits";
 import { Anchor, AnchorData, PlaceData, RangeData, StableId, TreeNodeData } from "./Anchors";
 import { DetachedRange, Place, Range, TreeNode } from "./TreeAnchors";
 import { TreeDescriptor } from "./TreeNodeDescriptor";
@@ -136,7 +133,7 @@ export interface CommandContext extends IdSerializer, LogViewer {
 }
 
 // TODO: actually implement this as a NodeId based anchor using the standard root node id.
-export const root: TreeNodeData = initialTree.identifier as unknown as TreeNodeData;
+export const root: TreeNodeData = initialTree as unknown as TreeNodeData;
 // Root detached range.
 export const rootRange: RangeData = "root" as unknown as RangeData;
 

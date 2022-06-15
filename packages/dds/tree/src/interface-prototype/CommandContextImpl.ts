@@ -4,10 +4,9 @@
  */
 
 import { Snapshot } from "../forest";
-import { OrderedEditSet } from "../EditLog";
 import { Definition, NodeId, TraitLabel, EditId } from "./Identifiers";
 
-import { Change, ConstraintEffect } from "./edits";
+import { Change, ConstraintEffect, OrderedEditSet } from "./edits";
 import { RangeData, StableId, TreeNodeData } from "./Anchors";
 import { DetachedRange, Place, Range, TreeNode } from "./TreeAnchors";
 import { CommandContext, AnchorSet, Command, DecontextualizedAnchorSet } from "./Checkout";
@@ -15,6 +14,7 @@ import { TreeDescriptor } from "./TreeNodeDescriptor";
 
 abstract class CommandContextImpl implements CommandContext {
 	constructor(readonly history: OrderedEditSet<Change>) {}
+	protected makeNominal: unknown;
 
 	move(destination: Place, ...nodes: (TreeNode | Range)[]): Range {
 		const range = this.detach(...nodes);

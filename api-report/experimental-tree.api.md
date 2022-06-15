@@ -210,7 +210,9 @@ export interface Constraint {
 export enum ConstraintEffect {
     InvalidAndDiscard = 0,
     InvalidRetry = 1,
-    ValidRetry = 2
+    InvalidRetryOffline = 3,
+    ValidRetry = 2,
+    ValidRetryOffline = 4
 }
 
 // @public

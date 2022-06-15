@@ -8,7 +8,8 @@
         "outDir": "./dist",
         "noImplicitAny": true,
         "composite": true,
-        "preserveConstEnums": true
+        "preserveConstEnums": true,
+        "noUnusedLocals": false
     },
     "include": [
         "src/**/*"
