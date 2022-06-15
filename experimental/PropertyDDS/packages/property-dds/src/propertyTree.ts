@@ -430,6 +430,33 @@ export class SharedPropertyTree extends SharedObject {
 		return snapshotSummary as ISnapshotSummary;
 	}
 
+    /**
+     * This method writes the log message if the logging is enabled in the extended DDS.
+     * The logging is not enabled in the default Property DDS
+     * @param message The message to be logged.
+     */
+     protected logIfEnabled(message) {}
+
+    /**
+     * This method optionally encodes the binary representation of the
+     * blob.
+     * @param blob The binary representation of the blob.
+     * @returns The encoded representation of the blob.
+     */
+    protected encodeSummaryBlob(blob: ArrayBuffer): any {
+        return bufferToString(blob, "base64");
+    }
+
+    /**
+     * This method optionally decodes the encoded representation of the
+     * blob.
+     * @param blob The encoded representation of the blob.
+     * @returns The binary representation of the blob.
+     */
+    protected decodeSummaryBlob(encoded: any): ArrayBuffer {
+        return stringToBuffer(encoded, "base64");
+    }
+
 	public summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		this.pruneHistory();
 		const snapshot: ISnapshot = {
@@ -449,12 +476,16 @@ export class SharedPropertyTree extends SharedObject {
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
 			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
+            let totalBlobsSize = 0;
             const serializedSummary = this.serializeSummary(summary);
 			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
-				builder.addBlob(`summaryChunk_${i}`,
-								bufferToString(serializedSummary.slice(pos, pos + chunkSize), "base64"));
+                const summaryBlob = this.encodeSummaryBlob(serializedSummary.slice(pos, pos + chunkSize));
+                // eslint-disable-next-line @typescript-eslint/dot-notation
+                totalBlobsSize += summaryBlob["length"];
+				builder.addBlob(`summaryChunk_${i}`, summaryBlob);
 				snapshot.numChunks++;
 			}
+            this.logIfEnabled(`Total blobs transfer size: ${totalBlobsSize}`);
 		}
 
 		builder.addBlob("properties", serializer !== undefined
@@ -477,7 +508,7 @@ export class SharedPropertyTree extends SharedObject {
 				const chunks: ArrayBufferLike[] = await Promise.all(
 					range(snapshot.numChunks).map(async (i) => {
 						const buffer = bufferToString(await storage.readBlob(`summaryChunk_${i}`), "utf8");
-						return stringToBuffer(buffer, "base64");
+						return this.decodeSummaryBlob(buffer);
 					}),
 				);
 
