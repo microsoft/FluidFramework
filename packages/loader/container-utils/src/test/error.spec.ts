@@ -9,98 +9,16 @@ import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { DataCorruptionError, DataProcessingError, GenericError } from "../error";
-
-// NOTE about this (temporary) alias:
-// CreateContainerError has been removed, with most call sites now using normalizeError.
-// This represents some small behavior changes, highlighted by the diffs in these tests.
-// They should be removed in a follow-up PR since they're redudnant with normalizeError's tests
-const CreateContainerErrorViaNormalize = (error, props?) => normalizeError(error, { props });
+import { DataCorruptionError, DataProcessingError } from "../error";
 
 describe("Errors", () => {
-    describe("GenericError coercion via normalizeError (formerly CreateContainerError)", () => {
-        it("Should add errorType and props, as a new object", () => {
-            const originalError: any = { hello: "world" };
-            const testError = CreateContainerErrorViaNormalize(originalError, { foo: "bar" });
-
-            assert(testError.errorType === ContainerErrorType.genericError);
-            assert(testError !== originalError);
-            assert((testError as any).hello === undefined);
-            assert(isILoggingError(testError));
-            assert(testError.getTelemetryProperties().foo === "bar");
-        });
-        it("Should add errorType and props to non-object input", () => {
-            const originalError = "womp womp";
-            const testError = CreateContainerErrorViaNormalize(originalError, { foo: "bar" });
-
-            assert(testError.errorType === ContainerErrorType.genericError);
-            assert(testError.message === "womp womp");
-            assert(isILoggingError(testError));
-            assert(testError.getTelemetryProperties().foo === "bar");
-            assert(testError.getTelemetryProperties().message === "womp womp");
-        });
-        it("Should not preserve existing errorType if not a fully valid error", () => {
-            const originalError = { errorType: "someErrorType" }; // missing message and telemetry prop functions
-            const testError = CreateContainerErrorViaNormalize(originalError);
-
-            assert(testError.errorType === "genericError");
-            assert(testError !== originalError);
-        });
-        it("Should ignore non-string errorType", () => {
-            const originalError = { errorType: 3 };
-            const testError = CreateContainerErrorViaNormalize(originalError);
-
-            assert(testError.errorType === ContainerErrorType.genericError);
-        });
-        it("Should not expose original error props for telemetry besides message", () => {
-            const originalError: any = { hello: "world", message: "super important" };
-            const testError = CreateContainerErrorViaNormalize(originalError, { foo: "bar" });
-
-            assert(isILoggingError(testError));
-            assert(testError.getTelemetryProperties().hello === undefined);
-            assert(testError.getTelemetryProperties().message === "super important");
-        });
-        it("Should preserve the stack", () => {
-            const originalError = new Error();
-            const testError = CreateContainerErrorViaNormalize(originalError);
-
-            assert((testError as GenericError).stack === originalError.stack);
-        });
-        it("Should add errorType but drop telemetry props, as a new object", () => {
-            const loggingError = new LoggingError("hello", { foo: "bar" });
-            const testError = CreateContainerErrorViaNormalize(loggingError);
-
-            assert(testError.errorType === ContainerErrorType.genericError);
-            assert(isILoggingError(testError));
-            assert(testError.getTelemetryProperties().foo === undefined, "telemetryProps shouldn't be copied when wrapping");
-            assert(testError as any !== loggingError);
-        });
-
-        it("Should preserve telemetry props and existing errorType, and return same object", () => {
-            const loggingError = new LoggingError("hello", { foo: "bar" }) as LoggingError & { errorType: string; };
-            loggingError.errorType = "someErrorType";
-            const testError = CreateContainerErrorViaNormalize(loggingError);
-
-            assert(testError.errorType === "someErrorType");
-            assert(isILoggingError(testError));
-            assert(testError.getTelemetryProperties().foo === "bar");
-            assert(testError as any === loggingError);
-        });
-        it("Check double conversion of generic error", async () => {
-            const err = {
-                message: "Test Error",
-            };
-            const error1 = CreateContainerErrorViaNormalize(err);
-            const error2 = CreateContainerErrorViaNormalize(error1);
-            assert.deepEqual(error1, error2, "Both errors should be same!!");
-            assert.deepEqual(error2.message, err.message, "Message text should not be lost!!");
-        });
-    });
     describe("DataProcessingError.create", () => {
         it("Should yield a DataProcessingError", () => {
-            const dpe = DataProcessingError.create("Some message", "someCodepath");
+            const dpe = DataProcessingError.create("Some message", "someCodepath", undefined, { someProp: 1234 });
             assert(dpe instanceof DataProcessingError);
             assert(dpe.errorType === ContainerErrorType.dataProcessingError);
+            assert(dpe.message === "Some message");
+            assert(dpe.getTelemetryProperties().someProp === 1234);
             assert(dpe.getTelemetryProperties().dataProcessingError === 1);
             assert(dpe.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
             assert(dpe.getTelemetryProperties().untrustedOrigin === 1);
@@ -146,7 +64,7 @@ describe("Errors", () => {
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
         });
-        it("Should coerce non-LoggingError object with errorType", () => {
+        it("Should coerce external error object even with errorType", () => {
             const originalError = {
                 errorType: "Some error type",
             };
@@ -174,7 +92,7 @@ describe("Errors", () => {
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "Inherited error message");
-            assert(coercedError.getTelemetryProperties().otherProperty === undefined, "telemetryProps shouldn't be copied when wrapping");
+            assert(coercedError.getTelemetryProperties().otherProperty === "Considered PII-free property", "telemetryProps should be copied when wrapping");
         });
 
         it("Should not fail coercing malformed inputs", () => {

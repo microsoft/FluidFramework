@@ -478,17 +478,15 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		uploadEditChunks: boolean;
 	} {
 		const noCompatOptions = options as SharedTreeOptions<WriteFormat, 'None'>;
-		if (typeof noCompatOptions.summarizeHistory === 'object') {
-			return {
-				summarizeHistory: true,
-				uploadEditChunks: noCompatOptions.summarizeHistory.uploadEditChunks,
-			};
-		} else {
-			return {
-				summarizeHistory: noCompatOptions.summarizeHistory ?? false,
-				uploadEditChunks: false,
-			};
-		}
+		return typeof noCompatOptions.summarizeHistory === 'object'
+			? {
+					summarizeHistory: true,
+					uploadEditChunks: noCompatOptions.summarizeHistory.uploadEditChunks,
+			  }
+			: {
+					summarizeHistory: noCompatOptions.summarizeHistory ?? false,
+					uploadEditChunks: false,
+			  };
 	}
 
 	/**
@@ -509,7 +507,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		private writeFormat: WriteFormat,
 		options: SharedTreeOptions<typeof writeFormat> = {}
 	) {
-		super(id, runtime, SharedTreeFactory.Attributes);
+		super(id, runtime, SharedTreeFactory.Attributes, 'fluid_sharedTree_');
 		const historyPolicy = this.getHistoryPolicy(options);
 		this.summarizeHistory = historyPolicy.summarizeHistory;
 		this.uploadEditChunks = historyPolicy.uploadEditChunks;
@@ -532,7 +530,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		);
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
-		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId);
+		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, this.logger);
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
 			{
 				editChunks: [],
@@ -1093,9 +1091,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		};
 		this.cachingLogViewer.setMinimumSequenceNumber(typedMessage.minimumSequenceNumber);
 		const op = typedMessage.contents;
+		if (op.version === undefined) {
+			// Back-compat: some legacy documents may contain trailing ops with an unstamped version; normalize them.
+			(op as { version: WriteFormat | undefined }).version = WriteFormat.v0_0_2;
+		}
 		const { type, version } = op;
-		const resolvedVersion = version ?? WriteFormat.v0_0_2;
-		const sameVersion = resolvedVersion === this.writeFormat;
+		const sameVersion = version === this.writeFormat;
 
 		// Edit and handle ops should only be processed if they're the same version as the tree write version.
 		// Update ops should only be processed if they're not the same version.
@@ -1128,7 +1129,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			}
 		} else if (type === SharedTreeOpType.Update) {
 			this.processVersionUpdate(op.version);
-		} else if (compareSummaryFormatVersions(resolvedVersion, this.writeFormat) === 1) {
+		} else if (compareSummaryFormatVersions(version, this.writeFormat) === 1) {
 			// An op version newer than our current version should not be received. If this happens, either an
 			// incorrect op version has been written or an update op was skipped.
 			const error = 'Newer op version received by a client that has yet to be updated.';
@@ -1264,7 +1265,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		this.interner = new MutableStringInterner([initialTree.definition]);
 		const oldIdCompressor = this.idCompressor;
 		// Create the IdCompressor that will be used after the upgrade
-		const newIdCompressor = new IdCompressor(createSessionId(), reservedIdCount, this.attributionId);
+		const newIdCompressor = new IdCompressor(createSessionId(), reservedIdCount, this.attributionId, this.logger);
 		const newContext = getNodeIdContext(newIdCompressor);
 		// Generate all local IDs in the new compressor that were in the old compressor and preserve their UUIDs.
 		// This will allow the client to continue to use local IDs that were allocated pre-upgrade

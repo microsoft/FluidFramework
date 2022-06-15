@@ -11,9 +11,9 @@ import { SharedTree } from '../../SharedTree';
 import { WriteFormat } from '../../persisted-types';
 import { performFuzzActions } from '../fuzz/SharedTreeFuzzTests';
 import { makeOpGenerator } from '../fuzz/Generators';
-import { expectAssert } from '../Summary.tests';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import { setUpLocalServerTestSharedTree, setUpTestSharedTree, testDocumentsPathBase } from './TestUtilities';
+import { expectAssert } from './TestCommon';
 
 const directory = join(testDocumentsPathBase, 'summary-load-perf-tests');
 

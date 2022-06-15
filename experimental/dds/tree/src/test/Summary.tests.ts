@@ -399,10 +399,6 @@ export function runSummaryTests(title: string): void {
 	});
 }
 
-export function expectAssert(condition: unknown, message?: string): asserts condition {
-	expect(condition, message);
-}
-
 async function expectSharedTreesEqual(
 	sharedTreeA: SharedTree,
 	sharedTreeB: SharedTree,
@@ -518,11 +514,9 @@ class DeterministicIdGenerator {
 	}
 
 	public getNextNodeId(): NodeId {
-		if (this.writeFormat === WriteFormat.v0_0_2) {
-			return this.sharedTree.generateNodeId(this.getNextStableId());
-		} else {
-			return this.sharedTree.generateNodeId();
-		}
+		return this.writeFormat === WriteFormat.v0_0_2
+			? this.sharedTree.generateNodeId(this.getNextStableId())
+			: this.sharedTree.generateNodeId();
 	}
 
 	private getNextStableId(): StableId {

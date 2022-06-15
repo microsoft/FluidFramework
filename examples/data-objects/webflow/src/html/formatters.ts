@@ -69,7 +69,7 @@ class TagsFormatter extends Formatter<ITagsState> {
             : {};
 
         const segment = layout.segment;
-        const props: ITagsProps = (segment && segment.properties) || emptyObject;
+        const props: ITagsProps = segment?.properties || emptyObject;
         const tags = props.tags;
 
         state.root = layout.pushTag(tags[0]);
@@ -137,7 +137,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
             : {};
 
         const segment = layout.segment;
-        const tag = (segment.properties && segment.properties.tag) || this.defaultTag;
+        const tag = segment.properties?.tag || this.defaultTag;
         state.root = layout.pushTag(tag);
         syncCss(state.root, getCss(segment), undefined);
 

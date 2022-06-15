@@ -85,7 +85,7 @@ const copyHandler = (rowData: IInspectorRow, ref: React.MutableRefObject<HTMLTex
 const isStaticProperty = (parent: BaseProperty, rowName: string) => {
   if (typeof (parent as NodeProperty).getDynamicIds === "function") {
     const dynamicIds = (parent as NodeProperty).getDynamicIds();
-    if (dynamicIds.indexOf(rowName) > -1) {
+    if (dynamicIds.includes(rowName)) {
       return false;
     }
   } else if (parent.getContext() !== "single") {

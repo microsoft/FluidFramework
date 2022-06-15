@@ -15,7 +15,7 @@ module.exports = env => {
 
     return merge({
         entry: {
-            main: "./src/index.tsx"
+            main: "./src/index.ts"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -24,6 +24,13 @@ module.exports = env => {
             rules: [{
                 test: /\.tsx?$/,
                 loader: require.resolve("ts-loader")
+            },
+            {
+                test: /\.css$/,
+                use: [
+                    require.resolve("style-loader"), // creates style nodes from JS strings
+                    require.resolve("css-loader"), // translates CSS into CommonJS
+                ]
             },
             {
                 test: /\.js$/,

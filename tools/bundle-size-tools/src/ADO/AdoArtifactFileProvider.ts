@@ -8,7 +8,7 @@ import { WebApi } from 'azure-devops-node-api';
 import { decompressStatsFile, unzipStream } from '../utilities';
 import JSZip from 'jszip';
 import { getBundleFilePathsFromFolder, BundleFileData } from './getBundleFilePathsFromFolder';
-import { Stats } from 'webpack';
+import { StatsCompilation } from 'webpack';
 import { BundleBuddyConfig } from '../BundleBuddyTypes';
 
 /**
@@ -55,7 +55,7 @@ export async function getZipObjectFromArtifact(
  * @param jsZip - A zip file that has been processed with the jszip library
  * @param relativePath - The relative path to the file that will be retrieved
  */
-export async function getStatsFileFromZip(jsZip: JSZip, relativePath: string): Promise<Stats.ToJsonOutput> {
+export async function getStatsFileFromZip(jsZip: JSZip, relativePath: string): Promise<StatsCompilation> {
   const jsZipObject = jsZip.file(relativePath);
   assert(jsZipObject, `getStatsFileFromZip could not find file ${relativePath}`);
 

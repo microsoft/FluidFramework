@@ -100,7 +100,7 @@ function _stringToInt64(in_signed: boolean, in_string: string, in_radix = 10): n
     while (position < string.length) {
         const digit = parseInt(string[position++], in_radix);
         if (isNaN(digit)) {
-            throw new Error(MSG.CANNOT_PARSE_INVALID_CHARACTERS + string);
+            throw new TypeError(MSG.CANNOT_PARSE_INVALID_CHARACTERS + string);
         }
         low = low * in_radix + digit;
         high = high * in_radix + Math.floor(low / BIT32);

@@ -15,7 +15,6 @@ import {
     ISummaryTree,
     IVersion,
     SummaryType,
-    ITree,
 } from "@fluidframework/protocol-definitions";
 import {
     assert,
@@ -231,11 +230,6 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         throw new Error("NYI");
     }
 
-    // This is only used through Container.snapshot() for testing purposes
-    public async write(root: ITree, parents: string[], message: string, ref: string) {
-        return this.storage.write(root, parents, message, ref);
-    }
-
     // for now we are not optimizing these blobs, with assumption that this API is used only
     // for big blobs (images)
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
@@ -343,7 +337,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
                     }
                     // Ensure only whole data stores can be reused, no reusing at deeper level!
                     assert(level === 0, 0x0fc /* "tree reuse at lower level" */);
-                    assert(handlePath.indexOf("/") === -1,
+                    assert(!handlePath.includes("/"),
                         0x0fd /* "data stores are writing incremental summaries!" */);
                     break;
                 }

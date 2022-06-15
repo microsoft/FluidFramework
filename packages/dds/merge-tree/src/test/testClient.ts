@@ -262,7 +262,7 @@ export class TestClient extends Client {
             chunk = this.getText(start, start + TestClient.searchChunkSize);
 
             const result = chunk.match(target);
-            if (result !== null && result.index) {
+            if (result?.index) {
                 return { text: result[0], pos: (result.index + start) };
             }
             start += TestClient.searchChunkSize;

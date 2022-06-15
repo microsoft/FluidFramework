@@ -142,7 +142,6 @@ export class IsoBuffer extends Uint8Array {
     /**
      * Sanitize a base64 string to provide to base64-js library.  base64-js
      * is not as tolerant of the same malformed base64 as Node's Buffer is.
-     * @param str
      */
     private static sanitizeBase64(str: string): string {
         let sanitizedStr = str;

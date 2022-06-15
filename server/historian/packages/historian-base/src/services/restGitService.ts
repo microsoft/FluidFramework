@@ -31,6 +31,8 @@ import { ICache } from "./definitions";
 const packageDetails = require("../../package.json");
 const userAgent = `Historian/${packageDetails.version}`;
 
+const latestSummarySha = "latest";
+
 export interface IDocument {
     existing: boolean;
     docPrivateKey: string;
@@ -49,7 +51,7 @@ function endsWith(value: string, endings: string[]): boolean {
 
 export class RestGitService {
     private readonly restWrapper: RestWrapper;
-    private readonly lumberProperties: Record<BaseTelemetryProperties, any>;
+    private readonly lumberProperties: Record<string, any>;
 
     constructor(
         private readonly storage: ITenantStorage,
@@ -238,16 +240,31 @@ export class RestGitService {
     }
 
     public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
-        return this.resolve(
-            // Currently, only "container" type summaries are retrieved from storage.
-            // In the future, we might want to also retrieve "channels". When that happens,
-            // our APIs will change so we specify what type we want to retrieve during
-            // the request.
-            this.getSummaryCacheKey("container"),
-            async () => this.get<IWholeFlatSummary>(
-                `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`),
-            useCache,
-            true);
+        const summaryFetch = async () => this.get<IWholeFlatSummary>(
+            `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`);
+
+        if (sha !== latestSummarySha) {
+            // Never cache specific summary versions.
+            return summaryFetch();
+        }
+
+        // Currently, only "container" type summaries are retrieved from storage.
+        // In the future, we might want to also retrieve "channels". When that happens,
+        // our APIs will change so we specify what type we want to retrieve during
+        // the request.
+        const summaryCacheKey = this.getSummaryCacheKey("container");
+
+        if (!useCache) {
+            // We set the useCache flag as false when we fetch the initial latest summary for a document.
+            // In that scenario, useCache as false means that we need to get the summary from storage and bypass the
+            // cache, since the cached data might be obsolete due to a cluster change. After fetching the value from
+            // storage, we add it to the cache so it can be up-to-date. As a result, subsequent requests that use
+            // the cache can read the correct value.
+            return this.fetchAndCache(summaryCacheKey, summaryFetch);
+        }
+
+        // If we get to this point, we want to obtain the latest summary, and we want to try reading it from the cache.
+        return this.resolve(summaryCacheKey, summaryFetch, true);
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
@@ -462,8 +479,7 @@ export class RestGitService {
 
     private async resolve<T>(key: string,
                              fetch: () => Promise<T>,
-                             useCache: boolean,
-                             resolvingSummary: boolean = false): Promise<T> {
+                             useCache: boolean): Promise<T> {
         if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
@@ -482,14 +498,6 @@ export class RestGitService {
             return this.fetchAndCache(key, fetch);
         }
 
-        if (resolvingSummary) {
-            /**
-             * We set the useCache flag as false when we fetch the summary at the first time. We need to
-             * get the summary from the storage, and update the cache. If not, the following calls with
-             * useCache enabled might read the outdated summary from cache in case of the cluster change.
-             */
-             return this.fetchAndCache(key, fetch);
-        }
         return fetch();
     }
 

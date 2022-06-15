@@ -101,7 +101,7 @@ nconf.argv({
             return obj;
         }
         const key = obj.key.substring("fluid__test__".length);
-        if (options[key] !== undefined && options[key].array) {
+        if (options[key]?.array) {
             try {
                 obj.value = JSON.parse(obj.value);
             } catch {

@@ -4,13 +4,14 @@
  */
 
 import * as path from "path";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync, readFileSync } from "fs";
 import { strict as assert } from "assert";
 import {
     AcceptanceCondition,
     BaseFuzzTestState,
     createWeightedGenerator,
     Generator,
+    generatorFromArray,
     interleave,
     makeRandom,
     performFuzzActions,
@@ -20,17 +21,25 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import {
     MockFluidDataStoreRuntime,
-    MockContainerRuntimeFactory,
     MockStorage,
+    MockContainerRuntimeFactoryForReconnection,
+    MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { PropertySet } from "@fluidframework/merge-tree";
 import { SharedString } from "../sharedString";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 
+const testCount = 10;
+
+interface Client {
+    sharedString: SharedString;
+    containerRuntime: MockContainerRuntimeForReconnection;
+}
 interface FuzzTestState extends BaseFuzzTestState {
-    containerRuntimeFactory: MockContainerRuntimeFactory;
-    sharedStrings: SharedString[];
+    containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+    clients: Client[];
 }
 
 interface ClientSpec {
@@ -66,7 +75,7 @@ interface AddInterval extends ClientSpec, IntervalCollectionSpec, RangeSpec {
     id: string;
 }
 
-interface ChangeInterval extends ClientSpec, IntervalCollectionSpec, RangeSpec {
+interface ChangeInterval extends ClientSpec, IntervalCollectionSpec, Partial<RangeSpec> {
     type: "changeInterval";
     id: string;
 }
@@ -76,15 +85,26 @@ interface DeleteInterval extends ClientSpec, IntervalCollectionSpec {
     id: string;
 }
 
+interface ChangeProperties extends ClientSpec, IntervalCollectionSpec {
+    type: "changeProperties";
+    id: string;
+    properties: PropertySet;
+}
+
+interface ChangeConnectionState extends ClientSpec {
+    type: "changeConnectionState";
+    connected: boolean;
+}
+
 interface Synchronize {
     type: "synchronize";
 }
 
-type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
+type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
 
 type TextOperation = AddText | RemoveRange;
 
-type ClientOperation = IntervalOperation | TextOperation;
+type ClientOperation = IntervalOperation | TextOperation | ChangeConnectionState;
 
 type Operation = ClientOperation | Synchronize;
 
@@ -104,6 +124,7 @@ interface OperationGenerationConfig {
     maxIntervals?: number;
     maxInsertLength?: number;
     intervalCollectionNamePool?: string[];
+    propertyNamePool?: string[];
     validateInterval?: number;
 }
 
@@ -112,20 +133,9 @@ const defaultOptions: Required<OperationGenerationConfig> = {
     maxIntervals: 100,
     maxInsertLength: 10,
     intervalCollectionNamePool: ["comments"],
+    propertyNamePool: ["prop1", "prop2", "prop3"],
     validateInterval: 100,
 };
-
-// A few places in the fuzz testing code need to inspect existing collections on a SharedString
-// to determine where to insert/modify/delete an interval from. There's some logic to scope all
-// provided labels with "intervalCollections/", which is what the iterator returns. This works
-// around that.
-function* getUnscopedLabels(string: SharedString): Iterable<string> {
-    const prefix = "intervalCollections/";
-    for (const label of string.getIntervalCollectionLabels()) {
-        assert(label.startsWith(prefix));
-        yield label.substring(prefix.length);
-    }
-}
 
 function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Generator<Operation, FuzzTestState> {
     const options = { ...defaultOptions, ...(optionsParam ?? {}) };
@@ -156,8 +166,18 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return { start, end };
     }
 
+    function propertySet(state: ClientOpState): PropertySet {
+        const propNamesShuffled = state.random.shuffle(options.propertyNamePool);
+        const propsToChange = propNamesShuffled.slice(0, state.random.integer(1, propNamesShuffled.length));
+        const propSet: PropertySet = {};
+        for (const name of propsToChange) {
+            propSet[name] = state.random.string(5);
+        }
+        return propSet;
+    }
+
     function nonEmptyIntervalCollection({ sharedString, random }: ClientOpState): string {
-        const nonEmptyLabels = Array.from(getUnscopedLabels(sharedString)).filter((label) => {
+        const nonEmptyLabels = Array.from(sharedString.getIntervalCollectionLabels()).filter((label) => {
             const collection = sharedString.getIntervalCollection(label);
             return isNonEmpty(collection);
         });
@@ -206,16 +226,38 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     }
 
     function changeInterval(state: ClientOpState): ChangeInterval {
+        const { start, end } = inclusiveRange(state);
         return {
             type: "changeInterval",
+            start: state.random.integer(0, 5) === 5 ? undefined : start,
+            end: state.random.integer(0, 5) === 5 ? undefined : end,
             ...interval(state),
-            ...inclusiveRange(state),
             stringId: state.sharedString.id,
         };
     }
 
+    function changeProperties(state: ClientOpState): ChangeProperties {
+        return {
+            type: "changeProperties",
+            ...interval(state),
+            properties: propertySet(state),
+            stringId: state.sharedString.id,
+        };
+    }
+
+    function changeConnectionState(state: ClientOpState): ChangeConnectionState {
+        const stringId = state.sharedString.id;
+        const { containerRuntime } = state.clients.find((c) => c.sharedString.id === stringId);
+        return {
+            type: "changeConnectionState",
+            stringId,
+            // No-ops aren't interesting; always make this flip the connection state.
+            connected: containerRuntime.connected ? false : true,
+        };
+    }
+
     const hasAnInterval = ({ sharedString }: ClientOpState): boolean =>
-        Array.from(getUnscopedLabels(sharedString)).some((label) => {
+        Array.from(sharedString.getIntervalCollectionLabels()).some((label) => {
             const collection = sharedString.getIntervalCollection(label);
             return isNonEmpty(collection);
         });
@@ -227,7 +269,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 
     const hasNotTooManyIntervals: AcceptanceCondition<ClientOpState> = ({ sharedString }) => {
         let intervalCount = 0;
-        for (const label of getUnscopedLabels(sharedString)) {
+        for (const label of sharedString.getIntervalCollectionLabels()) {
             for (const _ of sharedString.getIntervalCollection(label)) {
                 intervalCount++;
                 if (intervalCount >= options.maxIntervals) {
@@ -238,16 +280,21 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return true;
     };
 
+    const all = <T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
+        (t: T) => clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
+
     const clientBaseOperationGenerator = createWeightedGenerator<Operation, ClientOpState>([
         [addText, 2, isShorterThanMaxLength],
         [removeRange, 1, hasNonzeroLength],
-        [addInterval, 2, hasNotTooManyIntervals],
+        [addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
         [deleteInterval, 2, hasAnInterval],
-        [changeInterval, 2, hasAnInterval],
+        [changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
+        [changeProperties, 2, hasAnInterval],
+        [changeConnectionState, 1],
     ]);
 
     const clientOperationGenerator = (state: FuzzTestState) =>
-        clientBaseOperationGenerator({ ...state, sharedString: state.random.pick(state.sharedStrings) });
+        clientBaseOperationGenerator({ ...state, sharedString: state.random.pick(state.clients).sharedString });
 
     return interleave(
         clientOperationGenerator,
@@ -256,55 +303,112 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     );
 }
 
+interface LoggingInfo {
+    /** id of the interval to track over time */
+    intervalId: string;
+    /** Clients to print */
+    clientIds: string[];
+}
+
+function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
+    for (const id of loggingInfo.clientIds) {
+        const { sharedString } = state.clients.find((s) => s.sharedString.id === id);
+        const labels = sharedString.getIntervalCollectionLabels();
+        const interval = Array.from(labels)
+            .map((label) =>
+                sharedString.getIntervalCollection(label).getIntervalById(loggingInfo.intervalId))
+            .find((result) => result !== undefined);
+
+        console.log(`Client ${id}:`);
+        if (interval !== undefined) {
+            const start = sharedString.localReferencePositionToPosition(interval.start);
+            const end = sharedString.localReferencePositionToPosition(interval.end);
+            if (end === start) {
+                console.log(`${" ".repeat(start) }x`);
+            } else {
+                console.log(`${" ".repeat(start) }[${ " ".repeat(end - start - 1) }]`);
+            }
+        }
+        console.log(sharedString.getText());
+        console.log("\n");
+    }
+}
+
+/**
+ * Validates that all shared strings in the provided array are consistent in the underlying text
+ * and location of all intervals in any interval collections they have.
+ * */
+function assertConsistent(clients: Client[]): void {
+    const connectedClients = clients.filter((client) => client.containerRuntime.connected);
+    if (connectedClients.length < 2) {
+        // No two strings are expected to be consistent.
+        return;
+    }
+    const first = connectedClients[0].sharedString;
+    for (const { sharedString: other } of connectedClients.slice(1)) {
+    assert.equal(first.getLength(), other.getLength());
+        assert.equal(
+            first.getText(),
+            other.getText(),
+            `Non-equal text between strings ${first.id} and ${other.id}.`,
+        );
+        const firstLabels = Array.from(first.getIntervalCollectionLabels()).sort();
+        const otherLabels = Array.from(other.getIntervalCollectionLabels()).sort();
+        assert.deepEqual(
+            firstLabels,
+            otherLabels,
+            `Different interval collections found between ${first.id} and ${other.id}.`,
+        );
+        for (let i = 0; i < firstLabels.length; i++) {
+            const collection1 = first.getIntervalCollection(firstLabels[i]);
+            const collection2 = other.getIntervalCollection(otherLabels[i]);
+            const intervals1 = Array.from(collection1);
+            const intervals2 = Array.from(collection2);
+            assert.equal(
+                intervals1.length,
+                intervals2.length,
+                `Different number of intervals found in ${first.id} and ${other.id}` +
+                ` at collection ${firstLabels[i]}`,
+            );
+            for (const interval of intervals1) {
+                const otherInterval = collection2.getIntervalById(interval.getIntervalId());
+                const firstStart = first.localRefToPos(interval.start);
+                const otherStart = other.localRefToPos(otherInterval.start);
+                assert.equal(firstStart, otherStart,
+                    `Startpoints of interval ${interval.getIntervalId()} different:\n` +
+                    `\tfull text:${first.getText()}\n` +
+                    `\tclient ${first.id} char:${first.getText(firstStart, firstStart + 1)}\n` +
+                    `\tclient ${other.id} char:${other.getText(otherStart, otherStart + 1)}`);
+                const firstEnd = first.localRefToPos(interval.end);
+                const otherEnd = other.localRefToPos(otherInterval.end);
+                assert.equal(firstEnd, otherEnd,
+                    `Endpoints of interval ${interval.getIntervalId()} different:\n` +
+                    `\tfull text:${first.getText()}\n` +
+                    `\tclient ${first.id} char:${first.getText(firstEnd, firstEnd + 1)}\n` +
+                    `\tclient ${other.id} char:${other.getText(otherEnd, otherEnd + 1)}`);
+                assert.equal(interval.intervalType, otherInterval.intervalType);
+                assert.deepEqual(interval.properties, otherInterval.properties);
+            }
+        }
+    }
+}
+
 function runIntervalCollectionFuzz(
     generator: Generator<Operation, FuzzTestState>,
     initialState: FuzzTestState,
     saveInfo?: SaveInfo,
+    loggingInfo?: LoggingInfo,
 ): void {
-    // Validates that all shared strings in the provided array are consistent in the underlying text
-    // and location of all intervals in any interval collections they have.
-    function assertConsistent(sharedStrings: SharedString[]): void {
-        const first = sharedStrings[0];
-        for (const other of sharedStrings.slice(1)) {
-            assert.equal(first.getLength(), other.getLength());
-            assert.equal(
-                first.getText(),
-                other.getText(),
-                `Non-equal text between strings ${first.id} and ${other.id}.`,
-            );
-            const firstLabels = Array.from(getUnscopedLabels(first)).sort();
-            const otherLabels = Array.from(getUnscopedLabels(other)).sort();
-            assert.deepEqual(
-                firstLabels,
-                otherLabels,
-                `Different interval collections found between ${first.id} and ${other.id}.`,
-            );
-            for (let i = 0; i < firstLabels.length; i++) {
-                const collection1 = first.getIntervalCollection(firstLabels[i]);
-                const collection2 = other.getIntervalCollection(otherLabels[i]);
-                const intervals1 = Array.from(collection1);
-                const intervals2 = Array.from(collection2);
-                assert.equal(
-                    intervals1.length,
-                    intervals2.length,
-                    `Different number of intervals found in ${first.id} and ${other.id}` +
-                    ` at collection ${firstLabels[i]}`,
-                );
-                for (const interval of intervals1) {
-                    const otherInterval = collection2.getIntervalById(interval.getIntervalId());
-                    assert.equal(first.localRefToPos(interval.start), other.localRefToPos(otherInterval.start));
-                    assert.equal(first.localRefToPos(interval.end), other.localRefToPos(otherInterval.end));
-                    assert.equal(interval.intervalType, otherInterval.intervalType);
-                    assert.deepEqual(interval.properties, otherInterval.properties);
-                }
-            }
-        }
-    }
-
     // Small wrapper to avoid having to return the same state repeatedly; all operations in this suite mutate.
+    // Also a reasonable point to inject logging of incremental state.
     const statefully =
         <T>(statefulReducer: (state: FuzzTestState, operation: T) => void): Reducer<T, FuzzTestState> =>
             (state, operation) => {
+                if (loggingInfo !== undefined) {
+                    logCurrentState(state, loggingInfo);
+                    console.log("-".repeat(20));
+                    console.log("Next operation:", JSON.stringify(operation, undefined, 4));
+                }
                 statefulReducer(state, operation);
                 return state;
             };
@@ -312,32 +416,41 @@ function runIntervalCollectionFuzz(
     performFuzzActions(
         generator,
         {
-            addText: statefully(({ sharedStrings }, { stringId, index, content }) => {
-                const sharedString = sharedStrings.find((s) => s.id === stringId);
+            addText: statefully(({ clients }, { stringId, index, content }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 sharedString.insertText(index, content);
             }),
-            removeRange: statefully(({ sharedStrings }, { stringId, start, end }) => {
-                const sharedString = sharedStrings.find((s) => s.id === stringId);
+            removeRange: statefully(({ clients }, { stringId, start, end }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 sharedString.removeRange(start, end);
             }),
-            addInterval: statefully(({ sharedStrings }, { stringId, start, end, collectionName, id }) => {
-                const sharedString = sharedStrings.find((s) => s.id === stringId);
+            addInterval: statefully(({ clients }, { stringId, start, end, collectionName, id }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 const collection = sharedString.getIntervalCollection(collectionName);
                 collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
             }),
-            deleteInterval: statefully(({ sharedStrings }, { stringId, id, collectionName }) => {
-                const sharedString = sharedStrings.find((s) => s.id === stringId);
+            deleteInterval: statefully(({ clients }, { stringId, id, collectionName }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 const collection = sharedString.getIntervalCollection(collectionName);
                 collection.removeIntervalById(id);
             }),
-            changeInterval: statefully(({ sharedStrings }, { stringId, id, start, end, collectionName }) => {
-                const sharedString = sharedStrings.find((s) => s.id === stringId);
+            changeInterval: statefully(({ clients }, { stringId, id, start, end, collectionName }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
                 const collection = sharedString.getIntervalCollection(collectionName);
                 collection.change(id, start, end);
             }),
-            synchronize: statefully(({ containerRuntimeFactory, sharedStrings }) => {
+            synchronize: statefully(({ containerRuntimeFactory, clients }) => {
                 containerRuntimeFactory.processAllMessages();
-                assertConsistent(sharedStrings);
+                assertConsistent(clients);
+            }),
+            changeConnectionState: statefully(({ clients }, { stringId, connected }) => {
+                const { containerRuntime } = clients.find((c) => c.sharedString.id === stringId);
+                containerRuntime.connected = connected;
+            }),
+            changeProperties: statefully(({ clients }, { stringId, id, properties, collectionName }) => {
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
+                const collection = sharedString.getIntervalCollection(collectionName);
+                collection.changeProperties(id, { ...properties });
             }),
         },
         initialState,
@@ -346,6 +459,10 @@ function runIntervalCollectionFuzz(
 }
 
 const directory = path.join(__dirname, "../../src/test/results");
+
+function getPath(seed: number): string {
+    return path.join(directory, `${seed}.json`);
+}
 
 // Once known issues with SharedInterval are fixed, a small set of fuzz tests with reasonably-tuned parameters
 // should be enabled.
@@ -356,40 +473,79 @@ describe.skip("IntervalCollection fuzz testing", () => {
         }
     });
 
-    it("with default config", async () => {
-        const numClients = 3;
+    function runTests(seed: number, generator: Generator<Operation, FuzzTestState>, loggingInfo?: LoggingInfo): void {
+        it(`with default config, seed ${seed}`, async () => {
+            const numClients = 3;
 
-        const containerRuntimeFactory = new MockContainerRuntimeFactory();
-        const sharedStrings = Array.from({ length: numClients }, (_, index) => {
-            const dataStoreRuntime = new MockFluidDataStoreRuntime();
-            const sharedString = new SharedString(
-                dataStoreRuntime,
-                String.fromCharCode(index + 65),
-                SharedStringFactory.Attributes,
-            );
-            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-            const services: IChannelServices = {
-                deltaConnection: containerRuntime.createDeltaConnection(),
-                objectStorage: new MockStorage(),
+            const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+            const clients = Array.from({ length: numClients }, (_, index) => {
+                const dataStoreRuntime = new MockFluidDataStoreRuntime();
+                const sharedString = new SharedString(
+                    dataStoreRuntime,
+                    String.fromCharCode(index + 65),
+                    SharedStringFactory.Attributes,
+                );
+                const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+                const services: IChannelServices = {
+                    deltaConnection: containerRuntime.createDeltaConnection(),
+                    objectStorage: new MockStorage(),
+                };
+
+                sharedString.initializeLocal();
+                sharedString.connect(services);
+                return { containerRuntime, sharedString };
+            });
+
+            const initialState: FuzzTestState = {
+                clients,
+                containerRuntimeFactory,
+                random: makeRandom(seed),
             };
 
-            sharedString.initializeLocal();
-            sharedString.connect(services);
-            return sharedString;
+            runIntervalCollectionFuzz(
+                generator,
+                initialState,
+                { saveOnFailure: true, filepath: getPath(seed) },
+                loggingInfo,
+            );
         });
+    }
 
-        const generator = take(300, makeOperationGenerator());
+    function replayTestFromFailureFile(seed: number, loggingInfo?: LoggingInfo) {
+        const filepath = getPath(seed);
+        let operations: Operation[];
+        try {
+            operations = JSON.parse(readFileSync(filepath).toString());
+        } catch (err: any) {
+            // Mocha executes skipped suite creation blocks, but whoever's running this suite only cares if
+            // the containing block isn't skipped. Report the original error to them from inside a test.
+            if (err.message.includes("ENOENT")) {
+                it(`with default config, seed ${seed}`, () => {
+                    throw err;
+                });
+                return;
+            }
+            throw err;
+        }
 
-        const initialState: FuzzTestState = {
-            sharedStrings,
-            containerRuntimeFactory,
-            random: makeRandom(0),
-        };
+        const generator = generatorFromArray(operations);
+        runTests(seed, generator, loggingInfo);
+    }
 
-        runIntervalCollectionFuzz(
-            generator,
-            initialState,
-            { saveOnFailure: true, filepath: path.join(directory, "0.json") },
+    for (let i = 0; i < testCount; i++) {
+        const generator = take(30, makeOperationGenerator({ validateInterval: 10 }));
+        runTests(i, generator);
+    }
+
+    // Change this seed and unskip the block to replay the actions from JSON on disk.
+    // This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
+    describe.skip("replay specific seed", () => {
+        const seedToReplay = 0;
+        replayTestFromFailureFile(
+            seedToReplay,
+            // The following line can be uncommented for useful logging output which tracks the provided
+            // intervalId over time.
+            // { intervalId: "", clientIds: ["A", "B", "C"] },
         );
     });
 });
