@@ -588,6 +588,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         }
     }
 
+    /**
+     * TODO: docs
+     * @param pos - TODO: docs. TODO: what is the valid range here? We seem to return undefined if < 0, but what about when it is beyond the end?
+     */
     public splitAt(pos: number): ISegment | undefined {
         if (pos > 0) {
             const leafSegment = this.createSplitSegmentAt(pos);
@@ -614,6 +618,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             }
             return leafSegment;
         }
+        return undefined;
     }
 
     private copyPropertiesTo(other: ISegment) {
