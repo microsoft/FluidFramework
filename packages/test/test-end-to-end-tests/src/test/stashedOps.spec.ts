@@ -805,7 +805,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(map3.get(testKey2), testValue);
     });
 
-    it("works with summary while offline", async function() {
+    it.skip("works with summary while offline", async function() {
         map1.set("test op 1", "test op 1");
         await waitForSummary();
 
