@@ -14,6 +14,20 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 2.0.0
+## 2.0.0 Breaking Changes
+- [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
+
+### LocalReference class and method deprecations removed
+In 0.59.0 the [LocalReference class and it's related methods were deprecated](#LocalReference-class-and-method-deprecations)
+
+The deprecated and now removed LocalReference class is replaced with LocalReferencePosition.
+The following deprecated methods are  now removed from sequence and merge-tree. Their replacements should be used instead.
+ - createPositionReference to createLocalReferencePosition
+ - addLocalReference to createLocalReferencePosition
+ - localRefToPos to localReferencePositionToPosition
+ - removeLocalReference to removeLocalReferencePosition
+
 # 1.0.0
 
 ## 1.0.0 Upcoming changes
