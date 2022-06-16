@@ -64,7 +64,7 @@ export async function createSummarizerFromFactory(
     container: IContainer,
     dataStoreFactory: IFluidDataStoreFactory,
     summaryVersion?: string,
-    containerRuntimeFactory = ContainerRuntimeFactoryWithDefaultDataStore,
+    containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
 ): Promise<ISummarizer> {
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
@@ -79,7 +79,7 @@ export async function createSummarizerFromFactory(
     };
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
-    const runtimeFactory = new containerRuntimeFactory(
+    const runtimeFactory = new containerRuntimeFactoryType(
         dataStoreFactory,
         [
             [dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
@@ -91,7 +91,7 @@ export async function createSummarizerFromFactory(
 
     const loader = provider.createLoader(
         [[provider.defaultCodeDetails, runtimeFactory]],
-        { configProvider: mockConfigProvider({}) },
+        { configProvider: mockConfigProvider() },
     );
 
     return createSummarizerCore(container, loader, summaryVersion);
@@ -102,6 +102,7 @@ export async function createSummarizer(
     container: IContainer,
     summaryVersion?: string,
     gcOptions?: IGCRuntimeOptions,
+    disableIsolatedChannels?: true,
 ): Promise<ISummarizer> {
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
@@ -114,10 +115,11 @@ export async function createSummarizer(
                     initialSummarizerDelayMs: 0,
                     summarizerClientElection: false,
                  },
+                 disableIsolatedChannels,
             },
             gcOptions,
         },
-        loaderProps: { configProvider: mockConfigProvider({}) },
+        loaderProps: { configProvider: mockConfigProvider() },
     };
 
     const loader = provider.makeTestLoader(testContainerConfig);

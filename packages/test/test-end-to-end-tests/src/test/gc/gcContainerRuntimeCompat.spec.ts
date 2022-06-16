@@ -62,7 +62,7 @@ describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider
             [innerRequestHandler],
             runtimeOptions,
         );
-        return provider.createContainer(runtimeFactory, { configProvider: mockConfigProvider({}) });
+        return provider.createContainer(runtimeFactory, { configProvider: mockConfigProvider() });
     }
 
     beforeEach(async () => {
