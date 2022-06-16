@@ -32,7 +32,7 @@ export class SharedStringFactory implements IChannelFactory {
         packageVersion: pkgVersion,
     };
 
-    public static segmentFromSpec(spec: any): SharedStringSegment {
+    public static segmentFromSpec(spec: any): SharedStringSegment | undefined {
         const maybeText = TextSegment.fromJSONObject(spec);
         if (maybeText) { return maybeText; }
 

@@ -92,7 +92,7 @@ export class Interval implements ISerializableInterval {
     // (undocumented)
     addPropertySet(props: PropertySet): void;
     // (undocumented)
-    auxProps: PropertySet[];
+    auxProps: PropertySet[] | undefined;
     // (undocumented)
     clone(): Interval;
     // (undocumented)
@@ -173,9 +173,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     map(fn: (interval: TInterval) => void): void;
     // (undocumented)
-    nextInterval(pos: number): TInterval;
+    nextInterval(pos: number): TInterval | undefined;
     // (undocumented)
-    previousInterval(pos: number): TInterval;
+    previousInterval(pos: number): TInterval | undefined;
     // @internal (undocumented)
     rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
     // (undocumented)
@@ -269,7 +269,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 // @public
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg | undefined;
     insertText(pos: number, text: string, props?: PropertySet): void;
     posFromRelativePos(relativePos: IRelativePosition): number;
 }
@@ -605,9 +605,9 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition;
     // (undocumented)
-    removeRange(start: number, end: number): IMergeTreeRemoveMsg;
+    removeRange(start: number, end: number): IMergeTreeRemoveMsg | undefined;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
-    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number;
+    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     // (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -641,13 +641,13 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
     // (undocumented)
-    findTile(startPos: number | undefined, tileLabel: string, preceding?: boolean): {
+    findTile(startPos: number, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
         pos: number;
-    };
+    } | undefined;
     static getFactory(): SharedStringFactory;
     // (undocumented)
-    getMarkerFromId(id: string): ISegment;
+    getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;
     // (undocumented)
     getTextAndMarkers(label: string): {
@@ -661,13 +661,13 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     getTextWithPlaceholders(): string;
     // (undocumented)
     id: string;
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg | undefined;
     insertMarkerRelative(relativePos1: IRelativePosition, refType: ReferenceType, props?: PropertySet): void;
     insertText(pos: number, text: string, props?: PropertySet): void;
     insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
     // (undocumented)
     get ISharedString(): ISharedString;
-    removeText(start: number, end: number): IMergeTreeRemoveMsg;
+    removeText(start: number, end: number): IMergeTreeRemoveMsg | undefined;
     replaceText(start: number, end: number, text: string, props?: PropertySet): void;
 }
 
@@ -682,7 +682,7 @@ export class SharedStringFactory implements IChannelFactory {
     // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedString>;
     // (undocumented)
-    static segmentFromSpec(spec: any): SharedStringSegment;
+    static segmentFromSpec(spec: any): SharedStringSegment | undefined;
     // (undocumented)
     static Type: string;
     // (undocumented)
@@ -700,7 +700,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     static create(runtime: IFluidDataStoreRuntime, id?: string): SparseMatrix;
     static getFactory(): IChannelFactory;
     // (undocumented)
-    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle>;
+    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle> | undefined;
     // (undocumented)
     getPositionProperties(row: number, col: number): PropertySet;
     // (undocumented)

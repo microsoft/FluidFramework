@@ -116,8 +116,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                     const lastAnnotate = ops[ops.length - 1] as IMergeTreeAnnotateMsg;
                     const props = {};
                     for (const key of Object.keys(r.propertyDeltas)) {
-                        props[key] =
-                            r.segment.properties[key] === undefined ? null : r.segment.properties[key];
+                        props[key] = r.segment.properties?.[key] ?? null;
                     }
                     if (lastAnnotate && lastAnnotate.pos2 === r.position &&
                         matchProperties(lastAnnotate.props, props)) {
@@ -233,7 +232,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
      */
-    public removeRange(start: number, end: number) {
+    public removeRange(start: number, end: number): IMergeTreeRemoveMsg | undefined {
         const removeOp = this.client.removeRangeLocal(start, end);
         if (removeOp) {
             this.submitSequenceMessage(removeOp);
@@ -349,7 +348,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     public resolveRemoteClientPosition(
         remoteClientPosition: number,
         remoteClientRefSeq: number,
-        remoteClientId: string): number {
+        remoteClientId: string): number | undefined {
         return this.client.resolveRemoteClientPosition(
             remoteClientPosition,
             remoteClientRefSeq,
@@ -707,7 +706,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 // first we stop deferring incoming ops, and apply then all
                 this.deferIncomingOps = false;
                 while (this.loadedDeferredIncomingOps.length > 0) {
-                    this.processCore(this.loadedDeferredIncomingOps.shift(), false, undefined);
+                    const message = this.loadedDeferredIncomingOps.shift();
+
+                    if (message) {
+                        this.processCore(message, false, undefined);
+                    }
                 }
                 // then resolve the loaded promise
                 // and resubmit all the outstanding ops, as the snapshot
@@ -716,7 +719,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
                 while (this.loadedDeferredOutgoingOps.length > 0) {
                     const opData = this.loadedDeferredOutgoingOps.shift();
-                    this.reSubmitCore(opData[0], opData[1]);
+                    this.reSubmitCore(opData?.[0], opData?.[1]);
                 }
             }
         }
