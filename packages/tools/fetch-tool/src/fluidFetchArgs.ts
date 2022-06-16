@@ -199,8 +199,8 @@ function checkArgs() {
         paramNumSnapshotVersions = Math.max(paramSnapshotVersionIndex + 1, paramNumSnapshotVersions);
     }
 
-    if (!paramURL) {
-        if (paramSaveDir) {
+    if (paramURL === undefined) {
+        if (paramSaveDir !== undefined) {
             const file = `${paramSaveDir}/info.json`;
             if (fs.existsSync(file)) {
                 const info = JSON.parse(fs.readFileSync(file, { encoding: "utf-8" }));
@@ -210,7 +210,7 @@ function checkArgs() {
             }
         }
 
-        if (!paramURL) {
+        if (paramURL === undefined) {
             console.error("ERROR: Missing URL");
             printUsage();
             process.exit(-1);

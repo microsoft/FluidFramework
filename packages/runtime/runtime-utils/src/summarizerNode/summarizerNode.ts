@@ -6,11 +6,12 @@
 import {
     ISummarizerNode,
     ISummarizerNodeConfig,
-    ISummarizeInternalResult,
     ISummarizeResult,
     ISummaryTreeWithStats,
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
+    SummarizeInternalFn,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
     ISequencedDocumentMessage,
@@ -80,7 +81,11 @@ export class SummarizerNode implements IRootSummarizerNode {
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
-    public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
+    public async summarize(
+        fullTree: boolean,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
         assert(this.isTrackingInProgress(), 0x1a1 /* "summarize should not be called when not tracking the summary" */);
         assert(this.wipSummaryLogger !== undefined,
             0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */);
@@ -108,7 +113,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
 
         try {
-            const result = await this.summarizeInternalFn(fullTree);
+            const result = await this.summarizeInternalFn(fullTree, true, telemetryContext);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             if (result.pathPartsForChildren !== undefined) {
                 this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(result.pathPartsForChildren);
@@ -469,7 +474,7 @@ export class SummarizerNode implements IRootSummarizerNode {
      */
     public constructor(
         protected readonly defaultLogger: ITelemetryLogger,
-        private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        private readonly summarizeInternalFn: SummarizeInternalFn,
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
@@ -487,7 +492,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
     public createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: SummarizeInternalFn,
         /** Initial id or path part of this node */
         id: string,
         /**
@@ -644,7 +649,7 @@ export class SummarizerNode implements IRootSummarizerNode {
  */
 export const createRootSummarizerNode = (
     logger: ITelemetryLogger,
-    summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+    summarizeInternalFn: SummarizeInternalFn,
     changeSequenceNumber: number,
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfig = {},

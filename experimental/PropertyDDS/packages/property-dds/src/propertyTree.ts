@@ -114,7 +114,7 @@ export class SharedPropertyTree extends SharedObject {
 		attributes: IChannelAttributes,
 		options: SharedPropertyTreeOptions,
 	) {
-		super(id, runtime, attributes);
+		super(id, runtime, attributes, "fluid_propertyTree_");
 
 		this.options = options;
 		// Quick hack to let the root be aware of the DDS hosting it.
@@ -179,11 +179,9 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	public get activeCommit(): IPropertyTreeMessage {
-		if (this.localChanges.length > 0) {
-			return this.localChanges[this.localChanges.length - 1];
-		} else {
-			return this.remoteChanges[this.remoteChanges.length - 1];
-		}
+		return this.localChanges.length > 0
+            ? this.localChanges[this.localChanges.length - 1]
+            : this.remoteChanges[this.remoteChanges.length - 1];
 	}
 	public get root(): NodeProperty {
 		return this._root as NodeProperty;

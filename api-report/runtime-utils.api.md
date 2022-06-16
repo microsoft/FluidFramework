@@ -21,7 +21,6 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISummarizeInternalResult } from '@fluidframework/runtime-definitions';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions';
 import { ISummarizerNode } from '@fluidframework/runtime-definitions';
 import { ISummarizerNodeConfig } from '@fluidframework/runtime-definitions';
@@ -31,10 +30,13 @@ import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
+import { SummarizeInternalFn } from '@fluidframework/runtime-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
+import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 
 // @public (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
@@ -70,10 +72,10 @@ export function createDataStoreFactory(type: string, factory: Factory | Promise<
 export function createResponseError(status: number, value: string, request: IRequest): IResponse;
 
 // @public
-export const createRootSummarizerNode: (logger: ITelemetryLogger, summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfig) => IRootSummarizerNode;
+export const createRootSummarizerNode: (logger: ITelemetryLogger, summarizeInternalFn: SummarizeInternalFn, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfig) => IRootSummarizerNode;
 
 // @public
-export const createRootSummarizerNodeWithGC: (logger: ITelemetryLogger, summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfigWithGC, getGCDataFn?: ((fullGC?: boolean | undefined) => Promise<IGarbageCollectionData>) | undefined, getBaseGCDetailsFn?: (() => Promise<IGarbageCollectionDetailsBase>) | undefined) => IRootSummarizerNodeWithGC;
+export const createRootSummarizerNodeWithGC: (logger: ITelemetryLogger, summarizeInternalFn: SummarizeInternalFn, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfigWithGC, getGCDataFn?: ((fullGC?: boolean | undefined) => Promise<IGarbageCollectionData>) | undefined, getBaseGCDetailsFn?: (() => Promise<IGarbageCollectionDetailsBase>) | undefined) => IRootSummarizerNodeWithGC;
 
 // @public (undocumented)
 export function exceptionToResponse(err: any): IResponse;
@@ -111,7 +113,7 @@ export interface ISummarizerNodeRootContract {
 }
 
 // @public (undocumented)
-export function listBlobsAtTreePath(inputTree: ITree, path: string): Promise<string[]>;
+export function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]>;
 
 // @public
 export function mergeStats(...stats: ISummaryStats[]): ISummaryStats;
@@ -201,6 +203,16 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     get stats(): Readonly<ISummaryStats>;
     // (undocumented)
     get summary(): ISummaryTree;
+}
+
+// @public (undocumented)
+export class TelemetryContext implements ITelemetryContext {
+    // (undocumented)
+    get(prefix: string, property: string): TelemetryEventPropertyType;
+    // (undocumented)
+    serialize(): string;
+    // (undocumented)
+    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
 }
 
 // @public (undocumented)

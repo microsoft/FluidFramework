@@ -440,7 +440,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
-        this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect" }, error);
+        this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.clientId }, error);
         this.disposeCore(true, error);
     };
 
@@ -565,6 +565,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                                 type,
                                 message,
                                 retryAfterSeconds: retryAfter,
+                                clientId: this.clientId,
                             });
                         }
                         this.emit("nack", clientIdOrDocumentId, nacks);

@@ -59,11 +59,7 @@ export class SquaresBoard {
 
     private onMouseMove(e: MouseEvent) {
         const square = this.findSquare(e);
-        if (square) {
-            this.canvas.style.cursor = "pointer";
-        } else {
-            this.canvas.style.cursor = "inherit";
-        }
+        this.canvas.style.cursor = square ? "pointer" : "inherit";
 
         if (!this.selectedSquare) {
             return;

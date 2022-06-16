@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import { List, ListMakeHead, ListRemoveEntry } from "./collections";
 import {
@@ -26,9 +27,33 @@ import {
 } from "./referencePositions";
 
 /**
- * @deprecated - Use ReferencePosition
+ * @internal
  */
-export class LocalReference implements ReferencePosition {
+export function _validateReferenceType(refType: ReferenceType) {
+    let exclusiveCount = 0;
+    if (refTypeIncludesFlag(refType, ReferenceType.Transient)) {
+        ++exclusiveCount;
+    }
+    if (refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
+        ++exclusiveCount;
+    }
+    if (refTypeIncludesFlag(refType, ReferenceType.StayOnRemove)) {
+        ++exclusiveCount;
+    }
+    if (exclusiveCount > 1) {
+        throw new UsageError(
+            "Reference types can only be one of Transient, SlideOnRemove, and StayOnRemove");
+    }
+}
+
+export interface LocalReferencePosition extends ReferencePosition {
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+}
+
+/**
+ * @deprecated - Use LocalReferencePosition
+ */
+export class LocalReference implements LocalReferencePosition {
     /**
      * @deprecated - use DetachedReferencePosition
      */
@@ -44,6 +69,8 @@ export class LocalReference implements ReferencePosition {
      */
     public segment: ISegment | undefined;
 
+    public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
+
     /**
      * @deprecated - use createReferencePosition
      */
@@ -57,6 +84,7 @@ export class LocalReference implements ReferencePosition {
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
     ) {
+        _validateReferenceType(refType);
         this.segment = initSegment;
         this.properties = properties;
     }
@@ -144,9 +172,6 @@ export class LocalReference implements ReferencePosition {
     }
 
     public getOffset() {
-        if (this.segment?.removedSeq) {
-            return 0;
-        }
         return this.offset;
     }
 
@@ -312,8 +337,8 @@ export class LocalReferenceCollection {
             !refTypeIncludesFlag(lref, ReferenceType.Transient),
             0x2df /* "transient references cannot be bound to segments" */);
         assertLocalReferences(lref);
-        const refsAtOffset = this.refsByOffset[lref.getOffset()] =
-            this.refsByOffset[lref.getOffset()]
+        const refsAtOffset = this.refsByOffset[lref.offset] =
+            this.refsByOffset[lref.offset]
             ?? { at: ListMakeHead() };
         const atRefs = refsAtOffset.at =
             refsAtOffset.at

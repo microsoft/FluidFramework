@@ -114,7 +114,7 @@ export class Client {
     // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): ReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
     protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -152,6 +152,13 @@ export class Client {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
+    getSlideToSegment(segoff: {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    }): {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    };
     // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
@@ -188,11 +195,12 @@ export class Client {
     set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
+    rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     // @deprecated (undocumented)
-    removeLocalReference(lref: LocalReference): ReferencePosition | undefined;
+    removeLocalReference(lref: LocalReference): LocalReferencePosition | undefined;
     // (undocumented)
-    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
@@ -473,7 +481,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     // (undocumented)
     relativePos2?: IRelativePosition;
     // (undocumented)
-    type: MergeTreeDeltaType.ANNOTATE;
+    type: typeof MergeTreeDeltaType.ANNOTATE;
 }
 
 // @public (undocumented)
@@ -514,7 +522,7 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     // (undocumented)
     ops: IMergeTreeDeltaOp[];
     // (undocumented)
-    type: MergeTreeDeltaType.GROUP;
+    type: typeof MergeTreeDeltaType.GROUP;
 }
 
 // @public (undocumented)
@@ -530,7 +538,7 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     // (undocumented)
     seg?: any;
     // (undocumented)
-    type: MergeTreeDeltaType.INSERT;
+    type: typeof MergeTreeDeltaType.INSERT;
 }
 
 // @public (undocumented)
@@ -551,7 +559,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     // (undocumented)
     relativePos2?: IRelativePosition;
     // (undocumented)
-    type: MergeTreeDeltaType.REMOVE;
+    type: typeof MergeTreeDeltaType.REMOVE;
 }
 
 // @public (undocumented)
@@ -804,12 +812,14 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 export const LocalClientId = -1;
 
 // @public @deprecated (undocumented)
-export class LocalReference implements ReferencePosition {
+export class LocalReference implements LocalReferencePosition {
     // @deprecated
     constructor(client: Client, initSegment: ISegment,
     offset?: number, refType?: ReferenceType, properties?: PropertySet);
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
+    // (undocumented)
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
     // @deprecated (undocumented)
     compare(b: LocalReference): number;
     // @deprecated (undocumented)
@@ -892,6 +902,12 @@ export class LocalReferenceCollection {
 
 // @public (undocumented)
 export type LocalReferenceMapper = (id: string) => LocalReference;
+
+// @public (undocumented)
+export interface LocalReferencePosition extends ReferencePosition {
+    // (undocumented)
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+}
 
 // @public (undocumented)
 export interface LRUSegment {
@@ -1014,7 +1030,7 @@ export class MergeTree {
     // (undocumented)
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): ReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): LocalReferencePosition;
     // (undocumented)
     findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
         tile: ReferencePosition;
@@ -1033,6 +1049,14 @@ export class MergeTree {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
+    // @internal
+    _getSlideToSegment(segoff: {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    }): {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    };
     // (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
@@ -1076,7 +1100,7 @@ export class MergeTree {
     // @deprecated (undocumented)
     removeLocalReference(segment: ISegment, lref: LocalReference): void;
     // (undocumented)
-    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: number): number | undefined;
     // (undocumented)
     root: IMergeBlock;
@@ -1092,35 +1116,35 @@ export class MergeTree {
 export type MergeTreeDeltaCallback = (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
 
 // @public (undocumented)
-export type MergeTreeDeltaOperationType = MergeTreeDeltaType.ANNOTATE | MergeTreeDeltaType.INSERT | MergeTreeDeltaType.REMOVE;
+export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE;
 
 // @public (undocumented)
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
 // @public (undocumented)
-export const enum MergeTreeDeltaType {
-    // (undocumented)
-    ANNOTATE = 2,
-    // (undocumented)
-    GROUP = 3,
-    // (undocumented)
-    INSERT = 0,
-    // (undocumented)
-    REMOVE = 1
-}
+export const MergeTreeDeltaType: {
+    readonly INSERT: 0;
+    readonly REMOVE: 1;
+    readonly ANNOTATE: 2;
+    readonly GROUP: 3;
+};
+
+// @public (undocumented)
+export type MergeTreeDeltaType = typeof MergeTreeDeltaType[keyof typeof MergeTreeDeltaType];
 
 // @public (undocumented)
 export type MergeTreeMaintenanceCallback = (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;
 
 // @public (undocumented)
-export const enum MergeTreeMaintenanceType {
-    ACKNOWLEDGED = -4,
-    // (undocumented)
-    APPEND = -1,
-    // (undocumented)
-    SPLIT = -2,
-    UNLINK = -3
-}
+export const MergeTreeMaintenanceType: {
+    readonly APPEND: -1;
+    readonly SPLIT: -2;
+    readonly UNLINK: -3;
+    readonly ACKNOWLEDGED: -4;
+};
+
+// @public (undocumented)
+export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
 
 // @public (undocumented)
 export interface MergeTreeStats {
@@ -1233,12 +1257,13 @@ export interface QProperty<TKey, TData> {
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 // @public (undocumented)
-export const enum RBColor {
-    // (undocumented)
-    BLACK = 1,
-    // (undocumented)
-    RED = 0
-}
+export const RBColor: {
+    readonly RED: 0;
+    readonly BLACK: 1;
+};
+
+// @public (undocumented)
+export type RBColor = typeof RBColor[keyof typeof RBColor];
 
 // @public (undocumented)
 export interface RBNode<TKey, TData> {
@@ -1351,6 +1376,8 @@ export enum ReferenceType {
     // (undocumented)
     SlideOnRemove = 64,
     // (undocumented)
+    StayOnRemove = 128,
+    // (undocumented)
     Tile = 1,
     // (undocumented)
     Transient = 256
@@ -1375,7 +1402,7 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string): boole
 export function refHasTileLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
-export function refTypeIncludesFlag(refPos: ReferencePosition, flags: ReferenceType): boolean;
+export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
 // @public (undocumented)
 export const reservedMarkerIdKey = "markerId";

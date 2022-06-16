@@ -30,6 +30,7 @@ import {
     ISegment,
     ISegmentAction,
     LocalReference,
+    LocalReferencePosition,
     matchProperties,
     MergeTreeDeltaType,
     PropertySet,
@@ -48,15 +49,15 @@ import {
     SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
 import {
     IntervalCollection,
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
-import { IMapMessageLocalMetadata, DefaultMap } from "./defaultMap";
-import { IValueChanged } from "./defaultMapInterfaces";
+import { DefaultMap } from "./defaultMap";
+import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
@@ -173,7 +174,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
     ) {
-        super(id, dataStoreRuntime, attributes);
+        super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
         this.loadedDeferred.promise.catch((error) => {
             this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
@@ -312,7 +313,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         segment: T,
         offset: number,
         refType: ReferenceType,
-        properties: PropertySet | undefined): ReferencePosition {
+        properties: PropertySet | undefined): LocalReferencePosition {
         return this.client.createLocalReferencePosition(
             segment,
             offset,
@@ -387,7 +388,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.client.removeLocalReferencePosition(lref);
     }
 
-    public removeLocalReferencePosition(lref: ReferencePosition) {
+    public removeLocalReferencePosition(lref: LocalReferencePosition) {
         return this.client.removeLocalReferencePosition(lref);
     }
 
@@ -442,13 +443,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalCollections.get(this.getIntervalCollectionPath(label));
+        return this.intervalCollections.get(label);
     }
 
     public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
-        const labelPath = this.getIntervalCollectionPath(label);
-        const sharedCollection = this.intervalCollections.get(labelPath);
-        return sharedCollection;
+        return this.intervalCollections.get(label);
     }
 
     /**
@@ -463,7 +462,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.intervalCollections.keys();
     }
 
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
 
         // conditionally write the interval collection blob
@@ -519,10 +521,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
     }
 
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        if (!this.intervalCollections.trySubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
+        if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
             this.submitSequenceMessage(
                 this.client.regeneratePendingOp(
                     content as IMergeTreeOp,
@@ -559,18 +561,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                             || m.referenceSequenceNumber < collabWindow.minSeq
                             || m.sequenceNumber <= collabWindow.minSeq
                             || m.sequenceNumber <= collabWindow.currentSeq) {
-                            throw new Error(`Invalid catchup operations in snapshot: ${
-                                JSON.stringify({
-                                    op: {
-                                        seq: m.sequenceNumber,
-                                        minSeq: m.minimumSequenceNumber,
-                                        refSeq: m.referenceSequenceNumber,
-                                    },
-                                    collabWindow: {
-                                        seq: collabWindow.currentSeq,
-                                        minSeq: collabWindow.minSeq,
-                                    },
-                                })}`);
+                            throw new Error(`Invalid catchup operations in snapshot: ${JSON.stringify({
+                                op: {
+                                    seq: m.sequenceNumber,
+                                    minSeq: m.minimumSequenceNumber,
+                                    refSeq: m.referenceSequenceNumber,
+                                },
+                                collabWindow: {
+                                    seq: collabWindow.currentSeq,
+                                    minSeq: collabWindow.minSeq,
+                                },
+                            })}`);
                         }
                         this.processMergeTreeMsg(m);
                     });
@@ -666,7 +667,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 // shallow clone the message as we only overwrite top level properties,
                 // like referenceSequenceNumber and content only
                 stashMessage = {
-                    ... message,
+                    ...message,
                     referenceSequenceNumber: stashMessage.sequenceNumber - 1,
                     contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
                 };
@@ -680,10 +681,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
             }
         }
-    }
-
-    private getIntervalCollectionPath(label: string) {
-        return `intervalCollections/${label}`;
     }
 
     private processMinSequenceNumberChanged(minSeq: number) {

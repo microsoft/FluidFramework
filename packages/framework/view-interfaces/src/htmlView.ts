@@ -35,10 +35,3 @@ export interface IFluidHTMLView extends IProvideFluidHTMLView {
      */
     remove?(): void;
 }
-
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject{
-        /** @deprecated - use `FluidObject<IFluidHTMLView>` instead */
-        readonly IFluidHTMLView?: IFluidHTMLView;
-    }
-}
