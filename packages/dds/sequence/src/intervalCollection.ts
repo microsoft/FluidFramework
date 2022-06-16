@@ -85,7 +85,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 
 export class Interval implements ISerializableInterval {
     public properties: PropertySet;
-    public auxProps: PropertySet[] | undefined;
+    public auxProps: PropertySet[];
     public propertyManager: PropertiesManager;
     constructor(
         public start: number,
@@ -1546,7 +1546,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.localCollection.map(fn);
     }
 
-    public previousInterval(pos: number): TInterval | undefined {
+    public previousInterval(pos: number): TInterval {
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
         }
@@ -1554,7 +1554,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.localCollection.previousInterval(pos);
     }
 
-    public nextInterval(pos: number): TInterval | undefined {
+    public nextInterval(pos: number): TInterval {
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
         }

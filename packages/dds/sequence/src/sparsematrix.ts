@@ -276,7 +276,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
     public getItem(row: number, col: number):
         // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
-        Jsonable<string | number | boolean | IFluidHandle> | undefined {
+        Jsonable<string | number | boolean | IFluidHandle> {
         const pos = rowColToPosition(row, col);
         const { segment, offset } = this.getContainingSegment(pos);
         if (segment && RunSegment.is(segment)) {

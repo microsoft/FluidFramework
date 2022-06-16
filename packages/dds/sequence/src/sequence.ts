@@ -232,7 +232,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
      */
-    public removeRange(start: number, end: number): IMergeTreeRemoveMsg | undefined {
+    public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
         const removeOp = this.client.removeRangeLocal(start, end);
         if (removeOp) {
             this.submitSequenceMessage(removeOp);
@@ -348,7 +348,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     public resolveRemoteClientPosition(
         remoteClientPosition: number,
         remoteClientRefSeq: number,
-        remoteClientId: string): number | undefined {
+        remoteClientId: string): number {
         return this.client.resolveRemoteClientPosition(
             remoteClientPosition,
             remoteClientRefSeq,

@@ -38,7 +38,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
      * @param refType - The reference type of the marker
      * @param props - The properties of the marker
      */
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg | undefined;
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;
 
     /**
      * {@inheritDoc SharedSegmentSequence.posFromRelativePos}
@@ -116,7 +116,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     public insertMarker(
         pos: number,
         refType: ReferenceType,
-        props?: PropertySet): IMergeTreeInsertMsg | undefined {
+        props?: PropertySet): IMergeTreeInsertMsg {
         const segment = new Marker(refType);
         if (props) {
             segment.addProperties(props);
@@ -180,7 +180,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      * @param end - The exclusive end of the range to replace
      * @returns the message sent.
      */
-    public removeText(start: number, end: number): IMergeTreeRemoveMsg | undefined {
+    public removeText(start: number, end: number): IMergeTreeRemoveMsg {
         return this.removeRange(start, end);
     }
 
@@ -219,7 +219,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     public findTile(startPos: number, tileLabel: string, preceding = true): {
         tile: ReferencePosition;
         pos: number;
-    } | undefined {
+    } {
         return this.client.findTile(startPos, tileLabel, preceding);
     }
 
@@ -257,7 +257,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
     }
 
-    public getMarkerFromId(id: string): ISegment | undefined {
+    public getMarkerFromId(id: string): ISegment {
         return this.client.getMarkerFromId(id);
     }
 }
