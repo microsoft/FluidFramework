@@ -2498,8 +2498,9 @@ export class MergeTree {
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
     ): ReferencePosition {
         if (isRemoved(segment)) {
-            if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
-                throw new UsageError("Can only create SlideOnRemove local reference position on a removed segment");
+            if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)) {
+                throw new UsageError(
+                    "Can only create SlideOnRemove or Transient local reference position on a removed segment");
             }
         }
         const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
