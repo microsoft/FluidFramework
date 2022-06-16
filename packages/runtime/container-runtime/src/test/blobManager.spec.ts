@@ -187,21 +187,36 @@ const validateSummary = (runtime: MockRuntime) => {
 };
 
 describe("BlobManager", () => {
+    let handlePs: Promise<any>[] = [];
+    let runtime: MockRuntime;
+    let createBlob: (blob) => Promise<any>;
+
+    beforeEach(() => {
+        runtime = new MockRuntime();
+        handlePs.length = 0;
+        createBlob = (blob: ArrayBufferLike) => {
+            const promise = runtime.createBlob(blob);
+            handlePs.push(promise);
+            return promise;
+        };
+    });
+
+    afterEach(async () => {
+        await Promise.all(handlePs);
+    });
+
     it("empty snapshot", () => {
-        const runtime = new MockRuntime();
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 0);
         assert.strictEqual(summaryData.redirectTable, undefined);
     });
 
     it("non empty snapshot", async () => {
-        const runtime = new MockRuntime();
         await runtime.attach();
         await runtime.connect();
 
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
-        await handleP;
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -209,11 +224,8 @@ describe("BlobManager", () => {
     });
 
     it("detached snapshot", async () => {
-        const runtime = new MockRuntime();
-
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
-        await handleP;
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -221,12 +233,9 @@ describe("BlobManager", () => {
     });
 
     it("detached->attached snapshot", async () => {
-        const runtime = new MockRuntime();
-
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
         await runtime.attach();
-        await handleP;
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -234,7 +243,6 @@ describe("BlobManager", () => {
     });
 
     it("uploads while disconnected", async () => {
-        const runtime = new MockRuntime();
         await runtime.attach();
 
         await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
@@ -247,16 +255,14 @@ describe("BlobManager", () => {
     });
 
     it("transition to offline while upload pending", async () => {
-        const runtime = new MockRuntime();
         await runtime.attach();
         await runtime.connect();
 
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
 
         runtime.disconnect();
         await runtime.connect();
         await runtime.processAll();
-        await handleP;
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -264,19 +270,16 @@ describe("BlobManager", () => {
     });
 
     it("transition to offline while op in flight", async () => {
-        const runtime = new MockRuntime();
         await runtime.attach();
         await runtime.connect();
 
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-        const handleP2 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processBlobs();
 
         runtime.disconnect();
         await runtime.connect();
         await runtime.processAll();
-        await handleP;
-        await handleP2;
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -284,21 +287,19 @@ describe("BlobManager", () => {
     });
 
     it("multiple disconnect/connects", async () => {
-        const runtime = new MockRuntime();
         await runtime.attach();
         await runtime.connect();
 
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         runtime.disconnect();
         await runtime.connect();
 
-        const handleP2 = runtime.createBlob(IsoBuffer.from("blob2", "utf8"));
+        createBlob(IsoBuffer.from("blob2", "utf8"));
         await runtime.processBlobs();
 
         runtime.disconnect();
         await runtime.connect();
         await runtime.processAll();
-        await Promise.all([handleP, handleP2]);
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 2);
@@ -306,23 +307,24 @@ describe("BlobManager", () => {
     });
 
     it("handles deduped IDs", async () => {
-        const runtime = new MockRuntime();
         await runtime.attach();
         await runtime.connect();
 
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-        const handleP2 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         runtime.disconnect();
         await runtime.connect();
 
-        const handleP3 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-        const handleP4 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processBlobs();
 
         runtime.disconnect();
         await runtime.connect();
+
+        createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
-        await Promise.all([handleP, handleP2, handleP3, handleP4]);
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -330,13 +332,11 @@ describe("BlobManager", () => {
     });
 
     it("handles deduped IDs in detached", async () => {
-        const runtime = new MockRuntime();
         runtime.detachedStorage = new DedupeStorage();
 
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-        const handleP2 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
-        await Promise.all([handleP, handleP2]);
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -344,26 +344,23 @@ describe("BlobManager", () => {
     });
 
     it("handles deduped IDs in detached->attached", async () => {
-        const runtime = new MockRuntime();
         runtime.detachedStorage = new DedupeStorage();
 
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-        const handleP2 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
-        await Promise.all([handleP, handleP2]);
 
         await runtime.attach();
         await runtime.connect();
-        const handleP3 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-        const handleP4 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
 
         runtime.disconnect();
         await runtime.connect();
 
-        const handleP5 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-        const handleP6 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processBlobs();
-        await Promise.all([handleP3, handleP4, handleP5, handleP6]);
 
         runtime.disconnect();
         await runtime.connect();
@@ -371,24 +368,20 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable.size, 2);
+        assert.strictEqual(summaryData.redirectTable.size, 4);
     });
 
     it("can load from summary", async () => {
-        const runtime = new MockRuntime();
-
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
-        await handleP;
 
         await runtime.attach();
-        const handleP2 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
 
         await runtime.connect();
 
-        const handleP3 = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
-        await Promise.all([handleP2, handleP3]);
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -401,14 +394,12 @@ describe("BlobManager", () => {
     });
 
     it("handles duplicate remote upload", async () => {
-        const runtime = new MockRuntime();
         await runtime.attach();
         await runtime.connect();
 
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
-        await handleP;
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -416,15 +407,13 @@ describe("BlobManager", () => {
     });
 
     it("handles duplicate remote upload between upload and op", async () => {
-        const runtime = new MockRuntime();
         await runtime.attach();
         await runtime.connect();
 
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processBlobs();
         await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
-        await handleP;
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -432,12 +421,10 @@ describe("BlobManager", () => {
     });
 
     it("handles duplicate remote upload with local ID", async () => {
-        const runtime = new MockRuntime();
         await runtime.attach();
 
-        const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+        createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.connect();
-        await handleP;
         await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"), true);
         await runtime.processAll();
 
@@ -447,13 +434,10 @@ describe("BlobManager", () => {
     });
 
     it("includes blob IDs in summary while attaching", async () => {
-        const runtime = new MockRuntime();
-
-        const handleP = runtime.createBlob(IsoBuffer.from("blob1", "utf8"));
-        const handleP2 = runtime.createBlob(IsoBuffer.from("blob2", "utf8"));
-        const handleP3 = runtime.createBlob(IsoBuffer.from("blob3", "utf8"));
+        createBlob(IsoBuffer.from("blob1", "utf8"));
+        createBlob(IsoBuffer.from("blob2", "utf8"));
+        createBlob(IsoBuffer.from("blob3", "utf8"));
         await runtime.processAll();
-        await Promise.all([handleP, handleP2, handleP3]);
 
         // While attaching with blobs, Container takes a summary while still in "Detached"
         // state. BlobManager should know to include the list of attached blob
