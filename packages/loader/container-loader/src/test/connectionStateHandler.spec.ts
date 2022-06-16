@@ -13,11 +13,11 @@ import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ConnectionState } from "../connectionState";
-import { ConnectionStateHandler, IConnectionStateHandlerProps } from "../connectionStateHandler";
+import { ConnectionStateHandler, IConnectionStateHandlerInputs } from "../connectionStateHandler";
 
 describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
-    let handlerProps: IConnectionStateHandlerProps;
+    let handlerInputs: IConnectionStateHandlerInputs;
     let connectionStateHandler: ConnectionStateHandler;
     let protocolHandler: ProtocolOpHandler;
     let shouldClientJoinWrite: boolean;
@@ -75,7 +75,7 @@ describe("ConnectionStateHandler Tests", () => {
         };
         protocolHandler = new ProtocolOpHandler(0, 0, 1, [], [], [], (key, value) => 0);
         shouldClientJoinWrite = false;
-        handlerProps = {
+        handlerInputs = {
             logConnectionStateChangeTelemetry: () => undefined,
             maxClientLeaveWaitTime: expectedTimeout,
             quorumClients: () => protocolHandler.quorum,
@@ -84,7 +84,7 @@ describe("ConnectionStateHandler Tests", () => {
             connectionStateChanged: () => {},
         };
         connectionStateHandler = new ConnectionStateHandler(
-            handlerProps,
+            handlerInputs,
             new TelemetryNullLogger(),
         );
         connectionStateHandler_receivedAddMemberEvent =
@@ -120,7 +120,7 @@ describe("ConnectionStateHandler Tests", () => {
 
     it("Should move to connected state on normal flow for write client, even if quorum isn't initialized at first", async () => {
         // swap out quorumClients fn for one that returns undefined at first
-        handlerProps.quorumClients = () => undefined;
+        handlerInputs.quorumClients = () => undefined;
 
         client.mode = "write";
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -130,7 +130,7 @@ describe("ConnectionStateHandler Tests", () => {
             "Client should be in connecting state");
 
         // Restore quorumClients fn to return the test quorum object
-        handlerProps.quorumClients = () => protocolHandler.quorum;
+        handlerInputs.quorumClients = () => protocolHandler.quorum;
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
         connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
