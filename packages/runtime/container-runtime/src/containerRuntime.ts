@@ -49,6 +49,7 @@ import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidfr
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
+    DataProcessingError,
     GenericError,
     UsageError,
     extractSafePropertiesFromMessage,
@@ -1803,11 +1804,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.consecutiveReconnects++;
 
             if (!this.shouldContinueReconnecting()) {
-                this.closeFn(new GenericError(
+                this.closeFn(
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
-                    "Runtime detected too many reconnects with no progress syncing local ops",
-                    undefined, // error
-                    {
+                    DataProcessingError.create(
+                        "Runtime detected too many reconnects with no progress syncing local ops",
+                        "setConnectionState",
+                        undefined,
+                       {
+                        dataLoss: 1,
                         attempts: this.consecutiveReconnects,
                         pendingMessages: this.pendingStateManager.pendingMessagesCount,
                     }));
