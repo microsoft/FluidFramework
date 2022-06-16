@@ -603,7 +603,7 @@ export interface ISummaryConfigurationDisableSummarizer {
 
 // @public (undocumented)
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
-    // @deprecated
+    // @deprecated (undocumented)
     idleTime: number;
     maxIdleTime: number;
     maxOps: number;
