@@ -66,8 +66,8 @@
         "forwardCompat": false
       },
       "RemovedEnumDeclaration_ConnectionState": {
-        "backCompat": false,
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }

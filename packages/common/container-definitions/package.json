@@ -42,7 +42,7 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/core-interfaces": "^2.0.0",
     "@fluidframework/driver-definitions": "^2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000"
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -60,7 +60,11 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "2.0.0",
-    "broken": {}
+   "version": "2.0.0",
+    "broken": {
+      "InterfaceDeclaration_IConnectionDetails": {
+        "backCompat": false
+      }
+    }
   }
 }
