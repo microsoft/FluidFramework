@@ -187,18 +187,14 @@ const validateSummary = (runtime: MockRuntime) => {
 };
 
 describe("BlobManager", () => {
-    let handlePs: Promise<any>[] = [];
+    const handlePs: Promise<any>[] = [];
     let runtime: MockRuntime;
-    let createBlob: (blob) => Promise<any>;
+    let createBlob: (blob) => any;
 
     beforeEach(() => {
         runtime = new MockRuntime();
         handlePs.length = 0;
-        createBlob = (blob: ArrayBufferLike) => {
-            const promise = runtime.createBlob(blob);
-            handlePs.push(promise);
-            return promise;
-        };
+        createBlob = (blob: ArrayBufferLike) => handlePs.push(runtime.createBlob(blob));
     });
 
     afterEach(async () => {
