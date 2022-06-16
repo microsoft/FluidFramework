@@ -189,6 +189,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * Represents the resolved url to the Container
+     * TODO: what does it mean for this to be undefined?
      */
     resolvedUrl: IResolvedUrl | undefined;
 
