@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/fetch-tool",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Console tool to fetch Fluid data from relay service",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -29,23 +29,23 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluid-tools/fluidapp-odsp-urlresolver": "^1.0.1",
+    "@fluid-tools/fluidapp-odsp-urlresolver": "^1.0.2",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-runtime": "^1.0.1",
-    "@fluidframework/datastore": "^1.0.1",
-    "@fluidframework/driver-definitions": "^1.0.1",
-    "@fluidframework/driver-utils": "^1.0.1",
-    "@fluidframework/odsp-doclib-utils": "^1.0.1",
-    "@fluidframework/odsp-driver": "^1.0.1",
-    "@fluidframework/odsp-driver-definitions": "^1.0.1",
-    "@fluidframework/odsp-urlresolver": "^1.0.1",
+    "@fluidframework/container-runtime": "^1.0.2",
+    "@fluidframework/datastore": "^1.0.2",
+    "@fluidframework/driver-definitions": "^1.0.2",
+    "@fluidframework/driver-utils": "^1.0.2",
+    "@fluidframework/odsp-doclib-utils": "^1.0.2",
+    "@fluidframework/odsp-driver": "^1.0.2",
+    "@fluidframework/odsp-driver-definitions": "^1.0.2",
+    "@fluidframework/odsp-urlresolver": "^1.0.2",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/routerlicious-driver": "^1.0.1",
-    "@fluidframework/routerlicious-urlresolver": "^1.0.1",
-    "@fluidframework/runtime-definitions": "^1.0.1",
-    "@fluidframework/telemetry-utils": "^1.0.1",
-    "@fluidframework/test-client-utils": "^1.0.1",
-    "@fluidframework/tool-utils": "^1.0.1"
+    "@fluidframework/routerlicious-driver": "^1.0.2",
+    "@fluidframework/routerlicious-urlresolver": "^1.0.2",
+    "@fluidframework/runtime-definitions": "^1.0.2",
+    "@fluidframework/telemetry-utils": "^1.0.2",
+    "@fluidframework/test-client-utils": "^1.0.2",
+    "@fluidframework/tool-utils": "^1.0.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

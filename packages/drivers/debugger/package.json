@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/debugger",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Fluid Debugger - a tool to play through history of a file",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -33,10 +33,10 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": "^1.0.1",
-    "@fluidframework/driver-utils": "^1.0.1",
+    "@fluidframework/driver-definitions": "^1.0.2",
+    "@fluidframework/driver-utils": "^1.0.2",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/replay-driver": "^1.0.1",
+    "@fluidframework/replay-driver": "^1.0.2",
     "jsonschema": "^1.2.6"
   },
   "devDependencies": {
