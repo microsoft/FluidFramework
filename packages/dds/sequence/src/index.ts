@@ -24,7 +24,6 @@ export {
     ISerializableInterval,
     ISerializedInterval,
     SequenceInterval,
-    ISequenceIntervalEvents,
 } from "./intervalCollection";
 export {
     IMapMessageLocalMetadata,

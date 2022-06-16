@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISession } from "@fluidframework/server-services-client";
+import { ISession, NetworkError } from "@fluidframework/server-services-client";
 import { IDocument, ICollection } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
@@ -17,7 +17,10 @@ export async function getSession(ordererUrl: string,
     documentsCollection: ICollection<IDocument>): Promise<ISession> {
     const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-    const tempDocument: IDocument = await documentsCollection.findOne({ documentId });
+    const tempDocument: IDocument = await documentsCollection.findOne({ tenantId, documentId });
+    if (!tempDocument || tempDocument.scheduledDeletionTime !== undefined) {
+        throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+    }
     let tempSession: ISession = tempDocument.session;
     if (!tempSession) {
         tempSession = {
@@ -78,6 +81,5 @@ export async function getSession(ordererUrl: string,
     tempSession.isSessionAlive = isSessionAlive;
     Lumberjack.info(`Returning the session from the discovery: ${JSON.stringify(tempSession)}`,
         lumberjackProperties);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return tempSession;
 }
