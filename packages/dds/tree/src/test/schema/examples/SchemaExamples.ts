@@ -18,12 +18,10 @@
     TreeSchemaIdentifier,
     LocalFieldKey,
     NamedTreeSchema,
-} from "../Schema";
-import {
     emptyField,
     emptyMap,
     emptySet,
-} from "../Builders";
+} from "../../../schema";
 
 export const codePoint: NamedTreeSchema = {
     name: "Primitive.CodePoint" as TreeSchemaIdentifier,

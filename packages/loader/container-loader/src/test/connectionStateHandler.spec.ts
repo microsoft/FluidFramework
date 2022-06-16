@@ -186,7 +186,7 @@ describe("ConnectionStateHandler Tests", () => {
             "Client 2 should be in connected state");
     });
 
-    it.only("Should wait for previous client to leave before moving to conencted state, even if already in quorum", async () => {
+    it("Should wait for previous client to leave before moving to connected state, even if already in quorum", async () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
