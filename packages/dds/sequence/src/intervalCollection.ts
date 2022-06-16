@@ -745,8 +745,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     private addIntervalToIndex(interval: TInterval) {
-        assert(Object.prototype.hasOwnProperty.call(interval.properties, reservedIntervalIdKey),
-            0x2c0 /* "ID must be created before adding interval to collection" */);
+        const id = interval.getIntervalId();
+        assert(id !== undefined, 0x2c0 /* "ID must be created before adding interval to collection" */);
         // Make the ID immutable.
         Object.defineProperty(interval.properties, reservedIntervalIdKey, {
             configurable: false,
@@ -755,11 +755,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         });
         this.intervalTree.put(interval, this.conflictResolver);
         this.endIntervalTree.put(interval, interval, this.endConflictResolver);
-
-        const id = interval.getIntervalId();
-
-        assert(id !== undefined, 0x2c0);
-
         this.intervalIdMap.set(id, interval);
     }
 
