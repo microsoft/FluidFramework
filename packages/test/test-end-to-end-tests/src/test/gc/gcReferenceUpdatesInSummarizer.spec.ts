@@ -91,7 +91,8 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
     const summaryConfigOverrides: ISummaryConfiguration = {
         ...DefaultSummaryConfiguration,
         ...{
-            idleTime: IdleDetectionTime,
+            minIdleTime: IdleDetectionTime,
+            maxIdleTime: IdleDetectionTime,
             maxTime: IdleDetectionTime * 12,
             initialSummarizerDelayMs: 10,
         },
