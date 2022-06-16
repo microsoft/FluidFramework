@@ -40,6 +40,30 @@ use_old_EnumDeclaration_AttachState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedEnumDeclaration_ConnectionState": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_ConnectionState():
+    TypeOnly<old.ConnectionState>;
+declare function use_current_RemovedEnumDeclaration_ConnectionState(
+    use: TypeOnly<current.ConnectionState>);
+use_current_RemovedEnumDeclaration_ConnectionState(
+    get_old_EnumDeclaration_ConnectionState());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedEnumDeclaration_ConnectionState": {"backCompat": false}
+*/
+declare function get_current_RemovedEnumDeclaration_ConnectionState():
+    TypeOnly<current.ConnectionState>;
+declare function use_old_EnumDeclaration_ConnectionState(
+    use: TypeOnly<old.ConnectionState>);
+use_old_EnumDeclaration_ConnectionState(
+    get_current_RemovedEnumDeclaration_ConnectionState());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ContainerSchema": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ContainerSchema():

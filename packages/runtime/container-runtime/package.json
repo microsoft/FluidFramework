@@ -107,9 +107,15 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "VariableDeclaration_DefaultSummaryConfiguration": {"forwardCompat": false},
-      "TypeAliasDeclaration_ISummaryConfiguration": {"forwardCompat": false},
-      "InterfaceDeclaration_ISummaryConfigurationHeuristics": {"forwardCompat": false}
+      "VariableDeclaration_DefaultSummaryConfiguration": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_ISummaryConfiguration": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISummaryConfigurationHeuristics": {
+        "forwardCompat": false
+      }
     }
   }
 }
