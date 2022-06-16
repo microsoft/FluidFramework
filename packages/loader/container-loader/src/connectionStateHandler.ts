@@ -305,7 +305,7 @@ export class ConnectionStateHandler {
             // don't want to reset the timer as we still want to wait on original client which started this timer.
             if (client !== undefined
                 && this.handler.shouldClientJoinWrite()
-                && this.waitingForLeaveOp === false
+                && this.prevClientLeftTimer.hasTimer === false
             ) {
                 this.prevClientLeftTimer.restart();
             } else {
