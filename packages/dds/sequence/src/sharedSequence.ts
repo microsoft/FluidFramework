@@ -116,9 +116,9 @@ export class SubSequence<T> extends BaseSegment {
      * TODO: retain removed items for undo
      *
      * @param start - Starting index of the range to be removed.
-     * TODO: what should the policy be here if this is malformed (e.g. < 0 || > end)?
+     * TODO: what should the policy be here if this is malformed (e.g. \< 0 || \> end)?
      * @param end - End index of the range to be removed.
-     * TODO: what should the policy be here if this is malformed (e.g. >= length || < start)?
+     * TODO: what should the policy be here if this is malformed (e.g. \>= length || \< start)?
      * @returns True if the entire run is removed. Otherwise, false.
      */
     public removeRange(start: number, end: number): boolean {
