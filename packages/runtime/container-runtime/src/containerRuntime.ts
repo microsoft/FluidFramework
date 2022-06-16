@@ -49,6 +49,7 @@ import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidfr
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
+    DataProcessingError,
     GenericError,
     UsageError,
     extractSafePropertiesFromMessage,
@@ -108,7 +109,11 @@ import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
-import { ReportOpPerfTelemetry, latencyThreshold } from "./connectionTelemetry";
+import {
+    ReportOpPerfTelemetry,
+    latencyThreshold,
+    IPerfSignalReport,
+} from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
@@ -221,7 +226,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     /**
      * Defines the maximum allowed time in between summarizations.
      */
-     idleTime: number;
+    idleTime: number;
     /**
      * Defines the maximum allowed time, since the last received Ack,  before running the summary
      * with reason maxTime.
@@ -231,9 +236,9 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * Defines the maximum number of Ops, since the last received Ack, that can be allowed
      * before running the summary with reason maxOps.
      */
-     maxOps: number;
+    maxOps: number;
     /**
-     * Defnines the minimum number of Ops, since the last received Ack, that can be allowed
+     * Defines the minimum number of Ops, since the last received Ack, that can be allowed
      * before running the last summary.
      */
     minOpsForLastSummaryAttempt: number;
@@ -334,7 +339,7 @@ export interface ISummaryRuntimeOptions {
      * @deprecated - use `summaryConfigOverrides.maxOpsSinceLastSummary` instead.
      * Defaults to 7000 ops
      */
-     maxOpsSinceLastSummary?: number;
+    maxOpsSinceLastSummary?: number;
 
      /**
      * @deprecated - use `summaryConfigOverrides.summarizerClientElection` instead.
@@ -1044,6 +1049,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
 
+    private readonly defaultTelemetrySignalSampleCount = 100;
+    private _perfSignalData: IPerfSignalReport = {
+        signalsLost: 0,
+        signalSequenceNumber: 0,
+        signalTimestamp: 0,
+        trackingSignalSequenceNumber: undefined,
+    };
+
     /**
      * Summarizer is responsible for coordinating when to send generate and send summaries.
      * It is the main entry point for summary work.
@@ -1743,15 +1756,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const reconnection = changeOfState && connected;
         this._connected = connected;
 
+        if (!connected) {
+            this._perfSignalData.signalsLost = 0;
+            this._perfSignalData.signalTimestamp = 0;
+            this._perfSignalData.trackingSignalSequenceNumber = undefined;
+        }
+
         if (reconnection) {
             this.consecutiveReconnects++;
 
             if (!this.shouldContinueReconnecting()) {
-                this.closeFn(new GenericError(
+                this.closeFn(
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
-                    "Runtime detected too many reconnects with no progress syncing local ops",
-                    undefined, // error
-                    {
+                    DataProcessingError.create(
+                        "Runtime detected too many reconnects with no progress syncing local ops",
+                        "setConnectionState",
+                        undefined,
+                       {
+                        dataLoss: 1,
                         attempts: this.consecutiveReconnects,
                         pendingMessages: this.pendingStateManager.pendingMessagesCount,
                     }));
@@ -1853,6 +1875,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processAliasMessage(message, localOpMetadata, local);
     }
 
+    /**
+     * Emits the Signal event and update the perf signal data.
+     * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
+     */
+    private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
+        const duration = Date.now() - this._perfSignalData.signalTimestamp;
+        this.logger.sendPerformanceEvent({
+            eventName: "SignalLatency",
+            duration,
+            signalsLost: this._perfSignalData.signalsLost,
+        });
+
+        this._perfSignalData.signalsLost = 0;
+        this._perfSignalData.signalTimestamp = 0;
+    }
+
     public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as ISignalEnvelope;
         const transformed: IInboundSignalMessage = {
@@ -1860,6 +1898,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             content: envelope.contents.content,
             type: envelope.contents.type,
         };
+
+        // Only collect signal telemetry for messages sent by the current client.
+        if (message.clientId === this.clientId && this.connected) {
+            // Check to see if the signal was lost.
+            if (this._perfSignalData.trackingSignalSequenceNumber !== undefined &&
+                envelope.clientSignalSequenceNumber > this._perfSignalData.trackingSignalSequenceNumber) {
+                this._perfSignalData.signalsLost++;
+                this._perfSignalData.trackingSignalSequenceNumber = undefined;
+                this.logger.sendErrorEvent({
+                    eventName: "SignalLost",
+                    type: envelope.contents.type,
+                    signalsLost: this._perfSignalData.signalsLost,
+                    trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
+                    clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
+                });
+            } else if (envelope.clientSignalSequenceNumber === this._perfSignalData.trackingSignalSequenceNumber) {
+                this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+                this._perfSignalData.trackingSignalSequenceNumber = undefined;
+            }
+        }
 
         if (envelope.address === undefined) {
             // No address indicates a container signal message.
@@ -2002,6 +2060,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+        if (rootDataStoreId.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
+        }
         return this._aliasingEnabled === true ?
             this.createAndAliasDataStore(pkg, rootDataStoreId) :
             this.createRootDataStoreLegacy(pkg, rootDataStoreId);
@@ -2046,6 +2107,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
         rootDataStoreId: string): IFluidDataStoreContextDetached {
+        if (rootDataStoreId.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
+        }
         return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
     }
 
@@ -2143,6 +2207,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return true;
     }
 
+    private createNewSignalEnvelope(address: string | undefined, type: string, content: any): ISignalEnvelope {
+        const newSequenceNumber = ++this._perfSignalData.signalSequenceNumber;
+        const newEnvelope: ISignalEnvelope = {
+            address,
+            clientSignalSequenceNumber: newSequenceNumber,
+            contents: { type, content },
+        };
+
+        // We should not track any signals in case we already have a tracking number.
+        if (newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
+            this._perfSignalData.trackingSignalSequenceNumber === undefined) {
+            this._perfSignalData.signalTimestamp = Date.now();
+            this._perfSignalData.trackingSignalSequenceNumber = newSequenceNumber;
+        }
+
+        return newEnvelope;
+    }
+
     /**
      * Submits the signal to be sent to other clients.
      * @param type - Type of the signal.
@@ -2150,13 +2232,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        const envelope: ISignalEnvelope = { address: undefined, contents: { type, content } };
+        const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
         return this.context.submitSignalFn(envelope);
     }
 
     public submitDataStoreSignal(address: string, type: string, content: any) {
-        const envelope: ISignalEnvelope = { address, contents: { type, content } };
-        return this.context.submitSignalFn(envelope);
+        const envelope = this.createNewSignalEnvelope(address, type, content);
+         return this.context.submitSignalFn(envelope);
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
