@@ -8,6 +8,7 @@ import path from "path";
 import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
+import { assert } from "@fluidframework/common-utils";
 import { IFluidPackage } from "@fluidframework/container-definitions";
 import {
     getMicrosoftConfiguration,
@@ -57,7 +58,7 @@ export const before = (app: express.Application) => {
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
-    const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
+    const options: RouteOptions = { ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf
         .env({ parseValules: true, inputSeparator: "__" })
         .file(path.join(baseDir, "config.json"));
@@ -138,7 +139,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             while (odspAuthLock !== undefined) {
                 await odspAuthLock;
             }
-            let lockResolver: () => void;
+            let lockResolver: (() => void) | undefined;
             odspAuthLock = new Promise((resolve) => {
                 lockResolver = () => {
                     resolve();
@@ -183,6 +184,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 odspAuthStage = 2;
                 return false;
             } finally {
+                assert(lockResolver !== undefined, "lockResolver is undefined");
                 lockResolver();
             }
         };
@@ -195,6 +197,8 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             res.end();
             return;
         }
+
+        assert(options.server !== undefined, "options.server is undefined");
         await tokenManager.getOdspTokens(
             options.server,
             getMicrosoftConfiguration(),
@@ -214,6 +218,8 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             res.end();
             return;
         }
+
+        assert(options.server !== undefined, "options.server is undefined");
         options.pushAccessToken = (await tokenManager.getPushTokens(
             options.server,
             getMicrosoftConfiguration(),
@@ -299,6 +305,12 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     // eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
     const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
 
+    const browser = packageJson.fluid.browser;
+    assert(browser !== undefined, "browser property is undefined");
+
+    const umd = browser.umd;
+    assert(umd !== undefined, "umd property is undefined");
+
     const html =
         `<!DOCTYPE html>
 <html style="height: 100%;" lang="en">
@@ -312,7 +324,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     </div>
 
     <script src="/fluid-loader.bundle.js"></script>
-    ${packageJson.fluid.browser.umd.files.map((file) => `<script src="/${file}"></script>\n`)}
+    ${umd.files.map((file) => `<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
@@ -320,7 +332,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
         FluidLoader.start(
             "${documentId}",
             pkgJson,
-            window["${packageJson.fluid.browser.umd.library}"],
+            window["${umd.library}"],
             options,
             document.getElementById("content"))
         .then(() => fluidStarted = true)
