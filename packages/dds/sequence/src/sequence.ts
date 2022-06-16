@@ -30,6 +30,7 @@ import {
     ISegment,
     ISegmentAction,
     LocalReference,
+    LocalReferencePosition,
     matchProperties,
     MergeTreeDeltaType,
     PropertySet,
@@ -312,7 +313,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         segment: T,
         offset: number,
         refType: ReferenceType,
-        properties: PropertySet | undefined): ReferencePosition {
+        properties: PropertySet | undefined): LocalReferencePosition {
         return this.client.createLocalReferencePosition(
             segment,
             offset,
@@ -387,7 +388,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.client.removeLocalReferencePosition(lref);
     }
 
-    public removeLocalReferencePosition(lref: ReferencePosition) {
+    public removeLocalReferencePosition(lref: LocalReferencePosition) {
         return this.client.removeLocalReferencePosition(lref);
     }
 

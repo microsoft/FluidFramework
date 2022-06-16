@@ -119,7 +119,7 @@ export class ReferenceMapProperty extends StringMapProperty {
      */
     set(in_key, in_value) {
         if (!_.isString(in_key)) {
-            throw new Error(MSG.KEY_NOT_STRING + in_key);
+            throw new TypeError(MSG.KEY_NOT_STRING + in_key);
         }
         var value = ReferenceProperty._convertInputToPath(in_value);
         StringMapProperty.prototype.set.call(this, in_key, value);

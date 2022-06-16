@@ -239,7 +239,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      */
     static _convertInputToPaths = function(in_array, in_callerName) {
         if (!_.isArray(in_array)) {
-            throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'ReferenceArrayProperty.' + in_callerName);
+            throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + 'ReferenceArrayProperty.' + in_callerName);
         }
         var len = in_array.length;
         var arr = new Array(len);

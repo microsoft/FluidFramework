@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
@@ -55,8 +56,12 @@ class DataStore implements IDataStore {
     private alias: string | undefined;
 
     async trySetAlias(alias: string): Promise<AliasResult> {
+        if (alias.includes("/")) {
+            throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
+        }
+
         switch (this.aliasState) {
-            // If we're already aliasing, throw an exception
+            // If we're already aliasing, do nothing
             case AliasState.Aliasing:
                 return "Aliasing";
             // If this datastore is already aliased, return true only if this

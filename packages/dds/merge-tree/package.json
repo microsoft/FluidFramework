@@ -75,7 +75,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.71273",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@^0.58.0",
+    "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@^1.0.0",
     "@fluidframework/mocha-test-setup": "^1.1.0",
     "@fluidframework/test-runtime-utils": "^1.1.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -98,82 +98,10 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "broken": {
-      "ClassDeclaration_BaseSegment": {
-        "forwardCompat": false
-      },
       "ClassDeclaration_Client": {
         "forwardCompat": false
-      },
-      "InterfaceDeclaration_IConsensusInfo": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IHierBlock": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IMergeBlock": {
-        "forwardCompat": false
-      },
-      "TypeAliasDeclaration_IMergeNode": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IMergeNodeCommon": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_IncrementalMapState": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_InsertContext": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IRemovalInfo": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_ISegmentChanges": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_LocalReference": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "ClassDeclaration_LocalReferenceCollection": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_LRUSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_Marker": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "ClassDeclaration_MergeBlock": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_MergeNode": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_MergeTree": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SnapshotLegacy": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_TextSegment": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_List": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IJSONMarkerSegment": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IMarkerDef": {
-        "backCompat": false
-      },
-      "EnumDeclaration_ReferenceType": {
-        "backCompat": false
       }
     }
   }
