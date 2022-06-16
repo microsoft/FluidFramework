@@ -176,7 +176,7 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
         const channelsTree = summary.tree[channelsTreeName];
         assert(channelsTree?.type === SummaryType.Tree, "Expected .channels tree in summary root.");
 
-        const defaultDataStoreNode = channelsTree.tree[defaultDataStore.id];
+        const defaultDataStoreNode = channelsTree.tree[defaultDataStore._context.id];
         assert(defaultDataStoreNode?.type === SummaryType.Tree, "Expected default data store tree in summary.");
         assert(!defaultDataStoreNode.unreferenced, "Default data store should be referenced.");
         assert(defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
@@ -220,7 +220,7 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
         assert(!summary.unreferenced, "Root summary should be referenced.");
         assert(summary.tree[channelsTreeName] === undefined, "Unexpected .channels tree in summary root.");
 
-        const defaultDataStoreNode = summary.tree[defaultDataStore.id];
+        const defaultDataStoreNode = summary.tree[defaultDataStore._context.id];
         assert(defaultDataStoreNode?.type === SummaryType.Tree, "Expected default data store tree in summary.");
         assert(!defaultDataStoreNode.unreferenced, "Default data store should be referenced.");
         assert(defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
