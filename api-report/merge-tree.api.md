@@ -21,7 +21,7 @@ export interface AugmentedIntervalNode {
     minmax: IInterval;
 }
 
-// @public (undocumented)
+// @public
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
@@ -29,17 +29,13 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
-    // (undocumented)
     abstract append(segment: ISegment): void;
-    // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
     clientId: number;
-    // (undocumented)
     abstract clone(): ISegment;
     // (undocumented)
     protected cloneInto(b: ISegment): void;
-    // (undocumented)
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
     // (undocumented)
     hasProperty(key: string): boolean;
@@ -65,7 +61,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     seq: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
-    // (undocumented)
     abstract toJSONObject(): any;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;

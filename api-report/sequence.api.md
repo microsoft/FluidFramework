@@ -192,7 +192,7 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     segment: ISegment;
 }
 
-// @public (undocumented)
+// @public
 export interface ISerializableInterval extends IInterval {
     addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
     getIntervalId(): string | undefined;
@@ -714,9 +714,10 @@ export class SparseMatrixFactory implements IChannelFactory {
 // @public @deprecated (undocumented)
 export type SparseMatrixItem = Serializable;
 
-// @public (undocumented)
+// @public
 export class SubSequence<T> extends BaseSegment {
-    constructor(items: Serializable<T>[]);
+    constructor(
+    items: Serializable<T>[]);
     // (undocumented)
     append(segment: ISegment): void;
     // (undocumented)
@@ -725,11 +726,8 @@ export class SubSequence<T> extends BaseSegment {
     clone(start?: number, end?: number): SubSequence<T>;
     // (undocumented)
     protected createSplitSegmentAt(pos: number): SubSequence<T>;
-    // (undocumented)
-    static fromJSONObject<U>(spec: Serializable): SubSequence<U>;
-    // (undocumented)
+    static fromJSONObject<U>(spec: Serializable): SubSequence<U> | undefined;
     static is(segment: ISegment): segment is SubSequence<any>;
-    // (undocumented)
     items: Serializable<T>[];
     // (undocumented)
     removeRange(start: number, end: number): boolean;
@@ -737,9 +735,7 @@ export class SubSequence<T> extends BaseSegment {
     toJSONObject(): IJSONRunSegment<T>;
     // (undocumented)
     toString(): string;
-    // (undocumented)
     readonly type: string;
-    // (undocumented)
     static readonly typeString: string;
 }
 

@@ -488,6 +488,9 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
     return mergeTree.localNetLength(node);
 }
 
+/**
+ * TODO
+ */
 export abstract class BaseSegment extends MergeNode implements ISegment {
     public clientId: number = LocalClientId;
     public seq: number = UniversalSequenceNumber;
@@ -536,6 +539,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         b.seq = this.seq;
     }
 
+    /**
+     * TODO
+     * @param segment - TODO
+     */
     public canAppend(segment: ISegment): boolean {
         return false;
     }
@@ -546,6 +553,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         }
     }
 
+    /**
+     * TODO
+     */
     public abstract toJSONObject(): any;
 
     public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean {
@@ -619,8 +629,21 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         }
     }
 
+    /**
+     * TODO
+     */
     public abstract clone(): ISegment;
+
+    /**
+     * TODO
+     * @param segment - TODO
+     */
     public abstract append(segment: ISegment): void;
+
+    /**
+     * TODO
+     * @param pos - TODO
+     */
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 

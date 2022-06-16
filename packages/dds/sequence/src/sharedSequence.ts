@@ -15,12 +15,30 @@ export interface IJSONRunSegment<T> extends IJSONSegment {
     items: Serializable<T>[];
 }
 
+/**
+ * TODO
+ *
+ * @typeParam T - TODO
+ */
 export class SubSequence<T> extends BaseSegment {
+    /**
+     * TODO
+     */
     public static readonly typeString: string = "SubSequence";
+
+    /**
+     * Determines if the provided `ISegment` is a `SubSequence`.
+     */
     public static is(segment: ISegment): segment is SubSequence<any> {
         return segment.type === SubSequence.typeString;
     }
-    public static fromJSONObject<U>(spec: Serializable) {
+
+    /**
+     * Creates a `SubSequence` from the provided serialized object if it can.
+     * Otherwise, returns undefined.
+     * @param spec - TODO:
+     */
+    public static fromJSONObject<U>(spec: Serializable): SubSequence<U> | undefined {
         if (spec && typeof spec === "object" && "items" in spec) {
             const segment = new SubSequence<U>(spec.items);
             if (spec.props) {
@@ -31,19 +49,32 @@ export class SubSequence<T> extends BaseSegment {
         return undefined;
     }
 
+    /**
+     * TODO
+     */
     public readonly type = SubSequence.typeString;
 
-    constructor(public items: Serializable<T>[]) {
+    constructor(
+        /**
+         * TODO
+         */
+        public items: Serializable<T>[]) {
         super();
         this.cachedLength = items.length;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/merge-tree#BaseSegment.toJSONObject}
+     */
     public toJSONObject() {
         const obj: IJSONRunSegment<T> = { items: this.items };
         super.addSerializedProps(obj);
         return obj;
     }
 
+     /**
+     * {@inheritDoc @fluidframework/merge-tree#BaseSegment.clone}
+     */
     public clone(start = 0, end?: number) {
         const clonedItems = this.items.slice(start, end);
         const b = new SubSequence(clonedItems);
@@ -51,6 +82,9 @@ export class SubSequence<T> extends BaseSegment {
         return b;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/merge-tree#BaseSegment.canAppend}
+     */
     public canAppend(segment: ISegment): boolean {
         return SubSequence.is(segment)
             && (this.cachedLength <= MaxRun || segment.cachedLength <= MaxRun);
@@ -60,6 +94,9 @@ export class SubSequence<T> extends BaseSegment {
         return this.items.toString();
     }
 
+     /**
+     * {@inheritDoc @fluidframework/merge-tree#BaseSegment.append}
+     */
     public append(segment: ISegment) {
         if (!SubSequence.is(segment)) {
             throw new Error("can only append another run segment");
@@ -89,6 +126,9 @@ export class SubSequence<T> extends BaseSegment {
         return (this.items.length === 0);
     }
 
+    /**
+     * {@inheritDoc @fluidframework/merge-tree#BaseSegment.createSplitSegmentAt}
+     */
     protected createSplitSegmentAt(pos: number) {
         if (pos > 0) {
             const remainingItems = this.items.slice(pos);
