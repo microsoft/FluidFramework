@@ -101,7 +101,6 @@ export async function createSummarizer(
     container: IContainer,
     summaryVersion?: string,
     gcOptions?: IGCRuntimeOptions,
-    disableIsolatedChannels?: true,
 ): Promise<ISummarizer> {
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
