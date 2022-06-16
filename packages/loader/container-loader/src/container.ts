@@ -1708,8 +1708,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                             0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
                         this.submitMessage(type, contents);
                     },
-                    this.serviceConfiguration?.noopTimeFrequency,
-                    this.serviceConfiguration?.noopCountFrequency,
+                    this.serviceConfiguration.noopTimeFrequency,
+                    this.serviceConfiguration.noopCountFrequency,
                 );
             }
             this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
