@@ -187,7 +187,11 @@ export function runPendingLocalStateTests(
 
 		it('works across summaries', async () => {
 			// 1. Create a client
-			const { testObjectProvider } = await setUpLocalServerTestSharedTree({
+			const {
+				testObjectProvider,
+				container: c0,
+				tree: t0,
+			} = await setUpLocalServerTestSharedTree({
 				id: documentId,
 				writeFormat: WriteFormat.v0_0_2,
 			});
@@ -200,6 +204,27 @@ export function runPendingLocalStateTests(
 				testObjectProvider,
 				writeFormat: WriteFormat.v0_0_2,
 			}));
+
+			// insertSmallTree(tree);
+			// await waitForSummary(container);
+
+			// const { pendingLocalState } = await withContainerOffline(testObjectProvider, c0, () => {
+			// 	insertSmallTree(tree);
+			// });
+
+			// insertSmallTree(tree);
+			// await waitForSummary(container);
+
+			// await setUpLocalServerTestSharedTree({
+			// 	id: documentId,
+			// 	testObjectProvider,
+			// 	writeFormat: WriteFormat.v0_0_2,
+			// 	pendingLocalState,
+			// });
+
+			// await testObjectProvider.ensureSynchronized();
+
+			// return;
 
 			// 3. The second client creates stashed ops and rejoins multiple times
 			({ tree, container } = await stash(container, () => {
@@ -234,6 +259,21 @@ export function runPendingLocalStateTests(
 					testObjectProvider,
 					writeFormat: WriteFormat.v0_0_2,
 					pendingLocalState,
+				});
+			}
+
+			async function waitForSummary(container: IContainer): Promise<void> {
+				return new Promise((resolve, reject) => {
+					let summarized = false;
+					container.on('op', (op) => {
+						if (op.type === 'summarize') {
+							summarized = true;
+						} else if (summarized && op.type === 'summaryAck') {
+							resolve();
+						} else if (op.type === 'summaryNack') {
+							reject(new Error('summaryNack'));
+						}
+					});
 				});
 			}
 
