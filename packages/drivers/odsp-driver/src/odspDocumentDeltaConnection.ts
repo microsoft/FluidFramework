@@ -586,7 +586,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 
-        this.socketReference!.off("server_disconnect", this.serverDisconnectHandler);
+        this.socketReference?.off("server_disconnect", this.serverDisconnectHandler);
         this.socketReference = undefined;
 
         if (!socketProtocolError && this.hasDetails) {
