@@ -132,7 +132,7 @@ const endOfTextReference: ReferencePosition = {
     addProperties(props) {
         addProperties(this.properties, props);
     },
-};
+} as any as ReferencePosition;
 
 export interface IFlowDocumentEvents extends IEvent {
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString) => void);
