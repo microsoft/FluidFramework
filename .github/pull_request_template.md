@@ -28,11 +28,9 @@ Feel free to remove or alter parts of this template that do not offer value for 
 
 ## Does this introduce a breaking change?
 
--   [ ] Yes
--   [ ] No
-
 > If this introduces a breaking change, please describe the impact and migration path for existing applications below.
 > See [Breaking-vs-Non-breaking-Changes](https://github.com/microsoft/FluidFramework/wiki/Breaking-vs-Non-breaking-Changes) for details.
+> If there are no breaking changes, delete this section.
 
 ## Any relevant logs or outputs
 
