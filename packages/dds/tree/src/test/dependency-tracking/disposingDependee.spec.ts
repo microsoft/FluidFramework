@@ -35,6 +35,7 @@ describe("DisposingDependee", () => {
 		});
 		// Confirm that calling endInitialization when there are no dependents disposes.
 		assert(disposed);
+		assert(d.isDisposed());
 	});
 
 	it("used", () => {
@@ -51,21 +52,23 @@ describe("DisposingDependee", () => {
 			disposed = true;
 		});
 		assert(!disposed);
+		assert(!d.isDisposed());
 
 		// Test invalidation propagates.
 		dependent.markInvalid(testToken);
 		assert.deepEqual(dependent.tokens, [testToken]);
 
 		assert(!disposed);
+		assert(!d.isDisposed());
 		dependent.unregisterDependees();
 		// Confirm dispose runs when last dependent is removed (after endInitialization)
 		assert(disposed);
+		assert(d.isDisposed());
 	});
 
 	it("used during initialization", () => {
 		const d = new DisposingDependee("test");
 		const dependent = new MockDependent("dependent");
-		const testToken = new InvalidationToken("token");
 		recordDependency(dependent, d);
 		assert(!d.isDisposed());
 		assert.deepEqual(dependent.listDependees(), [d]);
@@ -78,5 +81,6 @@ describe("DisposingDependee", () => {
 		});
 		// Confirm that calling endInitialization when there are no dependents remaining disposes.
 		assert(disposed);
+		assert(d.isDisposed());
 	});
 });
