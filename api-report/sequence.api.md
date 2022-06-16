@@ -19,6 +19,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IInterval } from '@fluidframework/merge-tree';
 import { IJSONSegment } from '@fluidframework/merge-tree';
+import { IMapMessageLocalMetadata } from '@fluidframework/default-map';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree';
@@ -35,6 +36,7 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { IValueOpEmitter } from '@fluidframework/default-map';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 import { LocalReference } from '@fluidframework/merge-tree';
 import { LocalReferencePosition } from '@fluidframework/merge-tree';
@@ -79,11 +81,7 @@ export interface IJSONRunSegment<T> extends IJSONSegment {
     items: Serializable<T>[];
 }
 
-// @internal (undocumented)
-export interface IMapMessageLocalMetadata {
-    // (undocumented)
-    localSeq: number;
-}
+export { IMapMessageLocalMetadata }
 
 // @public (undocumented)
 export class Interval implements ISerializableInterval {
@@ -269,10 +267,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
     posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
-// @internal
-export interface IValueOpEmitter {
-    emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
-}
+export { IValueOpEmitter }
 
 // @public @deprecated (undocumented)
 export type MatrixSegment = RunSegment | PaddingSegment;

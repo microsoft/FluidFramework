@@ -18,7 +18,7 @@ export {
 export {
     IMapMessageLocalMetadata,
     IValueOpEmitter,
-} from "./defaultMapInterfaces";
+} from "@fluidframework/default-map";
 export * from "./sharedString";
 export * from "./sequence";
 export * from "./sequenceFactory";

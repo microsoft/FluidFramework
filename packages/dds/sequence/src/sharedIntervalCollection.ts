@@ -18,15 +18,14 @@ import {
     IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
+import { DefaultMap, IMapMessageLocalMetadata } from "@fluidframework/default-map";
 import {
     Interval,
     IntervalCollection,
     IntervalCollectionValueType,
     ISerializableInterval,
 } from "./intervalCollection";
-import { DefaultMap } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";
-import { IMapMessageLocalMetadata } from "./defaultMapInterfaces";
 
 const snapshotFileName = "header";
 
