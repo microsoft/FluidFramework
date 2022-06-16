@@ -219,18 +219,7 @@ export class Interval implements ISerializableInterval {
     }
 }
 
-/**
- * ISequenceIntervalEvents events should only be used internally in IntervalCollections.
- * SequenceInterval is exported as public so this must be too.
- */
-export interface ISequenceIntervalEvents extends IEvent {
-    (event: "beforePositionChange" | "afterPositionChange",
-        listener: () => void);
-}
-
-export class SequenceInterval
-extends TypedEventEmitter<ISequenceIntervalEvents>
-implements ISerializableInterval {
+export class SequenceInterval implements ISerializableInterval {
     public properties: PropertySet;
     public propertyManager: PropertiesManager;
 
@@ -239,72 +228,41 @@ implements ISerializableInterval {
         public end: LocalReference,
         public intervalType: IntervalType,
         props?: PropertySet) {
-        super();
         if (props) {
             this.addProperties(props);
         }
-        if (intervalType === IntervalType.SlideOnRemove) {
-            this.prepareIntervalEventEmitter();
+    }
+
+    private callbacks?: Record<"beforePositionChange" | "afterPositionChange", () => void>;
+
+    /**
+     * @internal
+     * Subscribes to position change events on this interval if there are no current listeners.
+     */
+    public addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void {
+        if (this.callbacks === undefined) {
+            this.callbacks = {
+                beforePositionChange,
+                afterPositionChange,
+            };
+
+            const startCbs = this.start.callbacks ??= {};
+            const endCbs = this.end.callbacks ??= {};
+            startCbs.beforeSlide = endCbs.beforeSlide = beforePositionChange;
+            startCbs.afterSlide = endCbs.afterSlide = afterPositionChange;
         }
     }
 
-    private prepareIntervalEventEmitter() {
-        const beforeSlide = () => {
-            this.emit("beforePositionChange");
-        };
-        const afterSlide = () => {
-            this.emit("afterPositionChange");
-        };
-        // Only listen to events from the positions when there is a listener on this.
-        // This is particularly important since SequenceIntervals are cloned when put in the
-        // interval trees and we don't want to listen on the clones.
-        super.on("newListener", (event) => {
-            switch (event) {
-                case "beforePositionChange":
-                    if (super.listenerCount(event) === 0) {
-                        const startCb = this.start.callbacks ??= {};
-                        startCb.beforeSlide = beforeSlide;
-                        const endCb = this.end.callbacks ??= {};
-                        endCb.beforeSlide = beforeSlide;
-                    }
-                    break;
-                case "afterPositionChange":
-                    if (super.listenerCount(event) === 0) {
-                        const startCb = this.start.callbacks ??= {};
-                        startCb.afterSlide = afterSlide;
-                        const endCb = this.end.callbacks ??= {};
-                        endCb.afterSlide = afterSlide;
-                    }
-                    break;
-                default:
-            }
-        });
-        super.on("removeListener", (event: string | symbol) => {
-            switch (event) {
-                case "beforePositionChange":
-                    if (super.listenerCount(event) === 0) {
-                        if (this.start.callbacks) {
-                            this.start.callbacks.beforeSlide = undefined;
-                        }
-                        if (this.end.callbacks) {
-                            this.end.callbacks.beforeSlide = undefined;
-                        }
-                    }
-                    break;
-                case "afterPositionChange":
-                    if (super.listenerCount(event) === 0) {
-                        if (this.start.callbacks) {
-                            this.start.callbacks.afterSlide = undefined;
-                        }
-                        if (this.end.callbacks) {
-                            this.end.callbacks.afterSlide = undefined;
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        });
+    /**
+     * @internal
+     * Removes the currently subscribed position change listeners.
+     */
+    public removePositionChangeListeners(): void {
+        if (this.callbacks) {
+            this.callbacks = undefined;
+            this.start.callbacks = undefined;
+            this.end.callbacks = undefined;
+        }
     }
 
     public serialize(client: Client) {
@@ -542,6 +500,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         private readonly client: Client,
         private readonly label: string,
         private readonly helpers: IIntervalHelpers<TInterval>,
+        /** Callback invoked each time one of the endpoints of an interval slides. */
+        private readonly onPositionChange?: (interval: TInterval) => void,
     ) {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         this.endIntervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
@@ -789,15 +749,19 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
     private addIntervalListeners(interval: TInterval) {
         if (interval instanceof SequenceInterval) {
-            interval.on("beforePositionChange", () => this.removeIntervalFromIndex(interval));
-            interval.on("afterPositionChange", () => this.addIntervalToIndex(interval));
+            interval.addPositionChangeListeners(
+                () => this.removeIntervalFromIndex(interval),
+                () => {
+                    this.addIntervalToIndex(interval);
+                    this.onPositionChange?.(interval);
+                },
+            );
         }
     }
 
     private removeIntervalListeners(interval: TInterval) {
         if (interval instanceof SequenceInterval) {
-            interval.removeAllListeners("beforePositionChange");
-            interval.removeAllListeners("afterPositionChange");
+            interval.removePositionChangeListeners();
         }
     }
 }
@@ -973,7 +937,18 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 }
 
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "addInterval" | "changeInterval" | "deleteInterval",
+    /**
+     * This event is invoked whenever the properties or endpoints of an interval may have changed.
+     * This can happen on:
+     * - endpoint modification (local or remote)
+     * - ack of an endpoint modification
+     * - property change (local or remote)
+     * - position change due to segment sliding (will always appear as a local change)
+     * The `interval` argument reflects the new values.
+     */
+    (event: "changeInterval",
+        listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
+    (event: "addInterval" | "deleteInterval",
         listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void);
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void);
 }
@@ -1010,7 +985,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
         // Instantiate the local interval collection based on the saved intervals
         this.client = client;
-        this.localCollection = new LocalIntervalCollection<TInterval>(client, label, this.helpers);
+        this.localCollection = new LocalIntervalCollection<TInterval>(
+            client,
+            label,
+            this.helpers,
+            (interval) => this.emit("changeInterval", interval, true, undefined),
+        );
         if (this.savedSerializedIntervals) {
             for (const serializedInterval of this.savedSerializedIntervals) {
                 this.localCollection.ensureSerializedId(serializedInterval);
@@ -1147,7 +1127,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         // Force id to be a string.
         const interval = this.getIntervalById(id);
         if (interval) {
-            this.localCollection.changeInterval(interval, start, end);
+            const newInterval = this.localCollection.changeInterval(interval, start, end);
             const serializedInterval: ISerializedInterval = interval.serialize(this.client);
             serializedInterval.start = start;
             serializedInterval.end = end;
@@ -1158,9 +1138,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 };
             this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
             this.addPendingChange(id, serializedInterval);
+            this.emit("changeInterval", newInterval, true, undefined);
+            return newInterval;
         }
-        this.emit("changeInterval", interval, true, undefined);
-        return interval;
+        // No interval to change
+        return undefined;
     }
 
     private addPendingChange(id: string, serializedInterval: ISerializedInterval) {
