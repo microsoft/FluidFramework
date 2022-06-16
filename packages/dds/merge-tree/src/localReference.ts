@@ -42,16 +42,6 @@ export interface LocalReferencePosition extends ReferencePosition {
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
 }
 
-/**
- * @deprecated - Use LocalReferencePosition
- */
-export class LocalReference implements LocalReferencePosition {
-    /**
-     * Lifecycle callbacks called on the local reference positions when the reference is slid.
-     */
-    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
-}
-
 class LocalReference implements LocalReferencePosition {
     public properties: PropertySet | undefined;
 
@@ -59,9 +49,6 @@ class LocalReference implements LocalReferencePosition {
 
     public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
 
-    /**
-     * @deprecated - use createReferencePosition
-     */
     constructor(
         initSegment: ISegment,
         public offset: number = 0,

@@ -24,7 +24,7 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "./constants";
-import { LocalReference, LocalReferenceCollection, LocalReferencePosition } from "./localReference";
+import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -2496,7 +2496,6 @@ export class MergeTree {
     }
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
-        client: Client,
     ): LocalReferencePosition {
         if (isRemoved(segment)) {
             if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)) {

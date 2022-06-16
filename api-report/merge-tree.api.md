@@ -195,8 +195,6 @@ export class Client {
     posFromRelativePos(relativePos: IRelativePosition): number;
     rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
-    // @deprecated (undocumented)
-    removeLocalReference(lref: LocalReference): LocalReferencePosition | undefined;
     // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
@@ -807,59 +805,6 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 // @public (undocumented)
 export const LocalClientId = -1;
 
-// @public @deprecated (undocumented)
-export class LocalReference implements LocalReferencePosition {
-    // @deprecated
-    constructor(client: Client, initSegment: ISegment,
-    offset?: number, refType?: ReferenceType, properties?: PropertySet);
-    // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp): void;
-    // (undocumented)
-    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
-    // @deprecated (undocumented)
-    compare(b: LocalReference): number;
-    // @deprecated (undocumented)
-    static readonly DetachedPosition: number;
-    // @deprecated (undocumented)
-    getClient(): Client;
-    // (undocumented)
-    getOffset(): number;
-    // (undocumented)
-    getProperties(): PropertySet | undefined;
-    // @deprecated (undocumented)
-    getRangeLabels(): string[] | undefined;
-    // (undocumented)
-    getSegment(): ISegment | undefined;
-    // @deprecated (undocumented)
-    getTileLabels(): string[] | undefined;
-    // @deprecated (undocumented)
-    hasRangeLabel(label: string): boolean;
-    // @deprecated (undocumented)
-    hasRangeLabels(): boolean;
-    // @deprecated (undocumented)
-    hasTileLabel(label: string): boolean;
-    // @deprecated (undocumented)
-    hasTileLabels(): boolean;
-    // (undocumented)
-    isLeaf(): boolean;
-    // @deprecated (undocumented)
-    max(b: LocalReference): LocalReference;
-    // @deprecated (undocumented)
-    min(b: LocalReference): LocalReference;
-    // @deprecated (undocumented)
-    offset: number;
-    // @deprecated (undocumented)
-    pairedRef?: LocalReference;
-    // (undocumented)
-    properties: PropertySet | undefined;
-    // (undocumented)
-    refType: ReferenceType;
-    // @deprecated (undocumented)
-    segment: ISegment | undefined;
-    // @deprecated (undocumented)
-    toPosition(): number;
-}
-
 // @public
 export class LocalReferenceCollection {
     // @internal
@@ -894,11 +839,6 @@ export class LocalReferenceCollection {
     removeLocalRef(lref: LocalReferencePosition): LocalReference | undefined;
     // @internal
     split(offset: number, splitSeg: ISegment): void;
-}
-
-// @public (undocumented)
-export interface LocalReferencePosition extends ReferencePosition {
-    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
 }
 
 // @public (undocumented)
@@ -1014,7 +954,7 @@ export class MergeTree {
     // (undocumented)
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): LocalReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
         tile: ReferencePosition;

@@ -29,6 +29,7 @@ import {
     IRelativePosition,
     ISegment,
     ISegmentAction,
+    LocalReferencePosition,
     matchProperties,
     MergeTreeDeltaType,
     PropertySet,

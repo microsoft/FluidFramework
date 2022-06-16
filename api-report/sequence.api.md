@@ -36,7 +36,6 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions';
-import { LocalReference } from '@fluidframework/merge-tree';
 import { LocalReferencePosition } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree';
@@ -548,8 +547,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected client: Client;
     // (undocumented)
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    // @deprecated (undocumented)
-    createPositionReference(segment: T, offset: number, refType: ReferenceType): LocalReference;
     // (undocumented)
     protected didAttach(): void;
     // (undocumented)
@@ -598,10 +595,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: SummarySerializer): void;
-    // @deprecated (undocumented)
-    removeLocalReference(lref: LocalReference): LocalReferencePosition;
     // (undocumented)
-    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition;
+    removeLocalReferencePosition(lref: ReferencePosition): LocalReferencePosition;
     // (undocumented)
     removeRange(start: number, end: number): IMergeTreeRemoveMsg;
     protected replaceRange(start: number, end: number, segment: ISegment): void;

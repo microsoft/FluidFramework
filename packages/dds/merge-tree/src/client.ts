@@ -16,7 +16,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReference, LocalReferencePosition } from "./localReference";
+import { LocalReferencePosition } from "./localReference";
 import {
     CollaborationWindow,
     compareStrings,
@@ -322,7 +322,7 @@ export class Client {
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
     ): LocalReferencePosition {
-        return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties, this);
+        return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties);
     }
 
     public removeLocalReferencePosition(lref: LocalReferencePosition) {

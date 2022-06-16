@@ -1878,12 +1878,6 @@ use_old_VariableDeclaration_LocalClientId(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedClassDeclaration_LocalReference": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_LocalReference():
-    TypeOnly<old.LocalReference>;
-declare function use_current_ClassDeclaration_LocalReference(
-    use: TypeOnly<current.LocalReference>);
-use_current_ClassDeclaration_LocalReference(
-    get_old_ClassDeclaration_LocalReference());
 
 /*
 * Validate back compat by using current type in place of old type
