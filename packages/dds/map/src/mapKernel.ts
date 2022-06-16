@@ -515,10 +515,7 @@ export class MapKernel {
      * @param local - Whether the message originated from the local client
      * @returns Previous local value of the key, if any
      */
-    private setCore(
-        key: string,
-        value: ILocalValue,
-        local: boolean): ILocalValue | undefined {
+    private setCore(key: string, value: ILocalValue, local: boolean): ILocalValue | undefined {
         const previousLocalValue = this.data.get(key);
         const previousValue = previousLocalValue?.value;
         this.data.set(key, value);

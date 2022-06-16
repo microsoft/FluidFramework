@@ -59,7 +59,6 @@ interface IDirectoryMessageHandler {
         op: IDirectoryOperation,
         local: boolean,
         localOpMetadata: unknown,
-        msg?: ISequencedDocumentMessage,
     ): void;
 
     /**
@@ -588,7 +587,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         while (stack.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const [currentSubDir, currentSubDirObject] = stack.pop()!;
-
             if (currentSubDirObject.subdirectories) {
                 for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
                     let newSubDir = currentSubDir.getSubDirectory(subdirName) as SubDirectory;
@@ -627,7 +625,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
             const handler = this.messageHandlers.get(op.type);
             assert(handler !== undefined, 0x00e /* Missing message handler for message type */);
-            handler.process(op, local, localOpMetadata, message);
+            handler.process(op, local, localOpMetadata);
         }
     }
 
