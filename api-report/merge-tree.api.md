@@ -822,21 +822,21 @@ export class LocalReferenceCollection {
     // (undocumented)
     addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
     // @internal
-    addLocalRef(lref: LocalReferencePosition, offset: number): void;
+    addLocalRef(lref: LocalReferencePosition): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
     // @internal
     append(other: LocalReferenceCollection): void;
+    // @internal
+    clear(): void;
     // @internal
     createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // @internal
     get empty(): boolean;
     // @internal
     hierRefCount: number;
-    // Warning: (ae-forgotten-export) The symbol "LocalReference" needs to be exported by the entry point index.d.ts
-    //
     // @internal
-    removeLocalRef(lref: LocalReferencePosition): LocalReference | undefined;
+    removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // @internal
     split(offset: number, splitSeg: ISegment): void;
 }

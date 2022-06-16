@@ -30,6 +30,8 @@ import {
     refTypeIncludesFlag,
     reservedRangeLabelsKey,
     UnassignedSequenceNumber,
+    maxReferencePosition,
+    createDetachedLocalReferencePosition,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
@@ -365,7 +367,7 @@ implements ISerializableInterval {
 
     public union(b: SequenceInterval) {
         return new SequenceInterval(this.client, minReferencePosition(this.start, b.start),
-            minReferencePosition(this.end, b.end), this.intervalType);
+            maxReferencePosition(this.end, b.end), this.intervalType);
     }
 
     public addProperties(
@@ -385,7 +387,7 @@ implements ISerializableInterval {
 
     public overlapsPos(bstart: number, bend: number) {
         const startPos = this.client.localReferencePositionToPosition(this.start);
-        const endPos = this.client.localReferencePositionToPosition(this.start);
+        const endPos = this.client.localReferencePositionToPosition(this.end);
         return (endPos > bstart) && (startPos < bend);
     }
 
@@ -415,6 +417,7 @@ function createPositionReferenceFromSegoff(
             throw new UsageError("Non-transient references need segment");
         }
     }
+    return createDetachedLocalReferencePosition(refType);
 }
 
 function createPositionReference(

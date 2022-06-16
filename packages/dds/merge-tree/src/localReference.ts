@@ -53,7 +53,7 @@ export class LocalReference implements LocalReferencePosition {
     public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
 
     constructor(
-        initSegment: ISegment,
+        initSegment: ISegment | undefined,
         public offset: number = 0,
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
@@ -82,6 +82,10 @@ export class LocalReference implements LocalReferencePosition {
     public getProperties() {
         return this.properties;
     }
+}
+
+export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition {
+    return new LocalReference(undefined, undefined, refType, undefined);
 }
 
 interface IRefsAtOffset {

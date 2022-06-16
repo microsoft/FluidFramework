@@ -391,8 +391,6 @@ export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents>
     // (undocumented)
     addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
     // (undocumented)
-    readonly client: Client;
-    // (undocumented)
     clone(): SequenceInterval;
     // (undocumented)
     compare(b: SequenceInterval): number;

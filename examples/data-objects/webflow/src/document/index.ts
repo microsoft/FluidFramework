@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-    addProperties,
+    createDetachedLocalReferencePosition,
     createInsertSegmentOp,
     createRemoveRangeOp,
     IMergeTreeRemoveMsg,
@@ -124,15 +124,7 @@ const accumAsLeafAction = (
 //
 //       See: https://github.com/microsoft/FluidFramework/issues/86
 const endOfTextSegment = undefined as unknown as SharedStringSegment;
-const endOfTextReference: ReferencePosition = {
-    getOffset: () => 0,
-    getSegment: () => endOfTextSegment,
-    isLeaf: () => false,
-    refType: ReferenceType.Transient,
-    addProperties(props) {
-        addProperties(this.properties, props);
-    },
-};
+const endOfTextReference = createDetachedLocalReferencePosition();
 
 export interface IFlowDocumentEvents extends IEvent {
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString) => void);
