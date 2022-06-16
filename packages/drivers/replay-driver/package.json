@@ -44,7 +44,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.71273",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@^0.59.0",
+    "@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -60,23 +60,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.0.0",
-    "broken": {
-      "ClassDeclaration_FileSnapshotReader": {
-        "backCompat": false
-      },
-      "ClassDeclaration_OpStorage": {
-        "backCompat": false
-      },
-      "ClassDeclaration_ReadDocumentStorageServiceBase": {
-        "backCompat": false
-      },
-      "ClassDeclaration_ReplayController": {
-        "backCompat": false
-      },
-      "ClassDeclaration_SnapshotStorage": {
-        "backCompat": false
-      }
-    }
+    "version": "1.0.2",
+    "broken": {}
   }
 }

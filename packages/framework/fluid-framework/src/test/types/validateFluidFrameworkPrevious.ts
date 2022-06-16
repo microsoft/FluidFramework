@@ -179,7 +179,6 @@ declare function get_current_ClassDeclaration_FluidContainer():
 declare function use_old_ClassDeclaration_FluidContainer(
     use: TypeOnly<old.FluidContainer>);
 use_old_ClassDeclaration_FluidContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FluidContainer());
 
 /*
@@ -360,7 +359,6 @@ declare function get_old_InterfaceDeclaration_IFluidContainer():
 declare function use_current_InterfaceDeclaration_IFluidContainer(
     use: TypeOnly<current.IFluidContainer>);
 use_current_InterfaceDeclaration_IFluidContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidContainer());
 
 /*
@@ -373,7 +371,6 @@ declare function get_current_InterfaceDeclaration_IFluidContainer():
 declare function use_old_InterfaceDeclaration_IFluidContainer(
     use: TypeOnly<old.IFluidContainer>);
 use_old_InterfaceDeclaration_IFluidContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidContainer());
 
 /*
@@ -1478,7 +1475,6 @@ declare function get_current_ClassDeclaration_SequenceInterval():
 declare function use_old_ClassDeclaration_SequenceInterval(
     use: TypeOnly<old.SequenceInterval>);
 use_old_ClassDeclaration_SequenceInterval(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceInterval());
 
 /*
@@ -1863,7 +1859,6 @@ declare function get_current_TypeAliasDeclaration_SharedStringSegment():
 declare function use_old_TypeAliasDeclaration_SharedStringSegment(
     use: TypeOnly<old.SharedStringSegment>);
 use_old_TypeAliasDeclaration_SharedStringSegment(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SharedStringSegment());
 
 /*
