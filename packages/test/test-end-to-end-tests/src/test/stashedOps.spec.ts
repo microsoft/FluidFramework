@@ -18,30 +18,38 @@ import { SharedString } from "@fluidframework/sequence";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
     ChannelFactoryRegistry,
-    createAndAttachContainer,
-    DataObjectFactoryType,
-    ITestContainerConfig,
     ITestFluidObject,
+    ITestContainerConfig,
     ITestObjectProvider,
+    DataObjectFactoryType,
+    createAndAttachContainer,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { SharedMatrix } from "@fluidframework/matrix";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
-const matrixId = "sharedMatrixKey";
-const registry: ChannelFactoryRegistry = [
-    [mapId, SharedMap.getFactory()],
-    [stringId, SharedString.getFactory()],
-    [matrixId, SharedMatrix.getFactory()],
-];
+const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()], [stringId, SharedString.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
     runtimeOptions: {
+        enableOfflineLoad: true,
         summaryOptions: {
-            // currently these tests will break if we load from a summary that was too recent
-            disableSummaries: true,
+            initialSummarizerDelayMs: 20, // Previous Containers had this property under SummaryOptions.
+            summaryConfigOverrides: {
+                ...DefaultSummaryConfiguration,
+                ...{
+                    idleTime: 5000,
+                    maxTime: 5000 * 12,
+                    maxAckWaitTime: 120000,
+                    maxOps: 1,
+                    initialSummarizerDelayMs: 20,
+                },
+            },
         },
     },
 };
@@ -52,9 +60,18 @@ const testKey2 = "another test key";
 const testValue = "test value";
 
 const ensureContainerConnected = async (container: IContainer) => {
-    if (!container.connected) {
+    if (container.connectionState !== ConnectionState.Connected) {
         return new Promise<void>((resolve) => container.once("connected", () => resolve()));
     }
+};
+
+const getPendingStateWithoutClose = (container: IContainer): string => {
+    const containerClose = container.close;
+    container.close = (message) => assert(message === undefined);
+    const pendingState = container.closeAndGetPendingLocalState();
+    assert(typeof pendingState === "string");
+    container.close = containerClose;
+    return pendingState;
 };
 
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
@@ -76,17 +93,9 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 
     let pendingState: string;
     if (send) {
-        const pendingRuntimeState = (container as any).context.runtime.getPendingLocalState();
+        pendingState = getPendingStateWithoutClose(container);
         await args.ensureSynchronized();
-        const p = container.closeAndGetPendingLocalState();
-        assert.strictEqual(JSON.parse(p).pendingRuntimeState, undefined);
-        // if we sent the ops successfully the pending state should have a clientId. if not they will be resent anyway
-        assert(pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
-        assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
-        pendingState = JSON.stringify({
-            url: container.resolvedUrl.url,
-            pendingRuntimeState,
-        });
+        container.close();
     } else {
         pendingState = container.closeAndGetPendingLocalState();
     }
@@ -97,6 +106,39 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     return pendingState;
 };
 
+async function loadOffline(provider: ITestObjectProvider, request: IRequest, pendingLocalState: string):
+    Promise<{ container: IContainer; connect: () => void; }> {
+    const p = new Deferred();
+    const documentServiceFactory = provider.driver.createDocumentServiceFactory();
+
+    // patch document service methods to simulate offline by not resolving until we choose to
+    const boundFn = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
+    documentServiceFactory.createDocumentService = async (...args) => {
+        const docServ = await boundFn(...args);
+        const boundCTDStream = docServ.connectToDeltaStream.bind(docServ);
+        docServ.connectToDeltaStream = async (...args2) => {
+            await p.promise;
+            return boundCTDStream(...args2);
+        };
+        const boundCTDStorage = docServ.connectToDeltaStorage.bind(docServ);
+        docServ.connectToDeltaStorage = async (...args2) => {
+            await p.promise;
+            return boundCTDStorage(...args2);
+        };
+        const boundCTStorage = docServ.connectToStorage.bind(docServ);
+        docServ.connectToStorage = async (...args2) => {
+            await p.promise;
+            return boundCTStorage(...args2);
+        };
+
+        return docServ;
+    };
+    const loader = provider.createLoader(
+        [[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
+        { documentServiceFactory });
+    return { container: await loader.resolve(request, pendingLocalState), connect: () => p.resolve(undefined) };
+}
+
 // Introduced in 0.37
 // REVIEW: enable compat testing
 describeNoCompat("stashed ops", (getTestObjectProvider) => {
@@ -106,7 +148,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     let container1: IContainer;
     let map1: SharedMap;
     let string1: SharedString;
-    let matrix1: SharedMatrix;
+    let waitForSummary: () => Promise<void>;
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
@@ -121,9 +163,21 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
         string1 = await dataStore1.getSharedObject<SharedString>(stringId);
         string1.insertText(0, "hello");
-        matrix1 = await dataStore1.getSharedObject<SharedMatrix>(matrixId);
-        matrix1.insertRows(0, 20);
-        matrix1.insertCols(0, 20);
+
+        waitForSummary = async () => {
+            await new Promise<void>((resolve, reject) => {
+                let summarized = false;
+                container1.on("op", (op) => {
+                    if (op.type === "summarize") {
+                        summarized = true;
+                    } else if (summarized && op.type === "summaryAck") {
+                        resolve();
+                    } else if (op.type === "summaryNack") {
+                        reject(new Error("summaryNack"));
+                    }
+                });
+            });
+        };
     });
 
     it("resends op", async function() {
@@ -335,6 +389,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
+        console.log(string2);
         await ensureContainerConnected(container2);
         await provider.ensureSynchronized();
         assert.strictEqual(string1.getText(), "hello world!");
@@ -456,113 +511,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(parallelMarker2.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
     });
 
-    it("resends matrix set op", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d, m) => {
-            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
-            matrix.setCell(0, 0, testValue);
-        });
-
-        // load container with pending ops, which should resend the op not sent by previous container
-        const container2 = await loader.resolve({ url }, pendingOps);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
-        await ensureContainerConnected(container2);
-        await provider.ensureSynchronized();
-        assert.strictEqual(matrix1.getCell(0, 0), testValue);
-        assert.strictEqual(matrix2.getCell(0, 0), testValue);
-    });
-
-    it("doesn't resend successful matrix set op", async function() {
-        const pendingOps = await getPendingOps(provider, true, async (c, d, m) => {
-            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
-            matrix.setCell(0, 0, testValue);
-        });
-
-        matrix1.setCell(0, 0, "a different value");
-
-        const container2 = await loader.resolve({ url }, pendingOps);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
-        await ensureContainerConnected(container2);
-        await provider.ensureSynchronized();
-        assert.strictEqual(matrix1.getCell(0, 0), "a different value");
-        assert.strictEqual(matrix2.getCell(0, 0), "a different value");
-    });
-
-    it("resends matrix insert col op", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d, m) => {
-            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
-            matrix.insertCols(matrix.colCount, 1);
-            matrix.insertRows(matrix.rowCount, 1);
-        });
-
-        // load container with pending ops, which should resend the op not sent by previous container
-        const container2 = await loader.resolve({ url }, pendingOps);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
-        await ensureContainerConnected(container2);
-        await provider.ensureSynchronized();
-        assert.strictEqual(matrix1.colCount, 21);
-        assert.strictEqual(matrix2.colCount, 21);
-        assert.strictEqual(matrix1.rowCount, 21);
-        assert.strictEqual(matrix2.rowCount, 21);
-    });
-
-    it("doesn't resend successful matrix insert col op", async function() {
-        const pendingOps = await getPendingOps(provider, true, async (c, d, m) => {
-            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
-            matrix.insertCols(matrix.colCount, 1);
-            matrix.insertRows(matrix.rowCount, 1);
-        });
-
-        const container2 = await loader.resolve({ url }, pendingOps);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
-        await ensureContainerConnected(container2);
-        await provider.ensureSynchronized();
-        assert.strictEqual(matrix1.colCount, 21);
-        assert.strictEqual(matrix2.colCount, 21);
-        assert.strictEqual(matrix1.rowCount, 21);
-        assert.strictEqual(matrix2.rowCount, 21);
-    });
-
-    it("resends matrix remove col op", async function() {
-        const pendingOps = await getPendingOps(provider, false, async (c, d, m) => {
-            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
-            matrix.removeCols(0, 1);
-            matrix.removeRows(0, 1);
-        });
-
-        // load container with pending ops, which should resend the op not sent by previous container
-        const container2 = await loader.resolve({ url }, pendingOps);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
-        await ensureContainerConnected(container2);
-        await provider.ensureSynchronized();
-        assert.strictEqual(matrix1.colCount, 19);
-        assert.strictEqual(matrix2.colCount, 19);
-        assert.strictEqual(matrix1.rowCount, 19);
-        assert.strictEqual(matrix2.rowCount, 19);
-    });
-
-    it("doesn't resend successful matrix remove col op", async function() {
-        const pendingOps = await getPendingOps(provider, true, async (c, d, m) => {
-            const matrix = await d.getSharedObject<SharedMatrix>(matrixId);
-            matrix.removeCols(0, 1);
-            matrix.removeRows(0, 1);
-        });
-
-        const container2 = await loader.resolve({ url }, pendingOps);
-        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        const matrix2 = await dataStore2.getSharedObject<SharedMatrix>(matrixId);
-        await ensureContainerConnected(container2);
-        await provider.ensureSynchronized();
-        assert.strictEqual(matrix1.colCount, 19);
-        assert.strictEqual(matrix2.colCount, 19);
-        assert.strictEqual(matrix1.rowCount, 19);
-        assert.strictEqual(matrix2.rowCount, 19);
-    });
-
     it("resends attach op", async function() {
         const newMapId = "newMap";
         let id;
@@ -609,5 +557,272 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         const container2 = await loader.resolve({ url }, pendingOps);
         await ensureContainerConnected(container2);
+    });
+
+    itExpects("waits for previous container's leave message", [
+        { eventName: "fluid:telemetry:Container:connectedStateRejected" },
+        { eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
+    ], async () => {
+        const container = await provider.loadTestContainer(testContainerConfig);
+        await ensureContainerConnected(container);
+        const serializedClientId = container.clientId;
+        assert.ok(serializedClientId);
+        const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+
+        await provider.ensureSynchronized();
+        await provider.opProcessingController.pauseProcessing(container);
+        assert(dataStore.runtime.deltaManager.outbound.paused);
+
+        [...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
+
+        const pendingState = getPendingStateWithoutClose(container);
+
+        const container2 = await loader.resolve({ url }, pendingState);
+
+        const connectP = new Promise<void>((resolve, reject) => {
+            container2.on("connected", () => {
+                if (container2.getQuorum().getMember(serializedClientId) === undefined) {
+                    resolve();
+                } else {
+                    reject(new Error("connected while previous client in quorum"));
+                }
+            });
+        });
+
+        // wait for the join message so we see connectedStateRejected
+        if (container2.connectionState !== ConnectionState.CatchingUp) {
+            await new Promise((resolve) => container2.deltaManager.on("connect", resolve));
+        }
+
+        container.close();
+        await connectP;
+    });
+
+    it("can make changes offline and resubmit them", async function() {
+        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+            [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+        });
+
+        const container2 = await loadOffline(provider, { url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2.container, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+        // pending changes should be applied
+        [...Array(lots).keys()].map((i) =>
+            assert.strictEqual(map2.get(i.toString()), i, `map 2 ${map2.get(i.toString())} !== ${i}`));
+        // make more changes while offline
+        [...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
+
+        container2.connect();
+        await ensureContainerConnected(container2.container);
+        await provider.ensureSynchronized();
+        [...Array(lots * 2).keys()].map((i) =>
+            assert.strictEqual(map1.get(i.toString()), i, `map 1 ${map1.get(i.toString())} !== ${i}`));
+        [...Array(lots * 2).keys()].map((i) =>
+            assert.strictEqual(map2.get(i.toString()), i, `map 2 ${map2.get(i.toString())} !== ${i}`));
+    });
+
+    it("can make changes offline and stash them", async function() {
+        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+            [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+        });
+
+        const container2 = await loadOffline(provider, { url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2.container, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+        // pending changes should be applied
+        [...Array(lots).keys()].map((i) =>
+            assert.strictEqual(map2.get(i.toString()), i, `map 2 ${map2.get(i.toString())} !== ${i}`));
+        // make more changes while offline
+        [...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
+
+        // get stashed ops from this container without connecting
+        const morePendingOps = container2.container.closeAndGetPendingLocalState();
+
+        const container3 = await loadOffline(provider, { url }, morePendingOps);
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3.container, "default");
+        const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+
+        // pending changes from both containers should be applied
+        [...Array(lots * 2).keys()].map((i) =>
+            assert.strictEqual(map3.get(i.toString()), i, `map 3 ${map2.get(i.toString())} !== ${i}`));
+        // make more changes while offline
+        [...Array(lots).keys()].map((i) => map3.set((i + lots * 2).toString(), i + lots * 2));
+
+        container3.connect();
+        await ensureContainerConnected(container3.container);
+        await provider.ensureSynchronized();
+        [...Array(lots * 3).keys()].map((i) =>
+            assert.strictEqual(map1.get(i.toString()), i, `map 1 ${map1.get(i.toString())} !== ${i}`));
+        [...Array(lots * 3).keys()].map((i) =>
+            assert.strictEqual(map3.get(i.toString()), i, `map 3 ${map3.get(i.toString())} !== ${i}`));
+    });
+
+    itExpects("waits for previous container's leave message after rehydration", [
+        { eventName: "fluid:telemetry:Container:connectedStateRejected" },
+        { eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
+    ], async () => {
+        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+            [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+        });
+
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        await ensureContainerConnected(container2);
+        const serializedClientId = container2.clientId;
+        assert.ok(serializedClientId);
+        await provider.ensureSynchronized();
+        [...Array(lots).keys()].map((i) =>
+            assert.strictEqual(map1.get(i.toString()), i, `map 1 ${map1.get(i.toString())} !== ${i}`));
+        [...Array(lots).keys()].map((i) =>
+            assert.strictEqual(map2.get(i.toString()), i, `map 2 ${map2.get(i.toString())} !== ${i}`));
+
+        await provider.opProcessingController.pauseProcessing(container2);
+        assert(dataStore2.runtime.deltaManager.outbound.paused);
+        [...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
+
+        const morePendingOps = getPendingStateWithoutClose(container2);
+        assert.ok(morePendingOps);
+
+        const container3 = await loader.resolve({ url }, morePendingOps);
+
+        const connectP = new Promise<void>((resolve, reject) => {
+            container3.on("connected", () => {
+                if (container3.getQuorum().getMember(serializedClientId) === undefined) {
+                    resolve();
+                } else {
+                    reject(new Error("connected while previous client in quorum"));
+                }
+            });
+        });
+
+        // wait for the join message so we see connectedStateRejected
+        if (container3.connectionState !== ConnectionState.CatchingUp) {
+            await new Promise((resolve) => container3.deltaManager.on("connect", resolve));
+        }
+
+        container2.close();
+        await connectP;
+    });
+
+    it("offline blob upload", async function() {
+        // load offline container
+        const offlineState = await loader.resolve({ url })
+            .then(async (c) => c.closeAndGetPendingLocalState());
+        const container = await loadOffline(provider, { url }, offlineState);
+        const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
+
+        // calling uploadBlob() will not resolve while offline, but should not result in an error
+        const blobHandleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+
+        container.connect();
+        // blob handle should resolve now we're connected
+        const handle = await blobHandleP;
+        assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+    });
+
+    it("offline attach", async function() {
+        const newMapId = "newMap";
+        let id;
+        // stash attach op
+        const pendingOps = await getPendingOps(provider, false, async (container, d, m) => {
+            const runtime = (container as any).context.runtime as IContainerRuntime;
+
+            const router = await runtime.createDataStore(["default"]);
+            const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
+            id = dataStore.context.id;
+
+            const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");
+            assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+
+            (await channel.handle.get() as SharedObject).bindToContext();
+            dataStore.channel.bindToContext();
+            (channel as SharedMap).set(testKey, testValue);
+        });
+
+        // load offline; new datastore should be accessible
+        const container2 = await loadOffline(provider, { url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2.container, id);
+        const map2 = await requestFluidObject<SharedMap>(dataStore2.runtime, newMapId);
+        assert.strictEqual(map2.get(testKey), testValue);
+        map2.set(testKey2, testValue);
+
+        container2.connect();
+        await ensureContainerConnected(container2.container);
+
+        // get new datastore from first container
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container1, id);
+        const map3 = await requestFluidObject<SharedMap>(dataStore3.runtime, newMapId);
+        await provider.ensureSynchronized();
+        assert.strictEqual(map3.get(testKey), testValue);
+        assert.strictEqual(map3.get(testKey2), testValue);
+    });
+
+    it("works for detached container", async function() {
+        const loader2 = provider.makeTestLoader(testContainerConfig);
+        const detachedContainer = await loader2.createDetachedContainer(provider.defaultCodeDetails);
+        const dataStore = await requestFluidObject<ITestFluidObject>(detachedContainer, "default");
+        const map = await dataStore.getSharedObject<SharedMap>(mapId);
+        map.set(testKey, testValue);
+
+        await detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        const pendingOps = detachedContainer.closeAndGetPendingLocalState();
+
+        const url2 = await detachedContainer.getAbsoluteUrl("");
+        assert.ok(url2);
+        const container2 = await loader2.resolve({ url: url2 }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        assert.strictEqual(map2.get(testKey), testValue);
+    });
+
+    it("works for rehydrated container", async function() {
+        const loader2 = provider.makeTestLoader(testContainerConfig);
+        const detachedContainer = await loader2.createDetachedContainer(provider.defaultCodeDetails);
+        const dataStore = await requestFluidObject<ITestFluidObject>(detachedContainer, "default");
+        const map = await dataStore.getSharedObject<SharedMap>(mapId);
+        map.set(testKey, testValue);
+
+        const summary = detachedContainer.serialize();
+        detachedContainer.close();
+        const rehydratedContainer = await loader2.rehydrateDetachedContainerFromSnapshot(summary);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(rehydratedContainer, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        map2.set(testKey2, testValue);
+
+        await rehydratedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        const pendingOps = rehydratedContainer.closeAndGetPendingLocalState();
+
+        const url2 = await rehydratedContainer.getAbsoluteUrl("");
+        assert.ok(url2);
+
+        const container3 = await loader2.resolve({ url: url2 }, pendingOps);
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+        assert.strictEqual(map3.get(testKey), testValue);
+        assert.strictEqual(map3.get(testKey2), testValue);
+    });
+
+    it("works with summary while offline", async function() {
+        map1.set("test op 1", "test op 1");
+        await waitForSummary();
+
+        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+            map.set(testKey, testValue);
+        });
+
+        map1.set("test op 2", "test op 2");
+        await waitForSummary();
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(map1.get(testKey), testValue);
+        assert.strictEqual(map2.get(testKey), testValue);
     });
 });

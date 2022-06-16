@@ -15,8 +15,10 @@ import {
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
     defaultSessionExpiryDurationMs,
     GarbageCollector,
@@ -27,7 +29,6 @@ import {
     IGarbageCollector,
     runSessionExpiryKey,
     disableSessionExpiryKey,
-    logUnknownOutboundReferencesKey,
 } from "../garbageCollection";
 import { IContainerRuntimeMetadata } from "../summaryFormat";
 
@@ -604,8 +605,9 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
 
-            const summaryTree = garbageCollector.summarize()?.summary;
+            const summaryTree = garbageCollector.summarize(true, false)?.summary;
             assert(summaryTree !== undefined, "Nothing to summarize after running GC");
+            assert(summaryTree.type === SummaryType.Tree, "Expecting a summary tree!");
 
             let rootGCState: IGarbageCollectionState = { gcNodes: {} };
             for (const key of Object.keys(summaryTree.tree)) {
@@ -629,7 +631,6 @@ describe("Garbage Collection Tests", () => {
 
         beforeEach(() => {
             closeCalled = false;
-            injectedSettings[logUnknownOutboundReferencesKey] = "true";
             defaultGCData.gcNodes = {};
             garbageCollector = createGarbageCollector();
         });
@@ -947,6 +948,59 @@ describe("Garbage Collection Tests", () => {
                 },
             ]);
             assert(eventsFound, `Expected unknownReferenceEvent event!`);
+        });
+    });
+
+    describe("No changes to GC between summaries", () => {
+        const settings = { "Fluid.GarbageCollection.TrackGCState": "true" };
+        const fullTree = false;
+        const trackState = true;
+        let garbageCollector: IGarbageCollector;
+
+        beforeEach(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
+            // Initialize nodes A & D.
+            defaultGCData.gcNodes = {};
+            defaultGCData.gcNodes["/"] = nodes;
+        });
+
+        afterEach(() => {
+            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+        });
+
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const parseNothing: ReadAndParseBlob = async <T>() => { const x: T = {} as T; return x; };
+
+        const checkGCSummaryType = (
+            summary: ISummarizeResult | undefined,
+            expectedBlobType: SummaryType,
+            summaryNumber: string,
+        ) => {
+            assert(summary !== undefined, `Expected a summary on ${summaryNumber} summarize`);
+            assert(
+                summary.summary.type === expectedBlobType,
+                `Expected summary type ${expectedBlobType} on ${summaryNumber} summarize, got ${summary.summary.type}`,
+            );
+        };
+
+        it("No changes to GC between summaries creates a blob handle when no version specified", async () => {
+            garbageCollector = createGarbageCollector();
+
+            await garbageCollector.collectGarbage({ runGC: true });
+            const tree1 = garbageCollector.summarize(fullTree, trackState);
+
+            checkGCSummaryType(tree1, SummaryType.Tree, "first");
+
+            await garbageCollector.latestSummaryStateRefreshed(
+                { wasSummaryTracked: true, latestSummaryUpdated: true },
+                parseNothing,
+            );
+
+            await garbageCollector.collectGarbage({ runGC: true });
+            const tree2 = garbageCollector.summarize(fullTree, trackState);
+
+            checkGCSummaryType(tree2, SummaryType.Handle, "second");
         });
     });
 });

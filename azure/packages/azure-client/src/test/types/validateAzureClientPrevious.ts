@@ -112,6 +112,30 @@ use_old_InterfaceDeclaration_AzureConnectionConfig(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_AzureConnectionConfigType": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_AzureConnectionConfigType():
+    TypeOnly<old.AzureConnectionConfigType>;
+declare function use_current_TypeAliasDeclaration_AzureConnectionConfigType(
+    use: TypeOnly<current.AzureConnectionConfigType>);
+use_current_TypeAliasDeclaration_AzureConnectionConfigType(
+    get_old_TypeAliasDeclaration_AzureConnectionConfigType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_AzureConnectionConfigType": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_AzureConnectionConfigType():
+    TypeOnly<current.AzureConnectionConfigType>;
+declare function use_old_TypeAliasDeclaration_AzureConnectionConfigType(
+    use: TypeOnly<old.AzureConnectionConfigType>);
+use_old_TypeAliasDeclaration_AzureConnectionConfigType(
+    get_current_TypeAliasDeclaration_AzureConnectionConfigType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AzureContainerServices": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_AzureContainerServices():
@@ -132,6 +156,30 @@ declare function use_old_InterfaceDeclaration_AzureContainerServices(
     use: TypeOnly<old.AzureContainerServices>);
 use_old_InterfaceDeclaration_AzureContainerServices(
     get_current_InterfaceDeclaration_AzureContainerServices());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureContainerVersion": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_AzureContainerVersion():
+    TypeOnly<old.AzureContainerVersion>;
+declare function use_current_InterfaceDeclaration_AzureContainerVersion(
+    use: TypeOnly<current.AzureContainerVersion>);
+use_current_InterfaceDeclaration_AzureContainerVersion(
+    get_old_InterfaceDeclaration_AzureContainerVersion());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureContainerVersion": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_AzureContainerVersion():
+    TypeOnly<current.AzureContainerVersion>;
+declare function use_old_InterfaceDeclaration_AzureContainerVersion(
+    use: TypeOnly<old.AzureContainerVersion>);
+use_old_InterfaceDeclaration_AzureContainerVersion(
+    get_current_InterfaceDeclaration_AzureContainerVersion());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -160,6 +208,54 @@ use_old_ClassDeclaration_AzureFunctionTokenProvider(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureGetVersionsOptions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_AzureGetVersionsOptions():
+    TypeOnly<old.AzureGetVersionsOptions>;
+declare function use_current_InterfaceDeclaration_AzureGetVersionsOptions(
+    use: TypeOnly<current.AzureGetVersionsOptions>);
+use_current_InterfaceDeclaration_AzureGetVersionsOptions(
+    get_old_InterfaceDeclaration_AzureGetVersionsOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureGetVersionsOptions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_AzureGetVersionsOptions():
+    TypeOnly<current.AzureGetVersionsOptions>;
+declare function use_old_InterfaceDeclaration_AzureGetVersionsOptions(
+    use: TypeOnly<old.AzureGetVersionsOptions>);
+use_old_InterfaceDeclaration_AzureGetVersionsOptions(
+    get_current_InterfaceDeclaration_AzureGetVersionsOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureLocalConnectionConfig": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_AzureLocalConnectionConfig():
+    TypeOnly<old.AzureLocalConnectionConfig>;
+declare function use_current_InterfaceDeclaration_AzureLocalConnectionConfig(
+    use: TypeOnly<current.AzureLocalConnectionConfig>);
+use_current_InterfaceDeclaration_AzureLocalConnectionConfig(
+    get_old_InterfaceDeclaration_AzureLocalConnectionConfig());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureLocalConnectionConfig": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_AzureLocalConnectionConfig():
+    TypeOnly<current.AzureLocalConnectionConfig>;
+declare function use_old_InterfaceDeclaration_AzureLocalConnectionConfig(
+    use: TypeOnly<old.AzureLocalConnectionConfig>);
+use_old_InterfaceDeclaration_AzureLocalConnectionConfig(
+    get_current_InterfaceDeclaration_AzureLocalConnectionConfig());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AzureMember": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_AzureMember():
@@ -180,6 +276,30 @@ declare function use_old_InterfaceDeclaration_AzureMember(
     use: TypeOnly<old.AzureMember>);
 use_old_InterfaceDeclaration_AzureMember(
     get_current_InterfaceDeclaration_AzureMember());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureRemoteConnectionConfig": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_AzureRemoteConnectionConfig():
+    TypeOnly<old.AzureRemoteConnectionConfig>;
+declare function use_current_InterfaceDeclaration_AzureRemoteConnectionConfig(
+    use: TypeOnly<current.AzureRemoteConnectionConfig>);
+use_current_InterfaceDeclaration_AzureRemoteConnectionConfig(
+    get_old_InterfaceDeclaration_AzureRemoteConnectionConfig());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_AzureRemoteConnectionConfig": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_AzureRemoteConnectionConfig():
+    TypeOnly<current.AzureRemoteConnectionConfig>;
+declare function use_old_InterfaceDeclaration_AzureRemoteConnectionConfig(
+    use: TypeOnly<old.AzureRemoteConnectionConfig>);
+use_old_InterfaceDeclaration_AzureRemoteConnectionConfig(
+    get_current_InterfaceDeclaration_AzureRemoteConnectionConfig());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -348,30 +468,6 @@ declare function use_old_InterfaceDeclaration_IUser(
     use: TypeOnly<old.IUser>);
 use_old_InterfaceDeclaration_IUser(
     get_current_InterfaceDeclaration_IUser());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_LOCAL_MODE_TENANT_ID": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_LOCAL_MODE_TENANT_ID():
-    TypeOnly<typeof old.LOCAL_MODE_TENANT_ID>;
-declare function use_current_VariableDeclaration_LOCAL_MODE_TENANT_ID(
-    use: TypeOnly<typeof current.LOCAL_MODE_TENANT_ID>);
-use_current_VariableDeclaration_LOCAL_MODE_TENANT_ID(
-    get_old_VariableDeclaration_LOCAL_MODE_TENANT_ID());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_LOCAL_MODE_TENANT_ID": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_LOCAL_MODE_TENANT_ID():
-    TypeOnly<typeof current.LOCAL_MODE_TENANT_ID>;
-declare function use_old_VariableDeclaration_LOCAL_MODE_TENANT_ID(
-    use: TypeOnly<typeof old.LOCAL_MODE_TENANT_ID>);
-use_old_VariableDeclaration_LOCAL_MODE_TENANT_ID(
-    get_current_VariableDeclaration_LOCAL_MODE_TENANT_ID());
 
 /*
 * Validate forward compat by using old type in place of current type

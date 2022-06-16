@@ -98,7 +98,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
     };
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
-    }
+}
 
 // @public (undocumented)
 export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
@@ -185,6 +185,7 @@ export interface ITestObjectProvider {
 
 // @public (undocumented)
 export class LoaderContainerTracker implements IOpProcessingController {
+    constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
     ensureSynchronized(...containers: IContainer[]): Promise<void>;
     pauseProcessing(...containers: IContainer[]): Promise<void>;
@@ -192,7 +193,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     processOutgoing(...containers: IContainer[]): Promise<void>;
     reset(): void;
     resumeProcessing(...containers: IContainer[]): IContainer[];
-    }
+}
 
 // @public
 export class LocalCodeLoader implements ICodeDetailsLoader {
@@ -288,10 +289,14 @@ export class TestObjectProvider implements ITestObjectProvider {
     // (undocumented)
     reset(): void;
     // (undocumented)
+    resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
+    // (undocumented)
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     // (undocumented)
     get urlResolver(): IUrlResolver;
-    }
+    // (undocumented)
+    waitContainerToCatchUp(container: IContainer): Promise<boolean>;
+}
 
 // @public (undocumented)
 export function timeoutAwait<T = void>(promise: PromiseLike<T>, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
@@ -318,7 +323,6 @@ export interface TimeoutWithValue<T = void> {
     // (undocumented)
     value: T;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

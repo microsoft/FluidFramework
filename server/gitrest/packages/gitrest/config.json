@@ -19,6 +19,7 @@
         "lib": {
             "name": "nodegit"
         },
-        "persistLatestFullSummary": false
+        "persistLatestFullSummary": false,
+        "repoPerDocEnabled": false
     }
 }

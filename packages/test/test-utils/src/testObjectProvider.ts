@@ -5,7 +5,11 @@
 
 import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import {
+    ILoaderProps,
+    Loader,
+    waitContainerToCatchUp as waitContainerToCatchUp_original,
+} from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -190,7 +194,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
 export class TestObjectProvider implements ITestObjectProvider {
-    private readonly _loaderContainerTracker = new LoaderContainerTracker();
+    private _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
     private _logger: EventAndErrorTrackingLogger | undefined;
@@ -367,7 +371,8 @@ export class TestObjectProvider implements ITestObjectProvider {
             url: await this.driver.createContainerUrl(this.documentId),
             headers: requestHeader,
         });
-        await waitContainerToCatchUp(container);
+        await this.waitContainerToCatchUp(container);
+
         return container;
     }
 
@@ -388,8 +393,25 @@ export class TestObjectProvider implements ITestObjectProvider {
         return this._loaderContainerTracker.ensureSynchronized();
     }
 
+    public async waitContainerToCatchUp(container: IContainer) {
+        // The original waitContainerToCatchUp() from container loader uses either Container.resume()
+        // or Container.connect() as part of its implementation. However, resume() was deprecated
+        // and eventually replaced with connect(). To avoid issues during LTS compatibility testing
+        // with older container versions issues, we use resume() when connect() is unavailable.
+        if ((container as any).connect === undefined) {
+            (container as any).connect = (container as any).resume;
+        }
+
+        return waitContainerToCatchUp_original(container);
+    }
+
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
         this._documentIdStrategy.update(resolvedUrl);
+    }
+
+    public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
+        this._loaderContainerTracker.reset();
+        this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
     }
 }
 

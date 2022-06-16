@@ -22,6 +22,7 @@
         "import",
         "unicorn",
         "react",
+        "unused-imports",
         "tsdoc",
         "promise",
         "jsdoc",
@@ -480,6 +481,18 @@
         "import/order": [
             "error"
         ],
+        "jsdoc/check-access": [
+            "error"
+        ],
+        "jsdoc/check-examples": [
+            "off"
+        ],
+        "jsdoc/check-tag-names": [
+            "off"
+        ],
+        "jsdoc/require-hyphen-before-param-description": [
+            "error"
+        ],
         "jsx-quotes": [
             "error"
         ],
@@ -900,11 +913,23 @@
         "unicorn/no-unsafe-regex": [
             "error"
         ],
+        "unicorn/prefer-switch": [
+            "error"
+        ],
+        "unicorn/prefer-ternary": [
+            "error"
+        ],
+        "unicorn/prefer-type-error": [
+            "error"
+        ],
+        "unused-imports/no-unused-imports": [
+            "error"
+        ],
         "use-isnan": [
             "error"
         ],
         "valid-typeof": [
-            "off"
+            "error"
         ],
         "yoda": [
             "off"
@@ -938,6 +963,23 @@
                     ".js",
                     ".jsx"
                 ]
+            }
+        },
+        "jsdoc": {
+            "mode": "typescript",
+            "tagNamePreference": {
+                "arg": {
+                    "message": "Please use @param instead of @arg.",
+                    "replacement": "param"
+                },
+                "argument": {
+                    "message": "Please use @param instead of @argument.",
+                    "replacement": "param"
+                },
+                "return": {
+                    "message": "Please use @returns instead of @return.",
+                    "replacement": "returns"
+                }
             }
         }
     }

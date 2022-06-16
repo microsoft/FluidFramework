@@ -25,6 +25,7 @@ import {
     InboundAttachMessage,
     ISummarizeResult,
     ISummaryTreeWithStats,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
      convertSnapshotTreeToSummaryTree,
@@ -33,7 +34,7 @@ import {
      responseToException,
      SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import { ChildLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ChildLogger, LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
@@ -144,7 +145,7 @@ export class DataStores implements IDisposable {
                 });
             } else {
                 if (typeof value !== "object") {
-                    throw new Error("Snapshot should be there to load from!!");
+                    throw new LoggingError("Snapshot should be there to load from!!");
                 }
                 const snapshotTree = value;
                 dataStoreContext = new LocalFluidDataStoreContext({
@@ -328,6 +329,8 @@ export class DataStores implements IDisposable {
         pkg: Readonly<string[]>,
         isRoot: boolean,
         id = uuid()): IFluidDataStoreContextDetached {
+        assert(!id.includes("/"), "Id cannot contain slashes");
+
         const context = new LocalDetachedFluidDataStoreContext({
             id,
             pkg,
@@ -349,6 +352,7 @@ export class DataStores implements IDisposable {
     }
 
     public _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
+        assert(!id.includes("/"), "Id cannot contain slashes");
         const context = new LocalFluidDataStoreContext({
             id,
             pkg,
@@ -378,6 +382,13 @@ export class DataStores implements IDisposable {
         const context = this.contexts.get(envelope.address);
         assert(!!context, 0x160 /* "There should be a store context for the op" */);
         context.reSubmit(envelope.contents, localOpMetadata);
+    }
+
+    public rollbackDataStoreOp(content: any, localOpMetadata: unknown) {
+        const envelope = content as IEnvelope;
+        const context = this.contexts.get(envelope.address);
+        assert(!!context, 0x2e8 /* "There should be a store context for the op" */);
+        context.rollback(envelope.contents, localOpMetadata);
     }
 
     public async applyStashedOp(content: any): Promise<unknown> {
@@ -410,9 +421,7 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
-        const internalId = this.aliasMap.get(id) ?? id;
-
-        const context = await this.contexts.getBoundOrRemoted(internalId, wait);
+        const context = await this.contexts.getBoundOrRemoted(id, wait);
         if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
             const request = { url: id };
@@ -473,7 +482,11 @@ export class DataStores implements IDisposable {
         return this.contexts.size;
     }
 
-    public async summarize(fullTree: boolean, trackState: boolean): Promise<ISummaryTreeWithStats> {
+    public async summarize(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -484,14 +497,14 @@ export class DataStores implements IDisposable {
                     0x165 /* "Summarizer cannot work if client has local changes" */);
                 return context.attachState === AttachState.Attached;
             }).map(async ([contextId, context]) => {
-                const contextSummary = await context.summarize(fullTree, trackState);
+                const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
                 summaryBuilder.addWithStats(contextId, contextSummary);
             }));
 
         return summaryBuilder.getSummaryTree();
     }
 
-    public createSummary(): ISummaryTreeWithStats {
+    public createSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
         // Attaching graph of some stores can cause other stores to get bound too.
         // So keep taking summary until no new stores get bound.
@@ -536,7 +549,7 @@ export class DataStores implements IDisposable {
     public async updateStateBeforeGC(): Promise<void> {
         for (const id of this.dataStoresSinceLastGC) {
             const context = this.contexts.get(id);
-            assert(context !== undefined, 0x2b6 /* `Missing data store context with id ${id}` */);
+            assert(context !== undefined, 0x2b6 /* Missing data store context */);
             if (await context.isRoot()) {
                 // A root data store is basically a reference from the container runtime to the data store.
                 const handle = new FluidObjectHandle(context, id, this.runtime.IFluidHandleContext);
@@ -610,7 +623,7 @@ export class DataStores implements IDisposable {
                 continue;
             }
             const dataStoreId = pathParts[1];
-            assert(this.contexts.has(dataStoreId), 0x2d7 /* `${dataStoreId} is not a data store` */);
+            assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.
@@ -672,7 +685,7 @@ export function getSummaryForDatastores(
 
     if (rootHasIsolatedChannels(metadata)) {
         const datastoresSnapshot = snapshot.trees[channelsTreeName];
-        assert(!!datastoresSnapshot, 0x168 /* `expected ${channelsTreeName} tree in snapshot` */);
+        assert(!!datastoresSnapshot, 0x168 /* Expected tree in snapshot not found */);
         return datastoresSnapshot;
     } else {
         // back-compat: strip out all non-datastore paths before giving to DataStores object.

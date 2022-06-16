@@ -99,8 +99,9 @@ export interface IContainerRuntime extends
      * Majority of data stores in container should not be roots, and should be reachable (directly or indirectly)
      * through one of the roots.
      * @param pkg - Package name of the data store factory
-     * @param rootDataStoreId - data store ID. IDs naming space is global in container. If collision on name occurs,
-     * it results in container corruption - loading this file after that will always result in error.
+     * @param rootDataStoreId - data store ID. Must not contain slashes. IDs naming space is global in container.
+     * If collision on name occurs, it results in container corruption - loading this file after that will always
+     * result in error.
      */
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 
@@ -108,7 +109,7 @@ export interface IContainerRuntime extends
      * Creates detached data store context. Data store initialization is considered compete
      * only after context.attachRuntime() is called.
      * @param pkg - package path
-     * @param rootDataStoreId - data store ID (unique name)
+     * @param rootDataStoreId - data store ID (unique name). Must not contain slashes.
      */
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
 

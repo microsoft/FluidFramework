@@ -61,8 +61,8 @@
     "tsc:fast": "fluid-build  --root .. -s tsc",
     "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
-    "typetests:gen": "fluid-type-validator -m packages -v",
-    "typetests:prepare": "npm run typetests:gen -- -p",
+    "typetests:gen": "lerna run typetests:gen --no-sort --stream --no-bail",
+    "typetests:prepare": "npm run typetests:gen -- -- -- -p -v",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
@@ -84,7 +84,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.66793",
+    "@fluidframework/build-tools": "^0.2.71273",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",

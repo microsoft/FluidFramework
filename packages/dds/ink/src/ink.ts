@@ -126,7 +126,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * @param id - Unique ID for the Ink
      */
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_ink_");
     }
 
     /**
@@ -204,12 +204,22 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation && !local) {
             const operation = message.contents as IInkOperation;
-            if (operation.type === "clear") {
-                this.executeClearOperation(operation);
-            } else if (operation.type === "createStroke") {
-                this.executeCreateStrokeOperation(operation);
-            } else if (operation.type === "stylus") {
-                this.executeStylusOperation(operation);
+            switch (operation.type) {
+                case "clear": {
+                    this.executeClearOperation(operation);
+                    break;
+                }
+                case "createStroke": {
+                    this.executeCreateStrokeOperation(operation);
+                    break;
+                }
+                case "stylus": {
+                    this.executeStylusOperation(operation);
+                    break;
+                }
+                default: {
+                    break;
+                }
             }
         }
     }
