@@ -227,7 +227,7 @@ implements ISerializableInterval {
     public propertyManager: PropertiesManager;
 
     constructor(
-        public readonly client: Client,
+        private readonly client: Client,
         public start: LocalReferencePosition,
         public end: LocalReferencePosition,
         public intervalType: IntervalType,

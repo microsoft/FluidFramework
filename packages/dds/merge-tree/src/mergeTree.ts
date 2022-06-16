@@ -24,7 +24,11 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "./constants";
-import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
+import {
+     assertLocalReferences,
+     LocalReferenceCollection,
+     LocalReferencePosition,
+} from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -1434,15 +1438,19 @@ export class MergeTree {
             newSegment.localRefs = new LocalReferenceCollection(newSegment);
         }
         for (const ref of refsToSlide) {
+            assertLocalReferences(ref);
             ref.callbacks?.beforeSlide?.();
             const removedRef = segment.localRefs.removeLocalRef(ref);
             assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
             if (!newSegment) {
                 // No valid segments (all nodes removed or not yet created)
-                ref.getSegment()?.localRefs?.removeLocalRef(ref);
+                ref.segment = undefined;
+                ref.offset = 0;
             } else {
+                ref.segment = newSegment;
+                ref.offset = newSegoff.offset ?? 0;
                 assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
-                newSegment.localRefs.addLocalRef(ref, newSegoff.offset ?? 0);
+                newSegment.localRefs.addLocalRef(ref);
             }
             ref.callbacks?.afterSlide?.();
         }
@@ -1458,21 +1466,28 @@ export class MergeTree {
             return;
         }
         const refsToSlide: ReferencePosition[] = [];
+        const refsToStay: ReferencePosition[] = [];
         for (const lref of segment.localRefs) {
             if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
-                continue;
+                refsToStay.push(lref);
             } else if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
-                if (!pending) {
+                if (pending) {
+                    refsToStay.push(lref);
+                } else {
                     refsToSlide.push(lref);
                 }
-            } else {
-                segment.localRefs.removeLocalRef(lref);
             }
         }
         // Rethink implementation of keeping and sliding refs once other reference
         // changes are complete. This works but is fragile and possibly slow.
         if (!pending) {
             this.slideReferences(segment, refsToSlide);
+        }
+        segment.localRefs.clear();
+        for (const lref of refsToStay) {
+            assertLocalReferences(lref);
+            lref.segment = segment;
+            segment.localRefs.addLocalRef(lref);
         }
     }
 
