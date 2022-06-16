@@ -64,6 +64,10 @@
       },
       "ClassDeclaration_SequenceInterval": {
         "forwardCompat": false
+      },
+      "RemovedEnumDeclaration_ConnectionState": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
