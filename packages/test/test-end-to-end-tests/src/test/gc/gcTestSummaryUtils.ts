@@ -10,9 +10,9 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import {
     gcBlobPrefix,
     gcTreeKey,
-    IContainerRuntimeOptions,
     IGCRuntimeOptions,
     ISummarizer,
+    ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
@@ -59,6 +59,16 @@ async function createSummarizerCore(container: IContainer, loader: IHostLoader, 
     return fluidObject.ISummarizer;
 }
 
+const defaultSummaryOptions: ISummaryRuntimeOptions = {
+    summaryConfigOverrides: {
+        state: "disableHeuristics",
+        maxAckWaitTime: 10000,
+        maxOpsSinceLastSummary: 7000,
+        initialSummarizerDelayMs: 0,
+        summarizerClientElection: false,
+    },
+};
+
 export async function createSummarizerFromFactory(
     provider: ITestObjectProvider,
     container: IContainer,
@@ -66,17 +76,6 @@ export async function createSummarizerFromFactory(
     summaryVersion?: string,
     containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
 ): Promise<ISummarizer> {
-    const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: {
-            summaryConfigOverrides: {
-                state: "disableHeuristics",
-                maxAckWaitTime: 10000,
-                maxOpsSinceLastSummary: 7000,
-                initialSummarizerDelayMs: 0,
-                summarizerClientElection: false,
-            },
-        },
-    };
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new containerRuntimeFactoryType(
@@ -86,7 +85,7 @@ export async function createSummarizerFromFactory(
         ],
         undefined,
         [innerRequestHandler],
-        runtimeOptions,
+        { summaryOptions: defaultSummaryOptions },
     );
 
     const loader = provider.createLoader(
@@ -106,17 +105,7 @@ export async function createSummarizer(
 ): Promise<ISummarizer> {
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
-            summaryOptions: {
-                initialSummarizerDelayMs: 0,
-                summaryConfigOverrides: {
-                    state: "disableHeuristics",
-                    maxAckWaitTime: 10000,
-                    maxOpsSinceLastSummary: 7000,
-                    initialSummarizerDelayMs: 0,
-                    summarizerClientElection: false,
-                 },
-                 disableIsolatedChannels,
-            },
+            summaryOptions: defaultSummaryOptions,
             gcOptions,
         },
         loaderProps: { configProvider: mockConfigProvider() },
