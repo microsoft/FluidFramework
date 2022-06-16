@@ -57,7 +57,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "2.0.0",
     "broken": {
       "ClassDeclaration_IntervalCollection": {
         "forwardCompat": false
@@ -73,7 +73,11 @@
       "ClassDeclaration_SharedSegmentSequence": {"backCompat": false},
       "ClassDeclaration_SharedSequence": {"backCompat": false},
       "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false},
-      "ClassDeclaration_SparseMatrix": {"backCompat": false}
+      "ClassDeclaration_SparseMatrix": {"backCompat": false},
+      "RemovedEnumDeclaration_ConnectionState": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
     }
   }
 }
