@@ -117,7 +117,7 @@
     "webpack-cli": "^4.9.2"
   },
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "2.0.0",
     "broken": {}
   }
 }

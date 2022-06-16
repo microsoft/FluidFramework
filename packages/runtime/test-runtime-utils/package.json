@@ -96,12 +96,12 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "2.0.0",
     "broken": {
-      "ClassDeclaration_MockContainerRuntimeFactory": {
+      "ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
         "forwardCompat": false
       },
-      "ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
+      "ClassDeclaration_MockContainerRuntimeFactory": {
         "forwardCompat": false
       }
     }
