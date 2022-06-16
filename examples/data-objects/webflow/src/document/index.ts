@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
+    addProperties,
     createInsertSegmentOp,
     createRemoveRangeOp,
     IMergeTreeRemoveMsg,
@@ -123,6 +124,15 @@ const accumAsLeafAction = (
 //
 //       See: https://github.com/microsoft/FluidFramework/issues/86
 const endOfTextSegment = undefined as unknown as SharedStringSegment;
+const endOfTextReference: ReferencePosition = {
+    getOffset: () => 0,
+    getSegment: () => endOfTextSegment,
+    isLeaf: () => false,
+    refType: ReferenceType.Transient,
+    addProperties(props) {
+        addProperties(this.properties, props);
+    },
+};
 
 export interface IFlowDocumentEvents extends IEvent {
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString) => void);
@@ -200,7 +210,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     public addLocalRef(position: number) {
         // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         if (position >= this.length) {
-            return this.sharedString.createLocalReferencePosition(endOfTextSegment, 0, ReferenceType.Transient, undefined);
+            return endOfTextReference;
         }
 
         const { segment, offset } = this.getSegmentAndOffset(position);
