@@ -314,15 +314,15 @@ function assertConsistent(sharedStrings: SharedString[]): void {
             );
             for (const interval of intervals1) {
                 const otherInterval = collection2.getIntervalById(interval.getIntervalId());
-                const firstStart = first.localRefToPos(interval.start);
-                const otherStart = other.localRefToPos(otherInterval.start);
+                const firstStart = first.localReferencePositionToPosition(interval.start);
+                const otherStart = other.localReferencePositionToPosition(otherInterval.start);
                 assert.equal(firstStart, otherStart,
                     `Startpoints of interval ${interval.getIntervalId()} different:\n` +
                     `\tfull text:${first.getText()}\n` +
                     `\tclient ${first.id} char:${first.getText(firstStart, firstStart + 1)}\n` +
                     `\tclient ${other.id} char:${other.getText(otherStart, otherStart + 1)}`);
-                const firstEnd = first.localRefToPos(interval.end);
-                const otherEnd = other.localRefToPos(otherInterval.end);
+                const firstEnd = first.localReferencePositionToPosition(interval.end);
+                const otherEnd = other.localReferencePositionToPosition(otherInterval.end);
                 assert.equal(firstEnd, otherEnd,
                     `Endpoints of interval ${interval.getIntervalId()} different:\n` +
                     `\tfull text:${first.getText()}\n` +
