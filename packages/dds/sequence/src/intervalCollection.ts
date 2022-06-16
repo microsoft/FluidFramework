@@ -189,12 +189,7 @@ export class Interval implements ISerializableInterval {
         op?: ICombiningOp,
     ): PropertySet | undefined {
         if (newProps) {
-            if (!this.propertyManager) {
-                this.propertyManager = new PropertiesManager();
-            }
-            if (!this.properties) {
-                this.properties = createMap<any>();
-            }
+            this.initializeProperties();
             return this.propertyManager.addProperties(this.properties, newProps, op, seq, collaborating);
         }
     }
@@ -208,10 +203,19 @@ export class Interval implements ISerializableInterval {
         }
         const newInterval = new Interval(startPos, endPos);
         if (this.properties) {
-            newInterval.properties = createMap<any>();
+            newInterval.initializeProperties();
             this.propertyManager.copyTo(this.properties, newInterval.properties, newInterval.propertyManager);
         }
         return newInterval;
+    }
+
+    private initializeProperties(): void {
+        if (!this.propertyManager) {
+            this.propertyManager = new PropertiesManager();
+        }
+        if (!this.properties) {
+            this.properties = createMap<any>();
+        }
     }
 }
 
@@ -377,12 +381,7 @@ implements ISerializableInterval {
         seq?: number,
         op?: ICombiningOp,
     ): PropertySet | undefined {
-        if (!this.propertyManager) {
-            this.propertyManager = new PropertiesManager();
-        }
-        if (!this.properties) {
-            this.properties = createMap<any>();
-        }
+        this.initializeProperties();
         return this.propertyManager.addProperties(this.properties, newProps, op, seq, collab);
     }
 
@@ -419,10 +418,19 @@ implements ISerializableInterval {
 
         const newInterval = new SequenceInterval(startRef, endRef, this.intervalType);
         if (this.properties) {
-            newInterval.properties = createMap<any>();
+            newInterval.initializeProperties();
             this.propertyManager.copyTo(this.properties, newInterval.properties, newInterval.propertyManager);
         }
         return newInterval;
+    }
+
+    private initializeProperties(): void {
+        if (!this.propertyManager) {
+            this.propertyManager = new PropertiesManager();
+        }
+        if (!this.properties) {
+            this.properties = createMap<any>();
+        }
     }
 }
 

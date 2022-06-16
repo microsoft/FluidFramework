@@ -421,9 +421,7 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
-        const internalId = this.aliasMap.get(id) ?? id;
-
-        const context = await this.contexts.getBoundOrRemoted(internalId, wait);
+        const context = await this.contexts.getBoundOrRemoted(id, wait);
         if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
             const request = { url: id };
