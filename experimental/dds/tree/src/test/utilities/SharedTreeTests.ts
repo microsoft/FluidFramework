@@ -401,6 +401,45 @@ export function runSharedTreeOperationsTests(
 				};
 			}
 
+			if (writeFormat === WriteFormat.v0_0_2) {
+				it('applies unversioned ops in the 0.0.2 format', () => {
+					const { tree: sharedTree1, containerRuntimeFactory } = setUpTestSharedTree(tree1Options);
+					const { sharedTree: sharedTree2, testTree: testTree2 } = createSimpleTestTree(
+						createSecondTreeOptions(containerRuntimeFactory)
+					);
+
+					containerRuntimeFactory.processAllMessages();
+					const originalPushMessage = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+					containerRuntimeFactory.pushMessage = (msg) => {
+						// Drop the version property to replicate ops created before the version property existed
+						msg.contents.version = undefined;
+						originalPushMessage(msg);
+					};
+
+					// Ensure that an edit can be passed and processed between two trees as normal
+					sharedTree2.applyEdit(Change.delete(StableRange.only(testTree2.right)));
+
+					const getTestTreeRoot = (sharedTree: SharedTree) =>
+						new TreeNodeHandle(
+							sharedTree.currentView,
+							sharedTree.convertToNodeId(sharedTree2.convertToStableNodeId(testTree2.identifier))
+						);
+
+					let root1 = getTestTreeRoot(sharedTree1);
+					let root2 = getTestTreeRoot(sharedTree2);
+
+					expect(Array.from(root1.traits[testTree2.right.traitLabel])).to.have.length(1);
+					expect(Array.from(root2.traits[testTree2.right.traitLabel] ?? [])).to.have.length(0);
+
+					containerRuntimeFactory.processAllMessages();
+
+					root1 = getTestTreeRoot(sharedTree1);
+					root2 = getTestTreeRoot(sharedTree2);
+					expect(Array.from(root1.traits[testTree2.right.traitLabel] ?? [])).to.have.length(0);
+					expect(Array.from(root2.traits[testTree2.right.traitLabel] ?? [])).to.have.length(0);
+				});
+			}
+
 			it('should apply remote changes and converge', () => {
 				const { tree: sharedTree1, containerRuntimeFactory } = setUpTestSharedTree(tree1Options);
 				const { tree: sharedTree2 } = setUpTestSharedTree(createSecondTreeOptions(containerRuntimeFactory));
@@ -858,17 +897,13 @@ export function runSharedTreeOperationsTests(
 
 					const serialized = serialize(sharedTree.saveSummary(), testSerializer, testHandle);
 					const treeContent: SharedTreeSummaryBase = JSON.parse(serialized);
-					let parsedTree: SummaryContents;
-					if (writeFormat === WriteFormat.v0_1_1) {
-						parsedTree = new SharedTreeEncoder_0_1_1(true).decodeSummary(
-							treeContent as SharedTreeSummary,
-							sharedTree.attributionId
-						);
-					} else {
-						parsedTree = new SharedTreeEncoder_0_0_2(true).decodeSummary(
-							treeContent as SharedTreeSummary_0_0_2
-						);
-					}
+					const parsedTree: SummaryContents =
+						writeFormat === WriteFormat.v0_1_1
+							? new SharedTreeEncoder_0_1_1(true).decodeSummary(
+									treeContent as SharedTreeSummary,
+									sharedTree.attributionId
+							  )
+							: new SharedTreeEncoder_0_0_2(true).decodeSummary(treeContent as SharedTreeSummary_0_0_2);
 
 					expect(parsedTree.currentTree).to.not.be.undefined;
 					const testRoot = assertArrayOfOne(
@@ -1094,7 +1129,7 @@ export function runSharedTreeOperationsTests(
 				it('is logged for invalid locally generated edits when those edits are sequenced', async () => {
 					const events: ITelemetryBaseEvent[] = [];
 					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger: { send: (event) => !event.eventName.includes('IdCompressor') && events.push(event) },
 						allowInvalid: true,
 					});
 					useFailedSequencedEditTelemetry(sharedTree);
@@ -1118,7 +1153,7 @@ export function runSharedTreeOperationsTests(
 				it('can be disabled and re-enabled', async () => {
 					const events: ITelemetryBaseEvent[] = [];
 					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger: { send: (event) => !event.eventName.includes('IdCompressor') && events.push(event) },
 						allowInvalid: true,
 					});
 					const { disable } = useFailedSequencedEditTelemetry(sharedTree);
@@ -1164,7 +1199,7 @@ export function runSharedTreeOperationsTests(
 				it('is not logged for valid edits', async () => {
 					const events: ITelemetryBaseEvent[] = [];
 					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger: { send: (event) => !event.eventName.includes('IdCompressor') && events.push(event) },
 					});
 					useFailedSequencedEditTelemetry(sharedTree);
 
@@ -1177,7 +1212,7 @@ export function runSharedTreeOperationsTests(
 				it('is not logged for remote edits', async () => {
 					const events: ITelemetryBaseEvent[] = [];
 					const { sharedTree: sharedTree1, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger: { send: (event) => !event.eventName.includes('IdCompressor') && events.push(event) },
 						allowInvalid: true,
 						localMode: false,
 					});

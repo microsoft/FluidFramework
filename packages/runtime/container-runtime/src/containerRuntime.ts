@@ -49,6 +49,7 @@ import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidfr
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
+    DataProcessingError,
     GenericError,
     UsageError,
     extractSafePropertiesFromMessage,
@@ -108,7 +109,11 @@ import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
-import { ReportOpPerfTelemetry, latencyThreshold } from "./connectionTelemetry";
+import {
+    ReportOpPerfTelemetry,
+    latencyThreshold,
+    IPerfSignalReport,
+} from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
@@ -891,7 +896,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // Verify summary runtime sequence number matches protocol sequence number.
         const runtimeSequenceNumber = metadata?.message?.sequenceNumber;
-        if (runtimeSequenceNumber !== undefined) {
+        // When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
+        if (!pendingRuntimeState && runtimeSequenceNumber !== undefined) {
             const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
             // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
             if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
@@ -1049,6 +1055,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
+
+    private readonly defaultTelemetrySignalSampleCount = 100;
+    private _perfSignalData: IPerfSignalReport = {
+        signalsLost: 0,
+        signalSequenceNumber: 0,
+        signalTimestamp: 0,
+        trackingSignalSequenceNumber: undefined,
+    };
 
     /**
      * Summarizer is responsible for coordinating when to send generate and send summaries.
@@ -1565,11 +1579,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private internalId(maybeAlias: string): string {
+        return this.dataStores.aliases().get(maybeAlias) ?? maybeAlias;
+    }
+
     private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
         const wait = typeof request.headers?.[RuntimeHeaders.wait] === "boolean"
             ? request.headers?.[RuntimeHeaders.wait]
             : true;
-        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
+
+        const internalId = this.internalId(id);
+        const dataStoreContext = await this.dataStores.getDataStore(internalId, wait);
 
         /**
          * If GC should run and this an external app request with "externalRequest" header, we need to return
@@ -1783,15 +1803,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const reconnection = changeOfState && connected;
         this._connected = connected;
 
+        if (!connected) {
+            this._perfSignalData.signalsLost = 0;
+            this._perfSignalData.signalTimestamp = 0;
+            this._perfSignalData.trackingSignalSequenceNumber = undefined;
+        }
+
         if (reconnection) {
             this.consecutiveReconnects++;
 
             if (!this.shouldContinueReconnecting()) {
-                this.closeFn(new GenericError(
+                this.closeFn(
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
-                    "Runtime detected too many reconnects with no progress syncing local ops",
-                    undefined, // error
-                    {
+                    DataProcessingError.create(
+                        "Runtime detected too many reconnects with no progress syncing local ops",
+                        "setConnectionState",
+                        undefined,
+                       {
+                        dataLoss: 1,
                         attempts: this.consecutiveReconnects,
                         pendingMessages: this.pendingStateManager.pendingMessagesCount,
                     }));
@@ -1892,6 +1921,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processAliasMessage(message, localOpMetadata, local);
     }
 
+    /**
+     * Emits the Signal event and update the perf signal data.
+     * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
+     */
+    private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
+        const duration = Date.now() - this._perfSignalData.signalTimestamp;
+        this.logger.sendPerformanceEvent({
+            eventName: "SignalLatency",
+            duration,
+            signalsLost: this._perfSignalData.signalsLost,
+        });
+
+        this._perfSignalData.signalsLost = 0;
+        this._perfSignalData.signalTimestamp = 0;
+    }
+
     public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as ISignalEnvelope;
         const transformed: IInboundSignalMessage = {
@@ -1899,6 +1944,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             content: envelope.contents.content,
             type: envelope.contents.type,
         };
+
+        // Only collect signal telemetry for messages sent by the current client.
+        if (message.clientId === this.clientId && this.connected) {
+            // Check to see if the signal was lost.
+            if (this._perfSignalData.trackingSignalSequenceNumber !== undefined &&
+                envelope.clientSignalSequenceNumber > this._perfSignalData.trackingSignalSequenceNumber) {
+                this._perfSignalData.signalsLost++;
+                this._perfSignalData.trackingSignalSequenceNumber = undefined;
+                this.logger.sendErrorEvent({
+                    eventName: "SignalLost",
+                    type: envelope.contents.type,
+                    signalsLost: this._perfSignalData.signalsLost,
+                    trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
+                    clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
+                });
+            } else if (envelope.clientSignalSequenceNumber === this._perfSignalData.trackingSignalSequenceNumber) {
+                this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+                this._perfSignalData.trackingSignalSequenceNumber = undefined;
+            }
+        }
 
         if (envelope.address === undefined) {
             // No address indicates a container signal message.
@@ -1910,7 +1975,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        const context = await this.dataStores.getDataStore(id, wait);
+        const internalId = this.internalId(id);
+        const context = await this.dataStores.getDataStore(internalId, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
@@ -2188,6 +2254,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return true;
     }
 
+    private createNewSignalEnvelope(address: string | undefined, type: string, content: any): ISignalEnvelope {
+        const newSequenceNumber = ++this._perfSignalData.signalSequenceNumber;
+        const newEnvelope: ISignalEnvelope = {
+            address,
+            clientSignalSequenceNumber: newSequenceNumber,
+            contents: { type, content },
+        };
+
+        // We should not track any signals in case we already have a tracking number.
+        if (newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
+            this._perfSignalData.trackingSignalSequenceNumber === undefined) {
+            this._perfSignalData.signalTimestamp = Date.now();
+            this._perfSignalData.trackingSignalSequenceNumber = newSequenceNumber;
+        }
+
+        return newEnvelope;
+    }
+
     /**
      * Submits the signal to be sent to other clients.
      * @param type - Type of the signal.
@@ -2195,13 +2279,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        const envelope: ISignalEnvelope = { address: undefined, contents: { type, content } };
+        const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
         return this.context.submitSignalFn(envelope);
     }
 
     public submitDataStoreSignal(address: string, type: string, content: any) {
-        const envelope: ISignalEnvelope = { address, contents: { type, content } };
-        return this.context.submitSignalFn(envelope);
+        const envelope = this.createNewSignalEnvelope(address, type, content);
+         return this.context.submitSignalFn(envelope);
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {

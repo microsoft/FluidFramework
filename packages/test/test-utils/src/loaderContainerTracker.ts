@@ -33,6 +33,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
     private readonly containers = new Map<IContainer, ContainerRecord>();
     private lastProposalSeqNum: number = 0;
 
+    constructor(private readonly syncSummarizerClients: boolean = false) {}
+
     /**
      * Add a loader to start to track any container created from them
      * @param loader - loader to start tracking any container created.
@@ -61,7 +63,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
      */
     private addContainer(container: IContainer) {
         // ignore summarizer
-        if (!container.deltaManager.clientDetails.capabilities.interactive) { return; }
+        if (!container.deltaManager.clientDetails.capabilities.interactive && !this.syncSummarizerClients) { return; }
 
         // don't add container that is already tracked
         if (this.containers.has(container)) { return; }
@@ -227,7 +229,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
             const quorum = container.getQuorum();
             quorum.getMembers().forEach((client, clientId) => {
                 // ignore summarizer
-                if (!client.client.details.capabilities.interactive) { return; }
+                if (!client.client.details.capabilities.interactive && !this.syncSummarizerClients) { return; }
                 if (!openedClientId.includes(clientId)) {
                     pendingClientId.add(clientId);
                 }

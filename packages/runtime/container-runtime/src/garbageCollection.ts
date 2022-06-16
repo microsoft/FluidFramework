@@ -42,7 +42,6 @@ import {
 
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
-import { pkgVersion } from "./packageVersion";
 import {
     getGCVersion,
     GCVersion,
@@ -75,8 +74,6 @@ export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to write the gc blob as a handle if the data is the same.
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
-// Feature gate key to limit which versions can write the gc blob as a handle if the data is the same.
-export const trackGCStateMinimumVersionKey = "Fluid.GarbageCollection.TrackGCState.MinVersion";
 
 const defaultInactiveTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -476,10 +473,7 @@ export class GarbageCollector implements IGarbageCollector {
             && !gcOptions.disableGC
         );
 
-        const minimumVersion = this.mc.config.getString(trackGCStateMinimumVersionKey);
-        const shouldTrackStateForVersion = meetsMinimumVersionRequirement(pkgVersion, minimumVersion);
-
-        this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true && shouldTrackStateForVersion;
+        this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -1309,67 +1303,4 @@ function setLongTimeout(
         timer = setTimeout(() => timeoutFn(), timeoutMs);
     }
     setTimerFn(timer);
-}
-
-/**
- * meetsMinimumVersionRequirement is used determining if a feature version should be run. This is similar to feature
- * flags. The advantage of this is that if we ship a bug in version 0.1.1 and fix it in version 0.2.1. We can keep this
- * feature disabled for version 0.1.1 and enabled for 0.2.1. Older versions will run without the feature and new
- * versions will run with the feature.
- * @param currentVersion - the total time the timeout needs to last in ms
- * @param minimumVersion - the function to execute when the timer ends
- */
-function meetsMinimumVersionRequirement(currentVersion: string, minimumVersion: string | undefined) {
-    return minimumVersion === undefined || semverCompare(currentVersion, minimumVersion) >= 0;
-}
-
-/**
- * Compare semver versions.
- * @param currentVersion - assumed to be any valid semver version
- * @param minimumVersion - must be [major].[minor].[patch], where major, minor, and patch are all numbers
- *  as it complicates the algorithm if we allow comparisons against minimum pre-release versions.
- * @returns
- *  0 if the currentVersion equals the minimumVersion
- *  1 if the currentVersion is greater than the minimumVersion
- *  -1 if the minimumVersion is greater than the currentVersion
- */
-export function semverCompare(currentVersion: string, minimumVersion: string): number {
-    const minimumValues = minimumVersion.split(".").map((value): number => {
-        assert(isNaN(+value) === false, 0x2fa /* Expected real numbers in minimum version! */);
-        return Number.parseInt(value, 10);
-    });
-    assert(minimumValues.length === 3, 0x2fb /* Expected minimumVersion to be [major].[minor].[patch] */);
-    const [minMajor, minMinor, minPatch] = minimumValues;
-
-    const currentValuesString = currentVersion.split(/\W/);
-    assert(currentValuesString.length >= 3, 0x2fc /* Expected version to match semver rules! */);
-    const currentValues = currentValuesString.slice(0, 3).map((value) => {
-        assert(isNaN(+value) === false, 0x2fd /* Expected real numbers in minimum version! */);
-        return Number.parseInt(value, 10);
-    });
-    const [cMajor, cMinor, cPatch] = currentValues;
-
-    if (cMajor > minMajor) {
-        return 1;
-    } else if (minMajor > cMajor) {
-        return -1;
-    }
-
-    if (cMinor > minMinor) {
-        return 1;
-    } else if (minMinor > cMinor) {
-        return -1;
-    }
-
-    if (cPatch > minPatch) {
-        return 1;
-    } else if (minPatch > cPatch) {
-        return -1;
-    }
-
-    if (currentValuesString.length === 3) {
-        return 0;
-    }
-
-    return -1;
 }
