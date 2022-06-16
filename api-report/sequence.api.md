@@ -58,8 +58,9 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 
 // @public (undocumented)
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
+    (event: "changeInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
     // (undocumented)
-    (event: "addInterval" | "changeInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
+    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void): any;
 }
@@ -213,12 +214,6 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     // (undocumented)
     propertyDeltas: PropertySet;
     segment: ISegment;
-}
-
-// @public
-export interface ISequenceIntervalEvents extends IEvent {
-    // (undocumented)
-    (event: "beforePositionChange" | "afterPositionChange", listener: () => void): any;
 }
 
 // @public (undocumented)
@@ -387,8 +382,10 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 }
 
 // @public (undocumented)
-export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents> implements ISerializableInterval {
+export class SequenceInterval implements ISerializableInterval {
     constructor(start: LocalReference, end: LocalReference, intervalType: IntervalType, props?: PropertySet);
+    // @internal
+    addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
     // (undocumented)
     addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
     // (undocumented)
@@ -415,6 +412,8 @@ export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents>
     properties: PropertySet;
     // (undocumented)
     propertyManager: PropertiesManager;
+    // @internal
+    removePositionChangeListeners(): void;
     // (undocumented)
     serialize(client: Client): ISerializedInterval;
     // (undocumented)
