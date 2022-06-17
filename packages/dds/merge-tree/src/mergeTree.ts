@@ -1442,9 +1442,7 @@ export class MergeTree {
             ref.callbacks?.beforeSlide?.();
             const removedRef = segment.localRefs.removeLocalRef(ref);
             assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
-            if (!newSegment) {
-                ref.getSegment()?.localRefs?.removeLocalRef(ref);
-            } else {
+            if (newSegment) {
                 assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
                 newSegment.localRefs.addLocalRef(ref, newSegoff.offset ?? 0);
             }

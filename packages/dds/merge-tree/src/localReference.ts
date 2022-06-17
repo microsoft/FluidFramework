@@ -205,7 +205,7 @@ export class LocalReferenceCollection {
             if (refs) {
                 for (const r of refs) {
                     if (r.getSegment() === this.segment) {
-                        r.link(undefined, 0, undefined);
+                        r.link(undefined, r.getOffset(), undefined);
                     }
                 }
             }
@@ -280,7 +280,10 @@ export class LocalReferenceCollection {
     public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         if (this.has(lref)) {
             assertLocalReferences(lref);
-            lref.link(lref.getSegment(), lref.getOffset(), undefined);
+            lref.link(
+                lref.getSegment(),
+                lref.getOffset(),
+                undefined);
             return lref;
         }
     }
