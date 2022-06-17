@@ -5,7 +5,6 @@
 
 import { Stack } from "./collections";
 import { ISegment } from "./mergeTree";
-import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ReferenceType, ICombiningOp } from "./ops";
 import { PropertySet, MapLike } from "./properties";
 
@@ -60,11 +59,11 @@ export function refHasRangeLabels(refPos: ReferencePosition): boolean {
 export interface ReferencePosition {
     properties?: PropertySet;
     refType: ReferenceType;
-    readonly trackingCollection: TrackingGroupCollection;
+
     getSegment(): ISegment | undefined;
     getOffset(): number;
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
-    isLeaf(): this is ISegment;
+    isLeaf(): boolean;
 }
 
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;

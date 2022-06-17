@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTree";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 
-export type Trackable = ISegment | LocalReferencePosition;
-
 export class TrackingGroup {
-    private readonly segmentSet: SortedSegmentSet<Trackable>;
+    private readonly segmentSet: SortedSegmentSet;
 
     constructor() {
         this.segmentSet = new SortedSegmentSet();
     }
 
-    public get segments(): readonly Trackable[] {
+    public get segments(): readonly ISegment[] {
         return this.segmentSet.items;
     }
 
@@ -24,20 +21,20 @@ export class TrackingGroup {
         return this.segmentSet.size;
     }
 
-    public has(segment: Trackable): boolean {
+    public has(segment: ISegment): boolean {
         return this.segmentSet.has(segment);
     }
 
-    public link(segment: Trackable) {
+    public link(segment: ISegment) {
         if (!this.segmentSet.has(segment)) {
             this.segmentSet.addOrUpdate(segment);
-            segment.trackingCollection?.link(this);
+            segment.trackingCollection.link(this);
         }
     }
 
-    public unlink(segment: Trackable) {
+    public unlink(segment: ISegment) {
         if (this.segmentSet.remove(segment)) {
-            segment.trackingCollection?.unlink(this);
+            segment.trackingCollection.unlink(this);
         }
     }
 }
@@ -45,7 +42,7 @@ export class TrackingGroup {
 export class TrackingGroupCollection {
     public readonly trackingGroups: Set<TrackingGroup>;
 
-    constructor(private readonly trackable: Trackable) {
+    constructor(private readonly segment: ISegment) {
         this.trackingGroups = new Set<TrackingGroup>();
     }
 
@@ -55,22 +52,22 @@ export class TrackingGroupCollection {
                 this.trackingGroups.add(trackingGroup);
             }
 
-            if (!trackingGroup.has(this.trackable)) {
-                trackingGroup.link(this.trackable);
+            if (!trackingGroup.has(this.segment)) {
+                trackingGroup.link(this.segment);
             }
         }
     }
 
     public unlink(trackingGroup: TrackingGroup) {
-        if (trackingGroup.has(this.trackable)) {
-            trackingGroup.unlink(this.trackable);
+        if (trackingGroup.has(this.segment)) {
+            trackingGroup.unlink(this.segment);
         }
         this.trackingGroups.delete(trackingGroup);
     }
 
-    public copyTo(segment: Trackable) {
+    public copyTo(segment: ISegment) {
         this.trackingGroups.forEach(
-            (sg) => segment.trackingCollection?.link(sg));
+            (sg) => segment.trackingCollection.link(sg));
     }
 
     public get empty(): boolean {
