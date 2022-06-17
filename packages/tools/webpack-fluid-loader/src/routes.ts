@@ -57,8 +57,13 @@ export const before = (app: express.Application) => {
     app.get("/", (req, res) => res.redirect("/new"));
 };
 
-export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
-    const options: RouteOptions = { ...env, ...{ port: server.options.port } };
+export const after = (
+    app: express.Application,
+    server: WebpackDevServer,
+    baseDir: string,
+    env: Partial<RouteOptions>,
+) => {
+    const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf
         .env({ parseValules: true, inputSeparator: "__" })
         .file(path.join(baseDir, "config.json"));
