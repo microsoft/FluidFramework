@@ -253,7 +253,7 @@ export class ConnectionStateHandler {
 
         const writeConnection = connectionMode === "write";
         assert(!this.handler.shouldClientJoinWrite() || writeConnection,
-            "shouldClientJoinWrite should imply this is a writeConnection");
+            0x30a /* shouldClientJoinWrite should imply this is a writeConnection */);
         assert(!this.waitingForLeaveOp || writeConnection,
             0x2a6 /* "waitingForLeaveOp should imply writeConnection (we need to be ready to flush pending ops)" */);
 

@@ -184,7 +184,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         super();
 
         assert(!dataStoreContext.id.includes("/"),
-            "Id cannot contain slashes. DataStoreContext should have validated this.");
+            0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */);
 
         this.logger = ChildLogger.create(
             dataStoreContext.logger,
