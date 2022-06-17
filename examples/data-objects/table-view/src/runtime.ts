@@ -5,6 +5,7 @@
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
+import React from "react";
 import { TableModel, tableModelType } from "./tableModel";
 import { TableView } from "./tableView";
 
@@ -13,7 +14,7 @@ const tableModelFactory = createDataStoreFactory(
     // eslint-disable-next-line max-len
     import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableModel").then((m) => m.TableModel.getFactory()));
 
-const tableViewCallback = (model: TableModel) => new TableView(model);
+const tableViewCallback = (model: TableModel) => React.createElement(TableView, { model });
 
 /**
  * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use
