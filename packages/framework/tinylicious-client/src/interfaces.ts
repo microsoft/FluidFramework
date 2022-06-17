@@ -4,6 +4,7 @@
  */
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import { IUser } from "@fluidframework/protocol-definitions";
 
 // Re-export so developers can build loggers without pulling in common-definitions
 export {
@@ -57,11 +58,28 @@ export interface TinyliciousContainerServices {
 }
 
 /**
- * Since Tinylicious provides user names for all of its members, we extend the IMember interface to include
+ * Since Tinylicious provides user names for all of its members, we extend the `IUser` interface to include
+ * this service-specific value. It will be returned for all audience members connected to Tinylicious.
+ */
+export interface TinyliciousUser extends IUser {
+    /**
+     * The user's name
+     */
+    name: string;
+}
+
+/**
+ * Since Tinylicious provides user names for all of its members, we extend the `IMember` interface to include
  * this service-specific value. It will be returned for all audience members connected to Tinylicious.
  */
 export interface TinyliciousMember extends IMember {
+    /**
+     * {@inheritDoc TinyliciousUser.name}
+     */
     userName: string;
 }
 
+/**
+ * TODO: semantic docs
+ */
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
