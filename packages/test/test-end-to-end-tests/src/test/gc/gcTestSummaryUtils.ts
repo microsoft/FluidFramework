@@ -101,10 +101,14 @@ export async function createSummarizer(
     container: IContainer,
     summaryVersion?: string,
     gcOptions?: IGCRuntimeOptions,
+    disableIsolatedChannels?: true,
 ): Promise<ISummarizer> {
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
-            summaryOptions: defaultSummaryOptions,
+            summaryOptions: {
+                ...defaultSummaryOptions,
+                disableIsolatedChannels,
+            },
             gcOptions,
         },
         loaderProps: { configProvider: mockConfigProvider() },
