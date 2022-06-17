@@ -49,7 +49,7 @@ export interface ITreeCursor {
     length(key: FieldKey): number;
     readonly type: TreeType;
     up(): TreeNavigationResult;
-    readonly value: undefined | Serializable;
+    readonly value: Value;
 }
 
 // @public
@@ -68,6 +68,9 @@ export const enum TreeNavigationResult {
 
 // @public (undocumented)
 export type TreeType = Brand<number | string, "TreeType">;
+
+// @public
+export type Value = undefined | Serializable;
 
 // (No @packageDocumentation comment for this package)
 

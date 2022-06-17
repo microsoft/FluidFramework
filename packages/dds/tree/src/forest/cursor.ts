@@ -18,6 +18,11 @@ export const enum TreeNavigationResult {
 }
 
 /**
+ * Value stored on a node.
+ */
+export type Value = undefined | Serializable;
+
+/**
  * A stateful low-level interface for reading tree data.
  *
  * TODO: Needs rules around invalidation/mutation of the underlying tree.
@@ -25,6 +30,10 @@ export const enum TreeNavigationResult {
  * (and likely via returning a sub-interface with documentation on the subject).
  *
  * TODO: Needs a way to efficiently clone Cursor so patterns like lazy tree reification can be implemented efficiently.
+ *
+ * TODO: add a way to iterate a field without calling up and down with the field key for each index.
+ *
+ * TODO: add optional fast path APIs for more efficient handling when supported by underlying format and reader.
  */
 export interface ITreeCursor {
     /** Select the child located at the given key and index. */
@@ -43,5 +52,5 @@ export interface ITreeCursor {
     length(key: FieldKey): number;
 
     /** value associated with the currently selected node. */
-    readonly value: undefined | Serializable;
+    readonly value: Value;
 }
