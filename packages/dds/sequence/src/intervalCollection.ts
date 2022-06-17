@@ -1213,11 +1213,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return entries && entries.length !== 0;
     }
 
-    /** @deprecated - use ackChange */
-    public changeInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
-        return this.ackChange(serializedInterval, local, op);
-    }
-
     /** @internal */
     public ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
         if (!this.attached) {
@@ -1395,14 +1390,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
     }
 
-    /** @deprecated - use ackAdd */
-    public addInternal(
-        serializedInterval: ISerializedInterval,
-        local: boolean,
-        op: ISequencedDocumentMessage) {
-        return this.ackAdd(serializedInterval, local, op);
-    }
-
     /** @internal */
     public ackAdd(
         serializedInterval: ISerializedInterval,
@@ -1439,14 +1426,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.emit("addInterval", interval, local, op);
 
         return interval;
-    }
-
-    /** @deprecated - use ackDelete */
-    public deleteInterval(
-        serializedInterval: ISerializedInterval,
-        local: boolean,
-        op: ISequencedDocumentMessage): void {
-        return this.ackDelete(serializedInterval, local, op);
     }
 
     /** @internal */

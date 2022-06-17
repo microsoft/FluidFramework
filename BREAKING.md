@@ -42,6 +42,7 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
 - [bindToContext to be removed from IFluidDataStoreChannel](#bindToContext-to-be-removed-from-IFluidDataStoreChannel)
 - [Garbage Collection (GC) mark phase turned on by default](#Garbage-Collection-(GC)-mark-phase-turned-on-by-default)
+- [SequenceEvent.isEmpty removed](#SequenceEvent\.isEmpty-removed)
 
 ### Summarize heuristic changes based on telemetry
 Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
@@ -59,6 +60,12 @@ GC mark phase is turned on by default with this version. In mark phase, unrefere
 For more details on GC and options for controlling its behavior, please see [this document](./packages/runtime/container-runtime/garbageCollection.md).
 
 > Note: GC sweep phase has not been enabled yet so unreferenced content won't be deleted. The work to enable it is in progress and will be ready soon.
+
+### SequenceEvent.isEmpty removed
+
+In `@fluidframework/sequence`, a change was previously made to no longer fire `SequenceEvent`s with empty deltas.
+This made the `isEmpty` property of `SequenceEvent` (also available on `SequenceDeltaEvent` and `SequenceMaintenanceEvent`) redundant.
+It has been removed in this release--consumers should assume any raised delta events are not empty.
 
 ## 1.0.0 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
