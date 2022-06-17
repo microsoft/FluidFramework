@@ -48,6 +48,10 @@
   },
   "typeValidation": {
     "version": "2.0.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_MockDocumentDeltaConnection": {
+        "backCompat": false
+      }
+    }
   }
 }
