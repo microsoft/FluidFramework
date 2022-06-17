@@ -1447,10 +1447,8 @@ export class MergeTree {
                 ref.segment = undefined;
                 ref.offset = 0;
             } else {
-                ref.segment = newSegment;
-                ref.offset = newSegoff.offset ?? 0;
                 assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
-                newSegment.localRefs.addLocalRef(ref);
+                newSegment.localRefs.addLocalRef(ref, newSegoff.offset ?? 0);
             }
             ref.callbacks?.afterSlide?.();
         }
