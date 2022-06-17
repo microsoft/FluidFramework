@@ -139,7 +139,7 @@ const main = async () => {
     await cpy(stagedPackageFiles, stagingPath, { cwd: originalPath });
 
     // Combine members.
-    combineMembers(stagingPath, stagingPath, data.memberCombineInstructions);
+    await combineMembers(stagingPath, stagingPath, data.memberCombineInstructions);
 
     // Rewrite any remaining references in the output files using replace-in-files
     const from = [];
