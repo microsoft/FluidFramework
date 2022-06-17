@@ -90,9 +90,7 @@ export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
 
 // @public
 export interface AzureMember<T = any> extends IMember {
-    // (undocumented)
     additionalDetails?: T;
-    // (undocumented)
     userName: string;
 }
 
