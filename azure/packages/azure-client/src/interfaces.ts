@@ -126,12 +126,12 @@ export interface AzureContainerServices {
  */
 export interface AzureUser<T = unknown> extends IUser {
     /**
-     * The user's name.
+     * The user's name
      */
     name: string;
 
     /**
-     * TODO
+     * Custom, app-specific user information
      */
     additionalDetails?: T;
 }
@@ -141,7 +141,14 @@ export interface AzureUser<T = unknown> extends IUser {
  * this service-specific value. It will be returned for all audience members connected to Azure.
  */
 export interface AzureMember<T = any> extends IMember {
+    /**
+     * {@inheritDoc AzureUser.name}
+     */
     userName: string;
+
+    /**
+     * {@inheritDoc AzureUser.additionalDetails}
+     */
     additionalDetails?: T;
 }
 
