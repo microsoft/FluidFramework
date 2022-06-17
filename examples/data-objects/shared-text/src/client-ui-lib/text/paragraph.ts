@@ -399,12 +399,9 @@ export function getListCacheInfo(
                     tile.listCache = { itemCounts };
                 } else {
                     // Doesn't race because re-render is deferred
-                    let series: number[];
-                    if (tile.properties!.listKind === 0) {
-                        series = [0, 0, 2, 6, 3, 7, 2, 6, 3, 7];
-                    } else {
-                        series = [0, 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6];
-                    }
+                    const series: number[] = tile.properties!.listKind === 0
+                        ? [0, 0, 2, 6, 3, 7, 2, 6, 3, 7]
+                        : [0, 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6];
                     sharedString.annotateRange(tilePos, tilePos + 1, { series });
                     convertToListHead(tile);
                 }

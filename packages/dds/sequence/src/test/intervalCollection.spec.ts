@@ -13,6 +13,7 @@ import {
     MockContainerRuntimeForReconnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
@@ -243,6 +244,31 @@ describe("SharedString interval collections", () => {
             assertIntervals(sharedString2, collection2, [
                 { start: -1, end: -1 },
             ], false);
+        });
+
+        it("remains consistent when a change to the same position but different segment is issued", () => {
+            // This is a regression test for an issue in LocalIntervalCollection, which avoided actually modifying
+            // intervals on change operations if it perceived them to already have the same position. That logic was
+            // invalid in 2 ways:
+            // 1. for remote ops, the position requested for change potentially refers to a different revision from
+            //    the local position.
+            // 2. for local ops, even if an interval appears to be at the position it's being changed to, it might
+            //    actually be associated with a removed segment and pending slide. In this case, failing to update
+            //    the interval locally but still emitting a change op causes inconsistent behavior, since subsequent
+            //    slides may be to different segments (in this test, the danger is that the client issuing the change
+            //    op may end up with their interval pointing to the "Y" if they fail to change it locally)
+            sharedString.insertText(0, "ABCDE");
+            const collection1 = sharedString.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+            const interval = collection1.add(1, 3, IntervalType.SlideOnRemove);
+            sharedString2.insertText(2, "XY");
+            sharedString2.removeRange(1, 3);
+            sharedString.removeRange(1, 4);
+            collection1.change(interval.getIntervalId(), 1, 1);
+            containerRuntimeFactory.processAllMessages();
+            assert.equal(sharedString.getText(), "AYE");
+            assertIntervals(sharedString, collection1, [{ start: 2, end: 2 }]);
+            assertIntervals(sharedString2, sharedString2.getIntervalCollection("test"), [{ start: 2, end: 2 }]);
         });
 
         it("can slide intervals nearer to locally removed segment", () => {
@@ -897,6 +923,98 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
+        describe("emits changeInterval events", () => {
+            let collection: IntervalCollection<SequenceInterval>;
+            const eventLog: {
+                interval: { start: number; end: number; };
+                local: boolean;
+                op: ISequencedDocumentMessage;
+            }[] = [];
+            let intervalId: string;
+            beforeEach(() => {
+                sharedString.insertText(0, "hello world");
+                collection = sharedString.getIntervalCollection("test");
+                collection.on("changeInterval",
+                    ({ start, end }, local, op) => eventLog.push({
+                        interval: {
+                            start: sharedString.localReferencePositionToPosition(start),
+                            end: sharedString.localReferencePositionToPosition(end),
+                        },
+                        local,
+                        op,
+                    }),
+                );
+                intervalId = collection.add(0, 1, IntervalType.SlideOnRemove).getIntervalId();
+                containerRuntimeFactory.processAllMessages();
+                eventLog.length = 0;
+            });
+
+            it("on local change", () => {
+                collection.change(intervalId, 2, 3);
+                assert.equal(eventLog.length, 1);
+                {
+                    const [{ interval, local, op }] = eventLog;
+                    assert.deepEqual(interval, { start: 2, end: 3 });
+                    assert.equal(local, true);
+                    assert.equal(op, undefined);
+                }
+                containerRuntimeFactory.processAllMessages();
+                assert.equal(eventLog.length, 2);
+                {
+                    const { interval, local, op } = eventLog[1];
+                    assert.deepEqual(interval, { start: 2, end: 3 });
+                    assert.equal(local, true);
+                    assert.equal(op.contents.type, "act");
+                }
+            });
+
+            it("on a remote change", () => {
+                const collection2 = sharedString2.getIntervalCollection("test");
+                collection2.change(intervalId, 2, 3);
+                assert.equal(eventLog.length, 0);
+                containerRuntimeFactory.processAllMessages();
+                assert.equal(eventLog.length, 1);
+                {
+                    const [{ interval, local, op }] = eventLog;
+                    assert.deepEqual(interval, { start: 2, end: 3 });
+                    assert.equal(local, false);
+                    assert.equal(op.contents.type, "act");
+                }
+            });
+
+            it("on a property change", () => {
+                collection.changeProperties(intervalId, { foo: "bar" });
+                assert.equal(eventLog.length, 1);
+                {
+                    const [{ interval, local, op }] = eventLog;
+                    assert.deepEqual(interval, { start: 0, end: 1 });
+                    assert.equal(local, true);
+                    assert.equal(op, undefined);
+                }
+                containerRuntimeFactory.processAllMessages();
+                assert.equal(eventLog.length, 2);
+                {
+                    const { interval, local, op } = eventLog[1];
+                    assert.deepEqual(interval, { start: 0, end: 1 });
+                    assert.equal(local, true);
+                    assert.equal(op.contents.type, "act");
+                }
+            });
+
+            it("on a change due to an endpoint sliding", () => {
+                sharedString.removeRange(1, 3);
+                assert.equal(eventLog.length, 0);
+                containerRuntimeFactory.processAllMessages();
+                assert.equal(eventLog.length, 1);
+                {
+                    const [{ interval, local, op }] = eventLog;
+                    assert.deepEqual(interval, { start: 0, end: 1 });
+                    assert.equal(local, true);
+                    assert.equal(op, undefined);
+                }
+            });
+        });
+
         it("can be concurrently created", () => {
             sharedString.insertText(0, "hello world");
             const collection1 = sharedString.getIntervalCollection("test");
@@ -904,6 +1022,21 @@ describe("SharedString interval collections", () => {
             containerRuntimeFactory.processAllMessages();
             assert.equal(Array.from(collection1).length, 0);
             assert.equal(Array.from(collection2).length, 0);
+        });
+
+        it("Can correctly interpret ack of single-endpoint changes", () => {
+            sharedString.insertText(0, "ABCDEF");
+            const collection1 = sharedString.getIntervalCollection("test");
+            const collection2 = sharedString2.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+            const interval = collection1.add(2, 5, IntervalType.SlideOnRemove);
+            sharedString2.removeRange(4, 6);
+            collection1.change(interval.getIntervalId(), 1 /* only change start */);
+            sharedString2.insertText(2, "123");
+            containerRuntimeFactory.processAllMessages();
+            assert.equal(sharedString.getText(), "AB123CD");
+            assertIntervals(sharedString, collection1, [{ start: 1, end: 6 }]);
+            assertIntervals(sharedString2, collection2, [{ start: 1, end: 6 }]);
         });
 
         it("doesn't slide references on ack if there are pending remote changes", () => {
@@ -925,6 +1058,23 @@ describe("SharedString interval collections", () => {
 
             assert.equal(sharedString.getText(), "ABC");
             assertIntervals(sharedString, collection1, [{ start: 1, end: 2 }]);
+        });
+
+        describe("have eventually consistent property sets", () => {
+            it("when an interval is modified with a pending change", () => {
+                sharedString.insertText(0, "ABC");
+                const collection1 = sharedString.getIntervalCollection("test");
+                const collection2 = sharedString2.getIntervalCollection("test");
+                const interval = collection1.add(0, 0, IntervalType.SlideOnRemove);
+                containerRuntimeFactory.processAllMessages();
+                const id = interval.getIntervalId();
+                collection1.change(id, 1, 1);
+                collection1.changeProperties(id, { propName: "losing value" });
+                collection2.changeProperties(id, { propName: "winning value" });
+                containerRuntimeFactory.processAllMessages();
+                assert.equal(collection1.getIntervalById(id).properties.propName, "winning value");
+                assert.equal(collection2.getIntervalById(id).properties.propName, "winning value");
+            });
         });
     });
 

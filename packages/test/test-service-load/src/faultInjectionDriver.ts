@@ -165,6 +165,8 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
 }
 
 export class FaultInjectionError extends LoggingError {
+    errorType = "faultInjectionError";
+
     constructor(
         message: string,
         public readonly canRetry: boolean | undefined,

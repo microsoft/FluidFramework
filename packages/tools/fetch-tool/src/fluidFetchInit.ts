@@ -126,7 +126,7 @@ async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
 
 export async function fluidFetchInit(urlStr: string) {
     const resolvedUrl = await resolveUrl(urlStr) as IFluidResolvedUrl;
-    if (!resolvedUrl) {
+    if (resolvedUrl === undefined) {
         return Promise.reject(new Error(`Unknown URL ${urlStr}`));
     }
     const protocol = new URL(resolvedUrl.url).protocol;

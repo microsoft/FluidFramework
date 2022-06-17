@@ -4,43 +4,171 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore, DataObjectFactory } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
+import { ILoaderProps } from "@fluidframework/container-loader";
 import {
     ContainerRuntime,
     gcTreeKey,
     IAckedSummary,
     IContainerRuntimeOptions,
+    ISummaryCancellationToken,
+    ISummaryNackMessage,
+    neverCancelledSummaryToken,
+    SummarizerStopReason,
     SummaryCollection,
 } from "@fluidframework/container-runtime";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestFluidObject,
+    ITestObjectProvider,
+    TestFluidObjectFactory,
+} from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import {
-    loadSummarizer,
-    TestDataObject,
-    submitAndAckSummary,
-    FailingSubmitSummaryStage,
-    submitFailingSummary,
-} from "../mockSummarizerClient";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { mockConfigProvider } from "./mockConfigProivder";
+import { mockConfigProvider } from "./gcTestConfigs";
+import { waitForContainerConnection } from "./gcTestSummaryUtils";
 
 /**
- * Validates that unchanged Fluid objects are not resummarized again. Basically, only objects that have changed since
- * the previous summary should be resummarized and for the rest, we add handles that refer to the previous summary.
- * A Fluid object is considered changed since the last summary if either or both of the following is true:
- * - It received an op.
- * - Its reference state changed, i.e., it was referenced and became unreferenced or vice-versa.
+  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
+  */
+async function loadSummarizer(
+    provider: ITestObjectProvider,
+    runtimeFactory: IRuntimeFactory,
+    sequenceNumber: number,
+    summaryVersion?: string,
+    loaderProps?: Partial<ILoaderProps>,
+) {
+    const requestHeader = {
+        [LoaderHeader.cache]: false,
+        [LoaderHeader.clientDetails]: {
+            capabilities: { interactive: true },
+            type: "summarizer",
+        },
+        [DriverHeader.summarizingClient]: true,
+        [LoaderHeader.reconnect]: false,
+        [LoaderHeader.sequenceNumber]: sequenceNumber,
+        [LoaderHeader.version]: summaryVersion,
+    };
+    const summarizerContainer = await provider.loadContainer(runtimeFactory, loaderProps, requestHeader);
+    await waitForContainerConnection(summarizerContainer);
+
+    // Fail fast if we receive a nack as something must have gone wrong.
+    const summaryCollection = new SummaryCollection(summarizerContainer.deltaManager, new TelemetryNullLogger());
+    summaryCollection.on("summaryNack", (op: ISummaryNackMessage) => {
+        throw new Error(`Received Nack for sequence#: ${op.contents.summaryProposal.summarySequenceNumber}`);
+    });
+
+    const defaultDataStore = await requestFluidObject<ITestFluidObject>(summarizerContainer, "default");
+    return {
+        containerRuntime: defaultDataStore.context.containerRuntime as ContainerRuntime,
+        summaryCollection,
+    };
+}
+
+namespace FailingSubmitSummaryStage {
+    export type Base = 1;
+    export type Generate = 2;
+    export type Upload = 3;
+
+    export const Base: Base = 1 as const;
+    export const Generate: Generate = 2 as const;
+    export const Upload: Upload = 3 as const;
+}
+
+type FailingSubmitSummaryStage =
+    FailingSubmitSummaryStage.Base |
+    FailingSubmitSummaryStage.Generate |
+    FailingSubmitSummaryStage.Upload;
+
+class ControlledCancellationToken implements ISummaryCancellationToken {
+    count: number = 0;
+    get cancelled(): boolean {
+        this.count++;
+        return this.count >= this.whenToCancel;
+    }
+
+    constructor(
+        private readonly whenToCancel: FailingSubmitSummaryStage,
+        public readonly waitCancelled: Promise<SummarizerStopReason> = new Promise(() => {}),
+    ) {}
+}
+
+async function submitFailingSummary(
+    provider: ITestObjectProvider,
+    summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
+    logger: ITelemetryLogger,
+    failingStage: FailingSubmitSummaryStage,
+    fullTree: boolean = false,
+) {
+    await provider.ensureSynchronized();
+    // Submit a summary with a fail token on generate
+    const result = await summarizerClient.containerRuntime.submitSummary({
+        fullTree,
+        refreshLatestAck: false,
+        summaryLogger: logger,
+        cancellationToken: new ControlledCancellationToken(failingStage),
+    });
+
+    const stageMap = new Map<FailingSubmitSummaryStage, string>();
+    stageMap.set(FailingSubmitSummaryStage.Base, "base");
+    stageMap.set(FailingSubmitSummaryStage.Generate, "generate");
+    stageMap.set(FailingSubmitSummaryStage.Upload, "upload");
+
+    const failingStageString = stageMap.get(failingStage);
+    assert(result.stage === failingStageString, `Expected a failure on ${failingStageString}`);
+    assert(result.stage !== "submit", `Expected a failing stage: ${failingStageString}`);
+    assert(result.error !== undefined, `Expected an error on ${failingStageString}`);
+}
+
+/**
+ * Generates, uploads, submits a summary on the given container runtime and waits for the summary to be ack'd
+ * by the server.
+ * @returns The acked summary and the last sequence number contained in the summary that is submitted.
  */
-describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
+async function submitAndAckSummary(
+    provider: ITestObjectProvider,
+    summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; },
+    logger: ITelemetryLogger,
+    fullTree: boolean = false,
+    cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
+) {
+    // Wait for all pending ops to be processed by all clients.
+    await provider.ensureSynchronized();
+    const summarySequenceNumber = summarizerClient.containerRuntime.deltaManager.lastSequenceNumber;
+    // Submit a summary
+    const result = await summarizerClient.containerRuntime.submitSummary({
+        fullTree,
+        refreshLatestAck: false,
+        summaryLogger: logger,
+        cancellationToken,
+    });
+    assert(result.stage === "submit", "The summary was not submitted");
+    // Wait for the above summary to be ack'd.
+    const ackedSummary = await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
+    // Update the container runtime with the given ack. We have to do this manually because there is no summarizer
+    // client in these tests that takes care of this.
+    await summarizerClient.containerRuntime.refreshLatestSummaryAck(
+        ackedSummary.summaryOp.contents.handle,
+        ackedSummary.summaryAck.contents.handle,
+        ackedSummary.summaryOp.referenceSequenceNumber,
+        logger,
+    );
+    return { ackedSummary, summarySequenceNumber };
+}
+
+/**
+ * Validates whether or not a GC Tree Summary Handle should be written to the summary.
+ */
+describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
+    const dataObjectFactory = new TestFluidObjectFactory([]);
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true },
@@ -67,9 +195,9 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
 
     let mainContainer: IContainer;
     let summarizerClient1: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection; };
-    let dataStoreA: TestDataObject;
-    let dataStoreB: TestDataObject;
-    let dataStoreC: TestDataObject;
+    let dataStoreA: ITestFluidObject;
+    let dataStoreB: ITestFluidObject;
+    let dataStoreC: ITestFluidObject;
 
     const isTreeHandle = true;
     const isTree = false;
@@ -146,7 +274,7 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
 
     describe("Stores handle in summary when GC state does not change", () => {
         beforeEach(async () => {
-            provider = getTestObjectProvider();
+            provider = getTestObjectProvider({ syncSummarizer: true });
             // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
             // time the summarizer client uploads a summary.
             (provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
@@ -155,19 +283,20 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             );
 
             mainContainer = await createContainer();
-            dataStoreA = await requestFluidObject<TestDataObject>(mainContainer, "default");
-
-            summarizerClient1 = await getNewSummarizer();
+            dataStoreA = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
 
             // Create data stores B and C, and mark them as referenced.
-            dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-            dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-            dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+            dataStoreB = await requestFluidObject<ITestFluidObject>(
+                await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type), "");
+            dataStoreA.root.set("dataStoreB", dataStoreB.handle);
+            dataStoreC = await requestFluidObject<ITestFluidObject>(
+                await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type), "");
+            dataStoreA.root.set("dataStoreC", dataStoreC.handle);
 
-            await provider.ensureSynchronized();
+            await waitForContainerConnection(mainContainer);
 
             // A gc blob should be submitted as this is the first summary
+            summarizerClient1 = await getNewSummarizer();
             await submitSummaryAndValidateState(summarizerClient1, isTree);
         });
 
@@ -185,7 +314,7 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             assert.deepEqual(tree2, tree1, "GC trees between containers should be the same!");
 
             // Make a change in dataStoreA.
-            dataStoreA._root.set("key", "value");
+            dataStoreA.root.set("key", "value");
 
             // Summarize and validate that a GC blob handle is generated.
             const summaryVersion = await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
@@ -203,13 +332,13 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
 
         it("New gc blobs are submitted when handles are added and deleted", async () => {
             // Make a change in dataStoreA.
-            dataStoreA._root.set("key", "value");
+            dataStoreA.root.set("key", "value");
 
             // A gc blob handle should be submitted as there are no gc changes
             await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
 
             // A new gc blob should be submitted as there is a deleted gc reference
-            dataStoreA._root.delete("dataStoreC");
+            dataStoreA.root.delete("dataStoreC");
 
             // Summarize and validate that all data store entries are trees since a datastore reference has changed.
             await submitSummaryAndValidateState(summarizerClient1, isTree);
@@ -218,14 +347,14 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
 
             // Add a handle reference to dataStore C
-            dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+            dataStoreA.root.set("dataStoreC", dataStoreC.handle);
             // A new gc blob should be submitted as there is a new gc reference
             await submitSummaryAndValidateState(summarizerClient1, isTree);
         });
 
         it("GC blob handle written when summary fails", async () => {
             // Make a change in dataStoreA.
-            dataStoreA._root.set("key", "value");
+            dataStoreA.root.set("key", "value");
 
             // A gc blob handle should be submitted as there are no gc changes
             await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
@@ -238,7 +367,7 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
 
         it("GC blob written when summary fails", async () => {
             // Make a reference change by deleting a handle
-            dataStoreA._root.delete("dataStoreB");
+            dataStoreA.root.delete("dataStoreB");
 
             await provider.ensureSynchronized();
 
@@ -254,7 +383,7 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
             await provider.ensureSynchronized();
 
             // Make a reference change by deleting a handle
-            dataStoreA._root.delete("dataStoreB");
+            dataStoreA.root.delete("dataStoreB");
 
             await submitFailingSummary(provider, summarizerClient1, logger, FailingSubmitSummaryStage.Generate);
 
@@ -270,7 +399,7 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
 
     describe("Stores handle in summary when GC state does not change", () => {
         it("Rewrites blob when data is not at root", async () => {
-            provider = getTestObjectProvider();
+            provider = getTestObjectProvider({ syncSummarizer: true });
             // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
             // time the summarizer client uploads a summary.
             (provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
@@ -278,13 +407,15 @@ describeNoCompat("GC Blob stored in summaries", (getTestObjectProvider) => {
                 uploadSummaryCb,
             );
             mainContainer = await createContainer();
-            dataStoreA = await requestFluidObject<TestDataObject>(mainContainer, "default");
+            dataStoreA = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
 
             // Create data stores B and C, and mark them as referenced.
-            dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-            dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-            dataStoreC = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
-            dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+            dataStoreB = await requestFluidObject<ITestFluidObject>(
+                await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type), "");
+            dataStoreA.root.set("dataStoreB", dataStoreB.handle);
+            dataStoreC = await requestFluidObject<ITestFluidObject>(
+                await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type), "");
+            dataStoreA.root.set("dataStoreC", dataStoreC.handle);
 
             settings["Fluid.GarbageCollection.WriteDataAtRoot"] = "false";
             summarizerClient1 = await getNewSummarizer();
