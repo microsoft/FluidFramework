@@ -6,16 +6,20 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
-//* import EventEmitter from "events";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { TelemetryNullLogger, Timer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
-import { IConnectionDetails } from "@fluidframework/container-definitions";
+import { IConnectionDetails, IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IEventProvider, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ConnectionState } from "../connectionState";
 import { ConnectionStateHandler, IConnectionStateHandlerInputs } from "../connectionStateHandler";
-// import { ImmediateCatchUpMonitor } from "../catchUpMonitor";
+import { ICatchUpMonitor } from "../catchUpMonitor";
+
+type MockDeltaManagerForCatchingUp =
+    TypedEventEmitter<IDeltaManagerEvents> &  //* Remove?
+    IEventProvider<IDeltaManagerEvents> &
+    Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">;
 
 describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
@@ -27,8 +31,11 @@ describe("ConnectionStateHandler Tests", () => {
     let client: IClient;
     const expectedTimeout = 90000;
     const pendingClientId = "pendingClientId";
+    let deltaManagerForCatchingUp: MockDeltaManagerForCatchingUp;
     let connectionStateHandler_receivedAddMemberEvent: (id: string) => void;
     let connectionStateHandler_receivedRemoveMemberEvent: (id: string) => void;
+    let connectionStateHandler_joinOpTimer: () => Timer;
+    let connectionStateHandler_catchUpMonitor: () => ICatchUpMonitor;
 
     // Stash the real setTimeout because sinon fake timers will hijack it.
     const realSetTimeout = setTimeout;
@@ -93,21 +100,23 @@ describe("ConnectionStateHandler Tests", () => {
             (id: string) => { (connectionStateHandler as any).receivedAddMemberEvent(id); };
         connectionStateHandler_receivedRemoveMemberEvent =
             (id: string) => { (connectionStateHandler as any).receivedRemoveMemberEvent(id); };
+        connectionStateHandler_joinOpTimer = () => (connectionStateHandler as any).joinOpTimer as Timer;
+        connectionStateHandler_catchUpMonitor = () => (connectionStateHandler as any).catchUpMonitor as ICatchUpMonitor;
+        deltaManagerForCatchingUp = new (class extends TypedEventEmitter<IDeltaManagerEvents> implements MockDeltaManagerForCatchingUp {
+            lastSequenceNumber: number = 5;
+            lastKnownSeqNumber: number = 10;
+        })();
     });
 
     /** Test plan:
      * NEW BEHAVIOR
      * (1) applyForConnectedState should wait for "caughtUp"
-     * (3) assert 0x2a6 shouldn't fire for write connections (it did before)
-     *      Write connection after Join op before prior Leave op
-     * (2) catchUpMonitor gets disposed on disconnect?
+     * (1) receivedConnectEvent should wait for "caughtUp"
      *
      * PRESERVED BEHAVIOR
-     * (3) receivedDisconnectEvent should stop joinOp timer
      * (1) [Immediate mode] Write client in quorum upon "connect" transitions directly to "connected"
      * (1) [Immediate mode] Write client not yet in quorum transitions to "connected" upon addMember event
      * (1) [Immediate mode] Read client transitions directly to "connected"
-     * (3) Only set Leave timer if there are unacked local ops (shouldClientJoinWrite is true) at the moment of disconnect ()  (is this even correct?)
      *
      * OTHER
      * (2) cannotTransitionToConnectedState event should never fire
@@ -119,6 +128,18 @@ describe("ConnectionStateHandler Tests", () => {
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Read Client should be in connected state");
+    });
+
+    it("Should move to connected after catching up for read client", async () => {
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in Disconnected state");
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails, deltaManagerForCatchingUp as any);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in CatchingUp state");
+        //* Move to helper on mock DM
+        deltaManagerForCatchingUp.emit("op", { sequenceNumber: 10 });
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Read Client should be in Connected state");
     });
 
     it("Should move to connected state on normal flow for write client", async () => {
@@ -136,6 +157,27 @@ describe("ConnectionStateHandler Tests", () => {
         connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
+    });
+
+    it("Should move to connected state after catching up for write client", async () => {
+        client.mode = "write";
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in Disconnected state");
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails, deltaManagerForCatchingUp as any);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in CatchingUp state");
+        protocolHandler.quorum.addMember("anotherClientId", { client, sequenceNumber: 0 });
+        connectionStateHandler_receivedAddMemberEvent("anotherClientId");
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Some other client joined.");
+        protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in CatchingUp state until caught up");
+        //* Move to helper on mock DM
+        deltaManagerForCatchingUp.emit("op", { sequenceNumber: 10 });
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client should be in Connected state");
     });
 
     it("Should move to connected state on normal flow for write client, even if quorum isn't initialized at first", async () => {
@@ -304,6 +346,23 @@ describe("ConnectionStateHandler Tests", () => {
         connectionStateHandler.containerSaved();
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 2 should now be in connected state");
+    });
+
+    it("All pending state should be cleared after disconnect", async () => {
+        client.mode = "write";
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        assert(connectionStateHandler.pendingClientId !== undefined, "pendingClientId should be set after receiving 'connect' event");
+        assert(connectionStateHandler_catchUpMonitor !== undefined, "catchUpMonitor should be set after receiving 'connect' event");
+        assert(connectionStateHandler_joinOpTimer().hasTimer, "joinOpTimer should be set after receiving 'connect' event");
+
+        let catchUpMonitorDisposed = false;
+        connectionStateHandler_catchUpMonitor().dispose = () => { catchUpMonitorDisposed = true; };
+
+        connectionStateHandler.receivedDisconnectEvent("test");
+        assert(connectionStateHandler.pendingClientId === undefined, "pendingClientId should not be set after receiving 'disconnect' event");
+        assert(connectionStateHandler_catchUpMonitor() === undefined, "catchUpMonitor should not be set after receiving 'disconnect' event");
+        assert(catchUpMonitorDisposed, "Original catchUpMonitor should have been disposed after receiving 'disconnect' event");
+        assert(!connectionStateHandler_joinOpTimer().hasTimer, "joinOpTimer should not be set after receiving 'disconnect' event");
     });
 
     it("Should wait for client 1 to leave before moving to connected state(Client 3) when client 2 got disconnected from connecting state", async () => {

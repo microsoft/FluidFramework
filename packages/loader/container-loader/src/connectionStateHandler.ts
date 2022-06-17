@@ -7,9 +7,7 @@ import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-d
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetails, IDeltaManager } from "@fluidframework/container-definitions";
 import { ILocalSequencedClient, IProtocolHandler } from "@fluidframework/protocol-base";
-//*
-// eslint-disable-next-line max-len
-import { ConnectionMode, IDocumentMessage, IQuorumClients, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ConnectionMode, IQuorumClients } from "@fluidframework/protocol-definitions";
 import { logIfFalse, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor, ImmediateCatchUpMonitor } from "./catchUpMonitor";
@@ -237,7 +235,7 @@ export class ConnectionStateHandler {
     };
 
     /**
-     * The "connect" event indicates the connection to the Relay Service is live.
+     * The "connect" event indicates the connection to the ordering service is live.
      * However, some additional conditions must be met before we can fully transition to
      * "Connected" state. This function handles that interim period, known as "Connecting" state.
      * @param connectionMode - Read or Write connection
@@ -248,7 +246,7 @@ export class ConnectionStateHandler {
     public receivedConnectEvent(
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
-        deltaManager?: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        deltaManager?: IDeltaManager<any, any>,
     ) {
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.CatchingUp;
@@ -283,7 +281,7 @@ export class ConnectionStateHandler {
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.CatchingUp, oldState);
 
         // For write connections, this pending clientId could be in the quorum already (i.e. join op already processed).
-        // We are fetching ops from storage in parallel to connecting to Relay Service,
+        // We are fetching ops from storage in parallel to connecting to ordering service,
         // and given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         // If quorumClients itself is undefined, we expect it will process the join op after it's initialized.

@@ -6,7 +6,7 @@
 import { IDisposable, IEvent } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /** @see ICatchUpMonitor for usage */
 type CaughtUpListener = (hasCheckpointSequenceNumber: boolean) => void;
@@ -39,7 +39,7 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
      * Create the CatchUpMonitor, setting the target sequence number to wait for based on DeltaManager's current state.
      */
     constructor(
-        private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        private readonly deltaManager: IDeltaManager<any, any>,
     ) {
         super();
 
