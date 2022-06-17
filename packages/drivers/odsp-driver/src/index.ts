@@ -34,5 +34,4 @@ export * from "./odspFluidFileLink";
 
 // Wire format related
 export * from "./compactSnapshotParser";
-export * from "./odspUtils";
 export * from "./ReadBufferUtils";

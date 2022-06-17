@@ -10,7 +10,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
-import { ISnapshotContents } from "../odspUtils";
+import { ISnapshotContents } from "../odspPublicUtils";
 import { ISnapshotTreeEx } from "../contracts";
 
 const snapshotTree: ISnapshotTreeEx = {

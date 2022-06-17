@@ -43,22 +43,6 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
 
-export interface ISnapshotContents {
-    snapshotTree: ISnapshotTree;
-    blobs: Map<string, ArrayBuffer>;
-    ops: ISequencedDocumentMessage[];
-
-    /**
-     * Sequence number of the summary
-     */
-    sequenceNumber: number;
-
-    /**
-     * Sequence number for the latest op/summary for the file in ODSP
-     */
-    latestSequenceNumber: number;
-}
-
 export interface IOdspResponse<T> {
     content: T;
     headers: Map<string, string>;

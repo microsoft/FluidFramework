@@ -6,7 +6,7 @@
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IOdspSnapshot, IOdspSnapshotCommit, ISnapshotTreeEx } from "./contracts";
-import { ISnapshotContents } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
 
 /**
  * Build a tree hierarchy base on a flat tree
@@ -67,6 +67,7 @@ export function convertOdspSnapshotToSnapshotTreeAndBlobs(
         ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
         sequenceNumber: odspSnapshot?.trees[0].sequenceNumber,
         snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
+        latestSequenceNumber: odspSnapshot.ops?.[odspSnapshot.ops.length - 1].sequenceNumber ?? odspSnapshot?.trees[0].sequenceNumber,
     };
     return val;
 }
