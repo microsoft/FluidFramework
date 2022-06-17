@@ -5,6 +5,7 @@
 
 import { ServiceAudience } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { assert } from '@fluidframework/common-utils'
 import { IAzureAudience, AzureMember, AzureUser } from "./interfaces";
 
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
@@ -12,12 +13,14 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
    * @internal
    */
   protected createServiceMember(audienceMember: IClient): AzureMember {
+    const azureUser = audienceMember.user as AzureUser;
+    assert(azureUser !== undefined, "Provided user was not an \"AzureUser\".");
+
     return {
       userId: audienceMember.user.id,
-      userName: (audienceMember.user as AzureUser).name,
+      userName: azureUser.name,
       connections: [],
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      additionalDetails: (audienceMember.user as AzureUser).additionalDetails,
+      additionalDetails: azureUser.additionalDetails,
     };
   }
 }
