@@ -121,7 +121,6 @@ export class Interval implements ISerializableInterval {
 
 // @public
 export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
-    // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
     // @internal
     constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]);
@@ -161,7 +160,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     serializeInternal(): ISerializedInterval[];
 }
 
-// @public (undocumented)
+// @public
 export class IntervalCollectionIterator<TInterval extends ISerializableInterval> {
     constructor(collection: IntervalCollection<TInterval>, iteratesForward?: boolean, start?: number, end?: number);
     // (undocumented)
@@ -215,11 +214,9 @@ export interface ISerializedInterval {
     start: number;
 }
 
-// @public (undocumented)
+// @public
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
-    // (undocumented)
     getIntervalCollection(label: string): IntervalCollection<TInterval>;
-    // (undocumented)
     waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
 }
 
@@ -729,7 +726,6 @@ export class SubSequence<T> extends BaseSegment {
     static fromJSONObject<U>(spec: Serializable): SubSequence<U> | undefined;
     static is(segment: ISegment): segment is SubSequence<any>;
     items: Serializable<T>[];
-    // (undocumented)
     removeRange(start: number, end: number): boolean;
     // (undocumented)
     toJSONObject(): IJSONRunSegment<T>;

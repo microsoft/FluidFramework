@@ -627,6 +627,17 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         this.intervalTree.mapUntil(fn);
     }
 
+    /**
+     * TODO
+     *
+     * @param results - TODO
+     * @param iteratesForward - TODO
+     * @param start - TODO: docs.
+     * TODO: semantic meaning of this being absent? Of both this and `end` being absent?
+     * @param end - TODO: docs.
+     * TODO: semantic meaning of this being absent? Of both this and `start` being absent?
+     * @returns
+     */
     public gatherIterationResults(
         results: TInterval[],
         iteratesForward: boolean,
@@ -982,6 +993,11 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
 
 export type DeserializeCallback = (properties: PropertySet) => void;
 
+/**
+ * TODO
+ *
+ * @typeParam TInterval - TODO
+ */
 export class IntervalCollectionIterator<TInterval extends ISerializableInterval> {
     private readonly results: TInterval[];
     private index: number;
@@ -1667,7 +1683,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     /**
-     * TODO
+     * TODO: docs
+     *
      * @param results - TODO
      * @param iteratesForward - TODO
      * @param start - TODO
@@ -1677,7 +1694,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         results: TInterval[],
         iteratesForward: boolean,
         start?: number,
-        end?: number) {
+        end?: number): void {
         if (!this.attached) {
             return;
         }
