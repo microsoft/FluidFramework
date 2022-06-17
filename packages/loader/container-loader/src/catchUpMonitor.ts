@@ -20,8 +20,8 @@ export interface ICatchUpMonitorEvents extends IEvent {
 export interface ICatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents>, IDisposable { }
 
 /**
- * Monitors the given Container and notifies listeners when the Container has processed all ops
- * known at the time the monitor was created.
+ * Monitors a Container's DeltaManager, notifying listeners when all ops have been processed
+ * that were known at the time the monitor was created.
  */
 export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> implements ICatchUpMonitor {
     private readonly hasCheckpointSequenceNumber: boolean;
@@ -51,10 +51,10 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
 
         this.deltaManager.on("op", this.opHandler);
 
-        // Simulate the last processed op
+        // Simulate the last processed op to set caughtUp in case we already are
         this.opHandler({ sequenceNumber: this.deltaManager.lastSequenceNumber });
 
-        // If a listener is added but before that point we caught up, notify that new listener immediately
+        // If a listener is added after we are already caught up, notify that new listener immediately
         this.on("newListener", (event: string, listener) => {
             if (event === "caughtUp") {
                 const caughtUpListener = listener as CaughtUpListener;
