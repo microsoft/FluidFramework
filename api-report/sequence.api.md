@@ -36,7 +36,7 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions';
-import { LocalReference } from '@fluidframework/merge-tree';
+import { LocalReferencePosition } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree';
@@ -57,8 +57,9 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 
 // @public (undocumented)
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
+    (event: "changeInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
     // (undocumented)
-    (event: "addInterval" | "changeInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
+    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void): any;
 }
@@ -206,12 +207,6 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     // (undocumented)
     propertyDeltas: PropertySet;
     segment: ISegment;
-}
-
-// @public
-export interface ISequenceIntervalEvents extends IEvent {
-    // (undocumented)
-    (event: "beforePositionChange" | "afterPositionChange", listener: () => void): any;
 }
 
 // @public (undocumented)
@@ -378,8 +373,10 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 }
 
 // @public (undocumented)
-export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents> implements ISerializableInterval {
-    constructor(start: LocalReference, end: LocalReference, intervalType: IntervalType, props?: PropertySet);
+export class SequenceInterval implements ISerializableInterval {
+    constructor(client: Client, start: LocalReferencePosition, end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet);
+    // @internal
+    addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
     // (undocumented)
     addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
     // (undocumented)
@@ -391,7 +388,7 @@ export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents>
     // (undocumented)
     compareStart(b: SequenceInterval): number;
     // (undocumented)
-    end: LocalReference;
+    end: LocalReferencePosition;
     // (undocumented)
     getIntervalId(): string | undefined;
     // (undocumented)
@@ -406,10 +403,12 @@ export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents>
     properties: PropertySet;
     // (undocumented)
     propertyManager: PropertiesManager;
+    // @internal
+    removePositionChangeListeners(): void;
     // (undocumented)
     serialize(client: Client): ISerializedInterval;
     // (undocumented)
-    start: LocalReference;
+    start: LocalReferencePosition;
     // (undocumented)
     union(b: SequenceInterval): SequenceInterval;
 }
@@ -530,17 +529,13 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 // @public (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval> {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
-    // @deprecated (undocumented)
-    addLocalReference(lref: LocalReference): void;
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
     // (undocumented)
     protected applyStashedOp(content: any): unknown;
     // (undocumented)
     protected client: Client;
     // (undocumented)
-    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined): ReferencePosition;
-    // @deprecated (undocumented)
-    createPositionReference(segment: T, offset: number, refType: ReferenceType): LocalReference;
+    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     protected didAttach(): void;
     // (undocumented)
@@ -581,8 +576,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected loadedDeferred: Deferred<void>;
     // (undocumented)
     localReferencePositionToPosition(lref: ReferencePosition): number;
-    // @deprecated (undocumented)
-    localRefToPos(localRef: LocalReference): number;
     // (undocumented)
     protected onConnect(): void;
     // (undocumented)
@@ -591,10 +584,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: SummarySerializer): void;
-    // @deprecated (undocumented)
-    removeLocalReference(lref: LocalReference): ReferencePosition;
     // (undocumented)
-    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition;
+    removeLocalReferencePosition(lref: ReferencePosition): LocalReferencePosition;
     // (undocumented)
     removeRange(start: number, end: number): IMergeTreeRemoveMsg;
     protected replaceRange(start: number, end: number, segment: ISegment): void;

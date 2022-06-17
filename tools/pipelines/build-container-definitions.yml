@@ -26,9 +26,7 @@ parameters:
 trigger:
   branches:
     include:
-    - main
-    - next
-    - release/*
+    - release/0.*
   paths:
     include:
     - common/lib/container-definitions
@@ -45,9 +43,7 @@ trigger:
 pr:
   branches:
     include:
-    - main
-    - next
-    - release/*
+    - release/0.*
   paths:
     include:
     - common/lib/container-definitions

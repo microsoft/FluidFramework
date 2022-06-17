@@ -16,7 +16,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReference } from "./localReference";
+import { LocalReferencePosition } from "./localReference";
 import {
     CollaborationWindow,
     compareStrings,
@@ -53,7 +53,7 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
-import { ReferencePosition, RangeStackMap } from "./referencePositions";
+import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -241,7 +241,7 @@ export class Client {
             this.getCurrentSeq(),
             this.getClientId());
 
-        if (pos === LocalReference.DetachedPosition) {
+        if (pos === DetachedReferencePosition) {
             return undefined;
         }
         const op = createInsertSegmentOp(
@@ -318,27 +318,14 @@ export class Client {
         }
         return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
     }
-    /**
-     * @deprecated - use createReferencePosition instead
-     */
-    public addLocalReference(lref: LocalReference) {
-        return this.mergeTree.addLocalReference(lref);
-    }
-
-    /**
-     * @deprecated - use removeReferencePosition instead
-     */
-    public removeLocalReference(lref: LocalReference) {
-        return this.removeLocalReferencePosition(lref);
-    }
 
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
-    ): ReferencePosition {
-        return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties, this);
+    ): LocalReferencePosition {
+        return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties);
     }
 
-    public removeLocalReferencePosition(lref: ReferencePosition) {
+    public removeLocalReferencePosition(lref: LocalReferencePosition) {
         return this.mergeTree.removeLocalReferencePosition(lref);
     }
 

@@ -69,10 +69,10 @@ export class EnumArrayProperty extends ValueArrayProperty {
      */
     insertRange(in_offset, in_array) {
         if (!_.isNumber(in_offset)) {
-            throw new Error(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.insertRange or .insert');
+            throw new TypeError(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.insertRange or .insert');
         }
         if (!_.isArray(in_array)) {
-            throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'EnumArrayProperty.insertRange');
+            throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + 'EnumArrayProperty.insertRange');
         }
 
         var internalValueArray = [];
@@ -92,7 +92,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
      */
     set(in_index, in_value) {
         if (!_.isNumber(in_value) && !_.isString(in_value)) {
-            throw new Error(MSG.VALUE_STRING_OR_NUMBER + in_value);
+            throw new TypeError(MSG.VALUE_STRING_OR_NUMBER + in_value);
         }
         this.setRange(in_index, [in_value]);
     }
@@ -119,10 +119,10 @@ export class EnumArrayProperty extends ValueArrayProperty {
      */
     setRange(in_offset, in_array) {
         if (!_.isNumber(in_offset)) {
-            throw new Error(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.setRange or .set');
+            throw new TypeError(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.setRange or .set');
         }
         if (!_.isArray(in_array)) {
-            throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'EnumArrayProperty.setRange');
+            throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + 'EnumArrayProperty.setRange');
         }
 
         var internalValueArray = [];
@@ -143,7 +143,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
         var internalValue = this._dataArrayRef.getValue(in_position);
         var resultEntry = this._enumDictionary.enumEntriesByValue[internalValue];
         if (!resultEntry) {
-            throw new Error(MSG.UNKNOWN_ENUM + internalValue);
+            throw new TypeError(MSG.UNKNOWN_ENUM + internalValue);
         } else {
             return resultEntry.id;
         }
@@ -159,10 +159,10 @@ export class EnumArrayProperty extends ValueArrayProperty {
      */
     getEnumStrings(in_offset, in_length) {
         if (!_.isNumber(in_offset)) {
-            throw new Error(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.getEnumStrings');
+            throw new TypeError(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.getEnumStrings');
         }
         if (!_.isNumber(in_length)) {
-            throw new Error(MSG.NOT_NUMBER + 'in_length, method: EnumArray.getEnumStrings');
+            throw new TypeError(MSG.NOT_NUMBER + 'in_length, method: EnumArray.getEnumStrings');
         }
 
         var result = [];

@@ -156,6 +156,7 @@ declare function get_current_ClassDeclaration_Client():
 declare function use_old_ClassDeclaration_Client(
     use: TypeOnly<old.Client>);
 use_old_ClassDeclaration_Client(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Client());
 
 /*
@@ -732,6 +733,7 @@ declare function get_current_InterfaceDeclaration_IConsensusInfo():
 declare function use_old_InterfaceDeclaration_IConsensusInfo(
     use: TypeOnly<old.IConsensusInfo>);
 use_old_InterfaceDeclaration_IConsensusInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusInfo());
 
 /*
@@ -1788,6 +1790,7 @@ declare function get_current_ClassDeclaration_List():
 declare function use_old_ClassDeclaration_List(
     use: TypeOnly<old.List<any>>);
 use_old_ClassDeclaration_List(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_List());
 
 /*
@@ -1865,27 +1868,14 @@ use_old_VariableDeclaration_LocalClientId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_LocalReference": {"forwardCompat": false}
+* "RemovedClassDeclaration_LocalReference": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_LocalReference():
-    TypeOnly<old.LocalReference>;
-declare function use_current_ClassDeclaration_LocalReference(
-    use: TypeOnly<current.LocalReference>);
-use_current_ClassDeclaration_LocalReference(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_ClassDeclaration_LocalReference());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_LocalReference": {"backCompat": false}
+* "RemovedClassDeclaration_LocalReference": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_LocalReference():
-    TypeOnly<current.LocalReference>;
-declare function use_old_ClassDeclaration_LocalReference(
-    use: TypeOnly<old.LocalReference>);
-use_old_ClassDeclaration_LocalReference(
-    get_current_ClassDeclaration_LocalReference());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1914,26 +1904,14 @@ use_old_ClassDeclaration_LocalReferenceCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_LocalReferenceMapper": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_LocalReferenceMapper": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_LocalReferenceMapper():
-    TypeOnly<old.LocalReferenceMapper>;
-declare function use_current_TypeAliasDeclaration_LocalReferenceMapper(
-    use: TypeOnly<current.LocalReferenceMapper>);
-use_current_TypeAliasDeclaration_LocalReferenceMapper(
-    get_old_TypeAliasDeclaration_LocalReferenceMapper());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_LocalReferenceMapper": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_LocalReferenceMapper": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_LocalReferenceMapper():
-    TypeOnly<current.LocalReferenceMapper>;
-declare function use_old_TypeAliasDeclaration_LocalReferenceMapper(
-    use: TypeOnly<old.LocalReferenceMapper>);
-use_old_TypeAliasDeclaration_LocalReferenceMapper(
-    get_current_TypeAliasDeclaration_LocalReferenceMapper());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2005,6 +1983,7 @@ declare function get_current_ClassDeclaration_Marker():
 declare function use_old_ClassDeclaration_Marker(
     use: TypeOnly<old.Marker>);
 use_old_ClassDeclaration_Marker(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Marker());
 
 /*
@@ -2149,6 +2128,7 @@ declare function get_current_ClassDeclaration_MergeTree():
 declare function use_old_ClassDeclaration_MergeTree(
     use: TypeOnly<old.MergeTree>);
 use_old_ClassDeclaration_MergeTree(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MergeTree());
 
 /*
@@ -3253,6 +3233,7 @@ declare function get_current_ClassDeclaration_SnapshotLegacy():
 declare function use_old_ClassDeclaration_SnapshotLegacy(
     use: TypeOnly<old.SnapshotLegacy>);
 use_old_ClassDeclaration_SnapshotLegacy(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SnapshotLegacy());
 
 /*

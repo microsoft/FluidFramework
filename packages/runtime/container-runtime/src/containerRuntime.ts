@@ -49,6 +49,7 @@ import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidfr
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
+    DataProcessingError,
     GenericError,
     UsageError,
     extractSafePropertiesFromMessage,
@@ -223,12 +224,14 @@ export interface ISummaryBaseConfiguration {
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
     state: "enabled";
     /**
-     * Defines the maximum allowed time in between summarizations.
+     * @deprecated - please move all implementation to minIdleTime and maxIdleTime
      */
     idleTime: number;
     /**
-     * Defines the maximum allowed time, since the last received Ack,  before running the summary
+     * Defines the maximum allowed time, since the last received Ack, before running the summary
      * with reason maxTime.
+     * For example, say we receive ops one by one just before the idle time is triggered.
+     * In this case, we still want to run a summary since it's been a while since the last summary.
      */
     maxTime: number;
     /**
@@ -241,6 +244,22 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * before running the last summary.
      */
     minOpsForLastSummaryAttempt: number;
+    /**
+     * Defines the lower boundary for the allowed time in between summarizations.
+     * Pairs with maxIdleTime to form a range.
+     * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
+     * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
+     * linearly depending on the number of ops we receive.
+     */
+    minIdleTime: number;
+    /**
+     * Defines the upper boundary for the allowed time in between summarizations.
+     * Pairs with minIdleTime to form a range.
+     * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
+     * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
+     * linearly depending on the number of ops we receive.
+     */
+    maxIdleTime: number;
     /**
      * Runtime op weight to use in heuristic summarizing.
      * This number is a multiplier on the number of runtime ops we process when running summarize heuristics.
@@ -272,6 +291,10 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
 
     idleTime: 15 * 1000, // 15 secs.
+
+    minIdleTime: 0,
+
+    maxIdleTime: 30 * 1000, // 30 secs.
 
     maxTime: 60 * 1000, // 1 min.
 
@@ -911,7 +934,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // Verify summary runtime sequence number matches protocol sequence number.
         const runtimeSequenceNumber = metadata?.message?.sequenceNumber;
-        if (runtimeSequenceNumber !== undefined) {
+        // When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
+        if (!pendingRuntimeState && runtimeSequenceNumber !== undefined) {
             const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
             // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
             if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
@@ -1585,11 +1609,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private internalId(maybeAlias: string): string {
+        return this.dataStores.aliases().get(maybeAlias) ?? maybeAlias;
+    }
+
     private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
         const wait = typeof request.headers?.[RuntimeHeaders.wait] === "boolean"
             ? request.headers?.[RuntimeHeaders.wait]
             : true;
-        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
+
+        const internalId = this.internalId(id);
+        const dataStoreContext = await this.dataStores.getDataStore(internalId, wait);
 
         /**
          * If GC should run and this an external app request with "externalRequest" header, we need to return
@@ -1781,11 +1811,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.consecutiveReconnects++;
 
             if (!this.shouldContinueReconnecting()) {
-                this.closeFn(new GenericError(
+                this.closeFn(
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
-                    "Runtime detected too many reconnects with no progress syncing local ops",
-                    undefined, // error
-                    {
+                    DataProcessingError.create(
+                        "Runtime detected too many reconnects with no progress syncing local ops",
+                        "setConnectionState",
+                        undefined,
+                       {
+                        dataLoss: 1,
                         attempts: this.consecutiveReconnects,
                         pendingMessages: this.pendingStateManager.pendingMessagesCount,
                     }));
@@ -1941,7 +1974,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        const context = await this.dataStores.getDataStore(id, wait);
+        const internalId = this.internalId(id);
+        const context = await this.dataStores.getDataStore(internalId, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }

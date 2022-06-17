@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
 import { Stack } from "./collections";
 import { ISegment } from "./mergeTree";
 import { ReferenceType, ICombiningOp } from "./ops";
@@ -57,14 +56,6 @@ export function refHasRangeLabels(refPos: ReferencePosition): boolean {
     return refGetRangeLabels(refPos) !== undefined;
 }
 
-/**
- * IReferencePositionEvents are emitted before and after  a local reference slides.
- * Currently the event emitter is only implemented on LocalReferences.
- */
-export interface IReferencePositionEvents extends IEvent {
-    (event: "beforeSlide" | "afterSlide", listener: () => void);
-}
-
 export interface ReferencePosition {
     properties?: PropertySet;
     refType: ReferenceType;
@@ -73,31 +64,6 @@ export interface ReferencePosition {
     getOffset(): number;
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
     isLeaf(): boolean;
-
-    /**
-     * @deprecated - use refHasTileLabels
-     */
-    hasTileLabels(): boolean;
-    /**
-     * @deprecated - use refHasRangeLabels
-     */
-    hasRangeLabels(): boolean;
-    /**
-     * @deprecated - use refHasTileLabel
-     */
-    hasTileLabel(label: string): boolean;
-    /**
-     * @deprecated - use refHasRangeLabel
-     */
-    hasRangeLabel(label: string): boolean;
-    /**
-     * @deprecated - use refGetTileLabels
-     */
-    getTileLabels(): string[] | undefined;
-    /**
-     * @deprecated - use refGetRangeLabels
-     */
-    getRangeLabels(): string[] | undefined;
 }
 
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;

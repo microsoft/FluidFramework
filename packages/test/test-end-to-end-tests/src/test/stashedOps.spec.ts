@@ -28,6 +28,7 @@ import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils"
 import { ConnectionState } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -37,6 +38,19 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
     runtimeOptions: {
         enableOfflineLoad: true,
+        summaryOptions: {
+            initialSummarizerDelayMs: 20, // Previous Containers had this property under SummaryOptions.
+            summaryConfigOverrides: {
+                ...DefaultSummaryConfiguration,
+                ...{
+                    idleTime: 5000,
+                    maxTime: 5000 * 12,
+                    maxAckWaitTime: 120000,
+                    maxOps: 1,
+                    initialSummarizerDelayMs: 20,
+                },
+            },
+        },
     },
 };
 
@@ -134,6 +148,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     let container1: IContainer;
     let map1: SharedMap;
     let string1: SharedString;
+    let waitForSummary: () => Promise<void>;
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
@@ -148,6 +163,21 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
         string1 = await dataStore1.getSharedObject<SharedString>(stringId);
         string1.insertText(0, "hello");
+
+        waitForSummary = async () => {
+            await new Promise<void>((resolve, reject) => {
+                let summarized = false;
+                container1.on("op", (op) => {
+                    if (op.type === "summarize") {
+                        summarized = true;
+                    } else if (summarized && op.type === "summaryAck") {
+                        resolve();
+                    } else if (op.type === "summaryNack") {
+                        reject(new Error("summaryNack"));
+                    }
+                });
+            });
+        };
     });
 
     it("resends op", async function() {
@@ -773,5 +803,42 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
         assert.strictEqual(map3.get(testKey), testValue);
         assert.strictEqual(map3.get(testKey2), testValue);
+    });
+
+    // TODO: https://github.com/microsoft/FluidFramework/issues/10729
+    it.skip("works with summary while offline", async function() {
+        map1.set("test op 1", "test op 1");
+        await waitForSummary();
+
+        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+            map.set(testKey, testValue);
+        });
+
+        map1.set("test op 2", "test op 2");
+        await waitForSummary();
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(map1.get(testKey), testValue);
+        assert.strictEqual(map2.get(testKey), testValue);
+    });
+
+    // TODO: https://github.com/microsoft/FluidFramework/issues/10729
+    it.skip("can stash between summary op and ack", async function() {
+        map1.set("test op 1", "test op 1");
+        const container = await provider.loadTestContainer(testContainerConfig);
+        const pendingOps = await new Promise<string>((res) => container.on("op", (op) => {
+            if (op.type === "summarize") {
+                res(container.closeAndGetPendingLocalState());
+            }
+        }));
+
+        const container2 = await loader.resolve({ url }, pendingOps);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
     });
 });
