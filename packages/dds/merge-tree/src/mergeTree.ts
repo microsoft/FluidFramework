@@ -24,7 +24,11 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "./constants";
-import { LocalReference, LocalReferenceCollection, LocalReferencePosition } from "./localReference";
+import {
+     assertLocalReferences,
+     LocalReferenceCollection,
+     LocalReferencePosition,
+} from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -58,13 +62,11 @@ import {
     refGetRangeLabels,
     refGetTileLabels,
     refHasRangeLabel,
-    refHasRangeLabels,
     refHasTileLabel,
-    refHasTileLabels,
+    DetachedReferencePosition,
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager } from "./segmentPropertiesManager";
-import { Client } from "./client";
 
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
@@ -696,43 +698,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
         }
     }
 
-    /**
-     * @deprecated - use refHasTileLabels
-     */
-    hasTileLabels() {
-        return refHasTileLabels(this);
-    }
-    /**
-     * @deprecated - use refHasRangeLabels
-     */
-    hasRangeLabels() {
-        return refHasRangeLabels(this);
-    }
-    /**
-     * @deprecated - use refHasTileLabel
-     */
-    hasTileLabel(label: string): boolean {
-        return refHasTileLabel(this, label);
-    }
-    /**
-     * @deprecated - use refHasRangeLabel
-     */
-    hasRangeLabel(label: string): boolean {
-        return refHasRangeLabel(this, label);
-    }
-    /**
-     * @deprecated - use refGetTileLabels
-     */
-    getTileLabels(): string[] | undefined {
-        return refGetTileLabels(this);
-    }
-    /**
-     * @deprecated - use refGetRangeLabels
-     */
-    getRangeLabels(): string[] | undefined {
-        return refGetRangeLabels(this);
-    }
-
     toString() {
         let bbuf = "";
         if (refTypeIncludesFlag(this, ReferenceType.Tile)) {
@@ -1003,8 +968,6 @@ const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
     compare: (a, b) => a.minRequired - b.minRequired,
 };
-
-export type LocalReferenceMapper = (id: string) => LocalReference;
 
 // Represents a sequence of text segments
 export class MergeTree {
@@ -1464,7 +1427,7 @@ export class MergeTree {
      * Otherwise eventual consistency is not guaranteed.
      * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
      */
-    private slideReferences(segment: ISegment, refsToSlide: LocalReference[]) {
+    private slideReferences(segment: ISegment, refsToSlide: LocalReferencePosition[]) {
         assert(
             isRemovedAndAcked(segment),
             0x2f1 /* slideReferences from a segment which has not been removed and acked */);
@@ -1475,6 +1438,7 @@ export class MergeTree {
             newSegment.localRefs = new LocalReferenceCollection(newSegment);
         }
         for (const ref of refsToSlide) {
+            assertLocalReferences(ref);
             ref.callbacks?.beforeSlide?.();
             const removedRef = segment.localRefs.removeLocalRef(ref);
             assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
@@ -1501,8 +1465,8 @@ export class MergeTree {
         if (!segment.localRefs || segment.localRefs.empty) {
             return;
         }
-        const refsToSlide: LocalReference[] = [];
-        const refsToStay: LocalReference[] = [];
+        const refsToSlide: ReferencePosition[] = [];
+        const refsToStay: ReferencePosition[] = [];
         for (const lref of segment.localRefs) {
             if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
                 refsToStay.push(lref);
@@ -1521,6 +1485,7 @@ export class MergeTree {
         }
         segment.localRefs.clear();
         for (const lref of refsToStay) {
+            assertLocalReferences(lref);
             lref.segment = segment;
             segment.localRefs.addLocalRef(lref);
         }
@@ -1630,7 +1595,7 @@ export class MergeTree {
             const offset = !seg.removedSeq ? refPos.getOffset() : 0;
             return offset + this.getPosition(seg, refSeq, clientId);
         }
-        return LocalReference.DetachedPosition;
+        return DetachedReferencePosition;
     }
 
     public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
@@ -1667,8 +1632,8 @@ export class MergeTree {
                 const marker = <Marker>searchInfo.tile;
                 pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
             } else {
-                const localRef = <LocalReference>searchInfo.tile;
-                pos = localRef.toPosition();
+                const localRef = searchInfo.tile;
+                pos = this.referencePositionToLocalPosition(localRef, UniversalSequenceNumber, clientId);
             }
             return { tile: searchInfo.tile, pos };
         }
@@ -2546,7 +2511,6 @@ export class MergeTree {
     }
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
-        client: Client,
     ): LocalReferencePosition {
         if (isRemoved(segment)) {
             if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)) {
@@ -2557,39 +2521,11 @@ export class MergeTree {
         const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
         segment.localRefs = localRefs;
 
-        const segRef = localRefs.createLocalRef(offset, refType, properties, client);
+        const segRef = localRefs.createLocalRef(offset, refType, properties);
 
         this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
             LocalClientId);
         return segRef;
-    }
-
-    /**
-     * @deprecated - use removeLocalReferencePosition
-     */
-    public removeLocalReference(segment: ISegment, lref: LocalReference) {
-        if (segment.localRefs) {
-            const removedRef = segment.localRefs.removeLocalRef(lref);
-            if (removedRef) {
-                this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-                    LocalClientId);
-            }
-        }
-    }
-
-    /**
-     * @deprecated - use createLocalReference
-     */
-    public addLocalReference(lref: LocalReference) {
-        const segment = lref.segment!;
-        let localRefs = segment.localRefs;
-        if (!localRefs) {
-            localRefs = new LocalReferenceCollection(segment);
-            segment.localRefs = localRefs;
-        }
-        localRefs.addLocalRef(lref);
-        this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-            LocalClientId);
     }
 
     private blockUpdate(block: IMergeBlock) {

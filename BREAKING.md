@@ -20,10 +20,21 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
+- [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
 Please migrate all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
+
+### LocalReference class and method deprecations removed
+In 0.59.0 the [LocalReference class and it's related methods were deprecated](#LocalReference-class-and-method-deprecations)
+
+The deprecated and now removed LocalReference class is replaced with LocalReferencePosition.
+The following deprecated methods are  now removed from sequence and merge-tree. Their replacements should be used instead.
+ - createPositionReference to createLocalReferencePosition
+ - addLocalReference to createLocalReferencePosition
+ - localRefToPos to localReferencePositionToPosition
+ - removeLocalReference to removeLocalReferencePosition
 
 # 1.0.0
 

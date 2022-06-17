@@ -29,7 +29,6 @@ import {
     IRelativePosition,
     ISegment,
     ISegmentAction,
-    LocalReference,
     LocalReferencePosition,
     matchProperties,
     MergeTreeDeltaType,
@@ -295,20 +294,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.client.getRangeExtentsOfPosition(pos);
     }
 
-    /**
-     * @deprecated - use createLocalReferencePosition
-     */
-    public createPositionReference(
-        segment: T,
-        offset: number,
-        refType: ReferenceType): LocalReference {
-        const lref = new LocalReference(this.client, segment, offset, refType);
-        if (refType !== ReferenceType.Transient) {
-            this.addLocalReference(lref);
-        }
-        return lref;
-    }
-
     public createLocalReferencePosition(
         segment: T,
         offset: number,
@@ -319,13 +304,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             offset,
             refType,
             properties);
-    }
-
-    /**
-     * @deprecated - use localReferencePositionToPosition
-     */
-    public localRefToPos(localRef: LocalReference) {
-        return this.client.localReferencePositionToPosition(localRef);
     }
 
     public localReferencePositionToPosition(lref: ReferencePosition): number {
@@ -374,21 +352,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
-    /**
-     * @deprecated - use createLocalReferencePosition
-     */
-    public addLocalReference(lref: LocalReference) {
-        return this.client.addLocalReference(lref);
-    }
-
-    /**
-     * @deprecated - use removeLocalReferencePosition
-     */
-    public removeLocalReference(lref: LocalReference) {
-        return this.client.removeLocalReferencePosition(lref);
-    }
-
-    public removeLocalReferencePosition(lref: LocalReferencePosition) {
+    public removeLocalReferencePosition(lref: ReferencePosition) {
         return this.client.removeLocalReferencePosition(lref);
     }
 
