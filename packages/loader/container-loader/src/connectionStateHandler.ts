@@ -4,13 +4,13 @@
  */
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetails, IDeltaManager } from "@fluidframework/container-definitions";
+import { ILocalSequencedClient, IProtocolHandler } from "@fluidframework/protocol-base";
 //*
 // eslint-disable-next-line max-len
 import { ConnectionMode, IDocumentMessage, IQuorumClients, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { logIfFalse, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert, Timer } from "@fluidframework/common-utils";
-import { ILocalSequencedClient, IProtocolHandler } from "@fluidframework/protocol-base";
 import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor, ImmediateCatchUpMonitor } from "./catchUpMonitor";
 
@@ -356,7 +356,7 @@ export class ConnectionStateHandler {
             // don't want to reset the timer as we still want to wait on original client which started this timer.
             if (client !== undefined
                 && this.handler.shouldClientJoinWrite()
-                && this.waitingForLeaveOp === false
+                && this.prevClientLeftTimer.hasTimer === false
             ) {
                 this.prevClientLeftTimer.restart();
             } else {
