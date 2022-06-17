@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, extractLogSafeErrorProperties, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -24,6 +24,7 @@ import {
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     ChildLogger,
+    extractLogSafeErrorProperties,
     getCircularReplacer,
     loggerToMonitoringContext,
     MonitoringContext,
@@ -560,7 +561,7 @@ export class DocumentDeltaConnection
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
             message = `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
         } else {
-            message = extractLogSafeErrorProperties(error).message;
+            message = extractLogSafeErrorProperties(error, false).message;
         }
 
         const errorObj = createGenericNetworkError(
