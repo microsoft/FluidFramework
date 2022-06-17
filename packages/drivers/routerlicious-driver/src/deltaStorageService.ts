@@ -26,7 +26,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
     constructor(
         private readonly tenantId: string,
         private readonly id: string,
-        private readonly storageService: IDeltaStorageService,
+        private readonly deltaStorageService: IDeltaStorageService,
         private readonly documentStorageService: DocumentStorageService) {
     }
 
@@ -70,7 +70,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
             }
         }
 
-        return this.storageService.get(this.tenantId, this.id, from, to);
+        return this.deltaStorageService.get(this.tenantId, this.id, from, to);
     }
 }
 
@@ -81,7 +81,9 @@ export class DeltaStorageService implements IDeltaStorageService {
     constructor(
         private readonly url: string,
         private readonly restWrapper: RestWrapper,
-        private readonly logger: ITelemetryLogger) {
+        private readonly logger: ITelemetryLogger,
+        private readonly getRestWrapper: () => Promise<RestWrapper> = async () => this.restWrapper,
+    ) {
     }
 
     public async get(
@@ -98,7 +100,8 @@ export class DeltaStorageService implements IDeltaStorageService {
                 to,
             },
             async (event) => {
-                const response = await this.restWrapper.get<ISequencedDocumentMessage[]>(
+                const restWrapper = await this.getRestWrapper();
+                const response = await restWrapper.get<ISequencedDocumentMessage[]>(
                     this.url,
                     { from: from - 1, to });
                 event.end({

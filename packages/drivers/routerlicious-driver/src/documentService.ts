@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { GitManager, Historian } from "@fluidframework/server-services-client";
+import { GitManager, Historian, RestWrapper } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
@@ -21,15 +21,33 @@ import { ICache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
 
 /**
+ * Amount of time after disconnect within which we don't need to rediscover.
+ * In the future, we likely want to retrieve this information from service's "inactive session" definition.
+ */
+const RediscoverAfterTimeDisconnectedMs = 60000; // 1 minute
+
+/**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
 export class DocumentService implements api.IDocumentService {
+    private lastDisconnectAt: number = Date.now();
+    private lastDiscoveredAt: number = Date.now();
+    private discoverP: Promise<void> | undefined;
+
+    private storageManager: GitManager | undefined;
+    private noCacheStorageManager: GitManager | undefined;
+    private ordererRestWrapper: RestWrapper | undefined;
+
+    public get resolvedUrl() {
+        return this._resolvedUrl;
+    }
+
     constructor(
-        public readonly resolvedUrl: api.IResolvedUrl,
+        private _resolvedUrl: api.IResolvedUrl,
         protected ordererUrl: string,
-        private readonly deltaStorageUrl: string,
-        private readonly gitUrl: string,
+        private deltaStorageUrl: string,
+        private storageUrl: string,
         private readonly logger: ITelemetryLogger,
         protected tokenProvider: ITokenProvider,
         protected tenantId: string,
@@ -37,6 +55,7 @@ export class DocumentService implements api.IDocumentService {
         private readonly driverPolicies: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike>,
         private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
+        private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
     ) {
     }
 
@@ -54,32 +73,42 @@ export class DocumentService implements api.IDocumentService {
             return this.documentStorageService;
         }
 
-        if (this.gitUrl === undefined) {
+        if (this.storageUrl === undefined) {
             return new NullBlobStorageService();
         }
 
-        const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests);
-        const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
-            this.tenantId,
-            this.documentId,
-            this.tokenProvider,
-            this.logger,
-            rateLimiter,
-            this.driverPolicies.enableRestLess,
-            this.gitUrl,
-        );
-        const historian = new Historian(
-            this.gitUrl,
-            true,
-            false,
-            storageRestWrapper);
-        const gitManager = new GitManager(historian);
-        const noCacheHistorian = new Historian(
-            this.gitUrl,
-            true,
-            true,
-            storageRestWrapper);
-        const noCacheGitManager = new GitManager(noCacheHistorian);
+        const getStorageManager = async (disableCache?: boolean): Promise<GitManager> => {
+            if (!this.storageManager || !this.noCacheStorageManager || this.shouldUpdateDiscoveredSessionInfo()) {
+                await this.refreshDiscovery();
+                const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests);
+                const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+                    this.tenantId,
+                    this.documentId,
+                    this.tokenProvider,
+                    this.logger,
+                    rateLimiter,
+                    this.driverPolicies.enableRestLess,
+                    this.storageUrl,
+                );
+                const historian = new Historian(
+                    this.storageUrl,
+                    true,
+                    false,
+                    storageRestWrapper);
+                this.storageManager = new GitManager(historian);
+                const noCacheHistorian = new Historian(
+                    this.storageUrl,
+                    true,
+                    true,
+                    storageRestWrapper);
+                this.noCacheStorageManager = new GitManager(noCacheHistorian);
+            }
+
+            return disableCache ? this.noCacheStorageManager : this.storageManager;
+        };
+        // Initialize storageManager and noCacheStorageManager
+        const storageManager = await getStorageManager();
+        const noCacheStorageManager = await getStorageManager(true);
         const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
             caching: this.driverPolicies.enablePrefetch
                 ? api.LoaderCachingPolicy.Prefetch
@@ -89,13 +118,14 @@ export class DocumentService implements api.IDocumentService {
 
         this.documentStorageService = new DocumentStorageService(
             this.documentId,
-            gitManager,
+            storageManager,
             this.logger,
             documentStorageServicePolicies,
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache,
-            noCacheGitManager);
+            noCacheStorageManager,
+            getStorageManager);
         return this.documentStorageService;
     }
 
@@ -108,18 +138,34 @@ export class DocumentService implements api.IDocumentService {
         await this.connectToStorage();
         assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
-        const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+        const getRestWrapper = async (): Promise<RestWrapper> => {
+            if (!this.ordererRestWrapper || this.shouldUpdateDiscoveredSessionInfo()) {
+                await this.refreshDiscovery();
+                const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+                this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+                    this.tenantId,
+                    this.documentId,
+                    this.tokenProvider,
+                    this.logger,
+                    rateLimiter,
+                    this.driverPolicies.enableRestLess,
+                );
+            }
+            return this.ordererRestWrapper;
+        };
+        const restWrapper = await getRestWrapper();
+        const deltaStorageService = new DeltaStorageService(
+            this.deltaStorageUrl,
+            restWrapper,
+            this.logger,
+            getRestWrapper,
+        );
+        return new DocumentDeltaStorageService(
             this.tenantId,
             this.documentId,
-            this.tokenProvider,
-            this.logger,
-            rateLimiter,
-            this.driverPolicies.enableRestLess,
+            deltaStorageService,
+            this.documentStorageService,
         );
-        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, ordererRestWrapper, this.logger);
-        return new DocumentDeltaStorageService(this.tenantId, this.documentId,
-            deltaStorage, this.documentStorageService);
     }
 
     /**
@@ -129,6 +175,9 @@ export class DocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
         const connect = async (refreshToken?: boolean) => {
+            if (this.shouldUpdateDiscoveredSessionInfo()) {
+                await this.refreshDiscovery();
+            }
             const ordererToken = await this.tokenProvider.fetchOrdererToken(
                 this.tenantId,
                 this.documentId,
@@ -147,16 +196,57 @@ export class DocumentService implements api.IDocumentService {
 
         // Attempt to establish connection.
         // Retry with new token on authorization error; otherwise, allow container layer to handle.
+        let connection: api.IDocumentDeltaConnection;
         try {
-            const connection = await connect();
-            return connection;
+            connection = await connect();
         } catch (error: any) {
             if (error?.statusCode === 401) {
                 // Fetch new token and retry once,
                 // otherwise 401 will be bubbled up as non-retriable AuthorizationError.
-                return connect(true /* refreshToken */);
+                connection = await connect(true /* refreshToken */);
             }
             throw error;
         }
+        // Listen to disconnect events after successful connection to know if we need to rediscover the session.
+        connection.on("disconnect", (reason: any) => {
+            this.lastDisconnectAt = Date.now();
+        });
+        return connection;
+    }
+
+    /**
+     * Re-discover session URLs if necessary.
+     */
+    private async refreshDiscovery(): Promise<void> {
+        if (this.lastDiscoveredAt >= this.lastDisconnectAt) {
+            // We already rediscovered since latest disconnect.
+            return;
+        }
+        if (!this.discoverP) {
+            this.discoverP = this.refreshDiscoveryCore();
+        }
+        return this.discoverP;
+    }
+
+    private async refreshDiscoveryCore(): Promise<void> {
+        const fluidResolvedUrl = await this.discoverFluidResolvedUrl();
+        this._resolvedUrl = fluidResolvedUrl;
+        this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
+        this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
+        this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+        this.lastDiscoveredAt = Date.now();
+    }
+
+    /**
+     * Whether enough time has passed since last disconnect to warrant a new discovery call on reconnect.
+     */
+    private shouldUpdateDiscoveredSessionInfo(): boolean {
+        if (!this.driverPolicies.enableDiscovery) {
+            return false;
+        }
+        // When connection is disconnected, we cannot know if session has moved or document has been deleted
+        // without re-doing discovery on the next attempt to connect.
+        // Make sure client was disconnected for a reasonably long enough time to avoid spamming discovery endpoint.
+        return Date.now() - this.lastDisconnectAt > RediscoverAfterTimeDisconnectedMs;
     }
 }
