@@ -11,15 +11,21 @@ import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails, IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { IEventProvider, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ConnectionState } from "../connectionState";
 import { ConnectionStateHandler, IConnectionStateHandlerInputs } from "../connectionStateHandler";
 import { ICatchUpMonitor } from "../catchUpMonitor";
 
-type MockDeltaManagerForCatchingUp =
-    TypedEventEmitter<IDeltaManagerEvents> &  //* Remove?
-    IEventProvider<IDeltaManagerEvents> &
-    Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">;
+class MockDeltaManagerForCatchingUp
+    extends TypedEventEmitter<IDeltaManagerEvents>
+    implements Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">
+{ // eslint-disable-line @typescript-eslint/brace-style
+    lastSequenceNumber: number = 5;
+    lastKnownSeqNumber: number = 10;
+    catchUp() {
+        this.emit("op", { sequenceNumber: this.lastKnownSeqNumber });
+    }
+}
 
 describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
@@ -102,10 +108,7 @@ describe("ConnectionStateHandler Tests", () => {
             (id: string) => { (connectionStateHandler as any).receivedRemoveMemberEvent(id); };
         connectionStateHandler_joinOpTimer = () => (connectionStateHandler as any).joinOpTimer as Timer;
         connectionStateHandler_catchUpMonitor = () => (connectionStateHandler as any).catchUpMonitor as ICatchUpMonitor;
-        deltaManagerForCatchingUp = new (class extends TypedEventEmitter<IDeltaManagerEvents> implements MockDeltaManagerForCatchingUp {
-            lastSequenceNumber: number = 5;
-            lastKnownSeqNumber: number = 10;
-        })();
+        deltaManagerForCatchingUp = new MockDeltaManagerForCatchingUp();
     });
 
     /** Test plan:
@@ -136,8 +139,7 @@ describe("ConnectionStateHandler Tests", () => {
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails, deltaManagerForCatchingUp as any);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client should be in CatchingUp state");
-        //* Move to helper on mock DM
-        deltaManagerForCatchingUp.emit("op", { sequenceNumber: 10 });
+        deltaManagerForCatchingUp.catchUp();
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Read Client should be in Connected state");
     });
@@ -174,9 +176,8 @@ describe("ConnectionStateHandler Tests", () => {
         connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client should be in CatchingUp state until caught up");
-        //* Move to helper on mock DM
-        deltaManagerForCatchingUp.emit("op", { sequenceNumber: 10 });
-        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+        deltaManagerForCatchingUp.catchUp();
+            assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in Connected state");
     });
 

@@ -47,7 +47,7 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
         this.targetSeqNumber = this.deltaManager.lastKnownSeqNumber;
 
         assert(this.targetSeqNumber >= this.deltaManager.lastSequenceNumber,
-            0x266 /* "Cannot wait for seqNumber below last processed sequence number" */);
+            "Cannot wait for seqNumber below last processed sequence number");
 
         this.deltaManager.on("op", this.opHandler);
 

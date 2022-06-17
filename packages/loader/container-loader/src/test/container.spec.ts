@@ -43,7 +43,7 @@ class MockContainer extends TypedEventEmitter<IContainerEvents> implements Parti
 
     get mockDeltaManager() { return this.deltaManager as any as MockDeltaManager; }
 
-    resume() {
+    connect() {
         this.connectionState = ConnectionState.Connected;
         this.emit("connected");
     }
@@ -110,8 +110,18 @@ describe("Container", () => {
             await waitP;
         });
 
-        //* SKIP
-        it.skip("Disconnected Container gets Connected then waits for catching up", async () => {
+        it("Connected and caught up Container resolves immediately", async () => {
+            const mockContainer = new MockContainer();
+            mockContainer.mockDeltaManager.lastSequenceNumber = 2; // to match lastKnownSeqNumber
+            mockContainer.connectionState = ConnectionState.Connected;
+
+            const waitP = waitContainerToCatchUp(mockContainer as any as IContainer);
+
+            // Should resolve immediately, otherwise test will time out
+            await waitP;
+        });
+
+        it("Disconnected Container gets Connected then waits for catching up", async () => {
             const mockContainer = new MockContainer();
             mockContainer.connectionState = ConnectionState.Disconnected;
 

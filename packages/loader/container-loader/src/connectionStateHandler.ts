@@ -110,7 +110,7 @@ export class ConnectionStateHandler {
                 const quorumClients = this.handler.quorumClients();
                 const details = {
                     quorumInitialized: quorumClients !== undefined,
-                    hasPendingClientId: this.pendingClientId !== undefined,
+                    pendingClientId: this.pendingClientId,
                     inQuorum: quorumClients?.getMember(this.pendingClientId ?? "") !== undefined,
                     waitingForLeaveOp: this.waitingForLeaveOp,
                 };
@@ -287,23 +287,16 @@ export class ConnectionStateHandler {
         // If quorumClients itself is undefined, we expect it will process the join op after it's initialized.
         const waitingForJoinOp = writeConnection && quorumClients?.getMember(this._pendingClientId) === undefined;
 
-        //* Question - if the quorum is not yet initialized, and is initialized with this new client
-        //* (rather than being added via addMember), we will not ever "get the join op". Is this possible/ok?
-        //* See members: QuorumClientsSnapshot param of Quorum constructor
-
         if (waitingForJoinOp) {
             // Previous client left, and we are waiting for our own join op. When it is processed we'll join the quorum
             // and attempt to transition to Connected state via receivedAddMemberEvent.
             this.startJoinOpTimer();
         } else if (!this.waitingForLeaveOp) {
             // We're not waiting for Join or Leave op (if read-only connection those don't even apply),
-            // go ahead and declare the state to be Connected!
-            // If we are waiting for Leave op still, do nothing for now, we will transition to Connected later.
-            //* MERGE THESE COMMENTS
-            // We're not waiting for Join or Leave op (if read-only connection those don't even apply),
             // but we do need to wait until we are caught up (to now-known ops) before transitioning to Connected state.
             this.catchUpMonitor.on("caughtUp", this.transitionToConnectedState);
         }
+        // else - We are waiting for Leave op still, do nothing for now, we will transition to Connected later
     }
 
     /** Clear all the state used during the Connecting phase (set in receivedConnectEvent) */
