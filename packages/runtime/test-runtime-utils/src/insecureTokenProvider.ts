@@ -10,7 +10,7 @@ import { generateToken } from "./generateToken";
 /**
  * {@link @fluidframework/routerlicious-driver#ITokenProvider} intended for **test use only**.
  * As the name implies this is not secure and should not be used in production.
- * It simply makes the example easier to get up and running.
+ * It simply makes examples where authentication is not relevant easier to bootstrap.
  */
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(

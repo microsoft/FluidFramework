@@ -8,7 +8,7 @@
  */
 export interface IUser {
     /**
-     * TODO
+     * Unique identifier of the user session. This ID is established on each connection with the service.
      */
     id: string;
 }
