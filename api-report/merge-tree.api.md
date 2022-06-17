@@ -59,7 +59,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     readonly segmentGroups: SegmentGroupCollection;
     // (undocumented)
     seq: number;
-    // (undocumented)
     splitAt(pos: number): ISegment | undefined;
     abstract toJSONObject(): any;
     // (undocumented)
