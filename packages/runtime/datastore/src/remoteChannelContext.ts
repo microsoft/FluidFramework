@@ -69,7 +69,7 @@ export class RemoteChannelContext implements IChannelContext {
         getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase>,
         private readonly attachMessageType?: string,
     ) {
-        assert(!this.id.includes("/"), "Channel context ID cannot contain slashes");
+        assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
 
         this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
 
