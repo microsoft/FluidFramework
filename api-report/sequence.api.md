@@ -139,8 +139,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
     // (undocumented)
     addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;
-    // @deprecated (undocumented)
-    addInternal(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
     // (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)
@@ -149,8 +147,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     attachGraph(client: Client, label: string): void;
     // (undocumented)
     change(id: string, start?: number, end?: number): TInterval | undefined;
-    // @deprecated (undocumented)
-    changeInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     // (undocumented)
     changeProperties(id: string, props: PropertySet): void;
     // (undocumented)
@@ -161,8 +157,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     CreateForwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval>;
     // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval>;
-    // @deprecated (undocumented)
-    deleteInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     // (undocumented)
     findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
     // (undocumented)
@@ -379,8 +373,6 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     // (undocumented)
     readonly deltaOperation: TOperation;
     get first(): Readonly<ISequenceDeltaRange<TOperation>>;
-    // @deprecated (undocumented)
-    readonly isEmpty: boolean;
     get last(): Readonly<ISequenceDeltaRange<TOperation>>;
     get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
 }

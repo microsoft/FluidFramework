@@ -108,10 +108,20 @@
     "version": "2.0.0",
     "broken": {
       "ClassDeclaration_IntervalCollection": {
+        "backCompat": false,
         "forwardCompat": false
       },
       "ClassDeclaration_SequenceInterval": {
         "forwardCompat": false
+      },
+      "ClassDeclaration_SequenceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceDeltaEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceMaintenanceEvent": {
+        "backCompat": false
       }
     }
   }
