@@ -102,9 +102,6 @@
     "broken": {
       "ClassDeclaration_Client": {
         "forwardCompat": false
-      },
-      "ClassDeclaration_LocalReference": {
-        "forwardCompat": false
       }
     }
   }

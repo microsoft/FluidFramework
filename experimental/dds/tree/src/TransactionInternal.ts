@@ -347,19 +347,17 @@ export class GenericTransaction {
 		}
 		const resolvedChange = resolutionResult.result;
 		const changeResult = this.policy.dispatchChange(this.state, resolvedChange);
-		if (Result.isOk(changeResult)) {
-			this.state = {
-				status: EditStatus.Applied,
-				view: changeResult.result,
-				changes: this.changes.concat(change),
-				steps: this.steps.concat({ resolvedChange, after: changeResult.result }),
-			};
-		} else {
-			this.state = {
-				...this.state,
-				...changeResult.error,
-			};
-		}
+		this.state = Result.isOk(changeResult)
+			? {
+					status: EditStatus.Applied,
+					view: changeResult.result,
+					changes: this.changes.concat(change),
+					steps: this.steps.concat({ resolvedChange, after: changeResult.result }),
+			  }
+			: {
+					...this.state,
+					...changeResult.error,
+			  };
 		return this;
 	}
 }
