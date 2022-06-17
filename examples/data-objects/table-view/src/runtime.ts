@@ -5,18 +5,18 @@
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
-import { TableView, tableViewType, TableViewView } from "./tableview";
+import { TableModel, tableModelType, TableView } from "./tableview";
 
-const tableViewFactory = createDataStoreFactory(
-    tableViewType,
+const tableModelFactory = createDataStoreFactory(
+    tableModelType,
     // eslint-disable-next-line max-len
-    import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableview").then((m) => m.TableView.getFactory()));
+    import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableview").then((m) => m.TableModel.getFactory()));
 
-const tableViewViewCallback = (model: TableView) => new TableViewView(model);
+const tableViewCallback = (model: TableModel) => new TableView(model);
 
 /**
  * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use
  * as our model (using the factory we provide), and the view callback we provide will pair that model with an
  * appropriate view.
  */
-export const fluidExport = new ContainerViewRuntimeFactory(tableViewFactory, tableViewViewCallback);
+export const fluidExport = new ContainerViewRuntimeFactory(tableModelFactory, tableViewCallback);

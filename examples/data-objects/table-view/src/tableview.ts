@@ -10,11 +10,11 @@ import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfac
 import { GridView } from "./grid";
 import * as styles from "./index.css";
 
-export const tableViewType = "@fluid-example/table-view";
+export const tableModelType = "@fluid-example/table-view";
 
 const matrixKey = "matrixKey";
 
-export class TableViewView implements IFluidHTMLView {
+export class TableView implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     private templateRoot: HTMLDivElement | undefined;
@@ -26,7 +26,7 @@ export class TableViewView implements IFluidHTMLView {
     private readonly _selectionSummary = document.createElement("span");
     public readonly setSelectionSummary = (val: string) => { this._selectionSummary.textContent = val; };
 
-    public constructor(private readonly tableView: TableView) { }
+    public constructor(private readonly tableView: TableModel) { }
 
     private generateView() {
         const root = document.createElement("div");
@@ -95,7 +95,7 @@ export class TableViewView implements IFluidHTMLView {
     // #endregion IFluidHTMLView
 }
 
-export class TableView extends DataObject {
+export class TableModel extends DataObject {
     public static getFactory() { return factory; }
 
     private _tableMatrix: SharedMatrix | undefined;
@@ -119,8 +119,8 @@ export class TableView extends DataObject {
 }
 
 const factory = new DataObjectFactory(
-    tableViewType,
-    TableView,
+    tableModelType,
+    TableModel,
     [
         SharedMatrix.getFactory(),
     ],
