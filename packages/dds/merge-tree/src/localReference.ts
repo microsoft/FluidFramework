@@ -9,6 +9,7 @@ import { List, ListMakeHead, ListRemoveEntry } from "./collections";
 import {
     ISegment,
 } from "./mergeTree";
+import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import {
@@ -40,6 +41,7 @@ export function _validateReferenceType(refType: ReferenceType) {
 
 export interface LocalReferencePosition extends ReferencePosition {
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+     trackingCollection?: TrackingGroupCollection;
 }
 
 /**
@@ -49,6 +51,8 @@ export class LocalReference implements LocalReferencePosition {
     public properties: PropertySet | undefined;
 
     public segment: ISegment | undefined;
+
+    public listNode: List<LocalReference> | undefined;
 
     public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
 
@@ -253,7 +257,7 @@ export class LocalReferenceCollection {
             refsAtOffset.at
             ?? ListMakeHead();
 
-        atRefs.enqueue(lref);
+        lref.listNode = atRefs.enqueue(lref);
 
         if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
             this.hierRefCount++;
@@ -267,38 +271,11 @@ export class LocalReferenceCollection {
      */
     public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         assertLocalReferences(lref);
-        const tryRemoveRef = (refs: List<LocalReference> | undefined) => {
-            if (refs) {
-                let node = refs;
-                do {
-                    node = node.next;
-                    if (node.data === lref) {
-                        ListRemoveEntry(node);
-                        if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
-                            this.hierRefCount--;
-                        }
-                        this.refCount--;
-                        return lref;
-                    }
-                } while (!node.isHead);
-            }
-        };
-        const refAtOffset = this.refsByOffset[lref.offset];
-        if (refAtOffset !== undefined) {
-            let ref = tryRemoveRef(refAtOffset.before);
-            if (ref) {
-                return ref;
-            }
 
-            ref = tryRemoveRef(refAtOffset.at);
-            if (ref) {
-                return ref;
-            }
-
-            ref = tryRemoveRef(refAtOffset.after);
-            if (ref) {
-                return ref;
-            }
+        if (lref.listNode) {
+            ListRemoveEntry(lref.listNode);
+            lref.listNode = undefined;
+            return lref;
         }
     }
 

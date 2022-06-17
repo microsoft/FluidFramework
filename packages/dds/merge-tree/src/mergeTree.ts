@@ -127,7 +127,7 @@ function isRemovedAndAcked(segment: ISegment): boolean {
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
-    readonly trackingCollection: TrackingGroupCollection;
+    trackingCollection: TrackingGroupCollection;
     propertyManager?: PropertiesManager;
     localSeq?: number;
     localRemovedSeq?: number;
