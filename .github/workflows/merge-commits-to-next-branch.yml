@@ -5,7 +5,6 @@ on:
     - cron: "0 */2 * * *"
 
 env:
-  COMMIT_INFO: commit-info
   TARGET_BRANCH: test_next
   SOURCE_BRANCH: main
 
