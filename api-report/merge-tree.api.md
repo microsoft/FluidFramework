@@ -836,7 +836,7 @@ export class LocalReferenceCollection {
     createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // @internal
     get empty(): boolean;
-    // (undocumented)
+    // @internal
     has(lref: ReferencePosition): boolean;
     // @internal
     hierRefCount: number;

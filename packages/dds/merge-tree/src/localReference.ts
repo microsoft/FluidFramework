@@ -278,9 +278,8 @@ export class LocalReferenceCollection {
      * @internal - this method should only be called by mergeTree
      */
     public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
-        assertLocalReferences(lref);
-        const listNode = lref.getListNode();
-        if (listNode) {
+        if (this.has(lref)) {
+            assertLocalReferences(lref);
             lref.link(lref.getSegment(), lref.getOffset(), undefined);
             return lref;
         }
