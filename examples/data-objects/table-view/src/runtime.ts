@@ -5,12 +5,13 @@
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
-import { TableModel, tableModelType, TableView } from "./tableview";
+import { TableModel, tableModelType } from "./tableModel";
+import { TableView } from "./tableview";
 
 const tableModelFactory = createDataStoreFactory(
     tableModelType,
     // eslint-disable-next-line max-len
-    import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableview").then((m) => m.TableModel.getFactory()));
+    import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableModel").then((m) => m.TableModel.getFactory()));
 
 const tableViewCallback = (model: TableModel) => new TableView(model);
 
