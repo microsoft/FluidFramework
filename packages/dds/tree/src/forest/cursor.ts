@@ -25,19 +25,21 @@ export type Value = undefined | Serializable;
 /**
  * A stateful low-level interface for reading tree data.
  *
- * TODO: Needs rules around invalidation/mutation of the underlying tree.
- * Should either be documented here, or each producer should document them
- * (and likely via returning a sub-interface with documentation on the subject).
- *
- * TODO: Needs a way to efficiently clone Cursor so patterns like lazy tree reification can be implemented efficiently.
- *
- * TODO: add a way to iterate a field without calling up and down with the field key for each index.
- *
  * TODO: add optional fast path APIs for more efficient handling when supported by underlying format and reader.
+ * Leverage "chunks" and "shape" for this, and skip to next chunk with seek (chunk length).
+ * Default chunks of size 1, and "node" shape?
  */
 export interface ITreeCursor {
     /** Select the child located at the given key and index. */
     down(key: FieldKey, index: number): TreeNavigationResult;
+
+    /**
+     * Moves `offset` entries in the field.
+     * May move less if  Pending or failed.
+     * In this case the distance moved is returned, and may be less than `offset`.
+     * Iff `ok` then `moved` will equal `offset`.
+     */
+    seek(offset: number): { result: TreeNavigationResult; moved: number; };
 
     /** Select the parent of the currently selected node. */
     up(): TreeNavigationResult;

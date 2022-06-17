@@ -45,14 +45,6 @@ export interface IForestSubscription extends Dependee {
     // current(): IForestSnapshot;
 
     /**
-     * @returns the node associated with `id`. Should not be used if there is no node with the provided id.
-     */
-    get(
-        id: NodeId,
-        observer?: ObservingDependent
-    ): ITreeSubscriptionCursor;
-
-    /**
      * If observer is provided, it will be invalidated if the value returned from this changes
      * (including from or two undefined).
      *
@@ -67,11 +59,6 @@ export interface IForestSubscription extends Dependee {
      * @returns true if the node associated with `id` exists in this forest, otherwise false
      */
     has(id: NodeId): boolean;
-
-    /**
-     * @returns the parent of `id`. Should not be used if there is no node with id or if id refers to the root node.
-     */
-    getParent(id: NodeId): ParentData;
 
     /**
      * @returns undefined iff root, otherwise the parent of `id`.
@@ -94,6 +81,8 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
     /**
      * @param observer - sets the starting value for the observer.
      * If undefined there is no observer for the returned ITreeSubscriptionCursor.
+     *
+     * Doing this has no impact on this.observer.
      */
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor;
 
@@ -133,7 +122,13 @@ export interface Anchor {
 }
 
 export enum ITreeSubscriptionCursorState {
+    /**
+     * On the current revision of the forest.
+     */
     Current,
+    /**
+     * Freed and must not be used.
+     */
     Freed,
 }
 
@@ -148,11 +143,11 @@ export enum ITreeSubscriptionCursorState {
  */
 export interface ITransaction extends IForestSubscription {
     /**
-     * Adds the supplied nodes to the forest. The nodes' IDs must be unique in the forest.
+     * Adds the supplied nodes to the forest.
      * @param nodes - the sequence of nodes to add to the forest.
-     * If any of them have children which exist in the forest already, those
-     * children will be parented.
-     * Any trait arrays present in a node must be non-empty. The nodes may be provided in any order.
+     * If any of them have children which exist in the forest already, those children will be parented.
+     * Any trait arrays present in a node must be non-empty.
+     * The nodes may be provided in any order.
      */
     add(nodes: Iterable<ITreeCursor>): void;
 
