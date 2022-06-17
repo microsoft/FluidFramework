@@ -14,8 +14,7 @@ jobs:
         with:
           node-version: 14
       - run: npm ci
-      - run:
-          echo ${{ github.event.pull_request.number }}
+      - run: echo ${{ github.event.pull_request.number }}
       - run: npm install @azure/storage-queue
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
@@ -38,7 +37,7 @@ jobs:
     needs: [ queue-pr ]
     steps:
       - name: Create Comment on PR
-        uses: actions/github-script@v6
+        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |

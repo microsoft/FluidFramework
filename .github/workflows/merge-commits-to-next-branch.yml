@@ -12,13 +12,13 @@ jobs:
   dequeue:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
         with:
           node-version: 14
       - run: npm ci
       - run: npm install @azure/storage-queue
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         id: deque-message
         with:
           script: |
@@ -43,11 +43,10 @@ jobs:
     needs: [ dequeue ]
     if: (needs.dequeue.result) == 'success'
     steps:
-      - run:
-          echo ${{needs.dequeue.outputs.LABEL}}
+      - run: echo ${{needs.dequeue.outputs.LABEL}}
       - name: Git checkout
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
-        uses: actions/checkout@v2
+        uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
           fetch-depth: '0'
@@ -70,7 +69,7 @@ jobs:
     steps:
       - run: npm install @octokit/core
       - name: Create PR using octokit
-        uses: actions/github-script@v6
+        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
           script: | # add assignee to PR
@@ -91,13 +90,13 @@ jobs:
     needs: [ createPullRequest, dequeue ]
     if: ( needs.createPullRequest.result == 'success' )
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
         with:
           node-version: 14
       - run: npm ci
       - run: npm install @azure/storage-queue
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           script: |
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
