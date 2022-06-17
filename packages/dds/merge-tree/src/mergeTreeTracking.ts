@@ -47,7 +47,6 @@ export class TrackingGroupCollection {
 
     constructor(private readonly trackable: Trackable) {
         this.trackingGroups = new Set<TrackingGroup>();
-        trackable.trackingCollection = this;
     }
 
     public link(trackingGroup: TrackingGroup) {

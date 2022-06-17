@@ -1442,11 +1442,7 @@ export class MergeTree {
             ref.callbacks?.beforeSlide?.();
             const removedRef = segment.localRefs.removeLocalRef(ref);
             assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
-            if (!newSegment) {
-                // No valid segments (all nodes removed or not yet created)
-                ref.segment = undefined;
-                ref.offset = 0;
-            } else {
+            if (newSegment) {
                 assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
                 newSegment.localRefs.addLocalRef(ref, newSegoff.offset ?? 0);
             }
@@ -1484,8 +1480,7 @@ export class MergeTree {
         segment.localRefs.clear();
         for (const lref of refsToStay) {
             assertLocalReferences(lref);
-            lref.segment = segment;
-            segment.localRefs.addLocalRef(lref);
+            segment.localRefs.addLocalRef(lref, lref.getOffset());
         }
     }
 
@@ -1589,9 +1584,16 @@ export class MergeTree {
         refSeq = this.collabWindow.currentSeq,
         clientId = this.collabWindow.clientId) {
         const seg = refPos.getSegment();
-        if (seg && seg.parent) {
-            const offset = !seg.removedSeq ? refPos.getOffset() : 0;
-            return offset + this.getPosition(seg, refSeq, clientId);
+        if (seg === undefined || isRemoved(seg)) {
+            return DetachedReferencePosition;
+        }
+        if (refPos.isLeaf()) {
+            return this.getPosition(refPos, refSeq, clientId);
+        }
+        if (refTypeIncludesFlag(refPos, ReferenceType.Transient)
+            || seg.localRefs?.has(refPos)) {
+                const offset = refPos.getOffset();
+                return offset + this.getPosition(seg, refSeq, clientId);
         }
         return DetachedReferencePosition;
     }

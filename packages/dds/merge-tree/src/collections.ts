@@ -8,6 +8,7 @@
 /* Remove once strictNullCheck is enabled */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import {
     ConflictAction,
     IIntegerRange,
@@ -64,7 +65,14 @@ export class List<T> {
         this.next = this;
     }
 
+    private assertHead() {
+        if (!this.isHead) {
+            throw new UsageError("only supported on list head");
+        }
+    }
+
     public clear(): void {
+        this.assertHead();
         if (this.isHead) {
             this.prev = this;
             this.next = this;
@@ -72,6 +80,7 @@ export class List<T> {
     }
 
     private add(data: T): List<T> {
+        this.assertHead();
         const entry = ListMakeEntry(data);
         this.prev.next = entry;
         entry.next = this;
@@ -81,6 +90,7 @@ export class List<T> {
     }
 
     public dequeue(): T | undefined {
+        this.assertHead();
         if (!this.empty()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const removedEntry = ListRemoveEntry(this.next)!;
@@ -118,6 +128,7 @@ export class List<T> {
     }
 
     public count(): number {
+        this.assertHead();
         let entry: List<T>;
         let i: number;
 
@@ -129,12 +140,14 @@ export class List<T> {
     }
 
     public first(): T | undefined {
+        this.assertHead();
         if (!this.empty()) {
             return (this.next.data);
         }
     }
 
     public last(): T | undefined {
+        this.assertHead();
         if (!this.empty()) {
             return (this.prev.data);
         }
@@ -145,6 +158,7 @@ export class List<T> {
     }
 
     public unshift(data: T): void {
+        this.assertHead();
         const entry = ListMakeEntry(data);
         entry.data = data;
         entry.isHead = false;

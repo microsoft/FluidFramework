@@ -41,7 +41,6 @@ export function _validateReferenceType(refType: ReferenceType) {
 
 export interface LocalReferencePosition extends ReferencePosition {
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
-    trackingCollection?: TrackingGroupCollection;
 }
 
 /**
@@ -53,9 +52,13 @@ class LocalReference implements LocalReferencePosition {
     private segment: ISegment | undefined;
     private offset: number = 0;
     private listNode: List<LocalReference> | undefined;
+    private _trackingCollection: TrackingGroupCollection | undefined;
 
     public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
 
+    public get trackingCollection(): TrackingGroupCollection {
+        return (this._trackingCollection ??= new TrackingGroupCollection(this));
+    }
     constructor(
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
@@ -110,7 +113,7 @@ interface IRefsAtOffset {
 }
 
 export function assertLocalReferences(
-    lref: LocalReferencePosition | LocalReferencePosition | LocalReference,
+    lref: any,
 ): asserts lref is LocalReference {
     assert(lref instanceof LocalReference, 0x2e0 /* "lref not a Local Reference" */);
 }
@@ -314,6 +317,36 @@ export class LocalReferenceCollection {
         }
 
         this.refsByOffset.push(...other.refsByOffset);
+    }
+
+    public has(lref: ReferencePosition): boolean {
+        assertLocalReferences(lref);
+        const seg = lref.getSegment();
+        if (seg !== this.segment) {
+            return false;
+        }
+        // we should be able to optimize finding the
+        // list head
+        const listNode = lref.getListNode();
+        let prev = listNode;
+        let next = listNode;
+        while (prev?.isHead !== true && next?.isHead !== true) {
+            prev = prev?.prev;
+            next = next?.next;
+        }
+
+        const headNode = prev?.isHead ? prev : next;
+        if (headNode?.isHead !== true || headNode.empty()) {
+            return false;
+        }
+        const offset = lref.getOffset();
+        const refsAtOffset = this.refsByOffset[offset];
+        if (refsAtOffset?.after === headNode
+            || refsAtOffset?.at === headNode
+            || refsAtOffset?.before === headNode) {
+                return true;
+            }
+        return false;
     }
 
     /**

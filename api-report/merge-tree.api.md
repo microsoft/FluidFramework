@@ -739,7 +739,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     // (undocumented)
     toJSONObject(): any;
     // (undocumented)
-    readonly trackingCollection: TrackingGroupCollection;
+    trackingCollection: TrackingGroupCollection;
     // (undocumented)
     readonly type: string;
 }
@@ -825,7 +825,7 @@ export class LocalReferenceCollection {
     // (undocumented)
     addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
     // @internal
-    addLocalRef(lref: LocalReferencePosition): void;
+    addLocalRef(lref: LocalReferencePosition, offset: number): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
     // @internal
@@ -836,6 +836,8 @@ export class LocalReferenceCollection {
     createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // @internal
     get empty(): boolean;
+    // (undocumented)
+    has(lref: ReferencePosition): boolean;
     // @internal
     hierRefCount: number;
     // @internal
@@ -1267,11 +1269,13 @@ export interface ReferencePosition {
     // (undocumented)
     getSegment(): ISegment | undefined;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // (undocumented)
     properties?: PropertySet;
     // (undocumented)
     refType: ReferenceType;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
 }
 
 // @public (undocumented)
@@ -1415,6 +1419,8 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 // @public
 export class SortedSegmentSet<T extends ISegment | {
     readonly segment: ISegment;
+} | {
+    getSegment(): ISegment | undefined;
 } = ISegment> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T): void;
@@ -1480,25 +1486,28 @@ export class TextSegment extends BaseSegment {
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
 
 // @public (undocumented)
+export type Trackable = ISegment | LocalReferencePosition;
+
+// @public (undocumented)
 export class TrackingGroup {
     constructor();
     // (undocumented)
-    has(segment: ISegment): boolean;
+    has(segment: Trackable): boolean;
     // (undocumented)
-    link(segment: ISegment): void;
+    link(segment: Trackable): void;
     // (undocumented)
-    get segments(): readonly ISegment[];
+    get segments(): readonly Trackable[];
     // (undocumented)
     get size(): number;
     // (undocumented)
-    unlink(segment: ISegment): void;
+    unlink(segment: Trackable): void;
 }
 
 // @public (undocumented)
 export class TrackingGroupCollection {
-    constructor(segment: ISegment);
+    constructor(trackable: Trackable);
     // (undocumented)
-    copyTo(segment: ISegment): void;
+    copyTo(segment: Trackable): void;
     // (undocumented)
     get empty(): boolean;
     // (undocumented)
