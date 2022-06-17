@@ -32,7 +32,7 @@ import { v4 as uuid } from "uuid";
  * and should only be used in client (browser) context.
  *
  * @param tenantId - @see {@link @fluidframework/protocol-definitions#ITokenClaims.tenantId}
- * @param key - TODO
+ * @param key - API key to authenticate user.
  * @param scopes - @see {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
  * @param documentId - @see {@link @fluidframework/protocol-definitions#ITokenClaims.documentId}.
  * If not specified, an empty string will be used instead.
