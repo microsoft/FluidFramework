@@ -1274,8 +1274,6 @@ export interface ReferencePosition {
     properties?: PropertySet;
     // (undocumented)
     refType: ReferenceType;
-    // (undocumented)
-    readonly trackingCollection: TrackingGroupCollection;
 }
 
 // @public (undocumented)
@@ -1419,8 +1417,6 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 // @public
 export class SortedSegmentSet<T extends ISegment | {
     readonly segment: ISegment;
-} | {
-    getSegment(): ISegment | undefined;
 } = ISegment> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T): void;
@@ -1486,28 +1482,25 @@ export class TextSegment extends BaseSegment {
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
 
 // @public (undocumented)
-export type Trackable = ISegment | LocalReferencePosition;
-
-// @public (undocumented)
 export class TrackingGroup {
     constructor();
     // (undocumented)
-    has(segment: Trackable): boolean;
+    has(segment: ISegment): boolean;
     // (undocumented)
-    link(segment: Trackable): void;
+    link(segment: ISegment): void;
     // (undocumented)
-    get segments(): readonly Trackable[];
+    get segments(): readonly ISegment[];
     // (undocumented)
     get size(): number;
     // (undocumented)
-    unlink(segment: Trackable): void;
+    unlink(segment: ISegment): void;
 }
 
 // @public (undocumented)
 export class TrackingGroupCollection {
-    constructor(trackable: Trackable);
+    constructor(segment: ISegment);
     // (undocumented)
-    copyTo(segment: Trackable): void;
+    copyTo(segment: ISegment): void;
     // (undocumented)
     get empty(): boolean;
     // (undocumented)

@@ -63,7 +63,7 @@ export interface ReferencePosition {
     getSegment(): ISegment | undefined;
     getOffset(): number;
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
 }
 
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;

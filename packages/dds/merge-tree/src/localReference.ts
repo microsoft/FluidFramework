@@ -9,7 +9,6 @@ import { List, ListMakeHead, ListRemoveEntry } from "./collections";
 import {
     ISegment,
 } from "./mergeTree";
-import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import {
@@ -52,13 +51,9 @@ class LocalReference implements LocalReferencePosition {
     private segment: ISegment | undefined;
     private offset: number = 0;
     private listNode: List<LocalReference> | undefined;
-    private _trackingCollection: TrackingGroupCollection | undefined;
 
     public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
 
-    public get trackingCollection(): TrackingGroupCollection {
-        return (this._trackingCollection ??= new TrackingGroupCollection(this));
-    }
     constructor(
         public refType = ReferenceType.Simple,
         properties?: PropertySet,
@@ -320,7 +315,9 @@ export class LocalReferenceCollection {
     }
 
     public has(lref: ReferencePosition): boolean {
-        assertLocalReferences(lref);
+        if (!(lref instanceof LocalReference)) {
+            return false;
+        }
         const seg = lref.getSegment();
         if (seg !== this.segment) {
             return false;

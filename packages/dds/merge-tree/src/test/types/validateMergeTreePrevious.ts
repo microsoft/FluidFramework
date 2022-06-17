@@ -2660,7 +2660,6 @@ declare function get_old_TypeAliasDeclaration_RangeStackMap():
 declare function use_current_TypeAliasDeclaration_RangeStackMap(
     use: TypeOnly<current.RangeStackMap>);
 use_current_TypeAliasDeclaration_RangeStackMap(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_RangeStackMap());
 
 /*
@@ -2805,7 +2804,6 @@ declare function get_old_InterfaceDeclaration_ReferencePosition():
 declare function use_current_InterfaceDeclaration_ReferencePosition(
     use: TypeOnly<current.ReferencePosition>);
 use_current_InterfaceDeclaration_ReferencePosition(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ReferencePosition());
 
 /*
@@ -3385,7 +3383,6 @@ declare function get_old_ClassDeclaration_TrackingGroup():
 declare function use_current_ClassDeclaration_TrackingGroup(
     use: TypeOnly<current.TrackingGroup>);
 use_current_ClassDeclaration_TrackingGroup(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TrackingGroup());
 
 /*
@@ -3398,7 +3395,6 @@ declare function get_current_ClassDeclaration_TrackingGroup():
 declare function use_old_ClassDeclaration_TrackingGroup(
     use: TypeOnly<old.TrackingGroup>);
 use_old_ClassDeclaration_TrackingGroup(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TrackingGroup());
 
 /*
