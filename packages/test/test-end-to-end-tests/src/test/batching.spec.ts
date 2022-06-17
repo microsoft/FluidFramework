@@ -75,7 +75,7 @@ async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
     }));
 }
 
-describeFullCompat("Flushing ops", (getTestObjectProvider) => {
+describeFullCompat.only("Flushing ops", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
@@ -104,6 +104,7 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
         dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
         dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 
+        // TODO: to remove these directives in https://dev.azure.com/fluidframework/internal/_workitems/edit/658
         // @ts-expect-error older versions rely on the "setFlushMode" method
         if (runtimeOptions?.flushMode !== undefined && dataObject1.context.containerRuntime.setFlushMode) {
             // @ts-expect-error older versions rely on the "setFlushMode" method
@@ -118,9 +119,9 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
         let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
         let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
-        describe("Flushing of batches via orderSequentially", () => {
+        function testFlushingUsingOrderSequentially(options: IContainerRuntimeOptions) {
             beforeEach(async () => {
-                await setupContainers();
+                await setupContainers(options);
                 setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
                 setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
             });
@@ -245,6 +246,14 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
                 verifyBatchMetadata(dataObject1BatchMessages);
                 verifyBatchMetadata(dataObject2BatchMessages);
             });
+        }
+
+        describe("Flushing of batches via orderSequentially [TurnBased]", () => {
+            testFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased });
+        });
+
+        describe.only("Flushing of batches via orderSequentially [Immediate]", () => {
+            testFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate });
         });
 
         describe("TurnBased flushing of batches", () => {

@@ -1018,7 +1018,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly defaultMaxConsecutiveReconnects = 15;
 
     private _orderSequentiallyCalls: number = 0;
-    private readonly _flushMode: FlushMode;
+    private _flushMode: FlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -1297,7 +1297,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 flushMode: () => this.flushMode,
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
-                setFlushMode: (mode) => {},
+                setFlushMode: (mode) => { this._flushMode = mode; },
             },
             this._flushMode,
             pendingRuntimeState?.pending);
@@ -1872,6 +1872,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return context.realize();
     }
 
+    private setFlushMode(mode: FlushMode): void {
+        if (mode === this._flushMode) {
+            return;
+        }
+        this._flushMode = mode;
+        // Let the PendingStateManager know that FlushMode has been updated.
+        this.pendingStateManager.onFlushModeUpdated(mode);
+    }
+
     public flush(): void {
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
@@ -1903,11 +1912,32 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public orderSequentially(callback: () => void): void {
+        // If flush mode is already TurnBased we are either
+        // nested in another orderSequentially, or
+        // the app is flushing manually, in which
+        // case this invocation doesn't own
+        // flushing.
+        if (this.flushMode === FlushMode.TurnBased) {
+            this.trackOrderSequentiallyCalls(callback);
+            return;
+        }
+
+        const savedFlushMode = this.flushMode;
+        this.setFlushMode(FlushMode.TurnBased);
+
+        try {
+            this.trackOrderSequentiallyCalls(callback);
+            this.flush();
+        } finally {
+            this.setFlushMode(savedFlushMode);
+        }
+    }
+
+    private trackOrderSequentiallyCalls(callback: () => void): void {
         let checkpoint: { rollback: () => void; } | undefined;
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
             checkpoint = this.pendingStateManager.checkpoint();
         }
-
         try {
             this._orderSequentiallyCalls++;
             callback();
@@ -1922,10 +1952,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
-        }
-
-        if (this._orderSequentiallyCalls === 0 && this.flushMode === FlushMode.Immediate) {
-            this.flush();
         }
     }
 
@@ -2702,6 +2728,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
                 if (!this.flushTrigger) {
+                    this.flushTrigger = true;
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     Promise.resolve().then(() => {
                         this.flushTrigger = false;
@@ -2715,7 +2742,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 content,
                 serializedContent,
                 maxOpSize,
-                this._flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls > 0,
+                this._flushMode === FlushMode.TurnBased,
                 opMetadataInternal);
         }
 
