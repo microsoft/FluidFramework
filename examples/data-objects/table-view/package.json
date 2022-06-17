@@ -52,7 +52,6 @@
     "@fluidframework/matrix": "^1.1.0",
     "@fluidframework/runtime-utils": "^1.1.0",
     "@fluidframework/sequence": "^1.1.0",
-    "@fluidframework/view-interfaces": "^1.1.0",
     "@tiny-calc/micro": "0.0.0-alpha.5",
     "react": "^16.10.2",
     "source-map-loader": "^2.0.0",
