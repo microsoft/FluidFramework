@@ -1594,7 +1594,7 @@ export class MergeTree {
         }
         if (refTypeIncludesFlag(refPos, ReferenceType.Transient)
             || seg.localRefs?.has(refPos)) {
-                const offset = refPos.getOffset();
+                const offset = isRemoved(seg) ? 0 : refPos.getOffset();
                 return offset + this.getPosition(seg, refSeq, clientId);
         }
         return DetachedReferencePosition;

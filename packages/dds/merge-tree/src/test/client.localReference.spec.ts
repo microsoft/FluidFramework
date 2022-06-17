@@ -163,22 +163,22 @@ describe("MergeTree.Client", () => {
         const c1LocalRef = client1.createLocalReferencePosition(
             segInfo.segment!, segInfo.offset!, ReferenceType.SlideOnRemove, undefined);
 
-        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 3);
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 3, "ref created");
 
         const remove1 = client1.makeOpMessage(
             client1.removeRangeLocal(3, 4), ++seq);
         remove1.minimumSequenceNumber = seq - 1;
-        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 3);
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 3, "after remove");
 
         const remove2 = client1.makeOpMessage(
             client1.removeRangeLocal(1, 3), ++seq);
         remove2.minimumSequenceNumber = seq - 1;
-        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 1);
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 1, "after second remove");
 
         client1.applyMsg(remove1);
         client1.applyMsg(remove2);
 
-        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 0);
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 0, "ops applied");
     });
 
     it("getSlideOnRemoveReferencePosition", () => {
