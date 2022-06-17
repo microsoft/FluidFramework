@@ -1442,7 +1442,9 @@ export class MergeTree {
             ref.callbacks?.beforeSlide?.();
             const removedRef = segment.localRefs.removeLocalRef(ref);
             assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
-            if (newSegment) {
+            if (!newSegment) {
+                ref.getSegment()?.localRefs?.removeLocalRef(ref);
+            } else {
                 assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
                 newSegment.localRefs.addLocalRef(ref, newSegoff.offset ?? 0);
             }
@@ -1584,7 +1586,7 @@ export class MergeTree {
         refSeq = this.collabWindow.currentSeq,
         clientId = this.collabWindow.clientId) {
         const seg = refPos.getSegment();
-        if (seg === undefined || isRemoved(seg)) {
+        if (seg?.parent === undefined) {
             return DetachedReferencePosition;
         }
         if (refPos.isLeaf()) {

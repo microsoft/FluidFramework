@@ -313,9 +313,13 @@ export class LocalReferenceCollection {
 
         this.refsByOffset.push(...other.refsByOffset);
     }
-
+    /**
+     * @internal - this method should only be called by mergeTree
+     * Return true of the local reference is in the collection, otherwise false
+     */
     public has(lref: ReferencePosition): boolean {
-        if (!(lref instanceof LocalReference)) {
+        if (!(lref instanceof LocalReference)
+            || refTypeIncludesFlag(lref, ReferenceType.Transient)) {
             return false;
         }
         const seg = lref.getSegment();
@@ -325,6 +329,9 @@ export class LocalReferenceCollection {
         // we should be able to optimize finding the
         // list head
         const listNode = lref.getListNode();
+        if (listNode === undefined) {
+            return false;
+        }
         let prev = listNode;
         let next = listNode;
         while (prev?.isHead !== true && next?.isHead !== true) {
@@ -381,6 +388,59 @@ export class LocalReferenceCollection {
         } else {
             // shrink the offset array when empty and splitting
             this.refsByOffset.length = offset;
+        }
+    }
+
+    public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]) {
+        const beforeRefs = this.refsByOffset[0]?.before ?? ListMakeHead();
+
+        for (const iterable of refs) {
+            for (const lref of iterable) {
+                assertLocalReferences(lref);
+                if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                    beforeRefs.unshift(lref);
+                    lref.link(this.segment, 0, beforeRefs.next);
+                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+                        this.hierRefCount++;
+                    }
+                    this.refCount++;
+                } else {
+                    lref.link(undefined, 0, undefined);
+                }
+            }
+        }
+        if (!beforeRefs.empty() && this.refsByOffset[0]?.before === undefined) {
+            const refsAtOffset = this.refsByOffset[0] =
+                this.refsByOffset[0]
+                ?? { before: beforeRefs };
+            refsAtOffset.before = refsAtOffset.before ?? beforeRefs;
+        }
+    }
+
+    public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]) {
+        const lastOffset = this.refsByOffset.length - 1;
+        const afterRefs =
+            this.refsByOffset[lastOffset]?.after ?? ListMakeHead();
+
+        for (const iterable of refs) {
+            for (const lref of iterable) {
+                assertLocalReferences(lref);
+                if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                    lref.link(this.segment, lastOffset, afterRefs.enqueue(lref));
+                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+                        this.hierRefCount++;
+                    }
+                    this.refCount++;
+                } else {
+                    lref.link(undefined, 0, undefined);
+                }
+            }
+        }
+        if (!afterRefs.empty() && this.refsByOffset[lastOffset]?.after === undefined) {
+            const refsAtOffset = this.refsByOffset[lastOffset] =
+                this.refsByOffset[lastOffset]
+                ?? { after: afterRefs };
+            refsAtOffset.after = refsAtOffset.after ?? afterRefs;
         }
     }
 }
