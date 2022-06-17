@@ -35,6 +35,7 @@
     "start:r11s": "webpack serve --config webpack.config.js --env mode=r11s",
     "start:spo": "webpack serve --config webpack.config.js --env mode=spo",
     "start:spo-df": "webpack serve --config webpack.config.js --env mode=spo-df",
+    "start:tinylicious": "webpack serve --config webpack.config.js --env mode=tinylicious",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",

@@ -805,7 +805,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(map3.get(testKey2), testValue);
     });
 
-    it("works with summary while offline", async function() {
+    // TODO: https://github.com/microsoft/FluidFramework/issues/10729
+    it.skip("works with summary while offline", async function() {
         map1.set("test op 1", "test op 1");
         await waitForSummary();
 
@@ -824,5 +825,20 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
         assert.strictEqual(map1.get(testKey), testValue);
         assert.strictEqual(map2.get(testKey), testValue);
+    });
+
+    // TODO: https://github.com/microsoft/FluidFramework/issues/10729
+    it.skip("can stash between summary op and ack", async function() {
+        map1.set("test op 1", "test op 1");
+        const container = await provider.loadTestContainer(testContainerConfig);
+        const pendingOps = await new Promise<string>((res) => container.on("op", (op) => {
+            if (op.type === "summarize") {
+                res(container.closeAndGetPendingLocalState());
+            }
+        }));
+
+        const container2 = await loader.resolve({ url }, pendingOps);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
     });
 });
