@@ -12,6 +12,7 @@ import {
 import { v4 as uuid } from "uuid";
 import {
     hasErrorInstanceId,
+    hasTelemetryPropFunctions,
     IFluidErrorBase,
     isFluidError,
     isValidLegacyError,
@@ -129,11 +130,14 @@ export function normalizeError(
         fluidError.addTelemetryProperties({ typeofError: typeof (error) });
     }
 
-    const originalErrorTelemetryProps = isILoggingError(error) ? error.getTelemetryProperties() : {};
+    const originalErrorTelemetryProps = LoggingError.typeCheck(error)
+        ? error.getTelemetryProperties()
+        : { untrustedOrigin: 1 }; // This will let us filter to errors not originated by our own code
+
     fluidError.addTelemetryProperties({
         ...originalErrorTelemetryProps,
         ...annotations.props,
-        untrustedOrigin: 1, // This will let us filter to errors not originated by our own code
+        // untrustedOrigin: 1
     });
 
     return fluidError;
@@ -150,7 +154,7 @@ let stackPopulatedOnCreation: boolean | undefined;
  * Some browsers will populate stack right away, others require throwing Error, so we do auto-detection on the fly.
  * @returns Error object that has stack populated.
  */
- export function generateErrorWithStack(): Error {
+export function generateErrorWithStack(): Error {
     const err = new Error("<<generated stack>>");
 
     if (stackPopulatedOnCreation === undefined) {
@@ -253,9 +257,13 @@ function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
  * False for any error we created and raised within the FF codebase, or wrapped in a well-known error type
  */
 export function isExternalError(e: any): boolean {
-    return !isValidLegacyError(e) ||
-        (e.getTelemetryProperties().untrustedOrigin === 1 &&
-         e.errorType === NormalizedExternalError.normalizedErrorType);
+    if (LoggingError.typeCheck(e)) {
+        if (NormalizedExternalError.typeCheck(e)) {
+            return e.getTelemetryProperties().untrustedOrigin === 1;
+        }
+        return false;
+    }
+    return !isValidLegacyError(e);
 }
 
 /**
@@ -327,7 +335,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     get errorInstanceId() { return this._errorInstanceId; }
     overwriteErrorInstanceId(id: string) { this._errorInstanceId = id; }
 
-    /** Back-compat to appease isFluidError typeguard in old code that may handle this error */
+    /** Back-compat to appease isFluidError typeCheck in old code that may handle this error */
     // @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
     private readonly fluidErrorCode: "-" = "-";
 
@@ -354,6 +362,16 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     }
 
     /**
+     * Determines if a given object is an instance of a LoggingError
+     * @param object 
+     * @returns true if the object is an instance of a LoggingError, false if not.
+     */
+    public static typeCheck(object: any): object is LoggingError {
+        return hasTelemetryPropFunctions(object)
+            && typeof object?.errorInstanceId === "string";
+    }
+
+    /**
      * Add additional properties to be logged
      */
     public addTelemetryProperties(props: ITelemetryProperties) {
@@ -376,7 +394,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
 }
 
 /** The Error class used when normalizing an external error */
-class NormalizedExternalError extends LoggingError {
+export class NormalizedExternalError extends LoggingError {
     // errorType "genericError" is used as a default value throughout the code.
     // Note that this matches ContainerErrorType/DriverErrorType's genericError
     static readonly normalizedErrorType = "genericError";
@@ -394,5 +412,15 @@ class NormalizedExternalError extends LoggingError {
         if (errorProps.stack !== undefined) {
             overwriteStack(this, errorProps.stack);
         }
+    }
+
+    /**
+     * Determines if a given object is an instance of a NormalizedExternalError
+     * @param object 
+     * @returns true if the object is an instance of a NormalizedExternalError, false if not.
+     */
+    public static typeCheck(object: any): object is NormalizedExternalError {
+        return object.errorType !== undefined
+            && LoggingError.typeCheck(object);
     }
 }

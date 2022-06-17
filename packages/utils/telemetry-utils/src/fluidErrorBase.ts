@@ -40,7 +40,7 @@ export interface IFluidErrorBase extends Error {
     addTelemetryProperties: (props: ITelemetryProperties) => void;
 }
 
-const hasTelemetryPropFunctions = (x: any): boolean =>
+export const hasTelemetryPropFunctions = (x: any): boolean =>
     typeof x?.getTelemetryProperties === "function" &&
     typeof x?.addTelemetryProperties === "function";
 
