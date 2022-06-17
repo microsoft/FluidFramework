@@ -13,13 +13,7 @@ import { ISummarizer } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
 import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gc/gcTestSummaryUtils";
 
-/**
- * Validates this scenario: When a data store is shared with an external app, if the data store becomes unreferenced
- * by the time it is requested via this external app, we return a failure (404).
- * Basically, for data stores that are unreferenced in the base snapshot that a container loads from, we return a
- * failure (404) when they are requested with "externalRequest" flag in the request header.
- */
-describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
+describeNoCompat("Isolated channels handle generation", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let mainContainer: IContainer;
     let mainDataStore: ITestDataObject;
@@ -56,7 +50,7 @@ describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
         await waitForContainerConnection(mainContainer);
     });
 
-    it("should fail requests with externalRequest flag for unreferenced data stores", async () => {
+    it("correctly update handle paths when isolated channels are enabled / disabled across summaries", async () => {
         // Create a second DDS that will not change so a handle will be sent during summaries.
         const directory = SharedDirectory.create(mainDataStore._runtime);
         mainDataStore._root.set("dir", directory.handle);
