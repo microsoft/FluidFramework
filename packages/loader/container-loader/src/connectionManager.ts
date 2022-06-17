@@ -224,7 +224,6 @@ export class ConnectionManager implements IConnectionManager {
         }
     }
 
-    /** We should join with a write connection if we have local ops that have not yet been ack'd */
     public shouldJoinWrite(): boolean {
         // We don't have to wait for ack for topmost NoOps. So subtract those.
         return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.trailingNoopCount);
@@ -837,6 +836,7 @@ export class ConnectionManager implements IConnectionManager {
                 // assume that connection stays "write" connection until disconnect, and act accordingly, which may
                 // not work well with de-facto "read" connection we are in after receiving own leave op on timeout.
                 // Clients need to be able to transition to "read" state after some time of inactivity!
+                // Note - this may close container!
                 this.reconnect(
                     "read", // connectionMode
                     "Switch to read", // message

@@ -610,7 +610,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
     }
 
-    /** Add messages to the inbound queue in sequential order */
     private enqueueMessages(
         messages: ISequencedDocumentMessage[],
         reason: string,
