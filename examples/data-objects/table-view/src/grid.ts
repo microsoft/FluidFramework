@@ -70,6 +70,8 @@ export class GridView {
     constructor(
         private readonly matrix: SharedMatrix,
         private readonly tableView: TableView,
+        private readonly getFormula: () => string,
+        private readonly setFormula: (val: string) => void,
     ) {
         this.root = this.generateDom();
         this.root.addEventListener("click", this.onGridClick as EventListener);
@@ -425,9 +427,9 @@ export class GridView {
             // The formula bar should always show raw values, but when a cell is
             // selected for edit it will be showing the raw value
             const cellValue = this.matrix.getCell(row, col);
-            this.tableView.formulaInput = `${cellValue ?? ""}`;
+            this.setFormula(`${cellValue ?? ""}`);
         } else {
-            this.tableView.formulaInput = "<multiple selection>";
+            this.setFormula("<multiple selection>");
         }
     }
 
@@ -438,7 +440,7 @@ export class GridView {
             const selectedCell = this.getTdFromRowCol(row, col) as HTMLTableDataCellElement;
             if (selectedCell) {
                 const previous = this.matrix.getCell(row, col);
-                const current = this.parseInput(this.tableView.formulaInput);
+                const current = this.parseInput(this.getFormula());
                 if (previous !== current) {
                     selectedCell.textContent = `\u200B${current}`;
                     this.matrix.setCell(row, col, current);

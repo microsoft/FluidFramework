@@ -20,6 +20,8 @@ export class TableViewView implements IFluidHTMLView {
     private templateRoot: HTMLDivElement | undefined;
 
     private readonly _formulaInput = document.createElement("input");
+    private readonly getFormula = () => this._formulaInput.value;
+    private readonly setFormula = (val: string) => { this._formulaInput.value = val; };
 
     private readonly _selectionSummary = document.createElement("span");
     // eslint-disable-next-line accessor-pairs
@@ -61,7 +63,7 @@ export class TableViewView implements IFluidHTMLView {
         const grid = document.createElement("div");
         grid.classList.add(styles.grid);
 
-        const gridView = new GridView(this.tableView.tableMatrix, this.tableView);
+        const gridView = new GridView(this.tableView.tableMatrix, this.tableView, this.getFormula, this.setFormula);
         grid.append(gridView.root);
 
         this._formulaInput.addEventListener("keypress", gridView.formulaKeypress);
@@ -89,16 +91,8 @@ export class TableViewView implements IFluidHTMLView {
     // #endregion IFluidHTMLView
 }
 
-export class TableView extends DataObject implements IFluidHTMLView {
+export class TableView extends DataObject {
     public static getFactory() { return factory; }
-
-    public get IFluidHTMLView() { return this; }
-
-    private tableViewView: TableViewView | undefined;
-
-    private readonly _formulaInput = document.createElement("input");
-    public get formulaInput(): string { return this._formulaInput.value; }
-    public set formulaInput(val: string) { this._formulaInput.value = val; }
 
     private readonly _selectionSummary = document.createElement("span");
     // eslint-disable-next-line accessor-pairs
@@ -111,15 +105,6 @@ export class TableView extends DataObject implements IFluidHTMLView {
         }
         return this._tableMatrix;
     }
-
-    // #region IFluidHTMLView
-    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
-        if (this.tableViewView === undefined) {
-            this.tableViewView = new TableViewView(this);
-        }
-        this.tableViewView.render(elm, options);
-    }
-    // #endregion IFluidHTMLView
 
     protected async initializingFirstTime() {
         const matrix = SharedMatrix.create(this.runtime);
