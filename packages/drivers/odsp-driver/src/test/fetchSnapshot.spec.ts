@@ -59,6 +59,7 @@ describe("Tests for snapshot fetch headers", () => {
         blobs: new Map(),
         ops: [],
         sequenceNumber: 0,
+        latestSequenceNumber: 0,
     };
     before(async () => {
         hashedDocumentId = await getHashedDocumentId(driveId, itemId);

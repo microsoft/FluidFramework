@@ -77,6 +77,7 @@ describe("Tests for snapshot fetch", () => {
         blobs: new Map(),
         ops: [],
         sequenceNumber: 0,
+        latestSequenceNumber: 0,
     };
 
     const value: IVersionedValueWithEpoch = {
