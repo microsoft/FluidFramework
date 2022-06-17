@@ -17,8 +17,6 @@ export class DefaultMap<T> {
     // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "IMapMessageLocalMetadata" which is marked as @internal
     constructor(serializer: IFluidSerializer, handle: IFluidHandle, submitMessage: (op: any, localOpMetadata: IMapMessageLocalMetadata) => void, type: IValueType<T>, eventEmitter?: TypedEventEmitter<ISharedDefaultMapEvents>);
     entries(): IterableIterator<[string, any]>;
-    // Warning: (ae-forgotten-export) The symbol "ISharedDefaultMapEvents" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     readonly eventEmitter: TypedEventEmitter<ISharedDefaultMapEvents>;
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
@@ -26,11 +24,8 @@ export class DefaultMap<T> {
     //
     // (undocumented)
     get(key: string): T;
-    // Warning: (ae-forgotten-export) The symbol "IMapDataObjectSerializable" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable;
-    // Warning: (ae-forgotten-export) The symbol "IMapDataObjectSerialized" needs to be exported by the entry point index.d.ts
     getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
@@ -42,17 +37,57 @@ export class DefaultMap<T> {
     get size(): number;
     // (undocumented)
     tryGetStashedOpLocalMetadata(op: any): unknown;
-    // Warning: (ae-forgotten-export) The symbol "IMapOperation" needs to be exported by the entry point index.d.ts
     tryProcessMessage(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage | undefined, localOpMetadata: unknown): boolean;
     // Warning: (ae-incompatible-release-tags) The symbol "tryResubmitMessage" is marked as @public, but its signature references "IMapMessageLocalMetadata" which is marked as @internal
     tryResubmitMessage(op: any, localOpMetadata: IMapMessageLocalMetadata): boolean;
     values(): IterableIterator<any>;
 }
 
+// @public
+export interface IMapDataObjectSerializable {
+    // (undocumented)
+    [key: string]: ISerializableValue;
+}
+
+// @public (undocumented)
+export interface IMapDataObjectSerialized {
+    // (undocumented)
+    [key: string]: ISerializedValue;
+}
+
 // @internal (undocumented)
 export interface IMapMessageLocalMetadata {
     // (undocumented)
     localSeq: number;
+}
+
+// @public
+export type IMapOperation = IMapValueTypeOperation;
+
+// @public
+export interface IMapValueTypeOperation {
+    key: string;
+    type: "act";
+    // @alpha
+    value: IValueTypeOperationValue;
+}
+
+// @public
+export interface ISerializableValue {
+    type: string;
+    value: any;
+}
+
+// @public (undocumented)
+export interface ISerializedValue {
+    type: string;
+    value: string | undefined;
+}
+
+// @public (undocumented)
+export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
+    // (undocumented)
+    (event: "valueChanged" | "create", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public

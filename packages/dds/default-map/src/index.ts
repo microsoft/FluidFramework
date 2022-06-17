@@ -3,13 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { DefaultMap } from "./defaultMap";
-export {
-    IMapMessageLocalMetadata,
-    IValueChanged,
-    IValueFactory,
-    IValueOpEmitter,
-    IValueOperation,
-    IValueType,
-    IValueTypeOperationValue,
-} from "./defaultMapInterfaces";
+export * from "./defaultMap";
+export * from "./defaultMapInterfaces";
