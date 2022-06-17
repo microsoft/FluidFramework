@@ -919,6 +919,9 @@
         "unicorn/prefer-ternary": [
             "error"
         ],
+        "unicorn/prefer-type-error": [
+            "error"
+        ],
         "unused-imports/no-unused-imports": [
             "error"
         ],

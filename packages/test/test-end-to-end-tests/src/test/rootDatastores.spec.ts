@@ -25,7 +25,7 @@ import {
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { Loader } from "@fluidframework/container-loader";
-import { GenericError } from "@fluidframework/container-utils";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
@@ -299,6 +299,23 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
+        it("Aliases with slashes are not supported", async () => {
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
+
+            const aliasResult1 = await ds1.trySetAlias(alias);
+
+            let error: Error | undefined;
+            try {
+                await ds2.trySetAlias(`${alias}/${alias}`);
+            } catch (err) {
+                error = err as Error;
+            }
+
+            assert.equal(aliasResult1, "Success");
+            assert.ok(error instanceof UsageError);
+        });
+
         it("Aliasing a datastore is idempotent", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -401,7 +418,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                             summaryConfigOverrides: {
                                 ...DefaultSummaryConfiguration,
                                 ...{
-                                    idleTime: IdleDetectionTime,
+                                    minIdleTime: IdleDetectionTime,
+                                    maxIdleTime: IdleDetectionTime,
                                     maxTime: IdleDetectionTime * 12,
                                     initialSummarizerDelayMs: 10,
                                 },
