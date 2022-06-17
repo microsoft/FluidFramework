@@ -28,6 +28,9 @@ export interface Covariant<T> {
     _removeContravariance?: T;
 }
 
+// @public
+export const EmptyKey: FieldKey;
+
 // Warning: (ae-forgotten-export) The symbol "ExtractFromOpaque" needs to be exported by the entry point index.d.ts
 //
 // @public

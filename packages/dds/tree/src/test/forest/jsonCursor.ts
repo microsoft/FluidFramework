@@ -3,53 +3,62 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
     ITreeCursor,
-    TreeKey,
+    EmptyKey,
+    FieldKey,
     TreeNavigationResult,
-    TreeType
-} from "../..";
+    TreeType,
+} from "../../..";
 
+/** NodeTypes used by the JsonCursor. */
 export const enum JsonType {
-    JsonNull    = 0,
-    JsonBoolean = 1,
-    JsonNumber  = 2,
-    JsonString  = 3,
-    JsonArray   = 4,
-    JsonObject  = 5,
-};
+    Null = 0,
+    Boolean = 1,
+    Number = 2,
+    String = 3,
+    Array = 4,
+    Object = 5,
+}
 
-export class JsonCursor implements ITreeCursor {
-    private currentNode: any;
-    private currentKey: TreeKey;
-    private currentIndex: number;
+/**
+ * An ITreeCursor implementation used to read a JSONable tree for testing and benchmarking.
+ */
+export class JsonCursor<T> implements ITreeCursor {
+    // PERF: JsonCursor maintains a stack of nodes/edges traversed.  This stack is
+    //       currently partitioned across 3 arrays, with the top of the stack maintained
+    //       in fields.  This design was advantageous in a similar tree visitor, but should
+    //       be benchmarked measured again to see if this still provides an advantage.
 
-    private readonly parentStack: any[] = [];
-    private readonly keyStack: TreeKey[] = [];
-    private readonly indexStack: number[] = [];
+    private currentNode: any;       // The node currently being visited.
+    private currentKey: FieldKey;   // The parent key used to navigate to this node.
+    private currentIndex: number;   // The parent index used to navigate to this node.
 
-    constructor(root: any) {
+    private readonly parentStack: any[] = [];       // Ancestors traversed to visit this node.
+    private readonly keyStack: FieldKey[] = [];     // Keys traversed to visit this node, excluding the most recent.
+    private readonly indexStack: number[] = [];     // Indices traversed to visit this node, excluding the most recent.
+
+    constructor(root: Jsonable<T>) {
         this.currentNode = root;
-        this.currentKey = "" as TreeKey;
+        this.currentKey = EmptyKey;
         this.currentIndex = -1;
     }
 
-    down(key: TreeKey, index: number): TreeNavigationResult {
+    down(key: FieldKey, index: number): TreeNavigationResult {
         const parentNode = this.currentNode;
         let childNode: any;
 
-        if (key === "" && Array.isArray(parentNode)) {
-            if (!((index >>> 0) < parentNode.length)) {
-                return TreeNavigationResult.NotFound;
-            } else {
-                childNode = parentNode[index];
-            }
-        } else {
+        if (key === EmptyKey && Array.isArray(parentNode)) {
+            childNode = parentNode[index];
+        } else if (index === 0) {
             childNode = parentNode[key];
-            if (childNode === undefined) {
-                return TreeNavigationResult.NotFound;
-            }
+        } else {
+            return TreeNavigationResult.NotFound;
+        }
+
+        if (childNode === undefined) {
+            return TreeNavigationResult.NotFound;
         }
 
         this.parentStack.push(parentNode);
@@ -65,13 +74,16 @@ export class JsonCursor implements ITreeCursor {
     }
 
     up(): TreeNavigationResult {
+        // TODO: Should benchmark vs. detecting via returned 'undefined' from 'pop()'.
         if (this.parentStack.length < 1) {
             return TreeNavigationResult.NotFound;
         }
 
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         this.currentNode = this.parentStack.pop()!;
         this.currentKey = this.keyStack.pop()!;
         this.currentIndex = this.indexStack.pop()!;
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
         return TreeNavigationResult.Ok;
     }
@@ -82,46 +94,53 @@ export class JsonCursor implements ITreeCursor {
 
         switch (type) {
             case "number":
-                return JsonType.JsonNumber as TreeType;
+                return JsonType.Number as TreeType;
             case "string":
-                return JsonType.JsonString as TreeType;
+                return JsonType.String as TreeType;
             case "boolean":
-                return JsonType.JsonBoolean as TreeType;
+                return JsonType.Boolean as TreeType;
             default:
                 if (node === null) {
-                    return JsonType.JsonNull as TreeType;
+                    return JsonType.Null as TreeType;
                 } else if (Array.isArray(node)) {
-                    return JsonType.JsonArray as TreeType;
+                    return JsonType.Array as TreeType;
                 } else {
-                    // assert.equal(type, "object");
-                    return JsonType.JsonObject as TreeType;
+                    return JsonType.Object as TreeType;
                 }
         }
     }
 
-    get keys(): Iterable<TreeKey> {
-        return this.currentNode !== null
-            ? Object.keys(this.currentNode) as Iterable<TreeKey>
+    get keys(): Iterable<FieldKey> {
+        const node = this.currentNode;
+
+        // It is legal to invoke 'keys()' on a node of type 'JsonType.Null', which requires a
+        // special to avoid 'Object.keys()' throwing.  We do not require a special case for
+        // 'undefined', as both JSON and the SharedTree data model represent 'undefined' via
+        // omission (except at the root, where JSON coerces undefined to null).
+        return node !== null
+            ? Object.keys(node) as Iterable<FieldKey>
             : [];
     }
 
-    length(key: TreeKey): number {
+    length(key: FieldKey): number {
         const node = this.currentNode;
 
-        if (key === "" && Array.isArray(node)) {
+        // The length of an array's indexer is equal to the length of the array.
+        if (key === EmptyKey && Array.isArray(node)) {
             return node.length;
         }
 
-        return node === undefined
-            ? 0
-            : 1;
+        return node[key] === undefined
+            ? 0     // A field with an undefined value has 0 length
+            : 1;    // All other fields have a length of 1
     }
 
-    get value(): Serializable {
+    get value(): Jsonable {
         const node = this.currentNode;
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return typeof (node) === "object"
-            ? undefined
-            : node;
+            ? undefined     // null, arrays, and objects have no defined value
+            : node;         // boolean, numbers, and strings are their own value
     }
 }
