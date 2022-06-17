@@ -278,6 +278,9 @@ export function createAnnotateMarkerOp(marker: Marker, props: PropertySet, combi
 export function createAnnotateRangeOp(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg;
 
 // @public (undocumented)
+export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition;
+
+// @public (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
 
 // @public (undocumented)

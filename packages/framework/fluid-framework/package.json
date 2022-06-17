@@ -75,8 +75,8 @@
       "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false},
       "ClassDeclaration_SparseMatrix": {"backCompat": false},
       "RemovedEnumDeclaration_ConnectionState": {
-        "backCompat": false,
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }

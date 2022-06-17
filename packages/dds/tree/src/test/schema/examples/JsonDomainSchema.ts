@@ -19,12 +19,10 @@ import {
     TreeSchemaIdentifier,
     LocalFieldKey,
     NamedTreeSchema,
-} from "../Schema";
-import {
     emptyField,
     emptyMap,
     emptySet,
-} from "../Builders";
+} from "../../../schema";
 
 export const typeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 
