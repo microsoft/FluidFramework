@@ -58,7 +58,7 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
-    disableIsolatedChannels: booleanCases,
+    disableIsolatedChannels: [false],
     disableSummaries: [false],
     initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides: [undefined],
