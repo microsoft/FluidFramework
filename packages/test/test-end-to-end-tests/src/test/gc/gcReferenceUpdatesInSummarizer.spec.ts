@@ -9,15 +9,11 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
-    IAckedSummary,
     IContainerRuntimeOptions,
     RuntimeHeaders,
-    SummaryCollection,
-    ISummaryConfiguration,
-    DefaultSummaryConfiguration,
+    ISummarizer,
 } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -25,9 +21,10 @@ import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merg
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { createSummarizerFromFactory, summarizeNow, waitForContainerConnection } from "./gcTestSummaryUtils";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -79,37 +76,27 @@ class TestDataObject extends DataObject {
  * The difference between these tests and the ones in the file 'gcReferenceUpdatesInLocalSummary' is that here we submit
  * summaries to the server, load new containers from the summary downloaded from server and validate them.
  */
-describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider) => {
+describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const factory = new DataObjectFactory(
+    const dataStoreFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
         [SharedMatrix.getFactory(), SharedString.getFactory()],
         []);
 
-    const IdleDetectionTime = 100;
-    const summaryConfigOverrides: ISummaryConfiguration = {
-        ...DefaultSummaryConfiguration,
-        ...{
-            idleTime: IdleDetectionTime,
-            maxTime: IdleDetectionTime * 12,
-            initialSummarizerDelayMs: 10,
-        },
-    };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            summaryConfigOverrides,
+            disableSummaries: true,
+            summaryConfigOverrides: { state: "disabled" },
         },
-        gcOptions: {
-            gcAllowed: true,
-        },
+        gcOptions: { gcAllowed: true },
     };
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-        factory,
+        dataStoreFactory,
         [
-            [factory.type, Promise.resolve(factory)],
+            [dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
         ],
         undefined,
         [innerRequestHandler],
@@ -118,7 +105,7 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
 
     let mainContainer: IContainer;
     let mainDataStore: TestDataObject;
-    let summaryCollection: SummaryCollection;
+    let summarizer: ISummarizer;
 
     /**
      * Waits for a summary with the current state of the document (including all in-flight changes). It basically
@@ -128,9 +115,8 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
      */
     async function waitForSummary(): Promise<string> {
         await provider.ensureSynchronized();
-        const ackedSummary: IAckedSummary =
-            await summaryCollection.waitSummaryAck(mainContainer.deltaManager.lastSequenceNumber);
-        return ackedSummary.summaryAck.contents.handle;
+        const summaryResult = await summarizeNow(summarizer);
+        return summaryResult.summaryVersion;
     }
 
     const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
@@ -142,26 +128,21 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
     };
 
     beforeEach(async () => {
-        provider = getTestObjectProvider();
-
-        // Create a Container for the first client.
+        provider = getTestObjectProvider({ syncSummarizer: true });
         mainContainer = await createContainer();
-
         // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
         // re-sent. Do it here so that the extra events don't mess with rest of the test.
         mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
         mainDataStore._root.set("test", "value");
+        await waitForContainerConnection(mainContainer);
 
-        await provider.ensureSynchronized();
-
-        // Create and setup a summary collection that will be used to track and wait for summaries.
-        summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger());
+        summarizer = await createSummarizerFromFactory(provider, mainContainer, dataStoreFactory);
     });
 
     describe("SharedMatrix", () => {
         it("should reflect handle updates immediately in the next summary", async () => {
             // Create a second data store (dataStore2).
-            const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
+            const dataStore2 = await dataStoreFactory.createInstance(mainDataStore._context.containerRuntime);
 
             // The request to use to load dataStore2.
             const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
@@ -199,7 +180,7 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
 
         it("should reflect undo / redo of handle updates immediately in the next summary", async () => {
             // Create a second data store (dataStore2).
-            const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
+            const dataStore2 = await dataStoreFactory.createInstance(mainDataStore._context.containerRuntime);
 
             // The request to use to load dataStore2.
             const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
@@ -262,7 +243,7 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
     describe("SharedString", () => {
         it("should reflect handle updates immediately in the next summary", async () => {
             // Create a second data store (dataStore2).
-            const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
+            const dataStore2 = await dataStoreFactory.createInstance(mainDataStore._context.containerRuntime);
 
             // The request to use to load dataStore2.
             const request: IRequest = { url: dataStore2.id, headers: { [RuntimeHeaders.externalRequest]: true } };
