@@ -20,12 +20,11 @@ export class TableViewView implements IFluidHTMLView {
     private templateRoot: HTMLDivElement | undefined;
 
     private readonly _formulaInput = document.createElement("input");
-    private readonly getFormula = () => this._formulaInput.value;
-    private readonly setFormula = (val: string) => { this._formulaInput.value = val; };
+    public readonly getFormula = () => this._formulaInput.value;
+    public readonly setFormula = (val: string) => { this._formulaInput.value = val; };
 
     private readonly _selectionSummary = document.createElement("span");
-    // eslint-disable-next-line accessor-pairs
-    public set selectionSummary(val: string) { this._selectionSummary.textContent = val; }
+    public readonly setSelectionSummary = (val: string) => { this._selectionSummary.textContent = val; };
 
     public constructor(private readonly tableView: TableView) { }
 
@@ -63,7 +62,12 @@ export class TableViewView implements IFluidHTMLView {
         const grid = document.createElement("div");
         grid.classList.add(styles.grid);
 
-        const gridView = new GridView(this.tableView.tableMatrix, this.tableView, this.getFormula, this.setFormula);
+        const gridView = new GridView(
+            this.tableView.tableMatrix,
+            this.getFormula,
+            this.setFormula,
+            this.setSelectionSummary,
+        );
         grid.append(gridView.root);
 
         this._formulaInput.addEventListener("keypress", gridView.formulaKeypress);
@@ -93,10 +97,6 @@ export class TableViewView implements IFluidHTMLView {
 
 export class TableView extends DataObject {
     public static getFactory() { return factory; }
-
-    private readonly _selectionSummary = document.createElement("span");
-    // eslint-disable-next-line accessor-pairs
-    public set selectionSummary(val: string) { this._selectionSummary.textContent = val; }
 
     private _tableMatrix: SharedMatrix | undefined;
     public get tableMatrix() {
