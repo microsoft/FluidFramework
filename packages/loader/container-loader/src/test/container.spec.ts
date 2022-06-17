@@ -13,10 +13,10 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, IDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Container, waitContainerToCatchUp } from "../container";
-import { Loader } from "../loader";
-import { IConnectionStateHandler } from "../connectionStateHandler";
-import { CatchUpMonitor, ImmediateCatchUpMonitor } from "../catchUpMonitor";
+import { waitContainerToCatchUp } from "../container";
+// import { Loader } from "../loader";
+// import { IConnectionStateHandlerInputs } from "../connectionStateHandler";
+// import { CatchUpMonitor, ImmediateCatchUpMonitor } from "../catchUpMonitor";
 import { ConnectionState } from "../connectionState";
 
 class MockDeltaManager

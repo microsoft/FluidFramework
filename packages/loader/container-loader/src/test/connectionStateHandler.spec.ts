@@ -15,7 +15,7 @@ import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ConnectionState } from "../connectionState";
 import { ConnectionStateHandler, IConnectionStateHandlerInputs } from "../connectionStateHandler";
-import { ImmediateCatchUpMonitor } from "../catchUpMonitor";
+// import { ImmediateCatchUpMonitor } from "../catchUpMonitor";
 
 describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
@@ -190,8 +190,7 @@ describe("ConnectionStateHandler Tests", () => {
         client.mode = "write";
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         protocolHandler.quorum.addMember(pendingClientId, { client, sequenceNumber: 0 });
-        connectionStateHandler.receivedAddMemberEvent(pendingClientId);
-        await Promise.resolve();
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
 
@@ -211,8 +210,7 @@ describe("ConnectionStateHandler Tests", () => {
             "Client 2 should be in connecting state as we are waiting for leave");
 
         // Send leave
-        connectionStateHandler.receivedRemoveMemberEvent(pendingClientId);
-        await Promise.resolve();
+        connectionStateHandler_receivedRemoveMemberEvent(pendingClientId);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client 2 should be in connected state");
     });
