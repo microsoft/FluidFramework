@@ -564,6 +564,7 @@ declare function get_current_ClassDeclaration_IntervalCollection():
 declare function use_old_ClassDeclaration_IntervalCollection(
     use: TypeOnly<old.IntervalCollection<any>>);
 use_old_ClassDeclaration_IntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_IntervalCollection());
 
 /*
@@ -1453,6 +1454,7 @@ declare function get_current_ClassDeclaration_SequenceDeltaEvent():
 declare function use_old_ClassDeclaration_SequenceDeltaEvent(
     use: TypeOnly<old.SequenceDeltaEvent>);
 use_old_ClassDeclaration_SequenceDeltaEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceDeltaEvent());
 
 /*
@@ -1477,6 +1479,7 @@ declare function get_current_ClassDeclaration_SequenceEvent():
 declare function use_old_ClassDeclaration_SequenceEvent(
     use: TypeOnly<old.SequenceEvent>);
 use_old_ClassDeclaration_SequenceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceEvent());
 
 /*
@@ -1527,6 +1530,7 @@ declare function get_current_ClassDeclaration_SequenceMaintenanceEvent():
 declare function use_old_ClassDeclaration_SequenceMaintenanceEvent(
     use: TypeOnly<old.SequenceMaintenanceEvent>);
 use_old_ClassDeclaration_SequenceMaintenanceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceMaintenanceEvent());
 
 /*
