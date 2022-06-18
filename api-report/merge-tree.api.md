@@ -739,7 +739,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     // (undocumented)
     toJSONObject(): any;
     // (undocumented)
-    trackingCollection: TrackingGroupCollection;
+    readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)
     readonly type: string;
 }
