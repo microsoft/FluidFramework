@@ -64,7 +64,7 @@ export interface IDeltaSender {
 /** Events emitted by the Delta Manager */
 export interface IDeltaManagerEvents extends IEvent {
     (event: "prepareSend", listener: (messageBuffer: any[]) => void);
-    (event: "submitOp", listener: (message: IDocumentMessage) => void);
+    (event: "submitOp" | "beforeParsing", listener: (message: IDocumentMessage) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
     (event: "allSentOpsAckd", listener: () => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);

@@ -757,6 +757,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             0x0ed /* "non-system message have to have clientId" */,
         );
 
+        // fire event before parsing
+        this.emit("beforeParsing", message);
+
         // TODO Remove after SPO picks up the latest build.
         if (
             typeof message.contents === "string"
