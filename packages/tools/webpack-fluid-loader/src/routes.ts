@@ -310,11 +310,8 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     // eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
     const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
 
-    const browser = packageJson.fluid.browser;
-    assert(browser !== undefined, "browser property is undefined");
-
-    const umd = browser.umd;
-    assert(umd !== undefined, "umd property is undefined");
+    const umd = packageJson.fluid.browser?.umd;
+    assert(umd !== undefined, "browser.umd property is undefined");
 
     const html =
         `<!DOCTYPE html>
