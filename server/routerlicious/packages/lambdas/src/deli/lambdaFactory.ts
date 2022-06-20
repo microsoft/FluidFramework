@@ -95,7 +95,21 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         }
 
         if (!dbObject || dbObject.scheduledDeletionTime) {
-            // Temporary guard against failure until we figure out what causing this to trigger.
+            // (Old, from tanviraumi:) Temporary guard against failure until we figure out what causing this to trigger.
+            // Document sessions can be joined (via Alfred) after a document is functionally deleted.
+            context.log?.error(
+                `Received attempt to connect to a deleted document.`,
+                { messageMetaData },
+            );
+            return new NoOpLambda(context);
+        }
+        if (this.serviceConfiguration.externalOrdererUrl
+            && dbObject.session.ordererUrl !== this.serviceConfiguration.externalOrdererUrl) {
+            // Session for this document exists in another location.
+            context.log?.error(
+                `Received attempt to connect to session existing in different location: ${dbObject.session.ordererUrl}`,
+                { messageMetaData },
+            );
             return new NoOpLambda(context);
         }
 
