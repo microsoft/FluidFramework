@@ -25,6 +25,7 @@
   "scripts": {
     "build": "tsc -b && npm run build:test",
     "build:test": "tsc --project ./src/test/tsconfig.json",
+    "bump": "node dist/bumpVersion/bumpVersionCli.js --root ../..",
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",

@@ -30,16 +30,12 @@ export async function writeReleaseVersions(context: Context) {
         }
     }
 
-    // Replace "Client" and "Server" with their constituent packages
-    const clientVer = packageVersions["Client"];
-    const serverVer = packageVersions["Server"];
-    delete packageVersions["Client"];
-    delete packageVersions["Server"];
+    // Replace release groups (e.g. "Client" and "Server") with their constituent packages
     for (const pkg of context.repo.packages.packages) {
-        if (pkg.group === "Client") {
-            packageVersions[pkg.name] = clientVer;
-        } else if (pkg.group === "Server") {
-            packageVersions[pkg.name] = serverVer;
+        for (const repo of Object.values(MonoRepoKind)) {
+            if (typeof repo === "string") {
+                packageVersions[pkg.name] = packageVersions[repo];
+            }
         }
     }
 
