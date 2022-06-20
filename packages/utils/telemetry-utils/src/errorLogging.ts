@@ -137,7 +137,6 @@ export function normalizeError(
     fluidError.addTelemetryProperties({
         ...originalErrorTelemetryProps,
         ...annotations.props,
-        // untrustedOrigin: 1
     });
 
     return fluidError;
@@ -335,7 +334,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     get errorInstanceId() { return this._errorInstanceId; }
     overwriteErrorInstanceId(id: string) { this._errorInstanceId = id; }
 
-    /** Back-compat to appease isFluidError typeCheck in old code that may handle this error */
+    /** Back-compat to appease isFluidError typeguard in old code that may handle this error */
     // @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
     private readonly fluidErrorCode: "-" = "-";
 
@@ -363,8 +362,8 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
 
     /**
      * Determines if a given object is an instance of a LoggingError
-     * @param object 
-     * @returns true if the object is an instance of a LoggingError, false if not.
+     * @param object - any object
+     * @returns - true if the object is an instance of a LoggingError, false if not.
      */
     public static typeCheck(object: any): object is LoggingError {
         return hasTelemetryPropFunctions(object)
@@ -416,8 +415,8 @@ export class NormalizedExternalError extends LoggingError {
 
     /**
      * Determines if a given object is an instance of a NormalizedExternalError
-     * @param object 
-     * @returns true if the object is an instance of a NormalizedExternalError, false if not.
+     * @param object - any object
+     * @returns - true if the object is an instance of a NormalizedExternalError, false if not.
      */
     public static typeCheck(object: any): object is NormalizedExternalError {
         return object.errorType !== undefined

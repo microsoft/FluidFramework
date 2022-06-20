@@ -449,7 +449,6 @@ const annotationCases: Record<string, IFluidErrorAnnotations> = {
 };
 
 describe("normalizeError", () => {
-
     describe("NormalizedExternalError", () => {
         it("typeCheck - correctly type checks an instance of NormalizedExternalError", () => {
             const normalizedError = normalizeError(new TestFluidError({ errorType: "et1", message: "m1" }), {});
@@ -534,7 +533,7 @@ describe("normalizeError", () => {
             errorType: "genericError",
             message,
             stack: stackHint,
-        })
+        });
 
         const testCases: { [label: string]: () => { input: any; expectedOutput: TestFluidError; }; } = {
             "Fluid Error minus errorType": () => ({
@@ -766,23 +765,16 @@ describe("wrapErrorAndLog", () => {
 
 describe("Error Discovery", () => {
     it("isExternalError", () => {
-        // assert(isExternalError("some string"));
-        // assert(isExternalError(createExternalError("error message")));
-        // assert(isExternalError(normalizeError("normalize me but I'm still external")));
-        // assert(isExternalError(normalizeError(createExternalError("normalize me but I'm still external"))));
-
-        // assert(!isExternalError(createTestError("hello")));
-
-
-        // const logginEr = new LoggingError("myLoggingError");
-
-        // assert.strictEqual(isValidLegacyError(logginEr), true);
-
+        assert(isExternalError("some string"));
+        assert(isExternalError(createExternalError("error message")));
+        assert(isExternalError(normalizeError("normalize me but I'm still external")));
+        assert(isExternalError(normalizeError(createExternalError("normalize me but I'm still external"))));
+        assert(!isExternalError(createTestError("hello")));
         assert(!isExternalError(new LoggingError("myLoggingError")));
 
-        // const wrappedError = wrapError("wrap me", createTestError);
-        // assert(!isExternalError(wrappedError));
-        // assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
+        const wrappedError = wrapError("wrap me", createTestError);
+        assert(isExternalError(wrappedError));
+        assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
     });
     it("isValidLegacyError", () => {
         const error = createExternalError("hello");
