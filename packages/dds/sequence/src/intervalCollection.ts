@@ -123,7 +123,7 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 export interface ISerializableInterval extends IInterval {
     properties: PropertySet;
     propertyManager: PropertiesManager;
-    serialize(client: Client): CompressedSerializedInterval;
+    serialize(client: Client): ISerializedInterval;
     addProperties(props: PropertySet, collaborating?: boolean, seq?: number):
         PropertySet | undefined;
     getIntervalId(): string | undefined;
@@ -167,7 +167,7 @@ export class Interval implements ISerializableInterval {
         this.auxProps.push(props);
     }
 
-    public serialize(client: Client): CompressedSerializedInterval {
+    public serialize(client: Client): ISerializedInterval {
         let seq = 0;
         if (client) {
             seq = client.getCurrentSeq();
@@ -182,7 +182,7 @@ export class Interval implements ISerializableInterval {
         if (this.properties) {
             serializedInterval.properties = this.properties;
         }
-        return compressInterval(serializedInterval);
+        return serializedInterval;
     }
 
     public clone() {
@@ -338,7 +338,7 @@ export class SequenceInterval
         });
     }
 
-    public serialize(client: Client): CompressedSerializedInterval {
+    public serialize(client: Client): ISerializedInterval {
         const startPosition = this.start.toPosition();
         const endPosition = this.end.toPosition();
         const serializedInterval: ISerializedInterval = {
@@ -352,7 +352,7 @@ export class SequenceInterval
             serializedInterval.properties = this.properties;
         }
 
-        return compressInterval(serializedInterval);
+        return serializedInterval;
     }
 
     public clone() {
@@ -795,7 +795,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
         return {
             label: this.label,
-            intervals: intervals.map((interval) => interval.serialize(client)),
+            intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
             version: 2,
         };
     }
@@ -1113,7 +1113,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 this.emitter.emit(
                     "delete",
                     undefined,
-                    decompressInterval(interval.serialize(this.client)),
+                    interval.serialize(this.client),
                     { localSeq: this.getNextLocalSeq() },
                 );
             } else {
@@ -1149,8 +1149,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (interval) {
             // Pass Unassigned as the sequence number to indicate that this is a local op that is waiting for an ack.
             const deltaProps = interval.addProperties(props, true, UnassignedSequenceNumber);
-            const serializedInterval: ISerializedInterval =
-                decompressInterval(interval.serialize(this.client), interval.properties[reservedRangeLabelsKey]);
+            const serializedInterval: ISerializedInterval = interval.serialize(this.client);
             // Emit a change op that will only change properties. Add the ID to the property bag provided by the caller.
             serializedInterval.start = undefined;
             serializedInterval.end = undefined;
@@ -1175,8 +1174,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         const interval = this.getIntervalById(id);
         if (interval) {
             this.localCollection.changeInterval(interval, start, end);
-            const serializedInterval: ISerializedInterval =
-                decompressInterval(interval.serialize(this.client), interval.properties[reservedRangeLabelsKey]);
+            const serializedInterval: ISerializedInterval = interval.serialize(this.client);
             serializedInterval.start = start;
             serializedInterval.end = end;
             // Emit a property bag containing only the ID, as we don't intend for this op to change any properties.

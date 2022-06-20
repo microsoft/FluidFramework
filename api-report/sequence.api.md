@@ -120,7 +120,7 @@ export class Interval implements ISerializableInterval {
     // (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
-    serialize(client: Client): CompressedSerializedInterval;
+    serialize(client: Client): ISerializedInterval;
     // (undocumented)
     start: number;
     // (undocumented)
@@ -234,7 +234,7 @@ export interface ISerializableInterval extends IInterval {
     // (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
-    serialize(client: Client): CompressedSerializedInterval;
+    serialize(client: Client): ISerializedInterval;
 }
 
 // @public (undocumented)
@@ -428,7 +428,7 @@ export class SequenceInterval extends TypedEventEmitter<ISequenceIntervalEvents>
     // (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
-    serialize(client: Client): CompressedSerializedInterval;
+    serialize(client: Client): ISerializedInterval;
     // (undocumented)
     start: LocalReference;
     // (undocumented)
