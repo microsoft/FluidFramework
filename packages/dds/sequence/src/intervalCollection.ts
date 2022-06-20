@@ -86,8 +86,6 @@ export interface ISerializedIntervalCollectionV2 {
 }
 
 /**
- * @internal
- *
  * Decompress an interval after loading a summary from JSON. The exact format
  * of this compression is unspecified and subject to change
  */
@@ -102,8 +100,6 @@ function decompressInterval(interval: CompressedSerializedInterval, label?: stri
 }
 
 /**
- * @internal
- *
  * Compress an interval prior to serialization as JSON. The exact format of this
  * compression is unspecified and subject to change
  */
