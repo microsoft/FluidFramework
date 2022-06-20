@@ -825,7 +825,7 @@ export class LocalReferenceCollection {
     // (undocumented)
     addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
     // @internal
-    addLocalRef(lref: LocalReferencePosition): void;
+    addLocalRef(lref: LocalReferencePosition, offset: number): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
     // @internal
@@ -836,6 +836,8 @@ export class LocalReferenceCollection {
     createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // @internal
     get empty(): boolean;
+    // @internal
+    has(lref: ReferencePosition): boolean;
     // @internal
     hierRefCount: number;
     // @internal
@@ -1267,7 +1269,7 @@ export interface ReferencePosition {
     // (undocumented)
     getSegment(): ISegment | undefined;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // (undocumented)
     properties?: PropertySet;
     // (undocumented)
