@@ -15,7 +15,7 @@ import { generateToken } from "./generateToken";
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(
         /**
-         * TODO
+         * Private server tenantKey for generating tokens.
          */
         private readonly tenantKey: string,
 
