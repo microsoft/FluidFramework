@@ -83,7 +83,7 @@ describe("Tests for snapshot fetch", () => {
     const value: IVersionedValueWithEpoch = {
         value: { ...content, cacheEntryTime: Date.now() },
         fluidEpoch: "epoch1",
-        version: persistedCacheValueVersion
+        version: persistedCacheValueVersion,
     };
 
     // Set the cacheEntryTime to anything greater than the current maxCacheAge
@@ -91,7 +91,7 @@ describe("Tests for snapshot fetch", () => {
         const versionedValue: IVersionedValueWithEpoch = {
             value: { ...content, cacheEntryTime: Date.now() - cacheExpiryTimeoutMs - 1000 },
             fluidEpoch: "epoch1",
-            version: persistedCacheValueVersion
+            version: persistedCacheValueVersion,
         };
         return versionedValue;
     }
@@ -153,7 +153,7 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl }
+                file: { docId: hashedDocumentId, resolvedUrl },
             };
             await localCache.put(cacheEntry, value);
 
@@ -183,7 +183,7 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl }
+                file: { docId: hashedDocumentId, resolvedUrl },
             };
             await localCache.put(cacheEntry, value);
 
@@ -209,7 +209,7 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl }
+                file: { docId: hashedDocumentId, resolvedUrl },
             };
             await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
 
@@ -228,7 +228,7 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl }
+                file: { docId: hashedDocumentId, resolvedUrl },
             };
             await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
 
@@ -275,7 +275,7 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl }
+                file: { docId: hashedDocumentId, resolvedUrl },
             };
             await localCache.put(cacheEntry, valueWithExpiredCache(defaultSummarizerCacheExpiryTimeout));
 
@@ -294,7 +294,7 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl }
+                file: { docId: hashedDocumentId, resolvedUrl },
             };
             await localCache.put(cacheEntry, valueWithExpiredCache(defaultSummarizerCacheExpiryTimeout - 5000));
 

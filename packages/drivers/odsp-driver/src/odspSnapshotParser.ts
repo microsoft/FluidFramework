@@ -67,7 +67,8 @@ export function convertOdspSnapshotToSnapshotTreeAndBlobs(
         ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
         sequenceNumber: odspSnapshot?.trees[0].sequenceNumber,
         snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
-        latestSequenceNumber: odspSnapshot.ops?.[odspSnapshot.ops.length - 1].sequenceNumber ?? odspSnapshot?.trees[0].sequenceNumber,
+        latestSequenceNumber: odspSnapshot.ops?.[odspSnapshot.ops.length - 1].sequenceNumber ??
+            odspSnapshot?.trees[0].sequenceNumber,
     };
     return val;
 }
