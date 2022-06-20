@@ -709,7 +709,7 @@ export class Client {
         seqNumberFrom: number,
         localSeq: number,
     ): number {
-        assert(localSeq <= this.mergeTree.collabWindow.localSeq, "localSeq greater than collab window");
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x300 /* localSeq greater than collab window */);
         let segment: ISegment | undefined;
         let posAccumulated = 0;
         let offset = pos;
@@ -722,7 +722,8 @@ export class Client {
             || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
 
         this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
-            assert(seg.seq !== undefined || seg.localSeq !== undefined, "Either seq or localSeq should be defined");
+            assert(seg.seq !== undefined || seg.localSeq !== undefined,
+                0x301 /* Either seq or localSeq should be defined */);
             segment = seg;
 
             if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
@@ -736,7 +737,7 @@ export class Client {
             return posAccumulated <= pos;
         });
 
-        assert(segment !== undefined, "No segment found");
+        assert(segment !== undefined, 0x302 /* No segment found */);
         const seqNumberTo = this.getCollabWindow().currentSeq;
         if ((segment.removedSeq !== undefined &&
              segment.removedSeq !== UnassignedSequenceNumber &&
@@ -746,7 +747,7 @@ export class Client {
             offset = 0;
         }
 
-        assert(0 <= offset && offset < segment.cachedLength, "Invalid offset");
+        assert(0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);
         return this.findReconnectionPosition(segment, localSeq) + offset;
     }
 
