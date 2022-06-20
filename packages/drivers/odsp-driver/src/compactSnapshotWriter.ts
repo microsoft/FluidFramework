@@ -132,7 +132,11 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): R
     const rootNode = builder.addNode();
     assert(snapshotContents.sequenceNumber !== undefined, 0x21c /* "Seq number should be provided" */);
 
-    writeSnapshotProps(rootNode, snapshotContents.latestSequenceNumber);
+    const latestSequenceNumber = snapshotContents.latestSequenceNumber ??
+        snapshotContents.ops.length > 0 ?
+        snapshotContents.ops[snapshotContents.ops.length - 1].sequenceNumber : snapshotContents.sequenceNumber;
+
+    writeSnapshotProps(rootNode, latestSequenceNumber);
 
     writeSnapshotSection(
         rootNode,
