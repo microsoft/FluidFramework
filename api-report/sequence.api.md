@@ -55,12 +55,6 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public
 export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
 
-// @internal
-export function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval;
-
-// @internal
-export function decompressInterval(interval: CompressedSerializedInterval, label?: string): ISerializedInterval;
-
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
@@ -138,7 +132,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
     // @internal
-    constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalV2);
+    constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2);
     // @internal (undocumented)
     ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
     // @internal (undocumented)
@@ -188,8 +182,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
     // (undocumented)
     removeIntervalById(id: string): TInterval;
-    // (undocumented)
-    serializeInternal(): ISerializedIntervalV2;
+    // @internal (undocumented)
+    serializeInternal(): ISerializedIntervalCollectionV2;
 }
 
 // @public (undocumented)
@@ -257,8 +251,8 @@ export interface ISerializedInterval {
     start: number;
 }
 
-// @public (undocumented)
-export interface ISerializedIntervalV2 {
+// @internal (undocumented)
+export interface ISerializedIntervalCollectionV2 {
     // (undocumented)
     intervals: CompressedSerializedInterval[];
     // (undocumented)

@@ -75,7 +75,10 @@ export interface ISerializedInterval {
  */
 export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
 
-export interface ISerializedIntervalV2 {
+/**
+ * @internal
+ */
+export interface ISerializedIntervalCollectionV2 {
     label: string;
     version: 2;
     intervals: CompressedSerializedInterval[];
@@ -87,7 +90,7 @@ export interface ISerializedIntervalV2 {
  * Decompress an interval after loading a summary from JSON. The exact format
  * of this compression is unspecified and subject to change
  */
-export function decompressInterval(interval: CompressedSerializedInterval, label?: string): ISerializedInterval {
+function decompressInterval(interval: CompressedSerializedInterval, label?: string): ISerializedInterval {
     return {
         start: interval[0],
         end: interval[1],
@@ -103,16 +106,17 @@ export function decompressInterval(interval: CompressedSerializedInterval, label
  * Compress an interval prior to serialization as JSON. The exact format of this
  * compression is unspecified and subject to change
  */
-export function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
-    // remove the `referenceRangeLabels` property as it is already stored in the
-    // `label` field of the summary
-    delete interval.properties?.referenceRangeLabels;
+function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
+    const { start, end, sequenceNumber, intervalType, properties } = interval;
+
     return [
-        interval.start,
-        interval.end,
-        interval.sequenceNumber,
-        interval.intervalType,
-        interval.properties ?? {},
+        start,
+        end,
+        sequenceNumber,
+        intervalType,
+        // remove the `referenceRangeLabels` property as it is already stored
+        // in the `label` field of the summary
+        { ...properties, [reservedRangeLabelsKey]: undefined },
     ];
 }
 
@@ -785,7 +789,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return newInterval;
     }
 
-    public serialize(): ISerializedIntervalV2 {
+    public serialize(): ISerializedIntervalCollectionV2 {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
 
@@ -817,7 +821,7 @@ class SequenceIntervalCollectionFactory
     implements IValueFactory<IntervalCollection<SequenceInterval>> {
     public load(
         emitter: IValueOpEmitter,
-        raw: ISerializedInterval[] | ISerializedIntervalV2 = [],
+        raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
     ): IntervalCollection<SequenceInterval> {
         const helpers: IIntervalHelpers<SequenceInterval> = {
             compareEnds: compareSequenceIntervalEnds,
@@ -826,7 +830,7 @@ class SequenceIntervalCollectionFactory
         return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw);
     }
 
-    public store(value: IntervalCollection<SequenceInterval>): ISerializedIntervalV2 {
+    public store(value: IntervalCollection<SequenceInterval>): ISerializedIntervalCollectionV2 {
         return value.serializeInternal();
     }
 }
@@ -869,7 +873,7 @@ class IntervalCollectionFactory
     implements IValueFactory<IntervalCollection<Interval>> {
     public load(
         emitter: IValueOpEmitter,
-        raw: ISerializedInterval[] | ISerializedIntervalV2 = [],
+        raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
     ): IntervalCollection<Interval> {
         const helpers: IIntervalHelpers<Interval> = {
             compareEnds: compareIntervalEnds,
@@ -880,7 +884,7 @@ class IntervalCollectionFactory
         return collection;
     }
 
-    public store(value: IntervalCollection<Interval>): ISerializedIntervalV2 {
+    public store(value: IntervalCollection<Interval>): ISerializedIntervalCollectionV2 {
         return value.serializeInternal();
     }
 }
@@ -1008,7 +1012,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         private readonly helpers: IIntervalHelpers<TInterval>,
         private readonly requiresClient: boolean,
         private readonly emitter: IValueOpEmitter,
-        serializedIntervals: ISerializedInterval[] | ISerializedIntervalV2,
+        serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2,
     ) {
         super();
 
@@ -1513,7 +1517,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
     }
 
-    public serializeInternal(): ISerializedIntervalV2 {
+    /**
+     * @internal
+     */
+    public serializeInternal(): ISerializedIntervalCollectionV2 {
         if (!this.attached) {
             throw new Error("attachSequence must be called");
         }
