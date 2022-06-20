@@ -131,9 +131,8 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): R
     // Create the root node.
     const rootNode = builder.addNode();
     assert(snapshotContents.sequenceNumber !== undefined, 0x21c /* "Seq number should be provided" */);
-    const ops = snapshotContents.ops;
-    const latestSequenceNumber = ops.length > 0 ? ops[ops.length - 1].sequenceNumber : snapshotContents.sequenceNumber;
-    writeSnapshotProps(rootNode, latestSequenceNumber);
+
+    writeSnapshotProps(rootNode, snapshotContents.latestSequenceNumber);
 
     writeSnapshotSection(
         rootNode,
@@ -145,7 +144,7 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): R
     writeBlobsSection(rootNode, snapshotContents.blobs);
 
     // Then write the ops node.
-    writeOpsSection(rootNode, ops);
+    writeOpsSection(rootNode, snapshotContents.ops);
 
     return builder.serialize();
 }

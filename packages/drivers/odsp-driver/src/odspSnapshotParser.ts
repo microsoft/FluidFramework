@@ -62,13 +62,16 @@ export function convertOdspSnapshotToSnapshotTreeAndBlobs(
             blobsWithBufferContent.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf8"));
         });
     }
+
+    const sequenceNumber = odspSnapshot?.trees[0].sequenceNumber;
+
     const val: ISnapshotContents = {
         blobs: blobsWithBufferContent,
         ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
-        sequenceNumber: odspSnapshot?.trees[0].sequenceNumber,
+        sequenceNumber,
         snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
-        latestSequenceNumber: odspSnapshot.ops?.[odspSnapshot.ops.length - 1].sequenceNumber ??
-            odspSnapshot?.trees[0].sequenceNumber,
+        latestSequenceNumber: (odspSnapshot.ops && odspSnapshot.ops.length > 0) ?
+            odspSnapshot.ops[odspSnapshot.ops.length - 1].sequenceNumber : sequenceNumber,
     };
     return val;
 }
