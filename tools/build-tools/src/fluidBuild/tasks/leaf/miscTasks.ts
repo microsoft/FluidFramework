@@ -1,7 +1,7 @@
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+* Licensed under the MIT License.
+*/
 
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
@@ -148,6 +148,7 @@ export class GenVerTask extends LeafTask {
             const content = await readFileAsync(file, "utf8");
             const match = content.match(/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9.]+)";.*/m);
             return (match !== null && this.node.pkg.name === match[1] && this.node.pkg.version === match[2]);
+        // eslint-disable-next-line no-empty
         } catch {
             return false;
         }

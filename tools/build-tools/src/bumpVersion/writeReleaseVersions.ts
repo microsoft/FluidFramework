@@ -32,8 +32,10 @@ export async function writeReleaseVersions(context: Context) {
 
     // Replace release groups (e.g. "Client" and "Server") with their constituent packages
     for (const pkg of context.repo.packages.packages) {
+        console.log(`Package ${pkg}`);
         for (const repo of Object.values(MonoRepoKind)) {
             if (typeof repo === "string") {
+                console.log(`\tChecking ${repo}`);
                 packageVersions[pkg.name] = packageVersions[repo];
             }
         }
