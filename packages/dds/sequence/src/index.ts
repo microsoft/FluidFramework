@@ -14,7 +14,6 @@ export {
     ISerializableInterval,
     ISerializedInterval,
     SequenceInterval,
-    ISequenceIntervalEvents,
     ISerializedIntervalCollectionV2,
     CompressedSerializedInterval,
 } from "./intervalCollection";
