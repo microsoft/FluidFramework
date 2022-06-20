@@ -11,7 +11,7 @@ import { BuildResult, BuildPackage } from "../buildGraph";
 export class ConcurrentNPMTask extends NPMTask {
     constructor(node: BuildPackage, command: string, tasks: Task[]) {
         super(node, command, tasks);
-    };
+    }
 
     protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
         this.logVerboseTask(`Begin Concurrent Child Tasks`);

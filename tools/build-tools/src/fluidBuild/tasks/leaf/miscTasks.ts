@@ -1,7 +1,7 @@
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+* Licensed under the MIT License.
+*/
 
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
@@ -9,6 +9,8 @@ import { logVerbose } from "../../../common/logging";
 import { ScriptDependencies } from "../../../common/npmPackage";
 import * as path from "path";
 import { BuildPackage } from "../../buildGraph";
+
+/* eslint-disable @typescript-eslint/no-empty-function */
 
 export class EchoTask extends LeafTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) { }
@@ -39,7 +41,7 @@ export class LesscTask extends LeafTask {
             this.logVerboseTrigger("failed to get file stats");
             return false;
         }
-    };
+    }
 }
 
 export class CopyfilesTask extends LeafTask {
@@ -144,13 +146,14 @@ export class GenVerTask extends LeafTask {
         try {
             const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
             const content = await readFileAsync(file, "utf8");
-            const match = content.match(/.*\nexport const pkgName = \"(.*)\";[\n\r]*export const pkgVersion = \"([0-9.]+)\";.*/m);
+            const match = content.match(/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9.]+)";.*/m);
             return (match !== null && this.node.pkg.name === match[1] && this.node.pkg.version === match[2]);
+        // eslint-disable-next-line no-empty
         } catch {
         }
         return false;
     }
-};
+}
 
 export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
     protected get doneFile(): string {

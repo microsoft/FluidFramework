@@ -606,8 +606,7 @@ export class FluidPackageCheck {
     }
     private static async checkOneTestDir(pkg: Package, fix: boolean, subDir: string) {
         const configFile = path.join(this.getTestBaseDir(pkg), subDir, "tsconfig.json");
-        let configJson;
-        configJson = TscUtils.readConfigFile(configFile);
+        const configJson = TscUtils.readConfigFile(configFile);
         if (!configJson) {
             this.logWarn(pkg, `Unable to read ${configFile}`, false);
             return;
@@ -705,6 +704,7 @@ export class FluidPackageCheck {
 
         // Only split test build if there is some ts files in the test directory
         const dirs = [maybeTestDir];
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const dir = dirs.pop();
             if (!dir) {
@@ -724,4 +724,4 @@ export class FluidPackageCheck {
             dirs.push(...files.filter((dirent) => dirent.isDirectory()).map((dirent) => path.join(dir, dirent.name)));
         }
     }
-};
+}
