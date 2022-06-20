@@ -32,8 +32,8 @@ export class JsonCursor<T> implements ITreeCursor {
     //       be benchmarked measured again to see if this still provides an advantage.
 
     private currentNode: any;       // The node currently being visited.
-    private currentKey: FieldKey;   // The parent key used to navigate to this node.
-    private currentIndex: number;   // The parent index used to navigate to this node.
+    private currentKey: FieldKey;   // The key used to navigate from the parent to this node.
+    private currentIndex: number;   // The index used to navigate from the parent to this node.
 
     private readonly parentStack: any[] = [];       // Ancestors traversed to visit this node.
     private readonly keyStack: FieldKey[] = [];     // Keys traversed to visit this node, excluding the most recent.
@@ -57,6 +57,7 @@ export class JsonCursor<T> implements ITreeCursor {
             return TreeNavigationResult.NotFound;
         }
 
+        // Like JSON, we model 'undefined' values by omitting the field.
         if (childNode === undefined) {
             return TreeNavigationResult.NotFound;
         }
@@ -114,9 +115,9 @@ export class JsonCursor<T> implements ITreeCursor {
         const node = this.currentNode;
 
         // It is legal to invoke 'keys()' on a node of type 'JsonType.Null', which requires a
-        // special to avoid 'Object.keys()' throwing.  We do not require a special case for
-        // 'undefined', as both JSON and the SharedTree data model represent 'undefined' via
-        // omission (except at the root, where JSON coerces undefined to null).
+        // special case to avoid 'Object.keys()' throwing.  We do not handle 'undefined', as both
+        // JSON and the SharedTree data model represent 'undefined' via omission (except at the
+        // root, where JSON coerces undefined to null).
         return node !== null
             ? Object.keys(node) as Iterable<FieldKey>
             : [];
@@ -125,11 +126,12 @@ export class JsonCursor<T> implements ITreeCursor {
     length(key: FieldKey): number {
         const node = this.currentNode;
 
-        // The length of an array's indexer is equal to the length of the array.
+        // The 'Empty' field is used to access the indexer of array nodes.
         if (key === EmptyKey && Array.isArray(node)) {
             return node.length;
         }
 
+        // Like JSON, we model 'undefined' values by omitting the field.
         return node[key] === undefined
             ? 0     // A field with an undefined value has 0 length
             : 1;    // All other fields have a length of 1
