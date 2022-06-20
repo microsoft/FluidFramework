@@ -22,42 +22,6 @@ import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gc
 describeNoCompat("GC Data Store Requests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let summarizer: ISummarizer;
-    const dataObjectFactory = new DataObjectFactory(
-        "TestDataObject",
-        TestDataObject,
-        [],
-        []);
-
-    const IdleDetectionTime = 100;
-    const summaryConfigOverrides: ISummaryConfiguration = {
-        ...DefaultSummaryConfiguration,
-        ...{
-            minIdleTime: IdleDetectionTime,
-            maxIdleTime: IdleDetectionTime,
-            maxTime: IdleDetectionTime * 12,
-            initialSummarizerDelayMs: 10,
-        },
-    };
-    const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: {
-            summaryConfigOverrides,
-        },
-        gcOptions: {
-            gcAllowed: true,
-        },
-    };
-    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-        runtime.IFluidHandleContext.resolveHandle(request);
-    const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-        dataObjectFactory,
-        [
-            [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
-        ],
-        undefined,
-        [innerRequestHandler],
-        runtimeOptions,
-    );
-
     let mainContainer: IContainer;
     let mainDataStore: ITestDataObject;
 

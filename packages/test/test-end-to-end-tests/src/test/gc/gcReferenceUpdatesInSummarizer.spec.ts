@@ -84,16 +84,6 @@ describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) =
         [SharedMatrix.getFactory(), SharedString.getFactory()],
         []);
 
-    const IdleDetectionTime = 100;
-    const summaryConfigOverrides: ISummaryConfiguration = {
-        ...DefaultSummaryConfiguration,
-        ...{
-            minIdleTime: IdleDetectionTime,
-            maxIdleTime: IdleDetectionTime,
-            maxTime: IdleDetectionTime * 12,
-            initialSummarizerDelayMs: 10,
-        },
-    };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
             disableSummaries: true,
