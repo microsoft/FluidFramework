@@ -56,9 +56,9 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
     }
 
     /**
-         * Loads a summarizer client with the given version (if any) and returns its container runtime and summary
-         * collection.
-         */
+     * Loads a summarizer client with the given version (if any) and returns its container runtime and summary
+     * collection.
+     */
      async function createSummarizerClient(config: ITestContainerConfig) {
         const requestHeader = {
             [LoaderHeader.cache]: false,
