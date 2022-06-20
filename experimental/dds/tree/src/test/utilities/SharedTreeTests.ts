@@ -897,17 +897,13 @@ export function runSharedTreeOperationsTests(
 
 					const serialized = serialize(sharedTree.saveSummary(), testSerializer, testHandle);
 					const treeContent: SharedTreeSummaryBase = JSON.parse(serialized);
-					let parsedTree: SummaryContents;
-					if (writeFormat === WriteFormat.v0_1_1) {
-						parsedTree = new SharedTreeEncoder_0_1_1(true).decodeSummary(
-							treeContent as SharedTreeSummary,
-							sharedTree.attributionId
-						);
-					} else {
-						parsedTree = new SharedTreeEncoder_0_0_2(true).decodeSummary(
-							treeContent as SharedTreeSummary_0_0_2
-						);
-					}
+					const parsedTree: SummaryContents =
+						writeFormat === WriteFormat.v0_1_1
+							? new SharedTreeEncoder_0_1_1(true).decodeSummary(
+									treeContent as SharedTreeSummary,
+									sharedTree.attributionId
+							  )
+							: new SharedTreeEncoder_0_0_2(true).decodeSummary(treeContent as SharedTreeSummary_0_0_2);
 
 					expect(parsedTree.currentTree).to.not.be.undefined;
 					const testRoot = assertArrayOfOne(

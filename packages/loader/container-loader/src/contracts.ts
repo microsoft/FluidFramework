@@ -163,7 +163,7 @@ export interface IConnectionManagerFactoryArgs {
 
 /**
  *
- * @param codeDetails- Data structure used to describe the code to load on the Fluid document
+ * @param codeDetails- - Data structure used to describe the code to load on the Fluid document
  * @returns The name of the Fluid package
  */
 export const getPackageName = (codeDetails: IFluidCodeDetails | undefined): IContainerPackageInfo => {
