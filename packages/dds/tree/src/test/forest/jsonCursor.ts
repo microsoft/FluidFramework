@@ -27,8 +27,8 @@ export const enum JsonType {
  */
 export class JsonCursor<T> implements ITreeCursor {
     // PERF: JsonCursor maintains a stack of nodes/edges traversed.  This stack is
-    //       currently partitioned across 3 arrays, with the top of the stack maintained
-    //       in fields.  This design was advantageous in a similar tree visitor, but should
+    //       partitioned across 3 arrays, with the top of the stack stored in fields.
+    //       This design was advantageous in a similar tree visitor, but should
     //       be benchmarked measured again to see if this still provides an advantage.
 
     private currentNode: any;       // The node currently being visited.
