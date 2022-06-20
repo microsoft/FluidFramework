@@ -7,7 +7,7 @@ import { TaskManager } from "@fluid-experimental/task-manager";
 import { Quorum } from "@fluid-internal/quorum";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-// import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
 import type { IContainerKillBit } from "./interfaces";
 
@@ -51,7 +51,11 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     public async setDead() {
         // Using a consensus-type data structure here, to make it easier to validate
         // that the setDead was ack'd and we can have confidence other clients will agree.
-        await this.crc.write(deadKey, true);
+        return PerformanceEvent.timedExecAsync(
+            this.runtime.logger,
+            { eventName: "SettingContainerDead" },
+            async () => this.crc.write(deadKey, true).then(() => { }),
+        );
     }
 
     public get markedForDestruction() {
@@ -67,7 +71,7 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         // Note that the marking could come from another client (e.g. two clients try to mark simultaneously).
         // Watching via the event listener will work regardless of whether our marking or a remote client's
         // marking was the one that actually wrote the flag.
-        return new Promise<void>((resolve, reject) => {
+        const markP = new Promise<void>((resolve, reject) => {
             const acceptedListener = (key: string) => {
                 if (key === markedForDestructionKey) {
                     resolve();
@@ -80,10 +84,20 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
             // logic if a remote client rejects the local client's mark).
             this.quorum.set(markedForDestructionKey, true);
         });
+
+        return PerformanceEvent.timedExecAsync(
+            this.runtime.logger,
+            { eventName: "MarkingContainerForDestruction" },
+            async () => markP,
+        );
     }
 
     public async volunteerForDestruction(): Promise<void> {
-        return this.taskManager.lockTask(destroyTaskName);
+        return PerformanceEvent.timedExecAsync(
+            this.runtime.logger,
+            { eventName: "VolunteeringForDestruction" },
+            async () => this.taskManager.lockTask(destroyTaskName),
+        );
     }
 
     public haveDestructionTask(): boolean {
@@ -108,8 +122,13 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
             quorum.on("accepted", watchForInitialSet);
         });
         quorum.set(markedForDestructionKey, false);
-        await initialSetP;
-        await crc.write(deadKey, false);
+        await PerformanceEvent.timedExecAsync(
+            this.runtime.logger,
+            { eventName: "InitializingKillBit" },
+            async () => {
+                await initialSetP;
+                await crc.write(deadKey, false);
+            });
     }
 
     protected async hasInitialized() {

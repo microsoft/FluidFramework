@@ -14,7 +14,6 @@
 import path from "path";
 import { Trace } from "@fluidframework/common-utils";
 import * as MergeTree from "@fluidframework/merge-tree";
-// eslint-disable-next-line @typescript-eslint/no-duplicate-imports
 import {
     TextSegment,
     createGroupOp,
