@@ -2926,14 +2926,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 "OpTooLarge",
                 /* error */ undefined,
                 {
-                    length: {
-                        value: serializedContent.length,
-                        tag: TelemetryDataTag.CodeArtifact,
-                    },
-                    limit: {
-                        value: this._maxOpSizeInBytes,
-                        tag: TelemetryDataTag.CodeArtifact,
-                    },
+                    length: serializedContent.length,
+                    limit: this._maxOpSizeInBytes,
                 }));
             return -1;
         }
