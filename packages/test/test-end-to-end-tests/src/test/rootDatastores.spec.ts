@@ -345,7 +345,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const alias2 = "alias2";
             const [aliasResult3, aliasResult4] = await Promise.all([
                 ds2.trySetAlias(alias2),
-                ds2.trySetAlias(alias2),
+                ds2.trySetAlias(alias2 + alias2),
             ]);
 
             assert.equal(aliasResult3, "Success");
