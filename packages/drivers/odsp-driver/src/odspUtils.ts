@@ -307,7 +307,7 @@ export function toInstrumentedOdspTokenFetcher(
                 if (token === null && throwOnNullToken) {
                     throw new NonRetryableError(
                         // pre-0.58 error message: Token is null for ${name} call
-                        `The Host-provided token fetcher for call returned null`,
+                        `The Host-provided token fetcher returned null`,
                         OdspErrorType.fetchTokenError,
                         { method: name, driverVersion });
                 }
