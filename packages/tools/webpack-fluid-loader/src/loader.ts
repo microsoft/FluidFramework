@@ -292,7 +292,8 @@ export async function start(
 
             const prefetched = await prefetchLatestSnapshot(
                 resolvedUrl,
-                async () => options.odspAccessToken ?? null, // TokenFetcher type is expressed using null instead of undefined
+                // TokenFetcher type is expressed using null instead of undefined
+                async () => options.odspAccessToken ?? null,
                 odspPersistantCache,
                 false /** forceAccessTokenViaAuthorizationHeader */,
                 new BaseTelemetryNullLogger(),
