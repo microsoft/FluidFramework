@@ -26,8 +26,8 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`flub hello PERSON`](#flub-hello-person)
-* [`flub hello world`](#flub-hello-world)
+* [`flub build PERSON`](#flub-build-person)
+* [`flub build world`](#flub-build-world)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub plugins`](#flub-plugins)
 * [`flub plugins:install PLUGIN...`](#flub-pluginsinstall-plugin)
@@ -39,13 +39,13 @@ USAGE
 * [`flub plugins:uninstall PLUGIN...`](#flub-pluginsuninstall-plugin-2)
 * [`flub plugins update`](#flub-plugins-update)
 
-## `flub hello PERSON`
+## `flub build PERSON`
 
 Say hello
 
 ```
 USAGE
-  $ flub hello [PERSON] -f <value>
+  $ flub build [PERSON] -f <value>
 
 ARGUMENTS
   PERSON  Person to say hello to
@@ -61,15 +61,15 @@ EXAMPLES
   hello friend from oclif! (./src/commands/hello/index.ts)
 ```
 
-_See code: [dist/commands/hello/index.ts](https://github.com/microsoft/hello-world/blob/v0.0.0/dist/commands/hello/index.ts)_
+_See code: [dist/commands/build/index.ts](https://github.com/microsoft/hello-world/blob/v0.0.0/dist/commands/build/index.ts)_
 
-## `flub hello world`
+## `flub build world`
 
 Say hello world
 
 ```
 USAGE
-  $ flub hello world
+  $ flub build world
 
 DESCRIPTION
   Say hello world
