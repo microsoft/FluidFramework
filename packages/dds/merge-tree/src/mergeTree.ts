@@ -1459,8 +1459,8 @@ export class MergeTree {
         if (!segment.localRefs || segment.localRefs.empty) {
             return;
         }
-        const refsToSlide: ReferencePosition[] = [];
-        const refsToStay: ReferencePosition[] = [];
+        const refsToSlide: LocalReferencePosition[] = [];
+        const refsToStay: LocalReferencePosition[] = [];
         for (const lref of segment.localRefs) {
             if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
                 refsToStay.push(lref);
