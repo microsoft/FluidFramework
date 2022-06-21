@@ -222,6 +222,21 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      */
     protected onDisconnect() {}
 
+    protected applyInnerOp(content: any) {
+        switch (content.type) {
+            case "setCell":
+                this.setCore(this.decode(content.value));
+                break;
+
+            case "deleteCell":
+                this.deleteCore();
+                break;
+
+            default:
+                throw new Error("Unknown operation");
+        }
+    }
+
     /**
      * Process a cell operation
      *
@@ -246,19 +261,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
         if (message.type === MessageType.Operation && !local) {
             const op = message.contents as ICellOperation;
-
-            switch (op.type) {
-                case "setCell":
-                    this.setCore(this.decode(op.value));
-                    break;
-
-                case "deleteCell":
-                    this.deleteCore();
-                    break;
-
-                default:
-                    throw new Error("Unknown operation");
-            }
+            this.applyInnerOp(op);
         }
     }
 
@@ -278,7 +281,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         return this.serializer.decode(value);
     }
 
-    protected applyStashedOp() {
-        throw new Error("not implemented");
+    protected applyStashedOp(content: any) {
+        this.applyInnerOp(content);
+        ++this.messageId;
+        return { type: "edit", pendingMessageId: this.messageId };
     }
 }

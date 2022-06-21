@@ -7,6 +7,7 @@ import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
+import { SharedCell } from "@fluidframework/cell";
 import {
     ReferenceType,
     reservedMarkerIdKey,
@@ -31,7 +32,12 @@ import { IRequest } from "@fluidframework/core-interfaces";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
-const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()], [stringId, SharedString.getFactory()]];
+const cellId = "cellKey";
+const registry: ChannelFactoryRegistry = [
+    [mapId, SharedMap.getFactory()],
+    [stringId, SharedString.getFactory()],
+    [cellId, SharedCell.getFactory()]];
+
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
