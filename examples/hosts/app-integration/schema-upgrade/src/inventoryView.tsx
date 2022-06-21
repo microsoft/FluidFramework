@@ -40,7 +40,7 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInv
             <CollaborativeInput
                 sharedString={ inventoryItem.name }
                 style={{ width: "200px" }}
-                // disabled={ disabled }
+                disabled={ disabled }
             ></CollaborativeInput>
             <input
                 ref={ quantityRef }

@@ -8,6 +8,65 @@ import React, { useEffect, useRef, useState } from "react";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
+interface ISessionStatusViewProps {
+    containerKillBit: IContainerKillBit;
+}
+
+const SessionStatusView: React.FC<ISessionStatusViewProps> = (props: ISessionStatusViewProps) => {
+    const { containerKillBit } = props;
+
+    const [dead, setDead] = useState<boolean>(containerKillBit.dead);
+    const [sessionEnding, setSessionEnding] = useState<boolean>(containerKillBit.markedForDestruction);
+
+    useEffect(() => {
+        const deadHandler = () => {
+            setDead(containerKillBit.dead);
+        };
+        containerKillBit.on("dead", deadHandler);
+        // For some reason, I'm seeing the event fire between setting the state initially and adding the listener.
+        deadHandler();
+        return () => {
+            containerKillBit.off("dead", deadHandler);
+        };
+    }, [containerKillBit]);
+
+    useEffect(() => {
+        const markedForDestructionHandler = () => {
+            setSessionEnding(containerKillBit.markedForDestruction);
+        };
+        containerKillBit.on("markedForDestruction", markedForDestructionHandler);
+        markedForDestructionHandler();
+        return () => {
+            containerKillBit.off("markedForDestruction", markedForDestructionHandler);
+        };
+    }, [containerKillBit]);
+
+    return (
+        <>
+            { sessionEnding && !dead && <h1>The session is ending...</h1> }
+            { dead && <h1>The session has ended.</h1> }
+        </>
+    );
+};
+
+interface IImportedDataViewProps {
+    data: string | undefined;
+}
+
+const ImportedDataView: React.FC<IImportedDataViewProps> = (props: IImportedDataViewProps) => {
+    const { data } = props;
+    if (data === undefined) {
+        return <div>Loaded from existing container</div>;
+    }
+
+    return (
+        <div>
+            <div>Imported data:</div>
+            <textarea rows={ 5 } value={ data } readOnly></textarea>
+        </div>
+    );
+};
+
 export interface IAppViewProps {
     inventoryList: IInventoryList;
     // Normally there's no need to display the imported string data, this is for demo purposes only.
@@ -58,10 +117,6 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 
     const savedDataRef = useRef<HTMLTextAreaElement>(null);
 
-    if (dead) {
-        return <h1>The session has ended.</h1>;
-    }
-
     const endSessionButtonClickHandler = () => {
         containerKillBit.markForDestruction().catch(console.error);
     };
@@ -82,23 +137,13 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             .catch(console.error);
     };
 
-    let importedDataView;
-    if (importedStringData !== undefined) {
-        importedDataView = (
-            <div>
-                <div>Imported data:</div>
-                <textarea rows={5} value={importedStringData} readOnly></textarea>
-            </div>
-        );
-    } else {
-        importedDataView = <div>Loaded from existing container</div>;
-    }
+    const disabled = sessionEnding || dead;
 
     return (
         <div>
-            {sessionEnding && <h1>The session is ending...</h1>}
-            {importedDataView}
-            <InventoryListView inventoryList={inventoryList} disabled={sessionEnding} />
+            <SessionStatusView containerKillBit={ containerKillBit } />
+            <ImportedDataView data={ importedStringData } />
+            <InventoryListView inventoryList={ inventoryList } disabled={ disabled } />
             <button onClick={async () => saveAndEndSession().catch(console.error)}>Save and End Session</button>
             <br />
             <button onClick={async () => migrateContainer().catch(console.error)}>Migrate to new container</button>

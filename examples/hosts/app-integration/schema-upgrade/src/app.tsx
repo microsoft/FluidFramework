@@ -25,7 +25,7 @@ import {
 } from "./version2";
 
 async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
+    // Our inventory list is available at the URL "/".
     return requestFluidObject<IInventoryList>(container, { url: "/" });
 }
 
