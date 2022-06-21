@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, extractLogSafeErrorProperties } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -28,6 +28,7 @@ import {
     loggerToMonitoringContext,
     MonitoringContext,
     EventEmitterWithErrorHandling,
+    extractLogSafeErrorProperties,
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
@@ -568,7 +569,7 @@ export class DocumentDeltaConnection
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
             message = `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
         } else {
-            message = extractLogSafeErrorProperties(error).message;
+            message = extractLogSafeErrorProperties(error, false).message;
         }
 
         const errorObj = createGenericNetworkError(

@@ -447,10 +447,11 @@ export class GarbageCollector implements IGarbageCollector {
             }
 
             const timeoutMs = this.sessionExpiryTimeoutMs;
-            setLongTimeout(timeoutMs,
+            setLongTimeout(
                 () => {
                     this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
                 },
+                timeoutMs,
                 (timer) => {
                     this.sessionExpiryTimer = timer;
                 });
@@ -1278,4 +1279,3 @@ function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollec
     }
     return sortedGCState;
 }
-
