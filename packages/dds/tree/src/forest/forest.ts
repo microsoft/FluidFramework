@@ -5,7 +5,8 @@
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { FieldKey } from "../tree";
-import { Value, ITreeCursor } from "./cursor";
+import { Brand, Opaque } from "../util";
+import { ITreeCursor, TreeNavigationResult } from "./cursor";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
@@ -22,21 +23,41 @@ import { Value, ITreeCursor } from "./cursor";
 export type NodeId = ITreeSubscriptionCursor | Anchor;
 
 /**
- * Information about a ForestNode's parent
+ * Location of a tree within a forest.
  *
  * @public
  */
-export interface ParentData {
-    readonly parentId: NodeId;
-    readonly traitParent: FieldKey;
+export interface TreeLocation {
+    readonly container: TreeParent;
     readonly index: number;
 }
 
+export interface ChildField {
+	readonly key: FieldKey;
+}
+
+/**
+ * Parent of a tree in a forest.
+ */
+export type TreeParent = ChildField | DetachedRange;
+
+/**
+ * A root in the forest.
+ *
+ * The anchoring does not refer to any of the nodes contained in this range:
+ * instead `start` and `end` are anchored to the ends of this detached range, but its object identity.
+ * Thus any additional content inserted before or after contents of this range will be included in the range.
+ * This also means that moving the content from this range elsewhere will leave this range valid, but empty.
+ *
+ * DetachedRanges, as well as their start and end, are not valid to use as anchors across edits:
+ * they are only valid within the edit in which they were created.
+ */
+export type DetachedRange = Opaque<Brand<number, "forest.DetachedRange">>;
 /**
  * Invalidates whenever `current` changes.
  * For now (might change later) downloading new parts of the forest counts as a change.
  *
- * When invalidating, all outstanding cursors must be freed.
+ * When invalidating, all outstanding cursors must be freed or cleared.
  */
 export interface IForestSubscription extends Dependee {
     // We could provide access to this
@@ -45,25 +66,29 @@ export interface IForestSubscription extends Dependee {
     // current(): IForestSnapshot;
 
     /**
+     * Allocates a cursor in the "cleared" state.
+     */
+    allocateCursor(): ITreeSubscriptionCursor;
+
+    /**
+     * Anchor at the beginning or root field.
+     */
+    readonly root: Anchor;
+
+    /**
      * If observer is provided, it will be invalidated if the value returned from this changes
      * (including from or two undefined).
      *
      *  @returns the node associated with `id`, or undefined if there is none.
+     *
+     * It is an error not to free `cursorToMove` before the next edit.
+     * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
      */
     tryGet(
-        id: NodeId,
+        destination: Anchor,
+        cursorToMove: ITreeSubscriptionCursor,
         observer?: ObservingDependent
-    ): ITreeSubscriptionCursor | undefined;
-
-    /**
-     * @returns true if the node associated with `id` exists in this forest, otherwise false
-     */
-    has(id: NodeId): boolean;
-
-    /**
-     * @returns undefined iff root, otherwise the parent of `id`.
-     */
-    tryGetParent(id: NodeId): ParentData | undefined;
+    ): TreeNavigationResult;
 }
 
 /**
@@ -88,25 +113,37 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
 
     /**
      * Release any resources this cursor is holding onto.
-     * After doing this, further use of this object other than reading `state` is forbidden (undefined behavior).
+     * After doing this, further use of this object other than reading `state` or passing to `tryGet`
+     * is forbidden (undefined behavior).
      * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
      */
     free(): void;
 
     /**
      * Construct an `Anchor` which the IForestSubscription will keep rebased to `current`.
-     * @param free - iff free, will also `free` this.
+     * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
      */
-    buildAnchor(free: boolean): Anchor;
+    buildAnchor(): Anchor;
 
     /**
      * Current state.
      */
     readonly state: ITreeSubscriptionCursorState;
+
+    /**
+     * @returns location within parent field or range.
+     */
+    // TODO: maybe support this.
+    // getParentInfo(id: NodeId): TreeLocation;
 }
 
 /**
  * Pointer to a location in a Forest which IForestSubscription will keep rebased onto `current`.
+ *
+ * TODO:Performance:
+ * An implementation might prefer to de-duplicate
+ * Anchors and thus use a ref count instead of allocating an object for each one.
+ * This could be enabled by removing "state".
  */
 export interface Anchor {
     /**
@@ -127,70 +164,11 @@ export enum ITreeSubscriptionCursorState {
      */
     Current,
     /**
+     * Empty, but can be reused.
+     */
+    Cleared,
+    /**
      * Freed and must not be used.
      */
     Freed,
-}
-
-/**
- * Editing APIs.
- *
- * These are sufficient to perform all possible edits,
- * but not particularly efficient (for large slice moves), or semantic.
- * They are also not particularly type safe (ex: you can pass a parented nodes into attach, which is invalid).
- *
- * TODO: improve these APIs, addressing the above.
- */
-export interface ITransaction extends IForestSubscription {
-    /**
-     * Adds the supplied nodes to the forest.
-     * @param nodes - the sequence of nodes to add to the forest.
-     * If any of them have children which exist in the forest already, those children will be parented.
-     * Any trait arrays present in a node must be non-empty.
-     * The nodes may be provided in any order.
-     */
-    add(nodes: Iterable<ITreeCursor>): void;
-
-    /**
-     * Parents a set of nodes already in the forest at a specified location within a trait.
-     * @param parentId - the id of the parent under which to insert the new nodes
-     * @param label - the label of the trait under which to insert the new nodes
-     * @param index - the index in the trait after which to insert the new nodes
-     * @param childIds - the ids of the nodes to insert
-     */
-    attachRangeOfChildren(
-        parentId: NodeId,
-        label: FieldKey,
-        index: number,
-        childIds: NodeId[]
-    ): void;
-
-    /**
-     * Detaches a range of nodes from their parent. The detached nodes remain in the `Forest`.
-     * @param parentId - the id of the parent from which to detach the nodes
-     * @param label - the label of the trait from which to detach the nodes
-     * @param startIndex - the index of the first node in the range to detach
-     * @param endIndex - the index after the last node in the range to detach
-     * @returns a new `Forest` with the nodes detached, and a list of the ids of the nodes that were detached
-     */
-    detachRangeOfChildren(
-        parentId: NodeId,
-        label: FieldKey,
-        startIndex: number,
-        endIndex: number
-    ): readonly NodeId[];
-
-    /**
-     * Replaces a node's value. The node must exist in this `Forest`.
-     * @param nodeId - the id of the node
-     * @param value - the new value
-     */
-    setValue(nodeId: NodeId, value: Value): void;
-
-    /**
-     * Deletes every node in ids (each of which must be unparented)
-     * @param ids - The IDs of the nodes to delete.
-     * @param deleteChildren - If true, recursively deletes descendants. Otherwise, leaves children unparented.
-     */
-    delete(ids: Iterable<NodeId>, deleteChildren: boolean): void;
 }
