@@ -1459,22 +1459,15 @@ export class MergeTree {
         if (!segment.localRefs || segment.localRefs.empty) {
             return;
         }
-        const refsToSlide: ReferencePosition[] = [];
         for (const lref of segment.localRefs) {
-            if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
-                continue;
-            } if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
-                if (!pending) {
-                    refsToSlide.push(lref);
-                }
-            } else {
+            if (!refTypeIncludesFlag(lref, ReferenceType.StayOnRemove | ReferenceType.SlideOnRemove)) {
                 segment.localRefs.removeLocalRef(lref);
             }
         }
         // Rethink implementation of keeping and sliding refs once other reference
         // changes are complete. This works but is fragile and possibly slow.
-        if (!pending) {
-            this.slideReferences(segment, refsToSlide);
+        if (!pending && segment.localRefs.empty === false) {
+            this.slideReferences(segment, segment.localRefs);
         }
     }
 
