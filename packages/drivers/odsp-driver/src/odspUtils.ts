@@ -13,7 +13,6 @@ import {
     NetworkErrorBasic,
 } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
@@ -42,13 +41,6 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
-
-export interface ISnapshotContents {
-    snapshotTree: ISnapshotTree;
-    blobs: Map<string, ArrayBuffer>;
-    ops: ISequencedDocumentMessage[];
-    sequenceNumber: number | undefined;
-}
 
 export interface IOdspResponse<T> {
     content: T;
@@ -243,7 +235,8 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
     ChildLogger.create(
         logger,
         "OdspDriver",
-        { all:
+        {
+            all:
             {
                 driverVersion,
             },

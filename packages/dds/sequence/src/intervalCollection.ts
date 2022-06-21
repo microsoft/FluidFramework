@@ -72,6 +72,55 @@ export interface ISerializedInterval {
     properties?: PropertySet;
 }
 
+/**
+ * A size optimization to avoid redundantly storing keys when serializing intervals
+ * as JSON. Intervals are of the format:
+ *
+ * [start, end, sequenceNumber, intervalType, properties]
+ */
+export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
+
+/**
+ * @internal
+ */
+export interface ISerializedIntervalCollectionV2 {
+    label: string;
+    version: 2;
+    intervals: CompressedSerializedInterval[];
+}
+
+/**
+ * Decompress an interval after loading a summary from JSON. The exact format
+ * of this compression is unspecified and subject to change
+ */
+function decompressInterval(interval: CompressedSerializedInterval, label?: string): ISerializedInterval {
+    return {
+        start: interval[0],
+        end: interval[1],
+        sequenceNumber: interval[2],
+        intervalType: interval[3],
+        properties: { ...interval[4], [reservedRangeLabelsKey]: label },
+    };
+}
+
+/**
+ * Compress an interval prior to serialization as JSON. The exact format of this
+ * compression is unspecified and subject to change
+ */
+function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
+    const { start, end, sequenceNumber, intervalType, properties } = interval;
+
+    return [
+        start,
+        end,
+        sequenceNumber,
+        intervalType,
+        // remove the `referenceRangeLabels` property as it is already stored
+        // in the `label` field of the summary
+        { ...properties, [reservedRangeLabelsKey]: undefined },
+    ];
+}
+
 export interface ISerializableInterval extends IInterval {
     properties: PropertySet;
     propertyManager: PropertiesManager;
@@ -119,7 +168,7 @@ export class Interval implements ISerializableInterval {
         this.auxProps.push(props);
     }
 
-    public serialize(client: Client) {
+    public serialize(client: Client): ISerializedInterval {
         let seq = 0;
         if (client) {
             seq = client.getCurrentSeq();
@@ -270,7 +319,7 @@ export class SequenceInterval implements ISerializableInterval {
         }
     }
 
-    public serialize(client: Client) {
+    public serialize(client: Client): ISerializedInterval {
         const startPosition = client.localReferencePositionToPosition(this.start);
         const endPosition = client.localReferencePositionToPosition(this.end);
         const serializedInterval: ISerializedInterval = {
@@ -279,9 +328,11 @@ export class SequenceInterval implements ISerializableInterval {
             sequenceNumber: client.getCurrentSeq(),
             start: startPosition,
         };
+
         if (this.properties) {
             serializedInterval.properties = this.properties;
         }
+
         return serializedInterval;
     }
 
@@ -741,10 +792,15 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return newInterval;
     }
 
-    public serialize() {
+    public serialize(): ISerializedIntervalCollectionV2 {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
-        return intervals.map((interval) => interval.serialize(client));
+
+        return {
+            label: this.label,
+            intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
+            version: 2,
+        };
     }
 
     private addIntervalListeners(interval: TInterval) {
@@ -773,7 +829,7 @@ class SequenceIntervalCollectionFactory
     implements IValueFactory<IntervalCollection<SequenceInterval>> {
     public load(
         emitter: IValueOpEmitter,
-        raw: ISerializedInterval[] = [],
+        raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
     ): IntervalCollection<SequenceInterval> {
         const helpers: IIntervalHelpers<SequenceInterval> = {
             compareEnds: compareSequenceIntervalEnds,
@@ -782,7 +838,7 @@ class SequenceIntervalCollectionFactory
         return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw);
     }
 
-    public store(value: IntervalCollection<SequenceInterval>): ISerializedInterval[] {
+    public store(value: IntervalCollection<SequenceInterval>): ISerializedIntervalCollectionV2 {
         return value.serializeInternal();
     }
 }
@@ -823,7 +879,10 @@ function createInterval(label: string, start: number, end: number, client: Clien
 
 class IntervalCollectionFactory
     implements IValueFactory<IntervalCollection<Interval>> {
-    public load(emitter: IValueOpEmitter, raw: ISerializedInterval[] = []): IntervalCollection<Interval> {
+    public load(
+        emitter: IValueOpEmitter,
+        raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
+    ): IntervalCollection<Interval> {
         const helpers: IIntervalHelpers<Interval> = {
             compareEnds: compareIntervalEnds,
             create: createInterval,
@@ -833,7 +892,7 @@ class IntervalCollectionFactory
         return collection;
     }
 
-    public store(value: IntervalCollection<Interval>): ISerializedInterval[] {
+    public store(value: IntervalCollection<Interval>): ISerializedIntervalCollectionV2 {
         return value.serializeInternal();
     }
 }
@@ -968,11 +1027,20 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     /** @internal */
-    constructor(private readonly helpers: IIntervalHelpers<TInterval>, private readonly requiresClient: boolean,
+    constructor(
+        private readonly helpers: IIntervalHelpers<TInterval>,
+        private readonly requiresClient: boolean,
         private readonly emitter: IValueOpEmitter,
-        serializedIntervals: ISerializedInterval[]) {
+        serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2,
+    ) {
         super();
-        this.savedSerializedIntervals = serializedIntervals;
+
+        if (Array.isArray(serializedIntervals)) {
+            this.savedSerializedIntervals = serializedIntervals;
+        } else {
+            this.savedSerializedIntervals =
+                serializedIntervals.intervals.map((i) => decompressInterval(i, serializedIntervals.label));
+        }
     }
 
     public attachGraph(client: Client, label: string) {
@@ -1121,11 +1189,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (!this.attached) {
             throw new LoggingError("Attach must be called before accessing intervals");
         }
+
+        // Force id to be a string.
         if (typeof (id) !== "string") {
             throw new LoggingError("Change API requires an ID that is a string");
         }
 
-        // Force id to be a string.
         const interval = this.getIntervalById(id);
         if (interval) {
             const newInterval = this.localCollection.changeInterval(interval, start, end);
@@ -1134,9 +1203,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             serializedInterval.end = end;
             // Emit a property bag containing only the ID, as we don't intend for this op to change any properties.
             serializedInterval.properties =
-                {
-                    [reservedIntervalIdKey]: interval.getIntervalId(),
-                };
+            {
+                [reservedIntervalIdKey]: interval.getIntervalId(),
+            };
             this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
             this.addPendingChange(id, serializedInterval);
             this.emit("changeInterval", newInterval, true, undefined);
@@ -1451,7 +1520,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
     }
 
-    public serializeInternal() {
+    /**
+     * @internal
+     */
+    public serializeInternal(): ISerializedIntervalCollectionV2 {
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
         }
