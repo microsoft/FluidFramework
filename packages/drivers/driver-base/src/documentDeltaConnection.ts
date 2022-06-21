@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
@@ -28,6 +29,7 @@ import {
     getCircularReplacer,
     loggerToMonitoringContext,
     MonitoringContext,
+    EventEmitterWithErrorHandling,
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
@@ -37,7 +39,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
  * Represents a connection to a stream of delta updates
  */
 export class DocumentDeltaConnection
-    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents>
     implements IDocumentDeltaConnection, IDisposable {
     static readonly eventsToForward = ["nack", "op", "signal", "pong"];
 
@@ -112,7 +114,14 @@ export class DocumentDeltaConnection
         logger: ITelemetryLogger,
         private readonly enableLongPollingDowngrades: boolean = false,
     ) {
-        super();
+        super((name, error) => {
+            logger.sendErrorEvent(
+                {
+                    eventName: "DeltaConnection:EventException",
+                    name,
+                },
+                error);
+        });
 
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(logger, "DeltaConnection"));
