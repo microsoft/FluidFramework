@@ -47,6 +47,10 @@ export interface ITreeCursor {
     keys: Iterable<FieldKey>;
     // (undocumented)
     length(key: FieldKey): number;
+    seek(offset: number): {
+        result: TreeNavigationResult;
+        moved: number;
+    };
     readonly type: TreeType;
     up(): TreeNavigationResult;
     readonly value: Value;
