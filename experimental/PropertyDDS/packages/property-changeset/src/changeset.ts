@@ -317,16 +317,14 @@ export class ChangeSet {
                 }
                 baseIsSetChange = true;
             }
-            let appliedChanges = in_appliedPropertyChanges[in_changedKey];
-            if (isObject(appliedChanges) && appliedChanges.hasOwnProperty("value")) {
-                appliedChanges = (appliedChanges as SerializedChangeSet).value;
-            }
+            const appliedChanges = in_appliedPropertyChanges[in_changedKey];
+            const appliedChangesValue = appliedChanges?.value ?? appliedChanges;
 
-            if (splitTypeid.typeid === "String" && isString(appliedChanges)) {
+            if (splitTypeid.typeid === "String" && isString(appliedChangesValue)) {
                 // we've got a 'set' command and just overwrite the changes
                 if (baseIsSetChange && oldValue !== undefined) {
                     in_baseChanges[in_changedKey] = {
-                        value: appliedChanges,
+                        value: appliedChangesValue,
                         oldValue,
                     };
                 } else {
