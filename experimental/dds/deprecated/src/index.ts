@@ -4,3 +4,4 @@
  */
 
 export * from "./sharedIntervalCollection";
+export * from "./sharedObjectSequence";

@@ -73,6 +73,14 @@
       "RemovedClassDeclaration_SharedIntervalCollectionFactory": {
         "backCompat": false,
         "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedObjectSequence": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedObjectSequenceFactory": {
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }
