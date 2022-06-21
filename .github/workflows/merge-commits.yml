@@ -16,10 +16,8 @@ jobs:
     if: ${{ github.repository_owner }} == 'microsoft'
     steps:
       - run: npm install @azure/storage-queue
-      - run:
-          echo ${{ github.repository_owner }}
-          echo ${{ github.repositoryUrl }}
-      - uses: actions/github-script@v6
+      - run: echo ${{ github.repository_owner }} echo ${{ github.repositoryUrl }}
+      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         if: ${{ github.repository_owner }} == 'microsoft'
         id: dequeue-message
         with:
@@ -62,7 +60,7 @@ jobs:
     steps:
       - name: Git checkout
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
-        uses: actions/checkout@v2
+        uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
         with:
           fetch-depth: '0'
       - name: Create branch
@@ -86,7 +84,7 @@ jobs:
     steps:
       - run: npm install @octokit/core
       - name: Create PR using octokit
-        uses: actions/github-script@v6
+        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           script: |
             const { Octokit } = require("@octokit/core");
@@ -116,13 +114,13 @@ jobs:
     needs: [ pull-request ]
     if: ( needs.pull-request.result == 'success' )
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
         with:
           node-version: 14
       - run: npm ci
       - run: npm install @azure/storage-queue
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
           script: |
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
