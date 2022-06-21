@@ -167,7 +167,7 @@ describe("AzureClient", () => {
      * be returned.
      */
     it("can connect existing Azure Fluid Relay container", async () => {
-        const container = (await client.createContainer(schema)).container;
+        const { container } = await client.createContainer(schema);
         const containerId = await container.attach();
         await timeoutPromise(
             (resolve) => container.once("connected", () => resolve()),
