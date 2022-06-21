@@ -238,6 +238,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                     // No tag means we can log plainly
                     newEvent[key] = value;
                     break;
+                case "PackageData": // For back-compat
                 case TelemetryDataTag.CodeArtifact:
                     // For Microsoft applications, CodeArtifact is safe for now
                     // (we don't load 3P code in 1P apps)
