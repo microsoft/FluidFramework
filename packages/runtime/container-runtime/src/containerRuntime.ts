@@ -45,7 +45,7 @@ import {
     loggerToMonitoringContext,
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
-import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { DriverErrorType, DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
@@ -1039,7 +1039,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Used to delay transition to "connected" state while we upload
      * attachment blobs that were added while disconnected
      */
-    private delayConnectedP?: { canceled: boolean; promise: Promise<void>; };
+    private delayConnectClientId?: string;
 
     public get connected(): boolean {
         return this._connected;
@@ -1294,9 +1294,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             blobManagerSnapshot,
             () => this.storage,
             (blobId, localId) => this.submit(
-                ContainerMessageType.BlobAttach,
-                undefined, undefined,
-                localId ? { blobId, localId } : { blobId }),
+                ContainerMessageType.BlobAttach, undefined, undefined, { blobId, localId }),
             (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
         );
@@ -1764,9 +1762,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        if (connected === false && this.delayConnectedP !== undefined) {
-            this.delayConnectedP.canceled = true;
-            this.delayConnectedP = undefined;
+        if (connected === false && this.delayConnectClientId !== undefined) {
+            this.delayConnectClientId = undefined;
             this.mc.logger.sendTelemetryEvent({
                 eventName: "UnsuccessfulConnectedTransition",
             });
@@ -1779,16 +1776,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // ensure we don't submit ops referencing a blob that has not been uploaded
         const connecting = connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
         if (connecting && this.blobManager.hasPendingUploads) {
-            const canceled = false;
-            const promise = this.blobManager.onConnected().then(() => {
-                this.delayConnectedP = undefined;
-                if (!canceled && !this.disposed) {
+            assert(!this.delayConnectClientId, "Connect event delay must be canceled before subsequent connect event");
+            assert(!!clientId, "Must have clientId when connecting");
+            this.delayConnectClientId = clientId;
+            this.blobManager.onConnected().then(() => {
+                if (this.delayConnectClientId === clientId && !this.disposed) {
+                    this.delayConnectClientId = undefined;
                     this.setConnectionStateCore(connected, clientId);
                 }
-            }, (reason) => {
-                this.closeFn(reason);
+            }, (error) => {
+                if (error.errorType !== DriverErrorType.offlineError) {
+                    this.closeFn(error);
+                }
             });
-            this.delayConnectedP = { canceled, promise };
             return;
         }
 
@@ -1796,6 +1796,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private setConnectionStateCore(connected: boolean, clientId?: string) {
+        assert(!this.delayConnectClientId, "connect event delay must be cleared before propagating connect event");
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -2217,7 +2218,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private canSendOps() {
-        return this.connected && !this.deltaManager.readOnlyInfo.readonly && !this.delayConnectedP;
+        return this.connected && !this.deltaManager.readOnlyInfo.readonly;
     }
 
     public getQuorum(): IQuorumClients {

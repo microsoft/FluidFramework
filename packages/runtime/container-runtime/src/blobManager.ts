@@ -122,8 +122,7 @@ export class BlobManager {
             this.logger,
             {
                 eventName: "BlobUploadOnConnected",
-                count: Array.from(this.pendingBlobs.values())
-                    .filter((entry) => entry.status === PendingBlobStatus.OfflinePendingUpload).length,
+                count: this.pendingUploadCount,
             },
             async () => {
                 // if blobs are added while uploading, upload them too
@@ -188,15 +187,26 @@ export class BlobManager {
      * transitions to "connected" state.
      */
     public get hasPendingUploads(): boolean {
+        return this.pendingUploadCount > 0;
+    }
+
+    private get pendingUploadCount(): number {
         return Array.from(this.pendingBlobs.values())
-            .filter((e) => e.status === PendingBlobStatus.OfflinePendingUpload).length > 0;
+            .filter((e) => e.status === PendingBlobStatus.OfflinePendingUpload ||
+                e.status === PendingBlobStatus.OnlinePendingUpload).length;
     }
 
     private get storageIds(): Set<string> {
-        const s = new Set(this.redirectTable.values());
-        assert(!s.delete(undefined) || this.runtime.attachState === AttachState.Detached && s.size === 0,
+        const ids = new Set<string | undefined>(this.redirectTable.values());
+
+        // If we are detached, we will not have storage IDs, only undefined
+        const havePendingBlobs = ids.delete(undefined);
+
+        // We should not have undefined entries in the table unless we are detached
+        assert(!havePendingBlobs || this.runtime.attachState === AttachState.Detached && ids.size === 0,
             "redirect table must not have an undefined value while attached");
-        return s as Set<string>;
+
+        return ids as Set<string>;
     }
 
     public async getBlob(blobId: string): Promise<ArrayBufferLike> {
@@ -246,7 +256,7 @@ export class BlobManager {
             pendingEntry?.status === PendingBlobStatus.OnlinePendingOp,
             "Blob must not have already transitioned to offline flow");
         pendingEntry.status = pendingEntry.status === PendingBlobStatus.OnlinePendingUpload ?
-            PendingBlobStatus.OfflinePendingUpload : PendingBlobStatus.OfflinePendingUpload;
+            PendingBlobStatus.OfflinePendingUpload : PendingBlobStatus.OfflinePendingOp;
 
         assert(this.runtime.connected === false, "Must not transition to offline when connected");
         // since we are offline, we will have a chance to add the storage ID when reSubmit() is called
@@ -461,7 +471,8 @@ export class BlobManager {
             builder.addBlob(
                 BlobManager.redirectTableBlobName,
                 // filter out identity entries
-                JSON.stringify(Array.from(this.redirectTable.entries()).filter(([k, v]) => k !== v)),
+                JSON.stringify(Array.from(this.redirectTable.entries())
+                    .filter(([localId, storageId]) => localId !== storageId)),
             );
         }
 
