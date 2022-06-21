@@ -340,7 +340,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             assert.equal(aliasResult1, "Success");
             assert.equal(aliasResult2, "Success");
-            assert.ok(await getRootDataStore(dataObject1, alias));
+            assert.ok(await getRootDataStore(dataObject1, alias1));
 
             const alias2 = "alias2";
             const [aliasResult3, aliasResult4] = await Promise.all([
