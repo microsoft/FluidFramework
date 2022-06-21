@@ -97,8 +97,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  * 'Conflict' - there is already a datastore bound to the provided alias. To acquire a handle to it,
  * use the `IContainerRuntime.getRootDataStore` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
- * 'Aliasing' - the datastore is in the process of aliasing, there should already be a promise for the
- * original aliasing call which needs to complete, so there is no action required for this API call.
+ * 'Aliasing' (deprecated) - this value is never returned.
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
  */
  export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
