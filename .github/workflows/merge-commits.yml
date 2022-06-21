@@ -60,8 +60,6 @@ jobs:
     needs: [ dequeue ]
     if: (needs.dequeue.result) == 'success'
     steps:
-      - run:
-          echo ${{needs.dequeue.outputs.LABEL}}
       - name: Git checkout
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
         uses: actions/checkout@v2
