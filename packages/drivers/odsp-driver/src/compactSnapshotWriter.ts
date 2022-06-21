@@ -6,7 +6,7 @@
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { snapshotMinReadVersion } from "./compactSnapshotParser";
-import { ISnapshotContents } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { TreeBuilderSerializer } from "./WriteBufferUtils";
 import { addBoolProperty, addNumberProperty, addStringProperty, NodeCore } from "./zipItDataRepresentationUtils";
@@ -131,8 +131,11 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): R
     // Create the root node.
     const rootNode = builder.addNode();
     assert(snapshotContents.sequenceNumber !== undefined, 0x21c /* "Seq number should be provided" */);
-    const ops = snapshotContents.ops;
-    const latestSequenceNumber = ops.length > 0 ? ops[ops.length - 1].sequenceNumber : snapshotContents.sequenceNumber;
+
+    const latestSequenceNumber = snapshotContents.latestSequenceNumber ??
+        snapshotContents.ops.length > 0 ?
+        snapshotContents.ops[snapshotContents.ops.length - 1].sequenceNumber : snapshotContents.sequenceNumber;
+
     writeSnapshotProps(rootNode, latestSequenceNumber);
 
     writeSnapshotSection(
@@ -145,7 +148,7 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): R
     writeBlobsSection(rootNode, snapshotContents.blobs);
 
     // Then write the ops node.
-    writeOpsSection(rootNode, ops);
+    writeOpsSection(rootNode, snapshotContents.ops);
 
     return builder.serialize();
 }
