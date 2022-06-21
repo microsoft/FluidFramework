@@ -67,11 +67,7 @@ class DataStore implements IDataStore {
             case AliasState.Aliasing: {
                 assert(this.aliasResult !== undefined, "There should be a cached promise of in-progress aliasing");
                 const pendingAliasResult = await this.aliasResult;
-                if (pendingAliasResult !== "Success") {
-                    return pendingAliasResult;
-                }
-
-                return this.alias === alias ? "Success" : "AlreadyAliased";
+                return this.alias === alias ? pendingAliasResult : "AlreadyAliased";
             }
 
             // If this datastore is already aliased, return true only if this
