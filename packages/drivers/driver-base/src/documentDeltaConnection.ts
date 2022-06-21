@@ -4,7 +4,7 @@
  */
 
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
