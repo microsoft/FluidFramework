@@ -36,7 +36,7 @@ export class DisposingDependee implements Dependee {
 	public constructor(public readonly computationName: string) {}
 
 	public registerDependent(dependent: Dependent): boolean {
-		assert(this.state !== State.Disposed, "registerDependent on disposed Dependee");
+		assert(this.state !== State.Disposed, 0x305 /* registerDependent on disposed Dependee */);
 		if (this.dependents.has(dependent)) {
 			return false;
 		}
@@ -54,7 +54,7 @@ export class DisposingDependee implements Dependee {
 	}
 
 	public invalidateDependents(): void {
-		assert(this.state !== State.Disposed, "invalidateDependents on disposed Dependee");
+		assert(this.state !== State.Disposed, 0x306 /* invalidateDependents on disposed Dependee */);
 		for (const dependent of this.dependents) {
 			dependent.markInvalid();
 		}
@@ -92,7 +92,7 @@ export class DisposingDependee implements Dependee {
 	public endInitialization(onDispose: (dependee: DisposingDependee) => void): void {
 		assert(
 			this.state === State.Initializing,
-			"endInitialization should be called exactly once",
+			0x307 /* endInitialization should be called exactly once */,
 		);
 		this.onDispose = onDispose;
 		this.state = State.Initialized;
@@ -104,7 +104,7 @@ export class DisposingDependee implements Dependee {
 	 */
 	private disposeIfEmpty(): void {
 		if (this.dependents.size === 0) {
-			assert(this.onDispose !== undefined, "onDispose should be set when disposing");
+			assert(this.onDispose !== undefined, 0x308 /* onDispose should be set when disposing */);
 			// Set the state to disposed before running the callback
 			// to detect cases where the callback adds a dependency (which is invalid).
 			this.state = State.Disposed;

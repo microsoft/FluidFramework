@@ -27,7 +27,8 @@ import {
     itExpects,
 } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { getGCStateFromSummary } from "./mockSummarizerClient";
+// eslint-disable-next-line import/no-internal-modules
+import { getGCStateFromSummary } from "./gc/gcTestSummaryUtils";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
