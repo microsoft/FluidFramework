@@ -77,7 +77,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         };
 
         let gitManager: IGitManager;
-        let dbObject: IDocument;
+        let document: IDocument;
 
         try {
             const tenant = await this.tenantManager.getTenant(tenantId, documentId);
@@ -85,7 +85,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
             // Lookup the last sequence number stored
             // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-            dbObject = await this.collection.findOne({ documentId, tenantId });
+            document = await this.collection.findOne({ documentId, tenantId });
             // Check if the document was deleted prior.
         } catch (error) {
             const errMsg = "Deli lambda creation failed";
@@ -94,20 +94,21 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             throw error;
         }
 
-        if (!dbObject || dbObject.scheduledDeletionTime) {
+        if (!document || document.scheduledDeletionTime) {
             // (Old, from tanviraumi:) Temporary guard against failure until we figure out what causing this to trigger.
             // Document sessions can be joined (via Alfred) after a document is functionally deleted.
             context.log?.error(
-                `Received attempt to connect to a deleted document.`,
+                `Received attempt to connect to a missing/deleted document.`,
                 { messageMetaData },
             );
             return new NoOpLambda(context);
         }
+        const sessionOrdererUrl = document.session.ordererUrl;
         if (this.serviceConfiguration.externalOrdererUrl
-            && dbObject.session.ordererUrl !== this.serviceConfiguration.externalOrdererUrl) {
+            && sessionOrdererUrl !== this.serviceConfiguration.externalOrdererUrl) {
             // Session for this document exists in another location.
             context.log?.error(
-                `Received attempt to connect to session existing in different location: ${dbObject.session.ordererUrl}`,
+                `Received attempt to connect to session existing in different location: ${sessionOrdererUrl}`,
                 { messageMetaData },
             );
             return new NoOpLambda(context);
@@ -118,11 +119,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         // Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary or the document
         // was created within a different tenant.
-        if (dbObject.deli === undefined || dbObject.deli === null) {
+        if (document.deli === undefined || document.deli === null) {
             context.log?.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
-            if (dbObject.deli === "") {
+            if (document.deli === "") {
                 context.log?.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
 
                 const lastCheckpointFromSummary =
@@ -145,7 +146,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                         ${JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {
-                lastCheckpoint = JSON.parse(dbObject.deli);
+                lastCheckpoint = JSON.parse(document.deli);
             }
         }
 

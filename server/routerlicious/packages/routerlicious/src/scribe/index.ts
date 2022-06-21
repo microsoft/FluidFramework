@@ -12,6 +12,7 @@ import {
     IDocument,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
+    IServiceConfiguration,
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
@@ -96,13 +97,19 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         kafkaMaxBatchSize,
         kafkaSslCACertFilePath);
 
+    const externalOrdererUrl = config.get("worker:serverUrl");
+    const serviceConfiguration: IServiceConfiguration = {
+        ...DefaultServiceConfiguration,
+        externalOrdererUrl,
+    };
+
     return new ScribeLambdaFactory(
         operationsDbManager,
         collection,
         scribeDeltas,
         producer,
         tenantManager,
-        DefaultServiceConfiguration,
+        serviceConfiguration,
         enableWholeSummaryUpload);
 }
 

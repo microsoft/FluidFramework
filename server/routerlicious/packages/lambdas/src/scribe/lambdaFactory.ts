@@ -89,6 +89,26 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 this.documentCollection.findOne({ documentId, tenantId }),
             ]);
 
+            if (!document || document.scheduledDeletionTime) {
+                // Document sessions can be joined (via Alfred) after a document is functionally deleted.
+                // If the document doesn't exist or is marked for deletion then we trivially accept every message.
+                context.log?.error(
+                    `Received attempt to connect to a missing/deleted document.`,
+                    { messageMetaData },
+                );
+                return new NoOpLambda(context);
+            }
+            const sessionOrdererUrl = document.session.ordererUrl;
+            if (this.serviceConfiguration.externalOrdererUrl
+                && sessionOrdererUrl !== this.serviceConfiguration.externalOrdererUrl) {
+                // Session for this document exists in another location.
+                context.log?.error(
+                    `Received attempt to connect to session existing in different location: ${sessionOrdererUrl}`,
+                    { messageMetaData },
+                );
+                return new NoOpLambda(context);
+            }
+
             // If the document doesn't exist or is marked for deletion then we trivially accept every message
             if (!document || document.scheduledDeletionTime) {
                 context.log?.info(`Creating NoOpLambda due to missing document`, { messageMetaData });
