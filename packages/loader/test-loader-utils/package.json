@@ -33,7 +33,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/driver-definitions": "^2.0.0",
     "@fluidframework/driver-utils": "^2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000"
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -47,7 +47,11 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.1.0",
-    "broken": {}
+    "version": "2.0.0",
+    "broken": {
+      "ClassDeclaration_MockDocumentDeltaConnection": {
+        "backCompat": false
+      }
+    }
   }
 }

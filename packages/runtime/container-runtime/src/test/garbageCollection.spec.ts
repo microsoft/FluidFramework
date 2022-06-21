@@ -49,7 +49,7 @@ describe("Garbage Collection Tests", () => {
     const inactiveTimeoutMs = 500;
     const testPkgPath = ["testPkg"];
     // The package data is tagged in the telemetry event.
-    const eventPkg = { value: `/${testPkgPath.join("/")}`, tag: TelemetryDataTag.CodeArtifact };
+    const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.CodeArtifact };
 
     const getNodeType = (nodePath: string) => {
         if (nodePath.split("/").length !== 2) {

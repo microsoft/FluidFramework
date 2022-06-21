@@ -15,7 +15,7 @@ import {
     numberCases,
 } from "@fluidframework/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-loader";
-import { ConfigTypes } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
@@ -35,7 +35,7 @@ export function applyOverrides<T>(options: OptionsMatrix<T>, optionsOverrides: P
                 if (Array.isArray(override)) {
                     realOptions[key] = override;
                 } else {
-                    throw new Error(`Override for ${key} is not array: ${JSON.stringify(optionsOverrides)}`);
+                    throw new LoggingError(`Override for ${key} is not array: ${JSON.stringify(optionsOverrides)}`);
                 }
             }
         }
@@ -58,7 +58,7 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
-    disableIsolatedChannels: booleanCases,
+    disableIsolatedChannels: [undefined],
     disableSummaries: [false],
     initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides: [undefined],
