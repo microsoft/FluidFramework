@@ -13,12 +13,10 @@ env:
 jobs:
   dequeue:
     runs-on: ubuntu-latest
-    if: ${{ github.repository_owner }} == 'microsoft'
+    if: github.repository_owner == 'microsoft'
     steps:
       - run: npm install @azure/storage-queue
-      - run: echo ${{ github.repository_owner }} echo ${{ github.repositoryUrl }}
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
-        if: ${{ github.repository_owner }} == 'microsoft'
         id: dequeue-message
         with:
           script: |
