@@ -26,7 +26,6 @@ describe("Pending State Manager Rollback", () => {
             close: () => closeCalled = true,
             connected: () => true,
             flush: () => {},
-            flushMode: () => FlushMode.Immediate,
             reSubmit: () => {},
             rollback: (type, content, metadata) => {
                 rollbackCalled = true;
@@ -35,7 +34,6 @@ describe("Pending State Manager Rollback", () => {
                     throw new Error();
                 }
             },
-            setFlushMode: () => {},
         }, FlushMode.Immediate, undefined);
     });
 

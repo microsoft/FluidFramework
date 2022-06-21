@@ -1018,7 +1018,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly defaultMaxConsecutiveReconnects = 15;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode;
+    private readonly _flushMode: FlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -1294,12 +1294,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 close: this.closeFn,
                 connected: () => this.connected,
                 flush: this.flush.bind(this),
-                flushMode: () => this.flushMode,
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
-                setFlushMode: (mode) => { this._flushMode = mode; },
             },
-            this._flushMode,
+            this.flushMode,
             pendingRuntimeState?.pending);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1872,15 +1870,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return context.realize();
     }
 
-    private setFlushMode(mode: FlushMode): void {
-        if (mode === this._flushMode) {
-            return;
-        }
-        this._flushMode = mode;
-        // Let the PendingStateManager know that FlushMode has been updated.
-        this.pendingStateManager.onFlushModeUpdated(mode);
-    }
-
     public flush(): void {
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
@@ -1912,28 +1901,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public orderSequentially(callback: () => void): void {
-        // If flush mode is already TurnBased we are either
-        // nested in another orderSequentially, or
-        // the app is flushing manually, in which
-        // case this invocation doesn't own
-        // flushing.
-        if (this.flushMode === FlushMode.TurnBased) {
-            this.trackOrderSequentiallyCalls(callback);
-            return;
-        }
-
-        const savedFlushMode = this.flushMode;
-        this.setFlushMode(FlushMode.TurnBased);
-
-        try {
-            this.trackOrderSequentiallyCalls(callback);
-            this.flush();
-        } finally {
-            this.setFlushMode(savedFlushMode);
-        }
-    }
-
-    private trackOrderSequentiallyCalls(callback: () => void): void {
         let checkpoint: { rollback: () => void; } | undefined;
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
             checkpoint = this.pendingStateManager.checkpoint();
@@ -1952,6 +1919,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
+        }
+
+        if (!this.currentlyBatching()) {
+            this.flush();
         }
     }
 
@@ -2089,6 +2060,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private canSendOps() {
         return this.connected && !this.deltaManager.readOnlyInfo.readonly;
+    }
+
+    private currentlyBatching() {
+        // TODO: potentially have property in pending state manager that knows it's batching
+        return this.flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls !== 0;
     }
 
     public getQuorum(): IQuorumClients {
@@ -2719,7 +2695,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in TurnBased flush mode we will trigger a flush at the next turn break
-            if (this.flushMode === FlushMode.TurnBased && !this.needsFlush) {
+            if (this.currentlyBatching() && !this.needsFlush) {
                 opMetadataInternal = {
                     ...opMetadata,
                     batch: true,
@@ -2742,7 +2718,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 content,
                 serializedContent,
                 maxOpSize,
-                this._flushMode === FlushMode.TurnBased,
+                this.currentlyBatching(),
                 opMetadataInternal);
         }
 
@@ -2832,7 +2808,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // System message should not be sent in the middle of the batch.
         // That said, we can preserve existing behavior by not flushing existing buffer.
         // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
-        const middleOfBatch = this.flushMode === FlushMode.TurnBased && this.needsFlush;
+        const middleOfBatch = this.currentlyBatching() && this.needsFlush;
         if (middleOfBatch) {
             this.mc.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
         }

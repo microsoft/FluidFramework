@@ -30,15 +30,6 @@ export interface IPendingMessage {
 }
 
 /**
- * This represents a FlushMode update and is added to the pending queue when `setFlushMode` is called on the
- * ContainerRuntime and the FlushMode changes.
- */
-export interface IPendingFlushMode {
-    type: "flushMode";
-    flushMode: FlushMode;
-}
-
-/**
  * This represents an explicit flush call and is added to the pending queue when flush is called on the ContainerRuntime
  * to flush pending messages.
  */
@@ -46,7 +37,7 @@ export interface IPendingFlush {
     type: "flush";
 }
 
-export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
+export type IPendingState = IPendingMessage | IPendingFlush;
 
 export interface IPendingLocalState {
     /**
@@ -58,8 +49,6 @@ export interface IPendingLocalState {
 export interface IRuntimeStateHandler{
     connected(): boolean;
     clientId(): string | undefined;
-    flushMode(): FlushMode;
-    setFlushMode(mode: FlushMode): void;
     close(error?: ICriticalContainerError): void;
     applyStashedOp: (type: ContainerMessageType, content: ISequencedDocumentMessage) => Promise<unknown>;
     flush(): void;
@@ -101,13 +90,6 @@ export class PendingStateManager implements IDisposable {
     // the correct batch metadata.
     private pendingBatchBeginMessage: ISequencedDocumentMessage | undefined;
 
-    /**
-     * This tracks the flush mode for the next message in the pending state queue. When replaying messages, we need to
-     * first set the flush mode to this value and then send ops. It is important to do this info because the flush
-     * mode could have been updated.
-     */
-    private flushModeForNextMessage: FlushMode;
-
     private clientId: string | undefined;
 
     /**
@@ -132,13 +114,10 @@ export class PendingStateManager implements IDisposable {
 
     constructor(
         private readonly stateHandler: IRuntimeStateHandler,
-        initialFlushMode: FlushMode,
+        private readonly flushMode: FlushMode,
         initialLocalState: IPendingLocalState | undefined,
     ) {
         this.initialStates = new Deque<IPendingState>(initialLocalState?.pendingStates ?? []);
-
-        this.flushModeForNextMessage = initialFlushMode;
-        this.onFlushModeUpdated(initialFlushMode);
     }
 
     public get disposed() { return this.disposeOnce.evaluated; }
@@ -176,20 +155,12 @@ export class PendingStateManager implements IDisposable {
     }
 
     /**
-     * Called when the FlushMode is updated. Adds the FlushMode to the pending state queue.
-     * @param flushMode - The flushMode that was updated.
-     */
-    public onFlushModeUpdated(flushMode: FlushMode) {
-        this.pendingStates.push({ type: "flushMode", flushMode });
-    }
-
-    /**
      * Called when flush() is called on the ContainerRuntime to manually flush messages.
      */
     public onFlush() {
         // If the FlushMode is Immediate, we don't need to track an explicit flush call because every message is
         // automatically flushed. So, flush is a no-op.
-        if (this.stateHandler.flushMode() === FlushMode.Immediate) {
+        if (this.flushMode === FlushMode.Immediate) {
             return;
         }
 
@@ -275,8 +246,6 @@ export class PendingStateManager implements IDisposable {
      * @param message - The message that is being processed.
      */
     private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
-        // Tracks the last FlushMode that was set before this message was sent.
-        let pendingFlushMode: FlushMode | undefined;
         // Tracks whether a flush was called before this message was sent.
         let pendingFlush: boolean = false;
 
@@ -291,9 +260,6 @@ export class PendingStateManager implements IDisposable {
          */
         let nextPendingState = this.peekNextPendingState();
         while (nextPendingState.type !== "message") {
-            if (nextPendingState.type === "flushMode") {
-                pendingFlushMode = nextPendingState.flushMode;
-            }
             if (nextPendingState.type === "flush") {
                 pendingFlush = true;
             }
@@ -301,13 +267,9 @@ export class PendingStateManager implements IDisposable {
             nextPendingState = this.peekNextPendingState();
         }
 
-        if (pendingFlushMode !== undefined) {
-            this.flushModeForNextMessage = pendingFlushMode;
-        }
-
         // If the FlushMode was set to Immediate before this message was sent, this message won't be a batch message
         // because in Immediate mode, every message is flushed individually.
-        if (pendingFlushMode === FlushMode.Immediate) {
+        if (pendingFlushMode === FlushMode.Immediate) { // TODO
             return;
         }
 
@@ -316,7 +278,7 @@ export class PendingStateManager implements IDisposable {
          * was an explicit flush call. Note that a flush call is tracked only in TurnBased mode and it indicates the end
          * of one batch and beginning of another.
          */
-        if (pendingFlushMode === FlushMode.TurnBased || pendingFlush) {
+        if (pendingFlushMode === FlushMode.TurnBased || pendingFlush) { // TODO
             // We should not already be processing a batch and there should be no pending batch begin message.
             assert(!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
                 0x16b /* "The pending batch state indicates we are already processing a batch" */);
@@ -340,16 +302,6 @@ export class PendingStateManager implements IDisposable {
         if (nextPendingState.type === "message") {
             return;
         }
-
-        /**
-         * We are in the middle of processing a batch. The batch ends when we see an explicit flush. We should never see
-         * a FlushMode before flush. This is true because we track batches only when FlushMode is TurnBased and in this
-         * mode, a batch ends either by calling flush or by changing the mode to Immediate which also triggers a flush.
-         */
-        assert(
-            nextPendingState.type !== "flushMode",
-            0x2bd /* "We should not see a pending FlushMode until we see a flush when processing a batch" */,
-        );
 
         // There should be a pending batch begin message.
         assert(this.pendingBatchBeginMessage !== undefined, 0x16d /* "There is no pending batch begin message" */);
@@ -455,13 +407,6 @@ export class PendingStateManager implements IDisposable {
         // Reset the pending message count because all these messages will be removed from the queue.
         this.pendingMessagesCount = 0;
 
-        // Save the current FlushMode so that we can revert it back after replaying the states.
-        const savedFlushMode = this.stateHandler.flushMode();
-
-        // Set the flush mode for the next message. This step is important because the flush mode may have been changed
-        // after the next pending message was sent.
-        this.stateHandler.setFlushMode(this.flushModeForNextMessage);
-
         // Process exactly `pendingStatesCount` items in the queue as it represents the number of states that were
         // pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
         // which must not be replayed.
@@ -476,9 +421,6 @@ export class PendingStateManager implements IDisposable {
                         pendingState.localOpMetadata,
                         pendingState.opMetadata);
                     break;
-                case "flushMode":
-                    this.stateHandler.setFlushMode(pendingState.flushMode);
-                    break;
                 case "flush":
                     this.stateHandler.flush();
                     break;
@@ -487,8 +429,5 @@ export class PendingStateManager implements IDisposable {
             }
             pendingStatesCount--;
         }
-
-        // Revert the FlushMode.
-        this.stateHandler.setFlushMode(savedFlushMode);
     }
 }
