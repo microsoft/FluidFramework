@@ -2,23 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable import/no-internal-modules */
 
 import { strict as assert } from "assert";
 
-// TODO: what is the pattern for testing packages which have folders inside src?
+// Allow importing from this specific file which is being tested:
+/* eslint-disable-next-line import/no-internal-modules */
+import { StoredSchemaRepository } from "../../schema/StoredSchemaRepository";
 
 import {
+	treeSchema, fieldSchema, emptyField, rootFieldKey,
+	Adapters, adaptRepo, checkCompatibility, Compatibility, MissingFieldAdapter, TreeAdapter,
+	isNeverField, isNeverTree,
 	FieldSchema,
 	GlobalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
-} from "../schema/Schema";
-import { codePoint, string } from "../schema/examples/SchemaExamples";
-import { StoredSchemaRepository } from "../schema/StoredSchemaRepository";
-import { treeSchema, fieldSchema, emptyField, rootFieldKey } from "../schema/Builders";
-import {
-	Adapters, adaptRepo, checkCompatibility, Compatibility, MissingFieldAdapter, TreeAdapter,
-} from "../schema/View";
-import { isNeverField, isNeverTree } from "../schema/Comparison";
+} from "../../schema";
+
+// Allow importing specific example files:
+/* eslint-disable-next-line import/no-internal-modules */
+import { codePoint, string } from "./examples/SchemaExamples";
 
 class ViewSchemaRepository extends StoredSchemaRepository {
 	public clone(): ViewSchemaRepository {
