@@ -61,7 +61,7 @@
     "@fluidframework/aqueduct": "^1.0.1",
     "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@1.0.0-73930",
     "@fluidframework/azure-local-service": "^0.1.38773",
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/build-tools": "^0.2.71273",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-client-utils": "^1.0.1",

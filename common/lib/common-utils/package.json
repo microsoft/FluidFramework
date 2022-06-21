@@ -84,7 +84,7 @@
     "sha.js": "^2.4.11"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/build-tools": "^0.2.71273",
     "@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@^0.32.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",

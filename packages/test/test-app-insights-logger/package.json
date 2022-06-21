@@ -56,7 +56,7 @@
     "applicationinsights": "^2.1.9"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
