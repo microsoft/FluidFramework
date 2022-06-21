@@ -54,7 +54,6 @@ enum AliasState {
 class DataStore implements IDataStore {
     private aliasState: AliasState = AliasState.None;
     private alias: string | undefined;
-    private proposedAlias: string | undefined;
     private aliasResult: Promise<AliasResult> | undefined;
 
     async trySetAlias(alias: string): Promise<AliasResult> {
@@ -65,13 +64,15 @@ class DataStore implements IDataStore {
         switch (this.aliasState) {
             // If we're already aliasing, check if it's for the same value and return
             // the stored promise, otherwise return 'AlreadyAliased'
-            case AliasState.Aliasing:
-                if (alias !== this.proposedAlias) {
-                    return "AlreadyAliased";
+            case AliasState.Aliasing: {
+                assert(this.aliasResult !== undefined, "There should be a cached promise of in-progress aliasing");
+                const pendingAliasResult = await this.aliasResult;
+                if (pendingAliasResult !== "Success") {
+                    return pendingAliasResult;
                 }
 
-                assert(this.aliasResult !== undefined, "There should be a cached promise of in-progress aliasing");
-                return this.aliasResult;
+                return this.alias === alias ? "Success" : "AlreadyAliased";
+            }
 
             // If this datastore is already aliased, return true only if this
             // is a repeated call for the same alias
@@ -84,7 +85,6 @@ class DataStore implements IDataStore {
             default: unreachableCase(this.aliasState);
         }
 
-        this.proposedAlias = alias;
         this.aliasState = AliasState.Aliasing;
         this.aliasResult = this.trySetAliasInternal(alias);
         return this.aliasResult;
@@ -136,7 +136,6 @@ class DataStore implements IDataStore {
                 },
             }, error);
             this.aliasState = AliasState.None;
-            this.proposedAlias = undefined;
             return false;
         });
 
