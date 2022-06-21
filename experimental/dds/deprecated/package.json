@@ -1,12 +1,12 @@
 {
-  "name": "@fluidframework/sequence",
+  "name": "@fluid-experimental/deprecated",
   "version": "1.1.0",
-  "description": "Distributed sequence",
+  "description": "Deprecated DDSs",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/dds/sequence"
+    "directory": "experimental/dds/deprecated"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
@@ -72,6 +72,7 @@
     "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/runtime-definitions": "^1.1.0",
     "@fluidframework/runtime-utils": "^1.1.0",
+    "@fluidframework/sequence": "^1.1.0",
     "@fluidframework/shared-object-base": "^1.1.0",
     "@fluidframework/telemetry-utils": "^1.1.0",
     "uuid": "^8.3.1"
@@ -109,17 +110,6 @@
     "version": "1.1.0",
     "broken": {
       "ClassDeclaration_IntervalCollection": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SequenceInterval": {
-        "forwardCompat": false
-      },
-      "RemovedClassDeclaration_SharedIntervalCollection": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedClassDeclaration_SharedIntervalCollectionFactory": {
-        "backCompat": false,
         "forwardCompat": false
       }
     }

@@ -23,8 +23,8 @@ import {
     Interval,
     IntervalCollection,
     IntervalCollectionValueType,
-    ISerializableInterval,
-} from "./intervalCollection";
+    ISharedIntervalCollection,
+} from "@fluidframework/sequence";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
@@ -73,11 +73,6 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 
         return map;
     }
-}
-
-export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
-    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
-    getIntervalCollection(label: string): IntervalCollection<TInterval>;
 }
 
 /**

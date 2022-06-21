@@ -714,50 +714,26 @@ use_old_ClassDeclaration_SequenceMaintenanceEvent(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedIntervalCollection": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedIntervalCollection": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedIntervalCollection():
-    TypeOnly<old.SharedIntervalCollection>;
-declare function use_current_ClassDeclaration_SharedIntervalCollection(
-    use: TypeOnly<current.SharedIntervalCollection>);
-use_current_ClassDeclaration_SharedIntervalCollection(
-    get_old_ClassDeclaration_SharedIntervalCollection());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedIntervalCollection": {"backCompat": false}
+* "RemovedClassDeclaration_SharedIntervalCollection": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedIntervalCollection():
-    TypeOnly<current.SharedIntervalCollection>;
-declare function use_old_ClassDeclaration_SharedIntervalCollection(
-    use: TypeOnly<old.SharedIntervalCollection>);
-use_old_ClassDeclaration_SharedIntervalCollection(
-    get_current_ClassDeclaration_SharedIntervalCollection());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedIntervalCollectionFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedIntervalCollectionFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedIntervalCollectionFactory():
-    TypeOnly<old.SharedIntervalCollectionFactory>;
-declare function use_current_ClassDeclaration_SharedIntervalCollectionFactory(
-    use: TypeOnly<current.SharedIntervalCollectionFactory>);
-use_current_ClassDeclaration_SharedIntervalCollectionFactory(
-    get_old_ClassDeclaration_SharedIntervalCollectionFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedIntervalCollectionFactory": {"backCompat": false}
+* "RemovedClassDeclaration_SharedIntervalCollectionFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedIntervalCollectionFactory():
-    TypeOnly<current.SharedIntervalCollectionFactory>;
-declare function use_old_ClassDeclaration_SharedIntervalCollectionFactory(
-    use: TypeOnly<old.SharedIntervalCollectionFactory>);
-use_old_ClassDeclaration_SharedIntervalCollectionFactory(
-    get_current_ClassDeclaration_SharedIntervalCollectionFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
