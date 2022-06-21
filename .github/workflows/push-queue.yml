@@ -3,17 +3,14 @@ on:
   push:
     branches:
       - 'main'
+
 jobs:
   queue-pr:
     runs-on: ubuntu-latest
-    if: ${{ github.event.label.name != 'do-not-merge-in-next' }} && ${{ github.repository_owner }} == 'microsoft'
+    if: github.event.label.name != 'do-not-merge-in-next' && github.repository_owner
+      == 'microsoft'
     steps:
-      - run:
-          echo ${{ github.pull_request }}
-          echo ${{ github.pull_request.number }}
-          echo ${{ github.event.pull_request.number }}
-          echo ${{ github.event.number }}
-          echo ${{ github.event.label }}
+      - run: echo ${{ github.event.issue.number }} echo ${{ github.event.label.name }}
       - run: npm install @azure/storage-queue
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
@@ -35,8 +32,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ queue-pr ]
     steps:
-      - name: Post comment on pr
-        uses: marocchino/sticky-pull-request-comment@39c5b5dc7717447d0cba270cd115037d32d28443 # pin@v2
+      - uses: jwalton/gh-find-current-pr@e12d66bc9ecc4fdcde07b0f70a3cb68ce7e4d807 # pin@v1
+        id: findPr
         with:
+          state: all
+      - run: echo "Your PR is ${PR}"
+        if: success() && steps.findPr.outputs.number
+        env:
+          PR: ${{ steps.findPr.outputs.pr }}
+      - uses: marocchino/sticky-pull-request-comment@39c5b5dc7717447d0cba270cd115037d32d28443 # pin@v2
+        with:
+          number: ${{ steps.findPr.outputs.pr }}
           message: |
             This commit is queued for merging with the `test_next` branch! Please ignore this PR for now. Contact @microsoft/fluid-cr-infra for help.
