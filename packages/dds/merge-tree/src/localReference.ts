@@ -194,6 +194,33 @@ export class LocalReferenceCollection {
         return iterator;
     }
 
+        /**
+     *
+     * @internal - this method should only be called by mergeTree
+     */
+    public clear() {
+        this.refCount = 0;
+        this.hierRefCount = 0;
+        const detachSegments = (refs: List<LocalReference> | undefined) => {
+            if (refs) {
+                for (const r of refs) {
+                    if (r.getSegment() === this.segment) {
+                        r.link(undefined, r.getOffset(), undefined);
+                    }
+                }
+            }
+        };
+        for (let i = 0; i < this.refsByOffset.length; i++) {
+            const refsAtOffset = this.refsByOffset[i];
+            if (refsAtOffset) {
+                detachSegments(refsAtOffset.before);
+                detachSegments(refsAtOffset.at);
+                detachSegments(refsAtOffset.before);
+                this.refsByOffset[i] = undefined;
+            }
+        }
+    }
+
     /**
      *
      * @internal - this method should only be called by mergeTree
