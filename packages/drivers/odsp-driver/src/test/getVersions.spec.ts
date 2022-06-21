@@ -17,9 +17,9 @@ import {
     persistedCacheValueVersion,
 } from "../contracts";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
-import { INewFileInfo, ISnapshotContents } from "../odspUtils";
+import { INewFileInfo } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId } from "../odspPublicUtils";
+import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService, defaultSummarizerCacheExpiryTimeout } from "../odspDocumentStorageManager";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
@@ -57,7 +57,7 @@ describe("Tests for snapshot fetch", () => {
     const resolver = new OdspDriverUrlResolver();
     const nonPersistentCache = new NonPersistentCache();
     const logger = new TelemetryNullLogger();
-    const odspUrl = createOdspUrl({ ... newFileParams, itemId, dataStorePath: "/" });
+    const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
     const odspSnapshot: IOdspSnapshot = {
         id: "id",
@@ -77,18 +77,22 @@ describe("Tests for snapshot fetch", () => {
         blobs: new Map(),
         ops: [],
         sequenceNumber: 0,
+        latestSequenceNumber: 0,
     };
 
-    const value: IVersionedValueWithEpoch = { value: { ...content, cacheEntryTime: Date.now() },
+    const value: IVersionedValueWithEpoch = {
+        value: { ...content, cacheEntryTime: Date.now() },
         fluidEpoch: "epoch1",
-        version: persistedCacheValueVersion };
+        version: persistedCacheValueVersion,
+    };
 
     // Set the cacheEntryTime to anything greater than the current maxCacheAge
     function valueWithExpiredCache(cacheExpiryTimeoutMs: number): IVersionedValueWithEpoch {
         const versionedValue: IVersionedValueWithEpoch = {
-             value: { ...content, cacheEntryTime: Date.now() - cacheExpiryTimeoutMs - 1000 },
-        fluidEpoch: "epoch1",
-        version: persistedCacheValueVersion };
+            value: { ...content, cacheEntryTime: Date.now() - cacheExpiryTimeoutMs - 1000 },
+            fluidEpoch: "epoch1",
+            version: persistedCacheValueVersion,
+        };
         return versionedValue;
     }
     const expectedVersion = [{ id: "id", treeId: undefined! }];
@@ -120,11 +124,11 @@ describe("Tests for snapshot fetch", () => {
                 GetHostStoragePolicyInternal(),
                 epochTracker,
                 async () => { return {}; },
-                );
+            );
         });
 
         afterEach(async () => {
-            await epochTracker.removeEntries().catch(() => {});
+            await epochTracker.removeEntries().catch(() => { });
         });
 
         it("cache fetch throws and network fetch succeeds", async () => {
@@ -149,7 +153,8 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl } };
+                file: { docId: hashedDocumentId, resolvedUrl },
+            };
             await localCache.put(cacheEntry, value);
 
             const version = await mockFetchSingle(
@@ -178,7 +183,8 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl } };
+                file: { docId: hashedDocumentId, resolvedUrl },
+            };
             await localCache.put(cacheEntry, value);
 
             const version = await mockFetchSingle(
@@ -203,7 +209,8 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl } };
+                file: { docId: hashedDocumentId, resolvedUrl },
+            };
             await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
 
             const version = await mockFetchSingle(
@@ -221,7 +228,8 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl } };
+                file: { docId: hashedDocumentId, resolvedUrl },
+            };
             await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
 
             await assert.rejects(async () => {
@@ -256,18 +264,19 @@ describe("Tests for snapshot fetch", () => {
                 GetHostStoragePolicyInternal(true /* isSummarizer */),
                 epochTracker,
                 async () => { return {}; },
-                );
+            );
         });
 
         afterEach(async () => {
-            await epochTracker.removeEntries().catch(() => {});
+            await epochTracker.removeEntries().catch(() => { });
         });
 
         it("cache expires and network fetch succeeds", async () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl } };
+                file: { docId: hashedDocumentId, resolvedUrl },
+            };
             await localCache.put(cacheEntry, valueWithExpiredCache(defaultSummarizerCacheExpiryTimeout));
 
             const version = await mockFetchSingle(
@@ -285,7 +294,8 @@ describe("Tests for snapshot fetch", () => {
             const cacheEntry: ICacheEntry = {
                 key: "",
                 type: "snapshot",
-                file: { docId: hashedDocumentId, resolvedUrl } };
+                file: { docId: hashedDocumentId, resolvedUrl },
+            };
             await localCache.put(cacheEntry, valueWithExpiredCache(defaultSummarizerCacheExpiryTimeout - 5000));
 
             assert.notEqual(cacheEntry, undefined, "Cache should have been restored");

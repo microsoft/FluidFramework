@@ -817,10 +817,6 @@ export class GarbageCollector implements IGarbageCollector {
         result: RefreshSummaryResult,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<void> {
-        // After a summary is successfully submitted and ack'd by this client, the GC state should have been reset in
-        // the summary and doesn't need to be reset anymore.
-        this.initialStateNeedsReset = false;
-
         if (!this.shouldRunGC || !result.latestSummaryUpdated) {
             return;
         }
@@ -829,6 +825,7 @@ export class GarbageCollector implements IGarbageCollector {
         // Basically, it was written in the current GC version.
         if (result.wasSummaryTracked) {
             this.latestSummaryGCVersion = this.currentGCVersion;
+            this.initialStateNeedsReset = false;
             if (this.trackGCState) {
                 this.latestSerializedSummaryState = this.pendingSerializedSummaryState;
                 this.pendingSerializedSummaryState = undefined;
@@ -1235,7 +1232,7 @@ export class GarbageCollector implements IGarbageCollector {
             if (pkg !== undefined) {
                 this.mc.logger.sendErrorEvent({
                     ...event,
-                    pkg: { value: `/${pkg.join("/")}`, tag: TelemetryDataTag.PackageData },
+                    pkg: { value: pkg.join("/"), tag: TelemetryDataTag.PackageData },
                 });
             } else {
                 this.pendingEventsQueue.push(event);
