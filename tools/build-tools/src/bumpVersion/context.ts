@@ -10,7 +10,7 @@ import { commonOptions } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getPackageManifest } from "../common/fluidUtils";
 import { FluidRepo, IPackageManifest } from "../common/fluidRepo";
-import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo } from "./gitRepo";
@@ -83,11 +83,12 @@ export class Context {
             depVersions.add(firstClientPackage, firstClientPackage.version);
         };
 
-        if (releaseName === MonoRepoKind[MonoRepoKind.Client]) {
-            processMonoRepo(this.repo.clientMonoRepo);
-        } else if (releaseName === MonoRepoKind[MonoRepoKind.Server]) {
-            assert(this.repo.serverMonoRepo, "Attempted to collect server info on a Fluid repo with no server directory");
-            processMonoRepo(this.repo.serverMonoRepo!);
+        if (isMonoRepoKind(releaseName)) {
+            const repoKind = MonoRepoKind[releaseName];
+            if (repoKind === MonoRepoKind.Server) {
+                assert(this.repo.serverMonoRepo, "Attempted to collect server info on a Fluid repo with no server directory");
+            }
+            processMonoRepo(this.repo.monoRepos.get(repoKind)!);
         } else {
             const pkg = this.fullPackageMap.get(releaseName);
             if (!pkg) {

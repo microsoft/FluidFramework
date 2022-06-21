@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { MonoRepoKind } from "../common/monoRepo";
+import { isMonoRepoKind, MonoRepoKind, supportedMonoRepoValues } from "../common/monoRepo";
 import { Context } from "./context";
 
 /**
@@ -20,7 +20,7 @@ import { Context } from "./context";
  * @param context the repo context
  */
 export async function writeReleaseVersions(context: Context) {
-    const depVersions = await context.collectVersionInfo(MonoRepoKind[MonoRepoKind.Client]);
+    const depVersions = await context.collectVersionInfo(MonoRepoKind.Client);
 
     const packageVersions: { [packageName: string]: string } = {};
     for (const [name] of depVersions.repoVersions) {
@@ -32,13 +32,13 @@ export async function writeReleaseVersions(context: Context) {
 
     // Replace release groups (e.g. "Client" and "Server") with their constituent packages
     for (const pkg of context.repo.packages.packages) {
-        console.log(`Package ${pkg}`);
-        for (const repo of Object.values(MonoRepoKind)) {
-            if (typeof repo === "string") {
-                console.log(`\tChecking ${repo}`);
-                packageVersions[pkg.name] = packageVersions[repo];
-            }
+        if (isMonoRepoKind(pkg.group)) {
+            packageVersions[pkg.name] = packageVersions[pkg.group];
         }
+    }
+
+    for (const repo of supportedMonoRepoValues()) {
+        delete packageVersions[repo];
     }
 
     // write out to versions.json in the current folder

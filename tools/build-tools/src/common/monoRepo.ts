@@ -8,11 +8,21 @@ import * as path from "path";
 import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync } from "./utils";
 
 export enum MonoRepoKind {
-    Client,
-    Server,
-    Azure,
+    Client = "Client",
+    Server = "Server",
+    Azure = "Azure",
 }
 
+export function isMonoRepoKind(string: unknown): string is MonoRepoKind {
+    return typeof string === "string" && string in MonoRepoKind;
+}
+
+
+export function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
+    yield MonoRepoKind.Client;
+    yield MonoRepoKind.Server;
+    yield MonoRepoKind.Azure;
+}
 export class MonoRepo {
     public readonly packages: Package[] = [];
     public readonly version: string;
