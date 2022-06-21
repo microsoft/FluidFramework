@@ -98,8 +98,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 );
                 return new NoOpLambda(context);
             }
-            const sessionOrdererUrl = document.session.ordererUrl;
-            if (this.serviceConfiguration.externalOrdererUrl
+            const sessionOrdererUrl = document.session?.ordererUrl;
+            if (this.serviceConfiguration.externalOrdererUrl && document.session
                 && sessionOrdererUrl !== this.serviceConfiguration.externalOrdererUrl) {
                 // Session for this document exists in another location.
                 context.log?.error(
