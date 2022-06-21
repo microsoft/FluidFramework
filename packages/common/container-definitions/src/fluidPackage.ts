@@ -86,7 +86,9 @@ export interface IFluidCodeDetails {
 
     /**
      * Configuration details. This includes links to the package manager and base CDNs.
-     * TODO: what does it mean for this to be undefined?
+     *
+     * @remarks This is strictly consumer-defined data.
+     * Its contents and semantics (including whether or not this data is present) are completely up to the consumer.
      */
     readonly config?: IFluidCodeDetailsConfig;
 }
