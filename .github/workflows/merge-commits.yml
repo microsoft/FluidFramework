@@ -66,7 +66,6 @@ jobs:
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.WORKFLOW_TOKEN }}
           fetch-depth: '0'
       - name: Create branch
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
@@ -91,7 +90,6 @@ jobs:
       - name: Create PR using octokit
         uses: actions/github-script@v6
         with:
-          token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
             const { Octokit } = require("@octokit/core");
             const token = `${{ secrets.GITHUB_TOKEN }}`;
