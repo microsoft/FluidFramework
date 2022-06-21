@@ -653,7 +653,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
     // (undocumented)
-    findTile(startPos: number, tileLabel: string, preceding?: boolean): {
+    findTile(startPos: number | undefined, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
         pos: number;
     };

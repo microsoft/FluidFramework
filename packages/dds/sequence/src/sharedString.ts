@@ -216,7 +216,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         }
     }
 
-    public findTile(startPos: number, tileLabel: string, preceding = true): {
+    public findTile(startPos: number | undefined, tileLabel: string, preceding = true): {
         tile: ReferencePosition;
         pos: number;
     } {

@@ -570,7 +570,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         this.conflictResolver = conflictResolver;
         this.endConflictResolver =
             (key: TInterval, currentKey: TInterval) => {
-                const ival = this.conflictResolver?.(key, currentKey);
+                const ival = conflictResolver(key, currentKey);
                 return {
                     data: ival,
                     key: ival,
@@ -743,9 +743,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
         const id = interval.getIntervalId();
 
-        if (id) {
-            this.intervalIdMap.delete(id);
-        }
+        assert(id !== undefined, "expected id to exist on interval");
+
+        this.intervalIdMap.delete(id);
     }
 
     public removeExistingInterval(interval: TInterval) {
@@ -1383,7 +1383,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
         // Trigger the async prepare work across all values in the collection
         this.localCollection.map((interval) => {
-            this.onDeserialize?.(interval);
+            onDeserialize(interval);
         });
     }
 

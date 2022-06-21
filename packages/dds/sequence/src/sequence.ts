@@ -705,22 +705,20 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 // it is important this series remains synchronous
                 // first we stop deferring incoming ops, and apply then all
                 this.deferIncomingOps = false;
-                while (this.loadedDeferredIncomingOps.length > 0) {
-                    const message = this.loadedDeferredIncomingOps.shift();
-
-                    if (message) {
-                        this.processCore(message, false, undefined);
-                    }
+                for (const message of this.loadedDeferredIncomingOps) {
+                    this.processCore(message, false, undefined);
                 }
+                this.loadedDeferredIncomingOps.length = 0;
+
                 // then resolve the loaded promise
                 // and resubmit all the outstanding ops, as the snapshot
                 // is fully loaded, and all outstanding ops are applied
                 this.loadedDeferred.resolve();
 
-                while (this.loadedDeferredOutgoingOps.length > 0) {
-                    const opData = this.loadedDeferredOutgoingOps.shift();
-                    this.reSubmitCore(opData?.[0], opData?.[1]);
+                for (const [messageContent, opMetadata] of this.loadedDeferredOutgoingOps) {
+                    this.reSubmitCore(messageContent, opMetadata);
                 }
+                this.loadedDeferredOutgoingOps.length = 0;
             }
         }
     }
