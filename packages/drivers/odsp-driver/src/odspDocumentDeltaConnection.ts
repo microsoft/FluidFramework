@@ -460,7 +460,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             };
         }
 
-        this.socketReference!.once("server_disconnect", this.serverDisconnectHandler);
+        this.socketReference!.on("server_disconnect", this.serverDisconnectHandler);
 
         this.socket.on("get_ops_response", (result: IGetOpsResponse) => {
             const messages = result.messages;
@@ -585,9 +585,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
-        this.socketReference = undefined;
 
-        this.socket.off("server_disconnect", this.serverDisconnectHandler);
+        this.socketReference?.off("server_disconnect", this.serverDisconnectHandler);
+        this.socketReference = undefined;
 
         if (!socketProtocolError && this.hasDetails) {
             // tell the server we are disconnecting this client from the document
