@@ -84,6 +84,7 @@ It has been removed in this release--consumers should assume any raised delta ev
 - [Remove `noopTimeFrequency` and `noopCountFrequency` from ILoaderOptions](#remove-nooptimefrequency-and-noopcountfrequency-from-iloaderoptions)
 - [proxyLoaderFactories members removed from ILoaderProps and ILoaderServices](#proxyloaderfactories-members-to-be-removed-from-iloaderprops-and-iloaderservices)
 - [IContainer.connectionState yields finer-grained ConnectionState values](#icontainerconnectionstate-yields-finer-grained-connectionstate-values)
+- [Remove ICodeLoader from container-definitions](#Remove-ICodeLoader-from-container-definitions)
 
 ### Changed AzureConnectionConfig API
 - Added a `type` field that's used to differentiate between remote and local connections.
@@ -184,6 +185,10 @@ should be updated depending on how you want to treat this new `EstablishingConne
 Additionally, please note that the `Connecting` state is being renamed to `CatchingUp`.
 `ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
 `ConnectionState.Connecting` will be removed in the following major release.
+
+### Remove ICodeLoader from container-definitions
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated a while ago and is now removed. Use `ICodeDetailsLoader` by importing it from `@fluidframework/container-loader`.
+Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
 
 # 0.59
 
