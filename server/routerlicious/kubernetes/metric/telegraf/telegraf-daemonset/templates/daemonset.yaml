@@ -8,6 +8,8 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
 spec:
+  selector:
+    app: {{ template "fullname" . }}
   template:
     metadata:
       labels:

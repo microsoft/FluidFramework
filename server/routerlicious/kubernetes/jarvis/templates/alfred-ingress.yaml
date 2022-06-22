@@ -26,6 +26,9 @@ spec:
     http:
       paths:
       - path: /
+        pathType: ImplementationSpecific
         backend:
-          serviceName: {{ template "jarvis.fullname" . }}
-          servicePort: 80
+          service:
+            name: {{ template "jarvis.fullname" . }}
+            port:
+              number: 80

@@ -10,6 +10,10 @@ metadata:
     heritage: "{{ .Release.Service }}"
 spec:
   replicas: {{ .Values.replicas }}
+  selector:
+    app: {{ template "metrics.fullname" . }}
+    component: "{{ .Values.name }}"
+    release: {{ .Release.Name }}
   template:
     metadata:
       annotations:

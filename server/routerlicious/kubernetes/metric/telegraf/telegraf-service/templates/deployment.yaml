@@ -9,6 +9,8 @@ metadata:
     release: "{{ .Release.Name }}"
 spec:
   replicas: 1
+  selector:
+    app: {{ template "fullname" . }}
   template:
     metadata:
       labels:

@@ -8,6 +8,10 @@ metadata:
 spec:
   updateStrategy:
     type: RollingUpdate
+  selector:
+    app: fluentd
+    version: v1
+    kubernetes.io/cluster-service: "true"
   template:
     metadata:
       labels:

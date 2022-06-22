@@ -23,6 +23,9 @@ spec:
    http:
      paths:
      - path: /
+       pathType: ImplementationSpecific
        backend:
-         serviceName: {{ template "historian.fullname" . }}
-         servicePort: 80
+         service:
+           name: {{ template "historian.fullname" . }}
+           port:
+             number: 80
