@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { IAudience } from "@fluidframework/container-definitions";
+import { IAudience } from "@fluidframework/protocol-base";
 import { IClient } from "@fluidframework/protocol-definitions";
 
 /**

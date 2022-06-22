@@ -15,7 +15,10 @@ import {
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
     MessageType,
+    ISignalMessage,
+    ISignalClient,
 } from "@fluidframework/protocol-definitions";
+import { IAudience } from "./audience";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
 export interface IScribeProtocolState {
@@ -50,7 +53,19 @@ export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
+export type ProtocolHandlerBuilder = (
+    minimumSequenceNumber: number,
+    sequenceNumber: number,
+    term: number | undefined,
+    members: [string, ISequencedClient][],
+    proposals: [number, ISequencedProposal, string[]][],
+    values: [string, ICommittedProposal][],
+    sendProposal: (key: string, value: any) => number,
+    audience: IAudience,
+) => IProtocolHandler;
+
 export interface IProtocolHandler {
+    readonly audience: IAudience;
     readonly quorum: IQuorum;
     readonly attributes: IDocumentAttributes;
 
@@ -59,6 +74,7 @@ export interface IProtocolHandler {
 
     close(): void;
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+    processSignal(message: ISignalMessage);
     getProtocolState(): IScribeProtocolState;
 }
 
@@ -66,7 +82,7 @@ export interface IProtocolHandler {
  * Handles protocol specific ops.
  */
 export class ProtocolOpHandler implements IProtocolHandler {
-    public readonly _quorum: Quorum;
+    private readonly _quorum: Quorum;
     public get quorum(): Quorum {
         return this._quorum;
     }
@@ -81,6 +97,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
+        public readonly audience: IAudience,
     ) {
         this.term = term ?? 1;
         this._quorum = new Quorum(
@@ -109,6 +126,17 @@ export class ProtocolOpHandler implements IProtocolHandler {
 
     public close() {
         this._quorum.close();
+    }
+
+    public processSignal(message: ISignalMessage) {
+        const innerContent = message.content as { content: any; type: string; };
+        if (innerContent.type === MessageType.ClientJoin) {
+            const newClient = innerContent.content as ISignalClient;
+            this.audience.addMember(newClient.clientId, newClient.client);
+        } else if (innerContent.type === MessageType.ClientLeave) {
+            const leftClientId = innerContent.content as string;
+            this.audience.removeMember(leftClientId);
+        }
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
