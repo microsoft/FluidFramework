@@ -28,8 +28,9 @@ import { v4 as uuid } from "uuid";
  * Generates a {@link https://en.wikipedia.org/wiki/JSON_Web_Token | JSON Web Token} (JWT)
  * to authorize access to a Routerlicious-based Fluid service.
  *
- * @remarks Note: this function uses a browser friendly auth library ({@link https://www.npmjs.com/package/jsrsasign | jsrsasign})
- * and may only be used in client (browser) context. It is **not** Node.js-compatible.
+ * @remarks Note: this function uses a browser friendly auth library
+ * ({@link https://www.npmjs.com/package/jsrsasign | jsrsasign}) and may only be used in client (browser) context.
+ * It is **not** Node.js-compatible.
  *
  * @param tenantId - @see {@link @fluidframework/protocol-definitions#ITokenClaims.tenantId}
  * @param key - API key to authenticate user.
