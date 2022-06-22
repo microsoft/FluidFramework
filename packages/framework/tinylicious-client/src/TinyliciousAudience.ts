@@ -17,7 +17,9 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
    */
   protected createServiceMember(audienceMember: IClient): TinyliciousMember {
     const tinyliciousUser = audienceMember.user as TinyliciousUser;
-    assert(tinyliciousUser !== undefined, "Specified user was not of type \"TinyliciousUser\".");
+    assert(
+        tinyliciousUser !== undefined && typeof tinyliciousUser.name === "string",
+        "Specified user was not of type \"TinyliciousUser\".");
 
     return {
       userId: tinyliciousUser.id,
