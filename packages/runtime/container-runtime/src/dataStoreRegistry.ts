@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { UsageError } from "@fluidframework/container-utils";
 import {
     FluidDataStoreRegistryEntry,
     IFluidDataStoreRegistry,
@@ -14,13 +15,12 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     public get IFluidDataStoreRegistry() { return this; }
 
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
-        this.map = new Map(namedEntries);
-        let countOfUniqueNames = 0;
-        for (const _ of namedEntries) {
-            countOfUniqueNames++;
-        }
-        if (this.map.size !== countOfUniqueNames) {
-            throw new Error("Duplicate entry names exist");
+        this.map = new Map();
+        for (const entry of namedEntries) {
+            if (this.map.has(entry[0])) {
+                throw new UsageError("Duplicate entry names exist");
+            }
+            this.map.set(entry[0], entry[1]);
         }
     }
 
