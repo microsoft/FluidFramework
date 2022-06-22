@@ -81,8 +81,8 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 /**
- * The IFluidContainer provides an entrypoint into the client side of collaborative Fluid data.  It provides access
- * to the data as well as status on the collaboration session.
+ * Provides an entrypoint into the client side of collaborative Fluid data.
+ * It provides access to the data as well as status on the collaboration session.
  */
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
@@ -158,7 +158,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 }
 
 /**
- * Implementation of the IFluidContainer.
+ * {@inheritDoc IFluidContainer}
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
