@@ -1215,18 +1215,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
-        this.garbageCollector = GarbageCollector.create(
-            this,
-            this.runtimeOptions.gcOptions,
-            (nodePath: string) => this.getGCNodePackagePath(nodePath),
-            () => this.messageAtLastSummary?.timestamp,
+        this.garbageCollector = GarbageCollector.create({
+            runtime: this,
+            gcOptions: this.runtimeOptions.gcOptions,
             baseSnapshot,
-            async <T>(id: string) => readAndParse<T>(this.storage, id),
-            this.mc.logger,
+            baseLogger: this.mc.logger,
             existing,
             metadata,
-            this.context.clientDetails.type === summarizerClientType,
-        );
+            isSummarizerClient: this.context.clientDetails.type === summarizerClientType,
+            getNodePackagePath: (nodePath: string) => this.getGCNodePackagePath(nodePath),
+            getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
+            readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
+        });
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(

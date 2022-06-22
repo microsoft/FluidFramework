@@ -182,6 +182,20 @@ export interface IGarbageCollector {
     dispose(): void;
 }
 
+/** Parameters necessary for creating a GarbageCollector. */
+export interface IGarbageCollectorCreateParams {
+    readonly runtime: IGarbageCollectionRuntime;
+    readonly gcOptions: IGCRuntimeOptions;
+    readonly baseLogger: ITelemetryLogger;
+    readonly existing: boolean;
+    readonly metadata: IContainerRuntimeMetadata | undefined;
+    readonly baseSnapshot: ISnapshotTree | undefined;
+    readonly isSummarizerClient: boolean;
+    readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined;
+    readonly getLastSummaryTimestampMs: () => number | undefined;
+    readonly readAndParseBlob: ReadAndParseBlob;
+}
+
 /**
  * Helper class that tracks the state of an unreferenced node such as the time it was unreferenced. It also sets
  * the node's state to inactive if it remains unreferenced for a given amount of time (inactiveTimeoutMs).
@@ -253,30 +267,8 @@ class UnreferencedStateTracker {
  *  NodeId = "dds1"     NodeId = "dds2"
  */
 export class GarbageCollector implements IGarbageCollector {
-    public static create(
-        provider: IGarbageCollectionRuntime,
-        gcOptions: IGCRuntimeOptions,
-        getNodePackagePath: (nodePath: string) => readonly string[] | undefined,
-        getLastSummaryTimestampMs: () => number | undefined,
-        baseSnapshot: ISnapshotTree | undefined,
-        readAndParseBlob: ReadAndParseBlob,
-        baseLogger: ITelemetryLogger,
-        existing: boolean,
-        metadata: IContainerRuntimeMetadata | undefined,
-        isSummarizerClient: boolean,
-    ): IGarbageCollector {
-        return new GarbageCollector(
-            provider,
-            gcOptions,
-            getNodePackagePath,
-            getLastSummaryTimestampMs,
-            baseSnapshot,
-            readAndParseBlob,
-            baseLogger,
-            existing,
-            metadata,
-            isSummarizerClient,
-        );
+    public static create(createParams: IGarbageCollectorCreateParams): IGarbageCollector {
+        return new GarbageCollector(createParams);
     }
 
     /**
@@ -383,23 +375,29 @@ export class GarbageCollector implements IGarbageCollector {
     // The number of times GC has successfully completed on this instance of GarbageCollector.
     private completedRuns = 0;
 
-    protected constructor(
-        private readonly runtime: IGarbageCollectionRuntime,
-        private readonly gcOptions: IGCRuntimeOptions,
-        /** For a given node path, returns the node's package path. */
-        private readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined,
-        /** Returns the timestamp of the last summary generated for this container. */
-        private readonly getLastSummaryTimestampMs: () => number | undefined,
-        baseSnapshot: ISnapshotTree | undefined,
-        readAndParseBlob: ReadAndParseBlob,
-        baseLogger: ITelemetryLogger,
-        existing: boolean,
-        metadata: IContainerRuntimeMetadata | undefined,
-        private readonly isSummarizerClient: boolean = true,
-    ) {
-        this.mc = loggerToMonitoringContext(
-            ChildLogger.create(baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } }),
-        );
+    private readonly runtime: IGarbageCollectionRuntime;
+    private readonly gcOptions: IGCRuntimeOptions;
+    private readonly isSummarizerClient: boolean;
+
+    /** For a given node path, returns the node's package path. */
+    private readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined;
+    /** Returns the timestamp of the last summary generated for this container. */
+    private readonly getLastSummaryTimestampMs: () => number | undefined;
+
+    protected constructor(createParams: IGarbageCollectorCreateParams) {
+        this.runtime = createParams.runtime;
+        this.isSummarizerClient = createParams.isSummarizerClient;
+        this.gcOptions = createParams.gcOptions;
+        this.getNodePackagePath = createParams.getNodePackagePath;
+        this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
+
+        const baseSnapshot = createParams.baseSnapshot;
+        const metadata = createParams.metadata;
+        const readAndParseBlob = createParams.readAndParseBlob;
+
+        this.mc = loggerToMonitoringContext(ChildLogger.create(
+            createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
+        ));
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -410,7 +408,7 @@ export class GarbageCollector implements IGarbageCollector {
          * 3. Whether GC session expiry is enabled or not.
          * For existing containers, we get this information from the metadata blob of its summary.
          */
-        if (existing) {
+        if (createParams.existing) {
             prevSummaryGCVersion = getGCVersion(metadata);
             // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
             // other existing documents, GC is enabled.
@@ -420,15 +418,15 @@ export class GarbageCollector implements IGarbageCollector {
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
-            if (gcOptions.sweepAllowed && gcOptions.gcAllowed === false) {
+            if (this.gcOptions.sweepAllowed && this.gcOptions.gcAllowed === false) {
                 throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
             }
 
             // For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
             // flag in GC options to false.
-            this.gcEnabled = gcOptions.gcAllowed !== false;
+            this.gcEnabled = this.gcOptions.gcAllowed !== false;
             // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
-            this.sweepEnabled = gcOptions.sweepAllowed === true;
+            this.sweepEnabled = this.gcOptions.sweepAllowed === true;
 
             // Set the Session Expiry only if the flag is enabled or the test option is set.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
@@ -470,7 +468,7 @@ export class GarbageCollector implements IGarbageCollector {
             // GC must be enabled for the document.
             this.gcEnabled
             // GC must not be disabled via GC options.
-            && !gcOptions.disableGC
+            && !this.gcOptions.disableGC
         );
 
         this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
@@ -492,7 +490,7 @@ export class GarbageCollector implements IGarbageCollector {
             defaultInactiveTimeoutMs;
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-        this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? gcOptions.runGCInTestMode === true;
+        this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
 
         // GC state is written into root of the summary tree by default. Can be overridden via feature flag for now.
         this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? true;
@@ -646,7 +644,7 @@ export class GarbageCollector implements IGarbageCollector {
             testMode: this.testMode,
             sessionExpiry: this.sessionExpiryTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
-            existing,
+            existing: createParams.existing,
             ...this.gcOptions,
         });
         if (this.isSummarizerClient) {
