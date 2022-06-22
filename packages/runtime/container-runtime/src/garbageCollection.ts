@@ -613,11 +613,7 @@ export class GarbageCollector implements IGarbageCollector {
             // Run GC on the nodes in the base summary to get the routes used in each node in the container.
             // This is an optimization for space (vs performance) wherein we don't need to store the used routes of
             // each node in the summary.
-            const usedRoutes = runGarbageCollection(
-                gcNodes,
-                ["/"],
-                this.mc.logger,
-            ).referencedNodeIds;
+            const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
 
             const baseGCDetailsMap = unpackChildNodesGCDetails({ gcData: { gcNodes }, usedRoutes });
             // Currently, the nodes may write the GC data. So, we need to update it's base GC details with the
@@ -698,11 +694,7 @@ export class GarbageCollector implements IGarbageCollector {
 
             // Get the runtime's GC data and run GC on the reference graph in it.
             const gcData = await this.runtime.getGCData(fullGC);
-            const gcResult = runGarbageCollection(
-                gcData.gcNodes,
-                ["/"],
-                logger,
-            );
+            const gcResult = runGarbageCollection(gcData.gcNodes, ["/"]);
             const gcStats = this.generateStatsAndLogEvents(gcResult, logger);
 
             // Update the state since the last GC run. There can be nodes that were referenced between the last and
@@ -1036,7 +1028,7 @@ export class GarbageCollector implements IGarbageCollector {
          * unreferenced, stop tracking them and remove from unreferenced list.
          * Some of these nodes may be unreferenced now and if so, the current run will add unreferenced state for them.
          */
-        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"], logger);
+        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"]);
         for (const nodeId of gcResult.referencedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
