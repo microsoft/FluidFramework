@@ -17,7 +17,7 @@ import {
 export const defaultTinyliciousPort = 7070;
 
 /**
- * Default endpoint URL base. Will be used by the service if the consumer does not specify a port.
+ * Default endpoint URL base. Will be used by the service if the consumer does not specify an endpoint.
  */
 export const defaultTinyliciousEndpoint = "http://localhost";
 
