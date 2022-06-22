@@ -10,93 +10,62 @@ import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
 /**
- * The "connected" event is emitted when the {@link IFluidContainer} completes connecting to the Fluid service.
- *
- * Listener signature:
- *
- * ```typescript
- * () => void;
- * ```
- */
-export const ConnectedEvent = "connected";
-/**
- * {@inheritDoc (ConnectedEvent:variable)}
- */
-export type ConnectedEvent = typeof ConnectedEvent;
-
-/**
- * The dispose event is emitted when the {@link IFluidContainer} is disposed, which permanently disables it.
- *
- * Listener signature:
- *
- * ```typescript
- * () => void;
- * ```
- */
-export const DisposedEvent = "dispose";
-/**
- * {@inheritDoc (DisposedEvent:variable)}
- */
-export type DisposedEvent = typeof DisposedEvent;
-
-/**
- * The disconnected event is emitted when the {@link IFluidContainer} becomes disconnected from the Fluid service.
- *
- * Listener signature:
- *
- * ```typescript
- * () => void;
- * ```
- */
-export const DisconnectedEvent = "disconnected";
-/**
- * {@inheritDoc (DisconnectedEvent:variable)}
- */
-export type DisconnectedEvent = typeof DisconnectedEvent;
-
-/**
- * The saved event is emitted when the {@link IFluidContainer} has local changes acknowledged by the service.
- *
- * Listener signature:
- *
- * ```typescript
- * () => void
- * ```
- */
-export const SavedEvent = "saved";
-/**
- * {@inheritDoc (SavedEvent:variable)}
- */
-export type SavedEvent = typeof SavedEvent;
-
-/**
- * The "dirty" event is emitted when the {@link IFluidContainer} has local changes that have not yet
- * been acknowledged by the service.
- *
- * Listener signature:
- *
- * ```typescript
- * () => void
- * ```
- */
-export const DirtyEvent = "dirty";
-/**
- * {@inheritDoc (DirtyEvent:variable)}
- */
-export type DirtyEvent = typeof DirtyEvent;
-
-/**
  * Events emitted from {@link IFluidContainer}.
  *
- * See:
- * - {@link (ConnectedEvent:variable)}
- * - {@link (DisposedEvent:variable)}
- * - {@link (DisconnectedEvent:variable)}
- * - {@link (SavedEvent:variable)}
- * - {@link (DirtyEvent:variable)}
+ * @remarks
+ * ### "connected"
+ *
+ * The connected event is emitted when the `IFluidContainer` completes connecting to the Fluid service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "dispose"
+ *
+ * The dispose event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "disconnected"
+ *
+ * The disconnected event is emitted when the `IFluidContainer` becomes disconnected from the Fluid service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "saved"
+ *
+ * The saved event is emitted when the `IFluidContainer` has local changes acknowledged by the service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void
+ * ```
+ *
+ * ### "dirty"
+ *
+ * The dirty event is emitted when the `IFluidContainer` has local changes that have not yet
+ * been acknowledged by the service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void
+ * ```
  */
 export interface IFluidContainerEvents extends IEvent {
-    (event: ConnectedEvent | DisposedEvent | DisconnectedEvent | SavedEvent | DirtyEvent, listener: () => void): void;
+    (event: "connected" | "dispose" | "disconnected" | "saved" | "dirty", listener: () => void): void;
 }
 
 /**
@@ -190,11 +159,11 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
  * {@inheritDoc IFluidContainer}
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    private readonly connectedHandler = () => this.emit(ConnectedEvent);
-    private readonly disconnectedHandler = () => this.emit(DisconnectedEvent);
-    private readonly disposedHandler = () => this.emit(DisposedEvent);
-    private readonly savedHandler = () => this.emit(SavedEvent);
-    private readonly dirtyHandler = () => this.emit(DirtyEvent);
+    private readonly connectedHandler = () => this.emit("connected");
+    private readonly disconnectedHandler = () => this.emit("disconnected");
+    private readonly disposedHandler = () => this.emit("dispose");
+    private readonly savedHandler = () => this.emit("saved");
+    private readonly dirtyHandler = () => this.emit("dirty");
 
     public constructor(
         private readonly container: IContainer,
