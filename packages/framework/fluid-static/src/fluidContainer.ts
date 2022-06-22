@@ -18,7 +18,11 @@ import { RootDataObject } from "./rootDataObject";
  * () => void;
  * ```
  */
-export type ConnectedEvent = "connected";
+export const ConnectedEvent = "connected";
+/**
+ * {@inheritDoc (ConnectedEvent:variable)}
+ */
+export type ConnectedEvent = typeof ConnectedEvent;
 
 /**
  * The dispose event is emitted when the {@link IFluidContainer} is disposed, which permanently disables it.
@@ -29,7 +33,11 @@ export type ConnectedEvent = "connected";
  * () => void;
  * ```
  */
-export type DisposedEvent = "dispose";
+export const DisposedEvent = "dispose";
+/**
+ * {@inheritDoc (DisposedEvent:variable)}
+ */
+export type DisposedEvent = typeof DisposedEvent;
 
 /**
  * The disconnected event is emitted when the {@link IFluidContainer} becomes disconnected from the Fluid service.
@@ -40,7 +48,11 @@ export type DisposedEvent = "dispose";
  * () => void;
  * ```
  */
-export type DisconnectedEvent = "disconnected";
+export const DisconnectedEvent = "disconnected";
+/**
+ * {@inheritDoc (DisconnectedEvent:variable)}
+ */
+export type DisconnectedEvent = typeof DisconnectedEvent;
 
 /**
  * The saved event is emitted when the {@link IFluidContainer} has local changes acknowledged by the service.
@@ -52,7 +64,11 @@ export type DisconnectedEvent = "disconnected";
  * ```
  *
  */
-export type SavedEvent = "saved";
+export const SavedEvent = "saved";
+/**
+ * {@inheritDoc (SavedEvent:variable)}
+ */
+export type SavedEvent = typeof SavedEvent;
 
 /**
  * The "dirty" event is emitted when the {@link IFluidContainer} has local changes that have not yet
@@ -64,17 +80,21 @@ export type SavedEvent = "saved";
  * () => void
  * ```
  */
-export type DirtyEvent = "dirty";
+export const DirtyEvent = "dirty";
+/**
+ * {@inheritDoc (DirtyEvent:variable)}
+ */
+export type DirtyEvent = typeof DirtyEvent;
 
 /**
  * Events emitted from {@link IFluidContainer}.
  *
  * @see
- * - {@link ConnectedEvent}
- * - {@link DisposedEvent}
- * - {@link DisconnectedEvent}
- * - {@link SavedEvent}
- * - {@link DirtyEvent}
+ * - {@link (ConnectedEvent:variable)}
+ * - {@link (DisposedEvent:variable)}
+ * - {@link (DisconnectedEvent:variable)}
+ * - {@link (SavedEvent:variable)}
+ * - {@link (DirtyEvent:variable)}
  */
 export interface IFluidContainerEvents extends IEvent {
     (event: ConnectedEvent | DisposedEvent | DisconnectedEvent | SavedEvent | DirtyEvent, listener: () => void): void;
@@ -161,11 +181,11 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
  * {@inheritDoc IFluidContainer}
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    private readonly connectedHandler = () => this.emit("connected");
-    private readonly disconnectedHandler = () => this.emit("disconnected");
-    private readonly disposedHandler = () => this.emit("disposed");
-    private readonly savedHandler = () => this.emit("saved");
-    private readonly dirtyHandler = () => this.emit("dirty");
+    private readonly connectedHandler = () => this.emit(ConnectedEvent);
+    private readonly disconnectedHandler = () => this.emit(DisconnectedEvent);
+    private readonly disposedHandler = () => this.emit(DisposedEvent);
+    private readonly savedHandler = () => this.emit(SavedEvent);
+    private readonly dirtyHandler = () => this.emit(DirtyEvent);
 
     public constructor(
         private readonly container: IContainer,
