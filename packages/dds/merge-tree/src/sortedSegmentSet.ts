@@ -15,8 +15,7 @@ import { ISegment } from "./mergeTree";
  * the segments changes. This invariant allows ensure the segments stay ordered and unique, and that new segments
  * can be inserted into that order.
  */
-export class SortedSegmentSet<
-    T extends ISegment | { readonly segment: ISegment; } | { getSegment(): ISegment | undefined; } = ISegment> {
+export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment; } = ISegment> {
     private readonly ordinalSortedItems: T[] = [];
 
     public get size(): number {
@@ -53,11 +52,13 @@ export class SortedSegmentSet<
     }
 
     private getOrdinal(item: T): string {
-        const maybeObject =
-            item as Partial<{ readonly segment: ISegment; getSegment(): ISegment; }> & Pick<ISegment, "ordinal">;
-        return maybeObject.segment?.ordinal
-            ?? maybeObject.getSegment?.().ordinal
-            ?? maybeObject.ordinal;
+        const maybeObject = item as { readonly segment: ISegment; };
+        if (maybeObject?.segment) {
+            return maybeObject.segment.ordinal;
+        }
+
+        const maybeSegment = item as ISegment;
+        return maybeSegment.ordinal;
     }
 
     private findOrdinalPosition(ordinal: string, start?: number, end?: number): { exists: boolean; index: number; } {
