@@ -11,9 +11,9 @@ import { EpochTracker } from "../epochTracker";
 import { HostStoragePolicyInternal } from "../contracts";
 import * as fetchSnapshotImport from "../fetchSnapshot";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
-import { INewFileInfo, IOdspResponse, ISnapshotContents } from "../odspUtils";
+import { INewFileInfo, IOdspResponse } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId } from "../odspPublicUtils";
+import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 
@@ -48,7 +48,7 @@ describe("Tests for snapshot fetch headers", () => {
     const resolver = new OdspDriverUrlResolver();
     const nonPersistentCache = new NonPersistentCache();
     const logger = new TelemetryNullLogger();
-    const odspUrl = createOdspUrl({ ... newFileParams, itemId, dataStorePath: "/" });
+    const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
     const content: ISnapshotContents = {
         snapshotTree: {
@@ -59,6 +59,7 @@ describe("Tests for snapshot fetch headers", () => {
         blobs: new Map(),
         ops: [],
         sequenceNumber: 0,
+        latestSequenceNumber: 0,
     };
     before(async () => {
         hashedDocumentId = await getHashedDocumentId(driveId, itemId);
@@ -86,11 +87,11 @@ describe("Tests for snapshot fetch headers", () => {
             hostPolicy,
             epochTracker,
             async () => { return {}; },
-            );
+        );
     });
 
     afterEach(async () => {
-        await epochTracker.removeEntries().catch(() => {});
+        await epochTracker.removeEntries().catch(() => { });
     });
 
     it("Mds limit check in fetch snapshot", async () => {
@@ -122,7 +123,7 @@ describe("Tests for snapshot fetch headers", () => {
                 Promise.resolve(response),
                 async () => service.getVersions(null, 1),
             );
-        } catch (error) {}
+        } catch (error) { }
         assert(success, "mds limit should not be set!!");
     });
 });

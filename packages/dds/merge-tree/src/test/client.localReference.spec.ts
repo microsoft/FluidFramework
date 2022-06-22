@@ -10,6 +10,7 @@ import { Client } from "../client";
 import { toRemovalInfo } from "../mergeTree";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
+import { DetachedReferencePosition } from "../referencePositions";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestClient } from "./";
 
@@ -52,7 +53,7 @@ describe("MergeTree.Client", () => {
         client2.applyMsg(remove);
 
         // this only works because zamboni hasn't run yet
-        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), -1, "after remove");
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), DetachedReferencePosition, "after remove");
 
         // this will force Zamboni to run
         for (let i = 0; i < 5; i++) {
@@ -64,7 +65,7 @@ describe("MergeTree.Client", () => {
             client1.applyMsg(insert);
             client2.applyMsg(insert);
         }
-        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), -1, "after zamboni");
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), DetachedReferencePosition, "after zamboni");
     });
 
     it("Remove segment of sliding local reference", () => {
@@ -280,7 +281,7 @@ describe("MergeTree.Client", () => {
         client1.applyMsg(remove);
         client2.applyMsg(remove);
 
-        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), -1);
+        assert.equal(client1.localReferencePositionToPosition(c1LocalRef), DetachedReferencePosition);
     });
 
     it("References can have offsets on removed segment", () => {
