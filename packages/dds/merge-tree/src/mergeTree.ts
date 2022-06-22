@@ -2478,7 +2478,7 @@ export class MergeTree {
         }
         const pending = this.collabWindow.collaborating && clientId === this.collabWindow.clientId;
         // these events are newly removed
-        // so we slide after eventing incase the consumer wants to make references
+        // so we slide after eventing in case the consumer wants to make reference
         // changes at remove time, like add a ref to track undo redo.
         removedSegments.forEach(
             (rSeg) => this.updateSegmentRefsAfterMarkRemoved(rSeg.segment, pending));
