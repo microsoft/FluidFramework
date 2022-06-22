@@ -13,16 +13,24 @@ export enum MonoRepoKind {
     Azure = "Azure",
 }
 
+/**
+ * A type guard used to determine if a string is a MonoRepoKind.
+ */
 export function isMonoRepoKind(string: unknown): string is MonoRepoKind {
     return typeof string === "string" && string in MonoRepoKind;
 }
 
-
+/**
+ * An iterator that returns only the Enum values of MonoRepoKind.
+ *
+ * TODO: Is there a better approach? for-of Object.values returns both strings and the enum values.
+ */
 export function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
     yield MonoRepoKind.Client;
     yield MonoRepoKind.Server;
     yield MonoRepoKind.Azure;
 }
+
 export class MonoRepo {
     public readonly packages: Package[] = [];
     public readonly version: string;
