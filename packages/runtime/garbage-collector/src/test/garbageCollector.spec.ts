@@ -106,25 +106,4 @@ describe("Garbage Collector", () => {
 
         runGCAndValidateResults(gcNodes, ["/", "/ds2"], deletedNodes);
     });
-
-    /**
-     * The "missingGCNode" telemetry log is disabled for now, so this test is skipped.
-     * Enable it once the telemetry is enabled. See - https://github.com/microsoft/FluidFramework/issues/4939
-     */
-    it.skip("should log error when a referenced node is missing from the graph", () => {
-        const gcNode1: IGCNode = { id: "/", outboundRoutes: ["/ds1"] };
-        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: ["/ds1/dds1"] };
-        const gcNode3: IGCNode = { id: "/ds2", outboundRoutes: [] };
-        const gcNode4: IGCNode = { id: "/ds1/dds1", outboundRoutes: ["/ds2", "/ds3"] };
-        // The following node is not referenced by any of the nodes above.
-        const gcNode5: IGCNode = { id: "/ds2/dds1", outboundRoutes: [] };
-
-        const gcNodes = [gcNode1, gcNode2, gcNode3, gcNode4, gcNode5];
-        const deletedNodes = [gcNode5];
-
-        runGCAndValidateResults(gcNodes, ["/"], deletedNodes);
-
-        const telemetryEvent = { eventName: "MissingGCNode", missingNodeId: "/ds3" };
-        assert.deepStrictEqual(telemetryEvents, [telemetryEvent], "GC did not generate event as expected");
-    });
 });

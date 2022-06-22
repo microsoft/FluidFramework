@@ -6,4 +6,5 @@
 export {
     ITreeCursor,
     TreeNavigationResult,
+    Value,
 } from "./cursor";

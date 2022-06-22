@@ -464,9 +464,7 @@ function getPath(seed: number): string {
     return path.join(directory, `${seed}.json`);
 }
 
-// Once known issues with SharedInterval are fixed, a small set of fuzz tests with reasonably-tuned parameters
-// should be enabled.
-describe.skip("IntervalCollection fuzz testing", () => {
+describe("IntervalCollection fuzz testing", () => {
     before(() => {
         if (!existsSync(directory)) {
             mkdirSync(directory);
@@ -533,7 +531,7 @@ describe.skip("IntervalCollection fuzz testing", () => {
     }
 
     for (let i = 0; i < testCount; i++) {
-        const generator = take(30, makeOperationGenerator({ validateInterval: 10 }));
+        const generator = take(100, makeOperationGenerator({ validateInterval: 10 }));
         runTests(i, generator);
     }
 
