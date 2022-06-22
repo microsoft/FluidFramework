@@ -47,6 +47,8 @@
     "@types/chai": "^4",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.9.4",
+    "@typescript-eslint/eslint-plugin": "~5.9.0",
+    "@typescript-eslint/parser": "~5.9.0",
     "chai": "^4",
     "eslint": "~8.6.0",
     "eslint-config-oclif": "^4",

@@ -4,21 +4,17 @@
  */
 
 module.exports = {
-    "parser": "@typescript-eslint/parser",
     "plugins": [
         "@typescript-eslint",
     ],
     "extends": [
+        "oclif",
+        "oclif-typescript",
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
         // require.resolve("@fluidframework/eslint-config-fluid"),
+        "prettier",
     ],
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
-    },
     "rules": {
-        "@typescript-eslint/switch-exhaustiveness-check": "error",
-        "@typescript-eslint/no-inferrable-types": "off",
-        "@typescript-eslint/no-var-requires": "off",
     },
 }
