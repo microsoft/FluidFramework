@@ -64,7 +64,6 @@ describe("MergeTree.Client", () => {
             client1.applyMsg(insert);
             client2.applyMsg(insert);
         }
-        assert.equal(c1LocalRef.getSegment(), undefined);
         assert.equal(client1.localReferencePositionToPosition(c1LocalRef), -1, "after zamboni");
     });
 
