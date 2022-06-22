@@ -62,7 +62,6 @@ export type DisconnectedEvent = typeof DisconnectedEvent;
  * ```typescript
  * () => void
  * ```
- *
  */
 export const SavedEvent = "saved";
 /**
@@ -110,7 +109,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      */
     readonly connectionState: ConnectionState;
 
-     /**
+    /**
      * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
      * You should always check the `isDirty` flag before closing the container or navigating away from the page.
      * Closing the container while `isDirty === true` may result in the loss of operations that have not yet been
@@ -127,7 +126,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      * service. In some cases this can be due to lack of network connection. If the network connection is down,
      * it needs to be restored for the pending changes to be acknowledged.
      */
-     readonly isDirty: boolean;
+    readonly isDirty: boolean;
 
     /**
      * Whether the container is disposed, which permanently disables it.
@@ -149,17 +148,24 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
      * A newly created container starts detached from the collaborative service.  Calling attach() uploads the
      * new container to the service and connects to the collaborative service.
+     *
+     * TODO: what states can this be called in? Just in "Disconnected"?
+     *
      * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
      */
     attach(): Promise<string>;
 
     /**
-     * Attempts to connect the container to the delta stream and process ops
+     * Attempts to connect the container to the delta stream and process ops.
+     *
+     * TODO: what states can this be called in? Just in "ConnectionState.Disconnected"?
      */
     connect(): void;
 
     /**
      * Disconnects the container from the delta stream and stops processing ops
+     *
+     * TODO: what states can this be called in? Just in "ConnectionState.Connected"?
      */
     disconnect(): void;
 
@@ -167,6 +173,9 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      * Create a new data object or DDS of the specified type.  In order to share the data object or DDS with other
      * collaborators and retrieve it later, store its handle in a collection like a SharedDirectory from your
      * initialObjects.
+     *
+     * TODO: what states can this be called in?
+     *
      * @param objectClass - The class of data object or DDS to create
      */
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
