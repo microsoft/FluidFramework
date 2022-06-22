@@ -850,6 +850,8 @@ export class LocalReferenceCollection {
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
 }
 
 // @public (undocumented)
@@ -1267,7 +1269,7 @@ export interface ReferencePosition {
     // (undocumented)
     getOffset(): number;
     // (undocumented)
-    getSegment(): ISegment | undefined;
+    getSegment(): ISegment;
     // (undocumented)
     isLeaf(): this is ISegment;
     // (undocumented)
@@ -1417,6 +1419,8 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 // @public
 export class SortedSegmentSet<T extends ISegment | {
     readonly segment: ISegment;
+} | {
+    getSegment(): ISegment | undefined;
 } = ISegment> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T): void;
@@ -1482,25 +1486,30 @@ export class TextSegment extends BaseSegment {
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
 
 // @public (undocumented)
+export type Trackable = ISegment | LocalReferencePosition;
+
+// @public (undocumented)
 export class TrackingGroup {
     constructor();
     // (undocumented)
-    has(segment: ISegment): boolean;
+    has(trackable: Trackable): boolean;
     // (undocumented)
-    link(segment: ISegment): void;
-    // (undocumented)
+    link(trackable: Trackable): void;
+    // @deprecated (undocumented)
     get segments(): readonly ISegment[];
     // (undocumented)
     get size(): number;
     // (undocumented)
-    unlink(segment: ISegment): void;
+    get tracked(): readonly Trackable[];
+    // (undocumented)
+    unlink(segment: Trackable): void;
 }
 
 // @public (undocumented)
 export class TrackingGroupCollection {
-    constructor(segment: ISegment);
+    constructor(trackable: Trackable);
     // (undocumented)
-    copyTo(segment: ISegment): void;
+    copyTo(trackable: Trackable): void;
     // (undocumented)
     get empty(): boolean;
     // (undocumented)

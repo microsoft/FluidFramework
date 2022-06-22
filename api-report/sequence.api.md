@@ -598,7 +598,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: SummarySerializer): void;
     // (undocumented)
-    removeLocalReferencePosition(lref: ReferencePosition): LocalReferencePosition;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition;
     // (undocumented)
     removeRange(start: number, end: number): IMergeTreeRemoveMsg;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
