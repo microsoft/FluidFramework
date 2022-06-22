@@ -5,14 +5,12 @@
 ```ts
 
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
@@ -116,7 +114,7 @@ export class Client {
     // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): ReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
     protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -200,9 +198,9 @@ export class Client {
     rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     // @deprecated (undocumented)
-    removeLocalReference(lref: LocalReference): ReferencePosition | undefined;
+    removeLocalReference(lref: LocalReference): LocalReferencePosition | undefined;
     // (undocumented)
-    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
@@ -696,12 +694,6 @@ export interface IRBMatcher<TKey, TData> {
 }
 
 // @public
-export interface IReferencePositionEvents extends IEvent {
-    // (undocumented)
-    (event: "beforeSlide" | "afterSlide", listener: () => void): any;
-}
-
-// @public
 export interface IRelativePosition {
     before?: boolean;
     id?: string;
@@ -820,12 +812,14 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 export const LocalClientId = -1;
 
 // @public @deprecated (undocumented)
-export class LocalReference extends TypedEventEmitter<IReferencePositionEvents> implements ReferencePosition {
+export class LocalReference implements LocalReferencePosition {
     // @deprecated
     constructor(client: Client, initSegment: ISegment,
     offset?: number, refType?: ReferenceType, properties?: PropertySet);
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
+    // (undocumented)
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
     // @deprecated (undocumented)
     compare(b: LocalReference): number;
     // @deprecated (undocumented)
@@ -895,7 +889,7 @@ export class LocalReferenceCollection {
     // @internal
     clear(): void;
     // @internal
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): ReferencePosition;
+    createLocalRef(offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, client: Client): ReferencePosition;
     // @internal
     get empty(): boolean;
     // @internal
@@ -908,6 +902,12 @@ export class LocalReferenceCollection {
 
 // @public (undocumented)
 export type LocalReferenceMapper = (id: string) => LocalReference;
+
+// @public (undocumented)
+export interface LocalReferencePosition extends ReferencePosition {
+    // (undocumented)
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+}
 
 // @public (undocumented)
 export interface LRUSegment {
@@ -1030,7 +1030,7 @@ export class MergeTree {
     // (undocumented)
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): ReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, client: Client): LocalReferencePosition;
     // (undocumented)
     findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
         tile: ReferencePosition;
@@ -1100,7 +1100,7 @@ export class MergeTree {
     // @deprecated (undocumented)
     removeLocalReference(segment: ISegment, lref: LocalReference): void;
     // (undocumented)
-    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: number): number | undefined;
     // (undocumented)
     root: IMergeBlock;

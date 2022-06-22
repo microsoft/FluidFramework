@@ -11,6 +11,7 @@ import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { getRandomName } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { assert } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { IDevServerUser, IRouterliciousRouteOptions, RouteOptions } from "./loader";
 
@@ -19,7 +20,7 @@ export const deltaConns = new Map<string, ILocalDeltaConnectionServer>();
 export function getDocumentServiceFactory(
     documentId: string,
     options: RouteOptions,
-    odspPersistantCache: IPersistedCache,
+    odspPersistantCache?: IPersistedCache,
     odspHostStoragePolicy?: HostStoragePolicy,
 ) {
     const deltaConn = deltaConns.get(documentId) ??
@@ -38,8 +39,12 @@ export function getDocumentServiceFactory(
             "12345",
             getUser());
     } else {
+        const routerliciousRouteOptions = options as IRouterliciousRouteOptions;
+        assert(
+            routerliciousRouteOptions !== undefined,
+            "options are not of type \"IRouterliciousRouteOptions\" as expected");
         routerliciousTokenProvider = new InsecureTokenProvider(
-            (options as IRouterliciousRouteOptions).tenantSecret,
+            routerliciousRouteOptions.tenantSecret ?? "",
             getUser());
     }
 
@@ -47,8 +52,8 @@ export function getDocumentServiceFactory(
         new LocalDocumentServiceFactory(deltaConn),
         // TODO: web socket token
         new OdspDocumentServiceFactory(
-            async () => options.mode === "spo" || options.mode === "spo-df" ? options.odspAccessToken : undefined,
-            async () => options.mode === "spo" || options.mode === "spo-df" ? options.pushAccessToken : undefined,
+            async () => options.mode === "spo" || options.mode === "spo-df" ? (options.odspAccessToken ?? null) : null,
+            async () => options.mode === "spo" || options.mode === "spo-df" ? (options.pushAccessToken ?? null) : null,
             odspPersistantCache,
             odspHostStoragePolicy,
         ),
