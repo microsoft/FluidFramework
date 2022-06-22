@@ -15,7 +15,7 @@ import { RootDataObject } from "./rootDataObject";
  * @remarks
  * ### "connected"
  *
- * The connected event is emitted when the `IFluidContainer` completes connecting to the Fluid service.
+ * The "connected" event is emitted when the `IFluidContainer` completes connecting to the Fluid service.
  *
  * #### Listener signature
  *
@@ -25,7 +25,7 @@ import { RootDataObject } from "./rootDataObject";
  *
  * ### "dispose"
  *
- * The dispose event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
+ * The "dispose" event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
  *
  * #### Listener signature
  *
@@ -35,7 +35,7 @@ import { RootDataObject } from "./rootDataObject";
  *
  * ### "disconnected"
  *
- * The disconnected event is emitted when the `IFluidContainer` becomes disconnected from the Fluid service.
+ * The "disconnected" event is emitted when the `IFluidContainer` becomes disconnected from the Fluid service.
  *
  * #### Listener signature
  *
@@ -45,7 +45,7 @@ import { RootDataObject } from "./rootDataObject";
  *
  * ### "saved"
  *
- * The saved event is emitted when the `IFluidContainer` has local changes acknowledged by the service.
+ * The "saved" event is emitted when the `IFluidContainer` has local changes acknowledged by the service.
  *
  * #### Listener signature
  *
@@ -55,7 +55,7 @@ import { RootDataObject } from "./rootDataObject";
  *
  * ### "dirty"
  *
- * The dirty event is emitted when the `IFluidContainer` has local changes that have not yet
+ * The "dirty" event is emitted when the `IFluidContainer` has local changes that have not yet
  * been acknowledged by the service.
  *
  * #### Listener signature
