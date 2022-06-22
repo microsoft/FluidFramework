@@ -38,10 +38,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     // (undocumented)
     protected applyInnerOp(content: any): void;
     // (undocumented)
-    protected applyStashedOp(content: any): {
-        type: string;
-        pendingMessageId: number;
-    };
+    protected applyStashedOp(content: any): number;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell<any>;
     delete(): void;
     empty(): boolean;
