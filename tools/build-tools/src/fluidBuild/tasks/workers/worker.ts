@@ -11,7 +11,7 @@ export interface WorkerMessage {
     workerName: string,
     command: string,
     cwd: string,
-};
+}
 
 export interface WorkerExecResult {
     code: number,

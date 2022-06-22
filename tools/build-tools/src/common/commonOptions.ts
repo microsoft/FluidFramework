@@ -9,7 +9,7 @@ interface CommonOptions {
     timer: boolean;
     logtime: boolean;
     verbose: boolean;
-};
+}
 
 export const commonOptions : CommonOptions = {
     defaultRoot: process.env["_FLUID_DEFAULT_ROOT_"],

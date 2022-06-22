@@ -49,6 +49,7 @@ import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidfr
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
+    DataProcessingError,
     GenericError,
     UsageError,
     extractSafePropertiesFromMessage,
@@ -895,7 +896,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // Verify summary runtime sequence number matches protocol sequence number.
         const runtimeSequenceNumber = metadata?.message?.sequenceNumber;
-        if (runtimeSequenceNumber !== undefined) {
+        // When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
+        if (!pendingRuntimeState && runtimeSequenceNumber !== undefined) {
             const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
             // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
             if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
@@ -1213,18 +1215,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
-        this.garbageCollector = GarbageCollector.create(
-            this,
-            this.runtimeOptions.gcOptions,
-            (nodePath: string) => this.getGCNodePackagePath(nodePath),
-            () => this.messageAtLastSummary?.timestamp,
+        this.garbageCollector = GarbageCollector.create({
+            runtime: this,
+            gcOptions: this.runtimeOptions.gcOptions,
             baseSnapshot,
-            async <T>(id: string) => readAndParse<T>(this.storage, id),
-            this.mc.logger,
+            baseLogger: this.mc.logger,
             existing,
             metadata,
-            this.context.clientDetails.type === summarizerClientType,
-        );
+            isSummarizerClient: this.context.clientDetails.type === summarizerClientType,
+            getNodePackagePath: (nodePath: string) => this.getGCNodePackagePath(nodePath),
+            getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
+            readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
+        });
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
@@ -1569,11 +1571,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private internalId(maybeAlias: string): string {
+        return this.dataStores.aliases().get(maybeAlias) ?? maybeAlias;
+    }
+
     private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
         const wait = typeof request.headers?.[RuntimeHeaders.wait] === "boolean"
             ? request.headers?.[RuntimeHeaders.wait]
             : true;
-        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
+
+        const internalId = this.internalId(id);
+        const dataStoreContext = await this.dataStores.getDataStore(internalId, wait);
 
         /**
          * If GC should run and this an external app request with "externalRequest" header, we need to return
@@ -1765,11 +1773,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.consecutiveReconnects++;
 
             if (!this.shouldContinueReconnecting()) {
-                this.closeFn(new GenericError(
+                this.closeFn(
                     // pre-0.58 error message: MaxReconnectsWithNoProgress
-                    "Runtime detected too many reconnects with no progress syncing local ops",
-                    undefined, // error
-                    {
+                    DataProcessingError.create(
+                        "Runtime detected too many reconnects with no progress syncing local ops",
+                        "setConnectionState",
+                        undefined,
+                       {
+                        dataLoss: 1,
                         attempts: this.consecutiveReconnects,
                         pendingMessages: this.pendingStateManager.pendingMessagesCount,
                     }));
@@ -1925,7 +1936,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        const context = await this.dataStores.getDataStore(id, wait);
+        const internalId = this.internalId(id);
+        const context = await this.dataStores.getDataStore(internalId, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
@@ -2055,6 +2067,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
+    /**
+     * @deprecated - will be removed in an upcoming release. See #9660.
+     */
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         if (rootDataStoreId.includes("/")) {
             throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);

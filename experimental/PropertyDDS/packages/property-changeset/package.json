@@ -71,7 +71,7 @@
     "traverse": "0.6.6"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/mocha-test-setup": "^1.1.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/lodash": "^4.14.118",
