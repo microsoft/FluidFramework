@@ -21,8 +21,6 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
     provideScopeLoader: booleanCases,
     maxClientLeaveWaitTime: numberCases,
-    noopCountFrequency: numberCases,
-    noopTimeFrequency: numberCases,
     summarizeProtocolTree: [undefined],
 };
 
@@ -58,7 +56,7 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
-    disableIsolatedChannels: booleanCases,
+    disableIsolatedChannels: [undefined],
     disableSummaries: [false],
     initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides: [undefined],
