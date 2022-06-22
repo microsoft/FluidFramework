@@ -149,12 +149,15 @@ export interface IContainerConfig {
 
 export interface IProtocolDetails {
     /**
-     * Optional function to be used for creating a protocol handler
+     * Optional function to be used for creating a protocol handler. If not provided,
+     * an instance of {@link @fluidframework/protocol-base/protocol.ts#ProtocolOpHandlerWithClientValidation}
+     * will be created and used.
      */
     protocolHandlerBuilder?: ProtocolHandlerBuilder;
 
     /**
-     * Optional implementation of the audience logic
+     * Optional implementation of the audience logic. If not provided,
+     * the default implementation from {@link Audience} will be used.
      */
     audience?: IAudience;
 }
@@ -1425,6 +1428,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 proposals,
                 values,
                 (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+                this._audience,
             );
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");

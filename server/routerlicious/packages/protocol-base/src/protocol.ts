@@ -97,7 +97,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
-        public readonly audience: IAudience,
+        public readonly audience?: IAudience,
     ) {
         this.term = term ?? 1;
         this._quorum = new Quorum(
@@ -132,10 +132,10 @@ export class ProtocolOpHandler implements IProtocolHandler {
         const innerContent = message.content as { content: any; type: string; };
         if (innerContent.type === MessageType.ClientJoin) {
             const newClient = innerContent.content as ISignalClient;
-            this.audience.addMember(newClient.clientId, newClient.client);
+            this.audience?.addMember(newClient.clientId, newClient.client);
         } else if (innerContent.type === MessageType.ClientLeave) {
             const leftClientId = innerContent.content as string;
-            this.audience.removeMember(leftClientId);
+            this.audience?.removeMember(leftClientId);
         }
     }
 
@@ -212,7 +212,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 
 export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
-        const client: ILocalSequencedClient | undefined = this._quorum.getMember(message.clientId);
+        const client: ILocalSequencedClient | undefined = this.quorum.getMember(message.clientId);
 
         // Check and report if we're getting messages from a clientId that we previously
         // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
