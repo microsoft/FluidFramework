@@ -144,17 +144,14 @@ export type SavedEvent = "saved";
 
 // @public
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
-    constructor(container: IContainer);
-    // (undocumented)
+    constructor(
+    container: IContainer);
     protected readonly audience: IAudience;
-    // (undocumented)
     protected readonly container: IContainer;
-    // (undocumented)
     protected abstract createServiceMember(audienceMember: IClient): M;
     getMembers(): Map<string, M>;
     getMyself(): M | undefined;
     protected lastMembers: Map<string, M>;
-    // (undocumented)
     protected shouldIncludeAsMember(member: IClient): boolean;
 }
 
