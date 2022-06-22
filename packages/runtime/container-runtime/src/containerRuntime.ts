@@ -2067,6 +2067,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
+    /**
+     * @deprecated - will be removed in an upcoming release. See #9660.
+     */
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         if (rootDataStoreId.includes("/")) {
             throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
