@@ -12,6 +12,7 @@ import {
     createRemoveRangeOp,
     IMergeTreeRemoveMsg,
     ISegment,
+    LocalReferencePosition,
     Marker,
     MergeTreeDeltaType,
     PropertySet,
@@ -211,7 +212,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         return localRef;
     }
 
-    public removeLocalRef(localRef: ReferencePosition) {
+    public removeLocalRef(localRef: LocalReferencePosition) {
         const segment = localRef.getSegment();
 
         // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').

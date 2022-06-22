@@ -128,7 +128,8 @@
       "TypeAliasDeclaration_IMergeNode": {"forwardCompat": false},
       "ClassDeclaration_MergeNode": {"forwardCompat": false},
       "InterfaceDeclaration_IMergeNodeCommon": {"forwardCompat": false},
-      "ClassDeclaration_TextSegment": {"forwardCompat": false}
+      "ClassDeclaration_TextSegment": {"forwardCompat": false},
+      "ClassDeclaration_TrackingGroup": {"forwardCompat": false}
     }
   }
 }

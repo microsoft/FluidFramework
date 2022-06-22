@@ -41,6 +41,7 @@ export function _validateReferenceType(refType: ReferenceType) {
 
 export interface LocalReferencePosition extends ReferencePosition {
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+    readonly trackingCollection: TrackingGroupCollection;
 }
 
 /**
@@ -401,6 +402,59 @@ export class LocalReferenceCollection {
         } else {
             // shrink the offset array when empty and splitting
             this.refsByOffset.length = offset;
+        }
+    }
+
+    public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]) {
+        const beforeRefs = this.refsByOffset[0]?.before ?? ListMakeHead();
+
+        for (const iterable of refs) {
+            for (const lref of iterable) {
+                assertLocalReferences(lref);
+                if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                    beforeRefs.unshift(lref);
+                    lref.link(this.segment, 0, beforeRefs.next);
+                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+                        this.hierRefCount++;
+                    }
+                    this.refCount++;
+                } else {
+                    lref.unlink();
+                }
+            }
+        }
+        if (!beforeRefs.empty() && this.refsByOffset[0]?.before === undefined) {
+            const refsAtOffset = this.refsByOffset[0] =
+                this.refsByOffset[0]
+                ?? { before: beforeRefs };
+            refsAtOffset.before = refsAtOffset.before ?? beforeRefs;
+        }
+    }
+
+    public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]) {
+        const lastOffset = this.refsByOffset.length - 1;
+        const afterRefs =
+            this.refsByOffset[lastOffset]?.after ?? ListMakeHead();
+
+        for (const iterable of refs) {
+            for (const lref of iterable) {
+                assertLocalReferences(lref);
+                if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                    lref.link(this.segment, lastOffset, afterRefs.enqueue(lref));
+                    if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+                        this.hierRefCount++;
+                    }
+                    this.refCount++;
+                } else {
+                    lref.unlink();
+                }
+            }
+        }
+        if (!afterRefs.empty() && this.refsByOffset[lastOffset]?.after === undefined) {
+            const refsAtOffset = this.refsByOffset[lastOffset] =
+                this.refsByOffset[lastOffset]
+                ?? { after: afterRefs };
+            refsAtOffset.after = refsAtOffset.after ?? afterRefs;
         }
     }
 }
