@@ -17,6 +17,10 @@ import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 export abstract class ServiceAudience<M extends IMember = IMember>
   extends TypedEventEmitter<IServiceAudienceEvents<M>>
   implements IServiceAudience<M> {
+
+  /**
+   * TODO
+   */
   protected readonly audience: IAudience;
 
   /**
@@ -33,7 +37,10 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   protected lastMembers: Map<string, M> = new Map();
 
   constructor(
-      protected readonly container: IContainer,
+    /**
+     * TODO
+     */
+    protected readonly container: IContainer,
   ) {
     super();
     this.audience = container.audience;
@@ -60,6 +67,10 @@ export abstract class ServiceAudience<M extends IMember = IMember>
     this.container.on("connected", () => this.emit("membersChanged"));
   }
 
+  /**
+   * TODO
+   * @param audienceMember - TODO
+   */
   protected abstract createServiceMember(audienceMember: IClient): M;
 
   /**
@@ -114,6 +125,10 @@ export abstract class ServiceAudience<M extends IMember = IMember>
     return member;
   }
 
+  /**
+   * TODO
+   * @param member - TODO
+   */
   protected shouldIncludeAsMember(member: IClient): boolean {
     // Include only human members
     return member.details.capabilities.interactive;
