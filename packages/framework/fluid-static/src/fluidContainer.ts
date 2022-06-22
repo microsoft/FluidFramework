@@ -89,7 +89,6 @@ export type DirtyEvent = typeof DirtyEvent;
 /**
  * Events emitted from {@link IFluidContainer}.
  *
- * @see
  * - {@link (ConnectedEvent:variable)}
  * - {@link (DisposedEvent:variable)}
  * - {@link (DisconnectedEvent:variable)}
