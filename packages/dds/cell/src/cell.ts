@@ -284,6 +284,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     protected applyStashedOp(content: any) {
         this.applyInnerOp(content);
         ++this.messageId;
-        return { type: "edit", pendingMessageId: this.messageId };
+        return this.messageId;
     }
 }

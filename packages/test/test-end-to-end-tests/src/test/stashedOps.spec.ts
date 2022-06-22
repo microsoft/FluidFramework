@@ -67,6 +67,7 @@ const getPendingStateWithoutClose = (container: IContainer): string => {
 };
 
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
+type CellCallback = (container: IContainer, dataStore: ITestFluidObject, cell: SharedCell) => void | Promise<void>;
 
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
 const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
@@ -82,6 +83,35 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     assert(dataStore.runtime.deltaManager.outbound.paused);
 
     await cb(container, dataStore, map);
+
+    let pendingState: string;
+    if (send) {
+        pendingState = getPendingStateWithoutClose(container);
+        await args.ensureSynchronized();
+        container.close();
+    } else {
+        pendingState = container.closeAndGetPendingLocalState();
+    }
+
+    args.opProcessingController.resumeProcessing();
+
+    assert.ok(pendingState);
+    return pendingState;
+};
+
+const getPendingCellOps = async (args: ITestObjectProvider, send: boolean, cb: CellCallback) => {
+    const container = await args.loadTestContainer(testContainerConfig);
+    await ensureContainerConnected(container);
+    const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+    const cell = await dataStore.getSharedObject<SharedCell>(cellId);
+
+    [...Array(lots).keys()].map((i) => dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i));
+
+    await args.ensureSynchronized();
+    await args.opProcessingController.pauseProcessing(container);
+    assert(dataStore.runtime.deltaManager.outbound.paused);
+
+    await cb(container, dataStore, cell);
 
     let pendingState: string;
     if (send) {
@@ -140,6 +170,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     let container1: IContainer;
     let map1: SharedMap;
     let string1: SharedString;
+    let cell1: SharedCell;
 
     beforeEach(async () => {
         provider = getTestObjectProvider();
@@ -152,6 +183,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         url = await container1.getAbsoluteUrl("");
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
+        cell1 = await dataStore1.getSharedObject<SharedCell>(cellId);
         string1 = await dataStore1.getSharedObject<SharedString>(stringId);
         string1.insertText(0, "hello");
     });
@@ -169,6 +201,21 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
         assert.strictEqual(map1.get(testKey), testValue);
         assert.strictEqual(map2.get(testKey), testValue);
+    });
+
+    it("resends cell op", async function() {
+        const pendingOps = await getPendingCellOps(provider, false, (c, d, cell) => {
+            cell.set(testValue);
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(cell1.get(), testValue);
+        assert.strictEqual(cell2.get(), testValue);
     });
 
     it("doesn't resend successful op", async function() {
