@@ -8,7 +8,51 @@ User presence scenarios are key examples of situations where sending transient d
 
 
 ### Creation
-_TODO_
+Just like with DDSes, the `FluidContainer` provides a container schema where you can include `SignalManager` as a shared object you would like to load.
+
+Here is a look at how you would go about loading `SignalManager` as part of the initial objects of the container:
+
+```typescript
+const containerSchema: ContainerSchema = {
+    initialObjects: {
+        signalManager: SignalManager,
+    },
+};
+
+const { container, services } =  await client.createContainer(containerSchema);
+
+const signalManager = container.initialObjects.signalManager as SignalManager
+```
+
+`signalManager` can then be directly used in your Fluid application!
+
+If you are loading an existing container the process is the same except you would use `getContainer` instead of `createContainer`:
+
+```typescript
+const containerSchema: ContainerSchema = {
+    initialObjects: {
+        signalManager: SignalManager,
+    },
+};
+
+const { container, services } =  await client.getContainer(id, containerSchema);
+
+const signalManager = container.initialObjects.signalManager as SignalManager
+```
+
+
+To dynamically create `SignalManager` instances it is the same process as with DDSes as well. You add the `SignalManager` type to `dynamicObjectTypes` in the container schema and then use the `create` function on the container:
+
+```typescript
+const containerSchema: ContainerSchema = {
+    /*...*/
+    dynamicObjectTypes: [ SignalManager ]
+};
+
+const { container, services } =  await client.getContainer(id, containerSchema);
+
+const newSignalManager = await container.create(SignalManager) //Creates a new SignalManager instance
+```
 
 
 
