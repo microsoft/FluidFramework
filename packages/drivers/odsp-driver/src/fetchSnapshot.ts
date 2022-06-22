@@ -448,7 +448,7 @@ export async function downloadSnapshot(
     snapshotFormatFetchType?: SnapshotFormatSupportType,
     controller?: AbortController,
     epochTracker?: EpochTracker,
-    callReason?: string,
+    scenarioName?: string,
 ): Promise<ISnapshotRequestAndResponseOptions> {
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
@@ -483,7 +483,7 @@ export async function downloadSnapshot(
             headers.accept = "application/json";
     }
 
-    const response = await (epochTracker?.fetch(url, fetchOptions, "treesLatest", true, callReason) ??
+    const response = await (epochTracker?.fetch(url, fetchOptions, "treesLatest", true, scenarioName) ??
         fetchHelper(url, fetchOptions));
 
     let finalSnapshotContents: IOdspResponse<ISnapshotContents>;

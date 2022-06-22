@@ -33,12 +33,12 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 
     constructor(protected readonly internalStorageService: IDocumentStorageService) { }
 
-    public async getSnapshotTree(version?: IVersion, callReason?: string): Promise<ISnapshotTree | null> {
-        return this.internalStorageService.getSnapshotTree(version, callReason);
+    public async getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null> {
+        return this.internalStorageService.getSnapshotTree(version, scenarioName);
     }
 
-    public async getVersions(versionId: string | null, count: number, callReason?: string): Promise<IVersion[]> {
-        return this.internalStorageService.getVersions(versionId, count, callReason);
+    public async getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]> {
+        return this.internalStorageService.getVersions(versionId, count, scenarioName);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
