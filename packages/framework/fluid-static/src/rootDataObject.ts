@@ -21,10 +21,19 @@ import {
 } from "./types";
 import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
 
+/**
+ * TODO
+ */
 export interface RootDataObjectProps {
+    /**
+     * TODO
+     */
     initialObjects: LoadableObjectClassRecord;
 }
 
+/**
+ * TODO
+ */
 export class RootDataObject extends DataObject<{ InitialState: RootDataObjectProps; }> {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
@@ -37,6 +46,9 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         return dir;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/aqueduct#PureDataObject.hasInitialized}
+     */
     protected async initializingFirstTime(props: RootDataObjectProps) {
         this.root.createSubDirectory(this.initialObjectsDirKey);
 
@@ -53,6 +65,9 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         await Promise.all(initialObjectsP);
     }
 
+    /**
+     * {@inheritDoc @fluidframework/aqueduct#PureDataObject.hasInitialized}
+     */
     protected async hasInitialized() {
         // We will always load the initial objects so they are available to the developer
         const loadInitialObjectsP: Promise<void>[] = [];
@@ -67,6 +82,9 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         await Promise.all(loadInitialObjectsP);
     }
 
+    /**
+     * TODO
+     */
     public get initialObjects(): LoadableObjectRecord {
         if (Object.keys(this._initialObjects).length === 0) {
             throw new Error("Initial Objects were not correctly initialized");
@@ -74,6 +92,10 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         return this._initialObjects;
     }
 
+    /**
+     * TODO
+     * @param objectClass - TODO
+     */
     public async create<T extends IFluidLoadable>(
         objectClass: LoadableObjectClass<T>,
     ): Promise<T> {
@@ -104,12 +126,16 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
 const rootDataStoreId = "rootDOId";
 
 /**
- * The DOProviderContainerRuntimeFactory is container code that provides a single RootDataObject.  This data object is
+ * Container code that provides a single {@link RootDataObject}.  This data object is
  * dynamically customized (registry and initial objects) based on the schema provided to the container runtime factory.
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-    private readonly rootDataObjectFactory; // type is DataObjectFactory
+    private readonly rootDataObjectFactory: DataObjectFactory<RootDataObject, {
+        InitialState: RootDataObjectProps;
+    }>;
+
     private readonly initialObjects: LoadableObjectClassRecord;
+
     constructor(schema: ContainerSchema) {
         const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
         const rootDataObjectFactory =
@@ -125,6 +151,9 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
         this.initialObjects = schema.initialObjects;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/aqueduct#BaseContainerRuntimeFactory.containerInitializingFirstTime}
+     */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         // The first time we create the container we create the RootDataObject
         await this.rootDataObjectFactory.createRootInstance(
