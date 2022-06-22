@@ -1459,15 +1459,22 @@ export class MergeTree {
         if (!segment.localRefs || segment.localRefs.empty) {
             return;
         }
+        const refsToSlide: ReferencePosition[] = [];
         for (const lref of segment.localRefs) {
-            if (!refTypeIncludesFlag(lref, ReferenceType.StayOnRemove | ReferenceType.SlideOnRemove)) {
+            if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
+                continue;
+            } if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                if (!pending) {
+                    refsToSlide.push(lref);
+                }
+            } else {
                 segment.localRefs.removeLocalRef(lref);
             }
         }
         // Rethink implementation of keeping and sliding refs once other reference
         // changes are complete. This works but is fragile and possibly slow.
-        if (!pending && segment.localRefs.empty === false) {
-            this.slideReferences(segment, segment.localRefs);
+        if (!pending) {
+            this.slideReferences(segment, refsToSlide);
         }
     }
 
@@ -2470,7 +2477,7 @@ export class MergeTree {
                 });
         }
         const pending = this.collabWindow.collaborating && clientId === this.collabWindow.clientId;
-        // these segments are newly removed
+        // these events are newly removed
         // so we slide after eventing incase the consumer wants to make references
         // changes at remove time, like add a ref to track undo redo.
         removedSegments.forEach(
