@@ -65,6 +65,38 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 }
 
 // @public @deprecated
+export class SharedNumberSequence extends SharedSequence<number> {
+    // @deprecated
+    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    // @deprecated
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedNumberSequence;
+    // @deprecated
+    static getFactory(): SharedNumberSequenceFactory;
+    // @deprecated (undocumented)
+    getRange(start: number, end?: number): number[];
+    // (undocumented)
+    id: string;
+}
+
+// @public @deprecated (undocumented)
+export class SharedNumberSequenceFactory implements IChannelFactory {
+    // @deprecated (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // @deprecated (undocumented)
+    get attributes(): IChannelAttributes;
+    // @deprecated (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
+    // @deprecated (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
+    // @deprecated (undocumented)
+    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number>;
+    // @deprecated (undocumented)
+    static Type: string;
+    // @deprecated (undocumented)
+    get type(): string;
+}
+
+// @public @deprecated
 export class SharedObjectSequence<T> extends SharedSequence<T> {
     // @deprecated
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);

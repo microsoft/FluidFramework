@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./sequenceFactory";
 export * from "./sharedIntervalCollection";
+export * from "./sharedNumberSequence";
 export * from "./sharedObjectSequence";

@@ -81,6 +81,14 @@
       "RemovedClassDeclaration_SharedObjectSequenceFactory": {
         "backCompat": false,
         "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedNumberSequence": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedNumberSequenceFactory": {
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }

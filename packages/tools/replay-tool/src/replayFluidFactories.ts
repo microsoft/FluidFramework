@@ -28,12 +28,12 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import {
-    SharedNumberSequence,
     SharedString,
     SparseMatrix,
 } from "@fluidframework/sequence";
 import {
     SharedIntervalCollection,
+    SharedNumberSequence,
     SharedObjectSequence,
 } from "@fluid-experimental/deprecated";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";

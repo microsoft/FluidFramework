@@ -62,6 +62,7 @@
     "@fluidframework/request-handler": "^1.1.0",
     "@fluidframework/runtime-definitions": "^1.1.0",
     "@fluidframework/sequence": "^1.1.0",
+    "@fluid-experimental/deprecated": "^1.1.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
