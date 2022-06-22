@@ -61,7 +61,7 @@ enum RuntimeMessage {
  * "alias"
  * "op"
  */
-export function isLegacyRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
         return true;
     }

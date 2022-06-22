@@ -225,9 +225,6 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)
-export function isLegacyRuntimeMessage(message: ISequencedDocumentMessage): boolean;
-
-// @public (undocumented)
 export function isOnline(): OnlineStatus;
 
 // @public (undocumented)
@@ -237,6 +234,9 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentM
 export interface ISummaryTreeAssemblerProps {
     unreferenced?: true;
 }
+
+// @public (undocumented)
+export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;

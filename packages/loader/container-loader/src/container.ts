@@ -51,7 +51,7 @@ import {
     runWithRetry,
     isFluidResolvedUrl,
     isRuntimeMessage,
-    isLegacyRuntimeMessage,
+    isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
     IProtocolHandler,
@@ -1688,9 +1688,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
         }
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
+            this.mc.logger.sendTelemetryEvent(
+                { eventName: "UnpackedRuntimeMessage", type: message.type });
+        }
         // Forward non system messages to the loaded runtime for processing
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (isRuntimeMessage(message) || isLegacyRuntimeMessage(message)) {
+        if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
             this.context.process(message, local, undefined);
         }
 
