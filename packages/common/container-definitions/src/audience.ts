@@ -18,7 +18,9 @@ export interface IAudience extends EventEmitter {
      */
     on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
 
-    /** List all clients connected to the op stream, keyed off their clientId */
+    /**
+     * List all clients connected to the op stream, keyed off their clientId
+     */
     getMembers(): Map<string, IClient>;
 
     /**
