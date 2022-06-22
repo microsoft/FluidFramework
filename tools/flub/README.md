@@ -1,5 +1,4 @@
-oclif-hello-world
-=================
+# @fluid-internal/flub
 
 oclif example Hello World CLI
 
@@ -7,17 +6,18 @@ oclif example Hello World CLI
 [![Version](https://img.shields.io/npm/v/oclif-hello-world.svg)](https://npmjs.org/package/oclif-hello-world)
 
 <!-- toc -->
+* [@fluid-internal/flub](#fluid-internalflub)
 * [Usage](#usage)
 * [Commands](#commands)
 <!-- tocstop -->
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g flub
+$ npm install -g @fluid-internal/flub
 $ flub COMMAND
 running command...
 $ flub (--version)
-flub/0.0.0 linux-x64 node-v14.19.3
+@fluid-internal/flub/0.0.0 linux-x64 node-v14.19.3
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -61,7 +61,7 @@ EXAMPLES
   hello friend from oclif! (./src/commands/hello/index.ts)
 ```
 
-_See code: [dist/commands/build/index.ts](https://github.com/microsoft/hello-world/blob/v0.0.0/dist/commands/build/index.ts)_
+_See code: [dist/commands/build/index.ts](https://github.com/microsoft/FluidFramework/blob/v0.0.0/dist/commands/build/index.ts)_
 
 ## `flub build world`
 
@@ -329,3 +329,9 @@ DESCRIPTION
   Update installed plugins.
 ```
 <!-- commandsstop -->
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

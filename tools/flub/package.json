@@ -1,21 +1,39 @@
 {
-  "name": "flub",
+  "name": "@fluid-internal/flub",
   "version": "0.0.0",
+  "private": true,
   "description": "oclif example Hello World CLI",
-  "author": "Tyler Butler @tylerbutler",
+  "keywords": [
+    "oclif"
+  ],
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "tools/flub"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "flub": "./bin/run"
   },
-  "homepage": "https://github.com/microsoft/hello-world",
-  "license": "MIT",
-  "main": "dist/index.js",
-  "repository": "microsoft/hello-world",
   "files": [
     "/bin",
     "/dist",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
+  "scripts": {
+    "build": "shx rm -rf dist && tsc -b",
+    "lint": "eslint . --ext .ts --config .eslintrc",
+    "prepack": "npm run build && oclif manifest && oclif readme",
+    "postpack": "shx rm -f oclif.manifest.json",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "posttest": "npm run lint",
+    "version": "oclif readme && git add README.md"
+  },
   "dependencies": {
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
@@ -27,16 +45,25 @@
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.9.4",
     "chai": "^4",
-    "eslint": "^7.32.0",
+    "eslint": "~8.6.0",
     "eslint-config-oclif": "^4",
     "eslint-config-oclif-typescript": "^1.0.2",
+    "eslint-config-prettier": "~8.5.0",
+    "eslint-plugin-eslint-comments": "~3.2.0",
+    "eslint-plugin-import": "~2.25.4",
+    "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0",
     "globby": "^11",
     "mocha": "^9",
     "oclif": "^3",
+    "prettier": "~2.6.2",
     "shx": "^0.3.3",
     "ts-node": "^10.2.1",
     "tslib": "^2.3.1",
     "typescript": "^4.4.3"
+  },
+  "engines": {
+    "node": ">=12.0.0"
   },
   "oclif": {
     "bin": "flub",
@@ -52,22 +79,5 @@
         "description": "Say hello to the world and others"
       }
     }
-  },
-  "scripts": {
-    "build": "shx rm -rf dist && tsc -b",
-    "lint": "eslint . --ext .ts --config .eslintrc",
-    "postpack": "shx rm -f oclif.manifest.json",
-    "posttest": "yarn lint",
-    "prepack": "npm run build && oclif manifest && oclif readme",
-    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
-    "version": "oclif readme && git add README.md"
-  },
-  "engines": {
-    "node": ">=12.0.0"
-  },
-  "bugs": "https://github.com/microsoft/hello-world/issues",
-  "keywords": [
-    "oclif"
-  ],
-  "types": "dist/index.d.ts"
+  }
 }
