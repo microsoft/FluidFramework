@@ -15,9 +15,9 @@ describe("Data Store Registry Creation Tests", () => {
 
     it("Validate duplicate name entries", () => {
         try {
-            const fluidDataStoreRegistry = new FluidDataStoreRegistry(entries as NamedFluidDataStoreRegistryEntries);
+            new FluidDataStoreRegistry(entries as NamedFluidDataStoreRegistryEntries);
+            assert.fail();
         } catch (error: any) {
-            // success = false;
             assert.strictEqual(error.message, "Duplicate entry names exist");
         }
     });
