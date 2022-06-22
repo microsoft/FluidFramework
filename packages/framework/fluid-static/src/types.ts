@@ -83,12 +83,14 @@ export interface ContainerSchema {
 
 /**
  * Events that trigger when the roster of members in the Fluid session change.
- * Only changes that would be reflected in the returned map of IServiceAudience's getMembers method
- * will emit events.
+ * Only changes that would be reflected in the returned map of {@link IServiceAudience}'s
+ * {@link IServiceAudience.getMembers} method will emit events.
+ *
+ * @remarks
  *
  * ### "membersChanged"
  *
- * The membersChanged event is emitted when a member is either added or removed.
+ * The "membersChanged" event is emitted when a member is either added or removed.
  *
  * #### Listener signature
  *
@@ -98,7 +100,7 @@ export interface ContainerSchema {
  *
  * ### "memberAdded"
  *
- * The memberAdded event is emitted when a member joins the audience.
+ * The "memberAdded" event is emitted when a member joins the audience.
  *
  * #### Listener signature
  *
@@ -111,7 +113,7 @@ export interface ContainerSchema {
  *
  * ### "memberRemoved"
  *
- * The memberRemoved event is emitted when a member leaves the audience.
+ * The "memberRemoved" event is emitted when a member leaves the audience.
  *
  * #### Listener signature
  *
