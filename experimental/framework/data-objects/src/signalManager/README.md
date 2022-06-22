@@ -59,8 +59,14 @@ const newSignalManager = await container.create(SignalManager) //Creates a new S
 
 
 ### API
-_TODO_
+`SignalManager` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
+- `submitSignal(signalName: string, payload?: Jsonable)` - Sends a signal with a payload to its connected listeners
+- `onSignal(signalName: string, listener: SignalListener)` - Adds a listener for the specifies signal. Same behavior as EventEmitter's `on` method.
+- `offSignal(signalName: string, listener: SignalListener | ((message: any) => void))` - Removes a listener for the specified signal. Same behavior as EventEmitter's `off` method.
+
+
 
 
 ### Common Patterns
+#### Signal Request
 _TODO_
