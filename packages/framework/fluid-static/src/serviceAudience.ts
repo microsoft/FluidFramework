@@ -17,7 +17,6 @@ import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 export abstract class ServiceAudience<M extends IMember = IMember>
   extends TypedEventEmitter<IServiceAudienceEvents<M>>
   implements IServiceAudience<M> {
-
   /**
    * TODO
    */
