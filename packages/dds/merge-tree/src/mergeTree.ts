@@ -1427,7 +1427,7 @@ export class MergeTree {
      * Otherwise eventual consistency is not guaranteed.
      * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
      */
-    private slideReferences(segment: ISegment, refsToSlide: LocalReferencePosition[]) {
+    private slideReferences(segment: ISegment, refsToSlide: Iterable<LocalReferencePosition>) {
         assert(
             isRemovedAndAcked(segment),
             0x2f1 /* slideReferences from a segment which has not been removed and acked */);
@@ -1460,27 +1460,21 @@ export class MergeTree {
             return;
         }
         const refsToSlide: ReferencePosition[] = [];
-        const refsToStay: ReferencePosition[] = [];
         for (const lref of segment.localRefs) {
             if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
-                refsToStay.push(lref);
-            } else if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
-                if (pending) {
-                    refsToStay.push(lref);
-                } else {
+                continue;
+            } if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                if (!pending) {
                     refsToSlide.push(lref);
                 }
+            } else {
+                segment.localRefs.removeLocalRef(lref);
             }
         }
         // Rethink implementation of keeping and sliding refs once other reference
         // changes are complete. This works but is fragile and possibly slow.
         if (!pending) {
             this.slideReferences(segment, refsToSlide);
-        }
-        segment.localRefs.clear();
-        for (const lref of refsToStay) {
-            assertLocalReferences(lref);
-            segment.localRefs.addLocalRef(lref, lref.getOffset());
         }
     }
 
@@ -2420,7 +2414,7 @@ export class MergeTree {
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: SegmentGroup;
         const removedSegments: IMergeTreeSegmentDelta[] = [];
-        const segmentsWithRefs: ISegment[] = [];
+        const localOverlapWithRefs: ISegment[] = [];
         const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
         const markRemoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
             const existingRemovalInfo = toRemovalInfo(segment);
@@ -2434,6 +2428,9 @@ export class MergeTree {
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
                     segment.localRemovedSeq = undefined;
+                    if (segment.localRefs?.empty === false) {
+                        localOverlapWithRefs.push(segment);
+                    }
                 } else {
                     // Do not replace earlier sequence number for remove
                     existingRemovalInfo.removedClientIds.push(clientId);
@@ -2444,9 +2441,6 @@ export class MergeTree {
                 segment.localRemovedSeq = localSeq;
 
                 removedSegments.push({ segment });
-            }
-            if (segment.localRefs && !segment.localRefs.empty) {
-                segmentsWithRefs.push(segment);
             }
 
             // Save segment so can assign removed sequence number when acked by server
@@ -2470,11 +2464,9 @@ export class MergeTree {
             return true;
         };
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
-        const pending = this.collabWindow.collaborating && clientId === this.collabWindow.clientId;
-        for (const segment of segmentsWithRefs) {
-            this.updateSegmentRefsAfterMarkRemoved(segment, pending);
-        }
-
+        // these segments are already viewed as being removed locally and are not event-ed
+        // so can slide immediately
+        localOverlapWithRefs.forEach((s) => this.slideReferences(s, s.localRefs!));
         // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback && removedSegments.length > 0) {
             this.mergeTreeDeltaCallback(
@@ -2484,6 +2476,13 @@ export class MergeTree {
                     deltaSegments: removedSegments,
                 });
         }
+        const pending = this.collabWindow.collaborating && clientId === this.collabWindow.clientId;
+        // these events are newly removed
+        // so we slide after eventing in case the consumer wants to make reference
+        // changes at remove time, like add a ref to track undo redo.
+        removedSegments.forEach(
+            (rSeg) => this.updateSegmentRefsAfterMarkRemoved(rSeg.segment, pending));
+
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
