@@ -108,7 +108,7 @@ function setPackageGroupIncrement(
     groups: PackageGroup[] | undefined,
     groupBreaks: Map<string, BreakingIncrement>,
 ): string | undefined {
-    let pkgGroupName = groups ? groupForPackage(groups, pkgDir) : undefined;
+    const pkgGroupName = groups ? groupForPackage(groups, pkgDir) : undefined;
     if (pkgGroupName !== undefined) {
         groupBreaks.set(
             pkgGroupName,
@@ -155,7 +155,7 @@ export async function validateRepo(options?: IValidationOptions): Promise<RepoVa
                 if (packageData.oldVersions.length > 0) {
                     log(`${pkgName}, ${buildPkg.level}`);
 
-                    let { increment, brokenTypes} = await validatePackage(packageData, buildPkg.pkg.directory, allBrokenTypes);
+                    const { increment, brokenTypes } = await validatePackage(packageData, buildPkg.pkg.directory, allBrokenTypes);
 
                     brokenTypes.forEach((v, k) => allBrokenTypes.set(k, v));
 

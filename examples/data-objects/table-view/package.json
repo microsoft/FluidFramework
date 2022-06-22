@@ -35,6 +35,7 @@
     "start:r11s": "webpack serve --config webpack.config.js --env mode=r11s",
     "start:spo": "webpack serve --config webpack.config.js --env mode=spo",
     "start:spo-df": "webpack serve --config webpack.config.js --env mode=spo-df",
+    "start:tinylicious": "webpack serve --config webpack.config.js --env mode=tinylicious",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
@@ -42,6 +43,7 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
+    "@fluid-example/example-utils": "^1.1.0",
     "@fluid-example/table-document": "^1.1.0",
     "@fluidframework/aqueduct": "^1.1.0",
     "@fluidframework/common-definitions": "^0.20.1",
@@ -50,17 +52,18 @@
     "@fluidframework/matrix": "^1.1.0",
     "@fluidframework/runtime-utils": "^1.1.0",
     "@fluidframework/sequence": "^1.1.0",
-    "@fluidframework/view-interfaces": "^1.1.0",
     "@tiny-calc/micro": "0.0.0-alpha.5",
+    "react": "^16.10.2",
     "source-map-loader": "^2.0.0",
     "url-loader": "^2.1.0"
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^1.1.0",
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
+    "@types/react": "^16.9.15",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "eslint": "~8.6.0",

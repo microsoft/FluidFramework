@@ -7,7 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable,
+    IDisposable, ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -609,12 +609,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
-                logConnectionIssue: (eventName: string) => {
+                logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
+                        ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });
                 },
                 connectionStateChanged: () => {
@@ -767,7 +768,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
         assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
-        assert(this._protocolHandler.attributes.term !== undefined, "Must have a valid protocol handler instance");
+        assert(this._protocolHandler.attributes.term !== undefined,
+            0x30b /* Must have a valid protocol handler instance */);
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -1708,8 +1710,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                             0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
                         this.submitMessage(type, contents);
                     },
-                    this.serviceConfiguration?.noopTimeFrequency,
-                    this.serviceConfiguration?.noopCountFrequency,
+                    this.serviceConfiguration.noopTimeFrequency,
+                    this.serviceConfiguration.noopCountFrequency,
                 );
             }
             this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
