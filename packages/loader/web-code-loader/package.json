@@ -38,7 +38,7 @@
     "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/web-code-loader-previous": "npm:@fluidframework/web-code-loader@^1.0.0",

@@ -187,9 +187,12 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     function interval(state: ClientOpState): { collectionName: string; id: string; } {
         const collectionName = nonEmptyIntervalCollection(state);
         const intervals = Array.from(state.sharedString.getIntervalCollection(collectionName));
+        const id = state.random.pick(intervals)?.getIntervalId();
+        assert(id);
+
         return {
+            id,
             collectionName,
-            id: state.random.pick(intervals).getIntervalId(),
         };
     }
 
@@ -247,12 +250,12 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 
     function changeConnectionState(state: ClientOpState): ChangeConnectionState {
         const stringId = state.sharedString.id;
-        const { containerRuntime } = state.clients.find((c) => c.sharedString.id === stringId);
+        const { containerRuntime } = state.clients.find((c) => c.sharedString.id === stringId) ?? {};
         return {
             type: "changeConnectionState",
             stringId,
             // No-ops aren't interesting; always make this flip the connection state.
-            connected: containerRuntime.connected ? false : true,
+            connected: containerRuntime?.connected ? false : true,
         };
     }
 
@@ -312,7 +315,8 @@ interface LoggingInfo {
 
 function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
     for (const id of loggingInfo.clientIds) {
-        const { sharedString } = state.clients.find((s) => s.sharedString.id === id);
+        const { sharedString } = state.clients.find((s) => s.sharedString.id === id) ?? {};
+        assert(sharedString);
         const labels = sharedString.getIntervalCollectionLabels();
         const interval = Array.from(labels)
             .map((label) =>
@@ -371,18 +375,22 @@ function assertConsistent(clients: Client[]): void {
                 ` at collection ${firstLabels[i]}`,
             );
             for (const interval of intervals1) {
-                const otherInterval = collection2.getIntervalById(interval.getIntervalId());
+                assert(interval);
+                const intervalId = interval.getIntervalId();
+                assert(intervalId);
+                const otherInterval = collection2.getIntervalById(intervalId);
+                assert(otherInterval);
                 const firstStart = first.localRefToPos(interval.start);
                 const otherStart = other.localRefToPos(otherInterval.start);
                 assert.equal(firstStart, otherStart,
-                    `Startpoints of interval ${interval.getIntervalId()} different:\n` +
+                    `Startpoints of interval ${intervalId} different:\n` +
                     `\tfull text:${first.getText()}\n` +
                     `\tclient ${first.id} char:${first.getText(firstStart, firstStart + 1)}\n` +
                     `\tclient ${other.id} char:${other.getText(otherStart, otherStart + 1)}`);
                 const firstEnd = first.localRefToPos(interval.end);
                 const otherEnd = other.localRefToPos(otherInterval.end);
                 assert.equal(firstEnd, otherEnd,
-                    `Endpoints of interval ${interval.getIntervalId()} different:\n` +
+                    `Endpoints of interval ${intervalId} different:\n` +
                     `\tfull text:${first.getText()}\n` +
                     `\tclient ${first.id} char:${first.getText(firstEnd, firstEnd + 1)}\n` +
                     `\tclient ${other.id} char:${other.getText(otherEnd, otherEnd + 1)}`);
@@ -417,25 +425,30 @@ function runIntervalCollectionFuzz(
         generator,
         {
             addText: statefully(({ clients }, { stringId, index, content }) => {
-                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
+                assert(sharedString);
                 sharedString.insertText(index, content);
             }),
             removeRange: statefully(({ clients }, { stringId, start, end }) => {
-                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
+                assert(sharedString);
                 sharedString.removeRange(start, end);
             }),
             addInterval: statefully(({ clients }, { stringId, start, end, collectionName, id }) => {
-                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
+                assert(sharedString);
                 const collection = sharedString.getIntervalCollection(collectionName);
                 collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
             }),
             deleteInterval: statefully(({ clients }, { stringId, id, collectionName }) => {
-                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
+                assert(sharedString);
                 const collection = sharedString.getIntervalCollection(collectionName);
                 collection.removeIntervalById(id);
             }),
             changeInterval: statefully(({ clients }, { stringId, id, start, end, collectionName }) => {
-                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
+                assert(sharedString);
                 const collection = sharedString.getIntervalCollection(collectionName);
                 collection.change(id, start, end);
             }),
@@ -444,11 +457,13 @@ function runIntervalCollectionFuzz(
                 assertConsistent(clients);
             }),
             changeConnectionState: statefully(({ clients }, { stringId, connected }) => {
-                const { containerRuntime } = clients.find((c) => c.sharedString.id === stringId);
+                const { containerRuntime } = clients.find((c) => c.sharedString.id === stringId) ?? {};
+                assert(containerRuntime);
                 containerRuntime.connected = connected;
             }),
             changeProperties: statefully(({ clients }, { stringId, id, properties, collectionName }) => {
-                const { sharedString } = clients.find((c) => c.sharedString.id === stringId);
+                const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
+                assert(sharedString);
                 const collection = sharedString.getIntervalCollection(collectionName);
                 collection.changeProperties(id, { ...properties });
             }),
@@ -464,9 +479,7 @@ function getPath(seed: number): string {
     return path.join(directory, `${seed}.json`);
 }
 
-// Once known issues with SharedInterval are fixed, a small set of fuzz tests with reasonably-tuned parameters
-// should be enabled.
-describe.skip("IntervalCollection fuzz testing", () => {
+describe("IntervalCollection fuzz testing", () => {
     before(() => {
         if (!existsSync(directory)) {
             mkdirSync(directory);
@@ -533,7 +546,7 @@ describe.skip("IntervalCollection fuzz testing", () => {
     }
 
     for (let i = 0; i < testCount; i++) {
-        const generator = take(30, makeOperationGenerator({ validateInterval: 10 }));
+        const generator = take(100, makeOperationGenerator({ validateInterval: 10 }));
         runTests(i, generator);
     }
 
