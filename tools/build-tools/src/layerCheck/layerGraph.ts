@@ -16,7 +16,7 @@ interface ILayerInfo {
     dev?: true;
     dot?: false;
     dotSameRank?: true;
-};
+}
 
 interface ILayerGroupInfo {
     dot?: false;
@@ -27,7 +27,7 @@ interface ILayerGroupInfo {
 
 interface ILayerInfoFile {
     [key: string]: ILayerGroupInfo
-};
+}
 
 class BaseNode {
     constructor(public readonly name: string) { }
@@ -35,7 +35,7 @@ class BaseNode {
     public get dotName() {
         return this.name.replace(/-/g, "_").toLowerCase();
     }
-};
+}
 
 class LayerNode extends BaseNode {
     public packages = new Set<PackageNode>();
@@ -121,7 +121,7 @@ class LayerNode extends BaseNode {
         }
         return false;
     }
-};
+}
 
 /** Used for traversing the layer dependency graph */
 type LayerDependencyNode = { node: LayerNode, orderedChildren: LayerNode[] };
@@ -166,7 +166,7 @@ class GroupNode extends BaseNode {
     ${subGraphs}
   }`;
     }
-};
+}
 
 class PackageNode extends BaseNode {
     private _pkg: Package | undefined;
@@ -245,7 +245,7 @@ class PackageNode extends BaseNode {
         }
         return this._level;
     }
-};
+}
 
 export class LayerGraph {
     private groupNodes: GroupNode[] = [];
@@ -525,4 +525,4 @@ ${lines.join(newline)}
         const layerInfoFile = require(info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json"));
         return new LayerGraph(root, layerInfoFile, packages);
     }
-};
+}

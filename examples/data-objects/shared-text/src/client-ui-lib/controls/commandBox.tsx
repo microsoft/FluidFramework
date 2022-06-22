@@ -120,19 +120,14 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
             dismissCommandBox();
         };
 
-        if (index === arrowedCommand) {
-            return (
+        return index === arrowedCommand ? (
                 <div key={ command.friendlyName } onClick={ clickCommand } style={{ backgroundColor: "#ccc" }}>
                     { command.friendlyName }
                 </div>
-            );
-        } else {
-            return <div key={ command.friendlyName } onClick={ clickCommand }>{ command.friendlyName }</div>;
-        }
+            ) : <div key={ command.friendlyName } onClick={ clickCommand }>{ command.friendlyName }</div>;
     });
 
-    if (show) {
-        return (
+    return show ? (
             <div style={{ position: "absolute", width: "100%", height: "100%" }}>
                 <div>
                     <input type="text" ref={ filterRef } onKeyDown={ keydownHandler } onKeyPress={ keypressHandler }/>
@@ -147,8 +142,5 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
                     : <></>
                 }
             </div>
-        );
-    } else {
-        return <></>;
-    }
+        ) : <></>;
 };

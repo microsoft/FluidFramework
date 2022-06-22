@@ -28,7 +28,7 @@ variables:
 - name: skipComponentGovernanceDetection
   value: true
 - name: testBuild
-  value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
+  value: ${{ lower(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}
 - name: shouldPublish
   value: ${{
     and(

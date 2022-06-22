@@ -53,7 +53,7 @@ export const handler: Handler = {
             const endOfCopyLinesRegex = /(COPY\s+server\/routerlicious\/packages\/.*\/package\*\.json\s+server\/routerlicious\/packages\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
             const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents)!;
             const localNewline = regexMatch.groups!.newline;
-            let insertIndex = regexMatch.index + regexMatch[0].length - localNewline.length;
+            const insertIndex = regexMatch.index + regexMatch[0].length - localNewline.length;
 
             dockerfileContents = dockerfileContents.substring(0, insertIndex)
                 + dockerfileCopyText + localNewline
