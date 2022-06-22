@@ -27,14 +27,12 @@ import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import {
-    SharedString,
-    SparseMatrix,
-} from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import {
     SharedIntervalCollection,
     SharedNumberSequence,
     SharedObjectSequence,
+    SparseMatrix,
 } from "@fluid-experimental/deprecated";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import { UnknownChannelFactory } from "./unknownChannel";

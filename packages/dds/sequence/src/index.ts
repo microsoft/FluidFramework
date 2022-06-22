@@ -26,4 +26,3 @@ export * from "./sequence";
 export * from "./sequenceFactory";
 export * from "./sequenceDeltaEvent";
 export * from "./sharedSequence";
-export * from "./sparsematrix";

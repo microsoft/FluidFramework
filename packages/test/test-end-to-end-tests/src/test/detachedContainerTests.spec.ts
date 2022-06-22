@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -33,6 +33,7 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { SparseMatrix } from "@fluid-experimental/deprecated";
 
 const detachedContainerRefSeqNumber = 0;
 

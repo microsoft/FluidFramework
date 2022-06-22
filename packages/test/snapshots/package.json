@@ -77,7 +77,8 @@
     "@fluidframework/replay-driver": "^1.1.0",
     "@fluidframework/sequence": "^1.1.0",
     "@fluidframework/server-local-server": "^0.1036.5000-0",
-    "@fluidframework/test-utils": "^1.1.0"
+    "@fluidframework/test-utils": "^1.1.0",
+    "@fluid-experimental/deprecated": "^1.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

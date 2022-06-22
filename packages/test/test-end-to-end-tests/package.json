@@ -106,6 +106,7 @@
     "@fluidframework/test-utils": "^1.1.0",
     "@fluidframework/test-version-utils": "^1.1.0",
     "@fluidframework/undo-redo": "^1.1.0",
+    "@fluid-experimental/deprecated": "^1.1.0",
     "cross-env": "^7.0.2",
     "mocha": "^10.0.0",
     "semver": "^7.3.4",

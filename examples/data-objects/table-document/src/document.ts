@@ -9,13 +9,15 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-    positionToRowCol,
-    rowColToPosition,
-    SparseMatrix,
     IntervalType,
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
-import { SharedNumberSequence } from "@fluid-experimental/deprecated";
+import {
+    positionToRowCol,
+    rowColToPosition,
+    SharedNumberSequence,
+    SparseMatrix,
+ } from "@fluid-experimental/deprecated";
 import { CellRange } from "./cellrange";
 import { TableDocumentType } from "./componentTypes";
 import { ConfigKey } from "./configKey";

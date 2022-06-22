@@ -89,6 +89,58 @@
       "RemovedClassDeclaration_SharedNumberSequenceFactory": {
         "backCompat": false,
         "forwardCompat": false
+      },
+      "RemovedTypeAliasDeclaration_MatrixSegment": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxCellPosition": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxCol": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxCols": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxRow": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxRows": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_PaddingSegment": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedFunctionDeclaration_positionToRowCol": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_rowColToPosition": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_RunSegment": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedTypeAliasDeclaration_SparseMatrixItem": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SparseMatrix": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SparseMatrixFactory": {
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }

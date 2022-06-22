@@ -20,8 +20,9 @@ import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils";
+import { SparseMatrix } from "@fluid-experimental/deprecated";
 
 // ContainerRuntime and Data Runtime API
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
