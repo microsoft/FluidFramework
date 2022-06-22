@@ -1,7 +1,7 @@
- /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+/*!
+* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+* Licensed under the MIT License.
+*/
 
 import { assert } from "@fluidframework/common-utils";
 import { DisposingDependee, ObservingDependent, recordDependency, SimpleDependee } from "../dependency-tracking";
@@ -73,15 +73,56 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         throw new Error("Method not implemented.");
     }
     allocateCursor(): ITreeSubscriptionCursor {
-        throw new Error("Method not implemented.");
+        return new Cursor(this);
     }
 
     tryGet(
         destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent | undefined,
-        ): TreeNavigationResult {
+    ): TreeNavigationResult {
         assert(destination instanceof ObjectAnchor, "ObjectForest must only be given its own Anchors");
+        assert(cursorToMove instanceof Cursor, "ObjectForest must only be given its own Cursor type");
+        assert(cursorToMove.forest === this, "ObjectForest must only be given its own Cursor");
         const node = destination.find(this, observer);
-        throw new Error("Method not implemented.");
+        if (node === undefined) {
+            return TreeNavigationResult.NotFound;
+        }
+        if (this.getRoot(this.rootField).length === 0) {
+            return TreeNavigationResult.NotFound;
+        }
+
+        // TODO: it unclear if this should be allowed to modify cursor in the case it does not find the actual result.
+        cursorToMove.set(this.rootField, 0);
+
+        // Epically slow solution: search entire tree for node:
+        if (this.search(node, cursorToMove) === TreeNavigationResult.NotFound) {
+            cursorToMove.clear();
+            return TreeNavigationResult.NotFound;
+        }
+        return TreeNavigationResult.Ok;
+    }
+
+    private search(destination: ObjectNode, cursor: Cursor): TreeNavigationResult {
+        if (cursor.getNode() === destination) {
+            return TreeNavigationResult.Ok;
+        }
+
+        // search children
+        for (const key of cursor.keys) {
+            cursor.down(key, 0);
+            if (this.search(destination, cursor) === TreeNavigationResult.Ok) {
+                return TreeNavigationResult.Ok;
+            }
+            cursor.up();
+        }
+
+        // search siblings
+        while (cursor.seek(1).result === TreeNavigationResult.Ok) {
+            if (this.search(destination, cursor) === TreeNavigationResult.Ok) {
+                return TreeNavigationResult.Ok;
+            }
+        }
+
+        return TreeNavigationResult.NotFound;
     }
 }
 
@@ -89,13 +130,17 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
  * Simple anchor that just points to a node object.
  * This results in pretty basic anchor rebase policy.
  */
- abstract class ObjectAnchor implements Anchor {
+abstract class ObjectAnchor implements Anchor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
     free(): void {
         assert(this.state === ITreeSubscriptionCursorState.Current, "Anchor must not be double freed");
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 
+    /**
+     * Gets object node for anchor.
+     * May return an object node thats no longer in the tree.
+     */
     abstract find(forest: ObjectForest, observer: ObservingDependent | undefined): ObjectNode | undefined;
 }
 
@@ -123,61 +168,126 @@ class NodeAnchor extends ObjectAnchor {
 class ObjectNode {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
     public readonly children: Map<FieldKey, ObjectField> = new Map();
-    public constructor() {}
+    public constructor(public type: TreeType, public value: Value = undefined) { }
     free(): void {
-        assert(this.state === ITreeSubscriptionCursorState.Current, "Anchor must not be double freed");
+        assert(this.state !== ITreeSubscriptionCursorState.Freed, "Anchor must not be double freed");
         this.state = ITreeSubscriptionCursorState.Freed;
     }
-
-    value: Value;
 }
 
 type ObjectField = ObjectNode[];
 
+/**
+ * TODO: track observations.
+ */
 class Cursor implements ITreeSubscriptionCursor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Cleared;
-    private readonly node?: ObjectNode;
-    public constructor(public readonly forest: ObjectForest) {}
+    public constructor(public readonly forest: ObjectForest) { }
 
     observer?: ObservingDependent | undefined;
 
+    // TODO: store stack here,
+    // then brute force on anchor restoration? (Add smarter anchor type later?)
+    private root: DetachedRange | undefined;
+
+    // Ancestors traversed to visit this node (including this node).
+    private readonly parentStack: ObjectNode[] = [];
+    // Keys traversed to visit this node
+    private readonly keyStack: FieldKey[] = [];
+    // Indices traversed to visit this node
+    private readonly indexStack: number[] = [];
+
+    private siblings?: ObjectNode[];
+
+    public clear(): void {
+        assert(this.state !== ITreeSubscriptionCursorState.Freed, "Cursor must not be freed");
+        this.root = undefined;
+        this.state = ITreeSubscriptionCursorState.Cleared;
+        this.parentStack.length = 0;
+        this.keyStack.length = 0;
+        this.indexStack.length = 0;
+        this.siblings = undefined;
+    }
+
+    public set(root: DetachedRange, index: number): void {
+        assert(this.state !== ITreeSubscriptionCursorState.Freed, "Cursor must not be freed");
+        this.clear();
+        this.root = root;
+        this.state = ITreeSubscriptionCursorState.Current;
+        this.indexStack.push(index);
+        this.siblings = this.forest.getRoot(root);
+    }
+
     getNode(): ObjectNode {
         assert(this.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
-        assert(this.node !== undefined, "Cursor must be current to be used");
-        return this.node;
+        assert(this.parentStack.length > 0, "Cursor must be current to be used");
+        return this.parentStack[this.parentStack.length - 1];
     }
 
     get value(): Value {
-        return this.getNode().value();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.getNode().value;
     }
 
     get type(): TreeType {
-        throw new Error("Method not implemented.");
+        return this.getNode().type;
     }
     get keys(): Iterable<FieldKey> {
-        throw new Error("Method not implemented.");
+        return this.getNode().children.keys();
     }
 
     fork(observer?: ObservingDependent | undefined): ITreeSubscriptionCursor {
         throw new Error("Method not implemented.");
     }
     free(): void {
-        throw new Error("Method not implemented.");
+        assert(this.state !== ITreeSubscriptionCursorState.Freed, "Cursor must not be double freed");
+        this.state = ITreeSubscriptionCursorState.Freed;
     }
     buildAnchor(): Anchor {
-        throw new Error("Method not implemented.");
+        return new NodeAnchor(this.getNode());
     }
     down(key: FieldKey, index: number): TreeNavigationResult {
-        throw new Error("Method not implemented.");
+        const siblings = (this.getNode().children.get(key) ?? []);
+        const child = siblings[index];
+        if (child !== undefined) {
+            this.parentStack.push(child);
+            this.indexStack.push(index);
+            this.keyStack.push(key);
+            this.siblings = siblings;
+            return TreeNavigationResult.Ok;
+        }
+        return TreeNavigationResult.NotFound;
     }
     seek(offset: number): { result: TreeNavigationResult; moved: number; } {
-        throw new Error("Method not implemented.");
+        assert(this.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
+        const index = offset + this.indexStack[this.indexStack.length - 1];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const child = this.siblings![index];
+        if (child !== undefined) {
+            this.indexStack[this.indexStack.length - 1] = index;
+            this.parentStack[this.parentStack.length - 1] = child;
+            return { result: TreeNavigationResult.Ok, moved: offset };
+        }
+        // Maybe truncate move, and move to end?
+        return { result: TreeNavigationResult.NotFound, moved: offset };
     }
     up(): TreeNavigationResult {
-        throw new Error("Method not implemented.");
+        assert(this.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
+        if (this.parentStack.length === 0) {
+            return TreeNavigationResult.NotFound;
+        }
+        this.parentStack.pop();
+        this.indexStack.pop();
+        this.keyStack.pop();
+        // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
+        this.siblings = this.parentStack.length === 0 ?
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.forest.getRoot(this.root!) :
+            this.parentStack[this.parentStack.length - 1].children.get(this.keyStack[this.keyStack.length - 1]);
+        return TreeNavigationResult.Ok;
     }
 
     length(key: FieldKey): number {
-        throw new Error("Method not implemented.");
+        return (this.getNode().children.get(key) ?? []).length;
     }
 }

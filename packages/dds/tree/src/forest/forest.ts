@@ -32,14 +32,14 @@ export interface TreeLocation {
     readonly index: number;
 }
 
-export interface ChildField {
-	readonly key: FieldKey;
+export interface RootRange {
+	readonly key: DetachedRange;
 }
 
 /**
  * Parent of a tree in a forest.
  */
-export type TreeParent = ChildField | DetachedRange;
+export type TreeParent = FieldKey | RootRange;
 
 /**
  * A root in the forest.

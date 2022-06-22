@@ -10,8 +10,9 @@ import {
     ITreeSubscriptionCursorState,
     DetachedRange,
     TreeParent,
-    ChildField,
+    RootRange,
 } from "../forest";
+import { FieldKey } from "../tree";
 import { ObjectForest } from "./objectForest";
 
 /**
@@ -27,7 +28,7 @@ import { ObjectForest } from "./objectForest";
  */
 class PathShared<TParent extends TreeParent> {
     // PathNode arrays are kept sorted by index for efficient search.
-    private readonly children: Map<TParent, PathNode[]> = new Map();
+    protected readonly children: Map<TParent, PathNode[]> = new Map();
     // public constructor() {}
 
     public detach(start: number, length: number, destination: DetachedRange): void {
@@ -40,8 +41,8 @@ class PathShared<TParent extends TreeParent> {
     }
 }
 
-class PathNode extends PathShared<ChildField> {
-    public constructor(public parent: PathShared<ChildField>, location: TreeLocation) {
+class PathNode extends PathShared<FieldKey> {
+    public constructor(public parent: PathShared<FieldKey>, location: TreeLocation) {
         super();
     }
 }
@@ -61,7 +62,7 @@ class PathNode extends PathShared<ChildField> {
  * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors
  * (and thus need parent paths).
  */
-class PathCollection extends PathShared<DetachedRange> {
+class PathCollection extends PathShared<RootRange> {
     public constructor(public forest: ObjectForest) {
         super();
     }
@@ -89,7 +90,7 @@ class PathCollection extends PathShared<DetachedRange> {
  * Since anchors need to work even for unloaded/pending parts of the tree,
  * these are kept separate from the actual tree data.
  */
- class ObjectAnchor implements Anchor {
+ export class ObjectAnchor implements Anchor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
     public constructor(public parent: ObjectAnchor | ObjectForest, index: number) {}
     free(): void {
