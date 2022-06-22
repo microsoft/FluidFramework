@@ -104,9 +104,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ) {
         super(
             logger,
-            async (fullTree: boolean, _trackState: boolean, telemetryContext?: ITelemetryContext) => {
-                return summarizeFn(fullTree, true /* trackState */, telemetryContext);
-            },
+            async (fullTree: boolean, _trackState: boolean, telemetryContext?: ITelemetryContext) =>
+                summarizeFn(fullTree, true /* trackState */, telemetryContext),
             config,
             changeSequenceNumber,
             latestSummary,
