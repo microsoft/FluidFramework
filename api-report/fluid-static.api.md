@@ -20,6 +20,9 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
+export type ConnectedEvent = "connected";
+
+// @public
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
@@ -29,6 +32,15 @@ export interface ContainerSchema {
 export type DataObjectClass<T extends IFluidLoadable> = {
     readonly factory: IFluidDataStoreFactory;
 } & LoadableObjectCtor<T>;
+
+// @public
+export type DirtyEvent = "dirty";
+
+// @public
+export type DisconnectedEvent = "disconnected";
+
+// @public
+export type DisposedEvent = "dispose";
 
 // @public
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
@@ -75,7 +87,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 // @public
 export interface IFluidContainerEvents extends IEvent {
     // (undocumented)
-    (event: "connected" | "dispose" | "disconnected" | "saved" | "dirty", listener: () => void): void;
+    (event: ConnectedEvent | DisposedEvent | DisconnectedEvent | SavedEvent | DirtyEvent, listener: () => void): void;
 }
 
 // @public
@@ -126,6 +138,9 @@ export class RootDataObject extends DataObject<{
 export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
+
+// @public
+export type SavedEvent = "saved";
 
 // @public
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {

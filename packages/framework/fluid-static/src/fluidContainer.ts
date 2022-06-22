@@ -10,61 +10,74 @@ import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
 /**
- * Events emitted from IFluidContainer.
+ * The "connected" event is emitted when the {@link IFluidContainer} completes connecting to the Fluid service.
  *
- * ### "connected"
- *
- * The connected event is emitted when the `IFluidContainer` completes connecting to the Fluid service.
- *
- * #### Listener signature
+ * Listener signature:
  *
  * ```typescript
  * () => void;
  * ```
+ */
+export type ConnectedEvent = "connected";
+
+/**
+ * The dispose event is emitted when the {@link IFluidContainer} is disposed, which permanently disables it.
  *
- * ### "dispose"
- *
- * The dispose event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
- *
- * #### Listener signature
- *
- * ```typescript
- * () => void;
- * ```
- *
- * ### "disconnected"
- *
- * The disconnected event is emitted when the `IFluidContainer` becomes disconnected from the Fluid service.
- *
- * #### Listener signature
+ * Listener signature:
  *
  * ```typescript
  * () => void;
  * ```
+ */
+export type DisposedEvent = "dispose";
+
+/**
+ * The disconnected event is emitted when the {@link IFluidContainer} becomes disconnected from the Fluid service.
  *
- * ### "saved"
+ * Listener signature:
  *
- * The saved event is emitted when the `IFluidContainer` has local changes acknowledged by the service.
+ * ```typescript
+ * () => void;
+ * ```
+ */
+export type DisconnectedEvent = "disconnected";
+
+/**
+ * The saved event is emitted when the {@link IFluidContainer} has local changes acknowledged by the service.
  *
- * #### Listener signature
+ * Listener signature:
  *
  * ```typescript
  * () => void
  * ```
  *
- * ### "dirty"
- *
- * The dirty event is emitted when the `IFluidContainer` has local changes that have not yet
+ */
+export type SavedEvent = "saved";
+
+/**
+ * The "dirty" event is emitted when the {@link IFluidContainer} has local changes that have not yet
  * been acknowledged by the service.
  *
- * #### Listener signature
+ * Listener signature:
  *
  * ```typescript
  * () => void
  * ```
  */
+export type DirtyEvent = "dirty";
+
+/**
+ * Events emitted from {@link IFluidContainer}.
+ *
+ * @see
+ * - {@link ConnectedEvent}
+ * - {@link DisposedEvent}
+ * - {@link DisconnectedEvent}
+ * - {@link SavedEvent}
+ * - {@link DirtyEvent}
+ */
 export interface IFluidContainerEvents extends IEvent {
-    (event: "connected" | "dispose" | "disconnected" | "saved" | "dirty", listener: () => void): void;
+    (event: ConnectedEvent | DisposedEvent | DisconnectedEvent | SavedEvent | DirtyEvent, listener: () => void): void;
 }
 
 /**
