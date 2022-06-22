@@ -311,7 +311,7 @@ export class LocalReferenceCollection {
      * @internal - this method should only be called by mergeTree
      */
     public createLocalRef(
-        offset: number,
+        offset: number | undefined,
         refType: ReferenceType,
         properties: PropertySet | undefined,
         client: Client): ReferencePosition {

@@ -82,7 +82,7 @@
   },
   "devDependencies": {
     "@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@^1.0.0",
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/build-tools": "^0.2.71273",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.1.0",

@@ -5,6 +5,7 @@
 ```ts
 
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
+import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IAnyDriverError } from '@fluidframework/driver-utils';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnect } from '@fluidframework/protocol-definitions';
@@ -19,10 +20,9 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import type { Socket } from 'socket.io-client';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
-export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
+export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
     protected constructor(socket: Socket, documentId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
@@ -76,7 +76,6 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     submitSignal(message: IDocumentMessage): void;
     get version(): string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

@@ -62,7 +62,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-driver-definitions-previous": "npm:@fluidframework/test-driver-definitions@^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",

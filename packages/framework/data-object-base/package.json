@@ -72,7 +72,7 @@
     "@fluidframework/shared-object-base": "^1.1.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@^1.0.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.1.0",
