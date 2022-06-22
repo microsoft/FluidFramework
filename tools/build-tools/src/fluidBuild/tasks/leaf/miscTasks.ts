@@ -148,10 +148,9 @@ export class GenVerTask extends LeafTask {
             const content = await readFileAsync(file, "utf8");
             const match = content.match(/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9.]+)";.*/m);
             return (match !== null && this.node.pkg.name === match[1] && this.node.pkg.version === match[2]);
-        // eslint-disable-next-line no-empty
         } catch {
+            return false;
         }
-        return false;
     }
 }
 
