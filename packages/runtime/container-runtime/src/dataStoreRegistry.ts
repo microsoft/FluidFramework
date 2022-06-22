@@ -15,6 +15,13 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         this.map = new Map(namedEntries);
+        let countOfUniqueNames = 0;
+        for (const _ of namedEntries) {
+            countOfUniqueNames++;
+        }
+        if (this.map.size !== countOfUniqueNames) {
+            throw new Error("Duplicate entry names exist");
+        }
     }
 
     public async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
