@@ -236,6 +236,24 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(map2.get(testKey), testValue);
     });
 
+    it("doesn't resend successful cell op", async function() {
+        const pendingOps = await getPendingCellOps(provider, true, (c, d, cell) => {
+            cell.set("something unimportant");
+        });
+
+        cell1.set(testValue);
+        await provider.ensureSynchronized();
+
+        // load with pending ops, which it should not resend because they were already sent successfully
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+
+        await provider.ensureSynchronized();
+        assert.strictEqual(cell1.get(), testValue);
+        assert.strictEqual(cell2.get(), testValue);
+    });
+
     it("resends a lot of ops", async function() {
         const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
