@@ -33,7 +33,7 @@ import { v4 as uuid } from "uuid";
  * It is **not** Node.js-compatible.
  *
  * @param tenantId - @see {@link @fluidframework/protocol-definitions#ITokenClaims.tenantId}
- * @param key - API key to authenticate user.
+ * @param key - API key to authenticate user. Must be {@link https://en.wikipedia.org/wiki/UTF-8 | UTF-8}-encoded.
  * @param scopes - @see {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
  * @param documentId - @see {@link @fluidframework/protocol-definitions#ITokenClaims.documentId}.
  * If not specified, an empty string will be used instead.
