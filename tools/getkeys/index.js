@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-const fs =  require("fs");
-const os =  require("os");
-const path =  require("path");
-const util =  require("util");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const util = require("util");
 const { exec } = require('child_process');
 const msRestAzure = require("ms-rest-azure");
 const keyVault = require("azure-keyvault");
@@ -45,7 +45,8 @@ async function saveEnv(env) {
     const shell = process.env.SHELL;
     const shellName = shell && path.basename(shell);
     switch (shellName) {
-        case "bash":
+        // Gitbash on windows will appear as bash.exe
+        case "bash" | "bash.exe":
             return exportToShellRc(
                 // '.bash_profile' is used for the "login shell" ('bash -l').
                 process.env.TERM_PROGRAM === "Apple_Terminal"
@@ -181,7 +182,7 @@ async function getClient() {
             console.log("\nNote: Default dev/test secrets overwritten with values from internal key vault.");
         } catch (e) { }
     }
-    
+
     console.log(`\nWriting '${path.join(os.homedir(), ".fluidtoolrc")}'.`);
     await rcTools.saveRC(rc);
     await saveEnv(rc.secrets);

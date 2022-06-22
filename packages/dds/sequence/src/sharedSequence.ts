@@ -149,7 +149,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
      */
     public getItems(start: number, end?: number): Serializable<T>[] {
         const items: Serializable<T>[] = [];
-        let firstSegment: ISegment;
+        let firstSegment: ISegment | undefined;
 
         // Return if the range is incorrect.
         if (end !== undefined && end <= start) {

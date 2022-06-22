@@ -35,4 +35,8 @@ export class SimpleDependee implements Dependee {
 			dependent.markInvalid();
 		}
 	}
+
+	public listDependents() {
+		return this.dependents;
+	}
 }
