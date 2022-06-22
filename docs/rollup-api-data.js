@@ -76,26 +76,5 @@ const stringReplacements = memberCombineInstructions.flatMap((instruction) => {
     return returnValue;
 });
 
-/**
- * Adds an array of strings to a set individually.
- *
- * @param {Set<string>} set
- * @param {string[]} add
- */
-const addToSet = (set, add) => {
-    for (item of add) {
-        set.add(item);
-    }
-}
-
-/** A Set containing all the packages that are needed to do the API rollup. */
-const allStagingPackages = new Set(websitePackages);
-for (const { package, sourceImports } of memberCombineInstructions) {
-    allStagingPackages.add(package);
-    addToSet(allStagingPackages, Array.from(sourceImports.keys()));
-}
-
-exports.allStagingPackages = Array.from(allStagingPackages);
 exports.memberCombineInstructions = memberCombineInstructions;
 exports.stringReplacements = stringReplacements;
-exports.websitePackages = websitePackages;
