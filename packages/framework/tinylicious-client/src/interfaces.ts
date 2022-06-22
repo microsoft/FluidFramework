@@ -82,6 +82,6 @@ export interface TinyliciousMember extends IMember {
 }
 
 /**
- * TODO: semantic docs
+ * Tinylicious-specific {@link @fluidframework/fluid-static#IServiceAudience} implementation.
  */
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
