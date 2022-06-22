@@ -328,6 +328,30 @@ use_old_InterfaceDeclaration_ICodeDetailsLoader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICodeLoader": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ICodeLoader():
+    TypeOnly<old.ICodeLoader>;
+declare function use_current_InterfaceDeclaration_ICodeLoader(
+    use: TypeOnly<current.ICodeLoader>);
+use_current_InterfaceDeclaration_ICodeLoader(
+    get_old_InterfaceDeclaration_ICodeLoader());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICodeLoader": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ICodeLoader():
+    TypeOnly<current.ICodeLoader>;
+declare function use_old_InterfaceDeclaration_ICodeLoader(
+    use: TypeOnly<old.ICodeLoader>);
+use_old_InterfaceDeclaration_ICodeLoader(
+    get_current_InterfaceDeclaration_ICodeLoader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConnectionDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConnectionDetails():
@@ -500,9 +524,9 @@ use_old_InterfaceDeclaration_IDeltaHandlerStrategy(
 * "InterfaceDeclaration_IDeltaManager": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaManager():
-    TypeOnly<old.IDeltaManager<any, any>>;
+    TypeOnly<old.IDeltaManager<any,any>>;
 declare function use_current_InterfaceDeclaration_IDeltaManager(
-    use: TypeOnly<current.IDeltaManager<any, any>>);
+    use: TypeOnly<current.IDeltaManager<any,any>>);
 use_current_InterfaceDeclaration_IDeltaManager(
     get_old_InterfaceDeclaration_IDeltaManager());
 
@@ -512,9 +536,9 @@ use_current_InterfaceDeclaration_IDeltaManager(
 * "InterfaceDeclaration_IDeltaManager": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDeltaManager():
-    TypeOnly<current.IDeltaManager<any, any>>;
+    TypeOnly<current.IDeltaManager<any,any>>;
 declare function use_old_InterfaceDeclaration_IDeltaManager(
-    use: TypeOnly<old.IDeltaManager<any, any>>);
+    use: TypeOnly<old.IDeltaManager<any,any>>);
 use_old_InterfaceDeclaration_IDeltaManager(
     get_current_InterfaceDeclaration_IDeltaManager());
 
