@@ -297,7 +297,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, mode, pendingLocalState, protocolDetails)
+                container.load(version, mode, pendingLocalState, protocolDetails?.protocolHandlerBuilder)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -336,7 +336,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             { eventName: "CreateDetached" },
             async (_event) => {
                 container._lifecycleState = "loading";
-                await container.createDetached(codeDetails, protocolDetails);
+                await container.createDetached(codeDetails, protocolDetails?.protocolHandlerBuilder);
                 return container;
             },
             { start: true, end: true, cancel: "generic" });
@@ -1108,7 +1108,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
         pendingLocalState?: IPendingContainerState,
-        protocolDetails?: IProtocolDetails,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
@@ -1186,7 +1186,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 attributes,
                 this.storageService,
                 snapshot,
-                protocolDetails?.protocolHandlerBuilder,
+                protocolHandlerBuilder,
             ) : await this.initializeProtocolState(
                 attributes,
                 {
@@ -1194,7 +1194,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     proposals: pendingLocalState.protocol.proposals,
                     values: pendingLocalState.protocol.values,
                 }, // pending IQuorumSnapshot
-                protocolDetails?.protocolHandlerBuilder,
+                protocolHandlerBuilder,
             );
 
         const codeDetails = this.getCodeDetailsFromQuorum();
@@ -1258,7 +1258,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         };
     }
 
-    private async createDetached(source: IFluidCodeDetails, protocolDetails?: IProtocolDetails) {
+    private async createDetached(source: IFluidCodeDetails, protocolHandlerBuilder?: ProtocolHandlerBuilder) {
         const attributes: IDocumentAttributes = {
             sequenceNumber: detachedContainerRefSeqNumber,
             term: 1,
@@ -1276,7 +1276,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 proposals: [],
                 values: qValues,
             }, // IQuorumSnapShot
-            protocolDetails?.protocolHandlerBuilder,
+            protocolHandlerBuilder,
         );
 
         // The load context - given we seeded the quorum - will be great
