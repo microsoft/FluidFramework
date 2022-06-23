@@ -1296,6 +1296,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 flush: this.flush.bind(this),
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
+                orderSequentially: this.orderSequentially.bind(this),
             },
             this.flushMode,
             pendingRuntimeState?.pending);
