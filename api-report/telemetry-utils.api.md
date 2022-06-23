@@ -246,8 +246,6 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 // @public
 export enum TelemetryDataTag {
     CodeArtifact = "CodeArtifact",
-    // @deprecated
-    PackageData = "PackageData",
     UserData = "UserData"
 }
 
