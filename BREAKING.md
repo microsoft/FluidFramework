@@ -21,6 +21,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
+- [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -35,6 +36,9 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
  - addLocalReference to createLocalReferencePosition
  - localRefToPos to localReferencePositionToPosition
  - removeLocalReference to removeLocalReferencePosition
+
+### Remove TelemetryDataTag.PackageData
+`TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
 
 # 1.0.0
 

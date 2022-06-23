@@ -38,8 +38,8 @@ import { IOdspCache } from "./odspCache";
 import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
-    ISnapshotContents,
 } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
 import { defaultCacheExpiryTimeoutMs, EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
@@ -275,7 +275,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 method: "POST",
                             },
                             "createBlob",
-                    ));
+                        ));
                     event.end({
                         blobId: res.content.id,
                         ...res.propsToLog,
@@ -437,7 +437,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 }
 
                                 return snapshotCachedEntry;
-                        });
+                            });
 
                     // Based on the concurrentSnapshotFetch policy:
                     // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
@@ -648,7 +648,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
         if (".protocol" in summary.tree && context.ackHandle !== undefined) {
             let retry = 0;
-            for (;;) {
+            for (; ;) {
                 const result = await this.flushCallback();
                 const seq = result.lastPersistedSequenceNumber;
                 if (seq !== undefined && seq >= context.referenceSequenceNumber) {

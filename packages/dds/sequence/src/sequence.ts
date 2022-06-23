@@ -352,7 +352,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
-    public removeLocalReferencePosition(lref: ReferencePosition) {
+    public removeLocalReferencePosition(lref: LocalReferencePosition) {
         return this.client.removeLocalReferencePosition(lref);
     }
 

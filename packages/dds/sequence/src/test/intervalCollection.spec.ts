@@ -12,6 +12,7 @@ import {
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
     MockStorage,
+    MockEmptyDeltaConnection,
 } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
@@ -54,7 +55,7 @@ describe("SharedString interval collections", () => {
     let dataStoreRuntime1: MockFluidDataStoreRuntime;
 
     beforeEach(() => {
-        dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+        dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
         sharedString = new SharedString(dataStoreRuntime1, "shared-string-1", SharedStringFactory.Attributes);
     });
 
@@ -76,7 +77,7 @@ describe("SharedString interval collections", () => {
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
-            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
@@ -386,7 +387,7 @@ describe("SharedString interval collections", () => {
 
         it("can slide intervals on create ack", () => {
             // Create and connect a third SharedString.
-            const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
+            const dataStoreRuntime3 = new MockFluidDataStoreRuntime({ clientId: "3" });
             const containerRuntime3 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
             const services3 = {
                 deltaConnection: containerRuntime3.createDeltaConnection(),
@@ -430,7 +431,7 @@ describe("SharedString interval collections", () => {
 
         it("can slide intervals on change ack", () => {
             // Create and connect a third SharedString.
-            const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
+            const dataStoreRuntime3 = new MockFluidDataStoreRuntime({ clientId: "3" });
             const containerRuntime3 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
             const services3 = {
                 deltaConnection: containerRuntime3.createDeltaConnection(),
@@ -704,6 +705,72 @@ describe("SharedString interval collections", () => {
                 { start: 2, end: 2 },
                 { start: 4, end: 4 },
             ]);
+        });
+
+        it("propagates delete op to second runtime", async () => {
+            containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+
+            // Connect the first SharedString.
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+            const services1: IChannelServices = {
+                deltaConnection: containerRuntime1.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            sharedString.initializeLocal();
+            sharedString.connect(services1);
+
+            // Create and connect a second SharedString.
+            const runtime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+            sharedString2 = new SharedString(runtime2, "shared-string-2", SharedStringFactory.Attributes);
+            const services2: IChannelServices = {
+                deltaConnection: containerRuntime2.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            sharedString2.initializeLocal();
+            sharedString2.connect(services2);
+
+            sharedString.insertText(0, "hello friend");
+            const collection1 = sharedString.getIntervalCollection("test");
+            const collection2 = sharedString2.getIntervalCollection("test");
+            containerRuntimeFactory.processAllMessages();
+
+            const interval = collection1.add(6, 8, IntervalType.SlideOnRemove); // the "fr" in "friend"
+
+            containerRuntimeFactory.processAllMessages();
+            collection1.removeIntervalById(interval.getIntervalId());
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString2, collection2, []);
+        });
+
+        it("can round trip intervals", async () => {
+            sharedString.insertText(0, "ABCDEF");
+            const collection1 = sharedString.getIntervalCollection("test");
+
+            const id = collection1.add(2, 2, IntervalType.SlideOnRemove).getIntervalId();
+            containerRuntimeFactory.processAllMessages();
+
+            const summaryTree = await sharedString.summarize();
+
+            const services: IChannelServices = {
+                deltaConnection: new MockEmptyDeltaConnection(),
+                objectStorage: MockStorage.createFromSummary(summaryTree.summary),
+            };
+
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const sharedString3 = new SharedString(
+                dataStoreRuntime2,
+                "shared-string-3",
+                SharedStringFactory.Attributes,
+            );
+
+            await sharedString3.load(services);
+            await sharedString3.loaded;
+
+            const collection2 = sharedString3.getIntervalCollection("test");
+
+            assertIntervalEquals(sharedString, collection1.getIntervalById(id), { start: 2, end: 2 });
+            assertIntervalEquals(sharedString3, collection2.getIntervalById(id), { start: 2, end: 2 });
         });
 
         describe("intervalCollection comparator consistency", () => {
@@ -1101,7 +1168,7 @@ describe("SharedString interval collections", () => {
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
-            const runtime2 = new MockFluidDataStoreRuntime();
+            const runtime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
             sharedString2 = new SharedString(runtime2, "shared-string-2", SharedStringFactory.Attributes);
             const services2: IChannelServices = {
