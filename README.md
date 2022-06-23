@@ -22,30 +22,39 @@ Have questions? Engage with other Fluid Framework users and developers in the [D
 
 The core code for both the Fluid client packages _and_ the reference ordering service is contained within this repo.
 
-The repo structure is somewhat unique because it contains two monorepos as well as several standalone packages. The
+The repo structure is somewhat unique because it contains five monorepos as well as several standalone packages. The
 monorepos are managed using [Lerna](https://lerna.js.org/) and are versioned separately from one another, but internally
 all packages in a monorepo are versioned together. Outside the monorepos there are plenty of packages which are
 versioned independently.
 
-Here's the breakdown of the repo:
+These monorepos (which also serve as "release groups") do not necessary align with package namespaces,
+and also don't necessary correspond to a single directory of this repo.
 
-* Fluid Framework Client Monorepo ([lerna.json](./lerna.json))
-  * [Packages](./packages)
-  * [Fluid Examples](./examples)
-* Azure-related Monorepo ([dir](./azure) | [lerna.json](azure/lerna.json)
-  * [Packages](./azure/packages)
-* Reference Fluid Ordering Service ("Routerlicious") Monorepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
-  * [Packages](./server/routerlicious/packages)
-* Common Packages
-  * [Common Definitions](./common/lib/common-definitions)
-  * [Common Utils](./common/lib/common-utils)
+Here's the list of Lerna managed release groups:
+
+* core (previously known as "Fluid Framework Client" or "Client") (Rooted in [./](./). Configured by [./lerna.json](./lerna.json))
+  * [./packages](./packages) (Published in the `@fluidframework/` namespace, but some in `@fluid-tools` and unpublished packages in `@fluid-internal/`)
+  * [./experimental](./experimental) (Published in the `@fluid-experimental/` namespace)
+  * [./examples](./examples) (Not published, live in the `@fluid-example/` namespace)
+* azure (Rooted in [./azure](./azure). Configured by [azure/lerna.json](azure/lerna.json))
+  * [Packages](./azure/packages) (Published in the `@fluidframework/` namespace)
+* Reference Fluid Ordering Service ("Routerlicious") (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/lerna.json](server/routerlicious/lerna.json))
+  * [Packages](./server/routerlicious/packages) (Published in the `@fluidframework/` namespace)
+* gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/lerna.json](./server/gitrest/lerna.json))
+  * [Packages](./server/gitrest/packages) (Published in the `@fluidframework/` namespace)
+* historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/lerna.json](./server/historian/lerna.json))
+  * [Packages](./server/historian/packages) (Published in the `@fluidframework/` namespace)
+
+Here's a list of other sets of other packages (each package within these groups is versioned independently,
+forming its own release group):
+
+* "Common" Packages: miscellaneous packages in the [./common](./common) directory and published under the `@fluidframework/` namespace. Most of these (but not all) have "common" in their package name.
+  Packages which are used by multiple other groups of packages (such as built tools, linter configs and protocol definitions) live here.
+* "Tools" Packages: miscellaneous packages in the [./tools](./tools) directory and published under a variety of namespaces.
+  Logically about the same as "Common", but most of the names include "tools" instead of "common".
 * Auxiliary Microservice Packages (supporting Routerlicious)
-  * [Server dir](./server) (excluding [Routerlicious](./server/routerlicious) itself)
-* Internal/Misc Packages
-  * [Build Common](./common/build/build-common)
-  * [ESlint Config](./common/build/eslint-config-fluid)
-  * [Docs](./docs)
-  * [Tools](./tools)
+  * [./server](./server) excluding routerlicious, gitrest and historian (Published in the `@fluidframework/` namespace)
+* [./docs](./docs): The code and content for <https://fluidframework.com>.
 
 Dependencies between packages in various layers of the system are enforced via a build step called
 [layer-check](./tools/build-tools/src/layerCheck). You can view the full list of packages and layers in
