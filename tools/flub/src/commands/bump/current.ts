@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as semver from "semver";
 import { Command } from "@oclif/core";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools/src/common/fluidUtils";
 import { GitRepo } from "@fluidframework/build-tools/src/bumpVersion/gitRepo";
@@ -23,23 +24,27 @@ export default class Current extends BaseBumpCommand {
     async run(): Promise<void> {
         const { args, flags } = await this.parse(Current);
 
+        this.log("got here");
+
         const resolvedRoot = await getResolvedFluidRoot();
         console.log(`Repo: ${resolvedRoot}`);
         const gitRepo = new GitRepo(resolvedRoot);
         const branch = await gitRepo.getCurrentBranchName();
         const context = new Context(gitRepo, "github.com/microsoft/FluidFramework", branch);
 
-        const { name, version, extra } = parseNameVersion(flags.package);
+        // const { name, version, extra } = parseNameVersion(flags.package);
+        // let semVersion: semver.SemVer | undefined;
 
-        if (version) {
-            if (typeof version !== "string") {
-                paramVersion = version;
-            } else {
-                fatal(`Invalid version ${version} for flag --version`);
-            }
-        }
+        // if (version) {
+        //     if (typeof version !== "string") {
+        //         semVersion = version;
+        //     } else {
+        //         this.error(`Invalid version ${version}`);
+        //     }
+        // }
 
+        const versionToShow = flags.releaseGroup ?? flags.package;
 
-        await showVersions(context, name, version);
+        await showVersions(context, versionToShow!);
     }
 }

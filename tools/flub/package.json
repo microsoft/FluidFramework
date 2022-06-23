@@ -42,13 +42,15 @@
     "@fluidframework/build-tools": "file:../build-tools",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
-    "@oclif/plugin-plugins": "^2.0.1"
+    "@oclif/plugin-plugins": "^2.0.1",
+    "semver": "^7.3.7"
   },
   "devDependencies": {
     "@oclif/test": "^2",
     "@types/chai": "^4",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.9.4",
+    "@types/semver": "^7.3.10",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "chai": "^4",
