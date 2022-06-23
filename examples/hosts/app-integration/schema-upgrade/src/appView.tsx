@@ -100,14 +100,13 @@ const ExternalDataSourceView: React.FC<IExternalDataSourceViewProps> = (props: I
 
 export interface IAppViewProps {
     inventoryList: IInventoryList;
+    containerKillBit: IContainerKillBit;
     // Normally there's no need to display the imported string data, this is for demo purposes only.
     importedStringData: string | undefined;
-    // Normally this is probably a Promise<void>.  Returns a string here for demo purposes only.
-    writeToExternalStorage: () => Promise<string>;
     proposeEndSession: () => void;
+    writeToExternalStorage: () => void;
     endSession: () => void;
     saveAndEndSession: () => void;
-    containerKillBit: IContainerKillBit;
     // End the collaboration session and create a new container using exported data.
     migrateContainer: () => void;
     externalDataSource: ExternalDataSource;
@@ -116,10 +115,10 @@ export interface IAppViewProps {
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     const {
         inventoryList,
-        importedStringData,
-        writeToExternalStorage,
         containerKillBit,
+        importedStringData,
         proposeEndSession,
+        writeToExternalStorage,
         endSession,
         saveAndEndSession,
         migrateContainer,
@@ -152,10 +151,6 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
         };
     }, [containerKillBit]);
 
-    const saveButtonClickHandler = () => {
-        writeToExternalStorage().catch(console.error);
-    };
-
     const disabled = sessionEnding || dead;
 
     return (
@@ -168,7 +163,7 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             <button onClick={ migrateContainer }>Migrate to new container</button>
             <br />
             <button onClick={ proposeEndSession }>1. Propose ending collaboration session</button>
-            <button onClick={ saveButtonClickHandler }>2. Save</button>
+            <button onClick={ writeToExternalStorage }>2. Write out to external data source</button>
             <button onClick={ endSession }>3. Actually end the collaboration session</button>
             <ExternalDataSourceView externalDataSource={ externalDataSource }/>
         </div>

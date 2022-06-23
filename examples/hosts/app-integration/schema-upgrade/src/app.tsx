@@ -124,9 +124,6 @@ async function start(): Promise<void> {
 
         const stringData = await extractStringData(inventoryList);
         await externalDataSource.writeData(stringData);
-
-        // Normally would be a void, we return the string here for demo purposes only.
-        return stringData;
     };
 
     const proposeEndSession = () => {
@@ -187,7 +184,7 @@ async function start(): Promise<void> {
         <AppView
             importedStringData={ fetchedData }
             inventoryList={ inventoryList }
-            writeToExternalStorage={ writeToExternalStorage }
+            writeToExternalStorage={ () => { writeToExternalStorage().catch(console.error); } }
             containerKillBit={ containerKillBit }
             proposeEndSession={ proposeEndSession }
             endSession={ endSession }
