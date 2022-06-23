@@ -91,7 +91,9 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
-    "broken": {}
+    "version": "2.0.0",
+    "broken": {
+      "ClassDeclaration_SharedSegmentSequenceRevertible": {"backCompat": false}
+    }
   }
 }

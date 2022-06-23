@@ -7,7 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable,
+    IDisposable, ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -609,12 +609,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
-                logConnectionIssue: (eventName: string) => {
+                logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
+                        ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });
                 },
                 connectionStateChanged: () => {

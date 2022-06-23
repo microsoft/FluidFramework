@@ -57,6 +57,7 @@
     "@fluidframework/routerlicious-driver": "^2.0.0",
     "@fluidframework/runtime-utils": "^2.0.0",
     "@fluidframework/sequence": "^2.0.0",
+    "@fluidframework/telemetry-utils": "^2.0.0",
     "@fluidframework/tinylicious-driver": "^2.0.0",
     "css-loader": "^1.0.0",
     "react": "^16.10.2",
