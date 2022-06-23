@@ -82,7 +82,73 @@ describe("ITreeCursor", () => {
         }
     });
 
+    describe("seek()", () => {
+        describe("with map-like node", () => {
+            const tests: [string, FieldKey][] = [
+                ["non-empty", "key" as const as FieldKey],
+                ["empty", EmptyKey],
+            ];
+
+            tests.forEach(([name, key]) => {
+                it(`permits offset of zero with ${name} map key`, () => {
+                    const cursor = new JsonCursor({ [key]: 0 });
+                    assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
+                    assert.equal(cursor.value, 0);
+                    assert.deepEqual(cursor.seek(0), { result: TreeNavigationResult.Ok, moved: 0 });
+                    assert.equal(cursor.value, 0);
+                });
+
+                it(`disallows non-zero offset with ${name} map key`, () => {
+                    const cursor = new JsonCursor({ [key]: 0 });
+                    assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
+                    assert.equal(cursor.value, 0);
+                    assert.deepEqual(cursor.seek(1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                    assert.equal(cursor.value, 0);
+                    assert.deepEqual(cursor.seek(-1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                    assert.equal(cursor.value, 0);
+                });
+            });
+        });
+
+        describe("with array-like node", () => {
+            it(`can seek forward`, () => {
+                const cursor = new JsonCursor([0, 1]);
+                assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
+                assert.equal(cursor.value, 0);
+                assert.deepEqual(cursor.seek(1), { result: TreeNavigationResult.Ok, moved: 1 });
+                assert.equal(cursor.value, 1);
+            });
+
+            it(`can seek backward`, () => {
+                const cursor = new JsonCursor([0, 1]);
+                assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
+                assert.equal(cursor.value, 1);
+                assert.deepEqual(cursor.seek(-1), { result: TreeNavigationResult.Ok, moved: -1 });
+                assert.equal(cursor.value, 0);
+            });
+
+            it(`can not seek past end of array`, () => {
+                const cursor = new JsonCursor([0, 1]);
+                assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
+                assert.equal(cursor.value, 1);
+                assert.deepEqual(cursor.seek(1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                assert.equal(cursor.value, 1);
+            });
+
+            it(`can not seek before beginning of array`, () => {
+                const cursor = new JsonCursor([0, 1]);
+                assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
+                assert.equal(cursor.value, 0);
+                assert.deepEqual(cursor.seek(-1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                assert.equal(cursor.value, 0);
+            });
+        });
+    });
+
     describe("TreeNavigationResult", () => {
+        const notFoundKey = "notFound" as const as FieldKey;
+        const foundKey = "found" as const as FieldKey;
+
         function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
             assert(0 <= index && index < cursor.length(key),
                 `.length() must include index of existing child '${key}[${index}]'.`);
@@ -100,26 +166,21 @@ describe("ITreeCursor", () => {
         }
 
         it("Missing key in map returns NotFound", () => {
-            const NotFoundKey = "notFound" as const as FieldKey;
-            const FoundKey = "found" as const as FieldKey;
-
-            const cursor = new JsonCursor({ [FoundKey]: true });
-            expectNotFound(cursor, NotFoundKey);
+            const cursor = new JsonCursor({ [foundKey]: true });
+            expectNotFound(cursor, notFoundKey);
 
             // A failed navigation attempt should leave the cursor in a valid state.  Verify
             // by subsequently moving to an existing key.
-            expectFound(cursor, FoundKey);
+            expectFound(cursor, foundKey);
         });
 
         it("Out of bounds map index returns NotFound", () => {
-            const FoundKey = "found" as const as FieldKey;
-
-            const cursor = new JsonCursor({ [FoundKey]: true });
-            expectNotFound(cursor, FoundKey, 1);
+            const cursor = new JsonCursor({ [foundKey]: true });
+            expectNotFound(cursor, foundKey, 1);
 
             // A failed navigation attempt should leave the cursor in a valid state.  Verify
             // by subsequently moving to an existing key.
-            expectFound(cursor, FoundKey);
+            expectFound(cursor, foundKey);
         });
 
         it("Empty array must not contain 0th item", () => {
