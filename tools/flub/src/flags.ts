@@ -3,6 +3,7 @@ import {
     MonoRepoKind,
     isMonoRepoKind,
     supportedMonoRepoValues,
+    sentenceCase,
 } from "@fluidframework/build-tools/src/common/monoRepo";
 
 // function getTeam(): Promise<string> {
@@ -21,7 +22,7 @@ export const releaseGroupFlag = Flags.build({
     options: [...supportedMonoRepoValues()]
         .map((s) => s.toString().toLowerCase())
         .filter(s => Boolean(s)),
-    parse: async (input, _) => input.toLowerCase(),
+    parse: async (input, _) => sentenceCase(input),
     exclusive: ["p"]
 });
 

@@ -24,12 +24,12 @@ export default class Current extends BaseBumpCommand {
     async run(): Promise<void> {
         const { args, flags } = await this.parse(Current);
 
-        this.log("got here");
 
         const resolvedRoot = await getResolvedFluidRoot();
         console.log(`Repo: ${resolvedRoot}`);
         const gitRepo = new GitRepo(resolvedRoot);
         const branch = await gitRepo.getCurrentBranchName();
+        this.log(`branch: ${branch}`);
         const context = new Context(gitRepo, "github.com/microsoft/FluidFramework", branch);
 
         // const { name, version, extra } = parseNameVersion(flags.package);
@@ -44,6 +44,7 @@ export default class Current extends BaseBumpCommand {
         // }
 
         const versionToShow = flags.releaseGroup ?? flags.package;
+        this.log(versionToShow);
 
         await showVersions(context, versionToShow!);
     }
