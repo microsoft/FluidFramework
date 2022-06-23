@@ -128,6 +128,14 @@ async function start(): Promise<void> {
         return stringData;
     };
 
+    const proposeEndSession = () => {
+        containerKillBit.markForDestruction().catch(console.error);
+    };
+
+    const endSession = () => {
+        containerKillBit.setDead().catch(console.error);
+    };
+
     const saveAndEndSession = async () => {
         if (!containerKillBit.markedForDestruction) {
             await containerKillBit.markForDestruction();
@@ -180,8 +188,10 @@ async function start(): Promise<void> {
             inventoryList={ inventoryList }
             writeToExternalStorage={ writeToExternalStorage }
             containerKillBit={ containerKillBit }
-            saveAndEndSession={ saveAndEndSession }
-            migrateContainer={ migrateContainer }
+            proposeEndSession={ proposeEndSession }
+            endSession={ endSession }
+            saveAndEndSession={ () => { saveAndEndSession().catch(console.error); } }
+            migrateContainer={ () => { migrateContainer().catch(console.error); } }
         />,
         div,
     );

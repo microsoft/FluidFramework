@@ -73,10 +73,12 @@ export interface IAppViewProps {
     importedStringData: string | undefined;
     // Normally this is probably a Promise<void>.  Returns a string here for demo purposes only.
     writeToExternalStorage: () => Promise<string>;
-    saveAndEndSession: () => Promise<string | undefined>;
+    proposeEndSession: () => void;
+    endSession: () => void;
+    saveAndEndSession: () => void;
     containerKillBit: IContainerKillBit;
     // End the collaboration session and create a new container using exported data.
-    migrateContainer: () => Promise<void>;
+    migrateContainer: () => void;
 }
 
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
@@ -85,6 +87,8 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
         importedStringData,
         writeToExternalStorage,
         containerKillBit,
+        proposeEndSession,
+        endSession,
         saveAndEndSession,
         migrateContainer,
     } = props;
@@ -117,14 +121,6 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 
     const savedDataRef = useRef<HTMLTextAreaElement>(null);
 
-    const endSessionButtonClickHandler = () => {
-        containerKillBit.markForDestruction().catch(console.error);
-    };
-
-    const setDeadButtonClickHandler = () => {
-        containerKillBit.setDead().catch(console.error);
-    };
-
     const saveButtonClickHandler = () => {
         writeToExternalStorage()
             // As noted above, in a real scenario we don't need to observe the data in the view.
@@ -144,15 +140,15 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             <SessionStatusView containerKillBit={ containerKillBit } />
             <ImportedDataView data={ importedStringData } />
             <InventoryListView inventoryList={ inventoryList } disabled={ disabled } />
-            <button onClick={async () => saveAndEndSession().catch(console.error)}>Save and End Session</button>
+            <button onClick={ saveAndEndSession }>Save and End Session</button>
             <br />
-            <button onClick={async () => migrateContainer().catch(console.error)}>Migrate to new container</button>
+            <button onClick={ migrateContainer }>Migrate to new container</button>
             <br />
-            <button onClick={endSessionButtonClickHandler}>1. End collaboration session</button>
-            <button onClick={saveButtonClickHandler}>2. Save</button>
-            <button onClick={setDeadButtonClickHandler}>3. Set dead</button>
+            <button onClick={ proposeEndSession }>1. Propose ending collaboration session</button>
+            <button onClick={ saveButtonClickHandler }>2. Save</button>
+            <button onClick={ endSession }>3. Actually end the collaboration session</button>
             <div>Data out:</div>
-            <textarea ref={savedDataRef} rows={5} readOnly></textarea>
+            <textarea ref={ savedDataRef } rows={ 5 } readOnly></textarea>
         </div>
     );
 };
