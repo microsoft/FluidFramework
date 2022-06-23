@@ -33,11 +33,11 @@ export class JsonCursor<T> implements ITreeCursor {
     //       This design was advantageous in a similar tree visitor, but should
     //       be measured again to see if this still provides an advantage.
 
-    private currentNode: Jsonable<T>;   // The node currently being visited.
-    private currentKey?: FieldKey;      // The parent key used to navigate to this node.
-    private currentIndex: number;       // The parent index used to navigate to this node.
+    private currentNode: unknown;   // The node currently being visited.
+    private currentKey?: FieldKey;  // The parent key used to navigate to this node.
+    private currentIndex: number;   // The parent index used to navigate to this node.
 
-    private readonly parentStack: Jsonable<T>[] = [];   // Ancestors traversed to visit this node.
+    private readonly parentStack: unknown[] = [];  // Ancestors traversed to visit this node.
 
     // Keys/indices traversed to visit the current node, excluding the most recent,
     // which are maintained in the current key/index fields.
@@ -157,8 +157,7 @@ export class JsonCursor<T> implements ITreeCursor {
             // RATIONALE: Both JSON and the SharedTree data model represent 'undefined' via omission
             //            (except at the root, where JSON coerces undefined to null).  Therefore, the
             //            currently selected node may never be 'undefined'.
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            ? Object.keys(node!) as Iterable<FieldKey>
+            ? Object.keys(node as object) as Iterable<FieldKey>
             : [];
     }
 
