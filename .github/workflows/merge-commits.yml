@@ -1,0 +1,133 @@
+name: Merge commits to next branch
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"
+
+env:
+  TARGET_BRANCH: next
+  SOURCE_BRANCH: main
+  USERNAME: msfluid-bot
+  EMAIL: banana-bot@outlook.com
+
+jobs:
+  dequeue:
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'microsoft'
+    steps:
+      - run: npm install @azure/storage-queue
+      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
+        id: dequeue-message
+        with:
+          script: |
+            const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
+            const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
+            const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
+            const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
+            const queueClient = queueServiceClient.getQueueClient(queueName);
+            var receivedMessages = await queueClient.receiveMessages();
+            const message = receivedMessages.receivedMessageItems[0];
+            const firstMessage = JSON.parse(message.messageText);
+            if(firstMessage === undefined) { return 0; }
+            const updateMsg = { "sha": firstMessage.sha, "author": firstMessage.author, "label": "in-progress" }
+            await queueClient.updateMessage(
+                message.messageId,
+                message.popReceipt,
+                JSON.stringify(updateMsg)
+            );
+            console.log("sha---", firstMessage.sha);
+            console.log("label---", firstMessage.label);
+            console.log("author---", firstMessage.author);
+            return firstMessage;
+    outputs:
+      LABEL: ${{ fromJSON(steps.dequeue-message.outputs.result).label }}
+      AUTHOR: ${{ fromJSON(steps.dequeue-message.outputs.result).author }}
+      SHA: ${{ fromJSON(steps.dequeue-message.outputs.result).sha }}
+  create-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      actions: write
+      checks: write
+      issues: write
+      pull-requests: write
+      statuses: write
+    needs: [ dequeue ]
+    if: (needs.dequeue.result) == 'success'
+    steps:
+      - name: Git checkout
+        if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
+        uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+        with:
+          fetch-depth: '0'
+      - name: Create branch
+        if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
+        run: |
+          git config user.name $USERNAME
+          git config user.email $EMAIL
+          git fetch origin
+          git checkout $SOURCE_BRANCH
+          git checkout -b main-next-${{needs.dequeue.outputs.SHA}}
+          git fetch --all
+          git reset --hard ${{needs.dequeue.outputs.SHA}}
+          git push --set-upstream origin main-next-${{needs.dequeue.outputs.SHA}}
+  pull-request:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: group-pr
+      cancel-in-progress: false
+    needs: [ create-branch, dequeue ]
+    if: needs.create-branch.result == 'success'
+    steps:
+      - run: npm install @octokit/core
+      - name: Create PR using octokit
+        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
+        with:
+          script: |
+            const { Octokit } = require("@octokit/core");
+            const token = `${{ secrets.GITHUB_TOKEN }}`;
+            const sha = 'main-next-${{needs.dequeue.outputs.SHA}}';
+            const author = '${{needs.dequeue.outputs.AUTHOR}}';
+            const baseBranch = $TARGET_BRANCH;
+            const octokit = new Octokit({ auth: token })
+            const newPr = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
+              owner: 'microsoft',
+              repo: 'FluidFramework',
+              title: 'Main Next Integrate',
+              body: 'This commit is queued for getting merged with the next branch. Please make sure to resolve any conflicts/CI failures seen on this PR. Thank you!',
+              head: sha,
+              base: baseBranch
+            });
+            await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
+              owner: 'microsoft',
+              repo: 'FluidFramework',
+              issue_number: newPr.data.number,
+              assignees: [ author, 'sonalivdeshpande', 'tylerbutler' ]
+            });
+  remove-from-queue:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: group-pr
+      cancel-in-progress: false
+    needs: [ pull-request ]
+    if: ( needs.pull-request.result == 'success' )
+    steps:
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
+        with:
+          node-version: 14
+      - run: npm ci
+      - run: npm install @azure/storage-queue
+      - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
+        with:
+          script: |
+            const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
+            const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
+            const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
+            const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
+            const queueClient = queueServiceClient.getQueueClient(queueName);
+            receivedMessages = await queueClient.receiveMessages();
+            var message = receivedMessages.receivedMessageItems[0];
+            console.log("Deleting message: ", message.messageText);
+            await queueClient.deleteMessage(message.messageId, message.popReceipt);

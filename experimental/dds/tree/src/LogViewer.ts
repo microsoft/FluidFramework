@@ -439,12 +439,7 @@ export class CachingLogViewer implements LogViewer {
 		}
 
 		const revision = editIndex + 1;
-		let nextView: RevisionView;
-		if (editingResult.status === EditStatus.Applied) {
-			nextView = editingResult.after;
-		} else {
-			nextView = prevView;
-		}
+		const nextView: RevisionView = editingResult.status === EditStatus.Applied ? editingResult.after : prevView;
 
 		const computedCacheEntry =
 			editingResult.status === EditStatus.Applied

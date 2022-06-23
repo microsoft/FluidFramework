@@ -1,4 +1,4 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "deli.fullname" . }}
@@ -10,6 +10,10 @@ metadata:
     heritage: "{{ .Release.Service }}"
 spec:
   replicas: {{ .Values.deli.replicas }}
+  selector:
+    app: {{ template "routerlicious.name" . }}
+    component: "{{ .Values.deli.name }}"
+    release: {{ .Release.Name }}
   template:
     metadata:
       annotations:

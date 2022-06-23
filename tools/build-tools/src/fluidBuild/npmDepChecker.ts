@@ -14,7 +14,7 @@ interface DepCheckRecord {
     peerImport?: RegExp,
     peerDeclare?: RegExp,
     found: boolean,
-};
+}
 
 export class NpmDepChecker {
     private readonly foundTypes: string[] = ["@types/node", "@types/expect-puppeteer", "@types/jest-environment-puppeteer"];
@@ -127,7 +127,7 @@ export class NpmDepChecker {
 
     private dupCheck() {
         if (!this.pkg.packageJson.devDependencies || !this.pkg.packageJson.dependencies) {
-            return false;;
+            return false;
         }
         let changed = false;
         for (const name of Object.keys(this.pkg.packageJson.dependencies)) {
@@ -139,4 +139,4 @@ export class NpmDepChecker {
         }
         return changed;
     }
-};
+}

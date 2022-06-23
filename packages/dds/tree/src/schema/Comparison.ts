@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../utils";
+import { fail } from "../util";
 import {
     SchemaRepository,
     TreeSchema,

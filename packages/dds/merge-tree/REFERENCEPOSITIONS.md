@@ -80,8 +80,53 @@ To implement an operation which creates LocalReferences which will be have an ev
    3. Delete the old reference and create a new one with the returned values
 4. Remote clients, on receiving the op, call `Client.getContainingSegment` followed by `Client.getSlideToSegment`
 on the result. Call `Client.createLocalReferencePosition` with the result to create a `SlideOnRemove` reference.
+5. If there is a dependency on the comparison of reference positions (such as the index in IntervalCollections)
+must listen to the `beforeSlide` and `afterSlide` events on `IReferencePositionEvents`. When slide occurs the
+relative position of references may have changed.
 
 ### Implementation Notes
+
+This is the state diagram for the implementation of Eventually Consistent References.
+
+```mermaid
+flowchart LR
+    subgraph StayOnRemove
+    localCreate[Local Create Ref]
+    pendingRef(("Ref:StayOnRemove\nSegment:Pending|Normal"))
+    pendingRefPendingRemove((Ref:StayOnRemove\nSegment:Pending Remove))
+    pendingRefRemoved((Ref:StayOnRemove\nSegment:Removed))
+    localCreate-->pendingRef
+    pendingRef--local remove-->pendingRefPendingRemove
+    pendingRefPendingRemove--remote remove-->pendingRefRemoved
+    pendingRef--remote remove-->pendingRefRemoved
+    end
+
+    subgraph SlideOnRemove
+    remoteCreate[Remote Create Ref]
+    remoteChoice{Segment Removed?}
+    ref((Ref:SlideOnRemove\nSegment:Normal))
+    refPendingRemove((Ref:SlideOnRemove\nSegment:Pending Remove))
+
+    remoteCreate-->remoteChoice
+    remoteChoice--no-->ref
+    remoteChoice--locally-->refPendingRemove
+    ref--local remove-->refPendingRemove
+    end
+
+    slide{Slide To}
+    detached((Ref:Detached))
+
+    pendingRef--create ack-->ref
+    pendingRefPendingRemove--create ack-->refPendingRemove
+    pendingRefRemoved--create ack-->slide
+    remoteChoice--yes-->slide
+    ref--remote remove-->slide
+    refPendingRemove--remove ack-->slide
+    refPendingRemove--remote remove-->slide
+    slide--segment-->ref
+    slide--locally removed segment-->refPendingRemove
+    slide--no segment-->detached
+```
 
 This algorithm works because it ensures that slid reference slide to the same segment.
 The slide only happens when both the creation of the reference and removal of the segment have been acknowledged.
@@ -114,6 +159,33 @@ Slide on receiving the remote create.
 6. Local create before remote remove. Slide on receiving the remove.
 7. Local remove before remote create. Slide on receiving the create.
 8. Remote remove before local create. Slide on receiving the ack of the create.
+
+### Why Eventually Consistent References Can Not Have Stable Order
+
+In an ideal system reference positions would have stable order. Specifically:
+
+1. If in any client state the position of a reference is less than the position of a specific item in the sequence,
+then the position of that reference would always be less than or equal to the position of that item.
+2. If in any client state the position of reference A is less than the position of reference B,
+then the position of reference A would always be less than or equal to the position of reference B.
+
+Neither of these properties is true for SlideOnRemove references. This is a result of them sliding over local
+only segments. This could change the relative positions of the sliding reference at items that are slide over,
+as well as any references on those items. Note that these properties do hold for items and references
+once the creation has been acknowledged (sequenced by the server).
+
+Supporting stable order is not possible in the current system because:
+
+1. Removing a range may cause an multiple references that had been at different positions to all be at the same
+position.
+2. To preserve stable ordering, an insert that conflicts with that remove would need to be after some of those
+references and before others.
+3. Insertion position is specified as a numerical offset in the sequence, so can't specify where in the set
+of references at a position to be inserted. (Technically there is enough information to do this within the
+collab window. But that information is lost if reconnect/resubmit is required.)
+
+Therefore implementing eventually consistent references with stable order would require adding additional
+information to insert ops.
 
 ## Tests
 

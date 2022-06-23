@@ -16,7 +16,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReference, _validateReferenceType } from "./localReference";
+import { LocalReference, LocalReferencePosition } from "./localReference";
 import {
     CollaborationWindow,
     compareStrings,
@@ -53,7 +53,7 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
-import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
+import { ReferencePosition, RangeStackMap } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -333,21 +333,17 @@ export class Client {
     }
 
     public createLocalReferencePosition(
-        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
-    ): ReferencePosition {
+        segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined,
+    ): LocalReferencePosition {
         return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties, this);
     }
 
-    public removeLocalReferencePosition(lref: ReferencePosition) {
+    public removeLocalReferencePosition(lref: LocalReferencePosition) {
         return this.mergeTree.removeLocalReferencePosition(lref);
     }
 
     public localReferencePositionToPosition(lref: ReferencePosition) {
-        const segment = lref.getSegment();
-        if (segment === undefined) {
-            return DetachedReferencePosition;
-        }
-        return this.getPosition(segment) + lref.getOffset();
+        return this.mergeTree.referencePositionToLocalPosition(lref);
     }
 
     /**
@@ -711,6 +707,61 @@ export class Client {
         });
 
         return segmentPosition;
+    }
+
+    /**
+     * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
+     * of the current sequence number. This is desirable when rebasing operations for reconnection.
+     *
+     * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
+     * the current sequence number, the returned position will align with the position of a reference given
+     * `SlideOnRemove` semantics.
+     */
+    public rebasePosition(
+        pos: number,
+        seqNumberFrom: number,
+        localSeq: number,
+    ): number {
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x300 /* localSeq greater than collab window */);
+        let segment: ISegment | undefined;
+        let posAccumulated = 0;
+        let offset = pos;
+        const isInsertedInView = (seg: ISegment) =>
+            (seg.seq !== undefined && seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom)
+            || (seg.localSeq !== undefined && seg.localSeq <= localSeq);
+
+        const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment) =>
+            (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= seqNumberFrom)
+            || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
+
+        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
+            assert(seg.seq !== undefined || seg.localSeq !== undefined,
+                0x301 /* Either seq or localSeq should be defined */);
+            segment = seg;
+
+            if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
+                posAccumulated += seg.cachedLength;
+                if (offset >= seg.cachedLength) {
+                    offset -= seg.cachedLength;
+                }
+            }
+
+            // Keep going while we've yet to reach the segment at the desired position
+            return posAccumulated <= pos;
+        });
+
+        assert(segment !== undefined, 0x302 /* No segment found */);
+        const seqNumberTo = this.getCollabWindow().currentSeq;
+        if ((segment.removedSeq !== undefined &&
+             segment.removedSeq !== UnassignedSequenceNumber &&
+             segment.removedSeq <= seqNumberTo)
+            || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
+            // Segment that the position was in has been removed: null out offset.
+            offset = 0;
+        }
+
+        assert(0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);
+        return this.findReconnectionPosition(segment, localSeq) + offset;
     }
 
     private resetPendingDeltaToOps(
