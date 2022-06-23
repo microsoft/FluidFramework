@@ -808,10 +808,6 @@ export class Client {
                         segmentPosition,
                         resetOp.seg,
                     );
-                    // newOp = createInsertSegmentOp(
-                    //     segmentPosition,
-                    //     segment
-                    // )
                     break;
 
                 case MergeTreeDeltaType.REMOVE:
