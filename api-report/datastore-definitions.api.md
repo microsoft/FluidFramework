@@ -5,7 +5,7 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { IAudience } from '@fluidframework/container-definitions';
+import { IAudience } from '@fluidframework/protocol-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';

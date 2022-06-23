@@ -7,7 +7,7 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAudience } from '@fluidframework/container-definitions';
+import { IAudience } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
@@ -37,6 +37,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
+import { ProtocolHandlerBuilder } from '@fluidframework/protocol-base';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
@@ -52,7 +53,7 @@ export enum ConnectionState {
 
 // @public (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    constructor(loader: Loader, config: IContainerConfig);
+    constructor(loader: Loader, config: IContainerConfig, audience?: IAudience);
     // (undocumented)
     attach(request: IRequest): Promise<void>;
     // (undocumented)
@@ -75,7 +76,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
-    static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
+    static createDetached(loader: Loader, codeDetails: IFluidCodeDetails, protocolDetails?: IProtocolDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -89,7 +90,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
-    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState): Promise<Container>;
+    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolDetails?: IProtocolDetails): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
     // (undocumented)
@@ -98,7 +99,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
-    static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;
+    static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string, protocolDetails?: IProtocolDetails): Promise<Container>;
     // (undocumented)
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -193,6 +194,12 @@ export interface IPendingContainerState {
     term: number;
     // (undocumented)
     url: string;
+}
+
+// @public (undocumented)
+export interface IProtocolDetails {
+    audience?: IAudience;
+    protocolHandlerBuilder?: ProtocolHandlerBuilder;
 }
 
 // @public

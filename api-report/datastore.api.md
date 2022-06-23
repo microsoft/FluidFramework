@@ -6,7 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAudience } from '@fluidframework/container-definitions';
+import { IAudience } from '@fluidframework/protocol-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
