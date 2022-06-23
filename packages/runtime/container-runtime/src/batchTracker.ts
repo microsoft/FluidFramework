@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
+import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";

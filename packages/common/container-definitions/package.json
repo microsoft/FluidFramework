@@ -62,14 +62,17 @@
   "typeValidation": {
    "version": "2.0.0",
     "broken": {
+      "InterfaceDeclaration_IAudience": {
+        "backCompat": false
+      },
       "InterfaceDeclaration_IConnectionDetails": {
         "backCompat": false
       },
       "InterfaceDeclaration_IContainer": {
-        "backCompat": false
+        "forwardCompat": false
       },
       "InterfaceDeclaration_IContainerContext": {
-        "backCompat": false
+        "forwardCompat": false
       }
     }
   }

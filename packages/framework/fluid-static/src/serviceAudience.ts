@@ -4,8 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IAudience, IContainer } from "@fluidframework/container-definitions";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
+import { IAudience, IClient } from "@fluidframework/protocol-definitions";
 import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 
 /**
