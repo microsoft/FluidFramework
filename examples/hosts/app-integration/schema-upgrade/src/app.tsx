@@ -34,6 +34,39 @@ async function getContainerKillBitFromContainer(container: IContainer): Promise<
     return requestFluidObject<IContainerKillBit>(container, { url: containerKillBitId });
 }
 
+async function createNewContainer(externalStringData?: string) {
+    const tinyliciousService = new TinyliciousService();
+
+    const load = async (): Promise<IFluidModuleWithDetails> => {
+        // TODO: Use some reasonable logic to select the appropriate container code to load from.
+        const useNewVersion = false;
+        const containerRuntimeFactory = useNewVersion
+            ? new InventoryListContainerRuntimeFactory2()
+            : new InventoryListContainerRuntimeFactory1();
+
+        return {
+            module: { fluidExport: containerRuntimeFactory },
+            details: { package: "no-dynamic-package", config: {} },
+        };
+    };
+    const codeLoader = { load };
+
+    const loader = new Loader({
+        urlResolver: tinyliciousService.urlResolver,
+        documentServiceFactory: tinyliciousService.documentServiceFactory,
+        codeLoader,
+    });
+
+    const container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
+    if (externalStringData !== undefined) {
+        const inventoryList = await getInventoryListFromContainer(container);
+        await applyStringData(inventoryList, externalStringData);
+    }
+    await container.attach(createTinyliciousCreateNewRequest());
+
+    return container;
+}
+
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
@@ -60,8 +93,6 @@ async function start(): Promise<void> {
     let fetchedData: string | undefined;
     let container: IContainer;
     let containerId: string;
-    let inventoryList: IInventoryList;
-    let containerKillBit: IContainerKillBit;
 
     // In interacting with the service, we need to be explicit about whether we're creating a new container vs.
     // loading an existing one.  If loading, we also need to provide the unique ID for the container we are
@@ -74,11 +105,7 @@ async function start(): Promise<void> {
     // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
     if (location.hash.length === 0) {
         fetchedData = await fetchData();
-        container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
-        inventoryList = await getInventoryListFromContainer(container);
-        containerKillBit = await getContainerKillBitFromContainer(container);
-        await applyStringData(inventoryList, fetchedData);
-        await container.attach(createTinyliciousCreateNewRequest());
+        container = await createNewContainer(fetchedData);
 
         // Discover the container ID after attaching
         const resolved = container.resolvedUrl;
@@ -90,11 +117,13 @@ async function start(): Promise<void> {
     } else {
         containerId = location.hash.substring(1);
         container = await loader.resolve({ url: containerId });
-        containerKillBit = await getContainerKillBitFromContainer(container);
-        inventoryList = await getInventoryListFromContainer(container);
     }
+
     // Put the container ID in the tab title
     document.title = containerId;
+
+    const inventoryList = await getInventoryListFromContainer(container);
+    const containerKillBit = await getContainerKillBitFromContainer(container);
 
     const writeToExternalStorage = async () => {
         // CONSIDER: it's perhaps more-correct to spawn a new client to extract with (to avoid local changes).
@@ -143,15 +172,9 @@ async function start(): Promise<void> {
     };
 
     const migrateContainer = async () => {
-        fetchedData = await saveAndEndSession();
+        const exportedData = await saveAndEndSession();
         container.close();
-        container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
-        inventoryList = await getInventoryListFromContainer(container);
-        containerKillBit = await getContainerKillBitFromContainer(container);
-        if (fetchedData !== undefined) {
-            await applyStringData(inventoryList, fetchedData);
-        }
-        await container.attach(createTinyliciousCreateNewRequest());
+        container = await createNewContainer(exportedData);
 
         // Discover the container ID after attaching
         const resolved = container.resolvedUrl;
