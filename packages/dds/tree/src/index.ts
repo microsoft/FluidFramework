@@ -4,7 +4,8 @@
  */
 
 export { EmptyKey, FieldKey, TreeType } from "./tree";
-export { ITreeCursor, TreeNavigationResult } from "./forest";
+
+export { ITreeCursor, TreeNavigationResult, Value } from "./forest";
 
 export {
     Brand,

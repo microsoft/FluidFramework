@@ -10,7 +10,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
-import { ISnapshotContents } from "../odspUtils";
+import { ISnapshotContents } from "../odspPublicUtils";
 import { ISnapshotTreeEx } from "../contracts";
 
 const snapshotTree: ISnapshotTreeEx = {
@@ -28,35 +28,35 @@ const snapshotTree: ISnapshotTreeEx = {
             trees: {},
         },
         ".app": {
-                blobs: { ".metadata": "bARD4RKvW4LL1KmaUKp6hUMSp" },
-                commits: {},
-                trees: {
-                    ".channels": {
-                        blobs: {},
-                        commits: {},
-                        trees: {
-                            default: {
-                                    blobs: {
-                                        ".component": "bARC6dCXlcrPxQHw3PeROtmKc",
-                                        "gc": "bARDNMoBed+nKrsf04id52iUA",
-                                    },
+            blobs: { ".metadata": "bARD4RKvW4LL1KmaUKp6hUMSp" },
+            commits: {},
+            trees: {
+                ".channels": {
+                    blobs: {},
+                    commits: {},
+                    trees: {
+                        default: {
+                            blobs: {
+                                ".component": "bARC6dCXlcrPxQHw3PeROtmKc",
+                                "gc": "bARDNMoBed+nKrsf04id52iUA",
+                            },
+                            commits: {},
+                            trees: {
+                                ".channels": {
+                                    blobs: {},
                                     commits: {},
                                     trees: {
-                                        ".channels": {
-                                            blobs: {},
-                                            commits: {},
-                                            trees: {
-                                            root: { blobs: {}, commits: {}, trees: {} },
-                                            },
-                                        },
+                                        root: { blobs: {}, commits: {}, trees: {} },
                                     },
+                                },
                             },
                         },
-                        unreferenced: true,
                     },
-                    ".blobs": { blobs: {}, commits: {}, trees: {} },
+                    unreferenced: true,
                 },
-                unreferenced: true,
+                ".blobs": { blobs: {}, commits: {}, trees: {} },
+            },
+            unreferenced: true,
         },
     },
 };
@@ -68,7 +68,7 @@ const blobs = new Map<string, ArrayBuffer>(
         ["bARBkx1nses1pHL1vKnmFUfIC", stringToBuffer(JSON.stringify([]), "utf8")],
         ["bARD4RKvW4LL1KmaUKp6hUMSp", stringToBuffer(JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }), "utf8")],
         ["bARC6dCXlcrPxQHw3PeROtmKc",
-        stringToBuffer(JSON.stringify({ pkg: "[\"@fluid-example/smde\"]", summaryFormatVersion: 2, isRootDataStore: true }), "utf8")],
+            stringToBuffer(JSON.stringify({ pkg: "[\"@fluid-example/smde\"]", summaryFormatVersion: 2, isRootDataStore: true }), "utf8")],
         ["bARDNMoBed+nKrsf04id52iUA", stringToBuffer(JSON.stringify(
             { usedRoutes: [""], gcData: { gcNodes: { "/root": ["/default/01b197a2-0432-413b-b2c9-83a992b804c4", "/default"], "/01b197a2-0432-413b-b2c9-83a992b804c4": ["/default"], "/": ["/default/root", "/default/01b197a2-0432-413b-b2c9-83a992b804c4"] } } }), "utf8")],
     ],
@@ -106,6 +106,7 @@ describe("Snapshot Format Conversion Tests", () => {
             blobs,
             ops,
             sequenceNumber: 0,
+            latestSequenceNumber: 2,
         };
         const compactSnapshot = convertToCompactSnapshot(snapshotContents);
         const result = parseCompactSnapshotResponse(compactSnapshot);
@@ -113,6 +114,7 @@ describe("Snapshot Format Conversion Tests", () => {
         assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
         assert.deepStrictEqual(result.ops, ops, "Ops should match");
         assert(result.sequenceNumber === 0, "Seq number should match");
+        assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
         assert(result.snapshotTree.id = snapshotContents.snapshotTree.id, "Snapshot id should match");
         // Convert to compact snapshot again and then match to previous one.
         const compactSnapshot2 = convertToCompactSnapshot(result);
