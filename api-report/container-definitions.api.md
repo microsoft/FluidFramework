@@ -4,12 +4,9 @@
 
 ```ts
 
-/// <reference types="node" />
-
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
-import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IClient } from '@fluidframework/protocol-definitions';
+import { IAudience } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
@@ -78,14 +75,6 @@ export enum ContainerErrorType {
 // @public
 export interface ContainerWarning extends IErrorBase {
     logged?: boolean;
-}
-
-// @public
-export interface IAudience extends EventEmitter {
-    getMember(clientId: string): IClient | undefined;
-    getMembers(): Map<string, IClient>;
-    // (undocumented)
-    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
 }
 
 // @public
