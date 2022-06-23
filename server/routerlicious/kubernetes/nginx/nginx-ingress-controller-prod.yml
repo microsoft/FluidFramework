@@ -31,7 +31,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: nginx-ingress-prod-controller
-          image: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.15
+          image: k8s.gcr.io/ingress-nginx/controller:v1.2.1@sha256:5516d103a9c2ecc4f026efbd4b40662ce22dc1f824fb129ed121460aaa5c47f8
           imagePullPolicy: Always
           readinessProbe:
             httpGet:
@@ -49,7 +49,7 @@ spec:
             - /nginx-ingress-controller
             - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
             - --default-ssl-certificate=$(POD_NAMESPACE)/wu2-tls-certificate
-            - --ingress-class=nginx-prod
+            - --controller-class=nginx-prod-controller
           env:
             - name: POD_NAME
               valueFrom:
