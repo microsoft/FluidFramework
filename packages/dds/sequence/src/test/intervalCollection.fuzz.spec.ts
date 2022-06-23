@@ -375,7 +375,11 @@ function assertConsistent(clients: Client[]): void {
                 ` at collection ${firstLabels[i]}`,
             );
             for (const interval of intervals1) {
-                const otherInterval = collection2.getIntervalById(interval.getIntervalId());
+                assert(interval);
+                const intervalId = interval.getIntervalId();
+                assert(intervalId);
+                const otherInterval = collection2.getIntervalById(intervalId);
+                assert(otherInterval);
                 const firstStart = first.localReferencePositionToPosition(interval.start);
                 const otherStart = other.localReferencePositionToPosition(otherInterval.start);
                 assert.equal(firstStart, otherStart,

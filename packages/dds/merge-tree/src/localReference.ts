@@ -234,7 +234,7 @@ export class LocalReferenceCollection {
      * @internal - this method should only be called by mergeTree
      */
     public createLocalRef(
-        offset: number | undefined,
+        offset: number,
         refType: ReferenceType,
         properties: PropertySet | undefined): LocalReferencePosition {
         const ref = new LocalReference(
