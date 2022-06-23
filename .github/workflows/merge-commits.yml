@@ -102,7 +102,7 @@ jobs:
               owner: 'microsoft',
               repo: 'FluidFramework',
               issue_number: newPr.data.number,
-              assignees: [ author ]
+              assignees: [ author, 'sonalivdeshpande', 'tylerbutler' ]
             });
   remove-from-queue:
     runs-on: ubuntu-latest
