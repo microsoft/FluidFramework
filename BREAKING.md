@@ -22,6 +22,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
 - [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
+- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-container-definitions)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -88,7 +89,6 @@ It has been removed in this release--consumers should assume any raised delta ev
 - [Remove `noopTimeFrequency` and `noopCountFrequency` from ILoaderOptions](#remove-nooptimefrequency-and-noopcountfrequency-from-iloaderoptions)
 - [proxyLoaderFactories members removed from ILoaderProps and ILoaderServices](#proxyloaderfactories-members-to-be-removed-from-iloaderprops-and-iloaderservices)
 - [IContainer.connectionState yields finer-grained ConnectionState values](#icontainerconnectionstate-yields-finer-grained-connectionstate-values)
-- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-container-definitions)
 
 ### Changed AzureConnectionConfig API
 - Added a `type` field that's used to differentiate between remote and local connections.
@@ -190,9 +190,8 @@ Additionally, please note that the `Connecting` state is being renamed to `Catch
 `ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
 `ConnectionState.Connecting` will be removed in the following major release.
 
-### Remove ICodeLoader from container-definitions
-`ICodeLoader` in `@fluidframework/container-definitions` was deprecated a while ago and is now removed. Use `ICodeDetailsLoader` by importing it from `@fluidframework/container-loader`.
-Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
+### Remove ICodeLoader from `@fluidframework/container-definitions`
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 # 0.59
 
@@ -207,7 +206,7 @@ Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace
 - [Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver](#Deprecated-enableRedeemFallback-from-HostStoragePolicy-in-Odsp-driver)]
 
 ### Remove ICodeLoader interface
-ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 ### IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release
 In major release 1.0, the optional functions `IFluidContainer.connect()` and `IFluidContainer.disconnect()` will be made mandatory functions.
@@ -293,7 +292,7 @@ The `packageInfoSource` argument in `getAbsoluteUrl()` on `@fluidframework/odsp-
 ```
 
 ### Replace ICodeLoader with ICodeDetailsLoader interface
-The interface `ICodeLoader` was deprecated a while ago in previous releases. The alternative for `ICodeLoader` interface is the `ICodeDetailsLoader` interface which can be imported from `@fluidframework/container-definitions`. `ICodeLoader` interface will be removed in the next release.
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 In particular, note the `ILoaderService` and `ILoaderProps` interfaces used with the `Loader` class now only support `ICodeDetailsLoader`. If you were using an `ICodeLoader` with these previously, you'll need to update to an `ICodeDetailsLoader`.
 
