@@ -14,7 +14,7 @@ import ReactDOM from "react-dom";
 
 import { AppView } from "./appView";
 import { extractStringData, applyStringData } from "./dataHelpers";
-import { fetchData, writeData } from "./externalData";
+import { dataSource } from "./externalData";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
@@ -92,7 +92,7 @@ async function start(): Promise<void> {
 
     // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
     if (location.hash.length === 0) {
-        fetchedData = await fetchData();
+        fetchedData = await dataSource.fetchData();
         container = await createNewContainer(fetchedData);
 
         // Discover the container ID after attaching
@@ -123,7 +123,7 @@ async function start(): Promise<void> {
         // exportContainer.close();
 
         const stringData = await extractStringData(inventoryList);
-        await writeData(stringData);
+        await dataSource.writeData(stringData);
 
         // Normally would be a void, we return the string here for demo purposes only.
         return stringData;
@@ -158,7 +158,7 @@ async function start(): Promise<void> {
             return stringData;
         }
 
-        await writeData(stringData);
+        await dataSource.writeData(stringData);
         if (!containerKillBit.haveDestructionTask()) {
             throw new Error("Lost task during write");
         } else {
