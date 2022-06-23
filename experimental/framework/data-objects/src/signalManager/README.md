@@ -69,4 +69,23 @@ const newSignalManager = await container.create(SignalManager) //Creates a new S
 
 ### Common Patterns
 #### Signal Request
-_TODO_
+There are some scenarios where a client would like to request a specific signal be sent to them from other connected clients within the application. One main use case for this pattern is when a newly joining client needs to recieve pertinent information immediatley after connecting the container. For example, in the [FocusTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/focus-tracker) we define a new focus request signal type that is used when a newly joining client requests to recieve the focus-state of each currently connected client:
+
+```typescript
+ private static readonly focusRequestType = "focusRequest";
+```
+
+```typescript
+container.on("connected", () => {
+            this.signalManager.submitSignal(FocusTracker.focusRequestType);
+        });
+```
+
+We then must have the connected clients listening to this focus request signal, so they can respond with their current focus state:
+
+```typescript
+this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
+            this.sendFocusSignal(document.hasFocus());
+        });
+```
+To reiterate, this pattern is not necessary for all use cases but it can be helpful when a client is in need of relevant information that won't be quickly available from other events being listened to.
