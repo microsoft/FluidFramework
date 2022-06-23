@@ -7,7 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable,
+    IDisposable, ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -53,7 +53,8 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
-    ProtocolOpHandler,
+    IProtocolHandler,
+    ProtocolOpHandlerWithClientValidation,
 } from "@fluidframework/protocol-base";
 import {
     IClient,
@@ -98,7 +99,7 @@ import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionStateHandler";
+import { ConnectionStateHandler } from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
@@ -392,7 +393,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         return this._context;
     }
-    private _protocolHandler: ProtocolOpHandler | undefined;
+    private _protocolHandler: IProtocolHandler | undefined;
     private get protocolHandler() {
         if (this._protocolHandler === undefined) {
             throw new Error("Attempted to access protocolHandler before it was defined");
@@ -600,12 +601,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
-                logConnectionIssue: (eventName: string) => {
+                logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
+                        ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });
                 },
                 connectionStateChanged: () => {
@@ -701,21 +703,32 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public close(error?: ICriticalContainerError) {
-        if (this.closed) {
-            return;
-        }
+        // 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
+        // 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
+        //    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
+        //    "closing" will lose that info (can also solve by tracking extra state).
+        this._deltaManager.close(error);
+        assert(this.connectionState === ConnectionState.Disconnected,
+            0x0cf /* "disconnect event was not raised!" */);
+
+        assert(this._lifecycleState === "closed", "Container properly closed");
+    }
+
+    private closeCore(error?: ICriticalContainerError) {
+        assert(!this.closed, "re-entrancy");
 
         try {
             // Ensure that we raise all key events even if one of these throws
             try {
-                // Close DetlaManager before changing _lifecycleState. Key two reasons:
-                // 1. We do close containers either directly because Container.close() is called, or because error
-                //    happens in DeltaManager layer (or disconnect happens for containers that do not allow disconnect)
-                //    We want DM's logic in both cases to run in exactly same state - not yet closing.
-                // 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
-                //    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
-                //    "closing" will lose that info (can also solve by tracking extra state).
-                this._deltaManager.close(error);
+                // Raise event first, to ensure we capture _lifecycleState before transition.
+                // This gives us a chance to know what errors happened on open vs. on fully loaded container.
+                this.mc.logger.sendTelemetryEvent(
+                    {
+                        eventName: "ContainerClose",
+                        category: error === undefined ? "generic" : "error",
+                    },
+                    error,
+                );
 
                 this._lifecycleState = "closing";
 
@@ -724,9 +737,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.connectionStateHandler.dispose();
 
                 this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
-
-                assert(this.connectionState === ConnectionState.Disconnected,
-                    0x0cf /* "disconnect event was not raised!" */);
 
                 this._storageService?.dispose();
 
@@ -737,14 +747,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             } catch (exception) {
                 this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, exception);
             }
-
-            this.mc.logger.sendTelemetryEvent(
-                {
-                    eventName: "ContainerClose",
-                    category: error === undefined ? "generic" : "error",
-                },
-                error,
-            );
 
             this.emit("closed", error);
 
@@ -766,11 +768,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
         assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
+        assert(this._protocolHandler.attributes.term !== undefined,
+            0x30b /* Must have a valid protocol handler instance */);
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
-            protocol: this._protocolHandler.getProtocolState(),
-            term: this._protocolHandler.term,
+            protocol: this.protocolHandler.getProtocolState(),
+            term: this._protocolHandler.attributes.term,
             clientId: this.clientId,
         };
 
@@ -1331,7 +1335,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
-    ): Promise<ProtocolOpHandler> {
+    ): Promise<IProtocolHandler> {
         let members: [string, ISequencedClient][] = [];
         let proposals: [number, ISequencedProposal, string[]][] = [];
         let values: [string, any][] = [];
@@ -1359,8 +1363,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, any][],
-    ): Promise<ProtocolOpHandler> {
-        const protocol = new ProtocolOpHandler(
+    ): Promise<IProtocolHandler> {
+        const protocol = new ProtocolOpHandlerWithClientValidation(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
             attributes.term,
@@ -1405,19 +1409,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private captureProtocolSummary(): ISummaryTree {
-        const quorumSnapshot = this.protocolHandler.quorum.snapshot();
-
-        // Save attributes for the document
-        const documentAttributes: IDocumentAttributes = {
-            minimumSequenceNumber: this.protocolHandler.minimumSequenceNumber,
-            sequenceNumber: this.protocolHandler.sequenceNumber,
-            term: this.protocolHandler.term,
-        };
-
+        const quorumSnapshot = this.protocolHandler.snapshot();
         const summary: ISummaryTree = {
             tree: {
                 attributes: {
-                    content: JSON.stringify(documentAttributes),
+                    content: JSON.stringify(this.protocolHandler.attributes),
                     type: SummaryType.Blob,
                 },
                 quorumMembers: {
@@ -1532,7 +1528,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("closed", (error?: ICriticalContainerError) => {
-            this.close(error);
+            this.closeCore(error);
         });
 
         return deltaManager;
@@ -1625,10 +1621,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Both protocol and context should not be undefined if we got so far.
 
-        if (!this.context.disposed) {
+        if (this._context?.disposed === false) {
             this.context.setConnectionState(state, this.clientId);
         }
-        this.protocolHandler.quorum.setConnectionState(state, this.clientId);
+        this.protocolHandler.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
 
         if (logOpsOnReconnect) {
@@ -1677,36 +1673,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
-        // Check and report if we're getting messages from a clientId that we previously
-        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
-        if (message.clientId != null) {
-            let errorMsg: string | undefined;
-            const client: ILocalSequencedClient | undefined =
-                this.getQuorum().getMember(message.clientId);
-            if (client === undefined && message.type !== MessageType.ClientJoin) {
-                // pre-0.58 error message: messageClientIdMissingFromQuorum
-                errorMsg = "Remote message's clientId is missing from the quorum";
-            } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
-                // pre-0.58 error message: messageClientIdShouldHaveLeft
-                errorMsg = "Remote message's clientId already should have left";
-            }
-            if (errorMsg !== undefined) {
-                const error = new DataCorruptionError(
-                    errorMsg,
-                    extractSafePropertiesFromMessage(message));
-                this.close(normalizeError(error));
-            }
-        }
-
         const local = this.clientId === message.clientId;
+
+        // Allow the protocol handler to process the message
+        let result: IProcessMessageResult = { immediateNoOp: false };
+        try {
+            result = this.protocolHandler.processMessage(message, local);
+        } catch (error) {
+            this.close(wrapError(error, (errorMessage) =>
+                new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
+        }
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
             this.context.process(message, local, undefined);
         }
 
-        // Allow the protocol handler to process the message
-        const result = this.protocolHandler.processMessage(message, local);
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {
             if (this.collabWindowTracker === undefined) {
@@ -1723,8 +1705,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                             0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
                         this.submitMessage(type, contents);
                     },
-                    this.serviceConfiguration?.noopTimeFrequency,
-                    this.serviceConfiguration?.noopCountFrequency,
+                    this.serviceConfiguration.noopTimeFrequency,
+                    this.serviceConfiguration.noopCountFrequency,
                 );
             }
             this.collabWindowTracker.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);

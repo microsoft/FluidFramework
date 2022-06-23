@@ -4,8 +4,9 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
@@ -53,16 +54,26 @@ enum AliasState {
 class DataStore implements IDataStore {
     private aliasState: AliasState = AliasState.None;
     private alias: string | undefined;
+    private aliasResult: Promise<AliasResult> | undefined;
 
     async trySetAlias(alias: string): Promise<AliasResult> {
+        if (alias.includes("/")) {
+            throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
+        }
+
         switch (this.aliasState) {
-            // If we're already aliasing, throw an exception
+            // If we're already aliasing, check if it's for the same value and return
+            // the stored promise, otherwise return 'AlreadyAliased'
             case AliasState.Aliasing:
-                return "Aliasing";
+                assert(this.aliasResult !== undefined, "There should be a cached promise of in-progress aliasing");
+                await this.aliasResult;
+                return this.alias === alias ? "Success" : "AlreadyAliased";
+
             // If this datastore is already aliased, return true only if this
             // is a repeated call for the same alias
             case AliasState.Aliased:
                 return this.alias === alias ? "Success" : "AlreadyAliased";
+
             // There is no current or past alias operation for this datastore,
             // it is safe to continue execution
             case AliasState.None: break;
@@ -70,6 +81,11 @@ class DataStore implements IDataStore {
         }
 
         this.aliasState = AliasState.Aliasing;
+        this.aliasResult = this.trySetAliasInternal(alias);
+        return this.aliasResult;
+    }
+
+    async trySetAliasInternal(alias: string): Promise<AliasResult> {
         const message: IDataStoreAliasMessage = {
             internalId: this.internalId,
             alias,
@@ -85,7 +101,7 @@ class DataStore implements IDataStore {
 
         if (this.runtime.attachState === AttachState.Detached) {
             const localResult = this.datastores.processAliasMessageCore(message);
-            // Explicitly Lock-out future attempts of aliasing,
+            // Explicitly lock-out future attempts of aliasing,
             // regardless of result
             this.aliasState = AliasState.Aliased;
             return localResult ? "Success" : "Conflict";

@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@cerner/duplicate-package-checker-webpack-plugin": "^2.3.0",
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/bundle-size-tools": "^0.0.8505",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@mixer/webpack-bundle-compare": "^0.1.0",

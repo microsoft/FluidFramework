@@ -52,7 +52,7 @@ export async function releaseVersion(context: Context, releaseName: string, upda
     const depVersions = await context.collectBumpInfo(releaseName);
 
     let releaseGroup: string | undefined;
-    let packages: Package[] = [];
+    const packages: Package[] = [];
     let monoRepo: MonoRepo | undefined;
     // Assumes that the packages are in dependency order already.
     for (const [name] of depVersions.repoVersions) {

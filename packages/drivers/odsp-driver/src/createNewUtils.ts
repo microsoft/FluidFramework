@@ -7,7 +7,7 @@ import { v4 as uuid } from "uuid";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { stringToBuffer, unreachableCase } from "@fluidframework/common-utils";
-import { ISnapshotContents } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
 import { ISnapshotTreeEx } from "./contracts";
 
 /**
@@ -25,6 +25,7 @@ export function convertCreateNewSummaryTreeToTreeAndBlobs(summary: ISummaryTree,
         blobs,
         ops: [],
         sequenceNumber,
+        latestSequenceNumber: sequenceNumber,
     };
 
     return snapshotTreeValue;

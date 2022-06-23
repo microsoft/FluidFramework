@@ -13,7 +13,7 @@ import { BreakingIncrement, enableLogging } from "./../../typeValidator/validato
 describe("Interface", () => {
     enableLogging(true);
     let project: Project;
-    let pkgDir: string = os.tmpdir();
+    const pkgDir: string = os.tmpdir();
     before(() => {
         project = new Project({
             skipFileDependencyResolution: true,
@@ -65,7 +65,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -83,7 +83,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.minor);
         });
 
@@ -101,7 +101,7 @@ describe("Interface", () => {
             export interface ITestInterface {}
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -121,7 +121,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -140,7 +140,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.minor);
         });
 
@@ -161,7 +161,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -182,7 +182,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -202,7 +202,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
     });
@@ -225,7 +225,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -245,7 +245,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.minor);
         });
     });
@@ -265,7 +265,7 @@ describe("Interface", () => {
             export interface ITestInterface extends IBaseInterface<number> {}
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -285,7 +285,7 @@ describe("Interface", () => {
             export interface ITestInterface extends IBaseInterface2<string> {}
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -305,7 +305,7 @@ describe("Interface", () => {
             export class TestClass implements ITestInterface2, ITestInterface1 {}
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.none);
         });
 
@@ -314,6 +314,7 @@ describe("Interface", () => {
         // implementing the interface (e.g. addition of a private method that then
         // requires implementers of the interface to also inherit from the extended
         // class).  We don't handle this on the assumption it's incredibly rare
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         it.skip("reflects changes to extended class in implementers", () => {
         });
     });
@@ -336,7 +337,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -358,7 +359,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.none);
         });
     });
@@ -382,7 +383,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -403,7 +404,7 @@ describe("Interface", () => {
             }
             `;
 
-            let increment = checkIncrement(sourceOld, sourceNew);
+            const increment = checkIncrement(sourceOld, sourceNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
     });

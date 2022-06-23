@@ -27,14 +27,10 @@ import {
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
-    trackGCStateMinimumVersionKey,
     runSessionExpiryKey,
     disableSessionExpiryKey,
-    logUnknownOutboundReferencesKey,
-    semverCompare,
 } from "../garbageCollection";
 import { IContainerRuntimeMetadata } from "../summaryFormat";
-import { pkgVersion } from "../packageVersion";
 
 describe("Garbage Collection Tests", () => {
     // Nodes in the reference graph.
@@ -53,7 +49,7 @@ describe("Garbage Collection Tests", () => {
     const inactiveTimeoutMs = 500;
     const testPkgPath = ["testPkg"];
     // The package data is tagged in the telemetry event.
-    const eventPkg = { value: `/${testPkgPath.join("/")}`, tag: TelemetryDataTag.PackageData };
+    const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.PackageData };
 
     const getNodeType = (nodePath: string) => {
         if (nodePath.split("/").length !== 2) {
@@ -83,18 +79,18 @@ describe("Garbage Collection Tests", () => {
         getNodeGCDetails: (id: string) => IGarbageCollectionDetailsBase = () => emptyGCDetails,
         metadata: IContainerRuntimeMetadata | undefined = undefined,
     ) => {
-        return GarbageCollector.create(
-            gcRuntime,
-            { gcAllowed: true, inactiveTimeoutMs },
-            (nodeId: string) => testPkgPath,
-            () => Date.now(),
+        return GarbageCollector.create({
+            runtime: gcRuntime,
+            gcOptions: { gcAllowed: true, inactiveTimeoutMs },
             baseSnapshot,
-            async <T>(id: string) => getNodeGCDetails(id) as T,
-            mockLogger,
-            metadata !== undefined /* existing */,
+            baseLogger: mockLogger,
+            existing: metadata !== undefined /* existing */,
             metadata,
-            true /* summarizerClient */,
-        );
+            isSummarizerClient: true /* summarizerClient */,
+            readAndParseBlob: async <T>(id: string) => getNodeGCDetails(id) as T,
+            getNodePackagePath: (nodeId: string) => testPkgPath,
+            getLastSummaryTimestampMs: () => Date.now(),
+        });
     };
 
     const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
@@ -635,7 +631,6 @@ describe("Garbage Collection Tests", () => {
 
         beforeEach(() => {
             closeCalled = false;
-            injectedSettings[logUnknownOutboundReferencesKey] = "true";
             defaultGCData.gcNodes = {};
             garbageCollector = createGarbageCollector();
         });
@@ -989,27 +984,6 @@ describe("Garbage Collection Tests", () => {
             );
         };
 
-        /**
-         * The client package version on the server is likely to be [major].[minor].[patch]-[pre-release], i.e 1.0.0-1
-         * This does conversions like this as minimumVersion needs to be [major].[minor].[patch] where [x] is a number.
-         * 1.0.0-1 to 1.0.0
-         * 1.0.0 to 1.0.0
-         * 1.0.0-pre1+12 to 1.0.0
-         * 1.0.0+a123-a123 to 1.0.0
-         */
-        const getRegularSemverVersion = () => {
-            let lastRegularIndex = pkgVersion.length;
-            const firstHyphen = pkgVersion.indexOf("-");
-            const firstPlus = pkgVersion.indexOf("+");
-            if (firstHyphen > 0 && (firstHyphen <= firstPlus || firstPlus <= 0)) {
-                lastRegularIndex = firstHyphen;
-            } else if (firstPlus > 0 && (firstPlus < firstHyphen || firstHyphen <= 0)) {
-                lastRegularIndex = firstPlus;
-            }
-
-            return pkgVersion.substring(0, lastRegularIndex);
-        };
-
         it("No changes to GC between summaries creates a blob handle when no version specified", async () => {
             garbageCollector = createGarbageCollector();
 
@@ -1028,70 +1002,5 @@ describe("Garbage Collection Tests", () => {
 
             checkGCSummaryType(tree2, SummaryType.Handle, "second");
         });
-
-        it("No changes to GC between summaries creates a blob handle when greater than minimum version", async () => {
-            settings[trackGCStateMinimumVersionKey] = "0.59.1000";
-            garbageCollector = createGarbageCollector();
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree1 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree1, SummaryType.Tree, "first");
-
-            await garbageCollector.latestSummaryStateRefreshed(
-                { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parseNothing,
-            );
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree2 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree2, SummaryType.Handle, "second");
-        });
-
-        it("No changes to GC between summaries creates a blob when less than minimum version", async () => {
-            settings[trackGCStateMinimumVersionKey] = `1${getRegularSemverVersion()}`;
-            garbageCollector = createGarbageCollector();
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree1 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree1, SummaryType.Tree, "first");
-
-            await garbageCollector.latestSummaryStateRefreshed(
-                { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parseNothing,
-            );
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree2 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree2, SummaryType.Tree, "second");
-        });
-    });
-
-    describe("Semver comparison tests", () => {
-        const test = (current: string, minimum: string, expected: number) => {
-            it(`Current: ${current} ${expected === 1 ? ">" : expected === 0 ? "=" : "<" } Minimum: ${minimum}`, () => {
-                const actual = semverCompare(current, minimum);
-                assert(actual === expected, `Semver compare failed, expected ${expected}, got ${actual}`);
-            });
-        };
-        test("0.0.0", "0.0.0", 0);
-        test("0.0.1", "0.0.0", 1);
-        test("0.0.0", "0.0.1", -1);
-        test("0.1.0", "0.1.0", 0);
-        test("0.1.0", "0.0.1", 1);
-        test("0.0.0", "0.1.0", -1);
-        test("1.0.0", "1.0.0", 0);
-        test("1.0.0", "0.1.1", 1);
-        test("0.1.1", "1.0.0", -1);
-        test("0.0.0-123", "0.0.0", -1);
-        test("0.0.12-123", "0.0.0", 1);
-        test("10.2.3-DEV-SNAPSHOT", "10.2.3", -1);
-        test("1.1.2-prerelease+meta", "1.1.2", -1);
-        test("0.59.4000", "0.59.4001", -1);
-        test("1.0.0", "0.59.4001", 1);
-        test("0.59.4000-123123", "0.59.4000", -1);
     });
 });
