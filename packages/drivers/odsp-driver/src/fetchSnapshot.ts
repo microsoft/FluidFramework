@@ -234,7 +234,6 @@ async function fetchLatestSnapshotCore(
                     snapshotOptions,
                     controller,
                 );
-
                 const odspResponse = response.odspResponse;
                 const contentType = odspResponse.headers.get("content-type");
                 odspResponse.propsToLog = {
@@ -260,10 +259,14 @@ async function fetchLatestSnapshotCore(
                             odspResponse.propsToLog.bodySize = content.byteLength;
                             const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
                                 new ReadBuffer(new Uint8Array(content)));
-                            assert(snapshotContents.snapshotTree.trees !== undefined,
-                                0x200 /* "Returned odsp snapshot is malformed. No trees!" */);
-                            assert(snapshotContents.snapshotTree.blobs !== undefined,
-                                0x201 /* "Returned odsp snapshot is malformed. No blobs!" */);
+                            if (snapshotContents.snapshotTree.trees === undefined ||
+                                snapshotContents.snapshotTree.blobs === undefined) {
+                                    throw new NonRetryableError(
+                                        "Returned odsp snapshot is malformed. No trees or blobs!",
+                                        DriverErrorType.incorrectServerResponse,
+                                        { driverVersion: pkgVersion, ...odspResponse.propsToLog },
+                                    );
+                                }
                             parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
                             break;
                         }
@@ -419,7 +422,7 @@ async function fetchLatestSnapshotCore(
     });
 }
 
-interface ISnapshotRequestAndResponseOptions {
+export interface ISnapshotRequestAndResponseOptions {
     odspResponse: IOdspResponse<Response>;
     requestUrl: string;
     requestHeaders: { [index: string]: any; };
