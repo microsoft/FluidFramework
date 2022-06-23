@@ -64,6 +64,12 @@
     "broken": {
       "InterfaceDeclaration_IConnectionDetails": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_IContainer": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IContainerContext": {
+        "backCompat": false
       }
     }
   }
