@@ -7,6 +7,10 @@
         "rootDir": "src",
         "strict": true,
         "target": "es2019",
+        "types": [
+            "node"
+        ],
+        "esModuleInterop": true
     },
     "include": ["src/**/*"],
 }

@@ -31,6 +31,7 @@
     "prepack": "npm run build && oclif manifest && oclif readme",
     "postpack": "shx rm -f oclif.manifest.json",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "tsc": "tsc -b",
     "posttest": "npm run lint",
     "format": "npm run prettier:fix",
     "prettier": "prettier --check \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
@@ -38,6 +39,7 @@
     "version": "oclif readme && git add README.md"
   },
   "dependencies": {
+    "@fluidframework/build-tools": "file:../build-tools",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-plugins": "^2.0.1"

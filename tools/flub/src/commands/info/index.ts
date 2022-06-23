@@ -4,33 +4,27 @@
  */
 
 import { Command, Flags } from "@oclif/core";
-import { packageSelectorFlag, releaseGroupFlag, rootPathFlag } from "../../flags";
+import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
 
-export abstract class BaseBumpCommand extends Command {
+export default class InfoCommand extends Command {
     static description = "Bump versions of packages and dependencies";
 
+    static examples = [
+        `$ oex hello friend --from oclif
+hello friend from oclif! (./src/commands/hello/index.ts)
+`,
+    ];
+
     static flags = {
-        root: rootPathFlag(),
         releaseGroup: releaseGroupFlag(),
         package: packageSelectorFlag(),
-    }
-
-    // async run(): Promise<void> {
-    // }
-}
-
-export default class BumpCommand extends BaseBumpCommand {
-    static description = "Bump versions of packages and dependencies";
-
-    static flags = {
-        ...super.flags
     };
 
     static args = [
     ];
 
     async run(): Promise<void> {
-        const { args, flags } = await this.parse(BumpCommand);
+        const { args, flags } = await this.parse(InfoCommand);
 
         this.log(`hello ${args.person} from ${flags.releaseGroup}! (./src/commands/hello/index.ts)`);
     }

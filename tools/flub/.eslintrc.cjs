@@ -4,10 +4,8 @@
  */
 
 module.exports = {
-    "plugins": [
-        "@typescript-eslint",
-    ],
-    "extends": [
+    plugins: ["@typescript-eslint"],
+    extends: [
         "oclif",
         "oclif-typescript",
         "eslint:recommended",
@@ -15,6 +13,7 @@ module.exports = {
         // require.resolve("@fluidframework/eslint-config-fluid"),
         "prettier",
     ],
-    "rules": {
+    rules: {
+        "no-negated-condition": "off",
     },
-}
+};

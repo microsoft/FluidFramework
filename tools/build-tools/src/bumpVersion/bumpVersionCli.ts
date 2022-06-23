@@ -49,7 +49,7 @@ let paramUpdate = false;
 let paramVirtualPatch = false;
 let paramWriteReleaseVersions = false;
 
-function parseNameVersion(arg: string | undefined) {
+export function parseNameVersion(arg: string | undefined) {
     let name = arg;
     let extra = false;
 
