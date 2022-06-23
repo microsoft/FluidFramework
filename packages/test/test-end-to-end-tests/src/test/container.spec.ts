@@ -104,7 +104,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
     async function createConnectedContainer(): Promise<Container> {
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-        runtime.IFluidHandleContext.resolveHandle(request);
+            runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
             TestDataObjectType,
             getDataStoreFactory(),
@@ -412,17 +412,13 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     it("can cancel connect() with disconnect()", async () => {
         const container = await createConnectedContainer();
 
-        let disconnectedEventFired = false;
-        container.once("disconnected", () => { disconnectedEventFired = true; });
         container.disconnect();
-        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
-        assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
 
         container.connect();
         container.disconnect();
         const connectPromise = timeoutPromise(
             (resolve) => container.once("connected", () => resolve()),
-            { durationMs: timeoutMs, errorMsg: "valueChanged timeout (expected error)" },
+            { durationMs: timeoutMs, errorMsg: "connected timeout (expected error)" },
         );
         await assert.rejects(
             connectPromise,
@@ -433,9 +429,13 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             ConnectionState.Disconnected,
             "container connected after disconnect()",
         );
+        assert.strictEqual(
+            (container as any).deltaManager.connectionManager.pendingConnection, undefined,
+            "pendingConnection is not undefined",
+        );
     });
 
-    it("can cancel call connect() twice", async () => {
+    it("can call connect() twice", async () => {
         const container = await createConnectedContainer();
 
         let disconnectedEventFired = false;
@@ -470,7 +470,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         container.disconnect();
         const connectPromise = timeoutPromise(
             (resolve) => container.once("connected", () => resolve()),
-            { durationMs: timeoutMs, errorMsg: "valueChanged timeout (expected error)" },
+            { durationMs: timeoutMs, errorMsg: "connected timeout (expected error)" },
         );
         await assert.rejects(
             connectPromise,
@@ -480,6 +480,10 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             container.connectionState,
             ConnectionState.Disconnected,
             "container connected after disconnect()",
+        );
+        assert.strictEqual(
+            (container as any).deltaManager.connectionManager.pendingConnection, undefined,
+            "pendingConnection is not undefined",
         );
     });
 

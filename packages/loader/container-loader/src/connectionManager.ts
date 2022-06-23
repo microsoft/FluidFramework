@@ -421,7 +421,6 @@ export class ConnectionManager implements IConnectionManager {
         this.connectCore(connectionMode).catch((error) => {
             const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
             this.props.closeHandler(normalizedError);
-            this.pendingConnection = undefined;
         });
     }
 
@@ -432,16 +431,13 @@ export class ConnectionManager implements IConnectionManager {
             return;  // Connection attempt already completed successfully
         }
 
-        let requestedMode = connectionMode;
+        let pendingConnectionMode;
         if (this.pendingConnection !== undefined) {
-            // If there is no specified ConnectionMode, then default to the previous mode
-            if (requestedMode === undefined) {
-                requestedMode = this.pendingConnection.connectionMode;
-            }
+            pendingConnectionMode = this.pendingConnection.connectionMode;
             this.cancelConnection();  // Throw out in-progress connection attempt in favor of new attempt
         }
-
-        requestedMode = requestedMode ?? this.defaultReconnectionMode;
+        // If there is no specified ConnectionMode, try the previous mode, if there is no previous mode use default
+        let requestedMode = connectionMode ?? pendingConnectionMode ?? this.defaultReconnectionMode;
 
         this.pendingConnection = { abortController: new AbortController(), connectionMode: requestedMode };
         const abortSignal = this.pendingConnection.abortController.signal;
@@ -562,16 +558,16 @@ export class ConnectionManager implements IConnectionManager {
     /**
      * Disconnect the current connection.
      * @param reason - Text description of disconnect reason to emit with disconnect event
+     * @returns A boolean that indicates if the disconnection was successful
      */
      private disconnectFromDeltaStream(reason: string): boolean {
         this.pendingReconnect = false;
 
-        if (this.pendingConnection !== undefined) {
-            this.cancelConnection();
-            if (this.connection === undefined) {
+        if (this.connection === undefined) {
+            if (this.pendingConnection !== undefined) {
+                this.cancelConnection();
                 return true;
             }
-        } else if (this.connection === undefined) {
             return false;
         }
 
@@ -627,7 +623,7 @@ export class ConnectionManager implements IConnectionManager {
 
         this.pendingConnection = undefined;
 
-        if (this.closed || abortSignal.aborted === true) {
+        if (abortSignal.aborted === true) {
             connection.dispose();
             return;
         }
@@ -646,6 +642,12 @@ export class ConnectionManager implements IConnectionManager {
         assert(!readonly || this.connectionMode === "read", 0x0e8 /* "readonly perf with write connection" */);
 
         this.set_readonlyPermissions(readonly);
+
+        if (this.closed) {
+            // Raise proper events, Log telemetry event and close connection.
+            this.disconnectFromDeltaStream("ConnectionManager already closed");
+            return;
+        }
 
         this._outbound.resume();
 
