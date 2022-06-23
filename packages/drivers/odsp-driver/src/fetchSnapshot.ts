@@ -276,6 +276,7 @@ async function fetchLatestSnapshotCore(
                     }
                 } catch (error) {
                     if (isFluidError(error)) {
+                        error.addTelemetryProperties({ driverVersion: pkgVersion, ...odspResponse.propsToLog });
                         throw error;
                     }
                     const enhancedError = wrapError(
