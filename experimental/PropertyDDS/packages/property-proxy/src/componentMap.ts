@@ -173,7 +173,7 @@ class ComponentMap extends Map {
      */
     set(key: string, value: any) {
         if (typeof key !== "string") {
-            throw new Error(PropertyProxyErrors.ONLY_STRING_KEYS);
+            throw new TypeError(PropertyProxyErrors.ONLY_STRING_KEYS);
         }
 
         const asteriskFound = Utilities.containsAsterisk(key);

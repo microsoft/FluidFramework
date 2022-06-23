@@ -35,7 +35,7 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
 
     let clientNeedBump = false;
     let serverNeedBump = false;
-    let packageNeedBump = new Set<Package>();
+    const packageNeedBump = new Set<Package>();
     for (const name of bump) {
         if (name === MonoRepoKind[MonoRepoKind.Client]) {
             clientNeedBump = true;

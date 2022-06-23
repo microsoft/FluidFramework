@@ -94,7 +94,7 @@ Most developers will use the Fluid Framework to create Fluid containers.
 Based on our two design principles of "Keep the server simple" and "Move logic to the client", the majority of the Fluid
 codebase is focused on building containers.
 
-### Fluid containers
+### Fluid container
 
 The Fluid container defines the application logic while containing persistent data. If the Fluid Framework is a
 serverless application model with persistent data, the container is the serverless application and data.
@@ -107,7 +107,7 @@ stored in **shared objects**.
 ### Fluid service
 
 The Fluid service is primarily a total-order broadcast: it takes in changes (called "operations" or "ops") from each
-client, gives the op a sequential order number, and sends the ordered op back to each client. Distributed data
+client, gives each op a sequential order number, and sends each ordered op back to each client. Distributed data
 structures use these ops to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact,
 the service knows nothing about the contents of any Fluid container.
 

@@ -46,10 +46,14 @@ export function _validateReferenceType(refType: ReferenceType) {
     }
 }
 
+export interface LocalReferencePosition extends ReferencePosition {
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+}
+
 /**
- * @deprecated - Use ReferencePosition
+ * @deprecated - Use LocalReferencePosition
  */
-export class LocalReference implements ReferencePosition {
+export class LocalReference implements LocalReferencePosition {
     /**
      * @deprecated - use DetachedReferencePosition
      */
@@ -64,6 +68,8 @@ export class LocalReference implements ReferencePosition {
      * @deprecated - use getSegment
      */
     public segment: ISegment | undefined;
+
+    public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
 
     /**
      * @deprecated - use createReferencePosition
@@ -166,9 +172,6 @@ export class LocalReference implements ReferencePosition {
     }
 
     public getOffset() {
-        if (this.segment?.removedSeq) {
-            return 0;
-        }
         return this.offset;
     }
 
@@ -308,7 +311,7 @@ export class LocalReferenceCollection {
      * @internal - this method should only be called by mergeTree
      */
     public createLocalRef(
-        offset: number,
+        offset: number | undefined,
         refType: ReferenceType,
         properties: PropertySet | undefined,
         client: Client): ReferencePosition {
