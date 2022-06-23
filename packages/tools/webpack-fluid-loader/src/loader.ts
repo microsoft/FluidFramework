@@ -101,7 +101,7 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
         fluidModule.fluidExport;
     if (fluidModuleExport.IRuntimeFactory === undefined) {
         const dataStoreFactory = fluidModuleExport.IFluidDataStoreFactory;
-        assert(dataStoreFactory !== undefined, "dataStoreFactory is undefined");
+        assert(dataStoreFactory !== undefined, 0x317 /* dataStoreFactory is undefined */);
 
         const defaultFactory = createDataStoreFactory(packageJson.name, dataStoreFactory);
 
@@ -192,7 +192,7 @@ async function createWebLoader(
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
         const resolvedUrl = await urlResolver.resolve(await urlResolver.createRequestForCreateNew(documentId));
-        assert(resolvedUrl !== undefined, "resolvedUrl is undefined");
+        assert(resolvedUrl !== undefined, 0x318 /* resolvedUrl is undefined */);
         const innerDocumentService = await documentServiceFactory.createDocumentService(
             resolvedUrl,
             undefined, // logger
@@ -202,7 +202,7 @@ async function createWebLoader(
         const localDeltaConnectionServer = deltaConns.get(documentId);
         assert(
             localDeltaConnectionServer !== undefined,
-            "No delta connection server associated with specified document ID");
+            0x319 /* No delta connection server associated with specified document ID */);
         documentServiceFactory = new LocalDocumentServiceFactory(
             localDeltaConnectionServer,
             undefined,
@@ -288,7 +288,7 @@ export async function start(
                 0x1ea /* "Prefetch snapshot only available for odsp!" */);
 
             const resolvedUrl = await urlResolver.resolve({ url: documentUrl });
-            assert(resolvedUrl !== undefined, "resolvedUrl is undefined");
+            assert(resolvedUrl !== undefined, 0x31a /* resolvedUrl is undefined */);
 
             const prefetched = await prefetchLatestSnapshot(
                 resolvedUrl,
@@ -350,7 +350,7 @@ export async function start(
         const loader2 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
 
         // Create a new request url from the resolvedUrl of the first container.
-        assert(container1.resolvedUrl !== undefined, "container1.resolvedUrl is undefined");
+        assert(container1.resolvedUrl !== undefined, 0x31b /* container1.resolvedUrl is undefined */);
         const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
         containers.push(container2);
@@ -358,7 +358,7 @@ export async function start(
         await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
         // Handle the code upgrade scenario (which fires contextChanged)
         container2.on("contextChanged", () => {
-            assert(rightDiv !== undefined, "rightDiv is undefined");
+            assert(rightDiv !== undefined, 0x31c /* rightDiv is undefined */);
             getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv).catch(() => { });
         });
     }

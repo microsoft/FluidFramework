@@ -290,7 +290,7 @@ async function fetchLatestSnapshotCore(
                             { driverVersion: pkgVersion, ...odspResponse.propsToLog }));
                     throw enhancedError;
                 }
-                assert(parsedSnapshotContents !== undefined, "snapshot should be parsed");
+                assert(parsedSnapshotContents !== undefined, 0x312 /* snapshot should be parsed */);
                 const snapshot = parsedSnapshotContents.content;
                 // From: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
                 // fetchStart: immediately before the browser starts to fetch the resource.
