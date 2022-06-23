@@ -28,10 +28,6 @@ export interface IConnectionStateHandlerInputs {
     connectionStateChanged: () => void;
 }
 
-export interface ILocalSequencedClient extends ISequencedClient {
-    shouldHaveLeft?: boolean;
-}
-
 const JoinOpTimeoutMs = 45000;
 
 /**
