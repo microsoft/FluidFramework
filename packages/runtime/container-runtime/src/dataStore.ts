@@ -65,7 +65,8 @@ class DataStore implements IDataStore {
             // If we're already aliasing, check if it's for the same value and return
             // the stored promise, otherwise return 'AlreadyAliased'
             case AliasState.Aliasing:
-                assert(this.aliasResult !== undefined, 0x316 /* There should be a cached promise of in-progress aliasing */);
+                assert(this.aliasResult !== undefined,
+                    0x316 /* There should be a cached promise of in-progress aliasing */);
                 await this.aliasResult;
                 return this.alias === alias ? "Success" : "AlreadyAliased";
 
