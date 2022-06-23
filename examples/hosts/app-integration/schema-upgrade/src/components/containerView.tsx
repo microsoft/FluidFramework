@@ -5,10 +5,11 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-import type { IContainerKillBit, IInventoryList } from "./interfaces";
+import type { IContainerKillBit, IInventoryList } from "../interfaces";
 import { InventoryListView } from "./inventoryView";
 
-export interface IAppViewProps {
+interface IContainerViewProps {
+    containerId: string;
     inventoryList: IInventoryList;
     // Normally there's no need to display the imported string data, this is for demo purposes only.
     importedStringData: string | undefined;
@@ -20,7 +21,7 @@ export interface IAppViewProps {
     migrateContainer: () => Promise<void>;
 }
 
-export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
+export const ContainerView: React.FC<IContainerViewProps> = (props: IContainerViewProps) => {
     const {
         inventoryList,
         importedStringData,

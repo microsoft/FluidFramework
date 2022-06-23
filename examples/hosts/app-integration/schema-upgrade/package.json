@@ -85,6 +85,7 @@
     "eslint-plugin-jsdoc": "~39.3.0",
     "eslint-plugin-prefer-arrow": "~1.2.2",
     "eslint-plugin-react": "~7.28.0",
+    "eslint-plugin-react-hooks": "~4.6.0",
     "eslint-plugin-unicorn": "~40.0.0",
     "eslint-plugin-unused-imports": "~2.0.0",
     "html-webpack-plugin": "^5.5.0",
