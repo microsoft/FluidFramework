@@ -11,7 +11,6 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
-    IAudience,
     IDeltaManager,
     BindState,
     AttachState,
@@ -32,6 +31,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
+    IAudience,
     IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,

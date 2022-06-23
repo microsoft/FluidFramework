@@ -10,12 +10,12 @@ import {
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
-    IAudience,
     IDeltaManager,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
+    IAudience,
     IDocumentMessage,
     IQuorumClients,
     ISequencedDocumentMessage,

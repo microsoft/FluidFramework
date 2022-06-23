@@ -13,13 +13,13 @@ import {
     FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
-    IAudience,
     IDeltaManager,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
+    IAudience,
     IClientDetails,
     IDocumentMessage,
     IQuorumClients,

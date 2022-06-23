@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
+    IAudience,
     IClientConfiguration,
     IClientDetails,
     ISequencedDocumentMessage,
@@ -21,7 +22,6 @@ import {
     IDocumentMessage,
     IQuorumClients,
 } from "@fluidframework/protocol-definitions";
-import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
 import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";

@@ -256,26 +256,26 @@ use_old_InterfaceDeclaration_ContainerWarning(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IAudience": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IAudience": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAudience():
     TypeOnly<old.IAudience>;
-declare function use_current_InterfaceDeclaration_IAudience(
+declare function use_current_RemovedInterfaceDeclaration_IAudience(
     use: TypeOnly<current.IAudience>);
-use_current_InterfaceDeclaration_IAudience(
+use_current_RemovedInterfaceDeclaration_IAudience(
     get_old_InterfaceDeclaration_IAudience());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IAudience": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IAudience": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IAudience():
+declare function get_current_RemovedInterfaceDeclaration_IAudience():
     TypeOnly<current.IAudience>;
 declare function use_old_InterfaceDeclaration_IAudience(
     use: TypeOnly<old.IAudience>);
 use_old_InterfaceDeclaration_IAudience(
-    get_current_InterfaceDeclaration_IAudience());
+    get_current_RemovedInterfaceDeclaration_IAudience());
 
 /*
 * Validate forward compat by using old type in place of current type

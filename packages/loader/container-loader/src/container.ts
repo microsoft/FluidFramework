@@ -52,13 +52,13 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
-    IAudience,
     IProtocolHandler,
     ProtocolHandlerBuilder,
     ProtocolOpHandlerWithClientValidation,
     IQuorumSnapshot,
 } from "@fluidframework/protocol-base";
 import {
+    IAudience,
     IClient,
     IClientConfiguration,
     IClientDetails,
@@ -363,7 +363,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 container._lifecycleState = "loading";
                 await container.rehydrateDetachedFromSnapshot(
                     deserializedSummary,
-                    protocolDetails?.protocolHandlerBuilder
+                    protocolDetails?.protocolHandlerBuilder,
                 );
                 return container;
             },
@@ -1291,7 +1291,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async rehydrateDetachedFromSnapshot(
         detachedContainerSnapshot: ISummaryTree,
-        protocolDetails?: IProtocolDetails,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ) {
         if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
             assert(!!this.loader.services.detachedBlobStorage && this.loader.services.detachedBlobStorage.size > 0,
@@ -1320,7 +1320,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     proposals: [],
                     values: codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
                 }, // IQuorumSnapShot
-                protocolDetails?.protocolHandlerBuilder);
+                protocolHandlerBuilder);
 
         await this.instantiateContextDetached(
             true, // existing

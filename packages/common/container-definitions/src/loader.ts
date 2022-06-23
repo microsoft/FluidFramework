@@ -9,6 +9,7 @@ import {
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
+    IAudience,
     IClientDetails,
     IDocumentMessage,
     IQuorumClients,
@@ -18,7 +19,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IAudience } from "./audience";
 import { IDeltaManager, ReadOnlyInfo } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { IFluidModule } from "./fluidModule";

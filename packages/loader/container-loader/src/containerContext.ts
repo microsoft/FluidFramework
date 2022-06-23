@@ -6,7 +6,6 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import {
-    IAudience,
     IContainerContext,
     IDeltaManager,
     ILoader,
@@ -31,6 +30,7 @@ import {
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { isFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
+    IAudience,
     IClientConfiguration,
     IClientDetails,
     IDocumentMessage,

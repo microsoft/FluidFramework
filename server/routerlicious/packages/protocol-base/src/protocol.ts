@@ -4,6 +4,7 @@
  */
 
 import {
+    IAudience,
     IDocumentAttributes,
     IClientJoin,
     ICommittedProposal,
@@ -18,7 +19,6 @@ import {
     ISignalMessage,
     ISignalClient,
 } from "@fluidframework/protocol-definitions";
-import { IAudience } from "./audience";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
 export interface IScribeProtocolState {

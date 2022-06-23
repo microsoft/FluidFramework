@@ -10,7 +10,6 @@ import {
     FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
-    IAudience,
     IDeltaManager,
     AttachState,
     ILoaderOptions,
@@ -18,6 +17,7 @@ import {
 
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
+    IAudience,
     IClientDetails,
     IDocumentMessage,
     IQuorumClients,
