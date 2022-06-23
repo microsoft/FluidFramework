@@ -5,6 +5,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
+import type { ExternalDataSource } from "./externalData";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
@@ -79,6 +80,7 @@ export interface IAppViewProps {
     containerKillBit: IContainerKillBit;
     // End the collaboration session and create a new container using exported data.
     migrateContainer: () => void;
+    dataSource: ExternalDataSource;
 }
 
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
@@ -91,6 +93,7 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
         endSession,
         saveAndEndSession,
         migrateContainer,
+        dataSource,
     } = props;
 
     const [dead, setDead] = useState<boolean>(containerKillBit.dead);
@@ -118,6 +121,17 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             containerKillBit.off("markedForDestruction", markedForDestructionHandler);
         };
     }, [containerKillBit]);
+
+    useEffect(() => {
+        const onDataWritten = (data: string) => {
+            console.log("Wrote data:");
+            console.log(data);
+        };
+        dataSource.on("dataWritten", onDataWritten);
+        return () => {
+            dataSource.off("dataWritten", onDataWritten);
+        };
+    }, [dataSource]);
 
     const savedDataRef = useRef<HTMLTextAreaElement>(null);
 

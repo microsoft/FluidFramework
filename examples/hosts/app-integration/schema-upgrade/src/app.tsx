@@ -193,6 +193,7 @@ async function start(): Promise<void> {
             endSession={ endSession }
             saveAndEndSession={ () => { saveAndEndSession().catch(console.error); } }
             migrateContainer={ () => { migrateContainer().catch(console.error); } }
+            dataSource={ dataSource }
         />,
         div,
     );

@@ -11,7 +11,7 @@ import EventEmitter from "events";
  * Here we make it an event emitter just so we can render a reasonable debug view on it for demo purposes -- in those
  * more-realistic cases there's not an expectation that the data source pushes updates or anything.
  */
-class ExternalDataSource extends EventEmitter {
+export class ExternalDataSource extends EventEmitter {
     private externalInventoryData: string;
 
     public constructor() {
@@ -30,9 +30,8 @@ Delta:4`;
     public async writeData(data: string): Promise<void> {
         // Write to persisted storage
         this.externalInventoryData = data;
-        this.emit("dataWritten");
-        console.log("Wrote data:");
-        console.log(data);
+        // Emit for debug views to update
+        this.emit("dataWritten", data);
     }
 }
 
