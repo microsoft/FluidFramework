@@ -74,9 +74,11 @@ export class Context {
     public async collectVersionInfo(releaseName: string) {
         console.log("  Resolving published dependencies");
 
-        const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
+        const depVersions =
+            new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
         const pendingDepCheck = [];
         const processMonoRepo = (monoRepo: MonoRepo) => {
+            console.log(monoRepo);
             pendingDepCheck.push(...monoRepo.packages);
             // Fake these for printing.
             const firstClientPackage = monoRepo.packages[0];

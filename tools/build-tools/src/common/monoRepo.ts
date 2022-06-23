@@ -16,8 +16,12 @@ export enum MonoRepoKind {
 /**
  * A type guard used to determine if a string is a MonoRepoKind.
  */
-export function isMonoRepoKind(string: unknown): string is MonoRepoKind {
-    return typeof string === "string" && string in MonoRepoKind;
+export function isMonoRepoKind(str: unknown): str is MonoRepoKind {
+    return typeof str === "string" && sentenceCase(str) in MonoRepoKind;
+}
+
+function sentenceCase(str: string) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /**
