@@ -13,7 +13,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { AppView } from "./appView";
-import { extractStringData, fetchData, applyStringData, writeData } from "./dataHelpers";
+import { extractStringData, applyStringData } from "./dataHelpers";
+import { fetchData, writeData } from "./externalData";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
