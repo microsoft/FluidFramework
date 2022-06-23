@@ -125,7 +125,7 @@ async function runAndValidateBatch(
 describeNoCompat("Batching failures", (getTestObjectProvider) => {
     it("working proxy",
     async function() {
-        const provider = getTestObjectProvider(true);
+        const provider = getTestObjectProvider({ resetAfterEach: true });
 
         const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
             provider.documentServiceFactory,
@@ -143,7 +143,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
     });
     it("working batch",
     async function() {
-        const provider = getTestObjectProvider(true);
+        const provider = getTestObjectProvider({ resetAfterEach: true });
         await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
     });
     describe("client sends invalid batches ", () => {
@@ -152,7 +152,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
         ],
         async function() {
-            const provider = getTestObjectProvider(true);
+            const provider = getTestObjectProvider({ resetAfterEach: true });
 
             const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
                 provider.documentServiceFactory,
@@ -191,7 +191,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         [
         ],
         async function() {
-            const provider = getTestObjectProvider(true);
+            const provider = getTestObjectProvider({ resetAfterEach: true });
 
             const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
                 provider.documentServiceFactory,
@@ -228,7 +228,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         [
         ],
         async function() {
-            const provider = getTestObjectProvider(true);
+            const provider = getTestObjectProvider({ resetAfterEach: true });
 
             const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
                 provider.documentServiceFactory,
@@ -257,7 +257,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
         ],
         async function() {
-            const provider = getTestObjectProvider(true);
+            const provider = getTestObjectProvider({ resetAfterEach: true });
 
             const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
                 provider.documentServiceFactory,
@@ -293,7 +293,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
         ],
         async function() {
-            const provider = getTestObjectProvider(true);
+            const provider = getTestObjectProvider({ resetAfterEach: true });
 
             const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
                 provider.documentServiceFactory,

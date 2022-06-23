@@ -73,12 +73,12 @@
     "@fluidframework/odsp-doclib-utils": "^2.0.0",
     "@fluidframework/odsp-driver": "^2.0.0",
     "@fluidframework/odsp-driver-definitions": "^2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/routerlicious-driver": "^2.0.0",
     "@fluidframework/runtime-definitions": "^2.0.0",
     "@fluidframework/runtime-utils": "^2.0.0",
-    "@fluidframework/server-local-server": "^0.1037.1000-0",
-    "@fluidframework/server-services-client": "^0.1037.1000-0",
+    "@fluidframework/server-local-server":  "^0.1037.1000-0",
+    "@fluidframework/server-services-client":  "^0.1037.1000-0",
     "@fluidframework/test-runtime-utils": "^2.0.0",
     "@fluidframework/tool-utils": "^2.0.0",
     "@fluidframework/view-adapters": "^2.0.0",
@@ -117,7 +117,7 @@
     "webpack-cli": "^4.9.2"
   },
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "2.0.0",
     "broken": {}
   }
 }

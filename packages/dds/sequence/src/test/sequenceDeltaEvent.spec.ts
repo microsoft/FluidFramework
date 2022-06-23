@@ -67,7 +67,6 @@ describe("non-collab", () => {
             const event = new SequenceDeltaEvent({ op }, deltaArgs, client);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.position, offset);
             assert.equal(event.first.segment.cachedLength, text.length);
@@ -111,7 +110,6 @@ describe("non-collab", () => {
             const event = new SequenceDeltaEvent({ op }, deltaArgs, client);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.position, start);
             assert.equal(event.first.segment.cachedLength, end - start);
@@ -182,7 +180,6 @@ describe("non-collab", () => {
             const event = new SequenceDeltaEvent({ op }, deltaArgs, client);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, expected.length);
@@ -242,7 +239,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -260,7 +256,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
             assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -290,7 +285,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -310,7 +304,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos);
             assert.equal(event.last.position, remoteInsertPos);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -342,7 +335,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -360,7 +352,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos);
             assert.equal(event.last.position, remoteInsertPos);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -391,7 +382,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
@@ -411,7 +401,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
             assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
@@ -445,7 +434,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -463,7 +451,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos);
             assert.equal(event.last.position, remoteInsertPos);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -493,7 +480,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -513,7 +499,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
             assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -550,7 +535,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -568,7 +552,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage1);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos1);
             assert.equal(event.last.position, remoteInsertPos1);
             assert.equal(event.first.segment.cachedLength, remoteInsertText1.length);
@@ -586,7 +569,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage2);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos2);
             assert.equal(event.last.position, remoteInsertPos2);
             assert.equal(event.first.segment.cachedLength, remoteInsertText2.length);
@@ -621,7 +603,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos1);
             assert.equal(event.last.position, localInsertPos1);
             assert.equal(event.first.segment.cachedLength, localInsertText1.length);
@@ -641,7 +622,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage1);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos + localInsertText1.length);
             assert.equal(event.last.position, remoteInsertPos + localInsertText1.length);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -659,7 +639,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage2);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos2);
             assert.equal(event.last.position, localInsertPos2);
             assert.equal(event.first.segment.cachedLength, localInsertText2.length);
@@ -699,7 +678,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -716,7 +694,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
@@ -746,7 +723,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -765,7 +741,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
@@ -799,7 +774,6 @@ describe("collab", () => {
             assert.equal(events.length, 1);
             const [event] = events;
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -841,7 +815,6 @@ describe("collab", () => {
             assert.equal(events.length, 1);
             const [event] = events;
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -887,7 +860,6 @@ describe("collab", () => {
             assert.equal(events.length, 1);
             const [event] = events;
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -929,7 +901,6 @@ describe("collab", () => {
             assert.equal(events.length, 1);
             const [event] = events;
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -974,7 +945,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -997,7 +967,6 @@ describe("collab", () => {
             const end = 10;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
@@ -1027,7 +996,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -1052,7 +1020,6 @@ describe("collab", () => {
             const end = 10;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
@@ -1084,7 +1051,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -1107,7 +1073,6 @@ describe("collab", () => {
             const end = 9;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
@@ -1137,7 +1102,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -1162,7 +1126,6 @@ describe("collab", () => {
             const end = 9;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
@@ -1193,7 +1156,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -1210,7 +1172,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 2);
             assert.equal(event.first.position, remoteRemovePosStart);
             // -1 is for split
@@ -1244,7 +1205,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -1263,7 +1223,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 2);
             assert.equal(event.first.position, remoteRemovePosStart);
             // -1 is for split
@@ -1908,7 +1867,6 @@ describe("collab", () => {
             expected: IExpectedSegmentInfo[],
         ): void {
             assert(event.isLocal === isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, expected.length);
@@ -1968,7 +1926,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -1985,7 +1942,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart + insertText.length);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2017,7 +1973,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2034,7 +1989,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart + insertText.length);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2070,7 +2024,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2087,7 +2040,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2119,7 +2071,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2136,7 +2087,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2172,7 +2122,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2189,7 +2138,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2221,7 +2169,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2238,7 +2185,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2274,7 +2220,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2291,7 +2236,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
@@ -2324,7 +2268,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2341,7 +2284,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
@@ -2378,7 +2320,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2395,7 +2336,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart + insertText.length);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2426,7 +2366,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2443,7 +2382,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart + insertText.length);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2479,7 +2417,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2496,7 +2433,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2528,7 +2464,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2545,7 +2480,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2581,7 +2515,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2598,7 +2531,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2630,7 +2562,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2647,7 +2578,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2681,7 +2611,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2700,7 +2629,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
@@ -2733,7 +2661,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2750,7 +2677,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
@@ -2787,7 +2713,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2810,7 +2735,6 @@ describe("collab", () => {
             const expectedRangeEnd2 = expectedRangeStart2 + "fox ".length;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, expectedRangeStart1);
             assert.equal(event.last.position + event.last.segment.cachedLength, expectedRangeEnd2);
             assert.equal(event.ranges.length, 2);
@@ -2845,7 +2769,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2868,7 +2791,6 @@ describe("collab", () => {
             const expectedRangeEnd2 = expectedRangeStart2 + "fox ".length;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, expectedRangeStart1);
             assert.equal(event.last.position + event.last.segment.cachedLength, expectedRangeEnd2);
             assert.equal(event.ranges.length, 2);
@@ -2908,7 +2830,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2925,7 +2846,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeStart + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2957,7 +2877,6 @@ describe("collab", () => {
             );
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2974,7 +2893,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeStart + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -3011,7 +2929,6 @@ describe("SequenceDeltaEvent", () => {
             const event = new SequenceDeltaEvent({ op }, deltaArgs, client);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.position, 0);
             assert.equal(event.first.segment.cachedLength, insertText.length);
@@ -3041,7 +2958,6 @@ describe("SequenceDeltaEvent", () => {
             const event = new SequenceDeltaEvent({ op }, deltaArgs, client);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, segmentCount);
             assert.equal(event.first.position, insertText.length);
             for (let i = 0; i < segmentCount; i = i + 1) {
@@ -3077,7 +2993,6 @@ describe("SequenceDeltaEvent", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, segmentCount);
             for (let i = 0; i < segmentCount; i = i + 1) {
                 assert.equal(event.ranges[i].position, (i + 1) * textCount);

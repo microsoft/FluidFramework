@@ -66,7 +66,7 @@
     "@fluidframework/driver-definitions": "^2.0.0",
     "@fluidframework/gitresources": "^0.1037.1000-0",
     "@fluidframework/protocol-base": "^0.1037.1000-0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/telemetry-utils": "^2.0.0",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
@@ -93,7 +93,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.0.0",
+    "version": "2.0.0",
     "broken": {
       "RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {
         "forwardCompat": false,

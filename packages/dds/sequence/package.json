@@ -68,7 +68,7 @@
     "@fluidframework/core-interfaces": "^2.0.0",
     "@fluidframework/datastore-definitions": "^2.0.0",
     "@fluidframework/merge-tree": "^2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/runtime-definitions": "^2.0.0",
     "@fluidframework/runtime-utils": "^2.0.0",
     "@fluidframework/shared-object-base": "^2.0.0",
@@ -105,14 +105,27 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "2.0.0",
     "broken": {
       "ClassDeclaration_IntervalCollection": {
+        "backCompat": false,
         "forwardCompat": false
       },
       "ClassDeclaration_SequenceInterval": {
-        "forwardCompat": false
-      }
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISharedString": {"backCompat": false},
+      "ClassDeclaration_SequenceEvent": {"backCompat": false},
+      "ClassDeclaration_SequenceDeltaEvent": {"backCompat": false},
+      "ClassDeclaration_SequenceMaintenanceEvent": {"backCompat": false},
+      "ClassDeclaration_SharedNumberSequence": {"backCompat": false},
+      "ClassDeclaration_SharedObjectSequence": {"backCompat": false},
+      "ClassDeclaration_SharedSegmentSequence": {"backCompat": false},
+      "ClassDeclaration_SharedSequence": {"backCompat": false},
+      "ClassDeclaration_SharedString": {"backCompat": false},
+      "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false},
+      "ClassDeclaration_SparseMatrix": {"backCompat": false}
     }
   }
 }

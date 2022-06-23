@@ -68,7 +68,7 @@
     "@fluidframework/matrix": "^2.0.0",
     "@fluidframework/mocha-test-setup": "^2.0.0",
     "@fluidframework/ordered-collection": "^2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/register-collection": "^2.0.0",
     "@fluidframework/runtime-definitions": "^2.0.0",
     "@fluidframework/sequence": "^2.0.0",
@@ -104,7 +104,7 @@
     "webpack-cli": "^4.9.2"
   },
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "2.0.0",
     "broken": {}
   }
 }

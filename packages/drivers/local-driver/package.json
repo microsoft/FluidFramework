@@ -62,12 +62,12 @@
     "@fluidframework/driver-base": "^2.0.0",
     "@fluidframework/driver-definitions": "^2.0.0",
     "@fluidframework/driver-utils": "^2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/routerlicious-driver": "^2.0.0",
-    "@fluidframework/server-local-server": "^0.1037.1000-0",
-    "@fluidframework/server-services-client": "^0.1037.1000-0",
-    "@fluidframework/server-services-core": "^0.1037.1000-0",
-    "@fluidframework/server-test-utils": "^0.1037.1000-0",
+    "@fluidframework/server-local-server":  "^0.1037.1000-0",
+    "@fluidframework/server-services-client":  "^0.1037.1000-0",
+    "@fluidframework/server-services-core":  "^0.1037.1000-0",
+    "@fluidframework/server-test-utils":  "^0.1037.1000-0",
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },
@@ -91,7 +91,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "2.0.0",
     "broken": {}
   }
 }
