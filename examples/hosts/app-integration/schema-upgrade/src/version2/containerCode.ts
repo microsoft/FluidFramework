@@ -29,6 +29,7 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
                 rootDataStoreRequestHandler,
             ],
         );
+        console.info("Using runtime factory version two");
     }
 
     /**

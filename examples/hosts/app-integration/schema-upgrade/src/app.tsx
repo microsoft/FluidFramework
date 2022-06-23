@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -34,30 +34,33 @@ async function getContainerKillBitFromContainer(container: IContainer): Promise<
     return requestFluidObject<IContainerKillBit>(container, { url: containerKillBitId });
 }
 
-async function createNewContainer(externalStringData?: string) {
+function createLoader() {
     const tinyliciousService = new TinyliciousService();
 
-    const load = async (): Promise<IFluidModuleWithDetails> => {
-        // TODO: Use some reasonable logic to select the appropriate container code to load from.
-        const useNewVersion = false;
-        const containerRuntimeFactory = useNewVersion
+    const load = async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+        const containerRuntimeFactory = source.package === "one"
             ? new InventoryListContainerRuntimeFactory2()
             : new InventoryListContainerRuntimeFactory1();
 
         return {
             module: { fluidExport: containerRuntimeFactory },
-            details: { package: "no-dynamic-package", config: {} },
+            details: { package: source.package },
         };
     };
     const codeLoader = { load };
 
-    const loader = new Loader({
+    return new Loader({
         urlResolver: tinyliciousService.urlResolver,
         documentServiceFactory: tinyliciousService.documentServiceFactory,
         codeLoader,
     });
+}
 
-    const container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
+async function createNewContainer(externalStringData?: string) {
+    const loader = createLoader();
+
+    // TODO probably take an argument for which container code to use.
+    const container = await loader.createDetachedContainer({ package: "two" });
     if (externalStringData !== undefined) {
         const inventoryList = await getInventoryListFromContainer(container);
         await applyStringData(inventoryList, externalStringData);
@@ -67,29 +70,13 @@ async function createNewContainer(externalStringData?: string) {
     return container;
 }
 
+async function loadContainer(containerId: string) {
+    const loader = createLoader();
+
+    return loader.resolve({ url: containerId });
+}
+
 async function start(): Promise<void> {
-    const tinyliciousService = new TinyliciousService();
-
-    const load = async (): Promise<IFluidModuleWithDetails> => {
-        // TODO: Use some reasonable logic to select the appropriate container code to load from.
-        const useNewVersion = false;
-        const containerRuntimeFactory = useNewVersion
-            ? new InventoryListContainerRuntimeFactory2()
-            : new InventoryListContainerRuntimeFactory1();
-
-        return {
-            module: { fluidExport: containerRuntimeFactory },
-            details: { package: "no-dynamic-package", config: {} },
-        };
-    };
-    const codeLoader = { load };
-
-    const loader = new Loader({
-        urlResolver: tinyliciousService.urlResolver,
-        documentServiceFactory: tinyliciousService.documentServiceFactory,
-        codeLoader,
-    });
-
     let fetchedData: string | undefined;
     let container: IContainer;
     let containerId: string;
@@ -116,7 +103,7 @@ async function start(): Promise<void> {
         location.hash = containerId;
     } else {
         containerId = location.hash.substring(1);
-        container = await loader.resolve({ url: containerId });
+        container = await loadContainer(containerId);
     }
 
     // Put the container ID in the tab title
