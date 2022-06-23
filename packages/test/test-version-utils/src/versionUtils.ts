@@ -236,10 +236,34 @@ export const loadPackage = (modulePath: string, pkg: string) =>
  * generally negative to move back versions (eg. -1).
  * Note: If the requested number is a string then that will be the returned value
  */
-export function getRequestedRange(baseVersion: string, requested?: number | string): string {
-    if (requested === undefined || requested === 0) { return baseVersion; }
-    if (typeof requested === "string") { return requested; }
+export function getRequestedRange(
+    baseVersion: string,
+    requested?: number | string
+): string {
+    if (requested === undefined || requested === 0) {
+        return baseVersion;
+    }
+    if (typeof requested === "string") {
+        return requested;
+    }
     const version = new semver.SemVer(baseVersion);
+    // const versionBoundaries = [
+    //     ["0.59.0-0", "1.0.0-0"],
+    //     ["1.0.0-0", "2.0.0-0"],
+    // ].map((version) => new semver.SemVer(version));
+
+    const versionBoundaries = [
+        ["0.0.0-0", "0.59.0-0"],
+        ["1.0.0-0", "1.0.0-0"],
+        ["2.0.0-0", "2.0.0-0"],
+    ].map((version) => new semver.SemVer(version));
+
+    // case 1 -- invalid base version (not in any boundary) but
+    // case 2 -- base + requested is in same boundary as base
+    // case 3 -- base + requested is in different boundary than base
+    // case 4 -- base + requested > max boundary
+    // case 5 -- base + requested < min boundary
+
     // ask for prerelease in case we just bumped the version and haven't release the previous version yet.
     if (version.major === 1) {
         if (requested === -1) {
