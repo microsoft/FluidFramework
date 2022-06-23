@@ -12,17 +12,25 @@ import EventEmitter from "events";
  * more-realistic cases there's not an expectation that the data source pushes updates or anything.
  */
 class ExternalDataSource extends EventEmitter {
-    public async fetchData(): Promise<string> {
-        const inventoryData =
+    private externalInventoryData: string;
+
+    public constructor() {
+        super();
+        this.externalInventoryData =
 `Alpha:1
 Beta:2
 Gamma:3
 Delta:4`;
-        return inventoryData;
+    }
+
+    public async fetchData(): Promise<string> {
+        return this.externalInventoryData;
     }
 
     public async writeData(data: string): Promise<void> {
         // Write to persisted storage
+        this.externalInventoryData = data;
+        this.emit("dataWritten");
         console.log("Wrote data:");
         console.log(data);
     }
