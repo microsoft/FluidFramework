@@ -2,7 +2,7 @@ name: Merge commits to next branch
 
 on:
   schedule:
-    - cron: "0 */3 * * *"
+    - cron: "0 */2 * * *"
 
 env:
   TARGET_BRANCH: next
@@ -72,13 +72,33 @@ jobs:
           git fetch --all
           git reset --hard ${{needs.dequeue.outputs.SHA}}
           git push --set-upstream origin main-next-${{needs.dequeue.outputs.SHA}}
+  merge-next:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      actions: write
+      checks: write
+      issues: write
+      pull-requests: write
+      statuses: write
+    needs: [ create-branch ]
+    steps:
+      - name: Merge next
+        run: |
+          git config user.name $USERNAME
+          git config user.email $EMAIL
+          git fetch origin
+          git checkout main-next-${{needs.dequeue.outputs.SHA}}
+          git merge $TARGET_BRANCH -X --no-ff
+          git push
   pull-request:
     runs-on: ubuntu-latest
     concurrency:
       group: group-pr
       cancel-in-progress: false
-    needs: [ create-branch, dequeue ]
-    if: needs.create-branch.result == 'success'
+    needs: [ create-branch, dequeue, merge-next ]
+    if: always()
     steps:
       - run: npm install @octokit/core
       - name: Create PR using octokit
@@ -89,7 +109,7 @@ jobs:
             const token = `${{ secrets.GITHUB_TOKEN }}`;
             const sha = 'main-next-${{needs.dequeue.outputs.SHA}}';
             const author = '${{needs.dequeue.outputs.AUTHOR}}';
-            const baseBranch = '$TARGET_BRANCH';
+            const baseBranch = ${{ env.TARGET_BRANCH }};
             const octokit = new Octokit({ auth: token })
             const newPr = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
               owner: 'microsoft',
