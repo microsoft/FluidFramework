@@ -88,7 +88,7 @@ It has been removed in this release--consumers should assume any raised delta ev
 - [Remove `noopTimeFrequency` and `noopCountFrequency` from ILoaderOptions](#remove-nooptimefrequency-and-noopcountfrequency-from-iloaderoptions)
 - [proxyLoaderFactories members removed from ILoaderProps and ILoaderServices](#proxyloaderfactories-members-to-be-removed-from-iloaderprops-and-iloaderservices)
 - [IContainer.connectionState yields finer-grained ConnectionState values](#icontainerconnectionstate-yields-finer-grained-connectionstate-values)
-- [Remove ICodeLoader from container-definitions](#Remove-ICodeLoader-from-container-definitions)
+- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-container-definitions)
 
 ### Changed AzureConnectionConfig API
 - Added a `type` field that's used to differentiate between remote and local connections.
