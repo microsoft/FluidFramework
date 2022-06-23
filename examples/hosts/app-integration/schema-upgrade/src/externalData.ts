@@ -35,4 +35,4 @@ Delta:4`;
     }
 }
 
-export const dataSource = new ExternalDataSource();
+export const externalDataSource = new ExternalDataSource();

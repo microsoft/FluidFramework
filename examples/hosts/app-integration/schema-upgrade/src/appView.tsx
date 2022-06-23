@@ -80,7 +80,7 @@ export interface IAppViewProps {
     containerKillBit: IContainerKillBit;
     // End the collaboration session and create a new container using exported data.
     migrateContainer: () => void;
-    dataSource: ExternalDataSource;
+    externalDataSource: ExternalDataSource;
 }
 
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
@@ -93,7 +93,7 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
         endSession,
         saveAndEndSession,
         migrateContainer,
-        dataSource,
+        externalDataSource,
     } = props;
 
     const [dead, setDead] = useState<boolean>(containerKillBit.dead);
@@ -127,11 +127,11 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             console.log("Wrote data:");
             console.log(data);
         };
-        dataSource.on("dataWritten", onDataWritten);
+        externalDataSource.on("dataWritten", onDataWritten);
         return () => {
-            dataSource.off("dataWritten", onDataWritten);
+            externalDataSource.off("dataWritten", onDataWritten);
         };
-    }, [dataSource]);
+    }, [externalDataSource]);
 
     const savedDataRef = useRef<HTMLTextAreaElement>(null);
 
