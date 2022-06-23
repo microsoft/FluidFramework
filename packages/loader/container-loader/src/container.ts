@@ -417,7 +417,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
-    private readonly _audience: Audience;
+    private readonly _audience: IAudience;
 
     private _context: ContainerContext | undefined;
     private get context() {
