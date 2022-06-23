@@ -34,7 +34,9 @@ import {
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
 /**
- * TinyliciousClient provides the ability to have a Fluid object backed by a Tinylicious service
+ * Provides the ability to have a Fluid object backed by a Tinylicious service.
+ *
+ * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
  */
 export class TinyliciousClient {
     private readonly documentServiceFactory: IDocumentServiceFactory;

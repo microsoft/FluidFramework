@@ -126,4 +126,4 @@ export class FluidRepo {
         }
         return FluidRepo.ensureInstalled(this.packages.packages);
     }
-};
+}

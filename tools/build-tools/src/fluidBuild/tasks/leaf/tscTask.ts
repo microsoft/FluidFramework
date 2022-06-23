@@ -24,7 +24,7 @@ interface ITsBuildInfo {
 
 interface TscTaskMatchOptions {
     tsConfig?: string;
-};
+}
 
 export class TscTask extends LeafTask {
     private _tsBuildInfoFullPath: string | undefined;
@@ -161,7 +161,7 @@ export class TscTask extends LeafTask {
         }
 
         const configFileFullPath = this.configFileFullPath;
-        if (!configFileFullPath) { assert.fail(); };
+        if (!configFileFullPath) { assert.fail(); }
 
         // Patch relative path based on the file directory where the config comes from
         const configOptions = TscUtils.filterIncrementalOptions(
@@ -336,7 +336,7 @@ export class TscTask extends LeafTask {
             && (parsed.fileNames.length === 0 || parsed.options.project === undefined)
             && !parsed.watchOptions;
     }
-};
+}
 
 // Base class for tasks that are dependent on a tsc compile
 export abstract class TscDependentTask extends LeafWithDoneFileTask {
@@ -391,4 +391,4 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
     }
 
     protected abstract get configFileFullPath(): string;
-};
+}

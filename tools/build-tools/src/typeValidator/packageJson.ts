@@ -52,10 +52,6 @@ function safeParse(json: string, error: string){
     }
 }
 
-export async function readPackageJson(packageDir: string) {
-
-}
-
 export async function getPackageDetails(packageDir: string):  Promise<PackageDetails> {
     const packagePath = `${packageDir}/package.json`;
     if(!await util.promisify(fs.exists)(packagePath)){
