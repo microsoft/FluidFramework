@@ -42,8 +42,8 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
 
         case "r11s":
             assert(options.tenantId !== undefined, "options.tenantId is undefined");
-            assert(options.fluidHost !== undefined, "options.fluidHost is undefined");
             assert(options.bearerSecret !== undefined, "options.bearerSecret is undefined");
+            assert(options.fluidHost !== undefined, "options.fluidHost is undefined");
             if (options.discoveryEndpoint !== undefined) {
                 return new InsecureUrlResolver(
                     "",
