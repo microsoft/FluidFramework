@@ -72,7 +72,7 @@ jobs:
           git fetch --all
           git reset --hard ${{needs.dequeue.outputs.SHA}}
           git push --set-upstream origin main-next-${{needs.dequeue.outputs.SHA}}
-  merge-next:
+  merge-dry-run:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -105,8 +105,8 @@ jobs:
       issues: write
       pull-requests: write
       statuses: write
-    needs: [ merge-next ]
-    if: needs.merge-next.result == 'success'
+    needs: [ merge-dry-run ]
+    if: needs.merge-dry-run.result == 'success'
     steps:
       - name: Git checkout
         uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
@@ -125,7 +125,7 @@ jobs:
     concurrency:
       group: group-pr
       cancel-in-progress: false
-    needs: [ create-branch, dequeue, merge-next ]
+    needs: [ create-branch, dequeue, merge-dry-run ]
     if: always()
     steps:
       - run: npm install @octokit/core
