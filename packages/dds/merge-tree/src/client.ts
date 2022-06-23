@@ -32,6 +32,7 @@ import {
     createAnnotateMarkerOp,
     createAnnotateRangeOp,
     createGroupOp,
+    createInsertOp,
     createInsertSegmentOp,
     createRemoveRangeOp,
 } from "./opBuilder";
@@ -803,9 +804,14 @@ export class Client {
                 case MergeTreeDeltaType.INSERT:
                     assert(segment.seq === UnassignedSequenceNumber,
                         0x037 /* "Segment already has assigned sequence number" */);
-                    newOp = createInsertSegmentOp(
+                    newOp = createInsertOp(
                         segmentPosition,
-                        segment);
+                        resetOp.seg,
+                    );
+                    // newOp = createInsertSegmentOp(
+                    //     segmentPosition,
+                    //     segment
+                    // )
                     break;
 
                 case MergeTreeDeltaType.REMOVE:
