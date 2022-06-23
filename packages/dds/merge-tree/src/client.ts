@@ -735,7 +735,10 @@ export class Client {
             || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
 
         this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
-            assert(seg.seq !== undefined || seg.localSeq !== undefined, 0x301 /* Either seq or localSeq should be defined */);
+            assert(
+                seg.seq !== undefined || seg.localSeq !== undefined,
+                0x301, /* Either seq or localSeq should be defined */
+            );
             segment = seg;
 
             if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
