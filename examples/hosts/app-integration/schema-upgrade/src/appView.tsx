@@ -68,6 +68,36 @@ const ImportedDataView: React.FC<IImportedDataViewProps> = (props: IImportedData
     );
 };
 
+interface IExternalDataSourceViewProps {
+    externalDataSource: ExternalDataSource;
+}
+
+const ExternalDataSourceView: React.FC<IExternalDataSourceViewProps> = (props: IExternalDataSourceViewProps) => {
+    const { externalDataSource } = props;
+    const externalDataTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        const onDataWritten = (data: string) => {
+            if (externalDataTextareaRef.current !== null) {
+                externalDataTextareaRef.current.value = data;
+            }
+            console.log("Wrote data:");
+            console.log(data);
+        };
+        externalDataSource.on("dataWritten", onDataWritten);
+        return () => {
+            externalDataSource.off("dataWritten", onDataWritten);
+        };
+    }, [externalDataSource]);
+
+    return (
+        <div>
+            <div>External data source:</div>
+            <textarea ref={ externalDataTextareaRef } rows={ 5 } readOnly></textarea>
+        </div>
+    );
+};
+
 export interface IAppViewProps {
     inventoryList: IInventoryList;
     // Normally there's no need to display the imported string data, this is for demo purposes only.
@@ -122,29 +152,8 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
         };
     }, [containerKillBit]);
 
-    useEffect(() => {
-        const onDataWritten = (data: string) => {
-            console.log("Wrote data:");
-            console.log(data);
-        };
-        externalDataSource.on("dataWritten", onDataWritten);
-        return () => {
-            externalDataSource.off("dataWritten", onDataWritten);
-        };
-    }, [externalDataSource]);
-
-    const savedDataRef = useRef<HTMLTextAreaElement>(null);
-
     const saveButtonClickHandler = () => {
-        writeToExternalStorage()
-            // As noted above, in a real scenario we don't need to observe the data in the view.
-            // Here we display it visually for demo purposes only.
-            .then((savedData) => {
-                if (savedDataRef.current !== null) {
-                    savedDataRef.current.value = savedData;
-                }
-            })
-            .catch(console.error);
+        writeToExternalStorage().catch(console.error);
     };
 
     const disabled = sessionEnding || dead;
@@ -161,8 +170,7 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             <button onClick={ proposeEndSession }>1. Propose ending collaboration session</button>
             <button onClick={ saveButtonClickHandler }>2. Save</button>
             <button onClick={ endSession }>3. Actually end the collaboration session</button>
-            <div>Data out:</div>
-            <textarea ref={ savedDataRef } rows={ 5 } readOnly></textarea>
+            <ExternalDataSourceView externalDataSource={ externalDataSource }/>
         </div>
     );
 };
