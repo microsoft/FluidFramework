@@ -56,6 +56,7 @@ import {
     IProtocolHandler,
     ProtocolHandlerBuilder,
     ProtocolOpHandlerWithClientValidation,
+    IQuorumSnapshot,
 } from "@fluidframework/protocol-base";
 import {
     IClient,
@@ -1188,9 +1189,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 protocolDetails?.protocolHandlerBuilder,
             ) : await this.initializeProtocolState(
                 attributes,
-                pendingLocalState.protocol.members,
-                pendingLocalState.protocol.proposals,
-                pendingLocalState.protocol.values,
+                {
+                    members: pendingLocalState.protocol.members,
+                    proposals: pendingLocalState.protocol.proposals,
+                    values: pendingLocalState.protocol.values,
+                }, // pending IQuorumSnapshot
                 protocolDetails?.protocolHandlerBuilder,
             );
 
@@ -1268,9 +1271,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const qValues = initQuorumValuesFromCodeDetails(source);
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
-            [], // members
-            [], // proposals
-            qValues,
+            {
+                members: [],
+                proposals: [],
+                values: qValues,
+            }, // IQuorumSnapShot
             protocolDetails?.protocolHandlerBuilder,
         );
 
@@ -1310,9 +1315,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler =
             await this.initializeProtocolState(
                 attributes,
-                [], // members
-                [], // proposals
-                codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
+                {
+                    members: [],
+                    proposals: [],
+                    values: codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
+                }, // IQuorumSnapShot
                 protocolDetails?.protocolHandlerBuilder);
 
         await this.instantiateContextDetached(
@@ -1380,13 +1387,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         snapshot: ISnapshotTree | undefined,
         protocolHandlerBuilder: ProtocolHandlerBuilder | undefined,
     ): Promise<IProtocolHandler> {
-        let members: [string, ISequencedClient][] = [];
-        let proposals: [number, ISequencedProposal, string[]][] = [];
-        let values: [string, any][] = [];
+        const quorumSnapshot: IQuorumSnapshot = {
+            members: [],
+            proposals: [],
+            values: [],
+        };
 
         if (snapshot !== undefined) {
             const baseTree = getProtocolSnapshotTree(snapshot);
-            [members, proposals, values] = await Promise.all([
+            [quorumSnapshot.members, quorumSnapshot.proposals, quorumSnapshot.values] = await Promise.all([
                 readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
                 readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals),
                 readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues),
@@ -1395,9 +1404,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const protocolHandler = await this.initializeProtocolState(
             attributes,
-            members,
-            proposals,
-            values,
+            quorumSnapshot,
             protocolHandlerBuilder);
 
         return protocolHandler;
@@ -1405,28 +1412,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async initializeProtocolState(
         attributes: IDocumentAttributes,
-        members: [string, ISequencedClient][],
-        proposals: [number, ISequencedProposal, string[]][],
-        values: [string, any][],
+        quorumSnapshot: IQuorumSnapshot,
         protocolHandlerBuilder: ProtocolHandlerBuilder | undefined,
     ): Promise<IProtocolHandler> {
         const protocol = protocolHandlerBuilder !== undefined ?
             protocolHandlerBuilder(
-                attributes.minimumSequenceNumber,
-                attributes.sequenceNumber,
-                attributes.term,
-                members,
-                proposals,
-                values,
+                attributes,
+                quorumSnapshot,
                 (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
                 this._audience,
             ) : new ProtocolOpHandlerWithClientValidation(
-                attributes.minimumSequenceNumber,
-                attributes.sequenceNumber,
-                attributes.term,
-                members,
-                proposals,
-                values,
+                attributes,
+                quorumSnapshot,
                 (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
                 this._audience,
             );

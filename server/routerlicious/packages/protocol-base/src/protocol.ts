@@ -54,18 +54,14 @@ export interface ILocalSequencedClient extends ISequencedClient {
 }
 
 export type ProtocolHandlerBuilder = (
-    minimumSequenceNumber: number,
-    sequenceNumber: number,
-    term: number | undefined,
-    members: [string, ISequencedClient][],
-    proposals: [number, ISequencedProposal, string[]][],
-    values: [string, ICommittedProposal][],
+    attributes: IDocumentAttributes,
+    snapshot: IQuorumSnapshot,
     sendProposal: (key: string, value: any) => number,
-    audience: IAudience,
+    audience?: IAudience,
 ) => IProtocolHandler;
 
 export interface IProtocolHandler {
-    readonly audience: IAudience;
+    readonly audience?: IAudience;
     readonly quorum: IQuorum;
     readonly attributes: IDocumentAttributes;
 
@@ -129,13 +125,17 @@ export class ProtocolOpHandler implements IProtocolHandler {
     }
 
     public processSignal(message: ISignalMessage) {
+        if (this.audience === undefined) {
+            return;
+        }
+
         const innerContent = message.content as { content: any; type: string; };
         if (innerContent.type === MessageType.ClientJoin) {
             const newClient = innerContent.content as ISignalClient;
-            this.audience?.addMember(newClient.clientId, newClient.client);
+            this.audience.addMember(newClient.clientId, newClient.client);
         } else if (innerContent.type === MessageType.ClientLeave) {
             const leftClientId = innerContent.content as string;
-            this.audience?.removeMember(leftClientId);
+            this.audience.removeMember(leftClientId);
         }
     }
 
@@ -211,6 +211,24 @@ export class ProtocolOpHandler implements IProtocolHandler {
 }
 
 export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
+    constructor(
+        attributes: IDocumentAttributes,
+        quorumSnapshot: IQuorumSnapshot,
+        sendProposal: (key: string, value: any) => number,
+        audience?: IAudience,
+    ) {
+        super(
+            attributes.minimumSequenceNumber,
+            attributes.sequenceNumber,
+            attributes.term,
+            quorumSnapshot.members,
+            quorumSnapshot.proposals,
+            quorumSnapshot.values,
+            sendProposal,
+            audience,
+        );
+    }
+
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
         const client: ILocalSequencedClient | undefined = this.quorum.getMember(message.clientId);
 
