@@ -89,7 +89,7 @@ jobs:
             const token = `${{ secrets.GITHUB_TOKEN }}`;
             const sha = 'main-next-${{needs.dequeue.outputs.SHA}}';
             const author = '${{needs.dequeue.outputs.AUTHOR}}';
-            const baseBranch = $TARGET_BRANCH;
+            const baseBranch = '$TARGET_BRANCH';
             const octokit = new Octokit({ auth: token })
             const newPr = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
               owner: 'microsoft',
