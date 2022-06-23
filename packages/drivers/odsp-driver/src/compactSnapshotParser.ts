@@ -131,7 +131,9 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
 
     assertBlobCoreInstance(records.mrv, "minReadVersion should be of BlobCore type");
     assertBlobCoreInstance(records.cv, "createVersion should be of BlobCore type");
-    assertNumberInstance(records.lsn, "lsn should be a number");
+    if (records.lsn !== undefined) {
+        assertNumberInstance(records.lsn, "lsn should be a number");
+    }
 
     assert(parseFloat(snapshotMinReadVersion) >= parseFloat(records.mrv.toString()),
         0x20f /* "Driver min read version should >= to server minReadVersion" */);

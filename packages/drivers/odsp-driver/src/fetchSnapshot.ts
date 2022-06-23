@@ -8,7 +8,7 @@ import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { isFluidError, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
     IOdspResolvedUrl,
     ISnapshotOptions,
@@ -16,7 +16,7 @@ import {
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { isRuntimeMessage, NonRetryableError } from "@fluidframework/driver-utils";
 import { IOdspSnapshot, ISnapshotCachedEntry, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -32,6 +32,7 @@ import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser"
 import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { EpochTracker } from "./epochTracker";
+import { pkgVersion } from "./packageVersion";
 
 /**
  * Enum to support different types of snapshot formats.
@@ -243,31 +244,47 @@ async function fetchLatestSnapshotCore(
                 };
                 let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
                 try {
-                    if (contentType === "application/json") {
-                        const text = await odspResponse.content.text();
-                        odspResponse.propsToLog.bodySize = text.length;
-                        const content: IOdspSnapshot = JSON.parse(text);
-                        validateBlobsAndTrees(content);
-                        const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
-                        parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
-                    } else {
-                        assert(contentType === "application/ms-fluid", 0x2c3 /* "Content type should be application/ms-fluid" */);
-                        const content = await odspResponse.content.arrayBuffer();
-                        odspResponse.propsToLog.bodySize = content.byteLength;
-                        const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
-                            new ReadBuffer(new Uint8Array(content)));
-                        assert(snapshotContents.snapshotTree.trees !== undefined,
-                            0x200 /* "Returned odsp snapshot is malformed. No trees!" */);
-                        assert(snapshotContents.snapshotTree.blobs !== undefined,
-                            0x201 /* "Returned odsp snapshot is malformed. No blobs!" */);
-                        parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
+                    switch (contentType) {
+                        case "application/json": {
+                            const text = await odspResponse.content.text();
+                            odspResponse.propsToLog.bodySize = text.length;
+                            const content: IOdspSnapshot = JSON.parse(text);
+                            validateBlobsAndTrees(content);
+                            const snapshotContents: ISnapshotContents =
+                                convertOdspSnapshotToSnapshotTreeAndBlobs(content);
+                            parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
+                            break;
+                        }
+                        case "application/ms-fluid": {
+                            const content = await odspResponse.content.arrayBuffer();
+                            odspResponse.propsToLog.bodySize = content.byteLength;
+                            const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
+                                new ReadBuffer(new Uint8Array(content)));
+                            assert(snapshotContents.snapshotTree.trees !== undefined,
+                                0x200 /* "Returned odsp snapshot is malformed. No trees!" */);
+                            assert(snapshotContents.snapshotTree.blobs !== undefined,
+                                0x201 /* "Returned odsp snapshot is malformed. No blobs!" */);
+                            parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
+                            break;
+                        }
+                        default:
+                            throw new NonRetryableError(
+                                "Unknown snapshot content type",
+                                DriverErrorType.incorrectServerResponse,
+                                { driverVersion: pkgVersion, ...odspResponse.propsToLog },
+                            );
                     }
                 } catch (error) {
-                    if (error !== null && typeof error === "object") {
-                        const enhancedError = { ...error, ...odspResponse.propsToLog };
-                        throw enhancedError;
+                    if (isFluidError(error)) {
+                        throw error;
                     }
-                    throw error;
+                    const enhancedError = wrapError(
+                        error,
+                        (errorMessage) => new NonRetryableError(
+                            `Error parsing snapshot response: ${errorMessage}`,
+                            DriverErrorType.genericError,
+                            { driverVersion: pkgVersion, ...odspResponse.propsToLog }));
+                    throw enhancedError;
                 }
                 assert(parsedSnapshotContents !== undefined, "snapshot should be parsed");
                 const snapshot = parsedSnapshotContents.content;
