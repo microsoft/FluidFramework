@@ -14,7 +14,7 @@ import {
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 
@@ -26,7 +26,7 @@ const testContainerConfig: ITestContainerConfig = {
             initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without this.
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
-                ...{ maxOps: 10, initialSummarizerDelayMs: 0, idleTime: 10 },
+                ...{ maxOps: 10, initialSummarizerDelayMs: 0, minIdleTime: 10, maxIdleTime: 10 },
              },
         },
     },
@@ -63,7 +63,7 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
     return JSON.parse(json);
 }
 
-describeFullCompat("Summaries", (getTestObjectProvider) => {
+describeNoCompat("Summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();

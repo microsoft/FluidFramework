@@ -107,7 +107,7 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
                         case MergeTreeDeltaType.REMOVE:
                             const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject() as IJSONSegment);
                             this.sequence.insertAtReferencePosition(
-                                this.sequence.createPositionReference(sg, 0, ReferenceType.Transient),
+                                this.sequence.createLocalReferencePosition(sg, 0, ReferenceType.Transient, undefined),
                                 insertSegment);
                             sg.trackingCollection.trackingGroups.forEach((tg) => {
                                 tg.link(insertSegment);
