@@ -86,7 +86,8 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     }
 
     /**
-     * TODO
+     * Provides a record of the initial objects defined on creation.
+     * @see {@link RootDataObject.initializingFirstTime}
      */
     public get initialObjects(): LoadableObjectRecord {
         if (Object.keys(this._initialObjects).length === 0) {
