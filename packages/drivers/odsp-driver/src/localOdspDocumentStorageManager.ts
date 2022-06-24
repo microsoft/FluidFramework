@@ -9,7 +9,7 @@ import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageManager";
-import { ISnapshotContents } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
 import { IOdspSnapshot } from "./contracts";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
 import { parseCompactSnapshotResponse } from "./compactSnapshotParser";
