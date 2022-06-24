@@ -14,6 +14,7 @@
 const websitePackages = [
     "fluid-framework",
     "tinylicious",
+    "@fluidframework/aqueduct",
     "@fluidframework/azure-client",
     "@fluidframework/azure-service-utils",
     "@fluidframework/container-definitions",
