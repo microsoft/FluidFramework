@@ -9,6 +9,15 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 /**
+ * Events emitted by {@link ISharedObject}.
+ *
+ * @remarks
+ * ### "pre-op"
+ *
+ * TODO
+ *
+ * ### "op"
+ *
  * TODO
  */
 export interface ISharedObjectEvents extends IErrorEvent {
