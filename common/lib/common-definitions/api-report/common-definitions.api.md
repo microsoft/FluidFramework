@@ -15,34 +15,31 @@ export interface IDisposable {
     readonly disposed: boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface IErrorEvent extends IEvent {
     // (undocumented)
     (event: "error", listener: (message: any) => void): any;
 }
 
-// @public (undocumented)
+// @public
 export interface IEvent {
     // (undocumented)
     (event: string, listener: (...args: any[]) => void): any;
 }
 
-// @public (undocumented)
+// @public
 export interface IEventProvider<TEvent extends IEvent> {
-    // (undocumented)
     readonly off: IEventTransformer<this, TEvent>;
-    // (undocumented)
     readonly on: IEventTransformer<this, TEvent>;
-    // (undocumented)
     readonly once: IEventTransformer<this, TEvent>;
 }
 
-// @public (undocumented)
+// @public
 export type IEventThisPlaceHolder = {
     thisPlaceHolder: "thisPlaceHolder";
 };
 
-// @public (undocumented)
+// @public
 export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: infer E0, listener: (...args: infer A0) => void): any;
     (event: infer E1, listener: (...args: infer A1) => void): any;
@@ -256,7 +253,7 @@ export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
 
-// @public (undocumented)
+// @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
@@ -267,9 +264,8 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
 // @public (undocumented)
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
-// @public (undocumented)
+// @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
-
 
 // (No @packageDocumentation comment for this package)
 
