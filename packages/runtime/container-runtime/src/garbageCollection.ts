@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
-import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
+import { assert, LazyPromise, Timer, setLongTimeout } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
@@ -452,10 +452,11 @@ export class GarbageCollector implements IGarbageCollector {
             }
 
             const timeoutMs = this.sessionExpiryTimeoutMs;
-            setLongTimeout(timeoutMs,
+            setLongTimeout(
                 () => {
                     this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
                 },
+                timeoutMs,
                 (timer) => {
                     this.sessionExpiryTimer = timer;
                 });
@@ -1296,29 +1297,6 @@ function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollec
         sortedGCState.gcNodes[nodeId] = nodeData;
     }
     return sortedGCState;
-}
-
-/**
- * setLongTimeout is used for timeouts longer than setTimeout's ~24.8 day max
- * @param timeoutMs - the total time the timeout needs to last in ms
- * @param timeoutFn - the function to execute when the timer ends
- * @param setTimerFn - the function used to update your timer variable
- */
-function setLongTimeout(
-    timeoutMs: number,
-    timeoutFn: () => void,
-    setTimerFn: (timer: ReturnType<typeof setTimeout>) => void,
-) {
-    // The setTimeout max is 24.8 days before looping occurs.
-    const maxTimeout = 2147483647;
-    let timer: ReturnType<typeof setTimeout>;
-    if (timeoutMs > maxTimeout) {
-        const newTimeoutMs = timeoutMs - maxTimeout;
-        timer = setTimeout(() => setLongTimeout(newTimeoutMs, timeoutFn, setTimerFn), maxTimeout);
-    } else {
-        timer = setTimeout(() => timeoutFn(), timeoutMs);
-    }
-    setTimerFn(timer);
 }
 
 /**

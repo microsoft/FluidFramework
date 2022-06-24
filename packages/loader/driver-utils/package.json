@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/common-utils": "^0.33.1000-0",
     "@fluidframework/core-interfaces": "^1.1.0",
     "@fluidframework/driver-definitions": "^1.1.0",
     "@fluidframework/gitresources": "^0.1036.4000",
