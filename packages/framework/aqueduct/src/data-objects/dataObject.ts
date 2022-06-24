@@ -84,10 +84,10 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
     }
 
     /**
-     * TODO
-     * @param item - TODO
+     * Generates an error string indicating an item is uninitialized.
+     * @param item - The name of the item that was uninitialized.
      */
-    protected getUninitializedErrorString(item: string) {
+    protected getUninitializedErrorString(item: string): string {
         return `${item} must be initialized before being accessed.`;
     }
 }
