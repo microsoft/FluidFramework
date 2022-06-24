@@ -21,6 +21,7 @@ const websitePackages = [
     "@fluidframework/map",
     "@fluidframework/sequence",
     "@fluidframework/fluid-static",
+    "@fluidframework/routerlicious-driver",
     "@fluidframework/test-client-utils",
     "@fluidframework/tinylicious-client",
     "@fluidframework/tinylicious-driver",
