@@ -61,7 +61,7 @@ function parseNameVersion(arg: string | undefined) {
 
     const split = name.split("=");
     name = split[0];
-    let v = split[1];
+    const v = split[1];
 
     if (name.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
         name = MonoRepoKind[MonoRepoKind.Client];

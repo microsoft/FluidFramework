@@ -90,4 +90,4 @@ export class TaskFactory {
         const tasks = scripts.map(value => TaskFactory.Create(node, `npm run ${value}`, {}));
         return tasks.length == 1 ? tasks[0] : new NPMTask(node, `npm run ${scripts.map(name => `npm run ${name}`).join(" && ")}`, tasks);
     }
-};
+}
