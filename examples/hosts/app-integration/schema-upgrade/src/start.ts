@@ -14,7 +14,7 @@ import ReactDOM from "react-dom";
 
 import { App } from "./app";
 import { AppView } from "./appView";
-import { extractStringData, applyStringData } from "./dataHelpers";
+import { applyStringData } from "./dataHelpers";
 import { externalDataSource } from "./externalData";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
@@ -116,38 +116,8 @@ async function start(): Promise<void> {
 
     const app = new App(inventoryList, containerKillBit);
 
-    const saveAndEndSession = async () => {
-        if (!containerKillBit.markedForDestruction) {
-            await containerKillBit.markForDestruction();
-        }
-
-        if (containerKillBit.dead) {
-            return undefined;
-        }
-
-        // After the quorum proposal is accepted, our system doesn't allow further edits to the string
-        // So we can immediately get the data out even before taking the lock.
-        const stringData = await extractStringData(inventoryList);
-        if (containerKillBit.dead) {
-            return stringData;
-        }
-
-        await containerKillBit.volunteerForDestruction();
-        if (containerKillBit.dead) {
-            return stringData;
-        }
-
-        await externalDataSource.writeData(stringData);
-        if (!containerKillBit.haveDestructionTask()) {
-            throw new Error("Lost task during write");
-        } else {
-            await containerKillBit.setDead();
-        }
-        return stringData;
-    };
-
     const migrateContainer = async () => {
-        const exportedData = await saveAndEndSession();
+        const exportedData = await app.saveAndEndSession();
         container.close();
         container = await createNewContainer(exportedData);
 
