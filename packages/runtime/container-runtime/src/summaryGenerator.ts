@@ -394,45 +394,33 @@ export class SummaryGenerator {
         initialProps: SummaryGeneratorTelemetry,
     ): SummaryGeneratorTelemetry {
         switch (summaryData.stage) {
-            case "base":
-                return initialProps;
+            case "base": return initialProps;
 
-            case "generate":
-                return {
-                    ...initialProps,
-                    ...summaryData.summaryStats,
-                    generateDuration: summaryData.generateDuration,
-                };
+            case "generate": return {
+                ...initialProps,
+                ...summaryData.summaryStats,
+                generateDuration: summaryData.generateDuration,
+            };
 
-            case "upload":
-                return {
-                    ...initialProps,
-                    ...summaryData.summaryStats,
-                    generateDuration: summaryData.generateDuration,
-                    handle: summaryData.handle,
-                    uploadDuration: summaryData.uploadDuration,
-                };
+            case "upload": return {
+                ...initialProps,
+                ...summaryData.summaryStats,
+                generateDuration: summaryData.generateDuration,
+                handle: summaryData.handle,
+                uploadDuration: summaryData.uploadDuration,
+            };
 
-            case "submit": {
-                const result = {
-                    ...initialProps,
-                    ...summaryData.summaryStats,
-                    generateDuration: summaryData.generateDuration,
-                    handle: summaryData.handle,
-                    uploadDuration: summaryData.uploadDuration,
-                    clientSequenceNumber: summaryData.clientSequenceNumber,
-                };
-
-                if (!this.heuristicData.hasMissingOpData) {
-                    return result;
-                }
-
-                return {
-                    ...result,
-                    opsSizesSinceLastSummary: this.heuristicData.totalOpsSize,
-                    nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
-                };
-            }
+            case "submit": return {
+                ...initialProps,
+                ...summaryData.summaryStats,
+                generateDuration: summaryData.generateDuration,
+                handle: summaryData.handle,
+                uploadDuration: summaryData.uploadDuration,
+                clientSequenceNumber: summaryData.clientSequenceNumber,
+                hasMissingOpData: this.heuristicData.hasMissingOpData,
+                opsSizesSinceLastSummary: this.heuristicData.totalOpsSize,
+                nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
+            };
 
             default: assert(true, "Unexpected summary stage");
         }
