@@ -165,7 +165,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 }
 
 /**
- * {@inheritDoc IFluidContainer}
+ * Base {@link IFluidContainer} implementation.
  *
  * TODO: this implementation is incomplete. What is the intention here with regards to consumers?
  * Should they extend it? Should it be an abstract class?
