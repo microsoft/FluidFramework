@@ -86,17 +86,6 @@ export function isOdcUrl(url: string | URL): boolean;
 // @public
 export function isSpoUrl(url: string): boolean;
 
-// @public
-export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
-    constructor(localSnapshot: Uint8Array | string);
-    // (undocumented)
-    createContainer(_createNewSummary: ISummaryTree | undefined, _createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, _clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // Warning: (ae-forgotten-export) The symbol "ICacheAndTracker" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, _cacheAndTrackerArg?: ICacheAndTracker, _clientIsSummarizer?: boolean): Promise<IDocumentService>;
-}
-
 // @public (undocumented)
 export const locatorQueryParamName = "nav";
 
@@ -118,6 +107,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    // Warning: (ae-forgotten-export) The symbol "ICacheAndTracker" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)

@@ -19,7 +19,7 @@ import {
     LoaderCachingPolicy,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { RateLimiter, NonRetryableError, UsageError } from "@fluidframework/driver-utils";
+import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
     IOdspResolvedUrl,
     ISnapshotOptions,
@@ -31,7 +31,6 @@ import {
     HostStoragePolicyInternal,
     IVersionedValueWithEpoch,
     ISnapshotCachedEntry,
-    IOdspSnapshot,
 } from "./contracts";
 import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem, SnapshotFormatSupportType } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -45,9 +44,6 @@ import { defaultCacheExpiryTimeoutMs, EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
-import { ReadBuffer } from "./ReadBufferUtils";
-import { parseCompactSnapshotResponse } from "./compactSnapshotParser";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 
@@ -811,73 +807,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
             // will be the actual id of tree to be fetched.
             return this.commitCache.get(id) ?? this.commitCache.get(treeId);
         });
-    }
-}
-
-/**
- * ODSP document storage service that works on a provided snapshot for all its processing.
- * Attempting to use unsupported actions/methods will result in errors being thrown.
- */
- export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceBase {
-    private snapshotTreeId: string | undefined;
-
-    constructor(
-        private readonly logger: ITelemetryLogger,
-        private readonly localSnapshot: Uint8Array | string,
-    ) {
-        super();
-    }
-
-    private calledGetVersions = false;
-
-    public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
-        assert(blobid === null, "Invalid usage. \"blobid\" should always be null");
-        assert(count === 1, "Invalid usage. \"count\" should always be 1");
-
-        // No reason to re-parse the data since it will never change
-        if (this.calledGetVersions) {
-            return this.getSnapshotVersion();
-        }
-        this.calledGetVersions = true;
-
-        let snapshotContents: ISnapshotContents;
-
-        if (typeof this.localSnapshot === "string") {
-            const content: IOdspSnapshot = JSON.parse(this.localSnapshot);
-            snapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
-        } else {
-            snapshotContents = parseCompactSnapshotResponse(
-                new ReadBuffer(this.localSnapshot));
-        }
-
-        this.snapshotTreeId = this.initializeFromSnapshot(snapshotContents);
-        return this.getSnapshotVersion();
-    }
-
-    private getSnapshotVersion(): api.IVersion[] {
-        return this.snapshotTreeId ? [{ id: this.snapshotTreeId, treeId: undefined! }] : [];
-    }
-
-    protected async fetchTreeFromSnapshot(_id: string): Promise<api.ISnapshotTree | undefined> {
-        throw this.getUsageErrorToThrow("fetchTreeFromSnapshot");
-    }
-
-    protected async fetchBlobFromStorage(_blobId: string, _evicted: boolean): Promise<ArrayBuffer> {
-        throw this.getUsageErrorToThrow("fetchBlobFromStorage");
-    }
-
-    public async uploadSummaryWithContext(_summary: api.ISummaryTree, _context: ISummaryContext): Promise<string> {
-        throw this.getUsageErrorToThrow("uploadSummaryWithContext");
-    }
-
-    public async createBlob(_file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
-        throw this.getUsageErrorToThrow("createBlob");
-    }
-
-    private getUsageErrorToThrow(methodName: string): UsageError {
-        const toThrow = new UsageError(`"${methodName}" is not supported by LocalOdspDocumentStorageService`);
-        this.logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
-        return toThrow;
     }
 }
 

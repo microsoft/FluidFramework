@@ -14,9 +14,9 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { LocalOdspDocumentService } from "../odspDocumentService";
-import { LocalOdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { LocalOdspDocumentStorageService } from "../odspDocumentStorageManager";
+import { LocalOdspDocumentService } from "../localOdspDocumentService";
+import { LocalOdspDocumentServiceFactory } from "../localOdspDocumentServiceFactory";
+import { LocalOdspDocumentStorageService } from "../localOdspDocumentStorageManager";
 
 describe("Local Odsp driver", () => {
     // TODO: add end-to-end test
@@ -47,26 +47,13 @@ describe("Local Odsp driver", () => {
         { encoding: "utf8" },
     );
 
-    async function assertThrowsAsync(fn: () => Promise<any>) {
-        try {
-            await fn();
-            assert.fail("Expected exception to be thrown");
-        } catch (err) { }
-    }
-
-    /**
-     * ! Will re-throw error when encountered
-     * ! This function helps explicitly define when we don't expect errors
-     */
-    async function assertDoesNotThrowAsync(fn: () => Promise<any>) {
-        await fn();
+    async function assertThrowsUsageError(fn: () => Promise<any>) {
+        await assert.rejects(fn, (e) => e.errorType === "usageError");
     }
 
     describe("Local Odsp document service factory", () => {
         it("Can use a real snapshot", () => {
-            assert.doesNotThrow(() => {
-                new LocalOdspDocumentServiceFactory(localSnapshot);
-            });
+            assert.doesNotThrow(() => new LocalOdspDocumentServiceFactory(localSnapshot));
         });
 
         it("Protocol name is correct", () => {
@@ -74,31 +61,29 @@ describe("Local Odsp driver", () => {
         });
 
         it("createContainer throws error", async () => {
-            await assertThrowsAsync(async () => {
-                await new LocalOdspDocumentServiceFactory("sample data")
-                    .createContainer(undefined, fakeOdspResolvedUrl);
-            });
+            await assertThrowsUsageError(async () => new LocalOdspDocumentServiceFactory("sample data")
+                .createContainer(undefined, fakeOdspResolvedUrl));
         });
 
         describe("createDocumentService", () => {
             it("clientIsSummarizer should be undefined or false", async () => {
                 const factory = new LocalOdspDocumentServiceFactory("sample data");
-                await assertDoesNotThrowAsync(async () => {
+                await assert.doesNotReject(async () => {
                     await factory.createDocumentService(fakeOdspResolvedUrl);
                 });
-                await assertDoesNotThrowAsync(async () => {
+                await assert.doesNotReject(async () => {
                     await factory.createDocumentService(fakeOdspResolvedUrl, undefined, undefined);
                 });
                 await factory.createDocumentService(fakeOdspResolvedUrl, undefined, false);
-                await assertThrowsAsync(async () => {
+                await assert.rejects(async () => {
                     await factory.createDocumentService(fakeOdspResolvedUrl, undefined, true);
                 });
             });
 
             it("resolvedUrl must be IOdspResolvedUrl", async () => {
                 const factory = new LocalOdspDocumentServiceFactory("sample data");
-                await assertDoesNotThrowAsync(async () => factory.createDocumentService(fakeOdspResolvedUrl));
-                await assertThrowsAsync(async () => factory.createDocumentService({ type: "web", data: "" }));
+                await assert.doesNotReject(async () => factory.createDocumentService(fakeOdspResolvedUrl));
+                await assert.rejects(async () => factory.createDocumentService({ type: "web", data: "" }));
             });
         });
     });
@@ -116,9 +101,8 @@ describe("Local Odsp driver", () => {
         }
 
         it("Can use a real snapshot", () => {
-            assert.doesNotThrow(() => {
-                new LocalOdspDocumentService(fakeOdspResolvedUrl, new MockLogger(), localSnapshot);
-            });
+            assert.doesNotThrow(() =>
+                new LocalOdspDocumentService(fakeOdspResolvedUrl, new MockLogger(), localSnapshot));
         });
 
         it("Can get resolvedUrl", () => {
@@ -148,7 +132,7 @@ describe("Local Odsp driver", () => {
                 scopes: [],
             };
 
-            await assertThrowsAsync(async () => service.connectToDeltaStream(client));
+            await assertThrowsUsageError(async () => service.connectToDeltaStream(client));
             mockLogger.assertMatch([
                 { eventName: "UnsupportedUsage" },
             ], "Expected log not present");
@@ -165,17 +149,14 @@ describe("Local Odsp driver", () => {
 
     describe("Local Odsp document storage service", () => {
         it("Can use a real snapshot", () => {
-            assert.doesNotThrow(() => {
-                new LocalOdspDocumentStorageService(new MockLogger(), localSnapshot);
-            });
+            assert.doesNotThrow(() => new LocalOdspDocumentStorageService(new MockLogger(), localSnapshot));
         });
 
         it("uploadSummaryWithContext throws error", async () => {
             const mockLogger = new MockLogger();
-            const storageService = new LocalOdspDocumentStorageService(mockLogger, "sample data");
 
-            await assertThrowsAsync(async () => {
-                await storageService.uploadSummaryWithContext(
+            await assertThrowsUsageError(async () =>
+                new LocalOdspDocumentStorageService(mockLogger, "sample data").uploadSummaryWithContext(
                     {
                         type: SummaryType.Tree,
                         tree: {},
@@ -185,8 +166,7 @@ describe("Local Odsp driver", () => {
                         ackHandle: undefined,
                         referenceSequenceNumber: 1,
                     },
-                );
-            });
+                ));
             mockLogger.assertMatch([
                 { eventName: "UnsupportedUsage" },
             ], "Expected log not present");
@@ -196,7 +176,7 @@ describe("Local Odsp driver", () => {
             const mockLogger = new MockLogger();
             const storageService = new LocalOdspDocumentStorageService(mockLogger, "sample data");
 
-            await assertThrowsAsync(async () => storageService.createBlob(new ArrayBuffer(0)));
+            await assertThrowsUsageError(async () => storageService.createBlob(new ArrayBuffer(0)));
             mockLogger.assertMatch([
                 { eventName: "UnsupportedUsage" },
             ], "Expected log not present");
@@ -207,15 +187,15 @@ describe("Local Odsp driver", () => {
 
             it("blobid should always be null", async () => {
                 const storageService = new LocalOdspDocumentStorageService(new MockLogger(), localSnapshot);
-                await assertThrowsAsync(async () => storageService.getVersions("", 1));
-                await assertThrowsAsync(async () => storageService.getVersions("1", 1));
+                await assert.rejects(async () => storageService.getVersions("", 1));
+                await assert.rejects(async () => storageService.getVersions("1", 1));
             });
 
             it("count should always be 1", async () => {
                 const storageService = new LocalOdspDocumentStorageService(new MockLogger(), localSnapshot);
-                await assertThrowsAsync(async () => storageService.getVersions(null, -1));
-                await assertThrowsAsync(async () => storageService.getVersions(null, 0));
-                await assertThrowsAsync(async () => storageService.getVersions(null, 2));
+                await assert.rejects(async () => storageService.getVersions(null, -1));
+                await assert.rejects(async () => storageService.getVersions(null, 0));
+                await assert.rejects(async () => storageService.getVersions(null, 2));
             });
 
             it("Retrieves snapshot version from JSON snapshot", async () => {
