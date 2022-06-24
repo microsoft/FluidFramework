@@ -12,6 +12,13 @@ spec:
   selector:
     app: nginx-ingress-prod-lb
 ---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: nginx-prod
+spec:
+  controller: nginx-prod-controller
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:

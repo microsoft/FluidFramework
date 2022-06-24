@@ -12,6 +12,13 @@ spec:
   selector:
     app: nginx-ingress-ppe-lb
 ---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: nginx-ppe
+spec:
+  controller: fluidframework.com/nginx-ppe-controller
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -34,22 +41,26 @@ spec:
           image: k8s.gcr.io/ingress-nginx/controller:v1.2.1@sha256:5516d103a9c2ecc4f026efbd4b40662ce22dc1f824fb129ed121460aaa5c47f8
           imagePullPolicy: Always
           readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 18080
-              scheme: HTTP
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 18080
-              scheme: HTTP
+            failureThreshold: 3
             initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            tcpSocket:
+              port: 10254
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
             timeoutSeconds: 5
+            tcpSocket:
+              port: 10254
           args:
             - /nginx-ingress-controller
             - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
             - --default-ssl-certificate=$(POD_NAMESPACE)/wu2-ppe-tls-certificate
-            - --controller-class=nginx-ppe-controller
+            - --controller-class=fluidframework.com/nginx-ppe-controller
           env:
             - name: POD_NAME
               valueFrom:
@@ -65,16 +76,7 @@ spec:
           volumeMounts:
             - name: tls-dhparam-vol
               mountPath: /etc/nginx-ssl/dhparam
-            - name: nginx-template-volume
-              mountPath: /etc/nginx/template
-              readOnly: true
       volumes:
         - name: tls-dhparam-vol
           secret:
             secretName: tls-dhparam
-        - name: nginx-template-volume
-          configMap:
-            name: nginx-template
-            items:
-            - key: nginx.tmpl
-              path: nginx.tmpl

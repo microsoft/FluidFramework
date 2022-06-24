@@ -34,6 +34,7 @@ rules:
         - "networking.k8s.io" # k8s 1.14+
       resources:
         - ingresses
+        - ingressclasses
       verbs:
         - get
         - list
