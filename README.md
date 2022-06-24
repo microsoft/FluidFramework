@@ -38,7 +38,7 @@ Here's the list of Lerna managed release groups:
     -   [./examples](./examples) (Not published, live in the `@fluid-example/` namespace)
 -   azure (Rooted in [./azure](./azure). Configured by [azure/lerna.json](azure/lerna.json))
     -   [Packages](./azure/packages) (Published in the `@fluidframework/` namespace)
--   Reference Fluid Ordering Service ("Routerlicious") (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/lerna.json](server/routerlicious/lerna.json))
+-   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/lerna.json](server/routerlicious/lerna.json))
     -   [Packages](./server/routerlicious/packages) (Published in the `@fluidframework/` namespace)
 -   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/lerna.json](./server/gitrest/lerna.json))
     -   [Packages](./server/gitrest/packages) (Published in the `@fluidframework/` namespace)
