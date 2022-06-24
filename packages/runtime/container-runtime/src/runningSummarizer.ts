@@ -87,11 +87,12 @@ export class RunningSummarizer implements IDisposable {
             heuristicData.lastSuccessfulSummary.refSequenceNumber
             + heuristicData.numNonRuntimeOps
             + heuristicData.numRuntimeOps);
-        if (diff > 0) {
+        heuristicData.hasMissingOpData = diff > 0;
+
+        if (heuristicData.hasMissingOpData) {
             // Split the diff 50-50 and increment the counts appropriately
             heuristicData.numNonRuntimeOps += Math.ceil(diff / 2);
             heuristicData.numRuntimeOps += Math.floor(diff / 2);
-            heuristicData.hasMissingOpData = true;
         }
 
         // Update last seq number (in case the handlers haven't processed anything yet)
