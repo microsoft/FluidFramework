@@ -122,7 +122,8 @@ export interface AzureContainerServices {
 }
 
 /**
- * Azure-client-specific User interface.
+ * Since Azure provides user names for all of its members, we extend the
+ * {@link @fluidframework/protocol-definitions#IUser} interface to include this service-specific value.
  */
 export interface AzureUser<T = unknown> extends IUser {
     /**
@@ -137,8 +138,9 @@ export interface AzureUser<T = unknown> extends IUser {
 }
 
 /**
- * Since Azure provides user names for all of its members, we extend the IMember interface to include
- * this service-specific value. It will be returned for all audience members connected to Azure.
+ * Since Azure provides user names for all of its members, we extend the
+ * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
+ * It will be returned for all audience members connected to Azure.
  */
 export interface AzureMember<T = any> extends IMember {
     /**
