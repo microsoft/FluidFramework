@@ -45,7 +45,12 @@ import {
     loggerToMonitoringContext,
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
-import { DriverErrorType, DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+    DriverErrorType,
+    DriverHeader,
+    IDocumentStorageService,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
@@ -1775,7 +1780,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // propagation of the "connected" event until we have uploaded them to
         // ensure we don't submit ops referencing a blob that has not been uploaded
         const connecting = connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
-        if (connecting && this.blobManager.hasPendingUploads) {
+        if (connecting && this.blobManager.hasPendingOfflineUploads) {
             assert(!this.delayConnectClientId, "Connect event delay must be canceled before subsequent connect event");
             assert(!!clientId, "Must have clientId when connecting");
             this.delayConnectClientId = clientId;

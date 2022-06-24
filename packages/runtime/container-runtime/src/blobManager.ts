@@ -18,6 +18,7 @@ import {
     ISummaryTreeWithStats,
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { Throttler, formExponentialFn } from "./throttler";
 
 /**
  * This class represents blob (long string)
@@ -78,9 +79,8 @@ interface PendingBlob {
     blob: ArrayBufferLike;
     status: PendingBlobStatus;
     storageId?: string;
-    // resolved when the online flow is complete (i.e. BlobAttach op round-tripped) or when we
-    // disonnect and transition everything to offline flow
-    deferred: Deferred<string>;
+    handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
+    uploadP: Promise<ICreateBlobResponse>;
 }
 
 export class BlobManager {
@@ -95,9 +95,12 @@ export class BlobManager {
     // Blobs which have not been uploaded or for which we have not yet seen a BlobAttach op round-trip
     private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
 
-    // Map of storage IDs to list of local IDs waiting for the BlobAttach op with that storage ID.
-    // Note this doesn't include "offline" BlobAttach ops since they will be 1:1 with "offline" blobs.
-    private readonly opsInFlight: Map<string, string[]> = new Map();
+    private readonly retryThrottler = new Throttler(
+        60 * 1000, // 60 sec delay window
+        30 * 1000, // 30 sec max delay
+        // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
+        formExponentialFn({ coefficient: 20, initialDelay: 0 }),
+    );
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
@@ -114,63 +117,39 @@ export class BlobManager {
         this.redirectTable = this.load(snapshot);
     }
 
+    public get pendingOfflineUploadCount(): number {
+        return Array.from(this.pendingBlobs.values())
+            .filter((e) => e.status === PendingBlobStatus.OfflinePendingUpload).length;
+    }
+
+    public get hasPendingOfflineUploads(): boolean {
+        return this.pendingOfflineUploadCount > 0;
+    }
+
     /**
      * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
      */
     public async onConnected() {
-        await PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
+        await PerformanceEvent.timedExecAsync(this.logger, {
                 eventName: "BlobUploadOnConnected",
-                count: this.pendingUploadCount,
-            },
-            async () => {
-                // if blobs are added while uploading, upload them too
-                while (this.hasPendingUploads) {
-                    const uploadPs: Promise<void>[] = [];
-                    for (const entry of this.pendingBlobs.values()) {
-                        assert(entry.status !== PendingBlobStatus.OnlinePendingUpload,
-                            "Must submit BlobAttach op before uploading offline blob");
-                        if (entry.status === PendingBlobStatus.OfflinePendingUpload) {
-                            uploadPs.push(this.getStorage().createBlob(entry.blob).then((response) => {
-                                entry.status = PendingBlobStatus.OfflinePendingOp;
-                                entry.storageId = response.id;
-                            }));
-                        }
-                    }
-                    await Promise.all(uploadPs);
-                }
-            },
+                count: this.pendingOfflineUploadCount,
+            }, async () => Promise.all(Array.from(this.pendingBlobs.values())
+                    .filter((e) => e.status === PendingBlobStatus.OfflinePendingUpload).map(async (e) => e.uploadP)),
             { start: true, end: true },
         );
     }
 
     private onDisconnected() {
-        // switch all blobs that haven't been uploaded yet to offline (local ID) flow
-        for (const [id, entry] of this.pendingBlobs) {
-            if (entry.status === PendingBlobStatus.OnlinePendingUpload ||
-                entry.status === PendingBlobStatus.OnlinePendingOp) {
-                this.transitionToOffline(id);
+        for (const [localId, entry] of this.pendingBlobs) {
+            if (entry.status === PendingBlobStatus.OnlinePendingOp) {
+                // we won't see the op until we connect again
+                entry.status = PendingBlobStatus.OfflinePendingOp;
+                // we submitted an op with the storage ID already, but it didn't
+                // have the local ID and we may not get a chance to resubmit it
+                this.sendBlobAttachOp(entry.storageId, localId);
+                entry.handleP.resolve(this.getBlobHandle(localId));
             }
         }
-        this.opsInFlight.clear();
-    }
-
-    /**
-     * Resubmit a BlobAttach op. Used to add storage IDs to ops that were
-     * submitted to runtime while disconnected.
-     * @param metadata - op metadata containing storage and/or local IDs
-     */
-    public reSubmit(metadata) {
-        assert(metadata.blobId || metadata.localId, "Submitted BlobAttach ops must have a blobId or localId");
-        if (!metadata.blobId) {
-            // We submitted this op while offline. The blob should have been uploaded by now.
-            const pendingEntry = this.pendingBlobs.get(metadata.localId);
-            assert(!!pendingEntry && pendingEntry.status === PendingBlobStatus.OfflinePendingOp &&
-                !!pendingEntry.storageId, "blob must be uploaded before resubmitting BlobAttach op");
-            return this.sendBlobAttachOp(pendingEntry.storageId, metadata.localId);
-        }
-        return this.sendBlobAttachOp(metadata.blobId, metadata.localId);
     }
 
     /**
@@ -180,20 +159,6 @@ export class BlobManager {
      */
     private getBlobGCNodePath(blobId: string) {
         return `/${BlobManager.basePath}/${blobId}`;
-    }
-
-    /**
-     * Returns true if there are blobs that need to be uploaded before runtime
-     * transitions to "connected" state.
-     */
-    public get hasPendingUploads(): boolean {
-        return this.pendingUploadCount > 0;
-    }
-
-    private get pendingUploadCount(): number {
-        return Array.from(this.pendingBlobs.values())
-            .filter((e) => e.status === PendingBlobStatus.OfflinePendingUpload ||
-                e.status === PendingBlobStatus.OnlinePendingUpload).length;
     }
 
     private get storageIds(): Set<string> {
@@ -237,32 +202,13 @@ export class BlobManager {
     }
 
     private getBlobHandle(id: string): IFluidHandle<ArrayBufferLike> {
-        assert(this.redirectTable.has(id) || this.pendingBlobs.has(id) || this.opsInFlight.has(id),
+        assert(this.redirectTable.has(id) || this.pendingBlobs.has(id),
             "requesting handle for unknown blob");
         return new BlobHandle(
             `${BlobManager.basePath}/${id}`,
             this.routeContext,
             async () => this.getBlob(id),
         );
-    }
-
-    /**
-     * Transition a blob added while online to the offline flow due to disconnect.
-     * @param id - Local blob ID
-     */
-    private transitionToOffline(id: string) {
-        const pendingEntry = this.pendingBlobs.get(id);
-        assert(pendingEntry?.status === PendingBlobStatus.OnlinePendingUpload ||
-            pendingEntry?.status === PendingBlobStatus.OnlinePendingOp,
-            "Blob must not have already transitioned to offline flow");
-        pendingEntry.status = pendingEntry.status === PendingBlobStatus.OnlinePendingUpload ?
-            PendingBlobStatus.OfflinePendingUpload : PendingBlobStatus.OfflinePendingOp;
-
-        assert(this.runtime.connected === false, "Must not transition to offline when connected");
-        // since we are offline, we will have a chance to add the storage ID when reSubmit() is called
-        this.sendBlobAttachOp(undefined, id);
-        pendingEntry.deferred.resolve(id);
-        return this.getBlobHandle(id);
     }
 
     private async createBlobDetached(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -285,65 +231,110 @@ export class BlobManager {
         const localId = uuid();
         const pendingEntry: PendingBlob = {
             blob,
-            deferred: new Deferred<string>(),
             status: PendingBlobStatus.OnlinePendingUpload,
+            handleP: new Deferred(),
+            uploadP: this.uploadBlob(localId, blob),
         };
         this.pendingBlobs.set(localId, pendingEntry);
 
-        if (!this.runtime.connected) {
-            // not connected; return local ID handle
-            return this.transitionToOffline(localId);
-        }
+        return pendingEntry.handleP.promise;
+    }
 
-        const responseP = PerformanceEvent.timedExecAsync(
+    private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        return PerformanceEvent.timedExecAsync(
             this.logger,
             { eventName: "createBlob" },
             async () => this.getStorage().createBlob(blob),
-            { end: true, cancel: "error" },
+            { end: true, cancel: this.runtime.connected ? "error" : "generic" },
+        ).then(
+            (response) => this.onUploadResolve(localId, response),
+            async (err) => this.onUploadReject(localId, err),
         );
-        const maybeResponse: string | ICreateBlobResponse = await Promise.race([
-            pendingEntry.deferred.promise,
-            responseP,
-        ]);
-        // Note: we check the status here because it's possible that createBlob() won the race, but
-        // the disconnect logic is executed (synchronously) before our async code here runs
-        if (typeof maybeResponse === "string" || pendingEntry.status !== PendingBlobStatus.OnlinePendingUpload) {
-            // disconnected while uploading; return local ID handle
-            assert(pendingEntry.status === PendingBlobStatus.OfflinePendingUpload, "Unexpected pending blob status");
-            return this.getBlobHandle(localId);
-        }
+    }
 
-        const storageId = maybeResponse.id;
-        if (this.storageIds.has(storageId)) {
-            // This blob was already uploaded; don't send a BlobAttach op
-            this.pendingBlobs.delete(localId);
-            return this.getBlobHandle(storageId);
+    private onUploadResolve(id, response: ICreateBlobResponse) {
+        const entry = this.pendingBlobs.get(id);
+        assert(!!entry, "");
+        entry.storageId = response.id;
+        if (this.runtime.connected) {
+            if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
+                if (this.storageIds.has(response.id)) {
+                    entry.handleP.resolve(this.getBlobHandle(response.id));
+                    this.pendingBlobs.delete(id);
+                } else {
+                    entry.status = PendingBlobStatus.OnlinePendingOp;
+                    this.sendBlobAttachOp(response.id);
+                }
+            } else if (entry.status === PendingBlobStatus.OfflinePendingUpload) {
+                entry.status = PendingBlobStatus.OfflinePendingOp;
+            }
+        } else {
+            // connected to storage but not ordering service?
+            this.logger.sendTelemetryEvent({ eventName: "BlobUploadSuccessWhileDisconnected" });
+            if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
+                this.sendBlobAttachOp(response.id, id);
+                entry.handleP.resolve(this.getBlobHandle(id));
+            }
+            entry.status = PendingBlobStatus.OfflinePendingOp;
         }
-        pendingEntry.storageId = storageId;
-        pendingEntry.status = PendingBlobStatus.OnlinePendingOp;
+        return response;
+    }
 
-        // storage may dedupe blobs; check for a BlobAttach op in flight with the same storageId
-        if (!this.opsInFlight.has(storageId)) {
-            this.sendBlobAttachOp(storageId);
+    private async onUploadReject(id, error) {
+        const entry = this.pendingBlobs.get(id);
+        assert(!!entry, "");
+        if (!this.runtime.connected) {
+            entry.status = PendingBlobStatus.OfflinePendingUpload;
+            // since we are not connected, we will have a chance to add the storage ID when reSubmit() is called
+            this.sendBlobAttachOp(undefined, id);
+            entry.handleP.resolve(this.getBlobHandle(id));
+            // we are probably not connected to storage but start another upload request in case we are
+            const delay = this.retryThrottler.getDelay();
+            entry.uploadP = new Promise<void>((res) => setTimeout(res, delay))
+                .then(async () => this.uploadBlob(id, entry.blob));
+            return entry.uploadP;
+        } else {
+            // retry?
+            entry.handleP.reject(error);
+            throw new Error("something");
         }
-        this.opsInFlight.set(storageId, (this.opsInFlight.get(storageId) ?? []).concat(localId));
+    }
 
-        return this.getBlobHandle(await pendingEntry.deferred.promise);
+    /**
+     * Resubmit a BlobAttach op. Used to add storage IDs to ops that were
+     * submitted to runtime while disconnected.
+     * @param metadata - op metadata containing storage and/or local IDs
+     */
+    public reSubmit(metadata) {
+        assert(metadata.blobId || metadata.localId, "Submitted BlobAttach ops must have a blobId or localId");
+        if (!metadata.blobId) {
+            // We submitted this op while offline. The blob should have been uploaded by now.
+            const pendingEntry = this.pendingBlobs.get(metadata.localId);
+            assert(pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
+                !!pendingEntry?.storageId, "blob must be uploaded before resubmitting BlobAttach op");
+            return this.sendBlobAttachOp(pendingEntry.storageId, metadata.localId);
+        }
+        return this.sendBlobAttachOp(metadata.blobId, metadata.localId);
     }
 
     public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
         assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
+        if (message.metadata.localId !== undefined) {
+            this.redirectTable.set(message.metadata.localId, message.metadata.blobId);
+        }
+        // set id. entry
+        this.redirectTable.set(message.metadata.blobId, message.metadata.blobId);
+
         if (local) {
             if (message.metadata.localId === undefined) {
-                const waitingIds = this.opsInFlight.get(message.metadata.blobId) ?? [];
-                for (const localId of waitingIds) {
-                    const entry = this.pendingBlobs.get(localId);
-                    assert(!!entry && entry.status === PendingBlobStatus.OnlinePendingOp,
-                        "Unexpected pending blob status");
-                    entry.deferred.resolve(message.metadata.blobId);
-                    this.pendingBlobs.delete(localId);
+                for (const [id, entry] of this.pendingBlobs) {
+                    // check status because we may have transitioned to offline flow since submitting this op
+                    if (entry.storageId === message.metadata.blobId &&
+                        entry.status === PendingBlobStatus.OnlinePendingOp) {
+                        entry.handleP.resolve(this.getBlobHandle(message.metadata.blobId));
+                        this.pendingBlobs.delete(id);
+                    }
                 }
-                this.opsInFlight.delete(message.metadata.blobId);
             } else {
                 const pendingBlobEntry = this.pendingBlobs.get(message.metadata.localId);
                 assert(pendingBlobEntry !== undefined, 0x1f8 /* "local BlobAttach op with no pending blob" */);
@@ -352,11 +343,6 @@ export class BlobManager {
                 this.pendingBlobs.delete(message.metadata.blobId);
             }
         }
-        if (message.metadata.localId !== undefined) {
-            this.redirectTable.set(message.metadata.localId, message.metadata.blobId);
-        }
-        // set id. entry
-        this.redirectTable.set(message.metadata.blobId, message.metadata.blobId);
     }
 
     /**
