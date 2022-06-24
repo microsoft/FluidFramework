@@ -265,6 +265,4 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
-// (No @packageDocumentation comment for this package)
-
 ```
