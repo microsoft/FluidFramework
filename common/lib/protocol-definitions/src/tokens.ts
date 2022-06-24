@@ -66,23 +66,52 @@ export interface ITokenClaims {
     jti?: string;
 }
 
+/**
+ * TODO
+ */
 export interface ISummaryTokenClaims {
+    /**
+     * TODO
+     */
     sub: string;
+
+    /**
+     * TODO
+     */
     act: IActorClient;
+
+    /**
+     * TODO
+     */
     claims: ITokenClaims;
 }
 
+/**
+ * TODO
+ */
 export interface IActorClient {
+    /**
+     * TODO
+     */
     sub: string;
 }
 
 /**
- * The ITokenService abstracts the discovery of claims contained within a token
+ * Abstracts the discovery of claims contained within a token
  */
 export interface ITokenService {
+    /**
+     * TODO
+     */
     extractClaims(token: string): ITokenClaims;
 }
 
+/**
+ * TODO
+ */
 export interface ITokenProvider {
+    /**
+     * TODO
+     */
     isValid(): boolean;
 }

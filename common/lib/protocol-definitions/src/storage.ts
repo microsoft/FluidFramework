@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IsoDate } from "./date";
+
 export interface IDocumentAttributes {
     /**
      * Sequence number at which the snapshot was taken
@@ -129,7 +131,6 @@ export interface IVersion {
 
     /**
      * Time when snapshot was generated.
-     * {@link https://www.iso.org/iso-8601-date-and-time-format.html | ISO 8601 format}: YYYY-MM-DDTHH:MM:SSZ
      */
-    date?: string;
+    date?: IsoDate;
 }

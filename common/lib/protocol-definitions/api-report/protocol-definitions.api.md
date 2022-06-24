@@ -23,9 +23,8 @@ export enum FileMode {
     Symlink = "120000"
 }
 
-// @public (undocumented)
+// @public
 export interface IActorClient {
-    // (undocumented)
     sub: string;
 }
 
@@ -400,6 +399,9 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
 }
 
 // @public
+export type IsoDate = string;
+
+// @public
 export interface ISummaryAck {
     handle: string;
     summaryProposal: ISummaryProposal;
@@ -413,13 +415,10 @@ export interface ISummaryAttachment {
     type: SummaryType.Attachment;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryAuthor {
-    // (undocumented)
-    date: string;
-    // (undocumented)
+    date: IsoDate;
     email: string;
-    // (undocumented)
     name: string;
 }
 
@@ -431,13 +430,10 @@ export interface ISummaryBlob {
     type: SummaryType.Blob;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryCommitter {
-    // (undocumented)
-    date: string;
-    // (undocumented)
+    date: IsoDate;
     email: string;
-    // (undocumented)
     name: string;
 }
 
@@ -490,13 +486,10 @@ export interface ISummaryProposal {
     summarySequenceNumber: number;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryTokenClaims {
-    // (undocumented)
     act: IActorClient;
-    // (undocumented)
     claims: ITokenClaims;
-    // (undocumented)
     sub: string;
 }
 
@@ -524,15 +517,13 @@ export interface ITokenClaims {
     ver: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ITokenProvider {
-    // (undocumented)
     isValid(): boolean;
 }
 
 // @public
 export interface ITokenService {
-    // (undocumented)
     extractClaims(token: string): ITokenClaims;
 }
 
@@ -582,7 +573,7 @@ export interface IUser {
 
 // @public
 export interface IVersion {
-    date?: string;
+    date?: IsoDate;
     id: string;
     treeId: string;
 }
@@ -673,7 +664,5 @@ export enum TreeEntry {
     // (undocumented)
     Tree = "Tree"
 }
-
-// (No @packageDocumentation comment for this package)
 
 ```

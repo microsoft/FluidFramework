@@ -3,22 +3,50 @@
  * Licensed under the MIT License.
  */
 
+import { IsoDate } from "./date";
+
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
+/**
+ * TODO
+ */
 export interface ISummaryAuthor {
+    /**
+     * Name of the summary author.
+     */
     name: string;
+
+    /**
+     * Email address of the summary author.
+     */
     email: string;
-    // ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
-    date: string;
+
+    /**
+     * Date on which the summary was generated.
+     */
+    date: IsoDate;
 }
 
+/**
+ * TODO
+ */
 export interface ISummaryCommitter {
+    /**
+     * Name of the summary committer.
+     */
     name: string;
+
+    /**
+     * Email address of the summary author.
+     */
     email: string;
-    // ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
-    date: string;
+
+    /**
+     * Date on which the summary was generated.
+     */
+    date: IsoDate;
 }
 
 /**
