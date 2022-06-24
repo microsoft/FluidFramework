@@ -119,6 +119,7 @@ declare function get_old_VariableDeclaration_DefaultSummaryConfiguration():
 declare function use_current_VariableDeclaration_DefaultSummaryConfiguration(
     use: TypeOnly<typeof current.DefaultSummaryConfiguration>);
 use_current_VariableDeclaration_DefaultSummaryConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_DefaultSummaryConfiguration());
 
 /*
@@ -1271,6 +1272,7 @@ declare function get_old_TypeAliasDeclaration_ISummaryConfiguration():
 declare function use_current_TypeAliasDeclaration_ISummaryConfiguration(
     use: TypeOnly<current.ISummaryConfiguration>);
 use_current_TypeAliasDeclaration_ISummaryConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_ISummaryConfiguration());
 
 /*
@@ -1343,6 +1345,7 @@ declare function get_old_InterfaceDeclaration_ISummaryConfigurationHeuristics():
 declare function use_current_InterfaceDeclaration_ISummaryConfigurationHeuristics(
     use: TypeOnly<current.ISummaryConfigurationHeuristics>);
 use_current_InterfaceDeclaration_ISummaryConfigurationHeuristics(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummaryConfigurationHeuristics());
 
 /*
