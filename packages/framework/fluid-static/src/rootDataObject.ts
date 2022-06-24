@@ -32,7 +32,8 @@ export interface RootDataObjectProps {
 }
 
 /**
- * TODO
+ * The entry-point/root collaborative object of the fluid container.
+ * This class abstracts the dynamic code required to build a fluid container into a static representation for end customers.
  */
 export class RootDataObject extends DataObject<{ InitialState: RootDataObjectProps; }> {
     private readonly initialObjectsDirKey = "initial-objects-key";
