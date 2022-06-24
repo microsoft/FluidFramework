@@ -115,10 +115,11 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly attachState: AttachState;
 
     /**
-     * A newly created container starts detached from the collaborative service.  Calling attach() uploads the
-     * new container to the service and connects to the collaborative service.
+     * A newly created container starts detached from the collaborative service.
+     * Calling attach() uploads the new container to the service and connects to the collaborative service.
      *
-     * TODO: what states can this be called in? Just in "Disconnected"?
+     * @remarks This should only be called when the container is in a detached state.
+     * This can be determined by observing {@link IFluidContainer.attachState}.
      *
      * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
      */
