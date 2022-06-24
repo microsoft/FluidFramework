@@ -8,9 +8,10 @@ import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-dr
 import { generateToken } from "./generateToken";
 
 /**
- * {@link @fluidframework/routerlicious-driver#ITokenProvider} intended for **test use only**.
- * Provides an in memory implementation of the ITokenProvider interface that can be used to insecurely connect to Azure Fluid Relay (and other routerlicious based fluid relays).
- * As the name implies this is not secure and should not be used in production.
+ * Provides an in memory implementation of {@link @fluidframework/routerlicious-driver#ITokenProvider} that can be
+ * used to insecurely connect to the Fluid Relay.
+ *
+ * As the name implies, this is not secure and should not be used in production.
  * It simply makes examples where authentication is not relevant easier to bootstrap.
  */
 export class InsecureTokenProvider implements ITokenProvider {
