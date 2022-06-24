@@ -356,9 +356,12 @@ export interface ISummaryRuntimeOptions {
     /** Override summary configurations set by the server. */
     summaryConfigOverrides?: ISummaryConfiguration;
 
-    // Flag that disables putting channels in isolated subtrees for each data store
-    // and the root node when generating a summary if set to true.
-    // Defaults to FALSE (enabled) for now.
+    /**
+     *  @deprecated - this option will not be supported on the next versions.
+     * Flag that disables putting channels in isolated subtrees for each data store
+     * and the root node when generating a summary if set to true.
+     * Defaults to FALSE (enabled) for now.
+     */
     disableIsolatedChannels?: boolean;
 
     /**
