@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
+import { App } from "./app";
 
 import type { ExternalDataSource } from "./externalData";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
@@ -171,14 +172,11 @@ const ExternalDataSourceView: React.FC<IExternalDataSourceViewProps> = (props: I
 };
 
 export interface IAppViewProps {
+    app: App;
     inventoryList: IInventoryList;
     containerKillBit: IContainerKillBit;
     // Normally there's no need to display the imported string data, this is for demo purposes only.
     importedStringData: string | undefined;
-    proposeEndSession: () => void;
-    writeToExternalStorage: () => void;
-    endSession: () => void;
-    saveAndEndSession: () => void;
     // End the collaboration session and create a new container using exported data.
     migrateContainer: () => void;
     externalDataSource: ExternalDataSource;
@@ -186,13 +184,10 @@ export interface IAppViewProps {
 
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     const {
+        app,
         inventoryList,
         containerKillBit,
         importedStringData,
-        proposeEndSession,
-        writeToExternalStorage,
-        endSession,
-        saveAndEndSession,
         migrateContainer,
         externalDataSource,
     } = props;
@@ -231,11 +226,11 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             <DebugView
                 containerKillBit={ containerKillBit }
                 importedStringData={ importedStringData }
-                saveAndEndSession={ saveAndEndSession }
+                saveAndEndSession={ app.saveAndEndSession }
                 migrateContainer={ migrateContainer }
-                proposeEndSession={ proposeEndSession }
-                writeToExternalStorage={ writeToExternalStorage }
-                endSession={ endSession }
+                proposeEndSession={ app.proposeEndSession }
+                writeToExternalStorage={ app.writeToExternalStorage }
+                endSession={ app.endSession }
                 externalDataSource={ externalDataSource }
             />
         </div>

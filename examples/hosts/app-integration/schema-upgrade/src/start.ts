@@ -12,6 +12,7 @@ import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-d
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { App } from "./app";
 import { AppView } from "./appView";
 import { extractStringData, applyStringData } from "./dataHelpers";
 import { externalDataSource } from "./externalData";
@@ -113,26 +114,7 @@ async function start(): Promise<void> {
     const inventoryList = await getInventoryListFromContainer(container);
     const containerKillBit = await getContainerKillBitFromContainer(container);
 
-    const writeToExternalStorage = async () => {
-        // CONSIDER: it's perhaps more-correct to spawn a new client to extract with (to avoid local changes).
-        // This can be done by making a loader.request() call with appropriate headers (same as we do for the
-        // summarizing client).  E.g.
-        // const exportContainer = await loader.resolve(...);
-        // const inventoryList = (await exportContainer.request(...)).value;
-        // const stringData = extractStringData(inventoryList);
-        // exportContainer.close();
-
-        const stringData = await extractStringData(inventoryList);
-        await externalDataSource.writeData(stringData);
-    };
-
-    const proposeEndSession = () => {
-        containerKillBit.markForDestruction().catch(console.error);
-    };
-
-    const endSession = () => {
-        containerKillBit.setDead().catch(console.error);
-    };
+    const app = new App(inventoryList, containerKillBit);
 
     const saveAndEndSession = async () => {
         if (!containerKillBit.markedForDestruction) {
@@ -182,13 +164,10 @@ async function start(): Promise<void> {
     const div = document.getElementById("content") as HTMLDivElement;
     ReactDOM.render(
         React.createElement(AppView, {
+            app,
             importedStringData: fetchedData,
             inventoryList,
-            writeToExternalStorage: () => { writeToExternalStorage().catch(console.error); },
             containerKillBit,
-            proposeEndSession,
-            endSession,
-            saveAndEndSession: () => { saveAndEndSession().catch(console.error); },
             migrateContainer: () => { migrateContainer().catch(console.error); },
             externalDataSource,
         }),
