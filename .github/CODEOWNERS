@@ -24,7 +24,6 @@
 /experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
 /experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
 /experimental/dds/tree-graphql/                                           @microsoft/fluid-cr-tree
-/experimental/dds/xtree/                                                  @microsoft/fluid-cr-tree
 /packages/dds/                                                            @microsoft/fluid-cr-dds
 /packages/drivers/                                                        @microsoft/fluid-cr-drivers
 /packages/drivers/odsp*/                                                  @microsoft/fluid-cr-drivers @microsoft/fluid-cr-odsp
