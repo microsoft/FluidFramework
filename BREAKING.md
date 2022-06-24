@@ -14,6 +14,30 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 2.0.0 Upcoming changes
+
+## 2.0.0 Breaking changes
+- [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
+- [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
+- [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
+
+### Deprecate ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please migrate all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
+
+### LocalReference class and method deprecations removed
+In 0.59.0 the [LocalReference class and it's related methods were deprecated](#LocalReference-class-and-method-deprecations)
+
+The deprecated and now removed LocalReference class is replaced with LocalReferencePosition.
+The following deprecated methods are  now removed from sequence and merge-tree. Their replacements should be used instead.
+ - createPositionReference to createLocalReferencePosition
+ - addLocalReference to createLocalReferencePosition
+ - localRefToPos to localReferencePositionToPosition
+ - removeLocalReference to removeLocalReferencePosition
+
+### Remove TelemetryDataTag.PackageData
+`TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
+
 # 1.1.0
 
 ## 1.1.0 Upcoming changes
@@ -21,6 +45,7 @@ There are a few steps you can take to write a good change note and avoid needing
 
  ### IContainerRuntime.createRootDataStore is deprecated
  See [#9660](https://github.com/microsoft/FluidFramework/issues/9660). The API is vulnerable to name conflicts, which lead to invalid documents. As a replacement, create a regular datastore using the `IContainerRuntimeBase.createDataStore` function, then alias the datastore by using the `IDataStore.trySetAlias` function and specify a string value to serve as the alias to which the datastore needs to be bound. If successful, "Success" will be returned, and a call to `getRootDataStore` with the alias as parameter will return the same datastore.
+# 2.0.0
 
 # 1.0.0
 
@@ -28,6 +53,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
 - [bindToContext to be removed from IFluidDataStoreChannel](#bindToContext-to-be-removed-from-IFluidDataStoreChannel)
 - [Garbage Collection (GC) mark phase turned on by default](#Garbage-Collection-(GC)-mark-phase-turned-on-by-default)
+- [SequenceEvent.isEmpty removed](#SequenceEvent\.isEmpty-removed)
 
 ### Summarize heuristic changes based on telemetry
 Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
@@ -45,6 +71,12 @@ GC mark phase is turned on by default with this version. In mark phase, unrefere
 For more details on GC and options for controlling its behavior, please see [this document](./packages/runtime/container-runtime/garbageCollection.md).
 
 > Note: GC sweep phase has not been enabled yet so unreferenced content won't be deleted. The work to enable it is in progress and will be ready soon.
+
+### SequenceEvent.isEmpty removed
+
+In `@fluidframework/sequence`, a change was previously made to no longer fire `SequenceEvent`s with empty deltas.
+This made the `isEmpty` property of `SequenceEvent` (also available on `SequenceDeltaEvent` and `SequenceMaintenanceEvent`) redundant.
+It has been removed in this release--consumers should assume any raised delta events are not empty.
 
 ## 1.0.0 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
@@ -217,6 +249,7 @@ Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver as it will
 - [Scope is no longer an IFluidObject](#scope-is-no-longer-an-IFluidObject)
 - [IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject](#IFluidHandle-and-requestFluidObject-generics-default-no-longer-includes-IFluidObject)
 - [LazyLoadedDataObjectFactory.create no longer returns an IFluidObject](#LazyLoadedDataObjectFactory.create-no-longer-returns-an-IFluidObject)
+- [Remove routerlicious-host package](#remove-routerlicious-host-package)
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -312,6 +345,9 @@ As a short term fix in both these cases IFluidObject can be passed at the generi
 LazyLoadedDataObjectFactory.create no longer returns an IFluidObject, it now only returns a [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
 
 As a short term fix the return type of this method can be safely casted to an IFluidObject. However, IFluidObject is deprecated and will be removed in an upcoming release so this can only be a temporary workaround before moving to [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### Remove Routerlicious-host package
+Remove `@fluidframework/routerlicious-host` package and its `ContainerUrlResolver` as they have been deprecated in 0.59 and unused.
 
 # 0.58
 
