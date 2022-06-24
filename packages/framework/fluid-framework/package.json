@@ -65,23 +65,48 @@
         "forwardCompat": false
       },
       "ClassDeclaration_SequenceInterval": {
-	      "forwardCompat": false,
+        "forwardCompat": false,
         "backCompat": false
       },
-      "InterfaceDeclaration_ISharedString": {"backCompat": false},
-      "ClassDeclaration_SequenceEvent": {"backCompat": false},
-      "ClassDeclaration_SequenceDeltaEvent": {"backCompat": false},
-      "ClassDeclaration_SequenceMaintenanceEvent": {"backCompat": false},
-      "ClassDeclaration_SharedString": {"backCompat": false},
-      "ClassDeclaration_SharedNumberSequence": {"backCompat": false},
-      "ClassDeclaration_SharedObjectSequence": {"backCompat": false},
-      "ClassDeclaration_SharedSegmentSequence": {"backCompat": false},
-      "ClassDeclaration_SharedSequence": {"backCompat": false},
-      "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false},
-      "ClassDeclaration_SparseMatrix": {"backCompat": false},
+      "InterfaceDeclaration_ISharedString": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceDeltaEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceMaintenanceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedString": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedNumberSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedObjectSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedSegmentSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedSequence": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_SharedStringSegment": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SparseMatrix": {
+        "backCompat": false
+      },
       "RemovedEnumDeclaration_ConnectionState": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "EnumDeclaration_ConnectionState": {
+        "forwardCompat": false
       }
     }
   }
