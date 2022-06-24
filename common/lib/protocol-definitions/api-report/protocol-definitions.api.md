@@ -42,9 +42,7 @@ export interface IAttachment {
 
 // @public
 export interface IBlob {
-    // (undocumented)
     contents: string;
-    // (undocumented)
     encoding: "utf-8" | "base64";
 }
 
@@ -388,7 +386,6 @@ export interface ISnapshotTree {
     trees: {
         [path: string]: ISnapshotTree;
     };
-    // (undocumented)
     unreferenced?: true;
 }
 
@@ -553,9 +550,7 @@ export interface ITrace {
 export interface ITree {
     // (undocumented)
     entries: ITreeEntry[];
-    // (undocumented)
     id?: string;
-    // (undocumented)
     unreferenced?: true;
 }
 
@@ -587,11 +582,8 @@ export interface IUser {
 
 // @public
 export interface IVersion {
-    // (undocumented)
     date?: string;
-    // (undocumented)
     id: string;
-    // (undocumented)
     treeId: string;
 }
 
