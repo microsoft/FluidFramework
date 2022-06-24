@@ -13,7 +13,7 @@ import { BreakingIncrement, enableLogging } from "./../../typeValidator/validato
 describe("Enum validator", () => {
     enableLogging(true);
     let project: Project;
-    let pkgDir: string = os.tmpdir();
+    const pkgDir: string = os.tmpdir();
     before(() => {
         project = new Project({
             skipFileDependencyResolution: true,
@@ -66,7 +66,7 @@ describe("Enum validator", () => {
         }
         `;
 
-        let increment = checkIncrement(sourceOld, sourceNew);
+        const increment = checkIncrement(sourceOld, sourceNew);
         assert(increment === BreakingIncrement.minor);
 
     }).timeout(10000);
@@ -88,7 +88,7 @@ describe("Enum validator", () => {
         }
         `;
 
-        let increment = checkIncrement(sourceOld, sourceNew);
+        const increment = checkIncrement(sourceOld, sourceNew);
         assert(increment === BreakingIncrement.major);
 
     }).timeout(10000);
@@ -113,7 +113,7 @@ describe("Enum validator", () => {
         }
         `;
 
-        let increment = checkIncrement(sourceOld, sourceNew);
+        const increment = checkIncrement(sourceOld, sourceNew);
         assert(increment === BreakingIncrement.major);
 
     }).timeout(10000);
@@ -136,7 +136,7 @@ describe("Enum validator", () => {
         }
         `;
 
-        let increment = checkIncrement(sourceOld, sourceNew);
+        const increment = checkIncrement(sourceOld, sourceNew);
         assert(increment === BreakingIncrement.none);
 
     }).timeout(10000);
@@ -158,7 +158,7 @@ describe("Enum validator", () => {
         }
         `;
 
-        let increment = checkIncrement(sourceOld, sourceNew);
+        const increment = checkIncrement(sourceOld, sourceNew);
         assert(increment === BreakingIncrement.major);
 
     }).timeout(10000);

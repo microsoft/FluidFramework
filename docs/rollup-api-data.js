@@ -23,6 +23,7 @@ const websitePackages = [
     "@fluidframework/routerlicious-driver",
     "@fluidframework/test-client-utils",
     "@fluidframework/tinylicious-client",
+    "@fluidframework/tinylicious-driver",
 ];
 
 /** An array of objects describing how members should be combined. */

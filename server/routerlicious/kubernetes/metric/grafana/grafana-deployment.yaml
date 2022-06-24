@@ -1,10 +1,13 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
   namespace: metric
 spec:
   replicas: 1
+  selector:
+    task: monitoring
+    k8s-app: grafana
   template:
     metadata:
       labels:

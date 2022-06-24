@@ -366,6 +366,10 @@ export class TelemetryContext implements ITelemetryContext {
      * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.serialize}
      */
     serialize(): string {
-        return JSON.stringify(this.telemetry);
+        const jsonObject = {};
+        this.telemetry.forEach((value, key) => {
+            jsonObject[key] = value;
+        });
+        return JSON.stringify(jsonObject);
     }
 }
