@@ -18,7 +18,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   extends TypedEventEmitter<IServiceAudienceEvents<M>>
   implements IServiceAudience<M> {
   /**
-   * TODO
+   * Audience object which includes all the existing members of the container.
    */
   protected readonly audience: IAudience;
 
@@ -37,7 +37,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 
   constructor(
     /**
-     * TODO
+     * Fluid Container to read the audience from.
      */
     protected readonly container: IContainer,
   ) {
@@ -67,8 +67,8 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   }
 
   /**
-   * TODO
-   * @param audienceMember - TODO
+   * Provides ability for inheriting class to modify/extend the audience object.
+   * @param audienceMember - Record of a specific audience member.
    */
   protected abstract createServiceMember(audienceMember: IClient): M;
 
@@ -125,8 +125,9 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   }
 
   /**
-   * TODO
-   * @param member - TODO
+   * Provides ability for the inheriting class to include/omit specific members.
+   * An example use case is omitting the summarizer client.
+   * @param member - Member to be included/omitted.
    */
   protected shouldIncludeAsMember(member: IClient): boolean {
     // Include only human members
