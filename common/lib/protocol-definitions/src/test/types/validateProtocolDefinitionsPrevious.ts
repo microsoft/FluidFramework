@@ -251,6 +251,7 @@ declare function get_current_InterfaceDeclaration_IClientConfiguration():
 declare function use_old_InterfaceDeclaration_IClientConfiguration(
     use: TypeOnly<old.IClientConfiguration>);
 use_old_InterfaceDeclaration_IClientConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IClientConfiguration());
 
 /*
@@ -371,6 +372,7 @@ declare function get_current_InterfaceDeclaration_IConnected():
 declare function use_old_InterfaceDeclaration_IConnected(
     use: TypeOnly<old.IConnected>);
 use_old_InterfaceDeclaration_IConnected(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnected());
 
 /*
@@ -1144,26 +1146,14 @@ use_old_InterfaceDeclaration_ISummaryCommitter(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummaryConfiguration": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISummaryConfiguration": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISummaryConfiguration():
-    TypeOnly<old.ISummaryConfiguration>;
-declare function use_current_InterfaceDeclaration_ISummaryConfiguration(
-    use: TypeOnly<current.ISummaryConfiguration>);
-use_current_InterfaceDeclaration_ISummaryConfiguration(
-    get_old_InterfaceDeclaration_ISummaryConfiguration());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummaryConfiguration": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISummaryConfiguration": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISummaryConfiguration():
-    TypeOnly<current.ISummaryConfiguration>;
-declare function use_old_InterfaceDeclaration_ISummaryConfiguration(
-    use: TypeOnly<old.ISummaryConfiguration>);
-use_old_InterfaceDeclaration_ISummaryConfiguration(
-    get_current_InterfaceDeclaration_ISummaryConfiguration());
 
 /*
 * Validate forward compat by using old type in place of current type
