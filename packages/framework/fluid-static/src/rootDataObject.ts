@@ -33,8 +33,8 @@ export interface RootDataObjectProps {
 }
 
 /**
- * The entry-point/root collaborative object of the fluid container.
- * This class abstracts the dynamic code required to build a fluid container into a static representation
+ * The entry-point/root collaborative object of the Fluid Container.
+ * This class abstracts the dynamic code required to build a Fluid Container into a static representation
  * for end customers.
  */
 export class RootDataObject extends DataObject<{ InitialState: RootDataObjectProps; }> {
