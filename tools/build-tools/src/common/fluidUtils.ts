@@ -52,6 +52,7 @@ async function inferRoot() {
             if (await isFluidRoot(curr)) {
                 return true;
             }
+        // eslint-disable-next-line no-empty
         } catch {
         }
         return false;

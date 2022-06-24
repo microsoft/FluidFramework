@@ -16,7 +16,7 @@ export interface Handler {
   handler: (file: string, root: string) => string | undefined,
   resolver?: (file: string, root: string) => { resolved: boolean, message?: string };
   final?: (root: string, resolve: boolean) => { error?: string } | undefined;
-};
+}
 
 export function readFile(file: string) {
   return fs.readFileSync(file, { encoding: "utf8" });

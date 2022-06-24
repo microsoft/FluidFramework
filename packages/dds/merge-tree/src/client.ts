@@ -320,9 +320,9 @@ export class Client {
     }
 
     public createLocalReferencePosition(
-        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
+        segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined,
     ): LocalReferencePosition {
-        return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties);
+        return this.mergeTree.createLocalReferencePosition(segment, offset ?? 0, refType, properties);
     }
 
     public removeLocalReferencePosition(lref: LocalReferencePosition) {

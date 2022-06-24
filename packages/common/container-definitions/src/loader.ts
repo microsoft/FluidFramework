@@ -189,6 +189,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * Represents the resolved url to the Container
+     * Will be undefined only when the container is in the {@link AttachState.Detached | detatched} state.
      */
     resolvedUrl: IResolvedUrl | undefined;
 
