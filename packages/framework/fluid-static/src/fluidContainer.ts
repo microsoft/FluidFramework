@@ -70,7 +70,7 @@ export interface IFluidContainerEvents extends IEvent {
 
 /**
  * Provides an entrypoint into the client side of collaborative Fluid data.
- * It provides access to the data as well as status on the collaboration session.
+ * Provides access to the data as well as status on the collaboration session.
  */
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
