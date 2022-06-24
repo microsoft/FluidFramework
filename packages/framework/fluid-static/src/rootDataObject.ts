@@ -22,18 +22,20 @@ import {
 import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
 
 /**
- * TODO
+ * Input props for {@link RootDataObject.initializingFirstTime}
  */
 export interface RootDataObjectProps {
     /**
-     * TODO
+     * Initial object structure with which the {@link RootDataObject} will be first-time initialized.
+     * @see {@link RootDataObject.initializingFirstTime}
      */
     initialObjects: LoadableObjectClassRecord;
 }
 
 /**
  * The entry-point/root collaborative object of the fluid container.
- * This class abstracts the dynamic code required to build a fluid container into a static representation for end customers.
+ * This class abstracts the dynamic code required to build a fluid container into a static representation
+ * for end customers.
  */
 export class RootDataObject extends DataObject<{ InitialState: RootDataObjectProps; }> {
     private readonly initialObjectsDirKey = "initial-objects-key";
@@ -48,7 +50,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     }
 
     /**
-     * {@inheritDoc @fluidframework/aqueduct#PureDataObject.hasInitialized}
+     * {@inheritDoc @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
      */
     protected async initializingFirstTime(props: RootDataObjectProps) {
         this.root.createSubDirectory(this.initialObjectsDirKey);
