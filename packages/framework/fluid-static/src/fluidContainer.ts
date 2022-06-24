@@ -129,6 +129,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 
     /**
      * Attempts to connect the container to the delta stream and process operations.
+     * Will throw an error if unsuccessful.
      *
      * @remarks This should only be called when the container is in the
      * {@link @fluidframework/container-definitions#ConnectionState.Disconnected} state.
