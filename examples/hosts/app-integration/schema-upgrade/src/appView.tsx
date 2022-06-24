@@ -9,6 +9,47 @@ import type { ExternalDataSource } from "./externalData";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
+interface IDebugViewProps {
+    containerKillBit: IContainerKillBit;
+    // Normally there's no need to display the imported string data, this is for demo purposes only.
+    importedStringData: string | undefined;
+    proposeEndSession: () => void;
+    writeToExternalStorage: () => void;
+    endSession: () => void;
+    saveAndEndSession: () => void;
+    // End the collaboration session and create a new container using exported data.
+    migrateContainer: () => void;
+    externalDataSource: ExternalDataSource;
+}
+
+const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+    const {
+        containerKillBit,
+        importedStringData,
+        proposeEndSession,
+        writeToExternalStorage,
+        endSession,
+        saveAndEndSession,
+        migrateContainer,
+        externalDataSource,
+    } = props;
+
+    return (
+        <div>
+            <SessionStatusView containerKillBit={ containerKillBit } />
+            <ImportedDataView data={ importedStringData } />
+            <ControlsView
+                saveAndEndSession={ saveAndEndSession }
+                migrateContainer={ migrateContainer }
+                proposeEndSession={ proposeEndSession }
+                writeToExternalStorage={ writeToExternalStorage }
+                endSession={ endSession }
+            />
+            <ExternalDataSourceView externalDataSource={ externalDataSource }/>
+        </div>
+    );
+};
+
 interface ISessionStatusViewProps {
     containerKillBit: IContainerKillBit;
 }
@@ -64,6 +105,37 @@ const ImportedDataView: React.FC<IImportedDataViewProps> = (props: IImportedData
         <div>
             <div>Imported data:</div>
             <textarea rows={ 5 } value={ data } readOnly></textarea>
+        </div>
+    );
+};
+
+interface IControlsViewProps {
+    proposeEndSession: () => void;
+    writeToExternalStorage: () => void;
+    endSession: () => void;
+    saveAndEndSession: () => void;
+    // End the collaboration session and create a new container using exported data.
+    migrateContainer: () => void;
+}
+
+const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
+    const {
+        proposeEndSession,
+        writeToExternalStorage,
+        endSession,
+        saveAndEndSession,
+        migrateContainer,
+    } = props;
+
+    return (
+        <div>
+            <button onClick={ saveAndEndSession }>Save and End Session</button>
+            <br />
+            <button onClick={ migrateContainer }>Migrate to new container</button>
+            <br />
+            <button onClick={ proposeEndSession }>1. Propose ending collaboration session</button>
+            <button onClick={ writeToExternalStorage }>2. Write out to external data source</button>
+            <button onClick={ endSession }>3. Actually end the collaboration session</button>
         </div>
     );
 };
@@ -155,17 +227,17 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 
     return (
         <div>
-            <SessionStatusView containerKillBit={ containerKillBit } />
-            <ImportedDataView data={ importedStringData } />
             <InventoryListView inventoryList={ inventoryList } disabled={ disabled } />
-            <button onClick={ saveAndEndSession }>Save and End Session</button>
-            <br />
-            <button onClick={ migrateContainer }>Migrate to new container</button>
-            <br />
-            <button onClick={ proposeEndSession }>1. Propose ending collaboration session</button>
-            <button onClick={ writeToExternalStorage }>2. Write out to external data source</button>
-            <button onClick={ endSession }>3. Actually end the collaboration session</button>
-            <ExternalDataSourceView externalDataSource={ externalDataSource }/>
+            <DebugView
+                containerKillBit={ containerKillBit }
+                importedStringData={ importedStringData }
+                saveAndEndSession={ saveAndEndSession }
+                migrateContainer={ migrateContainer }
+                proposeEndSession={ proposeEndSession }
+                writeToExternalStorage={ writeToExternalStorage }
+                endSession={ endSession }
+                externalDataSource={ externalDataSource }
+            />
         </div>
     );
 };
