@@ -201,7 +201,7 @@ export class DataStores implements IDisposable {
                     ...extractSafePropertiesFromMessage(message),
                     dataStoreId: {
                         value: attachMessage.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                 },
             );
@@ -440,7 +440,7 @@ export class DataStores implements IDisposable {
                 eventName: "SignalFluidDataStoreNotFound",
                 fluidDataStoreId: {
                     value: address,
-                    tag: TelemetryDataTag.PackageData,
+                    tag: TelemetryDataTag.CodeArtifact,
                 },
             });
             return;

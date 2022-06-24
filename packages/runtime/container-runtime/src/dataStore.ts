@@ -127,7 +127,7 @@ class DataStore implements IDataStore {
                 },
                 internalId: {
                     value: this.internalId,
-                    tag: TelemetryDataTag.PackageData,
+                    tag: TelemetryDataTag.CodeArtifact,
                 },
             }, error);
             this.aliasState = AliasState.None;
