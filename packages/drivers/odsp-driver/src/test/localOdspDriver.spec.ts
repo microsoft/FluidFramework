@@ -10,7 +10,6 @@ import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import {
     IClient,
     ISequencedDocumentMessage,
-    MessageType,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
