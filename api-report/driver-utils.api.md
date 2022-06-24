@@ -169,6 +169,12 @@ export type DriverErrorTelemetryProps = ITelemetryProperties & {
     driverVersion: string | undefined;
 };
 
+// @public
+export class EmptyDocumentDeltaStorageService implements IDocumentDeltaStorageService {
+    // (undocumented)
+    fetchMessages(from: number, _to: number | undefined, _abortSignal?: AbortSignal, _cachedOnly?: boolean, _fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
+}
+
 // @public (undocumented)
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
 
@@ -276,12 +282,6 @@ export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(message: string, errorType: T, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly errorType: T;
-}
-
-// @public
-export class NoOpDocumentDeltaStorageService implements IDocumentDeltaStorageService {
-    // (undocumented)
-    fetchMessages(from: number, _to: number | undefined, _abortSignal?: AbortSignal, _cachedOnly?: boolean, _fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
 }
 
 // @public (undocumented)

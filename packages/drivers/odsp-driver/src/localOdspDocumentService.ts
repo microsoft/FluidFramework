@@ -10,7 +10,7 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { UsageError, NoOpDocumentDeltaStorageService } from "@fluidframework/driver-utils";
+import { UsageError, EmptyDocumentDeltaStorageService } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManager";
@@ -39,7 +39,7 @@ export class LocalOdspDocumentService implements IDocumentService {
     }
 
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        return new NoOpDocumentDeltaStorageService();
+        return new EmptyDocumentDeltaStorageService();
     }
 
     public connectToDeltaStream(_client: IClient): never {

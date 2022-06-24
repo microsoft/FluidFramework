@@ -23,4 +23,4 @@ export * from "./treeConversions";
 export * from "./treeUtils";
 export * from "./messageRecognition";
 export * from "./error";
-export * from "./noOpDocumentDeltaStorageService";
+export * from "./emptyDocumentDeltaStorageService";
