@@ -111,28 +111,28 @@ export function create(
             // TODO: remove condition once old drivers are phased out and all clients can handle object response
             const clientAcceptsObjectResponse = enableDiscovery === true || generateToken === true;
             if (clientAcceptsObjectResponse) {
-              const responseBody = { id, token: undefined, session: undefined };
-              if (generateToken) {
-                // Generate creation token given a jwt from header
-                const authorizationHeader = request.header("Authorization");
-                const tokenRegex = /Basic (.+)/;
-                const tokenMatch = tokenRegex.exec(authorizationHeader);
-                const token = tokenMatch[1];
-                const tenantKey = await tenantManager.getKey(tenantId);
-                responseBody.token = getCreationToken(token, tenantKey, id);
-              }
-              if (enableDiscovery) {
-                // Session information
-                const session: ISession = {
-                   ordererUrl,
-                   historianUrl,
-                   isSessionAlive: false,
-                 };
-                 responseBody.session = session;
-              }
-              handleResponse(createP.then(() => responseBody), response, undefined, undefined, 201);
+                const responseBody = { id, token: undefined, session: undefined };
+                if (generateToken) {
+                    // Generate creation token given a jwt from header
+                    const authorizationHeader = request.header("Authorization");
+                    const tokenRegex = /Basic (.+)/;
+                    const tokenMatch = tokenRegex.exec(authorizationHeader);
+                    const token = tokenMatch[1];
+                    const tenantKey = await tenantManager.getKey(tenantId);
+                    responseBody.token = getCreationToken(token, tenantKey, id);
+                }
+                if (enableDiscovery) {
+                    // Session information
+                    const session: ISession = {
+                        ordererUrl,
+                        historianUrl,
+                        isSessionAlive: false,
+                    };
+                    responseBody.session = session;
+                }
+                handleResponse(createP.then(() => responseBody), response, undefined, undefined, 201);
             } else {
-              handleResponse(createP.then(() => id), response, undefined, undefined, 201);
+                handleResponse(createP.then(() => id), response, undefined, undefined, 201);
             }
         });
 
@@ -147,7 +147,7 @@ export function create(
             const documentId = getParam(request.params, "id");
             const tenantId = getParam(request.params, "tenantId");
             const session = getSession(ordererUrl, historianUrl, tenantId, documentId, documentsCollection);
-            handleResponse(session, response, undefined, 200);
+            handleResponse(session, response, false);
         });
     return router;
 }

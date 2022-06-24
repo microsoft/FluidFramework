@@ -10,8 +10,8 @@ import { IFileEntry, IOdspResolvedUrl, ShareLinkTypes } from "@fluidframework/od
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { EpochTracker } from "../epochTracker";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { INewFileInfo, createCacheSnapshotKey, ISnapshotContents } from "../odspUtils";
+import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
+import { INewFileInfo, createCacheSnapshotKey } from "../odspUtils";
 import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk } from "./mockFetch";
 
@@ -89,7 +89,7 @@ describe("Create New Utils Tests", () => {
     });
 
     afterEach(async () => {
-        await epochTracker.removeEntries().catch(() => {});
+        await epochTracker.removeEntries().catch(() => { });
     });
 
     const test = (snapshot: ISnapshotContents) => {
@@ -125,22 +125,22 @@ describe("Create New Utils Tests", () => {
 
     it("Should cache converted summary during createNewFluidFile", async () => {
         const odspResolvedUrl = await mockFetchOk(
-                async () => createNewFluidFile(
-                    async (_options) => "token",
-                    newFileParams,
-                    new TelemetryNullLogger(),
-                    createSummary(),
-                    epochTracker,
-                    fileEntry,
-                    true,
-                    false,
-                ),
-                { itemId: "itemId1", id: "Summary handle" },
-                { "x-fluid-epoch": "epoch1" },
-                );
+            async () => createNewFluidFile(
+                async (_options) => "token",
+                newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                true,
+                false,
+            ),
+            { itemId: "itemId1", id: "Summary handle" },
+            { "x-fluid-epoch": "epoch1" },
+        );
         const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
         test(snapshot);
-        await epochTracker.removeEntries().catch(() => {});
+        await epochTracker.removeEntries().catch(() => { });
     });
 
     it("Should save share link information received during createNewFluidFile", async () => {
@@ -150,19 +150,19 @@ describe("Create New Utils Tests", () => {
         // Test that sharing link is set appropriately when it is received in the response from ODSP
         const mockSharingLink = "mockSharingLink";
         let odspResolvedUrl = await mockFetchOk(
-                async () => createNewFluidFile(
-                    async (_options) => "token",
-                    newFileParams,
-                    new TelemetryNullLogger(),
-                    createSummary(),
-                    epochTracker,
-                    fileEntry,
-                    false,
-                    false,
-                ),
-                { itemId: "mockItemId", id: "mockId", sharingLink: mockSharingLink, sharingLinkErrorReason: undefined },
-                { "x-fluid-epoch": "epoch1" },
-                );
+            async () => createNewFluidFile(
+                async (_options) => "token",
+                newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                false,
+                false,
+            ),
+            { itemId: "mockItemId", id: "mockId", sharingLink: mockSharingLink, sharingLinkErrorReason: undefined },
+            { "x-fluid-epoch": "epoch1" },
+        );
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
             type: createLinkType,
             link: mockSharingLink,
@@ -184,31 +184,31 @@ describe("Create New Utils Tests", () => {
             ),
             { itemId: "mockItemId", id: "mockId", sharingLink: undefined, sharingLinkErrorReason: mockError },
             { "x-fluid-epoch": "epoch1" },
-            );
+        );
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
             type: createLinkType,
             link: undefined,
             error: mockError,
         });
-        await epochTracker.removeEntries().catch(() => {});
+        await epochTracker.removeEntries().catch(() => { });
     });
 
     it("Should set the isClpCompliantApp prop on resolved url if already present", async () => {
         const odspResolvedUrl1 = await mockFetchOk(
-                async () => createNewFluidFile(
-                    async (_options) => "token",
-                    newFileParams,
-                    new TelemetryNullLogger(),
-                    createSummary(),
-                    epochTracker,
-                    fileEntry,
-                    true,
-                    false,
-                    true /* isClpCompliantApp */,
-                ),
-                { itemId: "itemId1", id: "Summary handle" },
-                { "x-fluid-epoch": "epoch1" },
-                );
+            async () => createNewFluidFile(
+                async (_options) => "token",
+                newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                true,
+                false,
+                true /* isClpCompliantApp */,
+            ),
+            { itemId: "itemId1", id: "Summary handle" },
+            { "x-fluid-epoch": "epoch1" },
+        );
         assert(odspResolvedUrl1.isClpCompliantApp, "isClpCompliantApp should be set");
 
         const odspResolvedUrl2 = await mockFetchOk(
@@ -225,8 +225,8 @@ describe("Create New Utils Tests", () => {
             ),
             { itemId: "itemId1", id: "Summary handle" },
             { "x-fluid-epoch": "epoch1" },
-            );
+        );
         assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
-        await epochTracker.removeEntries().catch(() => {});
+        await epochTracker.removeEntries().catch(() => { });
     });
 });

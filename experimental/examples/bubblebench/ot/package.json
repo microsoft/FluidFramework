@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^1.1.0",
-    "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-common": "^0.24.0-0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
