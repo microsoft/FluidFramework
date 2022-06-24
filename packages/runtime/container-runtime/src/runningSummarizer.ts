@@ -9,12 +9,14 @@ import { UsageError } from "@fluidframework/container-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     ISummaryConfiguration,
 } from "./containerRuntime";
+import { opSize } from "./opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
     IEnqueueSummarizeOptions,
@@ -90,6 +92,7 @@ export class RunningSummarizer implements IDisposable {
             // Split the diff 50-50 and increment the counts appropriately
             heuristicData.numNonRuntimeOps += Math.ceil(diff / 2);
             heuristicData.numRuntimeOps += Math.floor(diff / 2);
+            heuristicData.hasMissingOpData = true;
         }
 
         // Update last seq number (in case the handlers haven't processed anything yet)
@@ -242,6 +245,8 @@ export class RunningSummarizer implements IDisposable {
             this.heuristicData.numNonRuntimeOps++;
         }
 
+        this.heuristicData.totalOpsSize += opSize(op);
+
         // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
         if (this.initialized
             && this.opCanTriggerSummary(op)
@@ -258,7 +263,7 @@ export class RunningSummarizer implements IDisposable {
 
     /**
      * Can the given op trigger a summary?
-     * # Currently only prevents summaries for Symmarize and SummaryAck ops
+     * # Currently only prevents summaries for Summarize and SummaryAck ops
      * @param op - op to check
      * @returns true if this type of op can trigger a summary
      */
