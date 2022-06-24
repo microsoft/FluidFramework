@@ -166,6 +166,9 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 
 /**
  * {@inheritDoc IFluidContainer}
+ *
+ * TODO: this implementation is incomplete. What is the intention here with regards to consumers?
+ * Should they extend it? Should it be an abstract class?
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
@@ -223,6 +226,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
 
     /**
      * {@inheritDoc IFluidContainer.attach}
+     *
+     * TODO: presumably implementations are required to override this?
      */
     public async attach(): Promise<string> {
         throw new Error("Cannot attach container. Container is not in detached state");
