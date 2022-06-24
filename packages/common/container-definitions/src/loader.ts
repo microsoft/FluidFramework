@@ -150,12 +150,6 @@ export namespace ConnectionState {
     export type CatchingUp = 1;
 
     /**
-     * @see ConnectionState.CatchingUp, which is the new name for this state.
-     * @deprecated - This state itself is not gone, just being renamed. Please use ConnectionState.CatchingUp.
-     */
-    export type Connecting = 1;
-
-    /**
      * The container is fully connected and syncing
      */
      export type Connected = 2;
@@ -168,7 +162,6 @@ export type ConnectionState =
     | ConnectionState.Disconnected
     | ConnectionState.EstablishingConnection
     | ConnectionState.CatchingUp
-    | ConnectionState.Connecting
     | ConnectionState.Connected;
 
 /**

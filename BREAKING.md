@@ -23,6 +23,8 @@ There are a few steps you can take to write a good change note and avoid needing
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
 - [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
 - [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
+- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-container-definitions)
+- [Remove ConnectionState.Connecting and replace remaining with ConnectionState.CatchingUp](#Remove-ConnectionState.Connecting-and-replace-remaining-with-ConnectionState.CatchingUp)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -52,6 +54,8 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 
  ### IContainerRuntime.createRootDataStore is deprecated
  See [#9660](https://github.com/microsoft/FluidFramework/issues/9660). The API is vulnerable to name conflicts, which lead to invalid documents. As a replacement, create a regular datastore using the `IContainerRuntimeBase.createDataStore` function, then alias the datastore by using the `IDataStore.trySetAlias` function and specify a string value to serve as the alias to which the datastore needs to be bound. If successful, "Success" will be returned, and a call to `getRootDataStore` with the alias as parameter will return the same datastore.
+### Remove ConnectionState.Connecting and replace remaining with ConnectionState.CatchingUp
+`ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
 
 # 1.0.0
 

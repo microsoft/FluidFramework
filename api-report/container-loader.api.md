@@ -44,8 +44,6 @@ import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 export enum ConnectionState {
     CatchingUp = 1,
     Connected = 2,
-    // @deprecated (undocumented)
-    Connecting = 1,
     Disconnected = 0,
     EstablishingConnection = 3
 }
