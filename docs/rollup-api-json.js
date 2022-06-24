@@ -128,7 +128,7 @@ const main = async () => {
     await fs.emptyDir(stagingPath);
     await fs.emptyDir(outputPath);
 
-    const apiExtractorInputDir = path.resolve('..', '_api-extractor-temp', 'doc-models');
+    const apiExtractorInputDir = path.resolve("..", "_api-extractor-temp", "doc-models");
 
     // Copy all the files to staging that need to be present for member processing.
     await cpy(apiExtractorInputDir, stagingPath);
