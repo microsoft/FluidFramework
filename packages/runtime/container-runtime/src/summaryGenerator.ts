@@ -10,7 +10,6 @@ import {
     IPromiseTimer,
     IPromiseTimerResult,
     Timer,
-    unreachableCase,
 } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
@@ -393,16 +392,18 @@ export class SummaryGenerator {
     private addSummaryDataToTelemetryProps(
         summaryData: SubmitSummaryResult,
         initialProps: SummaryGeneratorTelemetry,
-    ) {
+    ): SummaryGeneratorTelemetry {
         switch (summaryData.stage) {
             case "base":
                 return initialProps;
+
             case "generate":
                 return {
                     ...initialProps,
                     ...summaryData.summaryStats,
                     generateDuration: summaryData.generateDuration,
                 };
+
             case "upload":
                 return {
                     ...initialProps,
@@ -411,6 +412,7 @@ export class SummaryGenerator {
                     handle: summaryData.handle,
                     uploadDuration: summaryData.uploadDuration,
                 };
+
             case "submit": {
                 const result = {
                     ...initialProps,
@@ -434,6 +436,8 @@ export class SummaryGenerator {
 
             default: assert(true, "Unexpected summary stage");
         }
+
+        return initialProps;
     }
 
     private summarizeTimerHandler(time: number, count: number) {

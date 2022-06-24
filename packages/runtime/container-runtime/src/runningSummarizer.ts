@@ -9,7 +9,6 @@ import { UsageError } from "@fluidframework/container-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
-    ISequencedDocumentSystemMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";

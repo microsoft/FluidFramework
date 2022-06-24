@@ -115,6 +115,21 @@
       },
       "InterfaceDeclaration_ISummaryConfigurationHeuristics": {
         "forwardCompat": false
+      },
+      "InterfaceDeclaration_IGeneratedSummaryStats": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IGenerateSummaryTreeResult": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISubmitSummaryOpResult": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IUploadSummaryResult": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_SubmitSummaryResult": {
+        "backCompat": false
       }
     }
   }
