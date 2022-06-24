@@ -166,10 +166,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 }
 
 /**
- * Base {@link IFluidContainer} implementation.
- *
- * @remarks Note that this implementation is incomplete.
- * Consumers should extend this type and complete functionality (see {@link FluidContainer.attach}).
+ * {@inheritDoc IFluidContainer}
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
@@ -226,12 +223,10 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     /**
-     * See {@link IFluidContainer.attach}
-     *
-     * @remarks Note that this implementation should not be used.
-     * Consumers should extend this type and provide their own implementation.
+     * {@inheritDoc IFluidContainer.connect}
      */
     public async attach(): Promise<string> {
+        // TODO: this needs to be implemented. This type should be self-sufficient.
         throw new Error("Cannot attach container. Container is not in detached state");
     }
 
