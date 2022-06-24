@@ -123,6 +123,47 @@ function translateVirtualVersion(
     virtualVersion.format(); // semver must be reformated after edits
     return virtualVersion;
 }
+
+export async function setReleaseGroupVersion(
+    context: Context,
+    version: semver.SemVer,
+    monoRepo: MonoRepoKind,
+    versionBag?: VersionBag,
+) {
+    const bumpMonoRepo = async (repoVersionBump: semver.SemVer, monoRepo: MonoRepo) => {
+        // for (const p of monoRepo.packages) {
+        //     console.log(`${p.nameColored} ${p.version}`);
+        //     // const json = JSON.parse(p.packageJson.version);
+        //     p.packageJson.version = repoVersionBump.version;
+        //     await p.savePackageJson();
+        // }
+        // return "done";
+        return exec(`npx lerna version ${repoVersionBump.version} --no-push --no-git-tag-version -y`, monoRepo.repoPath, `bump mono repo ${monoRepo.repoPath}`);
+    }
+
+    console.log(`  Bumping ${monoRepo} version ${version.version}`);
+    // Translate the versionBump into the appropriate change for virtual patch versioning
+    const toBump = context.repo.monoRepos.get(monoRepo);
+    assert(toBump !== undefined, `No monorepo with name '${toBump}'`);
+    if (toBump !== undefined) {
+        await bumpMonoRepo(version, toBump);
+    }
+
+    // for (const pkg of packageNeedBump) {
+    //     console.log(`  Bumping ${pkg.name}${vPatchLogString}`);
+    //     // Translate the versionBump into the appropriate change for virtual patch versioning
+    //     const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get(pkg.name), virtualPatch);
+    //     let cmd = `npm version ${translatedVersionBump}`;
+    //     if (pkg.getScript("build:genver")) {
+    //         cmd += " && npm run build:genver";
+    //     }
+    //     await exec(cmd, pkg.directory, `bump version on ${pkg.name}`);
+    // }
+
+    // Package json has changed. Reload.
+    return context.collectVersions(true);
+}
+
 /**
  * Bump version of packages in the repo
  *
@@ -169,6 +210,9 @@ export async function bumpRepo(
     return context.collectVersions(true);
 }
 
+/**
+ * Note: this function does nothing if called with versionBump !== "patch".
+ */
 async function bumpLegacyDependencies(context: Context, versionBump: VersionChangeType) {
     if (versionBump !== "patch") {
         // Assumes that we want N/N-1 testing

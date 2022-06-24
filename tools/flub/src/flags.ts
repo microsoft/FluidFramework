@@ -5,6 +5,7 @@ import {
     supportedMonoRepoValues,
     sentenceCase,
 } from "@fluidframework/build-tools/src/common/monoRepo";
+import { VersionBumpTypeExtended } from "@fluidframework/build-tools/src/bumpVersion/context";
 
 // function getTeam(): Promise<string> {
 //     // imagine this reads a configuration file or something to find the team
@@ -13,7 +14,7 @@ import {
 export const rootPathFlag = Flags.build({
     char: "r",
     description: "root path",
-    env: "_FLUID_ROOT_"
+    env: "_FLUID_ROOT_",
 });
 
 export const releaseGroupFlag = Flags.build({
@@ -21,21 +22,21 @@ export const releaseGroupFlag = Flags.build({
     description: "release group",
     options: [...supportedMonoRepoValues()]
         .map((s) => s.toString().toLowerCase())
-        .filter(s => Boolean(s)),
+        .filter((s) => Boolean(s)),
     parse: async (input, _) => sentenceCase(input),
-    exclusive: ["p"]
+    exclusive: ["p"],
 });
 
 export const packageSelectorFlag = Flags.build({
     char: "p",
     description: "package",
-    exclusive: ["g"]
+    exclusive: ["g"],
 });
 
 export const bumpTypeFlag = Flags.build({
     char: "t",
     description: "bump type",
-    options: ["current", "patch", "minor", "major"],
-    default: "current"
+    options: ["major", "minor", "patch", "current"],
+    default: "current",
+    required: true,
 });
-

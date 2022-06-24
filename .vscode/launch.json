@@ -12,11 +12,19 @@
                 "<node_internals>/**"
             ],
             "type": "node",
+            // "args": [
+            //     "bump",
+            //     "current",
+            //     "-g",
+            //     "client"
+            // ],
             "args": [
                 "bump",
-                "current",
+                "write",
                 "-g",
-                "client"
+                "azure",
+                "-t",
+                "current"
             ],
         },
         {

@@ -19,9 +19,12 @@ import { fatal, prereleaseSatisfies } from "./utils";
 import * as semver from "semver";
 
 export type VersionBumpType = "major" | "minor" | "patch";
+export type VersionBumpTypeExtended = VersionBumpType | "current";
 export type VersionChangeType = VersionBumpType | semver.SemVer;
+export type VersionChangeTypeExtended = VersionBumpTypeExtended | semver.SemVer;
+
 export function isVersionBumpType(type: VersionChangeType | string): type is VersionBumpType {
-    return type === "major" || type === "minor" || type === "patch";
+    return type === "major" || type === "minor" || type === "patch" || type === "current";
 }
 
 export class Context {

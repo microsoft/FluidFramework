@@ -13,7 +13,7 @@ export abstract class BaseBumpCommand extends Command {
         root: rootPathFlag(),
         releaseGroup: releaseGroupFlag(),
         package: packageSelectorFlag(),
-    }
+    };
 
     // async run(): Promise<void> {
     // }
@@ -23,15 +23,16 @@ export default class BumpCommand extends BaseBumpCommand {
     static description = "Bump versions of packages and dependencies";
 
     static flags = {
-        ...super.flags
+        ...super.flags,
     };
 
-    static args = [
-    ];
+    static args = [];
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(BumpCommand);
 
-        this.log(`hello ${args.person} from ${flags.releaseGroup}! (./src/commands/hello/index.ts)`);
+        this.log(
+            `hello ${args.person} from ${flags.releaseGroup}! (./src/commands/hello/index.ts)`,
+        );
     }
 }

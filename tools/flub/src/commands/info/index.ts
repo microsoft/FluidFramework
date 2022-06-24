@@ -20,12 +20,13 @@ hello friend from oclif! (./src/commands/hello/index.ts)
         package: packageSelectorFlag(),
     };
 
-    static args = [
-    ];
+    static args = [];
 
     async run(): Promise<void> {
         const { args, flags } = await this.parse(InfoCommand);
 
-        this.log(`hello ${args.person} from ${flags.releaseGroup}! (./src/commands/hello/index.ts)`);
+        this.log(
+            `hello ${args.person} from ${flags.releaseGroup}! (./src/commands/hello/index.ts)`,
+        );
     }
 }
