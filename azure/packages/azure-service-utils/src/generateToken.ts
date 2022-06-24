@@ -36,9 +36,10 @@ import { v4 as uuid } from "uuid";
  * @param key - API key to authenticate user. Must be {@link https://en.wikipedia.org/wiki/UTF-8 | UTF-8}-encoded.
  * @param scopes - @see {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
  * @param documentId - @see {@link @fluidframework/protocol-definitions#ITokenClaims.documentId}.
- * If not specified, an empty string will be used instead.
+ * If not specified, the token will not be associated with a document, and an empty string will be used.
  * @param user - User with whom generated tokens will be associated.
- * If not specified, a randomly generated mock user will be used instead.
+ * If not specified, the token will not be associated with a user, and a randomly generated mock user will be
+ * used instead.
  * @see {@link @fluidframework/protocol-definitions#ITokenClaims.user}
  * @param lifetime - Used to generate the {@link @fluidframework/protocol-definitions#ITokenClaims.exp | expiration}.
  * Expiration = now + lifetime.
