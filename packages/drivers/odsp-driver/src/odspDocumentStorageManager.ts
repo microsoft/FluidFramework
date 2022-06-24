@@ -38,8 +38,8 @@ import { IOdspCache } from "./odspCache";
 import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
-    ISnapshotContents,
 } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
 import { defaultCacheExpiryTimeoutMs, EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
@@ -218,10 +218,10 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
         return this.readBlobCore(blobId);
     }
 
-    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+    public async getSnapshotTree(version?: api.IVersion, scenarioName?: string): Promise<api.ISnapshotTree | null> {
         let id: string;
         if (!version || !version.id) {
-            const versions = await this.getVersions(null, 1);
+            const versions = await this.getVersions(null, 1, scenarioName);
             if (!versions || versions.length === 0) {
                 return null;
             }
@@ -230,7 +230,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
             id = version.id;
         }
 
-        const snapshotTree = await this.readTree(id);
+        const snapshotTree = await this.readTree(id, scenarioName);
         if (!snapshotTree) {
             return null;
         }
@@ -250,7 +250,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
         return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
     }
 
-    public abstract getVersions(blobid: string | null, count: number): Promise<api.IVersion[]>;
+    public abstract getVersions(blobid: string | null, count: number, scenarioName?: string): Promise<api.IVersion[]>;
 
     public abstract uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
 
@@ -266,16 +266,16 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
         this.blobCache.addBlobs(blobs);
     }
 
-    private async readTree(id: string): Promise<api.ISnapshotTree | null> {
+    private async readTree(id: string, scenarioName?: string): Promise<api.ISnapshotTree | null> {
         let tree = this.commitCache.get(id);
         if (!tree) {
-            tree = await this.fetchTreeFromSnapshot(id);
+            tree = await this.fetchTreeFromSnapshot(id, scenarioName);
         }
 
         return tree ?? null;
     }
 
-    protected abstract fetchTreeFromSnapshot(id: string): Promise<api.ISnapshotTree | undefined>;
+    protected abstract fetchTreeFromSnapshot(id: string, scenarioName?: string): Promise<api.ISnapshotTree | undefined>;
 
     private combineProtocolAndAppSnapshotTree(
         hierarchicalAppTree: api.ISnapshotTree,
@@ -394,7 +394,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                                 method: "POST",
                             },
                             "createBlob",
-                    ));
+                        ));
                     event.end({
                         blobId: res.content.id,
                         ...res.propsToLog,
@@ -452,14 +452,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         return blob;
     }
 
-    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+    public async getSnapshotTree(version?: api.IVersion, scenarioName?: string): Promise<api.ISnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
         }
-        return super.getSnapshotTree(version);
+        return super.getSnapshotTree(version, scenarioName);
     }
 
-    public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
+    public async getVersions(blobid: string | null, count: number, scenarioName?: string): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
         if (blobid !== this.documentId && blobid) {
             // FluidFetch & FluidDebugger tools use empty sting to query for versions
@@ -517,14 +517,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                                 }
 
                                 return snapshotCachedEntry;
-                        });
+                            });
 
                     // Based on the concurrentSnapshotFetch policy:
                     // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
                     // or grab the cache value and then the network value if the cache value returns undefined.
                     let method: string;
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                        const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions);
+                        const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions, scenarioName);
 
                         // Ensure that failures on both paths are ignored initially.
                         // I.e. if cache fails for some reason, we will proceed with network result.
@@ -558,7 +558,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                         method = retrievedSnapshot !== undefined ? "cache" : "network";
 
                         if (retrievedSnapshot === undefined) {
-                            retrievedSnapshot = await this.fetchSnapshot(hostSnapshotOptions);
+                            retrievedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, scenarioName);
                         }
                     }
                     if (method === "network") {
@@ -591,7 +591,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                     eventName: "getVersions",
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
-                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, "versions"),
+                async () => this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(url, { headers }, "versions", undefined, scenarioName),
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
@@ -615,8 +615,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         });
     }
 
-    private async fetchSnapshot(hostSnapshotOptions: ISnapshotOptions | undefined) {
-        return this.fetchSnapshotCore(hostSnapshotOptions).catch((error) => {
+    private async fetchSnapshot(hostSnapshotOptions: ISnapshotOptions | undefined, scenarioName?: string) {
+        return this.fetchSnapshotCore(hostSnapshotOptions, scenarioName).catch((error) => {
             // Issue #5895:
             // If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
             // will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
@@ -629,7 +629,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         });
     }
 
-    private async fetchSnapshotCore(hostSnapshotOptions: ISnapshotOptions | undefined) {
+    private async fetchSnapshotCore(hostSnapshotOptions: ISnapshotOptions | undefined, scenarioName?: string) {
         const snapshotOptions: ISnapshotOptions = {
             mds: this.maxSnapshotSizeLimit,
             ...hostSnapshotOptions,
@@ -656,6 +656,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                 this.snapshotFormatFetchType,
                 controller,
                 this.epochTracker,
+                scenarioName,
             );
         };
         const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
@@ -775,7 +776,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         }
     }
 
-    protected async fetchTreeFromSnapshot(id: string): Promise<api.ISnapshotTree | undefined> {
+    protected async fetchTreeFromSnapshot(id: string, scenarioName?: string): Promise<api.ISnapshotTree | undefined> {
         return getWithRetryForTokenRefresh(async (options) => {
             const storageToken = await this.getStorageToken(options, "ReadCommit");
             const snapshotDownloader = async (url: string, fetchOptions: { [index: string]: any; }) => {
@@ -783,6 +784,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                     url,
                     fetchOptions,
                     "snapshotTree",
+                    undefined,
+                    scenarioName,
                 );
             };
             const snapshot = await fetchSnapshot(

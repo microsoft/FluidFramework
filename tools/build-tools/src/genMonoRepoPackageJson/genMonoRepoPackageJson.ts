@@ -229,7 +229,7 @@ async function main() {
     } else if (kind === MonoRepoKind.Azure && repo.azureMonoRepo) {
         await generateMonoRepoInstallPackageJson(repo.azureMonoRepo);
     }
-};
+}
 
 main().catch(error => {
     console.error("ERROR: Unexpected error");

@@ -19,7 +19,7 @@ abstract class LintBaseTask extends TscDependentTask {
         }
         super.addDependentTasks(dependentTasks);
     }
-};
+}
 
 export class TsLintTask extends LintBaseTask {
     protected get doneFile() {

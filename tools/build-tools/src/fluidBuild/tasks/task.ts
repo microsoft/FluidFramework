@@ -14,7 +14,7 @@ import { options } from "../options";
 export interface TaskExec {
     task: LeafTask;
     resolve: (value: BuildResult) => void;
-};
+}
 
 export abstract class Task {
     public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
@@ -67,4 +67,4 @@ export abstract class Task {
     public get forced() {
         return options.force && (options.matchedOnly !== true || this.package.matched);
     }
-};
+}

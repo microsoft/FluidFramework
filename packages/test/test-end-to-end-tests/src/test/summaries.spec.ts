@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { strict as assert } from "assert";
+import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
@@ -14,9 +15,16 @@ import {
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import {
+    describeFullCompat,
+    describeNoCompat,
+    ITestDataObject,
+    TestDataObjectType,
+} from "@fluidframework/test-version-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 const defaultDataStoreId = "default";
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
@@ -35,6 +43,7 @@ const testContainerConfig: ITestContainerConfig = {
 async function createContainer(
     provider: ITestObjectProvider,
     summaryOpt: ISummaryRuntimeOptions,
+    logger?: ITelemetryBaseLogger,
 ): Promise<IContainer> {
     // Force generateSummaries to false.
     const summaryOptions: ISummaryRuntimeOptions = {
@@ -44,7 +53,7 @@ async function createContainer(
             state: "disabled",
         } };
 
-    return provider.makeTestContainer({ runtimeOptions: { summaryOptions } });
+    return provider.makeTestContainer({ runtimeOptions: { summaryOptions }, loaderProps: { logger } });
 }
 
 async function createSummarizer(provider: ITestObjectProvider): Promise<ISummarizer> {
@@ -176,7 +185,7 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
         const channelsTree = summary.tree[channelsTreeName];
         assert(channelsTree?.type === SummaryType.Tree, "Expected .channels tree in summary root.");
 
-        const defaultDataStoreNode = channelsTree.tree[defaultDataStoreId];
+        const defaultDataStoreNode = channelsTree.tree[defaultDataStore._context.id];
         assert(defaultDataStoreNode?.type === SummaryType.Tree, "Expected default data store tree in summary.");
         assert(!defaultDataStoreNode.unreferenced, "Default data store should be referenced.");
         assert(defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
@@ -220,7 +229,7 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
         assert(!summary.unreferenced, "Root summary should be referenced.");
         assert(summary.tree[channelsTreeName] === undefined, "Unexpected .channels tree in summary root.");
 
-        const defaultDataStoreNode = summary.tree[defaultDataStoreId];
+        const defaultDataStoreNode = summary.tree[defaultDataStore._context.id];
         assert(defaultDataStoreNode?.type === SummaryType.Tree, "Expected default data store tree in summary.");
         assert(!defaultDataStoreNode.unreferenced, "Default data store should be referenced.");
         assert(defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
@@ -278,5 +287,40 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
         defaultDataStore._root.set("key", "value");
         await provider.ensureSynchronized();
         await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
+    });
+});
+
+describeNoCompat("Summaries", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+    });
+
+    it("TelemetryContext is populated with data", async () => {
+        const mockLogger = new MockLogger();
+        const container = await createContainer(provider, { disableIsolatedChannels: true }, mockLogger);
+        const defaultDataStore = await requestFluidObject<ITestDataObject>(container, defaultDataStoreId);
+        const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+        await provider.ensureSynchronized();
+
+        const directory1 = defaultDataStore._root;
+        directory1.set("key", "value");
+        assert.strictEqual(await directory1.get("key"), "value", "value1 is not set");
+
+        await containerRuntime.summarize({
+            runGC: false,
+            fullTree: false,
+            trackState: false,
+            summaryLogger: new TelemetryNullLogger(),
+        });
+
+        const summarizeTelemetryEvents =
+            mockLogger.events.filter((event) => event.eventName === "fluid:telemetry:SummarizeTelemetry");
+        assert.strictEqual(summarizeTelemetryEvents.length, 1, "There should only be one event");
+
+        const parsed = JSON.parse(summarizeTelemetryEvents[0].details as string);
+        assert(parsed && typeof parsed === "object", "Should be proper JSON");
+
+        assert.notStrictEqual(summarizeTelemetryEvents[0].details, "{}", "Should not be empty JSON object");
     });
 });

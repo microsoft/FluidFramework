@@ -31,7 +31,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 
     private calledGetVersions = false;
 
-    public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
+    public async getVersions(blobid: string | null, count: number, _scenarioName?: string): Promise<api.IVersion[]> {
         assert(blobid === null, "Invalid usage. \"blobid\" should always be null");
         assert(count === 1, "Invalid usage. \"count\" should always be 1");
 
@@ -59,7 +59,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
         return this.snapshotTreeId ? [{ id: this.snapshotTreeId, treeId: undefined! }] : [];
     }
 
-    protected fetchTreeFromSnapshot(_id: string): never {
+    protected fetchTreeFromSnapshot(_id: string, _scenarioName?: string): never {
         this.throwUsageError("fetchTreeFromSnapshot");
     }
 

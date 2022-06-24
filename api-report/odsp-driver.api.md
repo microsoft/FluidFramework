@@ -19,7 +19,9 @@ import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
@@ -50,6 +52,9 @@ export function createOdspCreateContainerRequest(siteUrl: string, driveId: strin
 // @public
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
 
+// @public (undocumented)
+export const currentReadVersion = "1.0";
+
 // @public
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string;
 
@@ -75,6 +80,18 @@ export interface IClpCompliantAppHeader {
 export interface ISharingLinkHeader {
     // (undocumented)
     [SharingLinkHeader.isSharingLinkToRedeem]: boolean;
+}
+
+// @public (undocumented)
+export interface ISnapshotContents {
+    // (undocumented)
+    blobs: Map<string, ArrayBuffer>;
+    latestSequenceNumber: number | undefined;
+    // (undocumented)
+    ops: ISequencedDocumentMessage[];
+    sequenceNumber: number | undefined;
+    // (undocumented)
+    snapshotTree: ISnapshotTree;
 }
 
 // @public
@@ -153,10 +170,38 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     fileVersion?: string;
 }
 
+// @public
+export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotContents;
+
 // Warning: (ae-forgotten-export) The symbol "SnapshotFormatSupportType" needs to be exported by the entry point index.d.ts
 //
 // @public @deprecated
 export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType): Promise<boolean>;
+
+// @public
+export class ReadBuffer {
+    constructor(data: Uint8Array);
+    // (undocumented)
+    get buffer(): Uint8Array;
+    // (undocumented)
+    protected readonly data: Uint8Array;
+    // (undocumented)
+    get eof(): boolean;
+    // (undocumented)
+    protected index: number;
+    // (undocumented)
+    get length(): number;
+    // (undocumented)
+    get pos(): number;
+    // (undocumented)
+    read(lengthArg?: number): number;
+    // (undocumented)
+    reset(): void;
+    // (undocumented)
+    skip(length: number): void;
+    // (undocumented)
+    slice(start: number, end: number): Uint8Array;
+}
 
 // @public
 export interface ShareLinkFetcherProps {
@@ -169,6 +214,9 @@ export enum SharingLinkHeader {
     // (undocumented)
     isSharingLinkToRedeem = "isSharingLinkToRedeem"
 }
+
+// @public (undocumented)
+export const snapshotMinReadVersion = "1.0";
 
 // @public
 export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator): void;

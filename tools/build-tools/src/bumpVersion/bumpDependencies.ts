@@ -68,7 +68,7 @@ async function bumpDependenciesCore(
             }
         }
 
-        let changedVersionString: string[] = [];
+        const changedVersionString: string[] = [];
         for (const [name, version] of changedVersion) {
             changedVersionString.push(`${name.padStart(40)} -> ${version}`);
         }
