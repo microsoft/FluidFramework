@@ -162,7 +162,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
     private readonly disconnectedHandler = () => this.emit("disconnected");
-    private readonly disposedHandler = () => this.emit("dispose");
+    private readonly disposedHandler = () => this.emit("disposed");
     private readonly savedHandler = () => this.emit("saved");
     private readonly dirtyHandler = () => this.emit("dirty");
 
