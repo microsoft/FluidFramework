@@ -103,8 +103,8 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly disposed: boolean;
 
     /**
-     * The collection of data objects and DDSes that were specified by the schema. These data objects and DDSes exist
-     * for the lifetime of the container.
+     * The collection of data objects and Distributed Data Stores (DDSes) that were specified by the schema.
+     * These data objects and DDSes exist for the lifetime of the container.
      */
     readonly initialObjects: LoadableObjectRecord;
 
@@ -116,9 +116,11 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 
     /**
      * A newly created container starts detached from the collaborative service.
-     * Calling attach() uploads the new container to the service and connects to the collaborative service.
+     * Calling `attach()` uploads the new container to the service and connects to the collaborative service.
      *
-     * @remarks This should only be called when the container is in a detached state.
+     * @remarks This should only be called when the container is in the
+     * {@link @fluidframework/container-definitions#AttachState.Detatched} state.
+     *
      * This can be determined by observing {@link IFluidContainer.attachState}.
      *
      * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
@@ -126,25 +128,31 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
 
     /**
-     * Attempts to connect the container to the delta stream and process ops.
+     * Attempts to connect the container to the delta stream and process operations.
      *
-     * TODO: what states can this be called in? Just in "ConnectionState.Disconnected"?
+     * @remarks This should only be called when the container is in the
+     * {@link @fluidframework/container-definitions#ConnectionState.Disconnected} state.
+     *
+     * This can be determined by observing {@link IFluidContainer.connectionState}.
      */
     connect(): void;
 
     /**
-     * Disconnects the container from the delta stream and stops processing ops
+     * Disconnects the container from the delta stream and stops processing operations.
      *
-     * TODO: what states can this be called in? Just in "ConnectionState.Connected"?
+     * @remarks This should only be called when the container is in the
+     * {@link @fluidframework/container-definitions#ConnectionState.Connected} state.
+     *
+     * This can be determined by observing {@link IFluidContainer.connectionState}.
      */
     disconnect(): void;
 
     /**
-     * Create a new data object or DDS of the specified type.  In order to share the data object or DDS with other
+     * Create a new data object or Distributed Data Store (DDS) of the specified type.
+     *
+     * @remarks In order to share the data object or DDS with other
      * collaborators and retrieve it later, store its handle in a collection like a SharedDirectory from your
      * initialObjects.
-     *
-     * TODO: what states can this be called in?
      *
      * @param objectClass - The class of data object or DDS to create
      */
