@@ -403,7 +403,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._protocolHandler;
     }
 
-    private inboundQueuePausedFromInit = false;
+    private inboundQueuePausedFromInit = true;
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
@@ -994,8 +994,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(!this.closed, 0x0d9 /* "Attempting to connect() a closed DeltaManager" */);
 
         // Resume processing ops
-        if (!this.inboundQueuePausedFromInit) {
-            this.inboundQueuePausedFromInit = true;
+        if (this.inboundQueuePausedFromInit) {
+            this.inboundQueuePausedFromInit = false;
             this._deltaManager.inbound.resume();
             this._deltaManager.inboundSignal.resume();
         }
@@ -1192,8 +1192,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             switch (loadMode.deltaConnection) {
                 case undefined:
                 case "delayed":
-                    assert(!this.inboundQueuePausedFromInit, "inboundQueuePausedFromInit should be false");
-                    this.inboundQueuePausedFromInit = true;
+                    assert(this.inboundQueuePausedFromInit, "inboundQueuePausedFromInit should be true");
+                    this.inboundQueuePausedFromInit = false;
                     this._deltaManager.inbound.resume();
                     this._deltaManager.inboundSignal.resume();
                     break;
