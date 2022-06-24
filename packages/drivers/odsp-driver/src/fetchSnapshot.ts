@@ -8,7 +8,7 @@ import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { isFluidError, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
     IOdspResolvedUrl,
     ISnapshotOptions,
@@ -16,7 +16,7 @@ import {
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { isRuntimeMessage, NonRetryableError } from "@fluidframework/driver-utils";
 import { IOdspSnapshot, ISnapshotCachedEntry, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -32,6 +32,7 @@ import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser"
 import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { EpochTracker } from "./epochTracker";
+import { pkgVersion } from "./packageVersion";
 
 /**
  * Enum to support different types of snapshot formats.
@@ -233,7 +234,64 @@ async function fetchLatestSnapshotCore(
                     snapshotOptions,
                     controller,
                 );
-                const snapshot = response.odspSnapshotResponse.content;
+                const odspResponse = response.odspResponse;
+                const contentType = odspResponse.headers.get("content-type");
+                odspResponse.propsToLog = {
+                    ...odspResponse.propsToLog,
+                    contentType,
+                    accept: response.requestHeaders.accept,
+                };
+                let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
+                try {
+                    switch (contentType) {
+                        case "application/json": {
+                            const text = await odspResponse.content.text();
+                            odspResponse.propsToLog.bodySize = text.length;
+                            const content: IOdspSnapshot = JSON.parse(text);
+                            validateBlobsAndTrees(content);
+                            const snapshotContents: ISnapshotContents =
+                                convertOdspSnapshotToSnapshotTreeAndBlobs(content);
+                            parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
+                            break;
+                        }
+                        case "application/ms-fluid": {
+                            const content = await odspResponse.content.arrayBuffer();
+                            odspResponse.propsToLog.bodySize = content.byteLength;
+                            const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
+                                new ReadBuffer(new Uint8Array(content)));
+                            if (snapshotContents.snapshotTree.trees === undefined ||
+                                snapshotContents.snapshotTree.blobs === undefined) {
+                                    throw new NonRetryableError(
+                                        "Returned odsp snapshot is malformed. No trees or blobs!",
+                                        DriverErrorType.incorrectServerResponse,
+                                        { driverVersion: pkgVersion, ...odspResponse.propsToLog },
+                                    );
+                                }
+                            parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
+                            break;
+                        }
+                        default:
+                            throw new NonRetryableError(
+                                "Unknown snapshot content type",
+                                DriverErrorType.incorrectServerResponse,
+                                { driverVersion: pkgVersion, ...odspResponse.propsToLog },
+                            );
+                    }
+                } catch (error) {
+                    if (isFluidError(error)) {
+                        error.addTelemetryProperties({ driverVersion: pkgVersion, ...odspResponse.propsToLog });
+                        throw error;
+                    }
+                    const enhancedError = wrapError(
+                        error,
+                        (errorMessage) => new NonRetryableError(
+                            `Error parsing snapshot response: ${errorMessage}`,
+                            DriverErrorType.genericError,
+                            { driverVersion: pkgVersion, ...odspResponse.propsToLog }));
+                    throw enhancedError;
+                }
+                assert(parsedSnapshotContents !== undefined, 0x312 /* snapshot should be parsed */);
+                const snapshot = parsedSnapshotContents.content;
                 // From: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
                 // fetchStart: immediately before the browser starts to fetch the resource.
                 // requestStart: immediately before the browser starts requesting the resource from the server
@@ -255,7 +313,7 @@ async function fetchLatestSnapshotCore(
                 let fetchStartToResponseEndTime: number | undefined; // responseEnd  - fetchStart
                 let reqStartToResponseEndTime: number | undefined; // responseEnd - requestStart
                 let networkTime: number | undefined; // responseEnd - startTime
-                const spReqDuration = response.odspSnapshotResponse.headers.get("sprequestduration");
+                const spReqDuration = odspResponse.headers.get("sprequestduration");
 
                 // getEntriesByType is only available in browser performance object
                 const resources1 = performance.getEntriesByType?.("resource") ?? [];
@@ -287,12 +345,12 @@ async function fetchLatestSnapshotCore(
                 }
 
                 const { numTrees, numBlobs, encodedBlobsSize } =
-                    validateAndEvalBlobsAndTrees(response.odspSnapshotResponse.content);
+                    evalBlobsAndTrees(parsedSnapshotContents.content);
 
                 // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
                 // cannot cache using an HTTP response header.
                 const canCache =
-                    response.odspSnapshotResponse.headers.get("disablebrowsercachingofusercontent") !== "true";
+                    odspResponse.headers.get("disablebrowsercachingofusercontent") !== "true";
                 const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
                 const seqNumberFromOps = snapshot.ops && snapshot.ops.length > 0 ?
                     snapshot.ops[0].sequenceNumber - 1 :
@@ -303,7 +361,7 @@ async function fetchLatestSnapshotCore(
                     logger.sendErrorEvent({ eventName: "fetchSnapshotError", sequenceNumber, seqNumberFromOps });
                     snapshot.sequenceNumber = undefined;
                 } else if (canCache) {
-                    const fluidEpoch = response.odspSnapshotResponse.headers.get("x-fluid-epoch");
+                    const fluidEpoch = odspResponse.headers.get("x-fluid-epoch");
                     assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
                     const value: ISnapshotCachedEntry = {
                         ...snapshot,
@@ -347,8 +405,8 @@ async function fetchLatestSnapshotCore(
                     // Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
-                    sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
-                    ...response.odspSnapshotResponse.propsToLog,
+                    sltelemetry: odspResponse.headers.get("x-fluid-sltelemetry"),
+                    ...odspResponse.propsToLog,
                 });
                 return snapshot;
             },
@@ -364,8 +422,8 @@ async function fetchLatestSnapshotCore(
     });
 }
 
-interface ISnapshotRequestAndResponseOptions {
-    odspSnapshotResponse: IOdspResponse<ISnapshotContents>;
+export interface ISnapshotRequestAndResponseOptions {
+    odspResponse: IOdspResponse<Response>;
     requestUrl: string;
     requestHeaders: { [index: string]: any; };
 }
@@ -407,11 +465,7 @@ function getFormBodyAndHeaders(
     return { body: postBody, headers: header };
 }
 
-function validateAndEvalBlobsAndTrees(snapshot: ISnapshotContents) {
-    assert(snapshot.snapshotTree !== undefined,
-        0x200 /* "Returned odsp snapshot is malformed. No trees!" */);
-    assert(snapshot.blobs !== undefined,
-        0x201 /* "Returned odsp snapshot is malformed. No blobs!" */);
+function evalBlobsAndTrees(snapshot: ISnapshotContents) {
     const numTrees = countTreesInSnapshotTree(snapshot.snapshotTree);
     const numBlobs = snapshot.blobs.size;
     let encodedBlobsSize = 0;
@@ -419,6 +473,13 @@ function validateAndEvalBlobsAndTrees(snapshot: ISnapshotContents) {
         encodedBlobsSize += blobContent.byteLength;
     }
     return { numTrees, numBlobs, encodedBlobsSize };
+}
+
+export function validateBlobsAndTrees(snapshot: IOdspSnapshot) {
+    assert(snapshot.trees !== undefined,
+        0x200 /* "Returned odsp snapshot is malformed. No trees!" */);
+    assert(snapshot.blobs !== undefined,
+        0x201 /* "Returned odsp snapshot is malformed. No blobs!" */);
 }
 
 function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
@@ -484,28 +545,11 @@ export async function downloadSnapshot(
             headers.accept = "application/json";
     }
 
-    const response = await (epochTracker?.fetch(url, fetchOptions, "treesLatest", true, scenarioName) ??
+    const odspResponse = await (epochTracker?.fetch(url, fetchOptions, "treesLatest", true, scenarioName) ??
         fetchHelper(url, fetchOptions));
 
-    let finalSnapshotContents: IOdspResponse<ISnapshotContents>;
-    const contentType = response.headers.get("content-type");
-    if (contentType === "application/json") {
-        const text = await response.content.text();
-        const content: IOdspSnapshot = JSON.parse(text);
-        response.propsToLog.bodySize = text.length;
-        const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
-        finalSnapshotContents = { ...response, content: snapshotContents };
-    } else {
-        assert(contentType === "application/ms-fluid", 0x2c3 /* "Content type should be application/ms-fluid" */);
-        const content = await response.content.arrayBuffer();
-        response.propsToLog.bodySize = content.byteLength;
-        const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
-            new ReadBuffer(new Uint8Array(content)));
-        finalSnapshotContents = { ...response, content: snapshotContents };
-    }
-    response.propsToLog.contentType = contentType;
     return {
-        odspSnapshotResponse: finalSnapshotContents,
+        odspResponse,
         requestHeaders: headers,
         requestUrl: url,
     };

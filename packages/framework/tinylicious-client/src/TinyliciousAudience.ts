@@ -19,7 +19,7 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
     const tinyliciousUser = audienceMember.user as TinyliciousUser;
     assert(
         tinyliciousUser !== undefined && typeof tinyliciousUser.name === "string",
-        "Specified user was not of type \"TinyliciousUser\".");
+        0x313 /* Specified user was not of type "TinyliciousUser". */);
 
     return {
       userId: tinyliciousUser.id,

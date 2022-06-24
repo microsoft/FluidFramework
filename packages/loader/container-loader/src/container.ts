@@ -711,11 +711,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.connectionState === ConnectionState.Disconnected,
             0x0cf /* "disconnect event was not raised!" */);
 
-        assert(this._lifecycleState === "closed", "Container properly closed");
+        assert(this._lifecycleState === "closed", 0x314 /* Container properly closed */);
     }
 
     private closeCore(error?: ICriticalContainerError) {
-        assert(!this.closed, "re-entrancy");
+        assert(!this.closed, 0x315 /* re-entrancy */);
 
         try {
             // Ensure that we raise all key events even if one of these throws
