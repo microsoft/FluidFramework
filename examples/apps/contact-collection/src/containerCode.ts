@@ -32,7 +32,8 @@ class ContactCollectionContainerRuntimeFactoryType extends BaseContainerRuntimeF
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await runtime.createRootDataStore(ContactCollectionInstantiationFactory.type, contactCollectionId);
+        const dataStore = await runtime.createDataStore(ContactCollectionInstantiationFactory.type);
+        await dataStore.trySetAlias(contactCollectionId);
     }
 }
 

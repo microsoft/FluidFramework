@@ -2575,7 +2575,7 @@ export class MergeTree {
         }
     }
     public createLocalReferencePosition(
-        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
+        segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined,
         client: Client,
     ): LocalReferencePosition {
         if (isRemoved(segment)) {

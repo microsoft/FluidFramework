@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "metrics.fullname" . }}
@@ -10,6 +10,10 @@ metadata:
     heritage: "{{ .Release.Service }}"
 spec:
   replicas: {{ .Values.replicas }}
+  selector:
+    app: {{ template "metrics.fullname" . }}
+    component: "{{ .Values.name }}"
+    release: {{ .Release.Name }}
   template:
     metadata:
       annotations:
