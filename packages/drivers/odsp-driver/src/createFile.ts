@@ -30,9 +30,9 @@ import {
     getWithRetryForTokenRefresh,
     INewFileInfo,
     getOrigin,
-    ISnapshotContents,
     maxUmpPostBodySize,
 } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
@@ -91,7 +91,7 @@ export async function createNewFluidFile(
         sharingLinkErrorReason = content.sharingLinkErrorReason;
     }
 
-    const odspUrl = createOdspUrl({ ... newFileInfo, itemId, dataStorePath: "/" });
+    const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
     const resolver = new OdspDriverUrlResolver();
     const odspResolvedUrl = await resolver.resolve({
         url: odspUrl,
