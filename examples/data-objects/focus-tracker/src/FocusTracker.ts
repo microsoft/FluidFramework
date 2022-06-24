@@ -22,6 +22,7 @@ export interface IFocusTrackerEvents extends IEvent {
  */
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     private static readonly focusSignalType = "changedFocus";
+    private static readonly focusRequestType = "focusRequest";
 
     /**
      * Local map of focus status for clients
@@ -72,7 +73,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         this.signalManager.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
             this.onFocusSignalFn(clientId, payload);
         });
-        this.signalManager.onBroadcastRequested(FocusTracker.focusSignalType, () => {
+        this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
             this.sendFocusSignal(document.hasFocus());
         });
         window.addEventListener("focus", () => {
@@ -83,9 +84,9 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         });
 
         container.on("connected", () => {
-            this.signalManager.requestBroadcast(FocusTracker.focusSignalType);
+            this.signalManager.submitSignal(FocusTracker.focusRequestType);
         });
-        this.signalManager.requestBroadcast(FocusTracker.focusSignalType);
+        this.signalManager.submitSignal(FocusTracker.focusRequestType);
     }
 
     /**

@@ -24,7 +24,7 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "./constants";
-import { LocalReference, LocalReferenceCollection } from "./localReference";
+import { LocalReference, LocalReferenceCollection, LocalReferencePosition } from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -1431,32 +1431,31 @@ export class MergeTree {
         if (!segoff.segment || !isRemovedAndAcked(segoff.segment)) {
             return segoff;
         }
-        // Slide to the next farthest valid segment in the tree. If no such segment is found
-        // slide to the last valid segment.
-        // TODO this walks the whole tree to find the segment - could write a more efficient
-        // walk that starts at the segment
-        let foundStart = false;
-        let foundSegmentPastStart = false;
         let slideToSegment: ISegment | undefined;
-        this.walkAllSegments(this.root, (seg) => {
+        const goFurtherToFindSlideToSegment = (seg) => {
             if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
                 slideToSegment = seg;
-                if (foundStart) {
-                    foundSegmentPastStart = true;
-                    return false;
-                }
-            }
-            if (!foundStart && seg === segoff.segment) {
-                foundStart = true;
+                return false;
             }
             return true;
-        });
-        let offset = 0;
-        if (slideToSegment && !foundSegmentPastStart) {
-            // If slid nearer then offset should be at the end of the segment
-            offset = slideToSegment.cachedLength - 1;
+        };
+        // Slide to the next farthest valid segment in the tree.
+        this.rightExcursion(segoff.segment, goFurtherToFindSlideToSegment);
+        if (slideToSegment) {
+            return { segment: slideToSegment, offset: 0 };
         }
-        return { segment: slideToSegment, offset };
+        // If no such segment is found, slide to the last valid segment.
+        this.leftExcursion(segoff.segment, goFurtherToFindSlideToSegment);
+
+        // Workaround TypeScript issue (https://github.com/microsoft/TypeScript/issues/9998)
+        slideToSegment = slideToSegment as ISegment | undefined;
+
+        if (slideToSegment) {
+            // If slid nearer then offset should be at the end of the segment
+            return { segment: slideToSegment, offset: slideToSegment.cachedLength - 1 };
+        }
+
+        return { segment: undefined, offset: 0 };
     }
 
     /**
@@ -1476,7 +1475,7 @@ export class MergeTree {
             newSegment.localRefs = new LocalReferenceCollection(newSegment);
         }
         for (const ref of refsToSlide) {
-            ref.emit("beforeSlide");
+            ref.callbacks?.beforeSlide?.();
             const removedRef = segment.localRefs.removeLocalRef(ref);
             assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
             if (!newSegment) {
@@ -1489,7 +1488,7 @@ export class MergeTree {
                 assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
                 newSegment.localRefs.addLocalRef(ref);
             }
-            ref.emit("afterSlide");
+            ref.callbacks?.afterSlide?.();
         }
         // TODO is it required to update the path lengths?
         if (newSegment) {
@@ -1789,11 +1788,10 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                const modified = pendingSegment.ack(pendingSegmentGroup, opArgs, this);
-                // This computation of overwrite appears incorrect. Leaving as is to avoid breaking something.
-                overwrite = !modified || overwrite;
+                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, this);
+                overwrite = overlappingRemove || overwrite;
 
-                if (modified && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
+                if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
                     this.updateSegmentRefsAfterMarkRemoved(pendingSegment, false);
                 }
                 if (MergeTree.options.zamboniSegments) {
@@ -2535,7 +2533,7 @@ export class MergeTree {
         }
     }
 
-    public removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined {
+    public removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         const segment = lref.getSegment();
         if (segment) {
             const removedRefs = segment?.localRefs?.removeLocalRef(lref);
@@ -2547,9 +2545,9 @@ export class MergeTree {
         }
     }
     public createLocalReferencePosition(
-        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
+        segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined,
         client: Client,
-    ): ReferencePosition {
+    ): LocalReferencePosition {
         if (isRemoved(segment)) {
             if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove)) {
                 throw new UsageError("Can only create SlideOnRemove local reference position on a removed segment");

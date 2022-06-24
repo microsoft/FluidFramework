@@ -35,6 +35,9 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `cleanup-printed-configs` | Clean up the printed configs. Removes the `parser` property and sorts the JSON. |
 | `print-config` | Print all the eslint configs. |
 | `print-config:default` | Print the eslint config for regular TypeScript files (`eslint --config index.js --print-config src/file.ts`). |
+| `print-config:minimal` | `eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json` |
+| `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json` |
+| `print-config:strict` | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json` |
 | `print-config:test` | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`). |
 <!-- AUTO-GENERATED-CONTENT:END -->
 
