@@ -166,7 +166,6 @@ async function start(): Promise<void> {
         React.createElement(AppView, {
             app,
             importedStringData: fetchedData,
-            inventoryList,
             migrateContainer: () => { migrateContainer().catch(console.error); },
             externalDataSource,
         }),

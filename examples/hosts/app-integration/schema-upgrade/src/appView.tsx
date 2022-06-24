@@ -7,17 +7,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { App, SessionState } from "./app";
 
 import type { ExternalDataSource } from "./externalData";
-import type { IInventoryList } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
 interface IDebugViewProps {
     app: App;
     // Normally there's no need to display the imported string data, this is for demo purposes only.
     importedStringData: string | undefined;
-    proposeEndSession: () => void;
-    writeToExternalStorage: () => void;
-    endSession: () => void;
-    saveAndEndSession: () => void;
     // End the collaboration session and create a new container using exported data.
     migrateContainer: () => void;
     externalDataSource: ExternalDataSource;
@@ -27,10 +22,6 @@ const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
     const {
         app,
         importedStringData,
-        proposeEndSession,
-        writeToExternalStorage,
-        endSession,
-        saveAndEndSession,
         migrateContainer,
         externalDataSource,
     } = props;
@@ -40,11 +31,11 @@ const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
             <SessionStatusView app={ app } />
             <ImportedDataView data={ importedStringData } />
             <ControlsView
-                saveAndEndSession={ saveAndEndSession }
+                saveAndEndSession={ app.saveAndEndSession }
                 migrateContainer={ migrateContainer }
-                proposeEndSession={ proposeEndSession }
-                writeToExternalStorage={ writeToExternalStorage }
-                endSession={ endSession }
+                proposeEndSession={ app.proposeEndSession }
+                writeToExternalStorage={ app.writeToExternalStorage }
+                endSession={ app.endSession }
             />
             <ExternalDataSourceView externalDataSource={ externalDataSource }/>
         </div>
@@ -160,7 +151,6 @@ const ExternalDataSourceView: React.FC<IExternalDataSourceViewProps> = (props: I
 
 export interface IAppViewProps {
     app: App;
-    inventoryList: IInventoryList;
     // Normally there's no need to display the imported string data, this is for demo purposes only.
     importedStringData: string | undefined;
     // End the collaboration session and create a new container using exported data.
@@ -171,7 +161,6 @@ export interface IAppViewProps {
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     const {
         app,
-        inventoryList,
         importedStringData,
         migrateContainer,
         externalDataSource,
@@ -192,15 +181,11 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 
     return (
         <div>
-            <InventoryListView inventoryList={ inventoryList } disabled={ disableInput } />
+            <InventoryListView inventoryList={ app.inventoryList } disabled={ disableInput } />
             <DebugView
                 app={ app }
                 importedStringData={ importedStringData }
-                saveAndEndSession={ app.saveAndEndSession }
                 migrateContainer={ migrateContainer }
-                proposeEndSession={ app.proposeEndSession }
-                writeToExternalStorage={ app.writeToExternalStorage }
-                endSession={ app.endSession }
                 externalDataSource={ externalDataSource }
             />
         </div>
