@@ -33,13 +33,12 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
     switch (options.mode) {
         case "docker":
             assert(options.tenantId !== undefined, 0x31e /* options.tenantId is undefined */);
-            assert(options.bearerSecret !== undefined, 0x31f /* options.bearerSecret is undefined */);
             return new InsecureUrlResolver(
                 dockerUrls.hostUrl,
                 dockerUrls.ordererUrl,
                 dockerUrls.storageUrl,
                 options.tenantId,
-                options.bearerSecret);
+                options.bearerSecret ?? "");
 
         case "r11s":
             assert(options.tenantId !== undefined, 0x320 /* options.tenantId is undefined */);
