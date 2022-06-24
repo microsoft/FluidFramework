@@ -20,6 +20,10 @@ export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType;
     tag: string;
 }
+
+/**
+ * JSON-serializable properties, which will be logged with telemetry.
+ */
 export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }

@@ -245,7 +245,7 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     duration?: number;
 }
 
-// @public (undocumented)
+// @public
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
