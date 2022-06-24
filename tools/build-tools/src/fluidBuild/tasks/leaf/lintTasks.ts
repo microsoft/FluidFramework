@@ -41,8 +41,8 @@ export class EsLintTask extends LintBaseTask {
 
     protected get configFileFullPath() {
         if (!this._configFileFullPath) {
-            // TODO: we currently don't support .cjs, .yaml and .yml, or config in package.json
-            const possibleConfig = [".eslintrc.js", ".eslintrc.json", ".eslintrc"];
+            // TODO: we currently don't support .yaml and .yml, or config in package.json
+            const possibleConfig = [".eslintrc.js",  ".eslintrc.cjs", ".eslintrc.json", ".eslintrc"];
             for (const configFile of possibleConfig) {
                 const configFileFullPath = this.getPackageFileFullPath(configFile);
                 if (existsSync(configFileFullPath)) {
@@ -60,7 +60,8 @@ export class EsLintTask extends LintBaseTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) {
         let config: any;
         try {
-            if (path.parse(this.configFileFullPath).ext !== ".js") {
+            const ext = path.parse(this.configFileFullPath).ext;
+            if (ext !== ".js" && ext !== ".cjs") {
                 // TODO: optimize double read for TscDependentTask.getDoneFileContent and there.
                 const configFile = readFileSync(this.configFileFullPath, "utf8");
                 config = JSON5.parse(configFile);
