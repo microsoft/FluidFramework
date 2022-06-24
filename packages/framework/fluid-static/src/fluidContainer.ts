@@ -226,7 +226,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     /**
-     * {@inheritDoc IFluidContainer.attach}
+     * See {@link IFluidContainer.attach}
      *
      * @remarks Note that this implementation should not be used.
      * Consumers should extend this type and provide their own implementation.
