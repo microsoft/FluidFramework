@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * TODO
+ */
 export interface IEvent {
     // the event emitter polyfill and the node event emitter have different event types:
     // string | symbol vs. string | number
@@ -10,18 +13,37 @@ export interface IEvent {
     (event: string, listener: (...args: any[]) => void);
 }
 
+/**
+ * TODO
+ */
 export interface IErrorEvent extends IEvent {
     (event: "error", listener: (message: any) => void);
 }
 
+/**
+ * TODO
+ */
 export interface IEventProvider<TEvent extends IEvent> {
+    /**
+     * Registers a callback to be invoked when the corresponding event is triggered.
+     */
     readonly on: IEventTransformer<this, TEvent>;
+
+    /**
+     * Registers a callback to be invoked the first time the corresponding event is triggered.
+     */
     readonly once: IEventTransformer<this, TEvent>;
+
+    /**
+     * Removes the corresponding event if it has been registered.
+     */
     readonly off: IEventTransformer<this, TEvent>;
 }
 
 /**
- * Allow an interface to extend an interfaces that already extends an IEventProvider
+ * Allows an interface to extend an interfaces that already extends an IEventProvider
+ *
+ * @example
  *``` typescript
  * interface AEvents extends IEvent{
  *  (event: "a-event",listener: (a: number)=>void);
