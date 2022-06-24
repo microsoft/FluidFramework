@@ -97,8 +97,8 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     }
 
     /**
-     * TODO
-     * @param objectClass - TODO
+     * Dynamically creates a new detached collaborative object (DDS/DataObject).
+     * @param objectClass - Type of the collaborative object to be created.
      */
     public async create<T extends IFluidLoadable>(
         objectClass: LoadableObjectClass<T>,
