@@ -17,7 +17,7 @@ import {
 } from "./interfaces";
 
 /**
- * A local value to be stored in a container type DDS.
+ * A local value to be stored in a container type Distributed Data Store (DDS).
  */
 export interface ILocalValue {
     /**
