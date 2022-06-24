@@ -105,7 +105,7 @@ jobs:
       issues: write
       pull-requests: write
       statuses: write
-    needs: [ merge-dry-run ]
+    needs: [ merge-dry-run, dequeue ]
     if: needs.merge-dry-run.result == 'success'
     steps:
       - name: Git checkout
@@ -119,6 +119,8 @@ jobs:
           git fetch origin
           git checkout main-next-${{needs.dequeue.outputs.SHA}}
           git merge $TARGET_BRANCH -X theirs
+          git add .
+          git commit -m "Main to next"
           git push
   pull-request:
     runs-on: ubuntu-latest
