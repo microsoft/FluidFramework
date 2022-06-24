@@ -21,7 +21,7 @@ export interface IPackageMatchedOptions {
     server: boolean;
     azure: boolean;
     dirs: string[];
-};
+}
 
 export class FluidRepoBuild extends FluidRepo {
     constructor(resolvedRoot: string, services: boolean) {
@@ -40,7 +40,7 @@ export class FluidRepoBuild extends FluidRepo {
 
         const r = await Promise.all([cleanPackageNodeModules, removePromise]);
         return r[0] && !r[1].some(ret => ret?.error);
-    };
+    }
 
     public setMatched(options: IPackageMatchedOptions) {
         const hasMatchArgs = options.match.length || options.dirs.length;
@@ -143,5 +143,5 @@ export class FluidRepoBuild extends FluidRepo {
         });
         return matched;
     }
-};
+}
 

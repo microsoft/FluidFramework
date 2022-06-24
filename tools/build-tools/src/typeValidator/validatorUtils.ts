@@ -25,7 +25,7 @@ export enum BreakingIncrement {
     none = 0,
     minor = 1,
     major = minor << 1 | minor,
-};
+}
 
 export interface IValidator {
     /**

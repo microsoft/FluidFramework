@@ -25,4 +25,4 @@ export class FileHashCache {
     public clear() {
         this.fileHashCache.clear();
     }
-};
+}

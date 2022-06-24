@@ -1,19 +1,16 @@
-name: Push commit to Azure Queue
-
+name: Push commit to queue
 on:
   push:
-    branch: [ main ]
+    branches:
+      - 'main'
 
 jobs:
   queue-pr:
     runs-on: ubuntu-latest
-    if: ${{ github.event.label.name != 'do-not-merge-in-next' }}
+    if: github.event.label.name != 'do-not-merge-in-next' && github.repository_owner
+      == 'microsoft'
     steps:
-      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
-      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
-        with:
-          node-version: 14
-      - run: npm ci
+      - run: echo ${{ github.event.issue.number }} echo ${{ github.event.label.name }}
       - run: npm install @azure/storage-queue
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
@@ -24,7 +21,7 @@ jobs:
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueClient = queueServiceClient.getQueueClient(queueName);
             console.log("SHA-----", `${{ github.sha }}`);
-            console.log("SHA-----", `${{ github.actor }}`);
+            console.log("ACTOR-----", `${{ github.actor }}`);
             const message = {
               sha: `${{ github.sha }}`,
               author: `${{ github.actor }}`,
@@ -35,8 +32,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ queue-pr ]
     steps:
-      - name: Create commit comment
-        uses: peter-evans/commit-comment@3f3629d9da4bf387b09fc75456a5b8a344ba5641 # pin@v2
+      - uses: jwalton/gh-find-current-pr@e12d66bc9ecc4fdcde07b0f70a3cb68ce7e4d807 # pin@v1
+        id: findPr
         with:
-          body: |
-            'This commit is queued for merging with the `test_next` branch! Please ignore this PR for now. Contact @microsoft/fluid-cr-infra for help.'
+          state: all
+      - run: echo "Your PR is ${PR}"
+        if: success() && steps.findPr.outputs.number
+        env:
+          PR: ${{ steps.findPr.outputs.pr }}
+      - uses: marocchino/sticky-pull-request-comment@39c5b5dc7717447d0cba270cd115037d32d28443 # pin@v2
+        with:
+          number: ${{ steps.findPr.outputs.pr }}
+          message: |
+            This commit is queued for merging with the `next` branch! Please ignore this PR for now. Contact @microsoft/fluid-cr-infra for help.
