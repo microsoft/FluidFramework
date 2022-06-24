@@ -111,13 +111,12 @@ describe("Local Odsp driver", () => {
             assert.strictEqual(service.resolvedUrl, resolvedUrl);
         });
 
-        it("Delta storage service returns NoOp", async () => {
+        it("Delta storage service returns no messages", async () => {
             const service = new LocalOdspDocumentService(fakeOdspResolvedUrl, new MockLogger(), "sample data");
             const deltaStorageService = await service.connectToDeltaStorage();
 
             const allOps = await readAll(deltaStorageService.fetchMessages(1, 2));
-            assert.strictEqual(allOps.length, 1, "There should be a single message");
-            assert.strictEqual(allOps[0].type, MessageType.NoOp, "Message should be of type NoOp");
+            assert.strictEqual(allOps.length, 0, "There should be no messages");
         });
 
         it("connectToDeltaStream throws error", async () => {

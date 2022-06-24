@@ -20,13 +20,10 @@ describe("Empty IDocumentDeltaStorageService", () => {
         return ops;
     }
 
-    function assertProperReturnValue(actual: ISequencedDocumentMessage[]) {
-        assert.strictEqual(actual.length, 0, "There should be a single message");
-    }
-
     it("Fetches empty queue every call", async () => {
         for (let i = 0; i < 3; i++) {
-            assertProperReturnValue(await readAll(new EmptyDocumentDeltaStorageService().fetchMessages(1, 2)));
+            const messages = await readAll(new EmptyDocumentDeltaStorageService().fetchMessages(1, 2));
+            assert.strictEqual(messages.length, 0, "There should be no messages");
         }
     });
 });

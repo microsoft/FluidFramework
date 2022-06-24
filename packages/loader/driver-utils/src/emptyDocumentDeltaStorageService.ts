@@ -17,6 +17,8 @@ export class EmptyDocumentDeltaStorageService implements IDocumentDeltaStorageSe
         _cachedOnly?: boolean,
         _fetchReason?: string,
     ): IStream<ISequencedDocumentMessage[]> {
-        return new Queue<ISequencedDocumentMessage[]>();
+        const queue = new Queue<ISequencedDocumentMessage[]>();
+        queue.pushDone();
+        return queue;
     }
 }
