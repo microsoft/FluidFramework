@@ -435,6 +435,7 @@ export class ConnectionManager implements IConnectionManager {
         if (this.pendingConnection !== undefined) {
             pendingConnectionMode = this.pendingConnection.connectionMode;
             this.cancelConnection();  // Throw out in-progress connection attempt in favor of new attempt
+            assert(this.pendingConnection === undefined, "this.pendingConnection should be undefined");
         }
         // If there is no specified ConnectionMode, try the previous mode, if there is no previous mode use default
         let requestedMode = connectionMode ?? pendingConnectionMode ?? this.defaultReconnectionMode;
