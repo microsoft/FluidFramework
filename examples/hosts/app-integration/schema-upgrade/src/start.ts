@@ -167,7 +167,6 @@ async function start(): Promise<void> {
             app,
             importedStringData: fetchedData,
             inventoryList,
-            containerKillBit,
             migrateContainer: () => { migrateContainer().catch(console.error); },
             externalDataSource,
         }),

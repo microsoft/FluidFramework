@@ -4,14 +4,14 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import { App } from "./app";
+import { App, SessionState } from "./app";
 
 import type { ExternalDataSource } from "./externalData";
-import type { IContainerKillBit, IInventoryList } from "./interfaces";
+import type { IInventoryList } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
 interface IDebugViewProps {
-    containerKillBit: IContainerKillBit;
+    app: App;
     // Normally there's no need to display the imported string data, this is for demo purposes only.
     importedStringData: string | undefined;
     proposeEndSession: () => void;
@@ -25,7 +25,7 @@ interface IDebugViewProps {
 
 const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
     const {
-        containerKillBit,
+        app,
         importedStringData,
         proposeEndSession,
         writeToExternalStorage,
@@ -37,7 +37,7 @@ const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
 
     return (
         <div>
-            <SessionStatusView containerKillBit={ containerKillBit } />
+            <SessionStatusView app={ app } />
             <ImportedDataView data={ importedStringData } />
             <ControlsView
                 saveAndEndSession={ saveAndEndSession }
@@ -52,42 +52,29 @@ const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
 };
 
 interface ISessionStatusViewProps {
-    containerKillBit: IContainerKillBit;
+    app: App;
 }
 
 const SessionStatusView: React.FC<ISessionStatusViewProps> = (props: ISessionStatusViewProps) => {
-    const { containerKillBit } = props;
+    const { app } = props;
 
-    const [dead, setDead] = useState<boolean>(containerKillBit.dead);
-    const [sessionEnding, setSessionEnding] = useState<boolean>(containerKillBit.markedForDestruction);
-
-    useEffect(() => {
-        const deadHandler = () => {
-            setDead(containerKillBit.dead);
-        };
-        containerKillBit.on("dead", deadHandler);
-        // For some reason, I'm seeing the event fire between setting the state initially and adding the listener.
-        deadHandler();
-        return () => {
-            containerKillBit.off("dead", deadHandler);
-        };
-    }, [containerKillBit]);
+    const [sessionState, setSessionState] = useState<SessionState>(app.sessionState);
 
     useEffect(() => {
-        const markedForDestructionHandler = () => {
-            setSessionEnding(containerKillBit.markedForDestruction);
+        const sessionStateChangedHandler = () => {
+            setSessionState(app.sessionState);
         };
-        containerKillBit.on("markedForDestruction", markedForDestructionHandler);
-        markedForDestructionHandler();
+        app.on("sessionStateChanged", sessionStateChangedHandler);
+        sessionStateChangedHandler();
         return () => {
-            containerKillBit.off("markedForDestruction", markedForDestructionHandler);
+            app.off("sessionStateChanged", sessionStateChangedHandler);
         };
-    }, [containerKillBit]);
+    }, [app]);
 
     return (
         <>
-            { sessionEnding && !dead && <h1>The session is ending...</h1> }
-            { dead && <h1>The session has ended.</h1> }
+            { sessionState === SessionState.ending && <h1>The session is ending...</h1> }
+            { sessionState === SessionState.ended && <h1>The session has ended.</h1> }
         </>
     );
 };
@@ -174,7 +161,6 @@ const ExternalDataSourceView: React.FC<IExternalDataSourceViewProps> = (props: I
 export interface IAppViewProps {
     app: App;
     inventoryList: IInventoryList;
-    containerKillBit: IContainerKillBit;
     // Normally there's no need to display the imported string data, this is for demo purposes only.
     importedStringData: string | undefined;
     // End the collaboration session and create a new container using exported data.
@@ -186,45 +172,29 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     const {
         app,
         inventoryList,
-        containerKillBit,
         importedStringData,
         migrateContainer,
         externalDataSource,
     } = props;
 
-    const [dead, setDead] = useState<boolean>(containerKillBit.dead);
-    const [sessionEnding, setSessionEnding] = useState<boolean>(containerKillBit.markedForDestruction);
+    const [disableInput, setDisableInput] = useState<boolean>(app.sessionState !== SessionState.collaborating);
 
     useEffect(() => {
-        const deadHandler = () => {
-            setDead(containerKillBit.dead);
+        const sessionStateChangedHandler = () => {
+            setDisableInput(app.sessionState !== SessionState.collaborating);
         };
-        containerKillBit.on("dead", deadHandler);
-        // For some reason, I'm seeing the event fire between setting the state initially and adding the listener.
-        deadHandler();
+        app.on("sessionStateChanged", sessionStateChangedHandler);
+        sessionStateChangedHandler();
         return () => {
-            containerKillBit.off("dead", deadHandler);
+            app.off("sessionStateChanged", sessionStateChangedHandler);
         };
-    }, [containerKillBit]);
-
-    useEffect(() => {
-        const markedForDestructionHandler = () => {
-            setSessionEnding(containerKillBit.markedForDestruction);
-        };
-        containerKillBit.on("markedForDestruction", markedForDestructionHandler);
-        markedForDestructionHandler();
-        return () => {
-            containerKillBit.off("markedForDestruction", markedForDestructionHandler);
-        };
-    }, [containerKillBit]);
-
-    const disabled = sessionEnding || dead;
+    }, [app]);
 
     return (
         <div>
-            <InventoryListView inventoryList={ inventoryList } disabled={ disabled } />
+            <InventoryListView inventoryList={ inventoryList } disabled={ disableInput } />
             <DebugView
-                containerKillBit={ containerKillBit }
+                app={ app }
                 importedStringData={ importedStringData }
                 saveAndEndSession={ app.saveAndEndSession }
                 migrateContainer={ migrateContainer }
