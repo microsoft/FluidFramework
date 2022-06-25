@@ -22,7 +22,7 @@
                 "bump",
                 "write",
                 "-g",
-                "azure",
+                "client",
                 "-t",
                 "current"
             ],

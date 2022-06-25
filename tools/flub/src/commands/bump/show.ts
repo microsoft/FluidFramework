@@ -10,9 +10,9 @@ import { GitRepo } from "@fluidframework/build-tools/src/bumpVersion/gitRepo";
 import { Context } from "@fluidframework/build-tools/src/bumpVersion/context";
 import { showVersions } from "@fluidframework/build-tools/src/bumpVersion/showVersions";
 import { parseNameVersion } from "@fluidframework/build-tools/src/bumpVersion/bumpVersionCli";
-import BaseBumpCommand from "./index";
+import BaseBumpCommand from "./base";
 
-export default class Current extends BaseBumpCommand {
+export default class Show extends BaseBumpCommand {
     static description = "Show package version info";
 
     static flags = {
@@ -22,7 +22,7 @@ export default class Current extends BaseBumpCommand {
     static args = [];
 
     async run(): Promise<void> {
-        const { args, flags } = await this.parse(Current);
+        const { args, flags } = await this.parse(Show);
 
         const resolvedRoot = await getResolvedFluidRoot();
         console.log(`Repo: ${resolvedRoot}`);
