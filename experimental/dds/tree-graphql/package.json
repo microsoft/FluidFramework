@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/tree-graphql",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Prototype using GraphQL to access a distributed tree",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,7 +36,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-experimental/tree": "^1.1.0",
+    "@fluid-experimental/tree": "^1.2.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@graphql-codegen/plugin-helpers": "^1.18.2",
     "@graphql-codegen/visitor-plugin-common": "^1.18.2",
@@ -44,8 +44,8 @@
     "graphql-tools": "^7.0.2"
   },
   "devDependencies": {
-    "@fluidframework/mocha-test-setup": "^1.1.0",
-    "@fluidframework/test-runtime-utils": "^1.1.0",
+    "@fluidframework/mocha-test-setup": "^1.2.0",
+    "@fluidframework/test-runtime-utils": "^1.2.0",
     "@graphql-codegen/cli": "1.20.1",
     "@graphql-codegen/typescript": "1.20.2",
     "@microsoft/api-extractor": "^7.22.2",

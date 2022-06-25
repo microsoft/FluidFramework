@@ -39,7 +39,7 @@ describe("MergeTree.Client", () => {
 
         const segInfo = client1.getContainingSegment(2);
         const c1LocalRef = client1.createLocalReferencePosition(
-            segInfo.segment!, segInfo.offset!, ReferenceType.Simple, undefined);
+            segInfo.segment!, segInfo.offset, ReferenceType.Simple, undefined);
 
         assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 2, "create position");
 
@@ -87,7 +87,7 @@ describe("MergeTree.Client", () => {
 
         const segInfo = client1.getContainingSegment(2);
         const c1LocalRef = client1.createLocalReferencePosition(
-            segInfo.segment!, segInfo.offset!, ReferenceType.SlideOnRemove, undefined);
+            segInfo.segment!, segInfo.offset, ReferenceType.SlideOnRemove, undefined);
 
         assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 2);
 
@@ -133,7 +133,7 @@ describe("MergeTree.Client", () => {
 
         const segInfo = client1.getContainingSegment(2);
         const c1LocalRef = client1.createLocalReferencePosition(
-            segInfo.segment!, segInfo.offset!, ReferenceType.SlideOnRemove, undefined);
+            segInfo.segment!, segInfo.offset, ReferenceType.SlideOnRemove, undefined);
 
         assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 2);
 
@@ -161,7 +161,7 @@ describe("MergeTree.Client", () => {
 
         const segInfo = client1.getContainingSegment(3);
         const c1LocalRef = client1.createLocalReferencePosition(
-            segInfo.segment!, segInfo.offset!, ReferenceType.SlideOnRemove, undefined);
+            segInfo.segment!, segInfo.offset, ReferenceType.SlideOnRemove, undefined);
 
         assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 3);
 
@@ -269,7 +269,7 @@ describe("MergeTree.Client", () => {
 
         const segInfo = client1.getContainingSegment(2);
         const c1LocalRef = client1.createLocalReferencePosition(
-            segInfo.segment!, segInfo.offset!, ReferenceType.SlideOnRemove, undefined);
+            segInfo.segment!, segInfo.offset, ReferenceType.SlideOnRemove, undefined);
 
         assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 2);
 
@@ -300,10 +300,10 @@ describe("MergeTree.Client", () => {
 
         const segInfo1 = client1.getContainingSegment(1);
         const LocalRef1 = client1.createLocalReferencePosition(
-            segInfo1.segment!, segInfo1.offset!, ReferenceType.SlideOnRemove, undefined);
+            segInfo1.segment!, segInfo1.offset, ReferenceType.SlideOnRemove, undefined);
         const segInfo3 = client1.getContainingSegment(3);
         const LocalRef2 = client1.createLocalReferencePosition(
-            segInfo3.segment!, segInfo3.offset!, ReferenceType.SlideOnRemove, undefined);
+            segInfo3.segment!, segInfo3.offset, ReferenceType.SlideOnRemove, undefined);
 
         const insert2 = client1.makeOpMessage(
             client1.insertTextLocal(2, "XY"),
@@ -320,9 +320,9 @@ describe("MergeTree.Client", () => {
             ++seq);
 
         const c2LocalRef1 = client2.createLocalReferencePosition(
-            c2SegInfo1.segment!, c2SegInfo1.offset!, ReferenceType.SlideOnRemove, undefined);
+            c2SegInfo1.segment!, c2SegInfo1.offset, ReferenceType.SlideOnRemove, undefined);
         const c2LocalRef2 = client2.createLocalReferencePosition(
-            c2SegInfo3.segment!, c2SegInfo3.offset!, ReferenceType.SlideOnRemove, undefined);
+            c2SegInfo3.segment!, c2SegInfo3.offset, ReferenceType.SlideOnRemove, undefined);
 
         assert.equal(client2.localReferencePositionToPosition(c2LocalRef1), 0);
         assert.equal(client2.localReferencePositionToPosition(c2LocalRef2), 0);
@@ -360,7 +360,7 @@ describe("MergeTree.Client", () => {
 
         const segInfo = client1.getContainingSegment(4);
         const localRef = client1.createLocalReferencePosition(
-            segInfo.segment!, segInfo.offset!, ReferenceType.SlideOnRemove, undefined);
+            segInfo.segment!, segInfo.offset, ReferenceType.SlideOnRemove, undefined);
         const createReference1 = client1.makeOpMessage(
             { type: MergeTreeDeltaType.INSERT }, ++seq, insert1.sequenceNumber);
 
@@ -380,7 +380,7 @@ describe("MergeTree.Client", () => {
 
         const segoff = getSlideOnRemoveReferencePosition(client2, 4, createReference1);
         const c2LocalRef = client2.createLocalReferencePosition(
-            segoff.segment!, segoff.offset!, ReferenceType.SlideOnRemove, undefined);
+            segoff.segment!, segoff.offset, ReferenceType.SlideOnRemove, undefined);
         assert.equal(client1.localReferencePositionToPosition(localRef), 6);
         assert.equal(client2.localReferencePositionToPosition(c2LocalRef), 1);
 
@@ -417,7 +417,7 @@ describe("MergeTree.Client", () => {
             assert(TextSegment.is(segment!));
             assert.strictEqual(segment.text[segInfo.offset!], "9");
             const localRef = clients.A.createLocalReferencePosition(
-                segment, segInfo.offset!, ReferenceType.Simple, undefined);
+                segment, segInfo.offset, ReferenceType.Simple, undefined);
             clients.A.removeLocalReferencePosition(localRef);
         }
         // split the segment
@@ -430,7 +430,7 @@ describe("MergeTree.Client", () => {
             assert(TextSegment.is(segment!));
             assert.strictEqual(segment.text[segInfo.offset!], "B");
             clients.A.createLocalReferencePosition(
-                segment, segInfo.offset!, ReferenceType.Simple, undefined);
+                segment, segInfo.offset, ReferenceType.Simple, undefined);
         }
         // apply all the ops
         while (messages.length > 0) {

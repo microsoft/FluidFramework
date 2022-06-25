@@ -26,8 +26,12 @@
     "build": "tsc -b && npm run build:test",
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
+    "eslint": "eslint --format stylish src",
+    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
     "layer-check:doc": "node dist/layerCheck/layerCheck.js --root ../.. --md",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
     "policy-check": "cd ../.. && node tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
     "policy-check:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js ",
@@ -57,6 +61,7 @@
     "ts-morph": "^7.1.2"
   },
   "devDependencies": {
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@types/async": "^3.2.6",
     "@types/fs-extra": "^8.1.0",
     "@types/glob": "^7.1.1",
@@ -70,6 +75,13 @@
     "@types/semver": "^7.1.0",
     "@types/shelljs": "^0.8.8",
     "@types/webpack": "^4.41.22",
+    "@typescript-eslint/eslint-plugin": "~5.9.0",
+    "@typescript-eslint/parser": "~5.9.0",
+    "eslint": "~8.6.0",
+    "eslint-plugin-eslint-comments": "~3.2.0",
+    "eslint-plugin-import": "~2.25.4",
+    "eslint-plugin-unicorn": "~40.0.0",
+    "eslint-plugin-unused-imports": "~2.0.0",
     "mocha": "^10.0.0",
     "typescript": "~4.5.5"
   }

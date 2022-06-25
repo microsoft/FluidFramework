@@ -23,6 +23,7 @@ import {
     convertSnapshotTreeToSummaryTree,
     convertSummaryTreeToITree,
     convertToSummaryTree,
+    TelemetryContext,
     utf8ByteLength,
 } from "../summaryUtils";
 
@@ -272,6 +273,24 @@ describe("Summary Utils", () => {
                 "������",
             ];
             a.map((s) => assert.strictEqual(utf8ByteLength(s), stringToBuffer(s, "utf8").byteLength, s));
+        });
+    });
+
+    describe("TelemetryContext", () => {
+        it("Should serialize properly", () => {
+            const telemetryContext = new TelemetryContext();
+
+            telemetryContext.set("pre1_", "prop1", 10);
+            telemetryContext.set("pre2_", "prop1", "10");
+            telemetryContext.set("pre2_", "prop2", true);
+            telemetryContext.set("pre1_", "prop2", undefined);
+
+            const obj = JSON.parse(telemetryContext.serialize());
+
+            assert.strictEqual(obj.pre1_prop1, 10);
+            assert.strictEqual(obj.pre1_prop2, undefined);
+            assert.strictEqual(obj.pre2_prop1, "10");
+            assert.strictEqual(obj.pre2_prop2, true);
         });
     });
 });

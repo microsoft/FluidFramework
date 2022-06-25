@@ -79,18 +79,18 @@ describe("Garbage Collection Tests", () => {
         getNodeGCDetails: (id: string) => IGarbageCollectionDetailsBase = () => emptyGCDetails,
         metadata: IContainerRuntimeMetadata | undefined = undefined,
     ) => {
-        return GarbageCollector.create(
-            gcRuntime,
-            { gcAllowed: true, inactiveTimeoutMs },
-            (nodeId: string) => testPkgPath,
-            () => Date.now(),
+        return GarbageCollector.create({
+            runtime: gcRuntime,
+            gcOptions: { gcAllowed: true, inactiveTimeoutMs },
             baseSnapshot,
-            async <T>(id: string) => getNodeGCDetails(id) as T,
-            mockLogger,
-            metadata !== undefined /* existing */,
+            baseLogger: mockLogger,
+            existing: metadata !== undefined /* existing */,
             metadata,
-            true /* summarizerClient */,
-        );
+            isSummarizerClient: true /* summarizerClient */,
+            readAndParseBlob: async <T>(id: string) => getNodeGCDetails(id) as T,
+            getNodePackagePath: (nodeId: string) => testPkgPath,
+            getLastSummaryTimestampMs: () => Date.now(),
+        });
     };
 
     const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
