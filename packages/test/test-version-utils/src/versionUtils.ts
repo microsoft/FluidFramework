@@ -247,36 +247,22 @@ export function getRequestedRange(
         return requested;
     }
     const version = new semver.SemVer(baseVersion);
-    // const versionBoundaries = [
-    //     ["0.59.0-0", "1.0.0-0"],
-    //     ["1.0.0-0", "2.0.0-0"],
-    // ].map((version) => new semver.SemVer(version));
 
-    const versionBoundaries = [
-        ["0.0.0-0", "0.59.0-0"],
-        ["1.0.0-0", "1.0.0-0"],
-        ["2.0.0-0", "2.0.0-0"],
-    ].map((version) => new semver.SemVer(version));
-
-    // case 1 -- invalid base version (not in any boundary) but
-    // case 2 -- base + requested is in same boundary as base
-    // case 3 -- base + requested is in different boundary than base
-    // case 4 -- base + requested > max boundary
-    // case 5 -- base + requested < min boundary
-
-    // ask for prerelease in case we just bumped the version and haven't release the previous version yet.
-    if (version.major === 1) {
-        if (requested === -1) {
-            return "^0.59.0-0";
-        } else if (requested === -2) {
-            return "^0.58.0-0";
-        }
-    } else if (version.major === 2) {
-        if (requested === -1) {
-            return "^1.0.0-0";
-        } else if (requested === -2) {
-            return "^0.59.0-0";
-        }
+    // calculate requested major version number
+    const requestedMajorVersion = version.major + requested;
+    // if the major version number is bigger than 0 then return it as normal
+    if (requestedMajorVersion > 0) {
+        return `^${requestedMajorVersion}.0.0-0`;
     }
-    return `^${version.major}.${version.minor + requested}.0-0`;
+    // if the major version number is <= 0 then we return the equivalent pre-releases
+    const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+    const subtractFromMinor = requestedMajorVersion;
+    const requestedMinorVersion =
+        lastPrereleaseVersion.minor - subtractFromMinor;
+    // too old a version / non existing version requested
+    if (requestedMinorVersion <= 0) {
+        // cap at min version
+        return "^0.0.1-0";
+    }
+    return `^0.${requestedMinorVersion}.0-0`;
 }
