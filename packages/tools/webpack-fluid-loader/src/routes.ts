@@ -189,7 +189,7 @@ export const after = (
                 odspAuthStage = 2;
                 return false;
             } finally {
-                assert(lockResolver !== undefined, "lockResolver is undefined");
+                assert(lockResolver !== undefined, 0x326 /* lockResolver is undefined */);
                 lockResolver();
             }
         };
@@ -203,7 +203,7 @@ export const after = (
             return;
         }
 
-        assert(options.server !== undefined, "options.server is undefined");
+        assert(options.server !== undefined, 0x327 /* options.server is undefined */);
         await tokenManager.getOdspTokens(
             options.server,
             getMicrosoftConfiguration(),
@@ -224,7 +224,7 @@ export const after = (
             return;
         }
 
-        assert(options.server !== undefined, "options.server is undefined");
+        assert(options.server !== undefined, 0x328 /* options.server is undefined */);
         options.pushAccessToken = (await tokenManager.getPushTokens(
             options.server,
             getMicrosoftConfiguration(),
@@ -311,7 +311,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
 
     const umd = packageJson.fluid.browser?.umd;
-    assert(umd !== undefined, "browser.umd property is undefined");
+    assert(umd !== undefined, 0x329 /* browser.umd property is undefined */);
 
     const html =
         `<!DOCTYPE html>
