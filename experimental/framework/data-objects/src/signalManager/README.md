@@ -29,7 +29,7 @@ For more information on using `ContainerSchema` to create objects please see [Da
 `SignalManager` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
 - `submitSignal(signalName: string, payload?: Jsonable)` - Sends a signal with a payload to its connected listeners
 - `onSignal(signalName: string, listener: SignalListener)` - Adds a listener for the specifies signal. Same behavior as EventEmitter's `on` method.
-- `offSignal(signalName: string, listener: SignalListener | ((message: any) => void))` - Removes a listener for the specified signal. Same behavior as EventEmitter's `off` method.
+- `offSignal(signalName: string, listener: SignalListener)` - Removes a listener for the specified signal. Same behavior as EventEmitter's `off` method.
 
 ## Common Patterns
 ### Signal Request
@@ -53,3 +53,4 @@ this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
 });
 ```
 To reiterate, this pattern is not necessary for all use cases but it can be helpful when a client is in need of relevant information that won't be quickly available from other events being listened to.
+
