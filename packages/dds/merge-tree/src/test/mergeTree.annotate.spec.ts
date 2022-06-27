@@ -31,7 +31,7 @@ describe("MergeTree", () => {
             UniversalSequenceNumber,
             LocalClientId,
             UniversalSequenceNumber,
-            undefined);
+            undefined as any);
 
         currentSequenceNumber = 0;
         mergeTree.insertSegments(
@@ -40,7 +40,7 @@ describe("MergeTree", () => {
             currentSequenceNumber,
             remoteClientId,
             ++currentSequenceNumber,
-            undefined);
+            undefined as any);
     });
 
     describe("annotateRange", () => {
@@ -56,12 +56,12 @@ describe("MergeTree", () => {
                     currentSequenceNumber,
                     remoteClientId,
                     currentSequenceNumber + 1,
-                    undefined);
+                    undefined as any);
 
                 const segmentInfo =
                     mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                 const segment = segmentInfo.segment as BaseSegment;
-                assert.equal(segment.properties.propertySource, "remote");
+                assert.equal(segment?.properties?.propertySource, "remote");
             });
 
             it("local", () => {
@@ -75,12 +75,12 @@ describe("MergeTree", () => {
                     currentSequenceNumber,
                     localClientId,
                     UnassignedSequenceNumber,
-                    undefined);
+                    undefined as any);
 
                 const segmentInfo =
                     mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                 const segment = segmentInfo.segment as BaseSegment;
-                assert.equal(segment.properties.propertySource, "local");
+                assert.equal(segment.properties?.propertySource, "local");
             });
         });
         describe("collaborating", () => {
@@ -103,14 +103,14 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
                 });
 
                 it("unsequenced local", () => {
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
-                    assert.equal(segment.properties.propertySource, "local");
+                    assert.equal(segment.properties?.propertySource, "local");
                 });
 
                 it("unsequenced local after unsequenced local", () => {
@@ -124,12 +124,12 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
-                    assert.equal(segment.properties.secondProperty, "local");
+                    assert.equal(segment.properties?.secondProperty, "local");
                 });
 
                 it("unsequenced local split", () => {
@@ -139,7 +139,7 @@ describe("MergeTree", () => {
 
                     const splitSegment = segment.splitAt(splitPos) as BaseSegment;
 
-                    assert.equal(splitSegment.properties.propertySource, "local");
+                    assert.equal(splitSegment.properties?.propertySource, "local");
                 });
 
                 it("unsequenced local after unsequenced local split", () => {
@@ -154,7 +154,7 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const splitOnlyProps = {
                         splitOnly: 1,
@@ -168,7 +168,7 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
@@ -179,14 +179,14 @@ describe("MergeTree", () => {
                     const splitSegment = splitSegmentInfo.segment as BaseSegment;
 
                     assert.equal(segment.segmentGroups.size, 2);
-                    assert.equal(segment.properties.propertySource, "local");
-                    assert.equal(segment.properties.secondChange, 1);
-                    assert(!segment.properties.splitOnly);
+                    assert.equal(segment.properties?.propertySource, "local");
+                    assert.equal(segment.properties?.secondChange, 1);
+                    assert(!segment.properties?.splitOnly);
 
                     assert.equal(splitSegment.segmentGroups.size, 3);
-                    assert.equal(splitSegment.properties.propertySource, "local");
-                    assert.equal(splitSegment.properties.secondChange, 1);
-                    assert.equal(splitSegment.properties.splitOnly, 1);
+                    assert.equal(splitSegment.properties?.propertySource, "local");
+                    assert.equal(splitSegment.properties?.secondChange, 1);
+                    assert.equal(splitSegment.properties?.splitOnly, 1);
 
                     mergeTree.ackPendingSegment(
                         {
@@ -202,14 +202,14 @@ describe("MergeTree", () => {
                         });
 
                     assert.equal(segment.segmentGroups.size, 1);
-                    assert.equal(segment.properties.propertySource, "local");
-                    assert.equal(segment.properties.secondChange, 1);
-                    assert(!segment.properties.splitOnly);
+                    assert.equal(segment.properties?.propertySource, "local");
+                    assert.equal(segment.properties?.secondChange, 1);
+                    assert(!segment.properties?.splitOnly);
 
                     assert.equal(splitSegment.segmentGroups.size, 2);
-                    assert.equal(splitSegment.properties.propertySource, "local");
-                    assert.equal(splitSegment.properties.secondChange, 1);
-                    assert.equal(splitSegment.properties.splitOnly, 1);
+                    assert.equal(splitSegment.properties?.propertySource, "local");
+                    assert.equal(splitSegment.properties?.secondChange, 1);
+                    assert.equal(splitSegment.properties?.splitOnly, 1);
 
                     mergeTree.ackPendingSegment(
                         {
@@ -225,14 +225,14 @@ describe("MergeTree", () => {
                         });
 
                     assert.equal(segment.segmentGroups.size, 0);
-                    assert.equal(segment.properties.propertySource, "local");
-                    assert.equal(segment.properties.secondChange, 1);
-                    assert(!segment.properties.splitOnly);
+                    assert.equal(segment.properties?.propertySource, "local");
+                    assert.equal(segment.properties?.secondChange, 1);
+                    assert(!segment.properties?.splitOnly);
 
                     assert.equal(splitSegment.segmentGroups.size, 1);
-                    assert.equal(splitSegment.properties.propertySource, "local");
-                    assert.equal(splitSegment.properties.secondChange, 1);
-                    assert.equal(splitSegment.properties.splitOnly, 1);
+                    assert.equal(splitSegment.properties?.propertySource, "local");
+                    assert.equal(splitSegment.properties?.secondChange, 1);
+                    assert.equal(splitSegment.properties?.splitOnly, 1);
 
                     mergeTree.ackPendingSegment(
                         {
@@ -248,14 +248,14 @@ describe("MergeTree", () => {
                         });
 
                     assert.equal(segment.segmentGroups.size, 0);
-                    assert.equal(segment.properties.propertySource, "local");
-                    assert.equal(segment.properties.secondChange, 1);
-                    assert(!segment.properties.splitOnly);
+                    assert.equal(segment.properties?.propertySource, "local");
+                    assert.equal(segment.properties?.secondChange, 1);
+                    assert(!segment.properties?.splitOnly);
 
                     assert.equal(splitSegment.segmentGroups.size, 0);
-                    assert.equal(splitSegment.properties.propertySource, "local");
-                    assert.equal(splitSegment.properties.secondChange, 1);
-                    assert.equal(splitSegment.properties.splitOnly, 1);
+                    assert.equal(splitSegment.properties?.propertySource, "local");
+                    assert.equal(splitSegment.properties?.secondChange, 1);
+                    assert.equal(splitSegment.properties?.splitOnly, 1);
                 });
 
                 it("unsequenced local before remote", () => {
@@ -270,15 +270,15 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         remoteClientId,
                         ++currentSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
 
                     assert.equal(segment.segmentGroups.size, 1);
-                    assert.equal(segment.properties.propertySource, "local");
-                    assert.equal(segment.properties.remoteProperty, 1);
+                    assert.equal(segment.properties?.propertySource, "local");
+                    assert.equal(segment.properties?.remoteProperty, 1);
                 });
 
                 it("sequenced local", () => {
@@ -299,7 +299,7 @@ describe("MergeTree", () => {
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
                     assert.equal(segment.segmentGroups.size, 0);
-                    assert.equal(segment.properties.propertySource, "local");
+                    assert.equal(segment.properties?.propertySource, "local");
                 });
 
                 it("sequenced local before remote", () => {
@@ -327,15 +327,15 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         remoteClientId,
                         ++currentSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
 
                     assert.equal(segment.segmentGroups.size, 0);
-                    assert.equal(segment.properties.propertySource, "remote");
-                    assert.equal(segment.properties.remoteProperty, 1);
+                    assert.equal(segment.properties?.propertySource, "remote");
+                    assert.equal(segment.properties?.remoteProperty, 1);
                 });
 
                 it("three local changes", () => {
@@ -343,7 +343,7 @@ describe("MergeTree", () => {
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
 
-                    assert.equal(segment.properties.propertySource, "local");
+                    assert.equal(segment.properties?.propertySource, "local");
 
                     const props2 = {
                         propertySource: "local2",
@@ -357,10 +357,10 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
 
-                    assert.equal(segment.properties.propertySource, "local2");
-                    assert.equal(segment.properties.secondSource, 1);
+                    assert.equal(segment.properties?.propertySource, "local2");
+                    assert.equal(segment.properties?.secondSource, 1);
 
                     const props3 = {
                         thirdSource: 1,
@@ -373,11 +373,11 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
 
-                    assert.equal(segment.properties.propertySource, "local2");
-                    assert.equal(segment.properties.secondSource, 1);
-                    assert.equal(segment.properties.thirdSource, 1);
+                    assert.equal(segment.properties?.propertySource, "local2");
+                    assert.equal(segment.properties?.secondSource, 1);
+                    assert.equal(segment.properties?.thirdSource, 1);
 
                     mergeTree.ackPendingSegment(
                         {
@@ -392,9 +392,9 @@ describe("MergeTree", () => {
                             } as ISequencedDocumentMessage,
                         });
 
-                    assert.equal(segment.properties.propertySource, "local2");
-                    assert.equal(segment.properties.secondSource, 1);
-                    assert.equal(segment.properties.thirdSource, 1);
+                    assert.equal(segment.properties?.propertySource, "local2");
+                    assert.equal(segment.properties?.secondSource, 1);
+                    assert.equal(segment.properties?.thirdSource, 1);
 
                     mergeTree.ackPendingSegment(
                         {
@@ -409,9 +409,9 @@ describe("MergeTree", () => {
                             } as ISequencedDocumentMessage,
                         });
 
-                    assert.equal(segment.properties.propertySource, "local2");
-                    assert.equal(segment.properties.secondSource, 1);
-                    assert.equal(segment.properties.thirdSource, 1);
+                    assert.equal(segment.properties?.propertySource, "local2");
+                    assert.equal(segment.properties?.secondSource, 1);
+                    assert.equal(segment.properties?.thirdSource, 1);
 
                     mergeTree.ackPendingSegment(
                         {
@@ -426,12 +426,12 @@ describe("MergeTree", () => {
                             } as ISequencedDocumentMessage,
                         });
 
-                    assert.equal(segment.properties.propertySource, "local2");
-                    assert.equal(segment.properties.secondSource, 1);
-                    assert.equal(segment.properties.thirdSource, 1);
+                    assert.equal(segment.properties?.propertySource, "local2");
+                    assert.equal(segment.properties?.secondSource, 1);
+                    assert.equal(segment.properties?.thirdSource, 1);
                 });
 
-                it("two local changes with interleved remote", () => {
+                it("two local changes with interleaved remote", () => {
                     mergeTree.annotateRange(
                         annotateStart,
                         annotateEnd,
@@ -442,7 +442,7 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     mergeTree.ackPendingSegment(
                         {
@@ -469,15 +469,15 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         remoteClientId,
                         ++currentSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
 
-                    assert.equal(segment.properties.remoteOnly, 1);
-                    assert.equal(segment.properties.propertySource, "remote");
-                    assert.equal(segment.properties.secondSource, "local2");
+                    assert.equal(segment.properties?.remoteOnly, 1);
+                    assert.equal(segment.properties?.propertySource, "remote");
+                    assert.equal(segment.properties?.secondSource, "local2");
                 });
             });
             describe("remote first", () => {
@@ -493,18 +493,18 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         remoteClientId,
                         ++currentSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
-                    assert(segmentInfo.segment.segmentGroups.empty);
+                    assert(segmentInfo.segment?.segmentGroups.empty);
                 });
                 it("remote only", () => {
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
-                    assert.equal(segment.properties.propertySource, "remote");
-                    assert.equal(segment.properties.remoteProperty, 1);
+                    assert.equal(segment.properties?.propertySource, "remote");
+                    assert.equal(segment.properties?.remoteProperty, 1);
                 });
 
                 it("split remote", () => {
@@ -513,8 +513,8 @@ describe("MergeTree", () => {
                     const segment = segmentInfo.segment as BaseSegment;
 
                     const splitSegment = segment.splitAt(1) as BaseSegment;
-                    assert.equal(splitSegment.properties.propertySource, "remote");
-                    assert.equal(splitSegment.properties.remoteProperty, 1);
+                    assert.equal(splitSegment.properties?.propertySource, "remote");
+                    assert.equal(splitSegment.properties?.remoteProperty, 1);
                 });
 
                 it("remote before unsequenced local", () => {
@@ -528,13 +528,13 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
-                    assert.equal(segment.properties.propertySource, "local");
-                    assert.equal(segment.properties.remoteProperty, 1);
+                    assert.equal(segment.properties?.propertySource, "local");
+                    assert.equal(segment.properties?.remoteProperty, 1);
                 });
 
                 it("remote before sequenced local", () => {
@@ -544,7 +544,7 @@ describe("MergeTree", () => {
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
-                    assert(segmentInfo.segment.segmentGroups.empty);
+                    assert(segmentInfo.segment?.segmentGroups.empty);
 
                     mergeTree.annotateRange(
                         annotateStart,
@@ -554,9 +554,9 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
 
-                    assert.equal(segmentInfo.segment.segmentGroups.size, 1);
+                    assert.equal(segmentInfo.segment?.segmentGroups.size, 1);
 
                     mergeTree.ackPendingSegment(
                         {
@@ -571,9 +571,9 @@ describe("MergeTree", () => {
                             } as ISequencedDocumentMessage,
                         });
 
-                    assert(segmentInfo.segment.segmentGroups.empty);
-                    assert.equal(segmentInfo.segment.properties.propertySource, "local");
-                    assert.equal(segmentInfo.segment.properties.remoteProperty, 1);
+                    assert(segmentInfo.segment?.segmentGroups.empty);
+                    assert.equal(segmentInfo.segment?.properties?.propertySource, "local");
+                    assert.equal(segmentInfo.segment?.properties?.remoteProperty, 1);
                 });
             });
             describe("local with rewrite first", () => {
@@ -592,7 +592,7 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
                 });
 
                 it("unsequenced local after unsequenced local", () => {
@@ -607,13 +607,13 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
-                    assert.equal(segment.properties.propertySource, "local2");
-                    assert.equal(segment.properties.secondProperty, "local");
+                    assert.equal(segment.properties?.propertySource, "local2");
+                    assert.equal(segment.properties?.secondProperty, "local");
                 });
 
                 it("unsequenced local before remote", () => {
@@ -628,15 +628,15 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         remoteClientId,
                         ++currentSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
 
                     assert.equal(segment.segmentGroups.size, 1);
-                    assert.equal(segment.properties.propertySource, "local");
-                    assert(!segment.properties.remoteProperty);
+                    assert.equal(segment.properties?.propertySource, "local");
+                    assert(!segment.properties?.remoteProperty);
                 });
 
                 it("sequenced local before remote", () => {
@@ -665,18 +665,18 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         remoteClientId,
                         ++currentSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
 
                     assert.equal(segment.segmentGroups.size, 0);
-                    assert.equal(segment.properties.propertySource, "remote");
-                    assert.equal(segment.properties.remoteProperty, 1);
+                    assert.equal(segment.properties?.propertySource, "remote");
+                    assert.equal(segment.properties?.remoteProperty, 1);
                 });
 
-                it("two local changes with interleved remote", () => {
+                it("two local changes with interleaved remote", () => {
                     mergeTree.annotateRange(
                         annotateStart,
                         annotateEnd,
@@ -687,7 +687,7 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         localClientId,
                         UnassignedSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     mergeTree.ackPendingSegment(
                         {
@@ -715,15 +715,15 @@ describe("MergeTree", () => {
                         currentSequenceNumber,
                         remoteClientId,
                         ++currentSequenceNumber,
-                        undefined);
+                        undefined as any);
 
                     const segmentInfo =
                         mergeTree.getContainingSegment(annotateStart, currentSequenceNumber, localClientId);
                     const segment = segmentInfo.segment as BaseSegment;
 
-                    assert(!segment.properties.remoteOnly);
-                    assert(!segment.properties.propertySource);
-                    assert.equal(segment.properties.secondSource, "local2");
+                    assert(!segment.properties?.remoteOnly);
+                    assert(!segment.properties?.propertySource);
+                    assert.equal(segment.properties?.secondSource, "local2");
                 });
             });
         });

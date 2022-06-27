@@ -15,6 +15,7 @@ import {
     TypeData,
 } from "./typeData";
 import { BreakingIncrement, IValidator, log } from "./validatorUtils";
+import { InterfaceValidator } from "./interfaceValidator";
 
 // TODO: correlate type name with exporting package to support name aliasing
 export type BrokenTypes = Map<string, BreakingIncrement>;
@@ -114,6 +115,10 @@ export function createSpecificValidator(
         const validator = new ClassValidator();
         validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
         return validator;
+    } else if (Node.isInterfaceDeclaration(oldNode) && Node.isInterfaceDeclaration(newNode)) {
+        const validator = new InterfaceValidator()
+        validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
+        return validator;
     } else if (Node.isEnumDeclaration(oldNode) && Node.isEnumDeclaration(newNode)) {
         const validator = new EnumValidator();
         validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
@@ -122,5 +127,5 @@ export function createSpecificValidator(
 
     // We don't need to report if the declaration types have changed because that
     // should be detected earlier as a removal/addition pair (major increment)
-    throw new Error("Unhandled export declaration type");
+    throw new Error(`Unhandled export declaration type: ${oldNode.getKindName()}`);
 }

@@ -38,6 +38,7 @@ import {
     CreateChildSummarizerNodeParam,
     ISummarizerNodeWithGC,
     ISummaryTreeWithStats,
+    ITelemetryContext,
     SummarizeInternalFn,
 } from "./summary";
 
@@ -57,6 +58,32 @@ export enum FlushMode {
     TurnBased,
 }
 
+/**
+ * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
+ * locally within the container only or visible globally to all clients.
+ */
+export const VisibilityState = {
+    /** Indicates that the object is not visible. This is the state when an object is first created. */
+    NotVisible: "NotVisible",
+
+    /**
+     * Indicates that the object is visible locally within the container. This is the state when an object is attached
+     * to the container's graph but the container itself isn't globally visible. The object's state goes from not
+     * visible to locally visible.
+     */
+    LocallyVisible: "LocallyVisible",
+
+    /**
+     * Indicates that the object is visible globally to all clients. This is the state of an object in 2 scenarios:
+     * 1. It is attached to the container's graph when the container is globally visible. The object's state goes from
+     *    not visible to globally visible.
+     * 2. When a container becomes globally visible, all locally visible objects go from locally visible to globally
+     *    visible.
+     */
+    GloballyVisible: "GloballyVisible",
+};
+export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
+
 export interface IContainerRuntimeBaseEvents extends IEvent{
     (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
@@ -64,7 +91,14 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
 }
 
 /**
- * Encapsulates the return codes of the aliasing API
+ * Encapsulates the return codes of the aliasing API.
+ *
+ * 'Success' - the datastore has been successfully aliased. It can now be used.
+ * 'Conflict' - there is already a datastore bound to the provided alias. To acquire a handle to it,
+ * use the `IContainerRuntime.getRootDataStore` function. The current datastore should be discarded
+ * and will be garbage collected. The current datastore cannot be aliased to a different value.
+ * 'Aliasing' (deprecated) - this value is never returned.
+ * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
  */
  export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
 
@@ -75,7 +109,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
     /**
      * Attempt to assign an alias to the datastore.
      * If the operation succeeds, the datastore can be referenced
-     * by the supplied alias.
+     * by the supplied alias and will not be garbage collected.
      *
      * @param alias - Given alias for this datastore.
      */
@@ -101,6 +135,7 @@ export interface IContainerRuntimeBase extends
 
     /**
      * Sets the flush mode for operations on the document.
+     * @deprecated - Will be removed in 0.60. See #9480.
      */
     setFlushMode(mode: FlushMode): void;
 
@@ -179,22 +214,31 @@ export interface IFluidDataStoreChannel extends
      */
     readonly attachState: AttachState;
 
+    readonly visibilityState?: VisibilityState;
+
     /**
      * @deprecated - This is an internal method that should not be exposed.
      * Called to bind the runtime to the container.
      * If the container is not attached to storage, then this would also be unknown to other clients.
      */
-     bindToContext(): void;
+    bindToContext(): void;
 
     /**
+     * @deprecated - This will be removed in favor of makeVisibleAndAttachGraph.
      * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
      */
     attachGraph(): void;
 
     /**
+     * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
+     * bound handles that represent its dependencies in the container's graph.
+     */
+    makeVisibleAndAttachGraph?(): void;
+
+    /**
      * Retrieves the summary used as part of the initial summary message
      */
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
 
     /**
      * Processes the op.
@@ -211,8 +255,13 @@ export interface IFluidDataStoreChannel extends
      * Introduced with summarizerNode - will be required in a future release.
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats>;
 
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
@@ -246,6 +295,14 @@ export interface IFluidDataStoreChannel extends
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 
     applyStashedOp(content: any): Promise<unknown>;
+
+    /**
+     * Revert a local message.
+     * @param type - The type of the original message.
+     * @param content - The content of the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    rollback?(type: string, content: any, localOpMetadata: unknown): void;
 }
 
 export type CreateChildSummarizerNodeFn = (
@@ -255,7 +312,6 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "attaching" | "attached", listener: () => void);
 }
 
@@ -334,13 +390,20 @@ export interface IFluidDataStoreContext extends
     submitSignal(type: string, content: any): void;
 
     /**
+     * @deprecated - To be removed in favor of makeVisible.
      * Register the runtime to the container
      */
     bindToContext(): void;
 
     /**
+     * Called to make the data store locally visible in the container. This happens automatically for root data stores
+     * when they are marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
+     */
+    makeLocallyVisible?(): void;
+
+    /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
-     * @param address - The address of the channe that is dirty.
+     * @param address - The address of the channel that is dirty.
      */
     setChannelDirty(address: string): void;
 

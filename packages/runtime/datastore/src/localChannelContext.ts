@@ -18,6 +18,7 @@ import {
     IFluidDataStoreContext,
     IGarbageCollectionData,
     ISummarizeResult,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -38,7 +39,7 @@ import { ChannelStorageService } from "./channelStorageService";
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
     public channel: IChannel | undefined;
-    private attached = false;
+    private globallyVisible = false;
     protected readonly pending: ISequencedDocumentMessage[] = [];
     protected factory: IChannelFactory | undefined;
     constructor(
@@ -46,10 +47,11 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         protected readonly registry: ISharedObjectRegistry,
         protected readonly runtime: IFluidDataStoreRuntime,
         private readonly servicesGetter: () => Lazy<{
-                readonly deltaConnection: ChannelDeltaConnection,
-                readonly objectStorage: ChannelStorageService,
+                readonly deltaConnection: ChannelDeltaConnection;
+                readonly objectStorage: ChannelStorageService;
             }>,
     ) {
+        assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
     }
 
     public async getChannel(): Promise<IChannel> {
@@ -62,14 +64,14 @@ export abstract class LocalChannelContextBase implements IChannelContext {
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        // Connection events are ignored if the data store is not yet attached or loaded
-        if (this.attached && this.isLoaded) {
+        // Connection events are ignored if the data store is not yet globallyVisible or loaded
+        if (this.globallyVisible && this.isLoaded) {
             this.servicesGetter().value.deltaConnection.setConnectionState(connected);
         }
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        assert(this.attached, 0x188 /* "Local channel must be attached when processing op" */);
+        assert(this.globallyVisible, 0x2d3 /* "Local channel must be globally visible when processing op" */);
 
         // A local channel may not be loaded in case where we rehydrate the container from a snapshot because of
         // delay loading. So after the container is attached and some other client joins which start generating
@@ -85,8 +87,13 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
     public reSubmit(content: any, localOpMetadata: unknown) {
         assert(this.isLoaded, 0x18a /* "Channel should be loaded to resubmit ops" */);
-        assert(this.attached, 0x18b /* "Local channel must be attached when resubmitting op" */);
+        assert(this.globallyVisible, 0x2d4 /* "Local channel must be globally visible when resubmitting op" */);
         this.servicesGetter().value.deltaConnection.reSubmit(content, localOpMetadata);
+    }
+    public rollback(content: any, localOpMetadata: unknown) {
+        assert(this.isLoaded, 0x2ee /* "Channel should be loaded to rollback ops" */);
+        assert(this.globallyVisible, 0x2ef /* "Local channel must be globally visible when rolling back op" */);
+        this.servicesGetter().value.deltaConnection.rollback(content, localOpMetadata);
     }
 
     public applyStashedOp() {
@@ -97,27 +104,32 @@ export abstract class LocalChannelContextBase implements IChannelContext {
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = false,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, 0x18c /* "Channel should be loaded to summarize" */);
-        return summarizeChannelAsync(this.channel, fullTree, trackState);
+        return summarizeChannelAsync(this.channel, fullTree, trackState, telemetryContext);
     }
 
-    public getAttachSummary(): ISummarizeResult {
+    public getAttachSummary(telemetryContext?: ITelemetryContext): ISummarizeResult {
         assert(this.isLoaded && this.channel !== undefined, 0x18d /* "Channel should be loaded to take snapshot" */);
-        return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
+        return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */, telemetryContext);
     }
 
-    public markAttached(): void {
-        if (this.attached) {
-            throw new Error("Channel is already attached");
+    public makeVisible(): void {
+        if (this.globallyVisible) {
+            throw new Error("Channel is already globally visible");
         }
 
         if (this.isLoaded) {
             assert(!!this.channel, 0x192 /* "Channel should be there if loaded!!" */);
             this.channel.connect(this.servicesGetter().value);
         }
-        this.attached = true;
+        this.globallyVisible = true;
     }
 
     /**
@@ -142,8 +154,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
 export class RehydratedLocalChannelContext extends LocalChannelContextBase {
     private readonly services: Lazy<{
-        readonly deltaConnection: ChannelDeltaConnection,
-        readonly objectStorage: ChannelStorageService,
+        readonly deltaConnection: ChannelDeltaConnection;
+        readonly objectStorage: ChannelStorageService;
     }>;
 
     private readonly dirtyFn: () => void;
@@ -232,7 +244,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         blobMap: Map<string, ArrayBufferLike>,
     ): boolean {
         let sanitize = false;
-        const blobsContents: {[path: string]: ArrayBufferLike} = (snapshotTree as any).blobsContents;
+        const blobsContents: { [path: string]: ArrayBufferLike; } = (snapshotTree as any).blobsContents;
         Object.entries(blobsContents).forEach(([key, value]) => {
             blobMap.set(key, value);
             if (snapshotTree.blobs[key] !== undefined) {
@@ -262,8 +274,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 
 export class LocalChannelContext extends LocalChannelContextBase {
     private readonly services: Lazy<{
-        readonly deltaConnection: ChannelDeltaConnection,
-        readonly objectStorage: ChannelStorageService,
+        readonly deltaConnection: ChannelDeltaConnection;
+        readonly objectStorage: ChannelStorageService;
     }>;
     private readonly dirtyFn: () => void;
     constructor(

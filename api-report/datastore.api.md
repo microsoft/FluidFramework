@@ -18,7 +18,6 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -27,8 +26,10 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
 
 // @public (undocumented)
 export enum DataStoreMessageType {
@@ -45,7 +46,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get absolutePath(): string;
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
-    // (undocumented)
     attachGraph(): void;
     // (undocumented)
     get attachState(): AttachState;
@@ -70,7 +70,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
@@ -89,6 +89,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): this;
     // (undocumented)
@@ -102,6 +103,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): this;
     // (undocumented)
@@ -112,15 +114,17 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     submitSignal(type: string, content: any): void;
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    visibilityState: VisibilityState_2;
     waitAttached(): Promise<void>;
 }
 
 // @public (undocumented)
-export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements IFluidHandle {
+export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
     constructor(value: T, path: string, routeContext: IFluidHandleContext);
     // (undocumented)
     readonly absolutePath: string;
@@ -156,7 +160,6 @@ export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime) => 
     path: string[];
     content: string;
 } | undefined>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
-
 
 // (No @packageDocumentation comment for this package)
 

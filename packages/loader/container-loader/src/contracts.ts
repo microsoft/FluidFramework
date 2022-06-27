@@ -11,6 +11,8 @@ import {
     ReadOnlyInfo,
     IConnectionDetails,
     ICriticalContainerError,
+    IFluidCodeDetails,
+    isFluidPackage,
 } from "@fluidframework/container-definitions";
 import {
     ConnectionMode,
@@ -20,6 +22,7 @@ import {
     IClientDetails,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
+import { IContainerPackageInfo } from "@fluidframework/driver-definitions";
 
 export enum ReconnectMode {
     Never = "Never",
@@ -98,6 +101,8 @@ export interface IConnectionManager {
      * Disposed connection manager
      */
     dispose(error?: ICriticalContainerError): void;
+
+    get connectionMode(): ConnectionMode;
 }
 
 /**
@@ -109,13 +114,13 @@ export interface IConnectionManagerFactoryArgs {
      * Called by connection manager for each incomming op. Some ops maybe delivered before
      * connectHandler is called (initial ops on socket connection)
      */
-    readonly incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void,
+    readonly incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void;
 
     /**
      * Called by connection manager for each incoming signals.
      * Maybe called before connectHandler is called (initial signals on socket connection)
      */
-    readonly signalHandler: (message: ISignalMessage) => void,
+    readonly signalHandler: (message: ISignalMessage) => void;
 
     /**
      * Called when connection manager experiences delay in connecting to relay service.
@@ -123,28 +128,28 @@ export interface IConnectionManagerFactoryArgs {
      * Can be called many times while not connected.
      * Situation is considered resolved when connection is established and connectHandler is called.
      */
-    readonly reconnectionDelayHandler: (delayMs: number, error: unknown) => void,
+    readonly reconnectionDelayHandler: (delayMs: number, error: unknown) => void;
 
     /**
      * Called by connection manager whwnever critical error happens and container should be closed.
      * Expects dispose() call in respose to this call.
      */
-    readonly closeHandler: (error?: any) => void,
+    readonly closeHandler: (error?: any) => void;
 
     /**
      * Called whenever connection to relay service is lost.
      */
-    readonly disconnectHandler: (reason: string) => void,
+    readonly disconnectHandler: (reason: string) => void;
 
     /**
      * Called whenever new connection to rely service is established
      */
-    readonly connectHandler: (connection: IConnectionDetails) => void,
+    readonly connectHandler: (connection: IConnectionDetails) => void;
 
     /**
      * Called whenever ping/pong messages are roundtripped on connection.
      */
-    readonly pongHandler: (latency: number) => void,
+    readonly pongHandler: (latency: number) => void;
 
     /**
      * Called whenever connection type changes from writable to read-only or vice versa.
@@ -153,5 +158,22 @@ export interface IConnectionManagerFactoryArgs {
      * This should not be confused with "read" / "write"connection mode which is internal
      * optimization.
      */
-    readonly readonlyChangeHandler: (readonly?: boolean) => void,
+    readonly readonlyChangeHandler: (readonly?: boolean) => void;
 }
+
+/**
+ *
+ * @param codeDetails- - Data structure used to describe the code to load on the Fluid document
+ * @returns The name of the Fluid package
+ */
+export const getPackageName = (codeDetails: IFluidCodeDetails | undefined): IContainerPackageInfo => {
+    let containerPackageName;
+    if (codeDetails && "name" in codeDetails) {
+        containerPackageName = codeDetails;
+    } else if (isFluidPackage(codeDetails?.package)) {
+        containerPackageName = codeDetails?.package.name;
+    } else {
+        containerPackageName = codeDetails?.package;
+    }
+    return { name: containerPackageName };
+};

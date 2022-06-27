@@ -19,6 +19,7 @@ export function createProducer(
     pollIntervalMs?: number,
     numberOfPartitions?: number,
     replicationFactor?: number,
+    maxBatchSize?: number,
     sslCACertFilePath?: string): IProducer {
     let producer: IProducer;
 
@@ -27,7 +28,14 @@ export function createProducer(
             { kafka: [kafkaEndPoint] },
             clientId,
             topic,
-            { enableIdempotence, pollIntervalMs, numberOfPartitions, replicationFactor, sslCACertFilePath });
+            {
+                enableIdempotence,
+                pollIntervalMs,
+                numberOfPartitions,
+                replicationFactor,
+                maxBatchSize,
+                sslCACertFilePath,
+            });
 
         producer.on("error", (error, errorData: IContextErrorData) => {
             if (errorData?.restart) {
@@ -47,7 +55,8 @@ export function createProducer(
             clientId,
             topic,
             numberOfPartitions,
-            replicationFactor);
+            replicationFactor,
+            maxBatchSize);
         producer.on("error", (error) => {
             winston.error(error);
             Lumberjack.error(error);

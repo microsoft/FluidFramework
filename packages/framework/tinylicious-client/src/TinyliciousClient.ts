@@ -7,7 +7,11 @@ import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import {
+    AttachState,
+    IContainer,
+    IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
     createTinyliciousCreateNewRequest,
@@ -30,7 +34,9 @@ import {
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
 /**
- * TinyliciousClient provides the ability to have a Fluid object backed by a Tinylicious service
+ * Provides the ability to have a Fluid object backed by a Tinylicious service.
+ *
+ * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
  */
 export class TinyliciousClient {
     private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -58,7 +64,7 @@ export class TinyliciousClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
         const loader = this.createLoader(containerSchema);
 
         // We're not actually using the code proposal (our code loader always loads the same module
@@ -97,7 +103,7 @@ export class TinyliciousClient {
     public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
-    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
@@ -119,8 +125,14 @@ export class TinyliciousClient {
         const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
-        const module = { fluidExport: containerRuntimeFactory };
-        const codeLoader = { load: async () => module };
+        const load = async (): Promise<IFluidModuleWithDetails> => {
+            return {
+                module: { fluidExport: containerRuntimeFactory },
+                details: { package: "no-dynamic-package", config: {} },
+            };
+        };
+
+        const codeLoader = { load };
         const loader = new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,

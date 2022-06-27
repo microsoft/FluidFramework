@@ -8,7 +8,7 @@ ARG NODE_VERSION=12
 
 # 'node:${VARIANT}' base image includes the following:
 #
-#    eslint (global), node/npm, nvm, yarn, zsh (+ oh-my-zsh)
+#    eslint (global), node/npm, nvm, yarn
 #
 # Debian base image includes the following:
 #
@@ -52,13 +52,6 @@ RUN apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
 USER node
-
-# Install ZSH extensions (see https://jilles.me/badassify-your-terminal-and-shell/)
-RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting \
-    && git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-
-# Copy our custom .zshrc to user's home directory
-COPY .zshrc /home/node/.zshrc
 
 # Set '/usr/local/share/docker-init.sh' as entrypoint to proxy Docker socket on start.
 ENTRYPOINT ["/usr/local/share/docker-init.sh"]

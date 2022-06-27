@@ -28,12 +28,24 @@ export function create(
     };
 
     async function getRefs(tenantId: string, authorization: string): Promise<git.IRef[]> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.getRefs();
     }
 
     async function getRef(tenantId: string, authorization: string, ref: string): Promise<git.IRef> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.getRef(ref);
     }
 
@@ -41,7 +53,13 @@ export function create(
         tenantId: string,
         authorization: string,
         params: ICreateRefParamsExternal): Promise<git.IRef> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.createRef(params);
     }
 
@@ -50,7 +68,13 @@ export function create(
         authorization: string,
         ref: string,
         params: IPatchRefParamsExternal): Promise<git.IRef> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.updateRef(ref, params);
     }
 
@@ -58,7 +82,13 @@ export function create(
         tenantId: string,
         authorization: string,
         ref: string): Promise<void> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.deleteRef(ref);
     }
 
@@ -90,10 +120,12 @@ export function create(
                 refP,
                 response,
                 false,
+                undefined,
                 201);
     });
 
     router.patch("/repos/:ignored?/:tenantId/git/refs/*",
+        utils.validateRequestParams("tenantId", 0),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const refP = updateRef(
@@ -108,6 +140,7 @@ export function create(
     });
 
     router.delete("/repos/:ignored?/:tenantId/git/refs/*",
+        utils.validateRequestParams("tenantId", 0),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const refP = deleteRef(request.params.tenantId, request.get("Authorization"), request.params[0]);
@@ -115,6 +148,7 @@ export function create(
                 refP,
                 response,
                 false,
+                undefined,
                 204);
     });
 

@@ -169,8 +169,11 @@ class ComponentArray extends Array {
         } else {
             popped = this.property.pop();
         }
-        if (PropertyFactory.instanceOf(popped, "BaseProperty")) { return PropertyProxy.proxify(popped); }
-        else { return popped; }
+        if (PropertyFactory.instanceOf(popped, "BaseProperty")) {
+            return PropertyProxy.proxify(popped);
+        } else {
+            return popped;
+        }
     }
 
     /**
@@ -201,8 +204,11 @@ class ComponentArray extends Array {
         } else {
             first = this.property.shift();
         }
-        if (PropertyFactory.instanceOf(first, "BaseProperty")) { return PropertyProxy.proxify(first); }
-        else { return first; }
+        if (PropertyFactory.instanceOf(first, "BaseProperty")) {
+            return PropertyProxy.proxify(first);
+        } else {
+            return first;
+        }
     }
 
     /**
@@ -242,11 +248,14 @@ class ComponentArray extends Array {
         const arrayLength = this.property.getLength();
 
         // If start is greater than the array, start is set to the length of the array
+        // eslint-disable-next-line @typescript-eslint/brace-style
         if (startValue > arrayLength) { startValue = arrayLength; }
         // If start is negative, we begin from the end of the array
         else if (startValue < 0) {
             startValue = arrayLength + startValue;
-            if (startValue < 0) { startValue = 0; }
+            if (startValue < 0) {
+                startValue = 0;
+            }
         }
 
         // Remove elements from array

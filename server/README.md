@@ -62,7 +62,7 @@ By default the [docker compose](./docker-compose.yml) file pulls the latest publ
 
 To use Routerlicious with a Yo-Fluid container, you should start the Routerlicious docker containers, and then start the webpack dev server with the docker env command.
 ```
-    "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
+    "start:docker": "webpack serve --config webpack.config.js --package package.json --env mode=docker",
 ```
 
 ### Using the Gateway Host

@@ -20,7 +20,7 @@ export type JsonSegmentSpecs = IJSONSegment | IJSONSegmentWithMergeInfo;
 
 export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     version: undefined;
-    chunkStartSegmentIndex: number,
+    chunkStartSegmentIndex: number;
     chunkSegmentCount: number;
     chunkLengthChars: number;
     totalLengthChars?: number;
@@ -32,19 +32,19 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
 }
 
 export interface MergeTreeHeaderChunkMetadata {
-    id: string,
+    id: string;
 }
 
 export interface MergeTreeHeaderMetadata {
-    totalLength: number,
-    totalSegmentCount: number,
-    orderedChunkMetadata: MergeTreeHeaderChunkMetadata[],
-    sequenceNumber: number,
-    minSequenceNumber: number,
+    totalLength: number;
+    totalSegmentCount: number;
+    orderedChunkMetadata: MergeTreeHeaderChunkMetadata[];
+    sequenceNumber: number;
+    minSequenceNumber: number;
 }
 
 export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk {
-    version: "1",
+    version: "1";
     startIndex: number;
     segmentCount: number;
     length: number;

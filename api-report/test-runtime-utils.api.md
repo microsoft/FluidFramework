@@ -4,6 +4,8 @@
 
 ```ts
 
+/// <reference types="node" />
+
 import { AttachState } from '@fluidframework/container-definitions';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
@@ -15,7 +17,6 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
@@ -35,7 +36,6 @@ import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitio
 import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -67,12 +67,14 @@ export interface IMockContainerRuntimePendingMessage {
 
 // @public
 export class InsecureTokenProvider implements ITokenProvider {
-    constructor(tenantKey: string, user: IUser);
+    constructor(
+    tenantKey: string,
+    user: IUser);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
-    }
+}
 
 // @public
 export class MockContainerRuntime {
@@ -107,18 +109,18 @@ export class MockContainerRuntimeFactory {
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
     getMinSeq(): number;
-    // (undocumented)
     protected messages: ISequencedDocumentMessage[];
     // (undocumented)
     minSeq: Map<string, number>;
     // (undocumented)
     get outstandingMessageCount(): number;
-    // (undocumented)
     processAllMessages(): void;
+    processOneMessage(): void;
+    processSomeMessages(count: number): void;
     // (undocumented)
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
-    readonly quorum: MockQuorum;
+    readonly quorum: MockQuorumClients;
     // (undocumented)
     protected readonly runtimes: MockContainerRuntime[];
     // (undocumented)
@@ -139,6 +141,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
+    // (undocumented)
+    process(message: ISequencedDocumentMessage): void;
     // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
@@ -162,7 +166,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     setConnectionState(connected: boolean): void;
     // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
-    }
+}
 
 // @public
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -208,7 +212,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get serviceConfiguration(): IClientConfiguration;
     // (undocumented)
-    submit(type: MessageType, contents: any, batch: boolean, localOpMetadata: any): number;
+    submit(type: MessageType, contents: any, batch: boolean | undefined, localOpMetadata: any): number;
     // (undocumented)
     submitSignal(content: any): void;
     // (undocumented)
@@ -235,7 +239,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     // (undocumented)
     peek(): T | undefined;
     // (undocumented)
-    pop(): T;
+    pop(): T | undefined;
     // (undocumented)
     protected process(): void;
     // (undocumented)
@@ -412,7 +416,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     processSignal(message: any, local: boolean): void;
     // (undocumented)
-    quorum: MockQuorum;
+    quorum: MockQuorumClients;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -422,6 +426,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     reSubmit(content: any, localOpMetadata: unknown): void;
     // (undocumented)
+    rollback?(message: any, localOpMetadata: unknown): void;
+    // (undocumented)
     get rootRoutingContext(): IFluidHandleContext;
     // (undocumented)
     save(message: string): void;
@@ -430,9 +436,9 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
-    submitMessage(type: MessageType, content: any): any;
+    submitMessage(type: MessageType, content: any): null;
     // (undocumented)
-    submitSignal(type: string, content: any): any;
+    submitSignal(type: string, content: any): null;
     // (undocumented)
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     // (undocumented)
@@ -480,7 +486,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 }
 
 // @public (undocumented)
-export class MockQuorum implements IQuorum, EventEmitter {
+export class MockQuorumClients implements IQuorumClients, EventEmitter {
     constructor(...members: [string, Partial<ISequencedClient>][]);
     // (undocumented)
     addListener(event: string | symbol, listener: (...args: any[]) => void): this;
@@ -495,17 +501,11 @@ export class MockQuorum implements IQuorum, EventEmitter {
     // (undocumented)
     eventNames(): (string | symbol)[];
     // (undocumented)
-    get(key: string): any;
-    // (undocumented)
-    getApprovalData(key: string): ICommittedProposal | undefined;
-    // (undocumented)
     getMaxListeners(): number;
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
     // (undocumented)
     getMembers(): Map<string, ISequencedClient>;
-    // (undocumented)
-    has(key: string): boolean;
     // (undocumented)
     listenerCount(type: string | symbol): number;
     // (undocumented)
@@ -520,8 +520,6 @@ export class MockQuorum implements IQuorum, EventEmitter {
     prependListener(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
     prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
-    // (undocumented)
-    propose(key: string, value: any): Promise<void>;
     // (undocumented)
     rawListeners(event: string | symbol): Function[];
     // (undocumented)
@@ -549,7 +547,7 @@ export class MockSharedObjectServices implements IChannelServices {
 
 // @public
 export class MockStorage implements IChannelStorageService {
-    constructor(tree?: ITree);
+    constructor(tree?: ITree | undefined);
     // (undocumented)
     contains(path: string): Promise<boolean>;
     // (undocumented)
@@ -559,9 +557,11 @@ export class MockStorage implements IChannelStorageService {
     // (undocumented)
     readBlob(path: string): Promise<ArrayBufferLike>;
     // (undocumented)
-    protected tree?: ITree;
+    protected tree?: ITree | undefined;
 }
 
+// @public
+export function validateAssertionError(error: Error, expectedErrorMsg: string): boolean;
 
 // (No @packageDocumentation comment for this package)
 

@@ -6,12 +6,13 @@
 const path = require('path');
 const { BundleComparisonPlugin } = require('@mixer/webpack-bundle-compare/dist/plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin');
+const DuplicatePackageCheckerPlugin = require('@cerner/duplicate-package-checker-webpack-plugin');
 const { BannedModulesPlugin } = require('@fluidframework/bundle-size-tools')
 
 module.exports = {
   entry: {
     'aqueduct': './src/aqueduct',
+    'connectionState': './src/connectionState',
     'containerRuntime': './src/containerRuntime',
     'loader': './src/loader',
     'map': './src/map',
@@ -39,7 +40,8 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
-    path: path.resolve(__dirname, 'dist')
+    path: path.resolve(__dirname, 'dist'),
+    library: 'bundle',
   },
   node: false,
   plugins: [
@@ -67,7 +69,7 @@ module.exports = {
       analyzerMode: 'static',
       reportFilename: path.resolve(process.cwd(), 'bundleAnalysis/report.html'),
       openAnalyzer: false,
-      generateStatsFile: false,
+      generateStatsFile: true,
       statsFilename: path.resolve(process.cwd(), 'bundleAnalysis/report.json')
     }),
     // Plugin that generates a compressed version of the stats file that can be uploaded to blob storage

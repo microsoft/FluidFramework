@@ -88,7 +88,7 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
         });
 
         it("fires incremented events in 3 containers correctly", async () => {
-            const incrementSteps: { incrementer: ISharedCounter, incrementAmount: number }[] = [
+            const incrementSteps: { incrementer: ISharedCounter; incrementAmount: number; }[] = [
                 { incrementer: sharedCounter3, incrementAmount: -1 },
                 { incrementer: sharedCounter1, incrementAmount: 3 },
                 { incrementer: sharedCounter2, incrementAmount: 10 },

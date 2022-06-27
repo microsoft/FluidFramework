@@ -2,22 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as Comlink from "comlink";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerPackageInfo, IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { MakeThinProxy } from "./proxyUtils";
 
 export interface IUrlResolverProxy {
-    connected(): Promise<void>,
+    connected(): Promise<void>;
     resolve(
         request: IRequest,
-    ): Promise<() => Promise<IResolvedUrl | undefined>>,
+    ): Promise<() => Promise<IResolvedUrl | undefined>>;
     getAbsoluteUrl(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
         relativeUrl: string,
-        packageInfoFn: () => Promise<IContainerPackageInfo | IFluidCodeDetails | undefined>,
-    ): Promise<string>,
+        packageInfoFn: () => Promise<IContainerPackageInfo | undefined>,
+    ): Promise<string>;
 }
 
 export const IUrlResolverProxyKey = "IUrlResolverProxy";
@@ -51,7 +50,7 @@ export class OuterUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
         relativeUrl: string,
-        packageInfoFn: () => Promise<IContainerPackageInfo | IFluidCodeDetails | undefined>,
+        packageInfoFn: () => Promise<IContainerPackageInfo | undefined>,
     ): Promise<string> {
         const resolvedUrl = await resolvedUrlFn();
         const packageInfo = await packageInfoFn();

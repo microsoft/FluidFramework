@@ -14,8 +14,6 @@ export type ConnectionMode = "write" | "read";
 // @public (undocumented)
 export enum FileMode {
     // (undocumented)
-    Commit = "160000",
-    // (undocumented)
     Directory = "040000",
     // (undocumented)
     Executable = "100755",
@@ -87,6 +85,8 @@ export interface IClientConfiguration {
     blockSize: number;
     // (undocumented)
     maxMessageSize: number;
+    noopCountFrequency?: number;
+    noopTimeFrequency?: number;
     // (undocumented)
     summary: ISummaryConfiguration;
 }
@@ -360,26 +360,26 @@ export interface IServerError {
 export interface ISignalClient {
     // (undocumented)
     client: IClient;
+    clientConnectionNumber?: number;
     // (undocumented)
     clientId: string;
+    referenceSequenceNumber?: number;
 }
 
 // @public (undocumented)
 export interface ISignalMessage {
+    clientConnectionNumber?: number;
     // (undocumented)
     clientId: string | null;
     // (undocumented)
     content: any;
+    referenceSequenceNumber?: number;
 }
 
 // @public (undocumented)
 export interface ISnapshotTree {
     // (undocumented)
     blobs: {
-        [path: string]: string;
-    };
-    // (undocumented)
-    commits: {
         [path: string]: string;
     };
     // (undocumented)
@@ -408,7 +408,7 @@ export interface ISummaryAck {
     summaryProposal: ISummaryProposal;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryAttachment {
     // (undocumented)
     id: string;
@@ -426,7 +426,7 @@ export interface ISummaryAuthor {
     name: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryBlob {
     // (undocumented)
     content: string | Uint8Array;
@@ -472,11 +472,9 @@ export interface ISummaryContent {
     parents: string[];
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryHandle {
-    // (undocumented)
     handle: string;
-    // (undocumented)
     handleType: SummaryTypeNoHandle;
     // (undocumented)
     type: SummaryType.Handle;
@@ -505,7 +503,7 @@ export interface ISummaryTokenClaims {
     sub: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ISummaryTree {
     // (undocumented)
     tree: {
@@ -517,23 +515,15 @@ export interface ISummaryTree {
     unreferenced?: true;
 }
 
-// @public (undocumented)
+// @public
 export interface ITokenClaims {
-    // (undocumented)
     documentId: string;
-    // (undocumented)
     exp: number;
-    // (undocumented)
     iat: number;
-    // (undocumented)
     jti?: string;
-    // (undocumented)
     scopes: string[];
-    // (undocumented)
     tenantId: string;
-    // (undocumented)
     user: IUser;
-    // (undocumented)
     ver: string;
 }
 
@@ -577,9 +567,6 @@ export type ITreeEntry = {
     type: TreeEntry.Blob;
     value: IBlob;
 } | {
-    type: TreeEntry.Commit;
-    value: string;
-} | {
     type: TreeEntry.Tree;
     value: ITree;
 } | {
@@ -595,7 +582,6 @@ export interface IUploadedSummaryDetails {
 
 // @public
 export interface IUser {
-    // (undocumented)
     id: string;
 }
 
@@ -651,13 +637,10 @@ export enum NackErrorType {
     ThrottlingError = "ThrottlingError"
 }
 
-// @public (undocumented)
+// @public
 export enum ScopeType {
-    // (undocumented)
     DocRead = "doc:read",
-    // (undocumented)
     DocWrite = "doc:write",
-    // (undocumented)
     SummaryWrite = "summary:write"
 }
 
@@ -667,7 +650,7 @@ export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISumm
 // @public (undocumented)
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
-// @public (undocumented)
+// @public
 export namespace SummaryType {
     // (undocumented)
     export type Attachment = 4;
@@ -677,14 +660,10 @@ export namespace SummaryType {
     export type Handle = 3;
     // (undocumented)
     export type Tree = 1;
-    const // (undocumented)
-    Tree: Tree;
-    const // (undocumented)
-    Blob: Blob;
-    const // (undocumented)
-    Handle: Handle;
-    const // (undocumented)
-    Attachment: Attachment;
+    const Tree: Tree;
+    const Blob: Blob;
+    const Handle: Handle;
+    const Attachment: Attachment;
 }
 
 // @public (undocumented)
@@ -700,11 +679,8 @@ export enum TreeEntry {
     // (undocumented)
     Blob = "Blob",
     // (undocumented)
-    Commit = "Commit",
-    // (undocumented)
     Tree = "Tree"
 }
-
 
 // (No @packageDocumentation comment for this package)
 

@@ -6,7 +6,8 @@
 import { Context, VersionBumpType } from "./context";
 import { bumpDependencies } from "./bumpDependencies";
 import { bumpVersion } from "./bumpVersion";
-import { fatal, runPolicyCheckWithFix } from "./utils";
+import { runPolicyCheckWithFix } from "./policyCheck";
+import { fatal } from "./utils";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 
@@ -29,7 +30,7 @@ export async function releaseVersion(context: Context, releaseName: string, upda
     // run policy check before releasing a version.
     // right now this only does assert short codes
     // but could also apply other fixups in the future
-    await runPolicyCheckWithFix(context.gitRepo);
+    await runPolicyCheckWithFix(context);
 
     if (releaseVersion === undefined) {
         if (!context.originalBranchName.startsWith("release/")) {
@@ -51,7 +52,7 @@ export async function releaseVersion(context: Context, releaseName: string, upda
     const depVersions = await context.collectBumpInfo(releaseName);
 
     let releaseGroup: string | undefined;
-    let packages: Package[] = [];
+    const packages: Package[] = [];
     let monoRepo: MonoRepo | undefined;
     // Assumes that the packages are in dependency order already.
     for (const [name] of depVersions.repoVersions) {

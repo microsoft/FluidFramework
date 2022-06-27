@@ -7,6 +7,7 @@ import * as async from "async";
 import sillyname from "sillyname";
 import git from "nodegit";
 import * as testUtils from "./utils";
+import { IStorageDirectoryConfig } from "../utils";
 
 async function mockTree(repository: git.Repository, entries: number) {
     const builder = await git.Treebuilder.create(repository, null);
@@ -31,8 +32,9 @@ describe("Treebuilder", () => {
         const treeCount = 100;
 
         const isBare: any = 1;
+        const storageDirConfig: IStorageDirectoryConfig = testUtils.defaultProvider.get("storageDir");
         const repository = await git.Repository.init(
-            `${testUtils.defaultProvider.get("storageDir")}/test`,
+            `${storageDirConfig.baseDir}/test`,
             isBare);
 
         const buffer = Buffer.from("Hello, World!", "utf-8");

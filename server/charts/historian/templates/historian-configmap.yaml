@@ -44,5 +44,6 @@ data:
         },
         "restGitService": {
             "disableGitCache": {{ .Values.historian.restGitService.disableGitCache }}
-        }
+        },
+        "storageUrl": "{{ .Values.historian.storageUrl }}"
     }

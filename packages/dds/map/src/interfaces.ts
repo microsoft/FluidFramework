@@ -49,6 +49,12 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     set<T = any>(key: string, value: T): this;
 
     /**
+     * Get the number of sub directory within the directory.
+     * @returns The number of sub directory within a directory.
+     */
+    countSubDirectory?(): number;
+
+    /**
      * Creates an IDirectory child of this IDirectory, or retrieves the existing IDirectory child if one with the
      * same name already exists.
      * @param subdirName - Name of the new child directory to create
@@ -106,7 +112,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * (
  *     changed: IDirectoryValueChanged,
  *     local: boolean,
- *     op: ISequencedDocumentMessage | null,
  *     target: IEventThisPlaceHolder,
  * ) => void
  * ```
@@ -114,8 +119,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  *   changed.
  *
  * - `local` - Whether the change originated from the this client.
- *
- * - `op` - The op that caused the change in value.
  *
  * - `target` - The ISharedDirectory itself.
  *
@@ -126,11 +129,41 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * #### Listener signature
  *
  * ```typescript
- * (local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void
+ * (local: boolean, target: IEventThisPlaceHolder) => void
  * ```
  * - `local` - Whether the clear originated from the this client.
  *
- * - `op` - The op that caused the clear.
+ * - `target` - The ISharedDirectory itself.
+ *
+ * ### "subDirectoryCreated"
+ *
+ * The subDirectoryCreated event is emitted when a subdirectory is created.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `path` -  The relative path to the subdirectory that is created.
+ *             It is relative from the object which raises the event.
+ *
+ * - `local` - Whether the create originated from the this client.
+ *
+ * - `target` - The ISharedDirectory itself.
+ *
+ * * ### "subDirectoryDeleted"
+ *
+ * The subDirectoryDeleted event is emitted when a subdirectory is deleted.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `path` - The relative path to the subdirectory that is deleted.
+ *            It is relative from the object which raises the event.
+ *
+ * - `local` - Whether the delete originated from the this client.
  *
  * - `target` - The ISharedDirectory itself.
  */
@@ -141,6 +174,17 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
         target: IEventThisPlaceHolder,
     ) => void);
     (event: "clear", listener: (
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "subDirectoryCreated", listener: (
+        path: string,
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
+    (event: "subDirectoryDeleted", listener: (
+        path: string,
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
@@ -163,7 +207,39 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  *
  * - `local` - Whether the change originated from the this client.
  *
+ *
  * - `target` - The IDirectory itself.
+ * ### "subDirectoryCreated"
+ *
+ * The subDirectoryCreated event is emitted when a subdirectory is created.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `path` - The relative path to the subdirectory that is created.
+ *            It is relative from the object which raises the event.
+ *
+ * - `local` - Whether the creation originated from the this client.
+ *
+ * - `target` - The ISharedDirectory itself.
+ *
+ * * ### "subDirectoryDeleted"
+ *
+ * The subDirectoryDeleted event is emitted when a subdirectory is deleted.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `path` - The relative path to the subdirectory that is deleted.
+ *            It is relative from the object which raises the event.
+ *
+ * - `local` - Whether the delete originated from the this client.
+ *
+ * - `target` - The ISharedDirectory itself.
  *
  * ### "disposed"
  *
@@ -180,6 +256,17 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (
         changed: IValueChanged,
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "subDirectoryCreated", listener: (
+        path: string,
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
+    (event: "subDirectoryDeleted", listener: (
+        path: string,
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
@@ -223,15 +310,12 @@ export interface IDirectoryValueChanged extends IValueChanged {
  * (
  *     changed: IValueChanged,
  *     local: boolean,
- *     op: ISequencedDocumentMessage | null,
  *     target: IEventThisPlaceHolder,
  * ) => void
  * ```
  * - `changed` - Information on the key that changed and its value prior to the change.
  *
  * - `local` - Whether the change originated from the this client.
- *
- * - `op` - The op that caused the change in value.
  *
  * - `target` - The map itself.
  *
@@ -242,11 +326,9 @@ export interface IDirectoryValueChanged extends IValueChanged {
  * #### Listener signature
  *
  * ```typescript
- * (local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void
+ * (local: boolean, target: IEventThisPlaceHolder) => void
  * ```
  * - `local` - Whether the clear originated from the this client.
- *
- * - `op` - The op that caused the clear.
  *
  * - `target` - The map itself.
  */
@@ -257,8 +339,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
         target: IEventThisPlaceHolder) => void);
     (event: "clear", listener: (
         local: boolean,
-        target: IEventThisPlaceHolder
-    ) => void);
+        target: IEventThisPlaceHolder) => void);
 }
 
 /**

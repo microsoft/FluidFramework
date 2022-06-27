@@ -6,10 +6,10 @@
 /* eslint-disable require-jsdoc */
 
 import { registerTestTemplates } from './testTemplates';
-import { DataBinding } from '../../src/data_binder/dataBinding';
+import { DataBinding } from '../data_binder/dataBinding';
 import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
-import { DataBinder } from '../../src';
+import { DataBinder } from '..';
 
 class AnimalRepresentation {
 }

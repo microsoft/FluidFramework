@@ -15,6 +15,9 @@ import {
 } from "@fluidframework/driver-definitions";
 import { default as Axios, AxiosInstance } from "axios";
 
+/**
+ * @deprecated ContainerUrlResolver is not recommended for use and will be removed in an upcoming version.
+ */
 export class ContainerUrlResolver implements IUrlResolver {
     private readonly cache = new PromiseCache<string, IResolvedUrl>();
 

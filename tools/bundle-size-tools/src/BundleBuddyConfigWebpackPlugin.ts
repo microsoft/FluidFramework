@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as Webpack from 'webpack';
+import { Compilation, Compiler, WebpackError } from 'webpack';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { BundleBuddyConfig } from './BundleBuddyTypes';
@@ -31,8 +31,8 @@ export class BundleBuddyConfigWebpackPlugin {
     this.config = config;
   }
 
-  public apply(compiler: Webpack.Compiler) {
-    compiler.hooks.emit.tapAsync(pluginName, (compilation: Webpack.compilation.Compilation, callback: () => void) => {
+  public apply(compiler: Compiler) {
+    compiler.hooks.emit.tapAsync(pluginName, (compilation: Compilation, callback: () => void) => {
       // Set used to validate that all chunks specified in the bundle buddy config actually exist in the output
       const chunkNamesLeftToValidate = new Set(this.config.bundleBuddyConfig.chunksToAnalyze.map((c) => c.name));
 
@@ -46,7 +46,7 @@ export class BundleBuddyConfigWebpackPlugin {
 
       if (chunkNamesLeftToValidate.size > 0) {
         compilation.errors.push(
-          new Error(
+          new WebpackError(
             `Bundle buddy config specified the following chunk names which do not exist in this compilation: ${[
               ...chunkNamesLeftToValidate
             ].join(', ')}`

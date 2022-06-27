@@ -4,32 +4,35 @@
  */
 
 import nodegit from "nodegit";
-import winston from "winston";
-import safeStringify from "json-stringify-safe";
 import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IExternalStorageManager } from "../externalStorageManager";
 import * as helpers from "./helpers";
 import * as conversions from "./nodegitConversions";
 import {
-    IRepositoryManagerFactory,
     GitObjectType,
     IExternalWriterConfig,
     IRepositoryManager,
     IFileSystemManagerFactory,
-    IRepoManagerParams,
+    IStorageDirectoryConfig,
+    BaseGitRestTelemetryProperties,
+    IFileSystemManager,
 } from "./definitions";
+import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
 export class NodegitRepositoryManager implements IRepositoryManager {
     constructor(
         private readonly repoOwner: string,
         private readonly repoName: string,
         private readonly repo: nodegit.Repository,
+        private readonly directory: string,
         private readonly externalStorageManager: IExternalStorageManager,
+        private readonly lumberjackBaseProperties: Record<string, any>,
     ) {}
 
     public get path(): string {
-        return this.repo.path();
+        return this.directory;
     }
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
@@ -74,7 +77,12 @@ export class NodegitRepositoryManager implements IRepositoryManager {
 
             return Promise.all(detailedCommits);
         } catch (err) {
-            winston.info(`getCommits error: ${err}`);
+            const lumberjackProperties = {
+                ...this.lumberjackBaseProperties,
+                [BaseGitRestTelemetryProperties.sha]: sha,
+                count,
+            };
+            Lumberjack.error("getCommits error", lumberjackProperties, err);
             if (externalWriterConfig?.enabled) {
                 try {
                     const result = await this.externalStorageManager.read(this.repoName, sha);
@@ -84,7 +92,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
                     return this.getCommits(sha, count, externalWriterConfig);
                 } catch (bridgeError) {
                     // If file does not exist or error trying to look up commit, return the original error.
-                    winston.error(`BridgeError: ${bridgeError}`);
+                    Lumberjack.error("BridgeError", lumberjackProperties, bridgeError);
                     return Promise.reject(err);
                 }
             }
@@ -186,7 +194,11 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             throw new NetworkError(400, "Invalid input");
         }
 
-        const signature = nodegit.Signature.create(commit.author.name, commit.author.email, Math.floor(date), 0);
+        const signature = nodegit.Signature.create(
+            commit.author.name,
+            commit.author.email,
+            Math.floor(date / 1000), // date represents time in milliseconds. NodeGit expects a timestamp in seconds.
+            0);
         const parents = commit.parents && commit.parents.length > 0 ? commit.parents : null;
         const commitOid = await this.repo.createCommit(
             null,
@@ -223,6 +235,11 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             const ref = await nodegit.Reference.lookup(this.repo, refId, undefined);
             return conversions.refToIRef(ref);
         } catch (err) {
+            const lumberjackProperties = {
+                ...this.lumberjackBaseProperties,
+                [BaseGitRestTelemetryProperties.ref]: refId,
+            };
+            Lumberjack.error("getRef error", lumberjackProperties, err);
             // Lookup external storage if commit does not exist.
             const fileName = refId.substring(refId.lastIndexOf("/") + 1);
             // If file does not exist or error trying to look up commit, return the original error.
@@ -230,18 +247,14 @@ export class NodegitRepositoryManager implements IRepositoryManager {
                 try {
                     const result = await this.externalStorageManager.read(this.repoName, fileName);
                     if (!result) {
-                        winston.error(`getRef error: ${
-                            safeStringify(err, undefined, 2)} repo: ${this.repoName} ref: ${refId}`);
                         return Promise.reject(err);
                     }
                     return this.getRef(refId, externalWriterConfig);
                 } catch (bridgeError) {
-                    winston.error(`Giving up on creating ref. BridgeError: ${
-                        safeStringify(bridgeError, undefined, 2)}`);
+                    Lumberjack.error("Giving up on creating ref. BridgeError", lumberjackProperties, bridgeError);
                     return Promise.reject(err);
                 }
             }
-            winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${this.repoName} ref: ${refId}`);
             return Promise.reject(err);
         }
     }
@@ -261,7 +274,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             try {
                 await this.externalStorageManager.write(this.repoName, createRefParams.ref, createRefParams.sha, false);
             } catch (e) {
-                winston.error(`Error writing to file ${e}`);
+                Lumberjack.error("Error writing to file", this.lumberjackBaseProperties, e);
             }
         }
 
@@ -284,8 +297,13 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             try {
                 await this.externalStorageManager.write(this.repoName, refId, patchRefParams.sha, true);
             } catch (error) {
-                winston.error(`External storage write failed while trying to update file
-                ${safeStringify(error, undefined, 2)}, ${this.repoName} / ${refId}`);
+                Lumberjack.error(
+                    "External storage write failed while trying to update file",
+                    {
+                        ...this.lumberjackBaseProperties,
+                        [BaseGitRestTelemetryProperties.ref]: refId,
+                    },
+                    error);
             }
         }
 
@@ -310,7 +328,11 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             throw new NetworkError(400, "Invalid input");
         }
 
-        const signature = nodegit.Signature.create(tagParams.tagger.name, tagParams.tagger.email, Math.floor(date), 0);
+        const signature = nodegit.Signature.create(
+            tagParams.tagger.name,
+            tagParams.tagger.email,
+            Math.floor(date / 1000), // date represents time in milliseconds. NodeGit expects a timestamp in seconds.
+            0);
         const object = await nodegit.Object.lookup(
             this.repo,
             nodegit.Oid.fromString(tagParams.object),
@@ -327,59 +349,41 @@ export class NodegitRepositoryManager implements IRepositoryManager {
     }
 }
 
-export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactory {
-    // Cache repositories to allow for reuse
-    private repositoryPCache: { [key: string]: Promise<nodegit.Repository> } = {};
-
+export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBase<nodegit.Repository> {
     constructor(
-        private readonly baseDir: string,
-        private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
-        private readonly externalStorageManager: IExternalStorageManager,
+        storageDirectoryConfig: IStorageDirectoryConfig,
+        fileSystemManagerFactory: IFileSystemManagerFactory,
+        externalStorageManager: IExternalStorageManager,
+        repoPerDocEnabled: boolean,
     ) {
+        super(storageDirectoryConfig, fileSystemManagerFactory, externalStorageManager, repoPerDocEnabled);
     }
 
-    public async create(params: IRepoManagerParams): Promise<NodegitRepositoryManager> {
-        // Verify that both inputs are valid folder names
-        const repoPath = helpers.getRepoPath(params.repoOwner, params.repoName);
-        // Create and then cache the repository
+    protected async initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<nodegit.Repository> {
         const isBare = 1;
-        const repositoryP = nodegit.Repository.init(`${this.baseDir}/${repoPath}`, isBare);
-        this.repositoryPCache[repoPath] = repositoryP;
-
-        const repository = await this.repositoryPCache[repoPath];
-        const repoManager = new NodegitRepositoryManager(
-            params.repoOwner,
-            params.repoName,
-            repository,
-            this.externalStorageManager);
-        winston.info(`Created a new repo for owner ${params.repoOwner} reponame: ${params.repoName}`);
-
-        return repoManager;
+        return nodegit.Repository.init(
+            gitdir,
+            isBare);
     }
 
-    public async open(params: IRepoManagerParams): Promise<NodegitRepositoryManager> {
-        const repoPath = helpers.getRepoPath(params.repoOwner, params.repoName);
+    protected async openGitRepo(gitdir: string): Promise<nodegit.Repository> {
+        return nodegit.Repository.open(gitdir);
+    }
 
-        if (!(repoPath in this.repositoryPCache)) {
-            const directory = `${this.baseDir}/${repoPath}`;
-
-            const repoExists = await helpers.exists(
-                this.fileSystemManagerFactory.create(params.fileSystemManagerParams), directory);
-            if (!repoExists) {
-                winston.info(`Repo does not exist ${directory}`);
-                // services-client/getOrCreateRepository depends on a 400 response code
-                throw new NetworkError(400, `Repo does not exist ${directory}`);
-            }
-
-            this.repositoryPCache[repoPath] = nodegit.Repository.open(directory);
-        }
-
-        const repository = await this.repositoryPCache[repoPath];
-        const repoManager = new NodegitRepositoryManager(
-            params.repoOwner,
-            params.repoName,
-            repository,
-            this.externalStorageManager);
-        return repoManager;
+    protected createRepoManager(
+        fileSystemManager: IFileSystemManager,
+        repoOwner: string,
+        repoName: string,
+        repo: nodegit.Repository,
+        gitdir: string,
+        externalStorageManager: IExternalStorageManager,
+        lumberjackBaseProperties: Record<string, any>): IRepositoryManager {
+            return new NodegitRepositoryManager(
+                repoOwner,
+                repoName,
+                repo,
+                gitdir,
+                externalStorageManager,
+                lumberjackBaseProperties);
     }
 }

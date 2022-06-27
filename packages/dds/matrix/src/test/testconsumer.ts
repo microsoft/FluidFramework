@@ -16,8 +16,7 @@ import { MatrixItem } from "..";
  */
 export class TestConsumer<T = any> implements
     IMatrixConsumer<MatrixItem<T>>,
-    IMatrixReader<MatrixItem<T>>
-{
+    IMatrixReader<MatrixItem<T>> {
     private readonly rows: DenseVector<void> = new DenseVector<void>();
     private readonly cols: DenseVector<void> = new DenseVector<void>();
     private readonly actual: RowMajorMatrix<MatrixItem<T>> = new RowMajorMatrix(this.rows, this.cols);

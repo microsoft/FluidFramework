@@ -28,7 +28,7 @@ export async function lint(message: WorkerMessage): Promise<WorkerExecResult> {
         let formatter;
         try {
             formatter = await engine.loadFormatter("stylish");
-        } catch (e) {
+        } catch (e: any) {
             console.error(e.message);
             return { code: 2 };
         }

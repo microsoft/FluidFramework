@@ -107,7 +107,7 @@ describe("TinyliciousClient", () => {
         const containerId = await container.attach();
 
         assert.strictEqual(
-            typeof(containerId), "string",
+            typeof (containerId), "string",
             "Attach did not return a string ID",
         );
         assert.strictEqual(
@@ -117,7 +117,7 @@ describe("TinyliciousClient", () => {
 
         await assert.rejects(
             container.attach(),
-            ()=> true,
+            () => true,
             "Container should not attached twice",
         );
     });

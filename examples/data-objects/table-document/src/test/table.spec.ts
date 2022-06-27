@@ -67,7 +67,7 @@ describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
 
     describe("local get/set", () => {
         // GitHub Issue #1683 - Cannot roundtrip non-finite numbers.
-        for (const value of ["", "string", 0 /* , -Infinity, +Infinity */]) {
+        for (const value of ["", "string", 0]) {
             it(`roundtrip ${JSON.stringify(value)}`, async () => {
                 tableDocument.insertRows(0, 1);
                 tableDocument.insertCols(0, 1);

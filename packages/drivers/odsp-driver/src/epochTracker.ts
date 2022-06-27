@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
-import { fetchAndParseAsJSONHelper, fetchArray, getOdspResolvedUrl, IOdspResponse } from "./odspUtils";
+import { fetchAndParseAsJSONHelper, fetchArray, fetchHelper, getOdspResolvedUrl, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
     INonPersistentCache,
@@ -55,6 +55,7 @@ export class EpochTracker implements IPersistedFileCache {
         protected readonly cache: IPersistedCache,
         protected readonly fileEntry: IFileEntry,
         protected readonly logger: ITelemetryLogger,
+        protected readonly clientIsSummarizer?: boolean,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
@@ -166,6 +167,7 @@ export class EpochTracker implements IPersistedFileCache {
      * @param fetchOptions - fetch options for request containing body, headers etc.
      * @param fetchType - method for which fetch is called.
      * @param addInBody - Pass True if caller wants to add epoch in post body.
+     * @param fetchReason - fetch reason to add to the request.
      */
     public async fetchAndParseAsJSON<T>(
         url: string,
@@ -174,12 +176,41 @@ export class EpochTracker implements IPersistedFileCache {
         addInBody: boolean = false,
         fetchReason?: string,
     ): Promise<IOdspResponse<T>> {
+        return this.fetchCore<T>(url, fetchOptions, fetchAndParseAsJSONHelper, fetchType, addInBody, fetchReason);
+    }
+
+    /**
+     * Api to fetch the response for given request and parse it as json.
+     * @param url - url of the request
+     * @param fetchOptions - fetch options for request containing body, headers etc.
+     * @param fetchType - method for which fetch is called.
+     * @param addInBody - Pass True if caller wants to add epoch in post body.
+     * @param fetchReason - fetch reason to add to the request.
+     */
+    public async fetch(
+        url: string,
+        fetchOptions: RequestInit,
+        fetchType: FetchType,
+        addInBody: boolean = false,
+        fetchReason?: string,
+    ) {
+        return this.fetchCore<Response>(url, fetchOptions, fetchHelper, fetchType, addInBody, fetchReason);
+    }
+
+    private async fetchCore<T>(
+        url: string,
+        fetchOptions: { [index: string]: any; },
+        fetcher: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<T>>,
+        fetchType: FetchType,
+        addInBody: boolean = false,
+        fetchReason?: string,
+    ) {
         const clientCorrelationId = this.formatClientCorrelationId(fetchReason);
         // Add epoch in fetch request.
         this.addEpochInRequest(fetchOptions, addInBody, clientCorrelationId);
         let epochFromResponse: string | undefined;
         return this.rateLimiter.schedule(
-            async () => fetchAndParseAsJSONHelper<T>(url, fetchOptions),
+            async () => fetcher(url, fetchOptions),
         ).then((response) => {
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
@@ -194,7 +225,7 @@ export class EpochTracker implements IPersistedFileCache {
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
         }).catch((error) => {
-            const fluidError = normalizeError(error, { props: { XRequestStatsHeader: clientCorrelationId }});
+            const fluidError = normalizeError(error, { props: { XRequestStatsHeader: clientCorrelationId } });
             throw fluidError;
         });
     }
@@ -205,37 +236,16 @@ export class EpochTracker implements IPersistedFileCache {
      * @param fetchOptions - fetch options for request containing body, headers etc.
      * @param fetchType - method for which fetch is called.
      * @param addInBody - Pass True if caller wants to add epoch in post body.
+     * @param fetchReason - fetch reason to add to the request.
      */
     public async fetchArray(
         url: string,
-        fetchOptions: {[index: string]: any},
+        fetchOptions: { [index: string]: any; },
         fetchType: FetchType,
         addInBody: boolean = false,
         fetchReason?: string,
     ) {
-        const clientCorrelationId = this.formatClientCorrelationId(fetchReason);
-        // Add epoch in fetch request.
-        this.addEpochInRequest(fetchOptions, addInBody, clientCorrelationId);
-        let epochFromResponse: string | undefined;
-        return this.rateLimiter.schedule(
-            async () => fetchArray(url, fetchOptions),
-        ).then((response) => {
-            epochFromResponse = response.headers.get("x-fluid-epoch");
-            this.validateEpochFromResponse(epochFromResponse, fetchType);
-            response.propsToLog.XRequestStatsHeader = clientCorrelationId;
-            return response;
-        }).catch(async (error) => {
-            // Get the server epoch from error in case we don't have it as if undefined we won't be able
-            // to mark it as epoch error.
-            if (epochFromResponse === undefined) {
-                epochFromResponse = (error as IOdspError).serverEpoch;
-            }
-            await this.checkForEpochError(error, epochFromResponse, fetchType);
-            throw error;
-        }).catch((error) => {
-            const fluidError = normalizeError(error, { props: { XRequestStatsHeader: clientCorrelationId }});
-            throw fluidError;
-        });
+        return this.fetchCore<ArrayBuffer>(url, fetchOptions, fetchArray, fetchType, addInBody, fetchReason);
     }
 
     private addEpochInRequest(
@@ -245,7 +255,7 @@ export class EpochTracker implements IPersistedFileCache {
     ) {
         const isClpCompliantApp = getOdspResolvedUrl(this.fileEntry.resolvedUrl).isClpCompliantApp;
         if (addInBody) {
-            const headers: {[key: string]: string} = {};
+            const headers: { [key: string]: string; } = {};
             headers["X-RequestStats"] = clientCorrelationId;
             if (this.fluidEpoch !== undefined) {
                 headers["x-fluid-epoch"] = this.fluidEpoch;
@@ -272,14 +282,14 @@ export class EpochTracker implements IPersistedFileCache {
         }
     }
 
-    private addParamInBody(fetchOptions: RequestInit, headers: {[key: string]: string}) {
+    private addParamInBody(fetchOptions: RequestInit, headers: { [key: string]: string; }) {
         // We use multi part form request for post body where we want to use this.
         // So extract the form boundary to mark the end of form.
         const body = fetchOptions.body;
         assert(typeof body === "string", 0x21d /* "body is not string" */);
         const splitBody = body.split("\r\n");
         const firstLine = splitBody.shift();
-        assert(firstLine !== undefined && firstLine.startsWith("--"), 0x21e /* "improper boundary format" */);
+        assert(firstLine?.startsWith("--") === true, 0x21e /* "improper boundary format" */);
         const formParams = [firstLine];
         Object.entries(headers).forEach(([key, value]) => {
             formParams.push(`${key}: ${value}`);
@@ -291,7 +301,12 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     private formatClientCorrelationId(fetchReason?: string) {
-        const items: string[] = [`driverId=${this.driverId}`, `RequestNumber=${this.networkCallNumber++}`];
+        const items: string[] = [
+            `driverId=${this.driverId}`,
+            `RequestNumber=${this.networkCallNumber++}`,
+            `driverVersion=${driverVersion}`,
+            `isSummarizer=${this.clientIsSummarizer}`,
+        ];
         if (fetchReason !== undefined) {
             items.push(`fetchReason=${fetchReason}`);
         }
@@ -403,7 +418,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 
     public async fetchAndParseAsJSON<T>(
         url: string,
-        fetchOptions: {[index: string]: any},
+        fetchOptions: { [index: string]: any; },
         fetchType: FetchType,
         addInBody: boolean = false,
         fetchReason?: string,
@@ -414,7 +429,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 
         try {
             return await super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody, fetchReason);
-        } catch (error) {
+        } catch (error: any) {
             // Only handling here treesLatest. If createFile failed, we should never try to do joinSession.
             // Similar, if getVersions failed, we should not do any further storage calls.
             // So treesLatest is the only call that can have parallel joinSession request.
@@ -466,9 +481,9 @@ export function createOdspCacheAndTracker(
     persistedCacheArg: IPersistedCache,
     nonpersistentCache: INonPersistentCache,
     fileEntry: IFileEntry,
-    logger: ITelemetryLogger): ICacheAndTracker
-{
-    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger);
+    logger: ITelemetryLogger,
+    clientIsSummarizer?: boolean): ICacheAndTracker {
+    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger, clientIsSummarizer);
     return {
         cache: {
             ...nonpersistentCache,

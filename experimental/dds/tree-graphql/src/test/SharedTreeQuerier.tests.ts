@@ -3,176 +3,170 @@
  * Licensed under the MIT License.
  */
 
-import { Definition, ChangeNode, NodeId, SharedTree } from '@fluid-experimental/tree';
+import { Definition, ChangeNode, SharedTree, NodeIdContext } from '@fluid-experimental/tree';
 import { assert } from '@fluidframework/common-utils';
 import { expect } from 'chai';
 import { Maybe } from 'graphql-tools';
 import { SharedTreeQuerier } from '../SharedTreeQuerier';
 import { typeDefs } from '../graphql-schemas/Pizza';
 import { Drink, Pizza, PizzaBase, Query, resolvers } from '../graphql-generated/Pizza';
-import { createTestQueryTree, NodeIdGenerator } from './TestUtilities';
+import { createTestQueryTree } from './TestUtilities';
 
 describe('SharedTreeQuerier', () => {
-	let id = new NodeIdGenerator();
-
-	beforeEach(() => {
-		id = new NodeIdGenerator();
-	});
-
-	function stringNode(value: string): ChangeNode {
+	function stringNode(idContext: NodeIdContext, value: string): ChangeNode {
 		return {
 			definition: 'String' as Definition,
-			identifier: id.new(),
+			identifier: idContext.generateNodeId(),
 			traits: {},
 			payload: value,
 		};
 	}
 
-	function booleanNode(value: boolean): ChangeNode {
+	function booleanNode(idContext: NodeIdContext, value: boolean): ChangeNode {
 		return {
 			definition: 'Boolean' as Definition,
-			identifier: id.new(),
+			identifier: idContext.generateNodeId(),
 			traits: {},
 			payload: value,
 		};
 	}
 
-	function intNode(value: number): ChangeNode {
+	function intNode(idContext: NodeIdContext, value: number): ChangeNode {
 		assert(value === Math.round(value), 'Not an int');
 		return {
 			definition: 'Int' as Definition,
-			identifier: id.new(),
+			identifier: idContext.generateNodeId(),
 			traits: {},
 			payload: value,
 		};
 	}
 
-	function floatNode(value: number): ChangeNode {
+	function floatNode(idContext: NodeIdContext, value: number): ChangeNode {
 		return {
 			definition: 'Float' as Definition,
-			identifier: id.new(),
+			identifier: idContext.generateNodeId(),
 			traits: {},
 			payload: value,
 		};
 	}
 
-	function idNode(value: string): ChangeNode {
-		return stringNode(value);
+	function idNode(idContext: NodeIdContext, value: string): ChangeNode {
+		return stringNode(idContext, value);
 	}
 
-	function enumNode(type: string, value: string): ChangeNode {
+	function enumNode(idContext: NodeIdContext, type: string, value: string): ChangeNode {
 		return {
 			definition: type as Definition,
-			identifier: id.new(),
+			identifier: idContext.generateNodeId(),
 			traits: {},
 			payload: value,
 		};
 	}
 
-	const fourPizzasTree: ChangeNode = {
+	const fourPizzasTreeFactory = (idContext: NodeIdContext): ChangeNode => ({
 		definition: 'Query' as Definition,
-		identifier: id.new(),
+		identifier: idContext.generateNodeId(),
 		traits: {
-			version: [idNode('0.0.1')],
-			drinks: [enumNode('Drink', Drink.Water), enumNode('Drink', Drink.Coke), enumNode('Drink', Drink.Lemonade)],
+			version: [idNode(idContext, '0.0.1')],
+			drinks: [
+				enumNode(idContext, 'Drink', Drink.Water),
+				enumNode(idContext, 'Drink', Drink.Coke),
+				enumNode(idContext, 'Drink', Drink.Lemonade),
+			],
 			pizzas: [
 				{
-					// Cheese Pizza
 					definition: 'Pizza' as Definition,
-					identifier: 'Cheese Pizza' as NodeId,
+					identifier: idContext.generateNodeId('Cheese Pizza'),
 					traits: {
-						name: [stringNode('Cheese')],
-						price: [floatNode(8.99)],
-						base: [enumNode('PizzaBase', PizzaBase.Marinara)],
-						hasCheese: [booleanNode(true)],
-						slices: [intNode(6)],
+						name: [stringNode(idContext, 'Cheese')],
+						price: [floatNode(idContext, 8.99)],
+						base: [enumNode(idContext, 'PizzaBase', PizzaBase.Marinara)],
+						hasCheese: [booleanNode(idContext, true)],
+						slices: [intNode(idContext, 6)],
 					},
 				},
 				{
-					// Pepperoni Pizza
 					definition: 'Pizza' as Definition,
-					identifier: 'Pepperoni Pizza' as NodeId,
+					identifier: idContext.generateNodeId('Pepperoni Pizza'),
 					traits: {
-						name: [stringNode('Pepperoni')],
-						price: [floatNode(9.99)],
-						base: [enumNode('PizzaBase', PizzaBase.Marinara)],
-						hasCheese: [booleanNode(true)],
+						name: [stringNode(idContext, 'Pepperoni')],
+						price: [floatNode(idContext, 9.99)],
+						base: [enumNode(idContext, 'PizzaBase', PizzaBase.Marinara)],
+						hasCheese: [booleanNode(idContext, true)],
 						toppings: [
 							{
 								definition: 'Topping' as Definition,
-								identifier: id.new(),
+								identifier: idContext.generateNodeId(),
 								traits: {
-									name: [stringNode('Pepperoni')],
-									isVegetarian: [booleanNode(false)],
+									name: [stringNode(idContext, 'Pepperoni')],
+									isVegetarian: [booleanNode(idContext, false)],
 								},
 							},
 						],
-						slices: [intNode(8)],
+						slices: [intNode(idContext, 8)],
 					},
 				},
 				{
-					// Hawaiian Pizza
 					definition: 'Pizza' as Definition,
-					identifier: 'Hawaiian Pizza' as NodeId,
+					identifier: idContext.generateNodeId('Hawaiian Pizza'),
 					traits: {
-						name: [stringNode('Hawaiian')],
-						price: [floatNode(11.5)],
-						base: [enumNode('PizzaBase', PizzaBase.Marinara)],
-						hasCheese: [booleanNode(true)],
+						name: [stringNode(idContext, 'Hawaiian')],
+						price: [floatNode(idContext, 11.5)],
+						base: [enumNode(idContext, 'PizzaBase', PizzaBase.Marinara)],
+						hasCheese: [booleanNode(idContext, true)],
 						toppings: [
 							{
 								definition: 'Topping' as Definition,
-								identifier: id.new(),
+								identifier: idContext.generateNodeId(),
 								traits: {
-									name: [stringNode('Ham')],
-									isVegetarian: [booleanNode(false)],
+									name: [stringNode(idContext, 'Ham')],
+									isVegetarian: [booleanNode(idContext, false)],
 								},
 							},
 							{
 								definition: 'Topping' as Definition,
-								identifier: id.new(),
+								identifier: idContext.generateNodeId(),
 								traits: {
-									name: [stringNode('Pineapple')],
-									isVegetarian: [booleanNode(true)],
+									name: [stringNode(idContext, 'Pineapple')],
+									isVegetarian: [booleanNode(idContext, true)],
 								},
 							},
 						],
-						slices: [intNode(8)],
+						slices: [intNode(idContext, 8)],
 					},
 				},
 				{
-					// Green Pizza
 					definition: 'Pizza' as Definition,
-					identifier: 'Green Pizza' as NodeId,
+					identifier: idContext.generateNodeId('Green Pizza'),
 					traits: {
-						name: [stringNode('Green')],
-						price: [floatNode(9.99)],
-						base: [enumNode('PizzaBase', PizzaBase.Pesto)],
-						hasCheese: [booleanNode(false)],
+						name: [stringNode(idContext, 'Green')],
+						price: [floatNode(idContext, 9.99)],
+						base: [enumNode(idContext, 'PizzaBase', PizzaBase.Pesto)],
+						hasCheese: [booleanNode(idContext, false)],
 						toppings: [
 							{
 								definition: 'Topping' as Definition,
-								identifier: id.new(),
+								identifier: idContext.generateNodeId(),
 								traits: {
-									name: [stringNode('Arugula')],
-									isVegetarian: [booleanNode(true)],
+									name: [stringNode(idContext, 'Arugula')],
+									isVegetarian: [booleanNode(idContext, true)],
 								},
 							},
 							{
 								definition: 'Topping' as Definition,
-								identifier: id.new(),
+								identifier: idContext.generateNodeId(),
 								traits: {
-									name: [stringNode('Bell Pepper')],
-									isVegetarian: [booleanNode(true)],
+									name: [stringNode(idContext, 'Bell Pepper')],
+									isVegetarian: [booleanNode(idContext, true)],
 								},
 							},
 						],
-						slices: [intNode(4)],
+						slices: [intNode(idContext, 4)],
 					},
 				},
 			],
 		},
-	};
+	});
 
 	function init(editTree): { tree: SharedTree; querier: SharedTreeQuerier<Query> } {
 		const tree = createTestQueryTree(editTree);
@@ -196,7 +190,7 @@ describe('SharedTreeQuerier', () => {
 	}
 
 	it('can query a field', async () => {
-		const { querier } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			pizzas {
 				name
@@ -207,7 +201,7 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query nested fields', async () => {
-		const { querier } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			pizzas {
 				toppings {
@@ -223,7 +217,7 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query strings', async () => {
-		const { querier } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			pizzas {
 				name
@@ -237,7 +231,7 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query floats', async () => {
-		const { querier } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			pizzas {
 				price
@@ -251,7 +245,7 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query integers', async () => {
-		const { querier } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			pizzas {
 				slices
@@ -265,7 +259,7 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query booleans', async () => {
-		const { querier } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			pizzas {
 				hasCheese
@@ -279,7 +273,7 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query IDs', async () => {
-		const { querier } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			version
 		}`);
@@ -288,7 +282,7 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query enums', async () => {
-		const { querier } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			pizzas {
 				base
@@ -302,13 +296,13 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query empty lists', async () => {
-		const { querier } = init({
+		const { querier } = init((idContext: NodeIdContext) => ({
 			definition: 'Query' as Definition,
-			identifier: id.new(),
+			identifier: idContext.generateNodeId(),
 			traits: {
 				/* No drinks */
 			},
-		});
+		}));
 
 		const result = await querier.query(`{
 			drinks
@@ -318,7 +312,7 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query lists', async () => {
-		const { querier } = init(fourPizzasTree);
+		const { querier } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			drinks
 		}`);
@@ -330,7 +324,7 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('can query the special identifier field', async () => {
-		const { querier } = init(fourPizzasTree);
+		const { querier, tree } = init(fourPizzasTreeFactory);
 		const result = await querier.query(`{
 			pizzas {
 				id
@@ -344,13 +338,13 @@ describe('SharedTreeQuerier', () => {
 	});
 
 	it('reports missing optional values as null', async () => {
-		const { querier } = init({
+		const { querier } = init((idContext: NodeIdContext) => ({
 			definition: 'Query' as Definition,
-			identifier: id.new(),
+			identifier: idContext.generateNodeId(),
 			traits: {
 				/* No Version */
 			},
-		});
+		}));
 
 		const result = await querier.query(`{
 			version

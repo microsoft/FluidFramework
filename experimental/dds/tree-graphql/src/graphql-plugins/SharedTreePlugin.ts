@@ -4,7 +4,7 @@
  */
 
 import { Types, PluginFunction } from '@graphql-codegen/plugin-helpers';
-import { NodeId, SharedTree, Snapshot, SnapshotNode, TraitLabel } from '@fluid-experimental/tree';
+import { NodeId, RevisionView, SharedTree, StableNodeId, TraitLabel, TreeViewNode } from '@fluid-experimental/tree';
 import {
 	FieldDefinitionNode,
 	GraphQLSchema,
@@ -218,21 +218,21 @@ export function getID(source: NodeId, args: unknown, context: SharedTree, info: 
 	return node?.payload as string | null;
 }
 
-/** A special hack for retrieving NodeId_s */
-export function getNodeID(source: NodeId, args: unknown, context: SharedTree): NodeId {
-	const node = context.currentView.getSnapshotNode(source);
-	return node.identifier;
+/** A special hack for retrieving StableNodeId_s */
+export function getNodeID(source: NodeId, args: unknown, context: SharedTree): StableNodeId {
+	const node = context.currentView.getViewNode(source);
+	return context.convertToStableNodeId(node.identifier);
 }
 
 /** Retrieves a leaf node */
-export function getScalar(parent: NodeId, snapshot: Snapshot, traitLabel: string): SnapshotNode | null {
-	const trait = snapshot.getTrait({ label: traitLabel as TraitLabel, parent });
+export function getScalar(parent: NodeId, view: RevisionView, traitLabel: string): TreeViewNode | null {
+	const trait = view.getTrait({ label: traitLabel as TraitLabel, parent });
 	const firstId = trait.length === 0 ? null : trait[0];
-	if (firstId === null || !snapshot.hasNode(firstId)) {
+	if (firstId === null || !view.hasNode(firstId)) {
 		return null;
 	}
 
-	return snapshot.getSnapshotNode(firstId);
+	return view.getViewNode(firstId);
 }
 
 // Resolvers for retrieving lists of scalars
@@ -244,7 +244,7 @@ export function getStringList(
 	info: GraphQLResolveInfo
 ): (string | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-	return trait.map((id) => context.currentView.getSnapshotNode(id).payload as string | null);
+	return trait.map((id) => context.currentView.getViewNode(id).payload as string | null);
 }
 
 export function getFloatList(
@@ -254,7 +254,7 @@ export function getFloatList(
 	info: GraphQLResolveInfo
 ): (number | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-	return trait.map((id) => context.currentView.getSnapshotNode(id).payload as number | null);
+	return trait.map((id) => context.currentView.getViewNode(id).payload as number | null);
 }
 
 export function getIntList(
@@ -264,7 +264,7 @@ export function getIntList(
 	info: GraphQLResolveInfo
 ): (number | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-	return trait.map((id) => context.currentView.getSnapshotNode(id).payload as number | null);
+	return trait.map((id) => context.currentView.getViewNode(id).payload as number | null);
 }
 
 export function getBooleanList(
@@ -274,7 +274,7 @@ export function getBooleanList(
 	info: GraphQLResolveInfo
 ): (boolean | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-	return trait.map((id) => context.currentView.getSnapshotNode(id).payload as boolean | null);
+	return trait.map((id) => context.currentView.getViewNode(id).payload as boolean | null);
 }
 
 export function getIDList(
@@ -284,7 +284,7 @@ export function getIDList(
 	info: GraphQLResolveInfo
 ): (string | null)[] {
 	const trait = context.currentView.getTrait({ label: info.fieldName as TraitLabel, parent: source });
-	return trait.map((id) => context.currentView.getSnapshotNode(id).payload as string | null);
+	return trait.map((id) => context.currentView.getViewNode(id).payload as string | null);
 }
 
 // Resolvers for descending into non-leaf traits

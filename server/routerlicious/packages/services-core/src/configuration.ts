@@ -13,11 +13,20 @@ export interface IDeliServerConfiguration {
     // Enables hashing of sequenced ops
     enableOpHashing: boolean;
 
+    // Enables automatically updating the DNS when sequencing a summaryAck
+    enableAutoDSNUpdate: boolean;
+
+    // Enables creating join/leave signals for write clients
+    enableWriteClientSignals: boolean;
+
     // Expire clients after this amount of inactivity
     clientTimeout: number;
 
     // Timeout for sending no-ops to trigger inactivity checker
     activityTimeout: number;
+
+    // How often to check for idle read clients
+    readClientIdleTimer: number;
 
     // Timeout for sending consolidated no-ops
     noOpConsolidationTimeout: number;
@@ -58,6 +67,11 @@ export interface IDeliOpEventServerConfiguration {
 
     // Causes an event to fire based on the number of ops since the last emit
     maxOps: number | undefined;
+}
+
+export interface IBroadcasterServerConfiguration {
+    // Enables including the event name in the topic name for message batching
+    includeEventInMessageBatchName: boolean;
 }
 
 // Scribe lambda configuration
@@ -121,6 +135,9 @@ export interface IServerConfiguration {
     // Deli lambda configuration
     deli: IDeliServerConfiguration;
 
+    // Broadcaster lambda configuration
+    broadcaster: IBroadcasterServerConfiguration;
+
     // Scribe lambda configuration
     scribe: IScribeServerConfiguration;
 
@@ -151,8 +168,11 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     deli: {
         enableNackMessages: true,
         enableOpHashing: true,
+        enableAutoDSNUpdate: false,
+        enableWriteClientSignals: false,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
+        readClientIdleTimer: 60 * 1000,
         noOpConsolidationTimeout: 250,
         checkpointHeuristics: {
             enable: false,
@@ -177,6 +197,9 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
                 message: "Submit a summary before inserting additional operations",
             },
         },
+    },
+    broadcaster: {
+        includeEventInMessageBatchName: false,
     },
     scribe: {
         generateServiceSummary: true,

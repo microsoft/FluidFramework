@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 /* globals expect, should  */
-import { DataBinder } from '../../src/data_binder/dataBinder';
+import { DataBinder } from '../data_binder/dataBinder';
 
 import {
   catchConsoleErrors
@@ -16,9 +16,9 @@ import {
 
 import * as _ from 'underscore';
 
-import { PropertyElement } from '../../src/internal/propertyElement';
+import { PropertyElement } from '../internal/propertyElement';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
-import { RESOLVE_NEVER, RESOLVE_NO_LEAFS, RESOLVE_ALWAYS } from '../../src/internal/constants';
+import { RESOLVE_NEVER, RESOLVE_NO_LEAFS, RESOLVE_ALWAYS } from '../internal/constants';
 import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 
 describe('Property element', function() {

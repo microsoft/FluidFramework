@@ -5,7 +5,7 @@
 
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
-import { IGitCache } from "@fluidframework/server-services-client";
+import { IGitCache, ISession } from "@fluidframework/server-services-client";
 import { LambdaName } from "./lambdas";
 import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
 
@@ -25,7 +25,7 @@ export interface IDocumentStorage {
 
     getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit>;
 
-    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }>;
+    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string; }>;
 
     createDocument(
         tenantId: string,
@@ -34,7 +34,10 @@ export interface IDocumentStorage {
         sequenceNumber: number,
         term: number,
         initialHash: string,
-        values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
+        ordererUrl: string,
+        historianUrl: string,
+        values: [string, ICommittedProposal][],
+        enableDiscovery: boolean): Promise<IDocumentDetails>;
 }
 
 export interface IClientSequenceNumber {
@@ -61,6 +64,9 @@ export interface IDeliState {
 
     // Sequence number at logOffset
     sequenceNumber: number;
+
+    // Signal number for the deli client at logOffset
+    signalClientConnectionNumber: number;
 
     // Rolling hash at sequenceNumber
     expHash1: string;
@@ -111,9 +117,14 @@ export interface IDocument {
 
     createTime: number;
 
+    // Timestamp of the latest document session end
+    lastAccessTime?: number;
+
     documentId: string;
 
     tenantId: string;
+
+    session: ISession;
 
     // Scribe state
     scribe: string;

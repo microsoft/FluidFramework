@@ -20,7 +20,7 @@ export interface ISerializableInk {
      * Stores a mapping from the provided key to its index in strokes. Since
      * ISerializableInk is serialized we need to use an index.
      */
-    strokeIndex: { [key: string]: number };
+    strokeIndex: { [key: string]: number; };
 }
 
 /**
@@ -35,7 +35,7 @@ export class InkData {
     /**
      * {@inheritDoc ISerializableInk.strokeIndex}
      */
-    private strokeIndex: { [key: string]: number };
+    private strokeIndex: { [key: string]: number; };
 
     /**
      * Construct a new InkData.

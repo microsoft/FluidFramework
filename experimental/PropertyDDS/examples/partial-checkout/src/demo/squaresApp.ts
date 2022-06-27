@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {ContainerProperty, PropertyFactory} from "@fluid-experimental/property-properties";
+import { ContainerProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 
 // import { IPropertyTree } from "../dataObject";
 import { DataBinder } from "@fluid-experimental/property-binder";
@@ -32,7 +32,7 @@ export function moveSquares(propertyNode: any, guid: string) {
             y: _.random(SquaresBoard.HEIGHT - length),
         });
         propertyNode._tree.commit();
-    },10);
+    }, 10);
 }
 
 export function randomSquaresBoardGenerator(

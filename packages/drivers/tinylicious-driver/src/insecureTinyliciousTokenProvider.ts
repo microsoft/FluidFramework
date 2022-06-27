@@ -48,6 +48,6 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
         };
 
         const utf8Key = { utf8: "12345" };
-        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
+        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
     }
 }

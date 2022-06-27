@@ -56,7 +56,7 @@ export class TestTenantManager implements ITenantManager {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public createTenant(id?: string): Promise<ITenantConfig & { key: string }> {
+    public createTenant(id?: string): Promise<ITenantConfig & { key: string; }> {
         return Promise.resolve({
             id: "test-tenant",
             storage: this.tenant.storage,

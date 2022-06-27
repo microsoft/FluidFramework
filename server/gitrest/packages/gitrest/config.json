@@ -1,13 +1,16 @@
 {
     "logger": {
         "colorize": true,
-        "morganFormat": "dev",
+        "morganFormat": "json",
         "json": false,
         "level": "info",
         "timestamp": true
     },
     "requestSizeLimit": "1gb",
-    "storageDir": "/home/node/documents",
+    "storageDir": {
+        "baseDir": "/home/node/documents",
+        "useRepoOwner": true
+    },
     "externalStorage": {
         "enabled": false,
         "endpoint": "http://externalStorage:3005"
@@ -16,6 +19,7 @@
         "lib": {
             "name": "nodegit"
         },
-        "persistLatestFullSummary": false
+        "persistLatestFullSummary": false,
+        "repoPerDocEnabled": false
     }
 }

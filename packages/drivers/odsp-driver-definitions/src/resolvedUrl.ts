@@ -39,25 +39,25 @@ export interface ShareLinkInfoType {
          * At the time of adding this comment (Sept/2021) ODSP only supports creation of CSL links
          * when provided as a request parameter with the /snapshot api call.
         */
-        type?: ShareLinkTypes,
+        type?: ShareLinkTypes;
 
         /**
          * Share link created when the file is created for the first time with /snapshot api call.
          * This link does not require redemption.
          */
-        link?: string,
+        link?: string;
 
         /**
          * Error message if creation of sharing link fails with /snapshot api call
          */
-        error?: any
-    }
+        error?: any;
+    };
 
     /**
      * This is used to save the network calls while doing trees/latest call as if the client does not have
      * permission then this link can be redeemed for the permissions in the same network call.
      */
-    sharingLinkToRedeem?: string,
+    sharingLinkToRedeem?: string;
 }
 export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     type: "fluid";
@@ -73,7 +73,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
         snapshotStorageUrl: string;
         attachmentPOSTStorageUrl: string;
         attachmentGETStorageUrl: string;
-        deltaStorageUrl: string,
+        deltaStorageUrl: string;
     };
 
     // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
@@ -87,8 +87,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     codeHint?: {
         // containerPackageName is used for adding the package name to the request headers.
         // This may be used for preloading the container package when loading Fluid content.
-        containerPackageName?: string
-    }
+        containerPackageName?: string;
+    };
 
     fileVersion: string | undefined;
 

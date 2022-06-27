@@ -66,7 +66,7 @@ export interface IEmbeddedSummaryHandle extends ISummaryHandle {
 export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
 
 export interface ISummaryTree extends BaseSummaryTree {
-    tree: { [path: string]: ExtendedSummaryObject };
+    tree: { [path: string]: ExtendedSummaryObject; };
 }
 
 /*

@@ -15,9 +15,7 @@ import {
     IConnectionDetails,
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
-    GenericError,
-} from "@fluidframework/container-utils";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentDeltaConnection,
@@ -82,8 +80,7 @@ function getNackReconnectInfo(nackContent: INackContent) {
  */
 class NoDeltaStream
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection, IDisposable
-{
+    implements IDocumentDeltaConnection, IDisposable {
     clientId: string = "storage-only client";
     claims: ITokenClaims = {
         scopes: [ScopeType.DocRead],
@@ -147,9 +144,6 @@ export class ConnectionManager implements IConnectionManager {
     /** True if there is pending (async) reconnection from "read" to "write" */
     private pendingReconnect = false;
 
-    /** downgrade "write" connection to "read" */
-    private downgradedConnection = false;
-
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
     /** Counts the number of noops sent by the client which may not be acked. */
@@ -175,13 +169,8 @@ export class ConnectionManager implements IConnectionManager {
     /**
      * The current connection mode, initially read.
      */
-     public get connectionMode(): ConnectionMode {
-        assert(!this.downgradedConnection || this.connection?.mode === "write",
-            0x277 /* "Did we forget to reset downgradedConnection on new connection?" */);
-        if (this.connection === undefined) {
-            return "read";
-        }
-        return this.connection.mode;
+    public get connectionMode(): ConnectionMode {
+        return this.connection?.mode ?? "read";
     }
 
     public get connected() { return this.connection !== undefined; }
@@ -379,9 +368,9 @@ export class ConnectionManager implements IConnectionManager {
         this._forceReadonly = readonly;
 
         if (oldValue !== this.readonly) {
-            assert(this._reconnectMode !== ReconnectMode.Never,
-                0x279 /* "API is not supported for non-connecting or closed container" */);
-
+            if (this._reconnectMode === ReconnectMode.Never) {
+                throw new UsageError("API is not supported for non-connecting or closed container");
+            }
             let reconnect = false;
             if (this.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
@@ -475,7 +464,7 @@ export class ConnectionManager implements IConnectionManager {
                     this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
                     connection = undefined;
                 }
-            } catch (origError) {
+            } catch (origError: any) {
                 if (typeof origError === "object" && origError !== null &&
                     origError?.errorType === DeltaStreamConnectionForbiddenError.errorType) {
                     connection = new NoDeltaStream();
@@ -490,6 +479,7 @@ export class ConnectionManager implements IConnectionManager {
                     throw error;
                 }
 
+                // Since the error is retryable this will not log to the error table
                 logNetworkFailure(
                     this.logger,
                     {
@@ -547,7 +537,6 @@ export class ConnectionManager implements IConnectionManager {
      */
      private disconnectFromDeltaStream(reason: string): boolean {
         this.pendingReconnect = false;
-        this.downgradedConnection = false;
 
         if (this.connection === undefined) {
             return false;
@@ -798,7 +787,7 @@ export class ConnectionManager implements IConnectionManager {
         // Note that we also want nacks to be rare and be treated as catastrophic failures.
         // Be careful with reentrancy though - disconnected event should not be be raised in the
         // middle of the current workflow, but rather on clean stack!
-        if (this.connectionMode === "read" || this.downgradedConnection) {
+        if (this.connectionMode === "read") {
             if (!this.pendingReconnect) {
                 this.pendingReconnect = true;
                 Promise.resolve().then(async () => {
@@ -841,7 +830,19 @@ export class ConnectionManager implements IConnectionManager {
             if (clientId === this.clientId) {
                 // We have been kicked out from quorum
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
-                this.downgradedConnection = true;
+
+                // Please see #8483 for more details on why maintaining connection further as is would not work.
+                // Short story - connection properties are immutable, and many processes (consensus DDSs, summarizer)
+                // assume that connection stays "write" connection until disconnect, and act accordingly, which may
+                // not work well with de-facto "read" connection we are in after receiving own leave op on timeout.
+                // Clients need to be able to transition to "read" state after some time of inactivity!
+                // Note - this may close container!
+                this.reconnect(
+                    "read", // connectionMode
+                    "Switch to read", // message
+                ).catch((error) => {
+                    this.logger.sendErrorEvent({ eventName: "SwitchToReadConnection" }, error);
+                });
             }
         }
     }

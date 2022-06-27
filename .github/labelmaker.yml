@@ -1,5 +1,5 @@
 teams:
-  internal: ['FluidFramework-Admin', 'FluidFramework-Contributors', 'FRS-Admin' ]
+  internal: ['FluidFramework-Admin', 'FluidFramework-Contributors', 'FRS-Contributors' ]
 
 labels:
   externalPRs: ['community-contribution']

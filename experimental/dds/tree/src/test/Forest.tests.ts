@@ -5,36 +5,53 @@
 
 import { expect } from 'chai';
 import { compareForestNodes, Forest, ForestNode } from '../Forest';
-import { Payload } from '../generic';
 import { NodeId, TraitLabel } from '../Identifiers';
-import { makeEmptyNode } from './utilities/TestUtilities';
+import { Payload } from '../persisted-types';
+import { TestTree } from './utilities/TestNode';
+import { refreshTestTree } from './utilities/TestUtilities';
 
 const mainTraitLabel = 'main' as TraitLabel;
 
-function makeForestNodeWithChildren(id: NodeId, ...children: NodeId[]): ForestNode {
+function makeForestNodeWithChildren(testTree: TestTree, id: NodeId, ...children: NodeId[]): ForestNode {
 	return {
-		...makeEmptyNode(id),
+		...testTree.buildLeaf(id),
 		traits: new Map(children.length > 0 ? [[mainTraitLabel, [...children]]] : []),
 	};
 }
 
 describe('Forest', () => {
-	const parentId = 'parent' as NodeId;
-	const childId = 'child' as NodeId;
-	const secondChildId = 'secondChild' as NodeId;
-	const thirdChildId = 'thirdChild' as NodeId;
-	const childNode = makeForestNodeWithChildren(childId);
-	const parentNode = makeForestNodeWithChildren(parentId);
-	const emptyForest = Forest.create(true);
-	const oneNodeForest = emptyForest.add([parentNode]);
-	const parentForest = oneNodeForest.add([childNode]).attachRangeOfChildren(parentId, mainTraitLabel, 0, [childId]);
-	const grandparentForest = parentForest
-		.add([makeForestNodeWithChildren(secondChildId)])
-		.attachRangeOfChildren(childId, mainTraitLabel, 0, [secondChildId]);
+	let parentId: NodeId;
+	let childId: NodeId;
+	let secondChildId: NodeId;
+	let thirdChildId: NodeId;
 
-	const threeLeafForest = parentForest
-		.add([makeForestNodeWithChildren(secondChildId), makeForestNodeWithChildren(thirdChildId)])
-		.attachRangeOfChildren(parentId, mainTraitLabel, 1, [secondChildId, thirdChildId]);
+	let childNode: ForestNode;
+	let parentNode: ForestNode;
+	let emptyForest: Forest;
+	let oneNodeForest: Forest;
+	let parentForest: Forest;
+	let grandparentForest: Forest;
+	let threeLeafForest: Forest;
+
+	const testTree = refreshTestTree(undefined, (t) => {
+		parentId = t.generateNodeId();
+		childId = t.generateNodeId();
+		secondChildId = t.generateNodeId();
+		thirdChildId = t.generateNodeId();
+
+		childNode = makeForestNodeWithChildren(t, childId);
+		parentNode = makeForestNodeWithChildren(t, parentId);
+		emptyForest = Forest.create(true);
+		oneNodeForest = emptyForest.add([parentNode]);
+		parentForest = oneNodeForest.add([childNode]).attachRangeOfChildren(parentId, mainTraitLabel, 0, [childId]);
+		grandparentForest = parentForest
+			.add([makeForestNodeWithChildren(t, secondChildId)])
+			.attachRangeOfChildren(childId, mainTraitLabel, 0, [secondChildId]);
+
+		threeLeafForest = parentForest
+			.add([makeForestNodeWithChildren(t, secondChildId), makeForestNodeWithChildren(t, thirdChildId)])
+			.attachRangeOfChildren(parentId, mainTraitLabel, 1, [secondChildId, thirdChildId]);
+	});
 
 	it('test forests are consistent', () => {
 		emptyForest.assertConsistent();
@@ -44,11 +61,11 @@ describe('Forest', () => {
 	});
 
 	it('fails on multiparenting', () => {
-		expect(() => oneNodeForest.add([makeForestNodeWithChildren(parentId, childId, childId)])).to.throw();
+		expect(() => oneNodeForest.add([makeForestNodeWithChildren(testTree, parentId, childId, childId)])).to.throw();
 	});
 
 	it('cannot add a node with a duplicate ID', () => {
-		expect(() => oneNodeForest.add([makeForestNodeWithChildren(parentId)])).to.throw();
+		expect(() => oneNodeForest.add([makeForestNodeWithChildren(testTree, parentId)])).to.throw();
 	});
 
 	it('can get nodes in the forest', () => {
@@ -66,7 +83,7 @@ describe('Forest', () => {
 		const children: ForestNode[] = [];
 		const numToAdd = 10;
 		for (let i = 0; i < numToAdd; i++) {
-			const node = makeForestNodeWithChildren(i.toString() as NodeId);
+			const node = makeForestNodeWithChildren(testTree, testTree.generateNodeId());
 			children.push(node);
 			forestA = forestA.add([node]);
 		}
@@ -77,6 +94,21 @@ describe('Forest', () => {
 		expect(forestA.equals(forestB)).to.be.true;
 	});
 
+	// Test that Forest.add() adds descendants and ancestors correctly regardless of the order in which they are supplied
+	it('can add nodes in any order', () => {
+		const childId = testTree.generateNodeId();
+		const parentId = testTree.generateNodeId();
+		const child = makeForestNodeWithChildren(testTree, childId);
+		const parent = makeForestNodeWithChildren(testTree, parentId, childId);
+		const grandparent = makeForestNodeWithChildren(testTree, testTree.generateNodeId(), parentId);
+		const forestA = emptyForest.add([child, parent, grandparent]);
+		const forestB = emptyForest.add([grandparent, parent, child]);
+		forestA.assertConsistent();
+		forestB.assertConsistent();
+		expect(forestA.size).to.equal(3);
+		expect(forestA.equals(forestB)).to.be.true;
+	});
+
 	it('can replace payloads', () => {
 		expectSuccessfulReplace(oneNodeForest, parentId, 0); // Set a payload when there was none
 		expectSuccessfulReplace(oneNodeForest, parentId, 1); // Change a payload
@@ -84,8 +116,8 @@ describe('Forest', () => {
 
 	it('can correctly attach a range to an empty trait on a root', () => {
 		const moreChildrenForest = oneNodeForest.add([
-			makeForestNodeWithChildren(childId),
-			makeForestNodeWithChildren(secondChildId),
+			makeForestNodeWithChildren(testTree, childId),
+			makeForestNodeWithChildren(testTree, secondChildId),
 		]);
 
 		expectSuccessfulAttach(moreChildrenForest, parentId, mainTraitLabel, 0, [childId, secondChildId]);
@@ -93,8 +125,8 @@ describe('Forest', () => {
 
 	it('can correctly attach ranges to a populated trait on a root', () => {
 		const twoLeafForest = parentForest.add([
-			makeForestNodeWithChildren(secondChildId),
-			makeForestNodeWithChildren(thirdChildId),
+			makeForestNodeWithChildren(testTree, secondChildId),
+			makeForestNodeWithChildren(testTree, thirdChildId),
 		]);
 
 		expectSuccessfulAttach(twoLeafForest, parentId, mainTraitLabel, 1, [secondChildId]);
@@ -102,12 +134,12 @@ describe('Forest', () => {
 	});
 
 	it('can correctly attach ranges under a leaf', () => {
-		const threeNodeForest = parentForest.add([makeForestNodeWithChildren(secondChildId)]);
+		const threeNodeForest = parentForest.add([makeForestNodeWithChildren(testTree, secondChildId)]);
 		expectSuccessfulAttach(threeNodeForest, childId, mainTraitLabel, 0, [secondChildId]);
 	});
 
 	it('only accepts valid indices for attaches', () => {
-		const twoNodeForest = oneNodeForest.add([makeForestNodeWithChildren(childId)]);
+		const twoNodeForest = oneNodeForest.add([makeForestNodeWithChildren(testTree, childId)]);
 		expect(() => twoNodeForest.attachRangeOfChildren(parentId, mainTraitLabel, -1, [childId])).to.throw(
 			'invalid attach index'
 		);

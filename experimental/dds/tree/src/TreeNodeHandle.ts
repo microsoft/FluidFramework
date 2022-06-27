@@ -4,25 +4,24 @@
  */
 
 import { Definition, NodeId } from './Identifiers';
-import { ChangeNode, Payload, TraitMap, TreeNode } from './generic';
-import { Snapshot } from './Snapshot';
-import { memoizeGetter } from './Common';
-import { getChangeNodeFromSnapshot } from './SnapshotUtilities';
+import { fail, memoizeGetter } from './Common';
+import { Payload, TraitMap, TreeNode } from './persisted-types';
+import { TreeView, TreeViewNode } from './TreeView';
 
 /**
- * A handle to a `TreeNode` that exists within a specific `Snapshot`. This type provides a convenient
- * API for traversing trees of nodes in a Snapshot and is not designed to provide maximum runtime
- * performance; if performance is a concern, consider using the Snapshot and SnapshotNode APIs directly.
+ * A handle to a `TreeNode` that exists within a specific `TreeView`. This type provides a convenient
+ * API for traversing trees of nodes in a TreeView and is not designed to provide maximum runtime
+ * performance; if performance is a concern, consider using the TreeView and TreeViewNode APIs directly.
  * @public
  */
-export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
-	private readonly snapshot: Snapshot;
-	private readonly nodeId: NodeId;
+export class TreeNodeHandle implements TreeNode<TreeNodeHandle, NodeId> {
+	private readonly view: TreeView;
+	private readonly viewNode: TreeViewNode;
 
-	/** Construct a handle which references the node with the given id in the given `Snapshot` */
-	public constructor(snapshot: Snapshot, nodeId: NodeId) {
-		this.snapshot = snapshot;
-		this.nodeId = nodeId;
+	/** Construct a handle which references the node with the given id in the given `TreeView` */
+	public constructor(view: TreeView, nodeId: NodeId) {
+		this.view = view;
+		this.viewNode = view.tryGetViewNode(nodeId) ?? fail('Failed to create handle: node is not present in view');
 	}
 
 	public get payload(): Payload | undefined {
@@ -40,11 +39,11 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 	public get traits(): TraitMap<TreeNodeHandle> {
 		// Construct a new trait map that wraps each node in each trait in a handle
 		const traitMap: TraitMap<TreeNodeHandle> = {};
-		const { snapshot } = this;
-		for (const [label, trait] of Object.entries(this.node.traits)) {
+		const { view } = this;
+		for (const [label, trait] of this.node.traits.entries()) {
 			Object.defineProperty(traitMap, label, {
 				get() {
-					const handleTrait = trait.map((node) => new TreeNodeHandle(snapshot, node.identifier));
+					const handleTrait = trait.map((node) => new TreeNodeHandle(view, node));
 					return memoizeGetter(this as TraitMap<TreeNodeHandle>, label, handleTrait);
 				},
 				configurable: true,
@@ -56,21 +55,9 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 	}
 
 	/**
-	 * Get a `ChangeNode` for the snapshot node that this handle references
+	 * Get a `TreeViewNode` for the tree view node that this handle references
 	 */
-	public get node(): ChangeNode {
-		return memoizeGetter(this, 'node', getChangeNodeFromSnapshot(this.snapshot, this.nodeId, true));
-	}
-
-	/**
-	 * Generate a new `ChangeNode` for the snapshot node that this handle references. The returned node will be fully
-	 * demanded, i.e. will contain no lazy/virtualized subtrees.
-	 */
-	public demandTree(): ChangeNode {
-		return getChangeNodeFromSnapshot(this.snapshot, this.nodeId, false);
-	}
-
-	public toString(): string {
-		return JSON.stringify(this.demandTree());
+	public get node(): TreeViewNode {
+		return memoizeGetter(this, 'node', this.viewNode);
 	}
 }

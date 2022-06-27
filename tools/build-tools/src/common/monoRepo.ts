@@ -10,7 +10,8 @@ import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync } fr
 export enum MonoRepoKind {
     Client,
     Server,
-};
+    Azure,
+}
 
 export class MonoRepo {
     public readonly packages: Package[] = [];
@@ -45,4 +46,4 @@ export class MonoRepo {
     public async uninstall() {
         return rimrafWithErrorAsync(this.getNodeModulePath(), this.repoPath);
     }
-};
+}

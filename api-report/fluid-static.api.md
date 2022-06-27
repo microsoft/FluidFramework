@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
+import { ConnectionState } from '@fluidframework/container-definitions';
 import { DataObject } from '@fluidframework/aqueduct';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -34,20 +35,22 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
     constructor(schema: ContainerSchema);
     // (undocumented)
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
-    }
+}
 
 // @public
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     constructor(container: IContainer, rootDataObject: RootDataObject);
     attach(): Promise<string>;
     get attachState(): AttachState;
-    get connected(): boolean;
+    connect(): Promise<void>;
+    get connectionState(): ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    disconnect(): Promise<void>;
     dispose(): void;
     get disposed(): boolean;
-    get initialObjects(): Record<string, IFluidLoadable>;
+    get initialObjects(): LoadableObjectRecord;
     get isDirty(): boolean;
-    }
+}
 
 // @public
 export interface IConnection {
@@ -59,8 +62,10 @@ export interface IConnection {
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
     readonly attachState: AttachState;
-    readonly connected: boolean;
+    connect(): void;
+    readonly connectionState: ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    disconnect(): void;
     dispose(): void;
     readonly disposed: boolean;
     readonly initialObjects: LoadableObjectRecord;
@@ -117,7 +122,7 @@ export class RootDataObject extends DataObject<{
     protected initializingFirstTime(props: RootDataObjectProps): Promise<void>;
     // (undocumented)
     get initialObjects(): LoadableObjectRecord;
-    }
+}
 
 // @public (undocumented)
 export interface RootDataObjectProps {
@@ -145,7 +150,6 @@ export abstract class ServiceAudience<M extends IMember = IMember> extends Typed
 export type SharedObjectClass<T extends IFluidLoadable> = {
     readonly getFactory: () => IChannelFactory;
 } & LoadableObjectCtor<T>;
-
 
 // (No @packageDocumentation comment for this package)
 

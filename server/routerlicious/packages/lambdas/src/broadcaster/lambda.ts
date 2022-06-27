@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { INack, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+    INack,
+    ISequencedDocumentMessage,
+    ISignalClient,
+    ISignalMessage,
+    MessageType,
+} from "@fluidframework/protocol-definitions";
+
 import {
     extractBoxcar,
+    IClientManager,
     IContext,
     IMessageBatch,
     INackMessage,
@@ -13,14 +21,17 @@ import {
     IPublisher,
     IQueuedMessage,
     ISequencedOperationMessage,
+    IServiceConfiguration,
+    ITicketedSignalMessage,
     NackOperationType,
     SequencedOperationType,
+    SignalOperationType,
 } from "@fluidframework/server-services-core";
 
 /**
  * Container for a batch of messages being sent for a specific tenant/document id
  */
-type BroadcasterMessageBatch = IMessageBatch<ISequencedDocumentMessage | INack>;
+type BroadcasterMessageBatch = IMessageBatch<ISequencedDocumentMessage | INack | ISignalMessage>;
 
 // Set immediate is not available in all environments, specifically it does not work in a browser.
 // Fallback to set timeout in those cases
@@ -42,42 +53,97 @@ export class BroadcasterLambda implements IPartitionLambda {
     private messageSendingTimerId: unknown | undefined;
 
     constructor(
-        private readonly publisher: IPublisher<ISequencedDocumentMessage | INack>,
-        protected context: IContext) {
+        private readonly publisher: IPublisher<ISequencedDocumentMessage | INack | ISignalMessage>,
+        private readonly context: IContext,
+        private readonly serviceConfiguration: IServiceConfiguration,
+        private readonly clientManager: IClientManager | undefined) {
     }
 
-    public handler(message: IQueuedMessage) {
+    public async handler(message: IQueuedMessage) {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
             let topic: string | undefined;
             let event: string | undefined;
 
-            if (baseMessage.type === SequencedOperationType) {
-                const value = baseMessage as ISequencedOperationMessage;
-                topic = `${value.tenantId}/${value.documentId}`;
-                event = "op";
-            } else if (baseMessage.type === NackOperationType) {
-                const value = baseMessage as INackMessage;
-                topic = `client#${value.clientId}`;
-                event = "nack";
+            switch (baseMessage.type) {
+                case SequencedOperationType: {
+                    event = "op";
+
+                    const sequencedOperationMessage = baseMessage as ISequencedOperationMessage;
+                    topic = `${sequencedOperationMessage.tenantId}/${sequencedOperationMessage.documentId}`;
+                    break;
+                }
+
+                case NackOperationType: {
+                    event = "nack";
+
+                    const nackMessage = baseMessage as INackMessage;
+                    topic = `client#${nackMessage.clientId}`;
+                    break;
+                }
+
+                case SignalOperationType: {
+                    event = "signal";
+
+                    const ticketedSignalMessage = baseMessage as ITicketedSignalMessage;
+                    topic = `${ticketedSignalMessage.tenantId}/${ticketedSignalMessage.documentId}`;
+
+                    if (this.clientManager && ticketedSignalMessage.operation) {
+                        const signalContent = JSON.parse(ticketedSignalMessage.operation.content);
+                        const signalType: MessageType | undefined =
+                            typeof (signalContent.type) === "string" ? signalContent.type : undefined;
+                        switch (signalType) {
+                            case MessageType.ClientJoin: {
+                                const signalClient: ISignalClient = signalContent.content;
+                                await this.clientManager.addClient(
+                                    ticketedSignalMessage.tenantId,
+                                    ticketedSignalMessage.documentId,
+                                    signalClient.clientId,
+                                    signalClient.client,
+                                    ticketedSignalMessage.operation);
+                                break;
+                            }
+
+                            case MessageType.ClientLeave:
+                                await this.clientManager.removeClient(
+                                    ticketedSignalMessage.tenantId,
+                                    ticketedSignalMessage.documentId,
+                                    signalContent.content,
+                                    ticketedSignalMessage.operation);
+                                break;
+
+                            default:
+                                // ignore unknown types
+                                break;
+                        }
+                    }
+
+                    break;
+                }
+
+                default:
+                    // ignore unknown types
+                    continue;
             }
 
-            if (topic && event) {
-                const value = baseMessage as INackMessage | ISequencedOperationMessage;
+            const value = baseMessage as INackMessage | ISequencedOperationMessage | ITicketedSignalMessage;
 
-                let pendingBatch = this.pending.get(topic);
-                if (!pendingBatch) {
-                    pendingBatch = {
-                        tenantId: value.tenantId,
-                        documentId: value.documentId,
-                        event,
-                        messages: [value.operation],
-                    };
-                    this.pending.set(topic, pendingBatch);
-                } else {
-                    pendingBatch.messages.push(value.operation);
-                }
+            if (this.serviceConfiguration.broadcaster.includeEventInMessageBatchName) {
+                topic += event;
+            }
+
+            let pendingBatch = this.pending.get(topic);
+            if (!pendingBatch) {
+                pendingBatch = {
+                    tenantId: value.tenantId,
+                    documentId: value.documentId,
+                    event,
+                    messages: [value.operation],
+                };
+                this.pending.set(topic, pendingBatch);
+            } else {
+                pendingBatch.messages.push(value.operation);
             }
         }
 

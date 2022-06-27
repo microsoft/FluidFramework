@@ -28,8 +28,7 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory";
  * @typeParam I - The input types for the DataObject
  */
 export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes>
-    extends PureDataObjectFactory<TObj, I>
-{
+    extends PureDataObjectFactory<TObj, I> {
     constructor(
         type: string,
         ctor: new (props: IDataObjectProps<I>) => TObj,

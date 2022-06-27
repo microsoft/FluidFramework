@@ -19,8 +19,9 @@ export interface IPackageMatchedOptions {
     match: string[];
     all: boolean;
     server: boolean;
+    azure: boolean;
     dirs: string[];
-};
+}
 
 export class FluidRepoBuild extends FluidRepo {
     constructor(resolvedRoot: string, services: boolean) {
@@ -39,7 +40,7 @@ export class FluidRepoBuild extends FluidRepo {
 
         const r = await Promise.all([cleanPackageNodeModules, removePromise]);
         return r[0] && !r[1].some(ret => ret?.error);
-    };
+    }
 
     public setMatched(options: IPackageMatchedOptions) {
         const hasMatchArgs = options.match.length || options.dirs.length;
@@ -69,11 +70,22 @@ export class FluidRepoBuild extends FluidRepo {
         }
 
         if (options.all) {
-            return this.matchWithFilter(pkg => true);
+            return this.matchWithFilter(() => true);
         }
 
-        const matchMonoRepo = options.server ? MonoRepoKind.Server : MonoRepoKind.Client;
-        return this.matchWithFilter(pkg => pkg.monoRepo?.kind === matchMonoRepo);
+        const monoReposToConsider: MonoRepoKind[] = [];
+
+        if (options.azure) {
+            monoReposToConsider.push(MonoRepoKind.Azure);
+        }
+        if (options.server) {
+            monoReposToConsider.push(MonoRepoKind.Server);
+        }
+        if (!options.azure && !options.server) {
+            monoReposToConsider.push(MonoRepoKind.Client);
+        }
+
+        return this.matchWithFilter(pkg => pkg.monoRepo ? monoReposToConsider.includes(pkg.monoRepo.kind) : false);
     }
 
     public async checkPackages(fix: boolean) {
@@ -131,5 +143,5 @@ export class FluidRepoBuild extends FluidRepo {
         });
         return matched;
     }
-};
+}
 

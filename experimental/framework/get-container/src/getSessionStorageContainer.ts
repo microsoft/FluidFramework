@@ -5,6 +5,7 @@
 
 import {
     IContainer,
+    IFluidModuleWithDetails,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -37,8 +38,14 @@ export async function getSessionStorageContainer(
 
     // To bypass proposal-based loading, we need a codeLoader that will return our already-in-memory container factory.
     // The expected format of that response is an IFluidModule with a fluidExport.
-    const module = { fluidExport: containerRuntimeFactory };
-    const codeLoader = { load: async () => module };
+    const load = async (): Promise<IFluidModuleWithDetails> => {
+        return {
+            module: { fluidExport: containerRuntimeFactory },
+            details: { package: "no-dynamic-package", config: {} },
+        };
+    };
+
+    const codeLoader = { load };
 
     const loader = new Loader({
         urlResolver,

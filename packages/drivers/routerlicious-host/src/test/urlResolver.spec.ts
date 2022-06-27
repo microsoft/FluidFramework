@@ -11,7 +11,7 @@ import { ContainerUrlResolver } from "../urlResolver";
 
 describe("Routerlicious Host", () => {
     describe("UrlResolver", () => {
-        let axiosMock: Partial<AxiosInstance> & { failPost?: boolean };
+        let axiosMock: Partial<AxiosInstance> & { failPost?: boolean; };
 
         it("resolve should be retryable", async () => {
             axiosMock = {

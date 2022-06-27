@@ -7,7 +7,7 @@
  * @fileoverview In this file, we will test the path helper
  *    functions described in /src/properties/path_helper.js
  */
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 
 import { ChangeSet } from "../changeset";
 

@@ -91,7 +91,7 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
         message: string,
         readonly expiryMs: number,
     ) {
-        super(message, { timeoutMs: expiryMs});
+        super(message, { timeoutMs: expiryMs });
     }
 }
 
@@ -132,10 +132,13 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         sequencedMessage?: ISequencedDocumentMessage,
         props: ITelemetryProperties = {},
     ) {
-        return DataProcessingError.wrapIfUnrecognized(
-            new LoggingError(errorMessage, props), // This will be considered an "unrecognized" error
+        const dataProcessingError = DataProcessingError.wrapIfUnrecognized(
+            errorMessage,
             dataProcessingCodepath,
             sequencedMessage);
+        dataProcessingError.addTelemetryProperties(props);
+
+        return dataProcessingError;
     }
 
     /**

@@ -99,7 +99,7 @@ async function loadOuterLogDiv(
     const logDiv = document.getElementById(logDivId) as HTMLDivElement;
 
     const log =
-        (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
+        (emitter: { on(event: string, listener: (...args: any[]) => void); }, name: string, ...events: string[]) => {
             events.forEach((event) =>
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 emitter.on(event, (...args) => {
@@ -115,7 +115,7 @@ async function loadOuterLogDiv(
 
 /**
  * Verify that the iframe container may be loaded in a regular, non-iframe environment
- * @param dataStoreDivId
+ * @param dataStoreDivId - the ID of the data store div
  */
 async function loadOuterDataStoreDiv(
     dataStoreDivId: string,

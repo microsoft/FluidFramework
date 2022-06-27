@@ -18,6 +18,10 @@ export function validateTokenClaims(
     token: string,
     documentId: string,
     tenantId: string): ITokenClaims {
+    if (typeof token !== "string") {
+        throw new NetworkError(403, `Token must be a string. Received: ${typeof token}`);
+    }
+
     const claims = jwtDecode<ITokenClaims>(token);
 
     if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
@@ -68,7 +72,7 @@ export function generateToken(
     // Current time in seconds
     const now = Math.round((new Date()).getTime() / 1000);
 
-    const claims: ITokenClaims & { jti: string } = {
+    const claims: ITokenClaims & { jti: string; } = {
         documentId,
         scopes,
         tenantId,
@@ -80,7 +84,7 @@ export function generateToken(
     };
 
     const utf8Key = { utf8: key };
-    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
+    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 }
 
 export function generateUser(): IUser {

@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 import Axios from "axios";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
+import { CorrelationIdHeaderName } from "../constants";
 import { BasicRestWrapper } from "../restWrapper";
 
 describe("BasicRestWrapper", () => {
     const baseurl = "https://fake.microsoft.com";
     const requestUrl = "/fakerequesturl/";
-    const correlationIdHeader = "x-correlation-id";
     const headerCount = 1;
     const maxBodyLength = 1000 * 1024 * 1024;
     const maxContentLength = 1000 * 1024 * 1024;
@@ -211,7 +211,7 @@ describe("BasicRestWrapper", () => {
             assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
             assert.strictEqual(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
-            assert.strictEqual(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
+            assert.strictEqual(CorrelationIdHeaderName, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {
@@ -330,7 +330,7 @@ describe("BasicRestWrapper", () => {
             assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
             assert.strictEqual(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
-            assert.strictEqual(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
+            assert.strictEqual(CorrelationIdHeaderName, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {
@@ -450,7 +450,7 @@ describe("BasicRestWrapper", () => {
             assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
             assert.strictEqual(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
-            assert.strictEqual(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
+            assert.strictEqual(CorrelationIdHeaderName, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {
@@ -570,7 +570,7 @@ describe("BasicRestWrapper", () => {
             assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
             assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
             assert.strictEqual(headerCount, Object.keys(requestOptions.headers).length, "Headers should only have 1 header");
-            assert.strictEqual(correlationIdHeader, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
+            assert.strictEqual(CorrelationIdHeaderName, Object.keys(requestOptions.headers)[0], "Headers should only have x-correlation-id");
         });
 
         it("Default QueryString and Default Headers", async () => {

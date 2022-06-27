@@ -4,13 +4,14 @@
  */
 
 import {
-    ICodeLoader,
+    ICodeDetailsLoader,
     IContainer,
     IHostLoader,
     ILoaderOptions,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
@@ -29,7 +30,7 @@ export function createLoader(
     logger?: ITelemetryBaseLogger,
     options?: ILoaderOptions,
 ): IHostLoader {
-    const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
+    const codeLoader: ICodeDetailsLoader = new LocalCodeLoader(packageEntries);
 
     return new Loader({
         urlResolver,

@@ -17,7 +17,6 @@ import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -58,7 +57,7 @@ export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = IShared
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
     constructor(type: string, ctor: new (context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject) => T, root: IChannelFactory, sharedObjects?: readonly IChannelFactory[], storeFactories?: readonly IFluidDataStoreFactory[]);
     // (undocumented)
-    create(parentContext: IFluidDataStoreContext, props?: any): Promise<IFluidObject & FluidObject>;
+    create(parentContext: IFluidDataStoreContext, props?: any): Promise<FluidObject>;
     // (undocumented)
     get IFluidDataStoreFactory(): this;
     // (undocumented)

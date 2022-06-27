@@ -58,8 +58,8 @@ export interface ITenantCustomData {
 }
 
 export interface ITenantKeys {
-    key1: string,
-    key2: string,
+    key1: string;
+    key2: string;
 }
 
 export enum KeyName {
@@ -79,7 +79,7 @@ export interface ITenantManager {
     /**
      * Creates a new tenant with the given id, or a randomly generated id when none is provided.
      */
-    createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }>;
+    createTenant(tenantId?: string): Promise<ITenantConfig & { key: string; }>;
 
     /**
      * Retrieves details for the given tenant

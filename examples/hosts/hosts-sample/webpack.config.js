@@ -36,7 +36,7 @@ module.exports = {
     },
     devServer: {
         historyApiFallback: true,
-        publicPath: '/dist',
+        devMiddleware: { publicPath: '/dist' },
         watchOptions: {
             ignored: "**/node_modules/**",
         }

@@ -2,28 +2,28 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SvgIcon } from './SVGIcon';
-import { createStyles, withStyles, WithStyles } from '@material-ui/core/styles';
-import classNames from 'classnames';
-import * as React from 'react';
+import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
+import classNames from "classnames";
+import * as React from "react";
+import { SvgIcon } from "./SVGIcon";
 
 const styles = () => createStyles({
   centered: {
-    marginBottom: '12px',
-    textAlign: 'center',
+    marginBottom: "12px",
+    textAlign: "center",
   },
   icon: {
-    marginBottom: '16px',
+    marginBottom: "16px",
   },
   large: {
-    fontSize: '24px',
+    fontSize: "24px",
   },
   root: {
-    alignItems: 'center',
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    justifyContent: 'center',
+    alignItems: "center",
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+    justifyContent: "center",
   },
 });
 
@@ -58,8 +58,8 @@ interface IEmptyProps {
 }
 
 export const defaultIconSize: IIconSize = {
-  height: '166px',
-  width: '294px',
+  height: "166px",
+  width: "294px",
 };
 
 export const iconAspectRatio: number = parseFloat(defaultIconSize.width) /
@@ -68,8 +68,8 @@ export const iconAspectRatio: number = parseFloat(defaultIconSize.width) /
 export const computeIconSize = (width: number): IIconSize => (width * 0.5 >= parseFloat(defaultIconSize.width) ?
   defaultIconSize :
     {
-      height: (width * 0.5) / iconAspectRatio + 'px',
-      width: width * 0.5 + 'px',
+      height: `${ (width * 0.5) / iconAspectRatio }px`,
+      width: `${ width * 0.5 }px`,
     }
 );
 
@@ -88,5 +88,5 @@ const Empty: React.FunctionComponent<IEmptyProps & WithStyles<typeof styles>> = 
   );
 };
 
-const StyledEmpty = withStyles(styles, {name: 'Empty'})(Empty);
+const StyledEmpty = withStyles(styles, { name: "Empty" })(Empty);
 export { StyledEmpty as Empty };

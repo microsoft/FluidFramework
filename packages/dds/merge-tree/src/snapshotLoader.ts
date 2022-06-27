@@ -38,18 +38,18 @@ export class SnapshotLoader {
 
     public async initialize(
         services: IChannelStorageService,
-    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]>; }> {
         const headerLoadedP =
             services.readBlob(SnapshotLegacy.header).then((header) => {
                 assert(!!header, 0x05f /* "Missing blob header on legacy snapshot!" */);
-                return this.loadHeader(bufferToString(header,"utf8"));
+                return this.loadHeader(bufferToString(header, "utf8"));
             });
 
         const catchupOpsP =
             this.loadBodyAndCatchupOps(headerLoadedP, services);
 
         catchupOpsP.catch(
-            (err)=>this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" },err));
+            (err) => this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" }, err));
 
         await headerLoadedP;
 
@@ -71,7 +71,7 @@ export class SnapshotLoader {
         if (blobs.length === headerChunk.headerMetadata!.orderedChunkMetadata.length + 1) {
             headerChunk.headerMetadata!.orderedChunkMetadata.forEach(
                 (md) => blobs.splice(blobs.indexOf(md.id), 1));
-            assert(blobs.length === 1, 0x060 /* `There should be only one blob with catch up ops: ${blobs.length}` */);
+            assert(blobs.length === 1, 0x060 /* There should be only one blob with catch up ops */);
 
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
@@ -107,14 +107,11 @@ export class SnapshotLoader {
             // this will only cause problems if there is an overlapping delete
             // spanning the snapshot, which should be rare
             if (spec.removedClient !== undefined) {
-                seg.removedClientId = this.client.getOrAddShortClientId(spec.removedClient);
+                seg.removedClientIds = [this.client.getOrAddShortClientId(spec.removedClient)];
             }
             if (spec.removedClientIds !== undefined) {
-                seg.removedClientId = this.client.getOrAddShortClientId(spec.removedClientIds[0]);
-                if(spec.removedClientIds.length > 1) {
-                    seg.removedClientOverlap = spec.removedClientIds.slice(1).map(
-                        (sid)=> this.client.getOrAddShortClientId(sid));
-                }
+                seg.removedClientIds = spec.removedClientIds?.map(
+                    (sid) => this.client.getOrAddShortClientId(sid));
             }
         } else {
             seg = this.client.specToSegment(spec);

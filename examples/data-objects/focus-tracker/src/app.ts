@@ -58,14 +58,14 @@ async function start(): Promise<void> {
     const createNew = !location.hash;
     if (createNew) {
         // The client will create a new container using the schema
-        ({container, services} = await client.createContainer(containerSchema));
+        ({ container, services } = await client.createContainer(containerSchema));
         containerId = await container.attach();
         // The new container has its own unique ID that can be used to access it in another session
         location.hash = containerId;
     } else {
         containerId = location.hash.substring(1);
         // Use the unique container ID to fetch the container created earlier
-        ({container, services} = await client.getContainer(containerId, containerSchema));
+        ({ container, services } = await client.getContainer(containerId, containerSchema));
     }
     // create/get container API returns a combination of the container and associated container services
     document.title = containerId;

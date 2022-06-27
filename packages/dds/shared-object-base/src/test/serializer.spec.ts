@@ -96,7 +96,7 @@ describe("FluidSerializer", () => {
         // Undefined is extra special in that it can't appear at the root, but can appear
         // embedded in the tree, in which case the key is elided (if an object) or it is
         // coerced to null (if in an array).
-        tricky.push({ u: undefined}, [undefined]);
+        tricky.push({ u: undefined }, [undefined]);
 
         for (const input of tricky) {
             it(`${printHandle(input)} -> ${JSON.stringify(input)}`, () => {

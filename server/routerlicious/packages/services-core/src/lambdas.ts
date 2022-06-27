@@ -46,8 +46,8 @@ export interface IContext {
 
     /**
      * Closes the context with an error.
-     * @param error The error object or string
-     * @param errorData Additional information about the error
+     * @param error - The error object or string
+     * @param errorData - Additional information about the error
      */
     error(error: any, errorData: IContextErrorData): void;
 

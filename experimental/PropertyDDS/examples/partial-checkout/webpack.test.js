@@ -4,8 +4,8 @@
  */
 
 const path = require("path");
-const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = env => {
     return ({
@@ -35,9 +35,17 @@ module.exports = env => {
             libraryTarget: "umd"
         },
         devServer: {
-            contentBase: path.join(__dirname, 'tests')
+            static: {
+                directory: path.join(__dirname, 'tests')
+            }
         },
         plugins: [
+            // For an unknown reason, this does not work for this specific example. It seems to have issues with the async package.
+            // new webpack.ProvidePlugin({process: 'process/browser'}),
+            // So use DefinePlugin to recreate just the part we need:
+            new webpack.DefinePlugin({
+                'process.env.NODE_DEBUG': undefined,
+            }),
             new HtmlWebpackPlugin({
                 template: "./tests/index.html",
             }),

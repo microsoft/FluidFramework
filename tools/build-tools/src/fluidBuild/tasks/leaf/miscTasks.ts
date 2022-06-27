@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { LeafTask } from "./leafTask";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
 import { logVerbose } from "../../../common/logging";
+import { ScriptDependencies } from "../../../common/npmPackage";
 import * as path from "path";
 import { BuildPackage } from "../../buildGraph";
+
+/* eslint-disable @typescript-eslint/no-empty-function */
 
 export class EchoTask extends LeafTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) { }
@@ -33,12 +36,12 @@ export class LesscTask extends LeafTask {
                 this.logVerboseNotUpToDate();
             }
             return result;
-        } catch (e) {
+        } catch (e: any) {
             logVerbose(`${this.node.pkg.nameColored}: ${e.message}`);
             this.logVerboseTrigger("failed to get file stats");
             return false;
         }
-    };
+    }
 }
 
 export class CopyfilesTask extends LeafTask {
@@ -47,8 +50,8 @@ export class CopyfilesTask extends LeafTask {
     private readonly copySrcArg: string = "";
     private readonly copyDstArg: string = "";
 
-    constructor(node: BuildPackage, command: string) {
-        super(node, command);
+    constructor(node: BuildPackage, command: string, scriptDeps: ScriptDependencies) {
+        super(node, command, scriptDeps);
 
         // TODO: something better
         const args = this.command.split(" ");
@@ -129,7 +132,7 @@ export class CopyfilesTask extends LeafTask {
                 }
             }
             return true;
-        } catch (e) {
+        } catch (e: any) {
             logVerbose(`${this.node.pkg.nameColored}: ${e.message}`);
             this.logVerboseTrigger("failed to get file stats");
             return false;
@@ -143,10 +146,24 @@ export class GenVerTask extends LeafTask {
         try {
             const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
             const content = await readFileAsync(file, "utf8");
-            const match = content.match(/.*\nexport const pkgName = \"(.*)\";[\n\r]*export const pkgVersion = \"([0-9.]+)\";.*/m);
+            const match = content.match(/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9.]+)";.*/m);
             return (match !== null && this.node.pkg.name === match[1] && this.node.pkg.version === match[2]);
         } catch {
+            return false;
         }
-        return false;
     }
-};
+}
+
+export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
+    protected get doneFile(): string {
+        return "package.json.done.build.log"
+    }
+    protected async getDoneFileContent(): Promise<string | undefined> {
+        return JSON.stringify(this.package.packageJson);
+    }
+}
+
+export class TypeValidationTask extends PackageJsonChangedTask {
+    protected addDependentTasks(dependentTasks: LeafTask[]): void {
+    }
+}

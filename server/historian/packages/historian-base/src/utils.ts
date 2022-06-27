@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { parse } from "path";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
@@ -64,14 +66,12 @@ export function getDocumentIdFromRequest(tenantId: string, authorization: string
 export function parseToken(tenantId: string, authorization: string): string {
     let token: string;
     if (authorization) {
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const base64TokenMatch = authorization.match(/Basic (.+)/);
         if (!base64TokenMatch) {
             throw new NetworkError(403, "Malformed authorization token");
         }
         const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
 
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const tokenMatch = encoded.match(/(.+):(.+)/);
         if (!tokenMatch || tenantId !== tokenMatch[1]) {
             throw new NetworkError(403, "Malformed authorization token");
@@ -81,6 +81,15 @@ export function parseToken(tenantId: string, authorization: string): string {
     }
 
     return token;
+}
+
+/**
+ * Check a given path string for path traversal (e.g. "../" or "/").
+ * TODO: replace with containsPathTraversal from services-shared
+ */
+ export function containsPathTraversal(path: string): boolean {
+    const parsedPath = parse(path);
+    return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
 }
 
 /**

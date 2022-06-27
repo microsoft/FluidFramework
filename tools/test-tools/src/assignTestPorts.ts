@@ -17,7 +17,7 @@ function main() {
             throw new Error("stdin input was not package array");
         }
     } catch (e) {
-        console.error(e.toString());
+        console.error(e);
         process.exit(-1);
     }
 

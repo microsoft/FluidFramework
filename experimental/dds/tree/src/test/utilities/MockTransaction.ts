@@ -3,23 +3,63 @@
  * Licensed under the MIT License.
  */
 
-import { EditStatus, GenericTransaction } from '../../generic';
-import { Snapshot } from '../../Snapshot';
+import { Result } from '../../Common';
+import { ChangeInternal, EditStatus } from '../../persisted-types';
+import { RevisionView } from '../../RevisionView';
+import {
+	ChangeResult,
+	GenericTransaction,
+	GenericTransactionPolicy,
+	TransactionInternal,
+} from '../../TransactionInternal';
 
 /**
- * A mock implementation of `GenericTransaction` for use in tests.
  * @internal
  */
-export class MockTransaction<TChange> extends GenericTransaction<TChange> {
-	public static factory<TChange>(snapshot: Snapshot): MockTransaction<TChange> {
-		return new MockTransaction<TChange>(snapshot);
+export namespace MockTransaction {
+	export interface Options {
+		statusOnClose: EditStatus;
 	}
 
-	protected validateOnClose(): EditStatus {
-		return EditStatus.Applied;
+	export const defaultOptions: Options = {
+		statusOnClose: EditStatus.Applied,
+	};
+
+	/**
+	 * Makes a new {@link GenericTransaction} that follows the {@link MockTransaction.Policy} policy.
+	 *
+	 * @internal
+	 */
+	export function factory(view: RevisionView, options: Options = defaultOptions): GenericTransaction {
+		return new GenericTransaction(view, new Policy(options));
 	}
 
-	protected dispatchChange(change: TChange): EditStatus {
-		return EditStatus.Applied;
+	/**
+	 * A mock implementation of `GenericTransaction` for use in tests.
+	 * @internal
+	 */
+	export class Policy implements GenericTransactionPolicy {
+		public options: Options;
+
+		public constructor(options: Options) {
+			this.options = options;
+		}
+
+		public tryResolveChange(_state, change: ChangeInternal): Result.Ok<ChangeInternal> {
+			return Result.ok(change);
+		}
+
+		public validateOnClose(state): ChangeResult {
+			return this.options.statusOnClose === EditStatus.Applied
+				? Result.ok(state.view)
+				: Result.error({
+						status: this.options.statusOnClose,
+						failure: undefined as unknown as TransactionInternal.Failure,
+				  });
+		}
+
+		public dispatchChange(state): ChangeResult {
+			return Result.ok(state.view);
+		}
 	}
 }

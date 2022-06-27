@@ -13,9 +13,9 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     IntervalCollection,
     IntervalType,
-    ISerializedInterval,
     SequenceInterval,
     SharedString,
+    ISerializedIntervalCollectionV2,
 } from "@fluidframework/sequence";
 import {
     ITestObjectProvider,
@@ -24,15 +24,18 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
     intervalView: IntervalCollection<SequenceInterval>,
-    expected: readonly { start: number; end: number }[],
+    expected: readonly { start: number; end: number; }[],
 ) => {
-    const actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    let actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    if (sharedString.getLength() === 0) {
+        actual = Array.from(intervalView);
+    }
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
 
@@ -198,7 +201,7 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
         intervalCollection.removeIntervalById(id);
     }
 }
-describeFullCompat("SharedInterval", (getTestObjectProvider) => {
+describeNoCompat("SharedInterval", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
@@ -210,7 +213,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         let intervals: IntervalCollection<SequenceInterval>;
         let dataObject: ITestFluidObject & IFluidLoadable;
 
-        const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
+        const assertIntervals = (expected: readonly { start: number; end: number; }[]) => {
             // Make sure all ops have been sent before actually asserting
             (dataObject.context.containerRuntime as IContainerRuntime).flush();
             assertIntervalsHelper(sharedString, intervals, expected);
@@ -246,6 +249,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             assertIntervals([{ start: 0, end: len - 1 }]);
 
             sharedString.removeRange(0, len);
+            await provider.ensureSynchronized();
             assertIntervals([{ start: LocalReference.DetachedPosition, end: LocalReference.DetachedPosition }]);
         });
 
@@ -541,8 +545,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(interval, interval2, "Oddball interval found in client 2");
             }
 
-            if (typeof(intervals1.change) === "function" &&
-                typeof(intervals2.change) === "function") {
+            if (typeof (intervals1.change) === "function" &&
+                typeof (intervals2.change) === "function") {
                 // Conflicting changes
                 intervals1.change(id1, 1, 2);
                 intervals2.change(id1, 2, 1);
@@ -554,20 +558,20 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 for (interval1 of intervals1) {
                     const id: string = interval1.getIntervalId() as string;
                     assert.strictEqual(interval1.start.getOffset(),
-                                       intervals2.getIntervalById(id)?.start.getOffset(),
-                                       "Conflicting changes");
+                        intervals2.getIntervalById(id)?.start.getOffset(),
+                        "Conflicting changes");
                     assert.strictEqual(interval1.end.getOffset(),
-                                       intervals2.getIntervalById(id)?.end.getOffset(),
-                                       "Conflicting changes");
+                        intervals2.getIntervalById(id)?.end.getOffset(),
+                        "Conflicting changes");
                 }
                 for (interval2 of intervals2) {
                     const id: string = interval2.getIntervalId() as string;
                     assert.strictEqual(interval2.start.getOffset(),
-                                       intervals1.getIntervalById(id)?.start.getOffset(),
-                                       "Conflicting changes");
+                        intervals1.getIntervalById(id)?.start.getOffset(),
+                        "Conflicting changes");
                     assert.strictEqual(interval2.end.getOffset(),
-                                       intervals1.getIntervalById(id)?.end.getOffset(),
-                                       "Conflicting changes");
+                        intervals1.getIntervalById(id)?.end.getOffset(),
+                        "Conflicting changes");
                 }
 
                 intervals1.change(id1, 4, 4);
@@ -598,8 +602,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(interval2.end.getOffset(), 2, "Conflicting transparent change");
             }
 
-            if (typeof(intervals1.changeProperties) === "function" &&
-                typeof(intervals2.changeProperties) === "function") {
+            if (typeof (intervals1.changeProperties) === "function" &&
+                typeof (intervals2.changeProperties) === "function") {
                 const assertPropertyChangedArg = (p: any, v: any, m: string) => {
                     // Check expected values of args passed to the propertyChanged event only if IntervalCollection
                     // is a TypedEventEmitter. (This is not true of earlier versions,
@@ -757,18 +761,18 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const serialized1 = intervalCollection1.serializeInternal();
             const serialized2 = intervalCollection2.serializeInternal();
             const serialized3 = intervalCollection3.serializeInternal();
-            assert.equal(serialized1.length, 3, "Incorrect interval collection size in container 1");
-            assert.equal(serialized2.length, 3, "Incorrect interval collection size in container 2");
-            assert.equal(serialized3.length, 3, "Incorrect interval collection size in container 3");
+            assert.equal(serialized1.intervals.length, 3, "Incorrect interval collection size in container 1");
+            assert.equal(serialized2.intervals.length, 3, "Incorrect interval collection size in container 2");
+            assert.equal(serialized3.intervals.length, 3, "Incorrect interval collection size in container 3");
 
-            const interval1From3 = serialized3[0];
-            assert(interval1From3.properties);
-            const comment1From3 = await (interval1From3.properties.story as IFluidHandle<SharedString>).get();
+            const interval1From3Properties = serialized3.intervals[0][4];
+            assert(interval1From3Properties);
+            const comment1From3 = await (interval1From3Properties.story as IFluidHandle<SharedString>).get();
             assert.equal(
                 comment1From3.getText(0, 12), "a comment...", "Incorrect text in interval collection's shared string");
-            const interval3From3 = serialized3[2];
-            assert(interval3From3.properties);
-            const mapFrom3 = await (interval3From3.properties.story as IFluidHandle<SharedMap>).get();
+            const interval3From3Properties = serialized3.intervals[2][4];
+            assert(interval3From3Properties);
+            const mapFrom3 = await (interval3From3Properties.story as IFluidHandle<SharedMap>).get();
             assert.equal(
                 mapFrom3.get("nestedKey"), "nestedValue", "Incorrect value in interval collection's shared map");
 
@@ -776,12 +780,13 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             // Since it's based on a map kernel, its contents parse as
             // an IMapDataObjectSerializable with the "comments" member we set
             const parsedContent = JSON.parse(summaryBlob.content as string);
-            // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
-            const serializedInterval1FromSnapshot =
-                (parsedContent["intervalCollections/comments"].value as ISerializedInterval[])[0];
+            // LocalIntervalCollection serializes as ISerializedIntervalCollectionV2,
+            // let's get the first comment
+            const serializedInterval1FromSnapshotProperties =
+                (parsedContent.comments.value as ISerializedIntervalCollectionV2).intervals[0][4];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
-            assert(serializedInterval1FromSnapshot.properties);
-            const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
+            assert(serializedInterval1FromSnapshotProperties);
+            const handleLocalValueFromSnapshot = serializedInterval1FromSnapshotProperties.story as { type: string; };
             assert.equal(
                 handleLocalValueFromSnapshot.type,
                 "__fluid_handle__",

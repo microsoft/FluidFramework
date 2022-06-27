@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./dbFactory";
 export * from "./kafkaProducerFactory";
 export * from "./messageReceiver";
 export * from "./messageSender";
@@ -11,7 +12,7 @@ export * from "./mongodb";
 export * from "./nodeCodeLoader";
 export * from "./redis";
 export * from "./redisClientManager";
-export * from "./redisThrottleStorageManager";
+export * from "./redisThrottleAndUsageStorageManager";
 export * from "./secretManager";
 export * from "./socketIoRedisPublisher";
 export * from "./tenant";

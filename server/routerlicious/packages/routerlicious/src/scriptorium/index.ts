@@ -10,31 +10,32 @@ import { deleteSummarizedOps, executeOnInterval, FluidServiceErrorCode } from "@
 import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
-    const operationsDbMongoUrl = config.get("mongo:operationsDbEndpoint") as string;
     const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes") as boolean;
-    const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
-    const mongoFactory = new services.MongoDbFactory(operationsDbMongoUrl, bufferMaxEntries);
+
     const softDeletionRetentionPeriodMs = config.get("mongo:softDeletionRetentionPeriodMs") as number;
     const offlineWindowMs = config.get("mongo:offlineWindowMs") as number;
     const softDeletionEnabled = config.get("mongo:softDeletionEnabled") as boolean;
     const permanentDeletionEnabled = config.get("mongo:permanentDeletionEnabled") as boolean;
     const deletionIntervalMs = config.get("mongo:deletionIntervalMs") as number;
-    const operationsDbMongoManager = new MongoManager(mongoFactory, false);
+
+    // Database connection for global db if enabled
+    const factory = await services.getDbFactory(config);
 
     let globalDb;
     if (globalDbEnabled) {
-        const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
-        const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
-        const globalDbMongoManager = new MongoManager(globalDbMongoFactory, false);
+        const globalDbMongoManager = new MongoManager(factory, false, null, true);
         globalDb = await globalDbMongoManager.getDatabase();
     }
 
-    const operationsDb = await operationsDbMongoManager.getDatabase();
+    const operationsDbManager = new MongoManager(factory, false);
+    const operationsDb = await operationsDbManager.getDatabase();
+
     const documentsCollectionDb = globalDbEnabled ? globalDb : operationsDb;
+
     const documentsCollection: ICollection<IDocument> = documentsCollectionDb.collection(documentsCollectionName);
     const opCollection = operationsDb.collection(deltasCollectionName);
 
@@ -58,7 +59,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     if (mongoExpireAfterSeconds > 0) {
         if (createCosmosDBIndexes) {
-            await opCollection.createTTLIndex({_ts:1}, mongoExpireAfterSeconds);
+            await opCollection.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds);
         } else {
             await opCollection.createTTLIndex(
                 {
@@ -83,5 +84,5 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         (error) => { return error.code === FluidServiceErrorCode.FeatureDisabled; },
     );
 
-    return new ScriptoriumLambdaFactory(operationsDbMongoManager, opCollection);
+    return new ScriptoriumLambdaFactory(operationsDbManager, opCollection);
 }

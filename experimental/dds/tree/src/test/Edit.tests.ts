@@ -4,8 +4,9 @@
  */
 
 import { expect } from 'chai';
-import { NodeId } from '../Identifiers';
-import { makeEmptyNode, makeTestNode, deepCompareNodes } from './utilities/TestUtilities';
+import { deepCompareNodes } from '../EditUtilities';
+import { ChangeNode } from '../persisted-types';
+import { refreshTestTree } from './utilities/TestUtilities';
 
 // TODO #45414: Re-enable when compareEdits compares the actual changes instead of just the edit IDs.
 // 			    Commented out instead of skipped to avoid linting errors.
@@ -14,11 +15,11 @@ import { makeEmptyNode, makeTestNode, deepCompareNodes } from './utilities/TestU
 // 		const node = makeTestNode();
 // 		const editId = '75dd0d7d-ea87-40cf-8860-dc2b9d827597' as EditId;
 // 		const editA: Edit = {
-// 			changes: [Delete.create(StableRange.only(node))],
+// 			changes: [Change.delete(StableRange.only(node))],
 // 		};
 
 // 		const sequencedEditB: Edit = {
-// 			changes: [Delete.create(StableRange.only(node))],
+// 			changes: [Change.delete(StableRange.only(node))],
 // 		};
 
 // 		expect(compareEdits(editA, sequencedEditB)).to.be.true;
@@ -29,12 +30,12 @@ import { makeEmptyNode, makeTestNode, deepCompareNodes } from './utilities/TestU
 // 		const nodeDestination = makeTestNode();
 
 // 		const sequencedEditA: Edit = {
-// 			changes: [Delete.create(StableRange.only(node))],
+// 			changes: [Change.delete(StableRange.only(node))],
 // 			id: '7366efae-f96a-4f5d-9c6c-eea62ac6dffb' as EditId,
 // 		};
 
 // 		const sequencedEditB: Edit = {
-// 			changes: [...Move.create(StableRange.only(node), StablePlace.before(nodeDestination))],
+// 			changes: [...Change.move(StableRange.only(node), StablePlace.before(nodeDestination))],
 // 			id: '57cb9fa9-9d1d-49eb-919a-5636ed55a65a' as EditId,
 // 		};
 
@@ -43,21 +44,34 @@ import { makeEmptyNode, makeTestNode, deepCompareNodes } from './utilities/TestU
 // });
 
 describe('deepCompareNodes', () => {
+	const testTree = refreshTestTree();
+
 	it('correctly compares two empty nodes', () => {
-		const nodeId = '8d39e7ee-890a-4443-aef7-16d7e8ef3de0' as NodeId;
-		expect(deepCompareNodes(makeEmptyNode(nodeId), makeEmptyNode(nodeId))).to.be.true;
+		const nodeId = testTree.generateNodeId();
+		expect(deepCompareNodes(testTree.buildLeaf(nodeId), testTree.buildLeaf(nodeId))).to.be.true;
 	});
 
 	it('correctly compares two deeply equal nodes', () => {
-		const nodeId = 'a5946b8c-fb40-4631-81c8-c5473da50359' as NodeId;
-		expect(deepCompareNodes(makeTestNode(nodeId), makeTestNode(nodeId))).to.be.true;
+		const otherTree: ChangeNode = {
+			definition: testTree.definition,
+			identifier: testTree.identifier,
+			traits: {
+				left: [{ definition: testTree.left.definition, identifier: testTree.left.identifier, traits: {} }],
+				right: [{ definition: testTree.right.definition, identifier: testTree.right.identifier, traits: {} }],
+			},
+		};
+		expect(deepCompareNodes(testTree, otherTree)).to.be.true;
 	});
 
 	it('returns false for unequal nodes', () => {
-		const nodeId = '30df2134-f347-494b-9f47-ddc9a73f227b' as NodeId;
-		expect(deepCompareNodes(makeEmptyNode(), makeEmptyNode())).to.be.false;
-		expect(deepCompareNodes(makeEmptyNode(nodeId), makeTestNode(nodeId))).to.be.false;
-		expect(deepCompareNodes(makeEmptyNode(), makeTestNode())).to.be.false;
-		expect(deepCompareNodes(makeTestNode(), makeEmptyNode())).to.be.false;
+		expect(
+			deepCompareNodes(
+				testTree.buildLeaf(testTree.generateNodeId()),
+				testTree.buildLeaf(testTree.generateNodeId())
+			)
+		).to.be.false;
+		expect(deepCompareNodes(testTree.buildLeaf(testTree.identifier), testTree)).to.be.false;
+		expect(deepCompareNodes(testTree.buildLeaf(testTree.identifier), testTree)).to.be.false;
+		expect(deepCompareNodes(testTree, testTree.buildLeaf(testTree.identifier))).to.be.false;
 	});
 });

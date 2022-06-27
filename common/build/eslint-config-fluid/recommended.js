@@ -6,12 +6,12 @@
 module.exports = {
     "extends": [
         "./minimal.js",
-        "@rushstack/eslint-config/mixins/tsdoc",
         "plugin:unicorn/recommended",
         "plugin:editorconfig/all",
     ],
     "plugins": [
         "editorconfig",
+        "eslint-plugin-tsdoc",
     ],
     "rules": {
         // RECOMMENDED RULES

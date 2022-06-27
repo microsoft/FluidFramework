@@ -7,7 +7,12 @@ import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
-import { IClient, IDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+    IClient,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    MessageType,
+} from "@fluidframework/protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
@@ -66,7 +71,6 @@ describe("Loader", () => {
                         // CollabWindowTracker expects every op submitted (including noops) to result in this call:
                         tracker.stopSequenceNumberUpdate();
                     },
-                    () => true,
                     expectedTimeout,
                     noopCountFrequency,
                 );
@@ -89,16 +93,20 @@ describe("Loader", () => {
                 });
             }
 
+            function generateOp(type: MessageType = MessageType.Operation): ISequencedDocumentMessage {
+                return {
+                    clientId: "Some client ID",
+                    clientSequenceNumber: ++clientSeqNumber,
+                    minimumSequenceNumber: 0,
+                    sequenceNumber: seq++,
+                    type,
+                } as any as ISequencedDocumentMessage;
+            }
+
             async function emitSequentialOps(type: MessageType = MessageType.Operation, count = 1) {
                 for (let num = 0; num < count; ++num) {
                     assert(!deltaConnection.disposed, "disposed");
-                    deltaConnection.emitOp(docId, [{
-                        clientId: "Some client ID",
-                        clientSequenceNumber: ++clientSeqNumber,
-                        minimumSequenceNumber: 0,
-                        sequenceNumber: seq++,
-                        type,
-                    }]);
+                    deltaConnection.emitOp(docId, [generateOp()]);
                 }
 
                 // Yield the event loop because the inbound op will be processed asynchronously.
@@ -140,6 +148,51 @@ describe("Loader", () => {
                     assert.strictEqual(MessageType.NoOp, messages[0].type);
                     assert.strictEqual(immediate ? "" : null, JSON.parse(messages[0].contents as string));
                 }
+
+                it("Infinite frequency parameters disables periodic noops completely", async () => {
+                    const tracker = new CollabWindowTracker(
+                        () => assert.fail("No ops should be sent with Infinite thresholds"),
+                        Infinity,
+                        Infinity,
+                    );
+
+                    for (let num = 0; num < 1000; ++num) {
+                        tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+                    }
+
+                    await tickClock(1000 * 1000);
+                });
+
+                it("Infinite time frequency will not generate noops at time intervals", async () => {
+                    let counter = 0;
+                    const tracker = new CollabWindowTracker(
+                        () => { counter++; tracker.stopSequenceNumberUpdate(); },
+                        Infinity,
+                        100,
+                    );
+                    for (let num = 0; num < 99; ++num) {
+                        tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+                    }
+                    await tickClock(1000 * 1000);
+                    assert.equal(counter, 0, "No messages sent after 99 ops");
+                    tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+                    assert.equal(counter, 1, "One message should be sent");
+                });
+
+                it("Infinite op frequency will not generate noops at op intervals", async () => {
+                    let counter = 0;
+                    const tracker = new CollabWindowTracker(
+                        () => { counter++; tracker.stopSequenceNumberUpdate(); },
+                        100,
+                        Infinity,
+                    );
+                    for (let num = 0; num < 1000; ++num) {
+                        tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+                    }
+                    assert.equal(counter, 0, "No messages sent after 99 ops");
+                    await tickClock(100);
+                    assert.equal(counter, 1, "One message should be sent");
+                });
 
                 it("Should update after op count threshold", async () => {
                     let runCount = 0;

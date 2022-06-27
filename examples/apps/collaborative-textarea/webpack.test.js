@@ -4,8 +4,8 @@
  */
 
 const path = require("path");
-const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 const pkg = require("./package.json");
 const componentName = pkg.name.slice(1);
@@ -38,9 +38,14 @@ module.exports = env => {
             libraryTarget: "umd"
         },
         devServer: {
-            contentBase: path.join(__dirname, 'tests')
+            static: {
+                directory: path.join(__dirname, 'tests')
+            }
         },
         plugins: [
+            new webpack.ProvidePlugin({
+                process: 'process/browser'
+            }),
             new HtmlWebpackPlugin({
                 template: "./tests/index.html",
             }),

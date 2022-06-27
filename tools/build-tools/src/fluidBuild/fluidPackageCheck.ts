@@ -70,9 +70,9 @@ export class FluidPackageCheck {
         const testScriptName = testMochaScript ? "test:mocha" : "test";
         const testScript = testMochaScript ?? pkg.getScript(testScriptName);
         if (testScript && /(ts-)?mocha/.test(testScript)) {
-            const isClient = pkg.monoRepo?.kind === MonoRepoKind.Client;
+            const shouldHaveConfig = pkg.monoRepo?.kind === MonoRepoKind.Client || pkg.monoRepo?.kind === MonoRepoKind.Azure;
             const hasConfig = testScript.includes(" --config ");
-            if (isClient) {
+            if (shouldHaveConfig) {
                 const pkgstring = "@fluidframework/mocha-test-setup";
                 if (this.ensureDevDependency(pkg, fix, pkgstring)) {
                     fixed = true;
@@ -273,6 +273,21 @@ export class FluidPackageCheck {
                     buildCommonJs.push("tsc");
                 } else {
                     buildCompile.push("tsc");
+                }
+            }
+
+            if(pkg.getScript("typetests:gen")){
+                // typetests:gen should be in build:commonjs if it exists, otherwise, it should be in build:compile
+                const buildTargetScripts =
+                    pkg.getScript("build:commonjs") ? buildCommonJs : buildCompile;
+                if(pkg.getScript("build:test")){
+                    // if there is a test target put test type gen after tsc
+                    // as the type test will build with the tests
+                    buildTargetScripts.push("typetests:gen");
+                }else{
+                    // if there is no test target put it before tsc
+                    // so type test build with tsc
+                    buildTargetScripts.unshift("typetests:gen");
                 }
             }
 
@@ -591,8 +606,7 @@ export class FluidPackageCheck {
     }
     private static async checkOneTestDir(pkg: Package, fix: boolean, subDir: string) {
         const configFile = path.join(this.getTestBaseDir(pkg), subDir, "tsconfig.json");
-        let configJson;
-        configJson = TscUtils.readConfigFile(configFile);
+        const configJson = TscUtils.readConfigFile(configFile);
         if (!configJson) {
             this.logWarn(pkg, `Unable to read ${configFile}`, false);
             return;
@@ -690,6 +704,7 @@ export class FluidPackageCheck {
 
         // Only split test build if there is some ts files in the test directory
         const dirs = [maybeTestDir];
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const dir = dirs.pop();
             if (!dir) {
@@ -709,4 +724,4 @@ export class FluidPackageCheck {
             dirs.push(...files.filter((dirent) => dirent.isDirectory()).map((dirent) => path.join(dir, dirent.name)));
         }
     }
-};
+}

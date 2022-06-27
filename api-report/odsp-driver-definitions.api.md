@@ -17,9 +17,10 @@ export interface HostStoragePolicy {
     // (undocumented)
     concurrentOpsBatches?: number;
     concurrentSnapshotFetch?: boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     enableRedeemFallback?: boolean;
     enableShareLinkWithCreate?: boolean;
+    // @deprecated (undocumented)
     fetchBinarySnapshotFormat?: boolean;
     isolateSocketCache?: boolean;
     // (undocumented)
@@ -37,6 +38,7 @@ export interface ICacheEntry extends IEntry {
 
 // @public (undocumented)
 export interface ICollabSessionOptions {
+    // @deprecated (undocumented)
     forceAccessTokenViaAuthorizationHeader?: boolean;
     unauthenticatedUserDisplayName?: string;
 }
@@ -207,7 +209,6 @@ export interface TokenResponse {
     fromCache?: boolean;
     token: string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

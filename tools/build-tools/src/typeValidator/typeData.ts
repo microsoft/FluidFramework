@@ -5,7 +5,7 @@
 
 import { Node, Project, ts } from "ts-morph";
 import * as fs from "fs";
-import { getPackageDetailsOrThrow, PackageDetails } from "./packageJson";
+import { getPackageDetails, PackageDetails } from "./packageJson";
 
 export interface PackageAndTypeData{
     packageDetails: PackageDetails;
@@ -166,7 +166,7 @@ function getIndexSourceFile(basePath: string){
 
 export async function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): Promise<PackageAndTypeData> {
 
-    let basePath = dependencyName === undefined
+    const basePath = dependencyName === undefined
         ? packageDir
         : tryFindDependencyPath(packageDir, dependencyName);
 
@@ -185,7 +185,7 @@ export async function generateTypeDataForProject(packageDir: string, dependencyN
         }
     }
 
-    const packageDetails = await getPackageDetailsOrThrow(basePath);
+    const packageDetails = await getPackageDetails(basePath);
     return {
         packageDetails,
         typeData: Array.from(typeData.values()).sort((a,b)=>a.name.localeCompare(b.name)),

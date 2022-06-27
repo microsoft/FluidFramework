@@ -6,12 +6,13 @@
 import * as Comlink from "comlink";
 import {
     AttachState,
-    ICodeLoader,
     IContainerContext,
     IRuntime,
-    IProxyLoaderFactory,
     ILoaderOptions,
     IContainer,
+    ICodeDetailsLoader,
+    IFluidCodeDetails,
+    ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
@@ -62,8 +63,6 @@ export interface IFrameOuterHostConfig {
     // A Fluid object that gives host provided capabilities/configurations
     // to the Fluid object in the container(such as auth).
     scope?: FluidObject;
-
-    proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 }
 
 class ProxyRuntime implements IRuntime {
@@ -89,6 +88,8 @@ class ProxyRuntime implements IRuntime {
     }
     setAttachState(state: AttachState.Attaching | AttachState.Attached) {
     }
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void {
+    }
     getPendingLocalState() {
         throw new Error("Method not implemented.");
     }
@@ -104,9 +105,14 @@ class ProxyChaincode extends RuntimeFactoryHelper {
     }
 }
 
-class ProxyCodeLoader implements ICodeLoader {
-    async load() {
-        return Promise.resolve({ fluidExport: new ProxyChaincode() });
+class ProxyCodeLoader implements ICodeDetailsLoader {
+    async load(source: IFluidCodeDetails) {
+        return {
+            module: {
+                fluidExport: new ProxyChaincode(),
+            },
+            details: source,
+        };
     }
 }
 

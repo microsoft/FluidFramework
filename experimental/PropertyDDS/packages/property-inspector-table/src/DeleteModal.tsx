@@ -2,35 +2,35 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { WithStyles } from '@material-ui/core';
-import Button from '@material-ui/core/Button';
-import { withStyles } from '@material-ui/core/styles';
-import * as React from 'react';
-import { ErrorPopup } from './ErrorPopup';
-import { IDeleteModalTextParameters } from './DeleteModalTextParameters';
-import { InspectorModal } from './InspectorModal';
+import { WithStyles } from "@material-ui/core";
+import Button from "@material-ui/core/Button";
+import { withStyles } from "@material-ui/core/styles";
+import * as React from "react";
+import { ErrorPopup } from "./ErrorPopup";
+import { IDeleteModalTextParameters } from "./DeleteModalTextParameters";
+import { InspectorModal } from "./InspectorModal";
 
 const styles = () => ({
   cancelButton: {
-    'margin-right': '12px',
+    "margin-right": "12px",
   },
   contentContainer: {
-    'display': 'flex',
-    'flex-direction': 'column',
-    'justify-content': 'space-between',
+    "display": "flex",
+    "flex-direction": "column",
+    "justify-content": "space-between",
   },
   horizontalButtonContainer: {
-    'align-items': 'center',
-    'display': 'flex',
-    'justify-content': 'flex-end',
-    'margin-bottom': '16px',
+    "align-items": "center",
+    "display": "flex",
+    "justify-content": "flex-end",
+    "margin-bottom": "16px",
   },
   spacer: {
-    'flex-basis': '5vh',
+    "flex-basis": "5vh",
   },
   truncatedText: {
-    'overflow': 'hidden',
-    'text-overflow': 'ellipsis',
+    "overflow": "hidden",
+    "text-overflow": "ellipsis",
   },
 });
 
@@ -81,7 +81,7 @@ class DeleteModal extends React.Component<IDeleteModalProps & WithStyles<typeof 
         <div className={this.props.classes!.contentContainer}>
           <div className={this.props.classes!.truncatedText}>
             {`You are about to delete the `}
-            <span style={{ fontWeight: 'bold' }}>{this.props.title}</span>
+            <span style={{ fontWeight: "bold" }}>{this.props.title}</span>
             {` ${textParameters.modalCallingSource}.`}
             <br />
             {`Are you sure you want to proceed?`}
@@ -89,8 +89,8 @@ class DeleteModal extends React.Component<IDeleteModalProps & WithStyles<typeof 
           <div className={this.props.classes!.spacer} />
           <div className={this.props.classes!.horizontalButtonContainer}>
             <Button
-              color='primary'
-              variant='outlined'
+              color="primary"
+              variant="outlined"
               disabled={this.state.deleting}
               className={this.props.classes!.cancelButton}
               onClick={this.props.onClosed}
@@ -98,12 +98,12 @@ class DeleteModal extends React.Component<IDeleteModalProps & WithStyles<typeof 
               Cancel
             </Button>
             <Button
-              id='deletePropertyConfirm'
+              id="deletePropertyConfirm"
               onClick={this.deleteHandler}
-              variant='contained'
-              color='primary'
+              variant="contained"
+              color="primary"
             >
-              {this.state.deleting ? 'Deleting' : `Yes, delete ${textParameters.modalCallingSource}`}
+              {this.state.deleting ? "Deleting" : `Yes, delete ${textParameters.modalCallingSource}`}
             </Button>
           </div>
         </div>
@@ -111,17 +111,18 @@ class DeleteModal extends React.Component<IDeleteModalProps & WithStyles<typeof 
     );
   }
 
-  private deleteHandler = async () => {
+  private readonly deleteHandler = async () => {
     this.setState({ deleting: true });
     return ErrorPopup(this.props.options.handler, false).then(() => {
       this.props.onClosed();
     }).catch(() => {
-      ErrorPopup(() => { throw new Error('The property was deleted by a remote collaborator!'); });
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      ErrorPopup(() => { throw new Error("The property was deleted by a remote collaborator!"); });
       this.setState({ deleting: false });
       this.props.onClosed();
     });
-  }
+  };
 }
 
-const StyledDeleteModal = withStyles(styles, { name: 'DeleteModal' })(DeleteModal);
+const StyledDeleteModal = withStyles(styles, { name: "DeleteModal" })(DeleteModal);
 export { StyledDeleteModal as DeleteModal };

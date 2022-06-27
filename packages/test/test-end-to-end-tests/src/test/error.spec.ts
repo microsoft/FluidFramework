@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory} from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {
@@ -71,8 +71,8 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 
     itExpects("GeneralError Test",
     [
-        {eventName: "fluid:telemetry:Container:ContainerClose", error: ""},
-        {eventName: "TestException", errorType: ContainerErrorType.genericError},
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "" },
+        { eventName: "TestException", errorType: ContainerErrorType.genericError },
     ],
     async () => {
         const documentServiceFactory = provider.documentServiceFactory;

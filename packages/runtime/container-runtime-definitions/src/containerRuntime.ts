@@ -12,7 +12,6 @@ import {
 import {
     IRequest,
     IResponse,
-    IFluidObject,
     IFluidRouter,
     FluidObject,
 } from "@fluidframework/core-interfaces";
@@ -80,7 +79,7 @@ export interface IContainerRuntime extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly flushMode: FlushMode;
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */
@@ -100,8 +99,10 @@ export interface IContainerRuntime extends
      * Majority of data stores in container should not be roots, and should be reachable (directly or indirectly)
      * through one of the roots.
      * @param pkg - Package name of the data store factory
-     * @param rootDataStoreId - data store ID. IDs naming space is global in container. If collision on name occurs,
-     * it results in container corruption - loading this file after that will always result in error.
+     * @param rootDataStoreId - data store ID. Must not contain slashes. IDs naming space is global in container.
+     * If collision on name occurs, it results in container corruption - loading this file after that will always
+     * result in error.
+     * @deprecated - will be removed in an upcoming release. See #9660.
      */
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 
@@ -109,7 +110,7 @@ export interface IContainerRuntime extends
      * Creates detached data store context. Data store initialization is considered compete
      * only after context.attachRuntime() is called.
      * @param pkg - package path
-     * @param rootDataStoreId - data store ID (unique name)
+     * @param rootDataStoreId - data store ID (unique name). Must not contain slashes.
      */
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
 

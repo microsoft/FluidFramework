@@ -2,41 +2,61 @@
 
 A [Fluid](https://fluidframework.com/) SharedObject Tree with:
 
--   Transactional editing
+-   Transactional editing and snapshot isolation
 -   Strong node identities
 -   High quality automatic merge resolution
--   Full History Inspection, Manipulation and Metadata
+-   A flexible operation set that includes Move
+-   History inspection, manipulation and metadata
 
-Revisions of the tree (see [EditLog](.\src\EditLog.ts) and [Snapshot](.\src\Snapshot.ts)) are created from sequences of Edits.
+Revisions of the tree (see [EditLog](./src/EditLog.ts) and [TreeView](./src/TreeView.ts)) are created from sequences of Edits.
 
 Semantically, the current state of the tree is defined as:
 
-The initial tree, modified by all edits in order.
+The [initial tree](./src/InitialTree.ts), modified by all edits in order.
 
 The order of the edits is:
 
 1. All acknowledged edits, in the order agreed upon by Fluid's consensus.
-2. All local edits (not acknowledged by Fluid yet), in the order they were created.
+2. All local edits (not acknowledged by Fluid yet), in the order they were applied.
+
+**Important: this DDS is no longer in active development, and a non-experimental, officially supported SharedTree is in active development by the Fluid team that will expand on its rich feature set.**
 
 # Getting Started
 
 ## Tree Abstraction
 
-The tree abstraction used for `SharedTree` is summarized by the [TreeNode](./src/generic/PersistedTypes.ts) class. Nodes have _traits_, a _definition_, an _identity_, and optionally a payload to contain extra arbitrary data.
+The tree abstraction used for `SharedTree` is composed of nodes with four main attributes: a _definition_, an _identity_, zero or more _traits_, and an optional _payload_ to contain arbitrary serializable data.
 
 ### Definition
 
-The definition of a node provides the node's meaning. It is typically used to associate the node with metadata such as a schema for what this tree represents.
+The definition of a node conveys the node's semantic meaning. It is typically used to associate the node with metadata such as a schema for what this tree represents.
 
 ### Identifier
 
-A node's identifier is a globally unique way to refer to it. This enables collaborative editing specifications by ensuring that each element of a document can be identified.
+A node's identifier is a unique key associated with that node. The identifier can be used to retrieve a node from a the current view of a SharedTree, and provides a way to refer to existing nodes when performing edits to the tree.
 
 ### Traits
 
-Traits are what give a node the structure of a tree. Intuitively, a trait is a named sequence of content nodes. Organizing a node's children underneath traits (rather than in a freeform list, as many trees do) allows more natural construction of documents.
+Traits are sequences of child nodes underneath a parent node. Each trait is identified by a label and may contain one or more children. Organizing a node's children underneath traits (rather than in a single freeform list, as many trees do) allows more intuitive construction of documents.
 
-### Example
+```typescript
+// A parent node with three traits, labelled "name", "employees" and "products"
+{
+	definition: 'Company',
+	identifier: 42,
+	traits: {
+		name: [{...}] // Traits may contain just one child node...
+		employees: [{...}, {...}, {...}], // ...or many children
+		products: [{...}, {...}]
+	}
+}
+```
+
+### Payload
+
+The payload of a node is a bag of arbitrary state with only one requirement: it must be JSON-serializable. Payloads allow the tree to store data that can't be efficiently encoded by nodes themselves (for example, strings or numbers)
+
+## Example Tree
 
 Consider a document which consists of the point (4, 9) in 2-dimensional space. One way this document could be encoded into the tree format expected by a `SharedTree` might look like this:
 
@@ -46,9 +66,9 @@ const pointDefinition = '3781c3b1-41e6-43c5-9ffd-13916071d4dc';
 const numberDefinition = '3e5a1652-983f-4533-bb59-130ac8f3714e';
 
 // These identifiers refer to *the particular* point/number nodes in the tree below.
-const pointIdentifier = '668b4277-ed5b-41f6-90ce-d2f666a59e41';
-const xIdentifier = 'f067342f-5307-460e-a67a-41d2448231f3';
-const yIdentifier = '6a23b443-8735-4c1d-8f88-3aca5ba07939';
+const pointIdentifier = 100;
+const xIdentifier = 101;
+const yIdentifier = 102;
 
 const pointDocument: Node = {
 	definition: pointDefinition
@@ -68,7 +88,7 @@ const pointDocument: Node = {
 };
 ```
 
-Note that this example isn't meant to be taken verbatim as valid code -- it cheats a bit with payload representation for the sake of simplicity. It is, however, truthful to tree structure.
+Note that this example isn't meant to be taken verbatim as valid code -- it cheats a bit with payload representation for the sake of simplicity, and isn't validly constructing the node's identifiers. It is, however, truthful to tree structure.
 
 ## Creating a SharedTree
 
@@ -78,29 +98,58 @@ SharedTree follows typical [Fluid DDS conventions](https://fluidframework.com/do
 const tree = SharedTree.create(runtime);
 ```
 
-Upon creation, the tree will contain a single node: `initialTree`.
+Upon creation, the tree will contain a single node: the [initialTree](./src/InitialTree.ts). All SharedTrees begin with this initial node as their root node, which cannot be deleted or moved. It provides an anchor for new nodes to be inserted underneath it.
+
+## Reading
+
+SharedTree provides [TreeView](./src/TreeView.ts)s which are immutable snapshots of the tree at a given revision. These views can be generated for the current (i.e. the most up-to-date after applying all known edits) state of the tree, or can be created for the state of the tree after a specific revision in the tree's history of edits.
+
+### Reading the current state of the tree
+
+The `currentView` property on SharedTree is the easiest way to get the view of the latest revision.
+
+```typescript
+function getChildrenUnderTrait(sharedTree: SharedTree, parentId: NodeId, traitLabel: TraitLabel): TreeViewNode[] {
+	// Get the most up-to-date view of the tree at this moment.
+	const view = sharedTree.currentView;
+	// Get the IDs of children in some trait with `getTrait`:
+	const childIds = view.getTrait({ label: traitLabel, parent: parentId });
+	// Get the node for a given ID with `getViewNode`:
+	return childIds.map((id) => view.getViewNode(id));
+}
+```
+
+> Note that `view` will never change, even if the shared tree applies or receives more edits. If you want the updated view after additional edits happen, you must call `sharedTree.currentView` again.
+
+### Reading an arbitrary revision of the tree
+
+If you want to inspect the tree at some state prior to the current view, SharedTree provides a [LogViewer](./src/LogViewer.ts) to obtain views at a specific revision.
+
+```typescript
+function getViewAfterEdit(sharedTree: SharedTree, editId: EditId): TreeView {
+	// First, find which revision corresponds to a given edit
+	const revision = sharedTree.edits.getIndexOfId(editId);
+	// Then, ask the logViewer to create a view at that specific revision
+	return sharedTree.logViewer.getRevisionViewInSession(revision);
+}
+```
 
 ## Editing
 
 For simple edits (ones in which transactionality isn't important), `SharedTree` provides convenient, imperative APIs along the following lines:
 
 ```typescript
-tree.editor.insert(fooNode, StablePlace.atStartOf({ parent: initialTree.identifier, label: 'foo' }));
-tree.editor.insert(barNode, StablePlace.atStartOf({ parent: initialTree.identifier, label: 'bar' }));
+const view = sharedTree.currentView;
+sharedTree.applyEdit(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: view.root, label: 'foo' }));
+sharedTree.applyEdit(Change.move(barNode, StablePlace.after(fooNode.identifier)));
 ```
 
-This would insert `fooNode` at the start of the "foo" trait underneath the initial tree's root node, and `barNode` underneath the "bar" trait.
-Each operation would be performed in its own `Edit`, which is `SharedTree`'s transactional atom.
+This would insert `fooNode` at the start of the "foo" trait underneath the root node, and move `barNode` from wherever it is in the tree to after the `foodNode` in the "foo" trait.
+Each operation would be performed in its own `Edit`, which is `SharedTree`'s transactional atom (one revision corresponds to one edit).
 
-If it is undesirable that one of the above operations could fail to apply while the other could succeed, you should instead leverage `Checkout`. A `Checkout`--whose name is inspired from source control--can be thought of as a local view of the `SharedTree` which provides [snapshot isolation](https://en.wikipedia.org/wiki/Snapshot_isolation#:~:text=In%20databases%2C%20and%20transaction%20processing,the%20transaction%20itself%20will%20successfully). Editing the `SharedTree` using a `Checkout` can be done by opening an edit, applying a number of changes, and closing the edit.
+An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [ChangeTypes](./src/ChangeTypes.ts)). Each edit, when applied to a version of the document (a TreeView), produces a new version of the document.
 
-```typescript
-const checkout = new BasicCheckout(tree);
-checkout.openEdit();
-checkout.applyChanges(Insert.create([fooNode], StablePlace.atStartOf({ parent: initialTree, label: 'foo' })));
-checkout.applyChanges(Insert.create([barNode], StablePlace.atStartOf({ parent: initialTree, label: 'bar' })));
-checkout.closeEdit();
-```
+Once an edit is acknowledged by the Fluid service (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit. There may be operations that will create new edits based on existing ones and apply them in a different context (e.g. undo), but these are logically considered new edits.
 
 "Move" and "delete" operations have the added complexity of needing to specify locations (`StableRange`s) within the `SharedTree` which should be moved (or deleted, respectively). A `StableRange` consists of a start `StablePlace` and an end `StablePlace`.
 `StablePlace`s are not nodes, but instead places where nodes could be inserted. Each place consists of an "anchor," which is either a trait or another node.
@@ -119,28 +168,78 @@ Once concurrent edits are considered, the different ways to anchor this `StableR
 
 Also note that there are some more convenient shorthands for several of these specifications. See `StableRange` documentation for more information.
 
-# Status
+### Change Atomicity
 
-SharedTree is in active, but still relatively early development. As such, it is lacking in some areas (such as performance testing). For an idea of some future features we'd like to support, see [Future Plans](./docs/Future.md).
+One or both of the above calls to `tree.applyEdit ` could fail to apply. It may be desirable to group changes to the tree such that all the changes are successful and apply at once, or in the case that any of them fail, none of them apply. There are three approaches available to accomplish this.
 
-Implementation-wise:
+#### Apply all changes together
 
--   Document format may change only in major releases, and SharedTree is committed to backwards compatibility (support for older documents). For more information on this commitment, see the notes in [PersistedTypes.ts](./src/generic/PersistedTypes.ts).
--   APIs are not yet stable, and those beyond what's needed for the MVP (ex: history editing and inspection) are not provided yet. Core APIs are not likely to significantly change.
--   Performance is generally reasonable. However, this assessment was made using integration-style performance tests of consuming applications. Though it's on the road-map, there are currently no rigorous performance tests which are isolated to SharedTree.
+The two edits above can simply have their changes concatenated into a single edit.
 
-Design wise:
+```typescript
+sharedTree.applyEdit([
+	...Change.insertTree(fooNode, StablePlace.atStartOf({ parent: view.root, label: 'foo' }),
+	...Change.move(barNode, StablePlace.after(fooNode.identifier))
+]);
+```
 
--   SharedTree is always created with an uninitialized state. It is up to the application to initialize the tree to something else if needed.
--   There are still open questions regarding how SharedTree will relate to the rest of the Fluid ecosystem.
-    For example, we do not have suggested design patterns for when users of SharedTree should store references to other Fluid DataObjects versus storing the data for children as subtrees.
+#### Use a Transaction
 
-# Edits
+The above approach is only possible once all the changes are known. A client may instead wish to build up a sequence of changes over time and observe their affects on the view, but wait until later to submit them in an edit. A [Transaction](./src/Transaction.ts) is a lightweight tool to accomplish this.
 
-An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [PersistedTypes.ts](.\src\generic\PersistedTypes.ts)). Each edit, when applied to a version of the document (a Snapshot), produces a new version of the document.
+```typescript
+const transaction = new Transaction(sharedTree);
+transaction.apply(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: view.root, label: 'foo' }));
+const viewAfterFirstEdit = transaction.currentView; // This is the view after applying the above change. It is not the current view of the SharedTree (which has not had the above change applied).
+transaction.apply(Change.move(barNode, StablePlace.after(fooNode.identifier)));
+transaction.closeAndCommit(); // If all changes were successful, this will apply them together as a single edit to the SharedTree. The transaction is now "closed" and any future changes will be ignored.
+```
 
-Once an edit is acknowledged by the Fluid service (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit.
-There may be operations that will create new edits based on existing ones and apply them in a different context, but these are logically considered new edits.
+> If any changes applied to a transaction fail, the transaction will automatically close.
+
+#### Use a Checkout
+
+A [Checkout](./src/Checkout.ts) is similar to a `Transaction` in that it applies changes over time, but it has some additional features:
+
+-   Multiple edits can be submitted over the lifetime of a single `Checkout`.
+
+    ```typescript
+    const checkout = new EagerCheckout(sharedTree);
+    checkout.openEdit();
+    checkout.applyChanges(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: initialTree, label: 'foo' })));
+    checkout.applyChanges(Change.move(barNode, StablePlace.after(fooNode.identifier)));
+    checkout.closeEdit(); // This submits the changes to the tree in an edit
+    checkout.openEdit();
+    checkout.applyChanges(Change.delete(barNode.identifier));
+    checkout.closeEdit(); // This submits another edit to the tree
+    ```
+
+    > If a change failed to apply, `closeEdit` will throw an error. Detect this case by checking `getEditStatus` and calling `abortEdit` instead.
+
+-   Change notifications are emitted when any changes are applied to the `Checkout`. This allows updating of application state even in response to changes within an ongoing edit. Notifications are also emitted when the underlying SharedTree's view changes, _unless there is an ongoing edit (i.e., `openEdit` has been called)_.
+
+    ```typescript
+    const checkout = new EagerCheckout(sharedTree);
+    checkout.on('viewChange', (before: TreeView, after: TreeView) => {
+    	// Use the delta object as a convenient way to see which nodes were added, deleted, or changed between views
+    	const delta = after.delta(before);
+    }));
+
+    ```
+
+-   Checkouts can rebase an edit in progress.
+
+    ```typescript
+    const checkout = new EagerCheckout(sharedTree);
+    checkout.openEdit();
+    checkout.applyChanges(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: initialTree, label: 'foo' })));
+    // ... Edits are applied to the tree (e.g. by other clients)
+    checkout.rebaseCurrentEdit(); // Rebases the current changes in this edit to the SharedTree's current view.
+    checkout.applyChanges(Change.move(barNode, StablePlace.after(fooNode.identifier)));
+    checkout.closeEdit(); // This submits the changes to the tree in an edit
+    ```
+
+-   Checkout implementations can choose how often they synchronize their view with the underlying `SharedTree` when not in an edit (i.e. snapshot isolated). If you want to synchronize as frequently as possible (this is likely), use `EagerCheckout`. If you prefer to control the cadence for synchronization, `LazyCheckout` can manage this through `Checkout.waitForPendingUpdates`.
 
 ## Conflicts
 
@@ -154,9 +253,11 @@ This flexibility allows the majority of edits to be encoded in a way where their
 and in the rare cases where this can not be done, they will conflict instead of being applied in a non-intention preserving way:
 SharedTree generally follows this policy that it is better to fail to apply a change than to apply it in a way that violates user expectation or intention.
 
-When a change fails to apply, or a constraint indicates that it applied, but may not have been ideal, it is called conflicted. Currently, if a change fails to apply due to a conflict, it is dropped. Improving this policy is in our [future plans](./docs/Future.md).
+When a change fails to apply, or a constraint indicates that it applied, but may not have been ideal, it is called conflicted. Currently, if a change fails to apply due to a conflict, it is dropped.
 
 ### Constraints
+
+> Constraints are mostly unsupported at this time. They will be supported in the upcoming SharedTree v2 implementation.
 
 A `Constraint` can be added to an Edit's list of changes which can be used to detect cases where an Edit could still apply (not-conflict) but may lose its original semantics due to reordering.
 
@@ -164,7 +265,7 @@ For example, two edits could be made concurrently: one that sorts a list alphabe
 Depending on how the sorting structures its changes and exactly where the insert occurred, the sort may or may not conflict if the insert gets acknowledged first.
 In some domains, it would be desired that this conflicts.
 In such domains, a Constraint could be added that would require the list to contain the same set of items as when the sort edit was created for it to apply correctly.
-The Constraint can specify what should happen if violated: see `ConstraintEffect` in [PersistedTypes.ts](.\src\default-edits\PersistedTypes.ts) for details.
+The Constraint can specify what should happen if violated: see `ConstraintEffect` in [persisted-types](./src/persisted-types/0.0.2.ts) for details.
 
 Note that these constraints apply to more than just the case of edits that were made concurrently:
 edits to history also use conflicts (and thus constraints) to prevent historical edits from being re-contextualized in ways that break their semantics.
@@ -183,7 +284,7 @@ Edits are transactional so any invalid change in an edit will cause the entire e
 However, no combination of changes will cause the client to crash.
 Changes go through validation before they are applied and invalid changes are currently dropped.
 
-#### Example
+#### Change Rejection Example
 
 Assuming a tree with a single node, A, a client creates an edit, 1, that inserts a node after node A.
 At the same time another client creates an edit, 2, that deletes node A.
@@ -200,12 +301,24 @@ In this situation, edit 1 is dropped.
 | Malformed Change | A change which can not possibly be applied to any tree without error. For example, a StablePlace with no sibling and also no trait.                                                             |
 | Malformed Edit   | An edit which contains one or more malformed changes, or an edit with a sequence of changes that could not possibly be applied sequentially without error. (e.g. parent a detached node twice). |
 
-# Undo
+# Undo/Redo
 
 Undo in a collaborative context is complex since the change being undone may not be the most recent change.
-This means undo and redo really need to be treated as arbitrary history edits, adding and removing changes as specific points in the past, and reconciling the impact of that with the edits after it.
+This means undo and redo really need to be treated as arbitrary history edits, adding and removing changes as specific points in the past, and reconciling the impact of that with the edits after it. Both `SharedTree` and `Checkout` expose `revert` as a method to revert arbitrary edits.
+
+```typescript
+const editId = sharedTree.applyEdit(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: view.root, label: 'foo' }));
+const undoEditId = sharedTree.revert(editId); // Undoes the insert
+const redoEditId = sharedTree.revert(undoEditId); // Redoes the insert
+```
 
 ## Summaries
+
+### History
+
+A `SharedTree` can optionally preserve its "history", i.e. all edits that were sequenced over time. This has storage and performance overhead, and is disabled by default. An instance of a SharedTree object will always contain all edits that were created/received during its lifetime, thus enabling undo, redo and history traversal of those edits.
+
+> Currently, `SharedTree` documents created with history enabled can never have their history removed.
 
 ### History Virtualization
 

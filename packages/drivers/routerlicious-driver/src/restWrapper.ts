@@ -17,6 +17,7 @@ import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider } from "./tokens";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 type AuthorizationHeaderGetter = (refresh?: boolean) => Promise<string | undefined>;
 
@@ -70,7 +71,9 @@ export class RouterliciousRestWrapper extends RestWrapper {
                     isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error));
             }));
 
-        const responseBody: any = await response.clone().json().catch(async () => response.text());
+        const responseBody: any = response.headers.get("content-type")?.includes("application/json")
+            ? await response.json()
+            : await response.text();
 
         // Success
         if (response.ok || response.status === statusCode) {
@@ -80,7 +83,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
         // Failure
         if (response.status === 401 && canRetry) {
             // Refresh Authorization header and retry once
-            this.authorizationHeader = await this.getAuthorizationHeader(true);
+            this.authorizationHeader = await this.getAuthorizationHeader(true /* refreshToken */);
             return this.request<T>(config, statusCode, false);
         }
         if (response.status === 429 && responseBody?.retryAfter > 0) {
@@ -107,8 +110,10 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
         return {
             ...requestHeaders,
+            // TODO: replace header names with CorrelationIdHeaderName and DriverVersionHeaderName from services-client
             // NOTE: Can correlationId actually be number | true?
             "x-correlation-id": correlationId as string,
+            "x-driver-version": driverVersion,
             // NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
             "Authorization": this.authorizationHeader!,
         };
@@ -139,12 +144,12 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         const defaultQueryString = {
             token: `${fromUtf8ToBase64(tenantId)}`,
         };
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refreshToken?: boolean): Promise<string> => {
             // Craft credentials using tenant id and token
             const storageToken = await tokenProvider.fetchStorageToken(
                 tenantId,
                 documentId,
-                refresh,
+                refreshToken,
             );
             const credentials = {
                 password: storageToken.jwt,
@@ -188,11 +193,11 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         useRestLess: boolean,
         baseurl?: string,
     ): Promise<RouterliciousOrdererRestWrapper> {
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refreshToken?: boolean): Promise<string> => {
             const ordererToken = await tokenProvider.fetchOrdererToken(
                 tenantId,
                 documentId,
-                refresh,
+                refreshToken,
             );
             return `Basic ${ordererToken.jwt}`;
         };

@@ -9,7 +9,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,
-    ISummaryConfiguration,
     ISummaryNack,
     ISummaryProposal,
     MessageType,
@@ -17,9 +16,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { ISummaryConfiguration } from "../containerRuntime";
 import { neverCancelledSummaryToken } from "../runWhileConnectedCoordinator";
 import { RunningSummarizer } from "../runningSummarizer";
-import { ISummarizerOptions } from "../summarizerTypes";
 import { SummaryCollection } from "../summaryCollection";
 import { SummarizeHeuristicData } from "../summarizerHeuristics";
 
@@ -39,12 +38,25 @@ describe("Runtime", () => {
             let lastRefSeq = 0;
             let lastClientSeq: number;
             let lastSummarySeq: number;
+            const summaryCommon = {
+                maxAckWaitTime: 120000, // 2 min
+                maxOpsSinceLastSummary: 7000,
+                initialSummarizerDelayMs: 0,
+                summarizerClientElection: false,
+            };
             const summaryConfig: ISummaryConfiguration = {
+                state: "enabled",
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
-                maxAckWaitTime: 120000, // 2 min
+                minOpsForLastSummaryAttempt: 50,
+                ...summaryCommon,
             };
+            const summaryConfigDisableHeuristics: ISummaryConfiguration = {
+                state: "disableHeuristics",
+                ...summaryCommon,
+            };
+
             let shouldDeferGenerateSummary: boolean = false;
             let deferGenerateSummary: Deferred<void> | undefined;
 
@@ -62,7 +74,7 @@ describe("Runtime", () => {
             }
 
             function emitBroadcast(timestamp = Date.now()) {
-                mockDeltaManager.emit("op",{
+                mockDeltaManager.emit("op", {
                     type: MessageType.Summarize,
                     clientId: summarizerClientId,
                     referenceSequenceNumber: lastRefSeq,
@@ -92,7 +104,7 @@ describe("Runtime", () => {
                 const summaryProposal: ISummaryProposal = {
                     summarySequenceNumber: lastSummarySeq,
                 };
-                const contents: ISummaryNack & { retryAfter?: number } = {
+                const contents: ISummaryNack & { retryAfter?: number; } = {
                     summaryProposal,
                     retryAfter: retryAfterSeconds,
                     message: "test-nack",
@@ -126,12 +138,12 @@ describe("Runtime", () => {
             }
 
             const startRunningSummarizer = async (
-                summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
+                disableHeuristics?: boolean,
             ): Promise<void> => {
                 summarizer = await RunningSummarizer.start(
                     mockLogger,
                     summaryCollection.createWatcher(summarizerClientId),
-                    summaryConfig,
+                    disableHeuristics ? summaryConfigDisableHeuristics : summaryConfig,
                     // submitSummaryCallback
                     async (options) => {
                         runCount++;
@@ -155,6 +167,7 @@ describe("Runtime", () => {
                         return {
                             stage: "submit",
                             referenceSequenceNumber: lastRefSeq,
+                            minimumSequenceNumber: 0,
                             generateDuration: 0,
                             uploadDuration: 0,
                             submitOpDuration: 0,
@@ -167,6 +180,9 @@ describe("Runtime", () => {
                                 dataStoreCount: 0,
                                 summarizedDataStoreCount: 0,
                                 unreferencedBlobSize: 0,
+                                opsSizesSinceLastSummary: 0,
+                                nonSystemOpsSinceLastSummary: 0,
+                                summaryNumber: 0,
                             },
                             handle: "test-handle",
                             clientSequenceNumber: lastClientSeq,
@@ -179,11 +195,11 @@ describe("Runtime", () => {
                     neverCancelledSummaryToken,
                     // stopSummarizerCallback
                     (reason) => { stopCall++; },
-                    summarizerOptions,
                 );
             };
 
             before(() => {
+                // eslint-disable-next-line import/no-named-as-default-member
                 clock = sinon.useFakeTimers();
             });
 
@@ -358,8 +374,8 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 0);
                 });
 
-                it("Should summarize one last time before closing >50 ops", async () => {
-                    await emitNextOp(51); // hard-coded to 50 for now
+                it("Should summarize one last time before closing >=min ops", async () => {
+                    await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
@@ -368,8 +384,8 @@ describe("Runtime", () => {
                     assertRunCounts(1, 0, 0, "should perform lastSummary");
                 });
 
-                it("Should not summarize one last time before closing <=50 ops", async () => {
-                    await emitNextOp(50); // hard-coded to 50 for now
+                it("Should not summarize one last time before closing <min ops", async () => {
+                    await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt - 1);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
@@ -636,8 +652,7 @@ describe("Runtime", () => {
                     try {
                         summarizer.summarizeOnDemand(undefined, { reason: "test" });
                         resolved = true;
-                    }
-                    catch {}
+                    } catch {}
 
                     await flushPromises();
                     assert(resolved === false, "already running promise should not resolve yet");
@@ -977,7 +992,7 @@ describe("Runtime", () => {
                             eventName: "Running:Summarize_end",
                             summarizeCount: runCount,
                             summarizerSuccessfulAttempts: runCount,
-                            summarizeReason: "maxOps",
+                            reason: "maxOps",
                         },
                     ]), "unexpected log sequence 3");
                 });
@@ -985,7 +1000,7 @@ describe("Runtime", () => {
 
             describe("Disabled Heuristics", () => {
                 it("Should not summarize after time or ops", async () => {
-                    await startRunningSummarizer({ disableHeuristics: true });
+                    await startRunningSummarizer(true /* disableHeuristics */);
 
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(0, 0, 0, "should not summarize after maxOps");
@@ -1002,9 +1017,9 @@ describe("Runtime", () => {
                 });
 
                 it("Should not summarize before closing", async () => {
-                    await startRunningSummarizer({ disableHeuristics: true });
+                    await startRunningSummarizer(true /* disableHeuristics */);
 
-                    await emitNextOp(51); // hard-coded to 50 for now
+                    await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt);
                     const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
@@ -1020,7 +1035,7 @@ describe("Runtime", () => {
                     emitBroadcast(summaryTimestamp);
 
                     let startStatus: "starting" | "started" | "failed" = "starting";
-                    startRunningSummarizer({ disableHeuristics: true })
+                    startRunningSummarizer(true /* disableHeuristics */)
                         .then(
                             () => { startStatus = "started"; },
                             () => { startStatus = "failed"; },

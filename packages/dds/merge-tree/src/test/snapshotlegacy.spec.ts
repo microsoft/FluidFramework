@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -25,7 +26,6 @@ describe("snapshot", () => {
 
         const snapshot = new SnapshotLegacy(client1.mergeTree, client1.logger);
         snapshot.extractSync();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summaryTree = snapshot.emit([], serializer, undefined!);
         const services = MockStorage.createFromSummary(summaryTree.summary);
 
@@ -46,7 +46,7 @@ describe("snapshot", () => {
         const clients = [new TestClient(), new TestClient(), new TestClient()];
         clients[0].startOrUpdateCollaboration("0");
         for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk + 10; i++) {
-            const op = clients[0].insertTextLocal(clients[0].getLength(), `${i % 10}`, { segment: i });
+            const op = clients[0].insertTextLocal(clients[0].getLength(), `${i % 10}`, { segment: i })!;
             const msg = clients[0].makeOpMessage(op, i + 1);
             msg.minimumSequenceNumber = i + 1;
             clients[0].applyMsg(msg);
@@ -58,7 +58,6 @@ describe("snapshot", () => {
             const client2 = clients[i + 1];
             const snapshot = new SnapshotLegacy(client1.mergeTree, client1.logger);
             snapshot.extractSync();
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const summaryTree = snapshot.emit([], serializer, undefined!);
             const services = MockStorage.createFromSummary(summaryTree.summary);
             const runtime: Partial<IFluidDataStoreRuntime> = {

@@ -2,6 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { makeStyles } from "@material-ui/core/styles";
+import classNames from "classnames";
+import React, { useState } from "react";
+import Select from "react-select";
+import { IndicatorProps } from "react-select/lib/components/indicators";
+import Option, { OptionProps } from "react-select/lib/components/Option";
+import SingleValue, { SingleValueProps } from "react-select/lib/components/SingleValue";
+import { Props as SelectProps } from "react-select/lib/Select";
+import { StylesConfig } from "react-select/lib/styles";
+import { GroupedOptionsType, OptionsType, ValueType } from "react-select/lib/types";
+import { SvgIcon } from "./SVGIcon";
 import {
   backGroundDarkGrayColor,
   backGroundGrayColor,
@@ -10,96 +22,82 @@ import {
   colorWhite,
   textDarkColor,
   transparentShadowColor,
-} from './constants';
-
-import {SvgIcon} from './SVGIcon';
-
-import { makeStyles } from '@material-ui/core/styles';
-import classNames from 'classnames';
-import React, { useState } from 'react';
-import Select from 'react-select';
-import { IndicatorProps } from 'react-select/lib/components/indicators';
-import Option, { OptionProps } from 'react-select/lib/components/Option';
-import SingleValue, { SingleValueProps } from 'react-select/lib/components/SingleValue';
-import { Props as SelectProps } from 'react-select/lib/Select';
-import { StylesConfig } from 'react-select/lib/styles';
-import { GroupedOptionsType, OptionsType, ValueType } from 'react-select/lib/types';
+} from "./constants";
 
 const useStyles = makeStyles({
 
   customOptionLabel: {
-    marginTop: '4px',
+    marginTop: "4px",
   },
   dropdown: {
-    borderRadius: '4px',
-    marginBottom: '5px',
+    borderRadius: "4px",
+    marginBottom: "5px",
   },
   dropdownClosed: {
-    border: '2px solid ' + backGroundGrayColor,
+    border: `2px solid ${ backGroundGrayColor }`,
   },
   dropdownOpen: {
-    border: '2px solid ' + borderBlueColor,
+    border: `2px solid ${ borderBlueColor }`,
   },
   menuIndicatorIcon: {
-    height: '16px',
-    marginRight: '8px',
-    width: '16px',
+    height: "16px",
+    marginRight: "8px",
+    width: "16px",
   },
-}, { name: 'DecoratedSelect' });
+}, { name: "DecoratedSelect" });
 
 // Style api of react-select library
 const reactSelectStyles: StylesConfig = {
   container: (provided) => ({
     ...provided,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   }),
   control: (base) => ({
     ...base,
-    backgroundColor: backGroundDarkGrayColor + ' !important',
-    border: 'none !important',
-    boxShadow: '1px 1px 10px 1px ' + transparentShadowColor + ' !important',
+    backgroundColor: `${ backGroundDarkGrayColor } !important`,
+    border: "none !important",
+    boxShadow: `1px 1px 10px 1px ${ transparentShadowColor } !important`,
   }),
   indicatorSeparator: (provided, state) => ({
     ...provided,
-    display: 'none',
+    display: "none",
   }),
   indicatorsContainer: (provided) => ({
     ...provided,
     background: backGroundDarkGrayColor,
-    borderRadius: '5px',
+    borderRadius: "5px",
   }),
   menu: (base) => ({
     ...base,
-    marginBottom: '0px',
-    marginTop: '5px',
+    marginBottom: "0px",
+    marginTop: "5px",
   }),
-  option: (provided, state) => (Object.assign({
+  option: (provided, state) => ({
     ...provided,
     color: textDarkColor,
-    display: 'flex',
-    fontSize: '.9rem',
-    fontWeight: 'bold',
-  },
-    state.isFocused ? { backgroundColor: backGroundLightBlueColor } : {},
-    !state.isFocused ? { backgroundColor: colorWhite } : {},
-  )),
+    display: "flex",
+    fontSize: ".9rem",
+    fontWeight: "bold",
+    ...(state.isFocused ? { backgroundColor: backGroundLightBlueColor } : {}),
+    ...(!state.isFocused ? { backgroundColor: colorWhite } : {}),
+  }),
   singleValue: (base) => ({
     ...base,
-    alignItems: 'center',
-    color: textDarkColor + ' !important',
-    display: 'flex',
-    fontSize: '.9rem',
-    fontWeight: 'bold',
-    marginLeft: '-5px',
-    marginRight: '15px',
-    position: 'relative',
+    alignItems: "center",
+    color: `${ textDarkColor } !important`,
+    display: "flex",
+    fontSize: ".9rem",
+    fontWeight: "bold",
+    marginLeft: "-5px",
+    marginRight: "15px",
+    position: "relative",
   }),
   valueContainer: (base) => ({
     ...base,
-    color: 'inherit',
-    height: '30px',
-    paddingLeft: '4px',
-    width: '100%',
+    color: "inherit",
+    height: "30px",
+    paddingLeft: "4px",
+    width: "100%",
   }),
 };
 
@@ -143,7 +141,7 @@ const CustomOption: React.FunctionComponent<OptionProps<IDecoratedSelectOptionTy
 const CustomSingleValue: React.FunctionComponent<SingleValueProps<IDecoratedSelectOptionType>> =
   ({ children, ...props }) => {
     return (
-      <SingleValue  {...props}>
+      <SingleValue {...props}>
         {props.data.icon}
         {children}
       </SingleValue>
@@ -154,7 +152,7 @@ const CustomDropdownIndicator: React.FunctionComponent<IndicatorProps<IDecorated
   const classes = useStyles();
   return (
     <SvgIcon
-      svgId={props.selectProps.menuIsOpen ? 'clear-24' : 'down'}
+      svgId={props.selectProps.menuIsOpen ? "clear-24" : "down"}
       className={classes.menuIndicatorIcon}
       hoverable
     />
@@ -171,7 +169,7 @@ export const DecoratedSelect: React.FunctionComponent<DecoratedSelectProps> = (p
         onMenuOpen={() => setRenderBorder(true)}
         onMenuClose={() => setRenderBorder(false)}
         isSearchable={renderBorder}
-        value={renderBorder ? { icon: '', label: '', value: '' } : props.value}
+        value={renderBorder ? { icon: "", label: "", value: "" } : props.value}
         components={{
           ...components,
           DropdownIndicator: CustomDropdownIndicator,
@@ -187,7 +185,7 @@ export const DecoratedSelect: React.FunctionComponent<DecoratedSelectProps> = (p
 
 DecoratedSelect.defaultProps = {
   maxMenuHeight: 180,
-  menuPlacement: 'bottom',
+  menuPlacement: "bottom",
   pageSize: 5,
   searchable: true,
 };

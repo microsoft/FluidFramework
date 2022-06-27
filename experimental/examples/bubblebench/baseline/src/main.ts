@@ -11,7 +11,7 @@ import {
 import { AppState } from "./state";
 
 export class Bubblebench extends DataObject {
-    public static get Name() { return "@fluid-experimental/bubblebench-baseline"; }
+    public static get Name() { return "@fluid-example/bubblebench-baseline"; }
     private state?: AppState;
 
     protected async hasInitialized() {

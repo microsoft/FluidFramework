@@ -4,7 +4,6 @@
  */
 
 import { ITenantConfig } from "@fluidframework/server-services-core";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { TestDb, TestTenant } from "@fluidframework/server-test-utils";
 import { ITenantService } from "../../services";
 

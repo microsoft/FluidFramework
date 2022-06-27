@@ -6,8 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import * as crypto from "crypto";
 import { expect } from "chai";
-import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IContainer, IHostLoader, ILoaderOptions, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -475,6 +474,7 @@ describe("PropertyDDS", () => {
                     // We expect all properties from the set to be present
                     const array = sharedPropertyTree1.root.get<ArrayProperty>("array");
                     assert(array !== undefined, "property undefined");
+
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                     for (const property of array.getValues() as any[]) {
                         expect(!deletedProperties.has(property.guid)).to.be.true;

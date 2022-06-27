@@ -36,7 +36,7 @@ describe("SummarizerHandle", () => {
     it("get should fail", async () => {
         try {
             await handle?.get();
-        } catch (e) {
+        } catch (e: any) {
             assert(e.message === "Do not try to get a summarizer object from the handle. Reference it directly.");
         }
     });

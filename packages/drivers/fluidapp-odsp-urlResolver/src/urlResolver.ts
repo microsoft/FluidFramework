@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert , fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
@@ -26,7 +26,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         } else if (server === "www.office.com") {
             const getRequiredParam = (name: string): string => {
                 const value = reqUrl.searchParams.get(name);
-                assert(!!value, 0x097 /* `Missing ${name} from office.com URL parameter` */);
+                assert(!!value, 0x097 /* Missing param from office.com URL parameter */);
                 return value;
             };
             contents = {
@@ -40,7 +40,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         if (!contents) {
             return undefined;
         }
-        const urlToBeResolved = createOdspUrl({...contents, dataStorePath:""});
+        const urlToBeResolved = createOdspUrl({ ...contents, dataStorePath: "" });
         const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
         return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
     }
@@ -57,7 +57,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
 async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlParts | undefined> {
     const pathname = urlSource.pathname;
     // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-    const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes)\/([^/]*)\/([^/]*)\/([^/]*)/);
+    const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/);
     if (siteDriveItemMatch === null) {
         return undefined;
     }

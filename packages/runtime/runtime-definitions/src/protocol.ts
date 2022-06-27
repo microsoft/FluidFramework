@@ -27,6 +27,11 @@ export interface ISignalEnvelope {
     address?: string;
 
     /**
+     * Identifier for the signal being submitted.
+     */
+    clientSignalSequenceNumber: number;
+
+     /**
      * The contents of the envelope
      */
     contents: {
@@ -70,4 +75,4 @@ export interface IAttachMessage {
  * so this gives correct typings for writing backward compatible code.
  */
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot">
-    & { snapshot: IAttachMessage["snapshot"] | null };
+    & { snapshot: IAttachMessage["snapshot"] | null; };

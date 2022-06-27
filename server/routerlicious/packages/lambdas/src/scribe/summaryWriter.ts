@@ -609,8 +609,8 @@ export class SummaryWriter implements ISummaryWriter {
         };
     }
 
-    private createSummaryTreeFromEntryCore(treeEntries: ITreeEntry[]): { [path: string]: SummaryObject } {
-        const tree: { [path: string]: SummaryObject } = {};
+    private createSummaryTreeFromEntryCore(treeEntries: ITreeEntry[]): { [path: string]: SummaryObject; } {
+        const tree: { [path: string]: SummaryObject; } = {};
         for (const treeEntry of treeEntries) {
             let summaryObject: SummaryObject;
             switch (treeEntry.type) {
@@ -639,7 +639,7 @@ export class SummaryWriter implements ISummaryWriter {
                     break;
                 }
                 default: {
-                    throw new Error(`Unexpected TreeEntry type: ${treeEntry.type} when converting ITreeEntry.`);
+                    throw new Error(`Unexpected TreeEntry type when converting ITreeEntry.`);
                 }
             }
 

@@ -108,7 +108,7 @@ describe("Shared Map with Interception", () => {
             let asserted: boolean = false;
             try {
                 sharedMapWithInterception.set("color", "green");
-            } catch (error) {
+            } catch (error: any) {
                 assert.strictEqual(error.message, "0x0c0",
                     "We should have caught an assert in replaceText because it detects an infinite recursion");
                 asserted = true;

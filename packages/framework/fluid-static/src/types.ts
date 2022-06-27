@@ -31,7 +31,7 @@ export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> |
  * @typeParam T - The class of the DataObject
  */
 export type DataObjectClass<T extends IFluidLoadable>
-    = { readonly factory: IFluidDataStoreFactory } & LoadableObjectCtor<T>;
+    = { readonly factory: IFluidDataStoreFactory; } & LoadableObjectCtor<T>;
 
 /**
  * A SharedObjectClass is a class that has a factory that can create a DDS (SharedObject) and a
@@ -39,7 +39,7 @@ export type DataObjectClass<T extends IFluidLoadable>
  * @typeParam T - The class of the SharedObject
  */
 export type SharedObjectClass<T extends IFluidLoadable>
-    = { readonly getFactory: () => IChannelFactory } & LoadableObjectCtor<T>;
+    = { readonly getFactory: () => IChannelFactory; } & LoadableObjectCtor<T>;
 
 /**
  * An object with a constructor that will return an `IFluidLoadable`.

@@ -29,10 +29,9 @@
     "deno.enable": false,
     "deno.lint": false,
     "deno.unstable": false,
-
-    // Custom dictionary additions for the 'streetsidesoftware.code-spell-checker' extension.
     "cSpell.words": [
         "injective",
-        "losslessly"
+        "losslessly",
+        "unaugmented"
     ]
 }

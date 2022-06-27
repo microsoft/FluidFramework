@@ -1,7 +1,7 @@
 # @fluidframework/undo-redo
 
-This package provides and implementation of an in-memory undo redo stack, as well as handlers for the SharedMap, and
-SharedSegmentSequence distributed datastructures.
+This package provides an implementation of an in-memory undo redo stack, as well as handlers for the SharedMap and
+SharedSegmentSequence distributed data structures.
 
 ## Undo Redo Stack Manager
 
@@ -12,11 +12,11 @@ The outer stack contains operations, and the inner stack contains all the IRever
 operation. This allows the consumer of the undo redo stack manager to determine the granularity of what is undone or
 redone.
 
-For instance, you could defined a text operation at the word level, so as a user types you could close the current
+For instance, you could define a text operation at the word level, so as a user types you could close the current
 operation whenever the user types a space. By doing this when the user issues an undo mid-word the characters typed
-since the last space would be undone, if they issue another undo the previous word would them be undone.
+since the last space would be undone, if they issue another undo the previous word would then be undone.
 
-As mentioned above operations are a stack of IRevertible objects. As suggested by the name, these objects have the
+As mentioned above, operations are a stack of IRevertible objects. As suggested by the name, these objects have the
 ability to revert some change which usually means two things. They must be able to track what was changed, and store
 enough metadata to revert that change.
 

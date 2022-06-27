@@ -5,7 +5,7 @@
 /**
  * @fileoverview Helper functions and classes to work with array ChangeSets
  */
- import {copy as cloneDeep} from "fastest-json-copy";
+ import { copy as cloneDeep } from "fastest-json-copy";
  import isNumber from "lodash/isNumber";
  import isString from "lodash/isString";
  import isEqual from "lodash/isEqual";
@@ -57,10 +57,10 @@ export interface OperationRangeDescription<T = GenericOperation> {
     removeInsertOperationB?: arrayRemoveList | arrayInsertList;
     removeInsertOperation?: arrayRemoveList | arrayInsertList;
     removeInsertOperationA?: arrayRemoveList | arrayInsertList;
-    op?: T,
-    begin?: number,
-    end?: number,
-    flag?: ArrayChangeSetRangeType
+    op?: T;
+    begin?: number;
+    end?: number;
+    flag?: ArrayChangeSetRangeType;
 
 }
 

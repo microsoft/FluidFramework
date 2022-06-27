@@ -47,16 +47,7 @@ module.exports = {
         "@typescript-eslint/brace-style": "off",
         "@typescript-eslint/comma-dangle": [
             "error",
-            {
-                "arrays": "always-multiline",
-                "enums": "always-multiline",
-                "exports": "always-multiline",
-                "functions": "always-multiline",
-                "generics": "never",
-                "imports": "always-multiline",
-                "objects": "always-multiline",
-                "tuples": "always-multiline",
-            }
+            "always-multiline",
         ],
         "@typescript-eslint/comma-spacing": "off",
         "@typescript-eslint/consistent-type-assertions": [

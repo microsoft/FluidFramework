@@ -30,7 +30,6 @@ import {
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IFluidHTMLOptions } from "@fluidframework/view-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
 import { clamp, emptyArray, randomId, TagName, TokenList } from "../util";
 import { IHTMLAttributes } from "../util/attr";
@@ -43,14 +42,13 @@ export const enum DocSegmentKind {
     paragraph = "<p>",
     lineBreak = "<br>",
     beginTags = "<t>",
-    inclusion = "<?>",
     endTags = "</>",
 
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
     endOfText = "eot",
 }
 
-const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion]);
+const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags]);
 
 const enum Workaround { checkpoint = "*" }
 
@@ -93,10 +91,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
 const empty = Object.freeze({});
 
-export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const getComponentOptions = (segment: ISegment): IFluidHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
+export const getCss = (segment: ISegment): Readonly<{ style?: string; classList?: string; }> => segment.properties || empty;
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
 
@@ -153,9 +148,8 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
     private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: TagName.p });
     private static readonly lineBreakProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint] });
-    private static readonly inclusionProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint] });
     private static readonly tagsProperties = Object.freeze({
-        [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint],
+        [reservedTileLabelsKey]: [DocTile.checkpoint],
         [reservedRangeLabelsKey]: [DocSegmentKind.beginTags],
     });
 
@@ -163,7 +157,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
     public create() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
         this.sharedString = SharedString.create(this.runtime);
         this.root.set(textId, this.sharedString.handle);
@@ -172,7 +166,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
     public async load() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
         const handle = this.root.get<IFluidHandle<SharedString>>(textId);
         if (handle === undefined) {
@@ -318,14 +312,6 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public insertComponent(position: number, handle: IFluidHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
-        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
-            ...FlowDocument.inclusionProperties,
-            componentOptions, handle, style, classList: classList && classList.join(" "), view,
-        }));
-    }
-
     public setFormat(position: number, tag: TagName) {
         const { start } = this.findParagraph(position);
 
@@ -366,7 +352,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     public getTags(position: number): Readonly<Marker[]> {
         const tags = this.sharedString.getStackContext(position, [DocSegmentKind.beginTags])[DocSegmentKind.beginTags];
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return (tags && tags.items) || emptyArray;
+        return tags?.items || emptyArray;
     }
 
     public getStart(marker: Marker) {
@@ -419,7 +405,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.annotateRange(start, end, { attr });
     }
 
-    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition, pos: number } {
+    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition; pos: number; } {
         return this.sharedString.findTile(position, tileType as unknown as string, preceding);
     }
 
@@ -486,7 +472,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {
-        const updates: { span: SegmentSpan, classList: string }[] = [];
+        const updates: { span: SegmentSpan; classList: string; }[] = [];
 
         this.visitRange((position, segment, startOffset, endOffset) => {
             const oldList = getCss(segment).classList;

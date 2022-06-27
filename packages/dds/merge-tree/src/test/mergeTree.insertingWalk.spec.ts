@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "assert";
 import {
     IMergeBlock,
@@ -88,13 +90,13 @@ const treeFactories: ITestTreeFactory[] = [
 
             const nodes: IMergeBlock[] = [mergeTree.root];
             while (nodes.length > 0) {
-                const node = nodes.pop();
+                const node = nodes.pop()!;
                 assert.equal(node.childCount, MaxNodesInBlock - 1);
-                const childernBlocks =
+                const childrenBlocks =
                     node.children
                         .map((v) => v as IMergeBlock)
                         .filter((v) => v === undefined);
-                nodes.push(...childernBlocks);
+                nodes.push(...childrenBlocks);
             }
 
             mergeTree.startCollaboration(
@@ -145,7 +147,7 @@ const treeFactories: ITestTreeFactory[] = [
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
             initialText = initialText.substring(remove);
 
             // remove from end
@@ -156,7 +158,7 @@ const treeFactories: ITestTreeFactory[] = [
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
             initialText = initialText.substring(0, initialText.length - remove);
 
             mergeTree.startCollaboration(
@@ -257,5 +259,74 @@ describe("MergeTree.insertingWalk", () => {
                 });
             });
         });
+    });
+
+    it("handles conflicts involving removed segments across block boundaries", () => {
+        let initialText = "0";
+        let seq = 0;
+        const mergeTree = new MergeTree();
+        mergeTree.startCollaboration(localClientId, 0, seq);
+        mergeTree.insertSegments(
+            0,
+            [TextSegment.make(initialText)],
+            UniversalSequenceNumber,
+            localClientId,
+            UniversalSequenceNumber,
+            undefined);
+        for (let i = 1; i < MaxNodesInBlock; i++) {
+            const text = String.fromCharCode(i + 64);
+            insertText(
+                mergeTree,
+                0,
+                UniversalSequenceNumber,
+                localClientId,
+                UnassignedSequenceNumber,
+                text,
+                undefined,
+                undefined);
+            initialText += text;
+        }
+
+        const textHelper = new MergeTreeTextHelper(mergeTree);
+
+        assert.equal(mergeTree.root.childCount, 2);
+        assert.equal(textHelper.getText(0, localClientId), "GFEDCBA0");
+        // Remove "DCBA"
+        mergeTree.markRangeRemoved(
+            3,
+            7,
+            UniversalSequenceNumber,
+            localClientId,
+            UnassignedSequenceNumber,
+            false,
+            undefined as any,
+        );
+        assert.equal(textHelper.getText(0, localClientId), "GFE0");
+        // Simulate another client inserting concurrently with the above operations. Because
+        // all segments but the 0 are unacked, this insert should place the segment directly
+        // before the 0. Prior to this regression test, an issue with `rightExcursion` in the
+        // merge conflict logic instead caused the segment to be placed before the removed segments.
+        insertText(
+            mergeTree,
+            0,
+            UniversalSequenceNumber,
+            localClientId + 1,
+            ++seq,
+            "x",
+        );
+
+        const segments: string[] = [];
+        mergeTree.walkAllSegments(mergeTree.root, (seg) => {
+            if (TextSegment.is(seg)) {
+                if (seg.localRemovedSeq !== undefined || seg.removedSeq !== undefined) {
+                    segments.push(`(${seg.text})`);
+                } else {
+                    segments.push(seg.text);
+                }
+            }
+            return true;
+        });
+
+        assert.deepStrictEqual(segments, ["G", "F", "E", "(D)", "(C)", "(B)", "(A)", "x", "0"]);
     });
 });

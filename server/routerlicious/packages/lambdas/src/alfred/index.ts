@@ -18,6 +18,8 @@ import {
 import {
     canSummarize,
     canWrite,
+    isNetworkError,
+    NetworkError,
     validateTokenClaims,
     validateTokenClaimsExpiration,
 } from "@fluidframework/server-services-client";
@@ -70,18 +72,19 @@ const getMessageMetadata = (documentId: string, tenantId: string) => ({
 const handleServerError = async (logger: core.ILogger, errorMessage: string, documentId: string, tenantId: string) => {
     logger.error(errorMessage, { messageMetaData: getMessageMetadata(documentId, tenantId) });
     Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
-    // eslint-disable-next-line prefer-promise-reject-errors
-    return Promise.reject({ code: 500, message: "Failed to connect client to document." });
+    throw new NetworkError(500, "Failed to connect client to document.");
 };
 
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
 
 const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
+const getSubmitSignalThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitSignal`;
+
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     // Trace sampling.
-    if (message.operation && message.operation.traces && getRandomInt(100) === 0) {
+    if (message.operation?.traces && getRandomInt(100) === 0) {
         message.operation.traces.push(
             {
                 action: "start",
@@ -114,19 +117,70 @@ function selectProtocolVersion(connectVersions: string[]): string | undefined {
 }
 
 /**
+ * Converts a relayUserAgent string into a \<key,value\> map.
+ * @param relayUserAgent - user agent string in the format "prop1:val1;prop2:val2;prop3:val3"
+ */
+function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string, string> {
+    if (!relayUserAgent) {
+        return {};
+    }
+    const map = {};
+    const propertyKeyValuePairs: string[][] = relayUserAgent.split(";").map((keyValuePair) => keyValuePair.split(":"));
+    // TODO: would be cleaner with `Object.fromEntries()` but tsconfig needs es2019 lib
+    for (const [key, value] of propertyKeyValuePairs) {
+        map[key] = value;
+    }
+    return map;
+}
+
+/**
+ * Stores client connectivity time in a Redis list.
+ */
+ async function storeClientConnectivityTime(
+    clientId: string,
+    documentId: string,
+    tenantId: string,
+    connectionTimestamp: number,
+    throttleAndUsageStorageManager: core.IThrottleAndUsageStorageManager) {
+    try {
+        const now = Date.now();
+        const connectionTimeInMinutes = (now - connectionTimestamp) / 60000;
+        const storageId = core.clientConnectivityStorageId;
+        const usageData = {
+            value: connectionTimeInMinutes,
+            tenantId,
+            documentId,
+            clientId,
+            startTime: connectionTimestamp,
+            endTime: now,
+        };
+        await throttleAndUsageStorageManager.setUsageData(storageId, usageData);
+    } catch (error) {
+        Lumberjack.error(`ClientConnectivity data storage failed`, {
+            [CommonProperties.clientId]: clientId,
+            [BaseTelemetryProperties.tenantId]: tenantId,
+            [BaseTelemetryProperties.documentId]: documentId,
+        },
+        error);
+    }
+}
+
+/**
  * @returns ThrottlingError if throttled; undefined if not throttled or no throttler provided.
  */
-function checkThrottle(
+function checkThrottleAndUsage(
     throttler: core.IThrottler | undefined,
     throttleId: string,
     tenantId: string,
-    logger?: core.ILogger): core.ThrottlingError | undefined {
+    logger?: core.ILogger,
+    usageStorageId?: string,
+    usageData?: core.IUsageData): core.ThrottlingError | undefined {
     if (!throttler) {
         return;
     }
 
     try {
-        throttler.incrementCount(throttleId);
+        throttler.incrementCount(throttleId, 1, usageStorageId, usageData);
     } catch (error) {
         if (error instanceof core.ThrottlingError) {
             return error;
@@ -158,8 +212,12 @@ export function configureWebSocketServices(
     maxNumberOfClientsPerDocument: number = 1000000,
     maxTokenLifetimeSec: number = 60 * 60,
     isTokenExpiryEnabled: boolean = false,
+    isClientConnectivityCountingEnabled: boolean = false,
+    isSignalUsageCountingEnabled: boolean = false,
     connectThrottler?: core.IThrottler,
-    submitOpThrottler?: core.IThrottler) {
+    submitOpThrottler?: core.IThrottler,
+    submitSignalThrottler?: core.IThrottler,
+    throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
@@ -167,6 +225,8 @@ export function configureWebSocketServices(
         const roomMap = new Map<string, IRoom>();
         // Map from client Ids to scope.
         const scopeMap = new Map<string, string[]>();
+        // Map from client Ids to connection time.
+        const connectionTimeMap = new Map<string, number>();
 
         // Timer to check token expiry for this socket connection
         let expirationTimer: NodeJS.Timer | undefined;
@@ -196,7 +256,7 @@ export function configureWebSocketServices(
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-            const throttleError = checkThrottle(
+            const throttleError = checkThrottleAndUsage(
                 connectThrottler,
                 getSocketConnectThrottleId(message.tenantId),
                 message.tenantId,
@@ -205,11 +265,7 @@ export function configureWebSocketServices(
                 return Promise.reject(throttleError);
             }
             if (!message.token) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 403,
-                    message: "Must provide an authorization token",
-                });
+                throw new NetworkError(403, "Must provide an authorization token");
             }
 
             // Validate token signature and claims
@@ -220,13 +276,13 @@ export function configureWebSocketServices(
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
-            } catch (err) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    // if we don't understand the error, be lenient and allow retry
-                    code: err?.response?.status ?? 401,
-                    message: err?.response?.data ?? "Invalid token",
-                });
+            } catch (error) {
+                if (isNetworkError(error)) {
+                    throw error;
+                }
+                // We don't understand the error, so it is likely an internal service error.
+                const errMsg = `Could not verify connect document token. Error: ${safeStringify(error, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.tenantId, claims.documentId);
             }
 
             const clientId = generateClientId();
@@ -254,9 +310,13 @@ export function configureWebSocketServices(
             messageClient.user = claims.user;
             messageClient.scopes = claims.scopes;
 
-            // Do not give SummaryWrite scope to clients that are not summarizers
+            // 1. Do not give SummaryWrite scope to clients that are not summarizers.
+            // 2. Store connection timestamp for all clients but the summarizer.
+            // Connection timestamp is used (inside socket disconnect event) to
+            // calculate the client connection time (i.e. for billing).
             if (!isSummarizer) {
                 messageClient.scopes = claims.scopes.filter((scope) => scope !== ScopeType.SummaryWrite);
+                connectionTimeMap.set(clientId, connectedTimestamp);
             }
 
             // back-compat: remove cast to any once new definition of IClient comes through.
@@ -271,13 +331,11 @@ export function configureWebSocketServices(
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 400,
-                    message: `Unsupported client protocol. ` +
-                        `Server: ${protocolVersions}. ` +
-                        `Client: ${JSON.stringify(connectVersions)}`,
-                });
+                throw new NetworkError(
+                    400,
+                    // eslint-disable-next-line max-len
+                    `Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`,
+                );
             }
 
             const clients = await clientManager.getClients(claims.tenantId, claims.documentId)
@@ -287,12 +345,13 @@ export function configureWebSocketServices(
                 });
 
             if (clients.length > maxNumberOfClientsPerDocument) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 429,
-                    message: "Too Many Clients Connected to Document",
-                    retryAfter: 5 * 60,
-                });
+                throw new NetworkError(
+                    429,
+                    "Too Many Clients Connected to Document",
+                    true, /* canRetry */
+                    false, /* isFatal */
+                    5 * 60 * 1000 /* retryAfterMs (5 min) */,
+                );
             }
 
             try {
@@ -399,8 +458,13 @@ export function configureWebSocketServices(
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
+            const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
+            const driverVersion: string | undefined = userAgentInfo.driverVersion;
             const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
-            connectMetric.setProperties(getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId));
+            connectMetric.setProperties({
+                ...getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId),
+                [CommonProperties.clientDriverVersion]: driverVersion,
+            });
 
             connectDocument(connectionMessage).then(
                 (message) => {
@@ -445,7 +509,7 @@ export function configureWebSocketServices(
 
                     socket.emit("nack", "", [nackMessage]);
                 } else {
-                    const throttleError = checkThrottle(
+                    const throttleError = checkThrottleAndUsage(
                         submitOpThrottler,
                         getSubmitOpThrottleId(clientId, connection.tenantId),
                         connection.tenantId,
@@ -499,6 +563,28 @@ export function configureWebSocketServices(
                     const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                     socket.emit("nack", "", [nackMessage]);
                 } else {
+                    const signalUsageData: core.IUsageData = {
+                        value: 0,
+                        tenantId: room.tenantId,
+                        documentId: room.documentId,
+                        clientId,
+                    };
+                    const throttleError = checkThrottleAndUsage(
+                        submitSignalThrottler,
+                        getSubmitSignalThrottleId(clientId, room.tenantId),
+                        room.tenantId,
+                        logger,
+                        isSignalUsageCountingEnabled ? core.signalUsageStorageId : undefined,
+                        isSignalUsageCountingEnabled ? signalUsageData : undefined);
+                    if (throttleError) {
+                        const nackMessage = createNackMessage(
+                            throttleError.code,
+                            NackErrorType.ThrottlingError,
+                            throttleError.message,
+                            throttleError.retryAfter);
+                        socket.emit("nack", "", [nackMessage]);
+                        return;
+                    }
                     contentBatches.forEach((contentBatche) => {
                         const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
 
@@ -517,6 +603,7 @@ export function configureWebSocketServices(
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("disconnect", async () => {
             clearExpirationTimer();
+            const removeAndStoreP: Promise<void>[] = [];
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
@@ -527,9 +614,20 @@ export function configureWebSocketServices(
                 );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
+                if (isClientConnectivityCountingEnabled && throttleAndUsageStorageManager) {
+                    const connectionTimestamp = connectionTimeMap.get(clientId);
+                    if (connectionTimestamp) {
+                        removeAndStoreP.push(storeClientConnectivityTime(
+                            clientId,
+                            connection.documentId,
+                            connection.tenantId,
+                            connectionTimestamp,
+                            throttleAndUsageStorageManager,
+                        ));
+                    }
+                }
             }
             // Send notification messages for all client IDs in the room map
-            const removeP: Promise<void>[] = [];
             for (const [clientId, room] of roomMap) {
                 const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
@@ -537,10 +635,10 @@ export function configureWebSocketServices(
                     `Disconnect of ${clientId} from room`,
                     getLumberBaseProperties(room.documentId, room.tenantId),
                 );
-                removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
+                removeAndStoreP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
                 socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
             }
-            await Promise.all(removeP);
+            await Promise.all(removeAndStoreP);
         });
     });
 }

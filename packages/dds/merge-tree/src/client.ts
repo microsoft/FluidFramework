@@ -11,12 +11,12 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Trace } from "@fluidframework/common-utils";
+import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReference } from "./localReference";
+import { LocalReference, LocalReferencePosition } from "./localReference";
 import {
     CollaborationWindow,
     compareStrings,
@@ -25,7 +25,6 @@ import {
     ISegmentAction,
     Marker,
     MergeTree,
-    RangeStackMap,
     SegmentGroup,
 } from "./mergeTree";
 import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
@@ -47,17 +46,18 @@ import {
     IMergeTreeOp,
     IRelativePosition,
     MergeTreeDeltaType,
+    ReferenceType,
 } from "./ops";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
+import { ReferencePosition, RangeStackMap } from "./referencePositions";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
     MergeTreeMaintenanceCallback,
-    ReferencePosition,
 } from "./index";
 
 function elapsedMicroseconds(trace: Trace) {
@@ -163,7 +163,7 @@ export class Client {
     public annotateMarker(
         marker: Marker,
         props: PropertySet,
-        combiningOp: ICombiningOp): IMergeTreeAnnotateMsg | undefined {
+        combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined {
         const annotateOp =
             createAnnotateMarkerOp(marker, props, combiningOp)!;
 
@@ -318,13 +318,32 @@ export class Client {
         }
         return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
     }
-
+    /**
+     * @deprecated - use createReferencePosition instead
+     */
     public addLocalReference(lref: LocalReference) {
         return this.mergeTree.addLocalReference(lref);
     }
 
+    /**
+     * @deprecated - use removeReferencePosition instead
+     */
     public removeLocalReference(lref: LocalReference) {
-        return this.mergeTree.removeLocalReference(lref.segment!, lref);
+        return this.removeLocalReferencePosition(lref);
+    }
+
+    public createLocalReferencePosition(
+        segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined,
+    ): LocalReferencePosition {
+        return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties, this);
+    }
+
+    public removeLocalReferencePosition(lref: LocalReferencePosition) {
+        return this.mergeTree.removeLocalReferencePosition(lref);
+    }
+
+    public localReferencePositionToPosition(lref: ReferencePosition) {
+        return this.mergeTree.referencePositionToLocalPosition(lref);
     }
 
     /**
@@ -552,13 +571,14 @@ export class Client {
 
     /**
      * Gets the client args from the op if remote, otherwise uses the local clients info
-     * @param opArgs - The op arg to get the client sequence args for
+     * @param sequencedMessage - The sequencedMessage to get the client sequence args for
      */
-    private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
+     private getClientSequenceArgsForMessage(sequencedMessage: ISequencedDocumentMessage | undefined):
+        IMergeTreeClientSequenceArgs {
         // If there this no sequenced message, then the op is local
         // and unacked, so use this clients sequenced args
         //
-        if (!opArgs.sequencedMessage) {
+        if (!sequencedMessage) {
             const segWindow = this.getCollabWindow();
             return {
                 clientId: segWindow.clientId,
@@ -567,11 +587,19 @@ export class Client {
             };
         } else {
             return {
-                clientId: this.getShortClientId(opArgs.sequencedMessage.clientId),
-                referenceSequenceNumber: opArgs.sequencedMessage.referenceSequenceNumber,
-                sequenceNumber: opArgs.sequencedMessage.sequenceNumber,
+                clientId: this.getOrAddShortClientId(sequencedMessage.clientId),
+                referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
+                sequenceNumber: sequencedMessage.sequenceNumber,
             };
         }
+    }
+
+    /**
+     * Gets the client args from the op if remote, otherwise uses the local clients info
+     * @param opArgs - The op arg to get the client sequence args for
+     */
+    private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
+        return this.getClientSequenceArgsForMessage(opArgs.sequencedMessage);
     }
 
     private ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
@@ -629,8 +657,7 @@ export class Client {
     getLongClientId(shortClientId: number) {
         if (shortClientId >= 0) {
             return this.shortClientIdMap[shortClientId];
-        }
-        else {
+        } else {
             return "original";
         }
     }
@@ -682,6 +709,61 @@ export class Client {
         return segmentPosition;
     }
 
+    /**
+     * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
+     * of the current sequence number. This is desirable when rebasing operations for reconnection.
+     *
+     * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
+     * the current sequence number, the returned position will align with the position of a reference given
+     * `SlideOnRemove` semantics.
+     */
+    public rebasePosition(
+        pos: number,
+        seqNumberFrom: number,
+        localSeq: number,
+    ): number {
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x300 /* localSeq greater than collab window */);
+        let segment: ISegment | undefined;
+        let posAccumulated = 0;
+        let offset = pos;
+        const isInsertedInView = (seg: ISegment) =>
+            (seg.seq !== undefined && seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom)
+            || (seg.localSeq !== undefined && seg.localSeq <= localSeq);
+
+        const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment) =>
+            (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= seqNumberFrom)
+            || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
+
+        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
+            assert(seg.seq !== undefined || seg.localSeq !== undefined,
+                0x301 /* Either seq or localSeq should be defined */);
+            segment = seg;
+
+            if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
+                posAccumulated += seg.cachedLength;
+                if (offset >= seg.cachedLength) {
+                    offset -= seg.cachedLength;
+                }
+            }
+
+            // Keep going while we've yet to reach the segment at the desired position
+            return posAccumulated <= pos;
+        });
+
+        assert(segment !== undefined, 0x302 /* No segment found */);
+        const seqNumberTo = this.getCollabWindow().currentSeq;
+        if ((segment.removedSeq !== undefined &&
+             segment.removedSeq !== UnassignedSequenceNumber &&
+             segment.removedSeq <= seqNumberTo)
+            || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
+            // Segment that the position was in has been removed: null out offset.
+            offset = 0;
+        }
+
+        assert(0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);
+        return this.findReconnectionPosition(segment, localSeq) + offset;
+    }
+
     private resetPendingDeltaToOps(
         resetOp: IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): IMergeTreeDeltaOp[] {
@@ -706,11 +788,16 @@ export class Client {
                 case MergeTreeDeltaType.ANNOTATE:
                     assert(segment.propertyManager?.hasPendingProperties() === true,
                         0x036 /* "Segment has no pending properties" */);
-                    newOp = createAnnotateRangeOp(
-                        segmentPosition,
-                        segmentPosition + segment.cachedLength,
-                        resetOp.props,
-                        resetOp.combiningOp);
+                    // if the segment has been removed, there's no need to send the annotate op
+                    // unless the remove was local, in which case the annotate must have come
+                    // before the remove
+                    if (segment.removedSeq === undefined || segment.localRemovedSeq !== undefined) {
+                        newOp = createAnnotateRangeOp(
+                            segmentPosition,
+                            segmentPosition + segment.cachedLength,
+                            resetOp.props,
+                            resetOp.combiningOp);
+                    }
                     break;
 
                 case MergeTreeDeltaType.INSERT:
@@ -773,7 +860,34 @@ export class Client {
         }
     }
 
-    public applyMsg(msg: ISequencedDocumentMessage) {
+    public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
+    public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
+    public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
+    public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
+        let metadata: SegmentGroup | SegmentGroup[] | undefined;
+        switch (op.type) {
+            case MergeTreeDeltaType.INSERT:
+                this.applyInsertOp({ op });
+                metadata = this.peekPendingSegmentGroups();
+                break;
+            case MergeTreeDeltaType.REMOVE:
+                this.applyRemoveRangeOp({ op });
+                metadata = this.peekPendingSegmentGroups();
+                break;
+            case MergeTreeDeltaType.ANNOTATE:
+                this.applyAnnotateRangeOp({ op });
+                metadata = this.peekPendingSegmentGroups();
+                break;
+            case MergeTreeDeltaType.GROUP:
+                return op.ops.map((o) => this.applyStashedOp(o));
+            default:
+                unreachableCase(op, "unrecognized op type");
+        }
+        assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
+        return metadata;
+    }
+
+    public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
         // Ensure client ID is registered
         this.getOrAddShortClientId(msg.clientId);
         // Apply if an operation message
@@ -782,10 +896,9 @@ export class Client {
                 op: msg.contents as IMergeTreeOp,
                 sequencedMessage: msg,
             };
-            if (opArgs.sequencedMessage?.clientId === this.longClientId) {
+            if (opArgs.sequencedMessage?.clientId === this.longClientId || local) {
                 this.ackPendingSegment(opArgs);
-            }
-            else {
+            } else {
                 this.applyRemoteOp(opArgs);
             }
         }
@@ -890,7 +1003,7 @@ export class Client {
             assert(
                 catchUpMsgs === undefined || catchUpMsgs.length === 0,
                 0x03f /* "New format should not emit catchup ops" */);
-            const snap = new SnapshotV1(this.mergeTree, this.logger, (id)=>this.getLongClientId(id));
+            const snap = new SnapshotV1(this.mergeTree, this.logger, (id) => this.getLongClientId(id));
             snap.extractSync();
             return snap.emit(serializer, handle);
         } else {
@@ -904,7 +1017,7 @@ export class Client {
         runtime: IFluidDataStoreRuntime,
         storage: IChannelStorageService,
         serializer: IFluidSerializer,
-    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]>; }> {
         const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger, serializer);
 
         return loader.initialize(storage);
@@ -918,8 +1031,7 @@ export class Client {
         const segWindow = this.getCollabWindow();
         if (segWindow.collaborating) {
             return UnassignedSequenceNumber;
-        }
-        else {
+        } else {
             return UniversalSequenceNumber;
         }
     }
@@ -969,18 +1081,17 @@ export class Client {
     }
 
     getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage) {
-        let seq: number;
-        let clientId: number;
-        if (op) {
-            clientId = this.getOrAddShortClientId(op.clientId);
-            seq = op.sequenceNumber;
-        }
-        else {
-            const segWindow = this.mergeTree.getCollabWindow();
-            seq = segWindow.currentSeq;
-            clientId = segWindow.clientId;
-        }
-        return this.mergeTree.getContainingSegment<T>(pos, seq, clientId);
+        const args = this.getClientSequenceArgsForMessage(op);
+        return this.mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, args.clientId);
+    }
+
+    /**
+     * Returns the position to slide a reference to if a slide is required.
+     * @param segoff - The segment and offset to slide from
+     * @returns - segment and offset to slide the reference to
+     */
+    getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
+        return this.mergeTree._getSlideToSegment(segoff);
     }
 
     getPropertiesAtPosition(pos: number) {

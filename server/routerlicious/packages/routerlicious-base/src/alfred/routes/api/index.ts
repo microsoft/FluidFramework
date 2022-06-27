@@ -5,6 +5,8 @@
 
 import {
     ICache,
+    ICollection,
+    IDocument,
     IDocumentStorage,
     IProducer,
     ITenantManager,
@@ -28,7 +30,7 @@ export function create(
     operationsDbMongoManager: MongoManager,
     producer: IProducer,
     appTenants: IAlfredTenant[],
-    globalDbMongoManager?: MongoManager): Router {
+    documentsCollection: ICollection<IDocument>): Router {
     const router: Router = Router();
     const deltasRoute = deltas.create(config, tenantManager, operationsDbMongoManager, appTenants, throttler);
     const documentsRoute = documents.create(
@@ -38,7 +40,7 @@ export function create(
         singleUseTokenCache,
         config,
         tenantManager,
-        globalDbMongoManager);
+        documentsCollection);
     const apiRoute = api.create(config, producer, tenantManager, storage, throttler);
 
     router.use(cors());

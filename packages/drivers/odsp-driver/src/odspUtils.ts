@@ -13,7 +13,6 @@ import {
     NetworkErrorBasic,
 } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
@@ -43,18 +42,11 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
 
-export interface ISnapshotContents {
-    snapshotTree: ISnapshotTree,
-    blobs: Map<string, ArrayBuffer>,
-    ops: ISequencedDocumentMessage[],
-    sequenceNumber: number | undefined,
-}
-
 export interface IOdspResponse<T> {
     content: T;
     headers: Map<string, string>;
     propsToLog: ITelemetryProperties;
-    duration: number,
+    duration: number;
 }
 
 export interface TokenFetchOptionsEx extends TokenFetchOptions {
@@ -129,21 +121,16 @@ export async function fetchHelper(
             duration: performance.now() - start,
         };
     }, (error) => {
-        // While we do not know for sure whether computer is offline, this error is not actionable and
-        // is pretty good indicator we are offline. Treating it as offline scenario will make it
-        // easier to see other errors in telemetry.
-        let online = isOnline();
+        const online = isOnline();
         const errorText = `${error}`;
-        if (errorText === "TypeError: Failed to fetch") {
-            online = OnlineStatus.Offline;
-        }
+
         // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
             throw new RetryableError(
                 "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, { driverVersion });
         }
         // TCP/IP timeout
-        if (errorText.indexOf("ETIMEDOUT") !== -1) {
+        if (errorText.includes("ETIMEDOUT")) {
             throw new RetryableError(
                 "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, { driverVersion });
         }
@@ -158,6 +145,8 @@ export async function fetchHelper(
                 // pre-0.58 error message prefix: Offline
                 `ODSP fetch failure (Offline): ${errorText}`, DriverErrorType.offlineError, { driverVersion });
         } else {
+            // It is perhaps still possible that this is due to being offline, the error does not reveal enough
+            // information to conclude.  Could also be DNS errors, malformed fetch request, CSP violation, etc.
             throw new RetryableError(
                 // pre-0.58 error message prefix: Fetch error
                 `ODSP fetch failure: ${errorText}`, DriverErrorType.fetchFailure, { driverVersion });
@@ -246,7 +235,8 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
     ChildLogger.create(
         logger,
         "OdspDriver",
-        { all :
+        {
+            all:
             {
                 driverVersion,
             },
@@ -310,7 +300,7 @@ export function toInstrumentedOdspTokenFetcher(
                 if (token === null && throwOnNullToken) {
                     throw new NonRetryableError(
                         // pre-0.58 error message: Token is null for ${name} call
-                        `The Host-provided token fetcher for ${name} call returned null`,
+                        `The Host-provided token fetcher returned null`,
                         OdspErrorType.fetchTokenError,
                         { method: name, driverVersion });
                 }
@@ -322,7 +312,7 @@ export function toInstrumentedOdspTokenFetcher(
                 const tokenError = wrapError(
                     error,
                     (errorMessage) => new NetworkErrorBasic(
-                        `The Host-provided token fetcher for ${name} call threw an error: ${errorMessage}`,
+                        `The Host-provided token fetcher threw an error: ${errorMessage}`,
                         OdspErrorType.fetchTokenError,
                         typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
                         { method: name, driverVersion }));
@@ -343,3 +333,7 @@ export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICach
     };
     return cacheEntry;
 }
+
+// 80KB is the max body size that we can put in ump post body for server to be able to accept it.
+// Keeping it 78KB to be a little cautious. As per the telemetry 99p is less than 78KB.
+export const maxUmpPostBodySize = 79872;

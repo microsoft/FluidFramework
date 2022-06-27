@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Definition, NodeId } from './Identifiers';
-import { ChangeNode } from './generic';
+import type { Definition, StableNodeId } from './Identifiers';
+import { legacySharedTreeInitialTreeId } from './id-compressor';
+import { ChangeNode_0_0_2 } from './persisted-types';
 
 /**
  * The initial tree.
  * @public
  */
-export const initialTree: ChangeNode = {
+export const initialTree: ChangeNode_0_0_2 = {
 	traits: {},
 	definition: '51c58718-47b9-4fe4-ad46-56312f3b9e86' as Definition,
-	identifier: '24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6' as NodeId,
+	identifier: legacySharedTreeInitialTreeId as StableNodeId,
 };

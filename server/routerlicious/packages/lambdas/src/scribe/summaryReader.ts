@@ -209,6 +209,7 @@ export class SummaryReader implements ISummaryReader {
             durableSequenceNumber: 0,
             logOffset: 0,
             sequenceNumber: 0,
+            signalClientConnectionNumber: 0,
             expHash1: "",
             epoch: 0,
             term: 1,

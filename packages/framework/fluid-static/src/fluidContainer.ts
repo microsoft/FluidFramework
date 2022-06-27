@@ -5,7 +5,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState, IContainer, ConnectionState } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
@@ -73,9 +73,9 @@ export interface IFluidContainerEvents extends IEvent {
  */
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
-     * Whether the container is connected to the collaboration session.
+     * Provides the current connected state of the container
      */
-    readonly connected: boolean;
+    readonly connectionState: ConnectionState;
 
      /**
      * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
@@ -119,6 +119,16 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
      */
     attach(): Promise<string>;
+
+    /**
+     * Attempts to connect the container to the delta stream and process ops
+     */
+    connect(): void;
+
+    /**
+     * Disconnects the container from the delta stream and stops processing ops
+     */
+    disconnect(): void;
 
     /**
      * Create a new data object or DDS of the specified type.  In order to share the data object or DDS with other
@@ -178,10 +188,10 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     /**
-     * {@inheritDoc IFluidContainer.connected}
+     * {@inheritDoc IFluidContainer.connectionState}
      */
-    public get connected() {
-        return this.container.connected;
+     public get connectionState(): ConnectionState {
+        return this.container.connectionState;
     }
 
     /**
@@ -196,6 +206,20 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      */
     public async attach(): Promise<string> {
         throw new Error("Cannot attach container. Container is not in detached state");
+    }
+
+    /**
+     * {@inheritDoc IFluidContainer.connect}
+     */
+    public async connect(): Promise<void> {
+        this.container.connect?.();
+    }
+
+    /**
+     * {@inheritDoc IFluidContainer.connect}
+     */
+    public async disconnect(): Promise<void> {
+        this.container.disconnect?.();
     }
 
     /**

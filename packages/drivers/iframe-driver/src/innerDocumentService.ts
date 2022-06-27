@@ -43,8 +43,7 @@ export class InnerDocumentService implements IDocumentService {
         private readonly outerProxy: ICombinedDriver,
         public readonly resolvedUrl: IResolvedUrl,
         public clientId: string,
-        logger?: ITelemetryBaseLogger)
-    {
+        logger?: ITelemetryBaseLogger) {
         // Use a combined logger with the provided and the outer proxy's
         this.logger = new MultiSinkLogger("InnerIFrameDriver");
         this.logger.addLogger(logger);

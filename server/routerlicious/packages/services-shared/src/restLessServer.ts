@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import type { IncomingMessage } from "http";
+import type { IncomingMessage, ServerResponse } from "http";
 import qs from "querystring";
 import { NetworkError, RestLessFieldNames } from "@fluidframework/server-services-client";
-import formidable from "formidable";
+import { urlencoded } from "body-parser";
 
 export const decodeHeader = (
     header: string,
-): { name: string; value: string } => {
+): { name: string; value: string; } => {
     const [name, value] = header.split(/: (.+)/);
     return { name, value };
 };
 
-type IncomingMessageEx = IncomingMessage & { body?: any };
+type IncomingMessageEx = IncomingMessage & { body?: any; };
 
 /**
  * Server for communicating with a "RestLess" client.
@@ -28,29 +28,45 @@ export class RestLessServer {
      */
     public async translate(
         request: IncomingMessageEx,
+        response: ServerResponse,
     ): Promise<IncomingMessageEx> {
         // Ensure it's intended to be RestLess
         if (!RestLessServer.isRestLess(request)) {
             return request;
         }
         // It is possible that body-parser.urlencoded has already parsed the body
-        if (typeof request.body === "object") {
-            this.translateRequestFields(request, request.body);
-            this.parseRequestBody(request);
-        } else if (!request.complete) {
-            await this.parseStreamRequestFormBody(request);
+        // If not, we must parse it ourselves.
+        if (!request.complete) {
+            await new Promise<void>((resolve, reject) =>
+                urlencoded(
+                    {
+                        extended: true,
+                        // urlencoded does not recognize content-type: application/x-www-form-urlencoded;restless
+                        type: (req) => req.headers["content-type"]?.startsWith("application/x-www-form-urlencoded"),
+                    },
+                )(request, response, () => resolve()),
+            );
         }
+        if (!request.body || typeof request.body !== "object") {
+            throw new Error("Could not parse RestLess request body");
+        }
+        this.translateRequestFields(request, request.body);
+        this.parseRequestBody(request);
         return request;
     }
 
     private translateRequestFields(request: IncomingMessageEx, fields: Record<string, any>): void {
         // Parse and override HTTP Method
-        const methodOverride = fields[
+        const methodOverrideField = fields[
             RestLessFieldNames.Method
-        ] as string;
-        request.method = methodOverride;
+        ] as string[] | string;
+        if (methodOverrideField instanceof Array) {
+            request.method = methodOverrideField[0];
+        } else {
+            request.method = methodOverrideField;
+        }
         // Parse and add HTTP Headers
-        const headerField = fields[RestLessFieldNames.Header];
+        const headerField: string | string[] = fields[RestLessFieldNames.Header];
         let definedNewContentType: boolean = false;
         const parseAndSetHeader = (header: string) => {
             const { name, value } = decodeHeader(header);
@@ -71,10 +87,14 @@ export class RestLessServer {
             request.headers["content-type"] = "application/json";
         }
         // Parse and replace request body
-        const bodyField = fields[RestLessFieldNames.Body];
+        const bodyField: string[] | string = fields[RestLessFieldNames.Body];
         // Tell body-parser middleware not to parse the body
         (request as any)._body = true;
-        request.body = bodyField;
+        if (bodyField instanceof Array) {
+            request.body = bodyField[0];
+        } else {
+            request.body = bodyField;
+        }
     }
 
     private parseRequestBody(request: IncomingMessageEx): void {
@@ -96,22 +116,6 @@ export class RestLessServer {
                 }
             }
         }
-    }
-
-    private async parseStreamRequestFormBody(request: IncomingMessageEx): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            const form = formidable({ multiples: true });
-
-            form.parse(request, (err, fields) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                this.translateRequestFields(request, fields);
-                this.parseRequestBody(request);
-                resolve();
-            });
-        });
     }
 
     private static isRestLess(request: IncomingMessageEx) {

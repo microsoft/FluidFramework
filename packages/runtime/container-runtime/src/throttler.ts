@@ -44,7 +44,7 @@ export class Throttler implements IThrottler {
      * by adding the delay times to the actual times.
      */
     public getAttempts(): readonly number[] {
-        return [ ...this.startTimes ];
+        return [...this.startTimes];
     }
 
     /**

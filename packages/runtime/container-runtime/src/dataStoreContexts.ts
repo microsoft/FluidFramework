@@ -8,7 +8,7 @@ import { assert, Deferred, Lazy } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
 
- export class DataStoreContexts implements Iterable<[string,FluidDataStoreContext]>, IDisposable {
+ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
     private readonly notBoundContexts = new Set<string>();
 
     /** Attached and loaded context proxies */
@@ -23,7 +23,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     private readonly deferredContexts = new Map<string, Deferred<FluidDataStoreContext>>();
 
-    private readonly disposeOnce = new Lazy<void>(()=>{
+    private readonly disposeOnce = new Lazy<void>(() => {
         // close/stop all store contexts
         for (const [fluidDataStoreId, contextD] of this.deferredContexts) {
             contextD.promise.then((context) => {
@@ -52,7 +52,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         return this._contexts.size;
     }
 
-    public get disposed() { return this.disposeOnce.evaluated;}
+    public get disposed() { return this.disposeOnce.evaluated; }
     public readonly dispose = () => this.disposeOnce.value;
 
     public notBoundLength() {
@@ -106,8 +106,8 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     /**
      * Get the context with the given id, once it exists locally and is attached.
      * e.g. If created locally, it must be bound, or if created remotely then it's fine as soon as it's sync'd in.
-     * @param id The id of the context to get
-     * @param wait If false, return undefined if the context isn't present and ready now. Otherwise, wait for it.
+     * @param id - The id of the context to get
+     * @param wait - If false, return undefined if the context isn't present and ready now. Otherwise, wait for it.
      */
     public async getBoundOrRemoted(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined> {
         const deferredContext = this.ensureDeferred(id);

@@ -5,7 +5,7 @@
 import { IFluidDependencySynthesizer } from ".";
 /**
  * This is a condensed version of Record that requires the object has all
- * the IFluidObject properties as its type mapped to a string representation
+ * the FluidObject properties as its type mapped to a string representation
  * of that property.
  *
  * @example - \{ IFoo: "IFoo" \}
@@ -16,7 +16,7 @@ export type FluidObjectSymbolProvider<T> = {
 
 /**
  * This is a condensed version of Record that requires the object has all
- * the IFluidObject properties as its type mapped to an object that implements
+ * the FluidObject properties as its type mapped to an object that implements
  * the property.
  */
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined ? Record<string, never> : {
@@ -25,7 +25,7 @@ export type AsyncRequiredFluidObjectProvider<T> = T extends undefined ? Record<s
 
 /**
  * This is a condensed version of Record that requires the object has all
- * the IFluidObject properties as its type, mapped to an object that implements
+ * the FluidObject properties as its type, mapped to an object that implements
  * the property or undefined.
  */
 export type AsyncOptionalFluidObjectProvider<T> = T extends undefined

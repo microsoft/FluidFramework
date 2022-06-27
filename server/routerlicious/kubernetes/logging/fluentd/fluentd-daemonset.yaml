@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: fluentd
@@ -8,6 +8,10 @@ metadata:
 spec:
   updateStrategy:
     type: RollingUpdate
+  selector:
+    app: fluentd
+    version: v1
+    kubernetes.io/cluster-service: "true"
   template:
     metadata:
       labels:

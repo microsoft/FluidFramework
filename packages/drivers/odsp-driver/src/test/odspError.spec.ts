@@ -186,7 +186,7 @@ describe("Odsp Error", () => {
     it("Authorization error with insufficient claims first-class properties", async () => {
         try {
             throwAuthorizationErrorWithInsufficientClaims("TestMessage");
-        } catch (error) {
+        } catch (error: any) {
             assert.equal(error.errorType, DriverErrorType.authorizationError, "errorType should be authorizationError");
             assert(error.message.includes("TestMessage"), "message should contain original message");
             assert.equal(error.canRetry, false, "canRetry should be false");
@@ -238,7 +238,7 @@ describe("Odsp Error", () => {
     it("Authorization error with realm first-class properties", async () => {
         try {
             throwAuthorizationErrorWithRealm("TestMessage");
-        } catch (error) {
+        } catch (error: any) {
             assert.strictEqual(error.errorType, DriverErrorType.authorizationError, "errorType should be authorizationError");
             assert(error.message.includes("TestMessage"), "message should contain original message");
             assert.strictEqual(error.canRetry, false, "canRetry should be false");

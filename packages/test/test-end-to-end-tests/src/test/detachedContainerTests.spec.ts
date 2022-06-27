@@ -136,27 +136,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(subDataStore.context.attachState, AttachState.Detached, "DataStore should be detached!!");
     });
 
-    /**
-     * This test times out because of the following bug. To be enabled once the bug is fixed.
-     * https://github.com/microsoft/FluidFramework/issues/9127
-     */
-    it.skip("Requesting non-root data stores in detached container", async () => {
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        // Get the root dataStore from the detached container.
-        const rootDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
-
-        // Create another data store and bind it by adding its handle in the root data store's DDS.
-        const dataStore2 = await createFluidObject(rootDataStore.context, "default");
-        rootDataStore.root.set("dataStore2", dataStore2.handle);
-
-        // Request the new data store via the request API on the container.
-        const dataStore2Response = await container.request({ url: dataStore2.handle.absolutePath });
-        assert(
-            dataStore2Response.mimeType === "fluid/object" && dataStore2Response.status === 200,
-            "Unable to load bound data store in detached container",
-        );
-    });
-
     it("DataStores in attached container", async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         // Get the root dataStore from the detached container.
@@ -182,7 +161,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
     it("can create DDS in detached container and attach / update it", async function() {
         // GitHub issue: #9534
-        if(provider.driver.type === "tinylicious") {
+        if (provider.driver.type === "tinylicious") {
             this.skip();
         }
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -363,7 +342,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
                 assert.strictEqual(contents.contents.type,
                     testDataStoreType, "DataStore type should match");
                 defPromise.resolve();
-            } catch(e) {
+            } catch (e) {
                 defPromise.reject(e);
             }
             return 0;
@@ -663,7 +642,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
     }).timeout(5000);
 
-    itExpects("Container should be closed on failed attach with non retryable error",[
+    itExpects("Container should be closed on failed attach with non retryable error", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" },
     ], async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -706,5 +685,25 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         const dataStore2 = response2.value as ITestFluidObject;
         assert.strictEqual(dataStore2.root.get("attachKey").absolutePath, subDataStore1.handle.absolutePath,
             "Stored handle should match!!");
+    });
+
+    /**
+     * Fixed in 0.58.2000. Move to full compat once this is the last supported version.
+     */
+    it("Requesting non-root data stores in detached container", async () => {
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        // Get the root dataStore from the detached container.
+        const rootDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+
+        // Create another data store and bind it by adding its handle in the root data store's DDS.
+        const dataStore2 = await createFluidObject(rootDataStore.context, "default");
+        rootDataStore.root.set("dataStore2", dataStore2.handle);
+
+        // Request the new data store via the request API on the container.
+        const dataStore2Response = await container.request({ url: dataStore2.handle.absolutePath });
+        assert(
+            dataStore2Response.mimeType === "fluid/object" && dataStore2Response.status === 200,
+            "Unable to load bound data store in detached container",
+        );
     });
 });

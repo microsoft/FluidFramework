@@ -58,6 +58,7 @@ import {
     ISummarizeResult,
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -132,7 +133,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
     readonly pkg: Readonly<string[]> | undefined;
     readonly snapshotTree: ISnapshotTree | undefined;
     readonly isRootDataStore: boolean | undefined;
-    readonly bindChannelFn: (channel: IFluidDataStoreChannel) => void;
+    readonly makeLocallyVisibleFn: () => void;
     /**
      * @deprecated 0.16 Issue #1635, #3631
      */
@@ -246,7 +247,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     // The used state of this node as per the last GC run. This is used to update the used state of the channel
     // if it realizes after GC is run.
-    private lastUsedState: { usedRoutes: string[], gcTimestamp?: number } | undefined;
+    private lastUsedState: { usedRoutes: string[]; gcTimestamp?: number; } | undefined;
 
     public readonly id: string;
     private readonly _containerRuntime: ContainerRuntime;
@@ -261,7 +262,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         private readonly existing: boolean,
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
-        bindChannelFn: (channel: IFluidDataStoreChannel) => void,
+        private readonly makeLocallyVisibleFn: () => void,
     ) {
         super();
 
@@ -275,7 +276,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // URIs use slashes as delimiters. Handles use URIs.
         // Thus having slashes in types almost guarantees trouble down the road!
-        assert(this.id.indexOf("/") === -1, 0x13a /* `Data store ID contains slash: ${id}` */);
+        assert(!this.id.includes("/"), 0x13a /* Data store ID contains slash */);
 
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && this.existing ?
             this.containerRuntime.attachState : AttachState.Detached;
@@ -284,12 +285,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
             this.bindState = BindState.Binding;
             assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
-            bindChannelFn(this.channel);
+            this.makeLocallyVisible();
             this.bindState = BindState.Bound;
         };
 
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+            async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
+            this.summarizeInternal(fullTree, trackState, telemetryContext);
 
         this.summarizerNode = props.createSummarizerNodeFn(
             thisSummarizeInternal,
@@ -317,7 +319,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
+        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
@@ -326,9 +328,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
                 const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
-                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData"} });
+                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData" } });
                 this.channelDeferred?.reject(errorWrapped);
-                this.logger.sendErrorEvent({ eventName: "RealizeError"}, errorWrapped);
+                this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
             });
         }
         return this.channelDeferred.promise;
@@ -445,16 +447,25 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree, trackState);
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
     }
 
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeInternalResult> {
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const summarizeResult = await this.channel!.summarize(fullTree, trackState);
+        const summarizeResult = await this.channel!.summarize(fullTree, trackState, telemetryContext);
         let pathPartsForChildren: string[] | undefined;
 
         if (!this.disableIsolatedChannels) {
@@ -627,13 +638,21 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
+    /**
+     * This is called by the data store channel when it becomes locally visible indicating that it is ready to become
+     * globally visible now.
+     */
+    public makeLocallyVisible() {
+        assert(this.channel !== undefined, 0x2cf /* "undefined channel on datastore context" */);
+        this.makeLocallyVisibleFn();
+    }
+
     protected bindRuntime(channel: IFluidDataStoreChannel) {
         if (this.channel) {
             throw new Error("Runtime already bound");
         }
 
-        try
-        {
+        try {
             assert(!this.detachedRuntimeCreation, 0x148 /* "Detached runtime creation on runtime bind" */);
             assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
             assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
@@ -671,7 +690,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData"} },
+                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData" } },
                 error);
         }
     }
@@ -707,6 +726,17 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
         const innerContents = contents as FluidDataStoreMessage;
         this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
+    }
+
+    public rollback(contents: any, localOpMetadata: unknown) {
+        if (!this.channel) {
+            throw new Error("Channel must exist when rolling back ops");
+        }
+        if (!this.channel.rollback) {
+            throw new Error("Channel doesn't support rollback");
+        }
+        const innerContents = contents as FluidDataStoreMessage;
+        this.channel.rollback(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     public async applyStashedOp(contents: any): Promise<unknown> {
@@ -864,7 +894,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             props.snapshotTree !== undefined ? true : false /* existing */,
             props.snapshotTree ? BindState.Bound : BindState.NotBound,
             true /* isLocalDataStore */,
-            props.bindChannelFn,
+            props.makeLocallyVisibleFn,
         );
 
         this.snapshotTree = props.snapshotTree;
@@ -984,8 +1014,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
  */
 export class LocalDetachedFluidDataStoreContext
     extends LocalFluidDataStoreContextBase
-    implements IFluidDataStoreContextDetached
-{
+    implements IFluidDataStoreContextDetached {
     constructor(props: ILocalFluidDataStoreContextProps) {
         super(props);
         this.detachedRuntimeCreation = true;
@@ -993,8 +1022,7 @@ export class LocalDetachedFluidDataStoreContext
 
     public async attachRuntime(
         registry: IProvideFluidDataStoreFactory,
-        dataStoreRuntime: IFluidDataStoreChannel)
-    {
+        dataStoreChannel: IFluidDataStoreChannel) {
         assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
         assert(this.channelDeferred === undefined, 0x155 /* "channel deferral is already set" */);
 
@@ -1009,10 +1037,16 @@ export class LocalDetachedFluidDataStoreContext
         this.detachedRuntimeCreation = false;
         this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
-        super.bindRuntime(dataStoreRuntime);
+        super.bindRuntime(dataStoreChannel);
 
         if (await this.isRoot()) {
-            dataStoreRuntime.bindToContext();
+            // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
+            // For older versions, we still have to call bindToContext.
+            if (dataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
+                dataStoreChannel.makeVisibleAndAttachGraph();
+            } else {
+                dataStoreChannel.bindToContext();
+            }
         }
     }
 

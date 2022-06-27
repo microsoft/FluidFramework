@@ -18,6 +18,9 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
+    ITelemetryContext,
+    blobCountPropertyName,
+    totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -79,9 +82,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     constructor(
         public id: string,
         protected runtime: IFluidDataStoreRuntime,
-        public readonly attributes: IChannelAttributes)
-    {
+        public readonly attributes: IChannelAttributes) {
         super((event: EventEmitterEventType, e: any) => this.eventListenerErrorHandler(event, e));
+
+        assert(!id.includes("/"), 0x304 /* Id cannot contain slashes */);
 
         this.handle = new SharedObjectHandle(
             this,
@@ -185,7 +189,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).connect}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
      */
     public connect(services: IChannelServices) {
         this.services = services;
@@ -193,21 +197,29 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).isAttached}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).isAttached}
      */
     public isAttached(): boolean {
         return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).getAttachSummary}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
      */
-    public abstract getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    public abstract getAttachSummary(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
 
     /**
-     * {@inheritDoc (ISharedObject:interface).summarize}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
      */
-    public abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    public abstract summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats>;
 
     /**
      * {@inheritDoc (ISharedObject:interface).getGCData}
@@ -355,6 +367,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             applyStashedOp: (content: any): unknown => {
                 return this.applyStashedOp(content);
             },
+            rollback: (content: any, localOpMetadata: unknown) => {
+                this.rollback(content, localOpMetadata);
+            },
         });
 
         // Trigger initial state
@@ -383,7 +398,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             // - nack could get a new msn - but might as well do it in the join?
             this.onDisconnect();
         } else {
-            // Call this for now so that DDSes like ConsensesOrderedCollection that maintain their own pending
+            // Call this for now so that DDSes like ConsensusOrderedCollection that maintain their own pending
             // messages will work.
             this.onConnect();
         }
@@ -413,6 +428,21 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.reSubmitCore(content, localOpMetadata);
     }
 
+    /**
+     * Revert an op
+     */
+    protected rollback(content: any, localOpMetadata: unknown) {
+        throw new Error("rollback not supported");
+    }
+
+    /**
+     * Apply changes from an op. Used when rehydrating an attached container
+     * with pending changes. This prepares the SharedObject for seeing an ACK
+     * for the op or resubmitting the op upon reconnection.
+     * @param content - Contents of a stashed op.
+     * @returns localMetadata of the op, to be passed to process() or resubmit()
+     * when the op is ACKed or resubmitted, respectively
+     */
     protected abstract applyStashedOp(content: any): unknown;
 }
 
@@ -453,8 +483,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
-        attributes: IChannelAttributes)
-    {
+        attributes: IChannelAttributes,
+        private readonly telemetryContextPrefix: string,
+    ) {
         super(id, runtime, attributes);
 
         this._serializer = new FluidSerializer(
@@ -464,17 +495,31 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).getAttachSummary}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
      */
-    public getAttachSummary(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
-        return this.summarizeCore(this.serializer);
+    public getAttachSummary(
+        fullTree: boolean = false,
+        trackState: boolean = false,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
+        const result = this.summarizeCore(this.serializer, telemetryContext);
+        this.incrementTelemetryMetric(blobCountPropertyName, result.stats.blobNodeCount, telemetryContext);
+        this.incrementTelemetryMetric(totalBlobSizePropertyName, result.stats.totalBlobSize, telemetryContext);
+        return result;
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).summarize}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummaryTreeWithStats> {
-        return this.summarizeCore(this.serializer);
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = false,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
+        const result = this.summarizeCore(this.serializer, telemetryContext);
+        this.incrementTelemetryMetric(blobCountPropertyName, result.stats.blobNodeCount, telemetryContext);
+        this.incrementTelemetryMetric(totalBlobSizePropertyName, result.stats.totalBlobSize, telemetryContext);
+        return result;
     }
 
     /**
@@ -519,5 +564,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object.
      */
-    protected abstract summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected abstract summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
+
+    private incrementTelemetryMetric(propertyName: string, incrementBy: number, telemetryContext?: ITelemetryContext) {
+        const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, propertyName) ?? 0) as number;
+        telemetryContext?.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
+    }
 }

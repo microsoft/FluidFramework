@@ -58,7 +58,8 @@ data:
             "endpoint": "{{ .Values.zookeeper.url }}"
         },
         "storage": {
-            "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }}
+            "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }},
+            "storageUrl": "{{ .Values.storage.storageUrl }}"
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
@@ -82,6 +83,12 @@ data:
                     "maxBurst": {{ .Values.alfred.throttling.submitOps.maxBurst }},
                     "minCooldownIntervalInMs": {{ .Values.alfred.throttling.submitOps.minCooldownIntervalInMs }},
                     "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitOps.minThrottleIntervalInMs }}
+                },
+                "submitSignal": {
+                    "maxPerMs": {{ .Values.alfred.throttling.submitSignal.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.submitSignal.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.submitSignal.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitSignal.minThrottleIntervalInMs }}
                 }
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
@@ -98,7 +105,10 @@ data:
                 "enableCustomSocketIoAdapter": {{ .Values.alfred.socketIoAdapter.enableCustomSocketIoAdapter }},
                 "shouldDisableDefaultNamespace": {{ .Values.alfred.socketIoAdapter.shouldDisableDefaultNamespace }}
             },
-            "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }}
+            "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }},
+            "socketIo" : {
+                "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}}
+            }
         },
         "client": {
             "type": "browser",
@@ -124,6 +134,10 @@ data:
             "topics": {
                 "send": "{{ .Values.kafka.topics.deltas }}"
             }
+        },
+        "usage": {
+            "clientConnectivityCountingEnabled": "{{ .Values.usage.clientConnectivityCountingEnabled }}",
+            "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }}
         },
         "auth": {
             "endpoint": "http://{{ template "riddler.fullname" . }}",

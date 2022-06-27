@@ -99,7 +99,7 @@ describe("Runtime", () => {
                 try {
                     fn();
                     throw Error(`${failMsg}: Expected to fail`);
-                } catch (error) {
+                } catch (error: any) {
                     assert(expectedErrors.some((e) => e === error.message), errMsg);
                 }
             }
@@ -113,7 +113,7 @@ describe("Runtime", () => {
                 try {
                     await fn();
                     throw Error(`${failMsg}: Expected to reject`);
-                } catch (error) {
+                } catch (error: any) {
                     assert(expectedErrors.some((e) => e === error.message), errMsg);
                 }
             }
@@ -127,18 +127,18 @@ describe("Runtime", () => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 ({ sequenceNumber } as ISequencedDocumentMessage);
 
-            const emptySnapshot: ISnapshotTree = { blobs: {}, commits: {}, trees: {} };
-            const protocolTree: ISnapshotTree = { blobs: { attributes: "protocolAttributes" }, commits: {}, trees: {} };
-            const coreSnapshot: ISnapshotTree = { blobs: {}, commits: {}, trees: {
-                [ids[1]]: { blobs: {}, commits: {}, trees: {
+            const emptySnapshot: ISnapshotTree = { blobs: {}, trees: {} };
+            const protocolTree: ISnapshotTree = { blobs: { attributes: "protocolAttributes" }, trees: {} };
+            const coreSnapshot: ISnapshotTree = { blobs: {}, trees: {
+                [ids[1]]: { blobs: {}, trees: {
                     [ids[2]]: emptySnapshot,
                 } },
             } };
-            const simpleSnapshot: ISnapshotTree = { blobs: {}, commits: {}, trees: {
+            const simpleSnapshot: ISnapshotTree = { blobs: {}, trees: {
                 ...coreSnapshot.trees,
                 ".protocol": protocolTree,
             } };
-            const channelsSnapshot: ISnapshotTree = { blobs: {}, commits: {}, trees: {
+            const channelsSnapshot: ISnapshotTree = { blobs: {}, trees: {
                 [channelsTreeName]: coreSnapshot,
                 ".protocol": protocolTree,
             } };

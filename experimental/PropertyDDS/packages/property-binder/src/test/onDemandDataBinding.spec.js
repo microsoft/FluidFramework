@@ -12,9 +12,9 @@
  *
  */
 import _ from 'lodash';
-import { DataBinding } from '../../src/data_binder/dataBinding';
-import { DataBinder } from '../../src/data_binder/dataBinder';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internalUtils';
+import { DataBinding } from '../data_binder/dataBinding';
+import { DataBinder } from '../data_binder/dataBinder';
+import { unregisterAllOnPathListeners } from '../data_binder/internalUtils';
 import {
   registerTestTemplates, ParentTemplate, ChildTemplate,
   InheritedChildTemplate,

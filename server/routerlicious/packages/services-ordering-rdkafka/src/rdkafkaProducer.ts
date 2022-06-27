@@ -20,6 +20,7 @@ import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	enableIdempotence: boolean;
 	pollIntervalMs: number;
+	maxBatchSize: number;
 	additionalOptions?: kafkaTypes.ProducerGlobalConfig;
 	topicConfig?: kafkaTypes.ProducerTopicConfig;
 }
@@ -62,6 +63,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			...options,
 			enableIdempotence: options?.enableIdempotence ?? false,
 			pollIntervalMs: options?.pollIntervalMs ?? 10,
+			maxBatchSize: options?.maxBatchSize ?? MaxBatchSize,
 		};
 	}
 
@@ -161,6 +163,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		await new Promise<void>((resolve) => {
 			const producer = this.producer;
 			this.producer = undefined;
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 			if (producer && producer.isConnected()) {
 				producer.disconnect(resolve);
 			} else {
@@ -190,7 +193,8 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			boxcar = boxcars[boxcars.length - 1];
 
 			// Create a new boxcar if necessary
-			if (boxcar.partitionId !== partitionId || boxcar.messages.length + messages.length >= MaxBatchSize) {
+			if (boxcar.partitionId !== partitionId ||
+				boxcar.messages.length + messages.length >= this.producerOptions.maxBatchSize) {
 				boxcar = new PendingBoxcar(tenantId, documentId);
 				boxcars.push(boxcar);
 			}
@@ -210,7 +214,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		// If adding a new message to the boxcar filled it up, and we are connected, then send immediately. Otherwise
 		// request a send
-		if (this.connected && boxcar.messages.length >= MaxBatchSize) {
+		if (this.connected && boxcar.messages.length >= this.producerOptions.maxBatchSize) {
 			// Send all the boxcars
 			this.sendBoxcars(boxcars);
 			this.messages.delete(key);

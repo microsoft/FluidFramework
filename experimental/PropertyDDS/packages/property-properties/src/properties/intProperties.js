@@ -91,7 +91,6 @@ export class Integer64Property extends ValueProperty {
      * @protected
      * @extends property-properties.ValueProperty
      * @alias property-properties.Integer64Property
-     * @protected
      * @abstract
      * @category Value Properties
      */
@@ -147,7 +146,7 @@ export class Integer64Property extends ValueProperty {
     /**
      * @param {number} in_high set the higher 32 bit integer part
      * @throws if in_high is not a number
-     * @return {boolen} true if the value was actually changed
+     * @return {boolean} true if the value was actually changed
      */
     setValueHigh(in_high) {
         ConsoleUtils.assert(_.isNumber(in_high), MSG.IN_HIGH_MUST_BE_NUMBER + in_high);
@@ -164,7 +163,7 @@ export class Integer64Property extends ValueProperty {
     /**
      * @param {number} in_low set the lower 32 bit integer part
      * @throws if in_low is not a number
-     * @return {boolen} true if the value was actually changed
+     * @return {boolean} true if the value was actually changed
      */
     setValueLow(in_low) {
         ConsoleUtils.assert(_.isNumber(in_low), MSG.IN_LOW_MUST_BE_NUMBER + in_low);

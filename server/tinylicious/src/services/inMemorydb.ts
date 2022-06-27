@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ICollection, IDb } from "@fluidframework/server-services-core";
+import { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
 import { Collection } from "./inMemorycollection";
 
 export class InMemoryDb extends EventEmitter implements IDb {
@@ -21,5 +21,25 @@ export class InMemoryDb extends EventEmitter implements IDb {
         }
 
         return this.collections.get(name);
+    }
+
+    public async dropCollection(name: string): Promise<boolean> {
+        if (!this.collections.has(name)) {
+            return true;
+        }
+        this.collections.delete(name);
+        return true;
+    }
+}
+
+export class InMemoryDbFactory implements IDbFactory {
+    private readonly db: InMemoryDb;
+
+    constructor() {
+        this.db = new InMemoryDb();
+    }
+
+    public async connect(): Promise<IDb> {
+        return this.db;
     }
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import registerDebug from "debug";
+import { debug as registerDebug, IDebugger } from "debug";
 import { ILogger } from "@fluidframework/server-services-core";
 
 /**
@@ -29,9 +29,9 @@ export class DebugLogger implements ILogger {
     }
 
     constructor(
-        private readonly debugInfo: registerDebug.IDebugger,
-        private readonly debugErr: registerDebug.IDebugger,
-        private readonly debugWarn: registerDebug.IDebugger) {
+        private readonly debugInfo: IDebugger,
+        private readonly debugErr: IDebugger,
+        private readonly debugWarn: IDebugger) {
     }
 
     public info(message: string) {

@@ -6,13 +6,13 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
 import {
+    IContainer,
     IFluidCodeDetails,
     IFluidCodeDetailsComparer,
     IFluidPackage,
     isFluidPackage,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/container-definitions";
 import {
     createAndAttachContainer,
     createDocumentId,
@@ -26,8 +26,8 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
-    version: number,
-    schema: number,
+    version: number;
+    schema: number;
 }
 
 function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackage {
@@ -150,8 +150,8 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
     itExpects("Code Proposal",
     [
-        {eventName:"fluid:telemetry:Container:ContainerClose", error:"Existing context does not satisfy incoming proposal"},
-        {eventName:"fluid:telemetry:Container:ContainerClose", error:"Existing context does not satisfy incoming proposal"},
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "Existing context does not satisfy incoming proposal" },
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "Existing context does not satisfy incoming proposal" },
     ],
     async () => {
         const proposal: IFluidCodeDetails = { package: packageV2 };

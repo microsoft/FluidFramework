@@ -13,7 +13,6 @@ import {
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 
@@ -34,16 +33,12 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 
     constructor(protected readonly internalStorageService: IDocumentStorageService) { }
 
-    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        return this.internalStorageService.getSnapshotTree(version);
+    public async getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null> {
+        return this.internalStorageService.getSnapshotTree(version, scenarioName);
     }
 
-    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
-        return this.internalStorageService.getVersions(versionId, count);
-    }
-
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.internalStorageService.write(tree, parents, message, ref);
+    public async getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]> {
+        return this.internalStorageService.getVersions(versionId, count, scenarioName);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {

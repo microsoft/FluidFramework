@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 /* globals sinon, expect, should */
-import { DataBinder } from '../../src/data_binder/dataBinder';
-import { SingletonDataBinding, StatelessDataBinding } from '../../src/data_binder/statelessDataBinding';
+import { DataBinder } from '../data_binder/dataBinder';
+import { SingletonDataBinding, StatelessDataBinding } from '../data_binder/statelessDataBinding';
 import { catchConsoleErrors } from './catchConsoleError';
 import { MockSharedPropertyTree } from './mockSharedPropertyTree';
 

@@ -11,7 +11,7 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     IFluidSerializer,
@@ -144,7 +144,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_map_");
         this.kernel = new MapKernel(
             this.serializer,
             this.handle,
@@ -245,7 +245,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         let currentSize = 0;
         let counter = 0;
         let headerBlob: IMapDataObjectSerializable = {};
@@ -320,7 +323,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @internal
      */
     protected async loadCore(storage: IChannelStorageService) {
-        // eslint-disable-next-line @typescript-eslint/ban-types
         const json = await readAndParse<object>(storage, snapshotFileName);
         const newFormat = json as IMapSerializationFormat;
         if (Array.isArray(newFormat.blobs)) {
@@ -349,6 +351,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
     protected applyStashedOp(content: any): unknown {
@@ -365,4 +368,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             this.kernel.tryProcessMessage(message.contents, local, localOpMetadata);
         }
     }
+
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
+     * @internal
+    */
+   protected rollback(content: any, localOpMetadata: unknown) {
+       this.kernel.rollback(content, localOpMetadata);
+   }
 }

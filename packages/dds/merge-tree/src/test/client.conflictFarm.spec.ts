@@ -71,7 +71,7 @@ describe("MergeTree.Client", () => {
             const mt = random.engines.mt19937();
             mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, minLength]);
 
-            const clients: TestClient[] = [new TestClient({ blockUpdateMarkers: true })];
+            const clients: TestClient[] = [new TestClient()];
             clients.forEach(
                 (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 

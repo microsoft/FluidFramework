@@ -89,7 +89,8 @@ export interface IProducer<T = ITicketedMessage> {
 
     /**
      * Sends the message to a queue
-     * @param partitionId Specify this to send the messages to a specific partition. Only RdkafkaProducer supports this.
+     * @param partitionId - Specify this to send the messages to a specific partition. Only RdkafkaProducer supports
+     * this.
      */
     send(messages: T[], tenantId: string, documentId: string, partitionId?: number): Promise<void>;
 

@@ -9,7 +9,7 @@ interface CommonOptions {
     timer: boolean;
     logtime: boolean;
     verbose: boolean;
-};
+}
 
 export const commonOptions : CommonOptions = {
     defaultRoot: process.env["_FLUID_DEFAULT_ROOT_"],
@@ -18,6 +18,8 @@ export const commonOptions : CommonOptions = {
     logtime: false,
     verbose: false,
 }
+
+// This string is duplicated in the readme (multiple times): update readme if changing this.
 
 export const commonOptionString =
 `     --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)

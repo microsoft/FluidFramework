@@ -3,55 +3,53 @@
  * Licensed under the MIT License.
  */
 
+import { makeStyles } from "@material-ui/styles";
+import * as React from "react";
 import {
   icon24,
   iconBaseColor,
   iconHoverColor,
-} from './constants';
+} from "./constants";
 
-import { SvgIcon } from './SVGIcon';
+import { SvgIcon } from "./SVGIcon";
 
-import { makeStyles } from '@material-ui/styles';
-
-import { IInspectorTableProps } from './InspectorTableTypes';
-
-import * as React from 'react';
+import { IInspectorTableProps } from "./InspectorTableTypes";
 
 const useStyles = makeStyles((theme) => ({
   footer: {
-    alignItems: 'center',
-    display: 'flex',
-    fontFamily: 'ArtifaktElement, Helvetica, Arial',
-    fontSize: '12px',
-    height: '100%',
-    justifyContent: 'space-between',
-    paddingLeft: '23px',
-    paddingRight: '16px',
+    alignItems: "center",
+    display: "flex",
+    fontFamily: "ArtifaktElement, Helvetica, Arial",
+    fontSize: "12px",
+    height: "100%",
+    justifyContent: "space-between",
+    paddingLeft: "23px",
+    paddingRight: "16px",
   },
   footerButtonContainer: {
-    '&:hover': {
+    "&:hover": {
       color: iconHoverColor,
       fill: iconHoverColor,
       stroke: iconHoverColor,
     },
-    'alignItems': 'center',
-    'color': iconBaseColor,
-    'cursor': 'pointer',
-    'display': 'flex',
-    'fill': iconBaseColor,
-    'stroke': iconBaseColor,
+    "alignItems": "center",
+    "color": iconBaseColor,
+    "cursor": "pointer",
+    "display": "flex",
+    "fill": iconBaseColor,
+    "stroke": iconBaseColor,
   },
   label: {
-    display: 'inline-flex',
+    display: "inline-flex",
   },
   svg: {
-    margin: '8px',
+    margin: "8px",
   },
   svgFooterContainer: {
-    alignItems: 'center',
-    display: 'flex',
+    alignItems: "center",
+    display: "flex",
   },
-}), { name: 'InspectorTableFooter' });
+}), { name: "InspectorTableFooter" });
 
 interface IInspectorTableFooterProps {
   handleExpandAll: (IInspectorTableProps) => void;
@@ -75,11 +73,11 @@ export const InspectorTableFooter: React.FunctionComponent<IInspectorTableFooter
         >
           <span>Expand All</span>
           <div
-            id='expandAllButton'
+            id="expandAllButton"
             className={classes.svg}
           >
             <SvgIcon
-              svgId={'expand-all'}
+              svgId={"expand-all"}
               activeClassName={classes.footerButtonContainer}
               width={icon24}
               height={icon24}
@@ -93,11 +91,11 @@ export const InspectorTableFooter: React.FunctionComponent<IInspectorTableFooter
         >
           <span>Collapse All</span>
           <div
-            id='collapseAllButton'
+            id="collapseAllButton"
             className={classes.svg}
           >
             <SvgIcon
-              svgId={'collapse-all'}
+              svgId={"collapse-all"}
               activeClassName={classes.footerButtonContainer}
               width={icon24}
               height={icon24}
@@ -110,5 +108,5 @@ export const InspectorTableFooter: React.FunctionComponent<IInspectorTableFooter
 };
 
 InspectorTableFooter.defaultProps = {
-  path: '',
+  path: "",
 };

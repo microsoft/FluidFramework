@@ -223,7 +223,7 @@ export class DebuggerUI {
         element.addEventListener("click", () => {
             this.controller.onDownloadOpsButtonClick(anonymize.checked).then((opJson) => {
                 this.download("opStream.json", opJson);
-            }).catch((error) => {console.log(`Error downloading ops: ${error}`);});
+            }).catch((error) => { console.log(`Error downloading ops: ${error}`); });
         });
     }
 

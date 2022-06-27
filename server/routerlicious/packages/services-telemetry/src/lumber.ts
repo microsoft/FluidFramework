@@ -88,7 +88,7 @@ export class Lumber<T extends string = LumberEventName> {
         } else {
             Object.entries(properties).forEach((entry) => {
                 const [key, value] = entry;
-                this.setProperty(key,value);
+                this.setProperty(key, value);
             });
         }
         return this;

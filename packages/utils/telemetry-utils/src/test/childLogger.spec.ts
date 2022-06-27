@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "../logger";
 
 describe("ChildLogger", () => {
-    it("Properties & Getters Propagate",()=>{
+    it("Properties & Getters Propagate", () => {
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -22,14 +22,14 @@ describe("ChildLogger", () => {
             logger,
             "test1",
             {
-                all:{
+                all: {
                     testProperty: true,
-                    testGetter: ()=>true,
+                    testGetter: () => true,
                 },
             },
         );
 
-        childLogger1.send({ category:"generic", eventName:"test1" });
+        childLogger1.send({ category: "generic", eventName: "test1" });
         assert(sent, "event should be sent");
 
         sent = false;
@@ -37,11 +37,11 @@ describe("ChildLogger", () => {
             childLogger1,
             "test2");
 
-        childLogger2.send({ category:"generic", eventName:"test2" });
+        childLogger2.send({ category: "generic", eventName: "test2" });
         assert(sent, "event should be sent");
     });
 
-    it("Undefined initial Properties and Getter",()=>{
+    it("Undefined initial Properties and Getter", () => {
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -66,16 +66,16 @@ describe("ChildLogger", () => {
                 all:
                 {
                     testProperty: true,
-                    testGetter: ()=>true,
+                    testGetter: () => true,
                 },
             },
         );
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 
-    it("Properties Are Combined",()=>{
+    it("Properties Are Combined", () => {
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -109,11 +109,11 @@ describe("ChildLogger", () => {
                 },
             });
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 
-    it("Getters Are Combined",()=>{
+    it("Getters Are Combined", () => {
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -132,7 +132,7 @@ describe("ChildLogger", () => {
             {
                 all:
                 {
-                    testGetter1: ()=> true,
+                    testGetter1: () => true,
                 },
             },
         );
@@ -143,16 +143,16 @@ describe("ChildLogger", () => {
             {
                 all:
                 {
-                    testGetter2: ()=> true,
+                    testGetter2: () => true,
                 },
             },
         );
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 
-    it("Undefined initial namespace",()=>{
+    it("Undefined initial namespace", () => {
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -170,11 +170,11 @@ describe("ChildLogger", () => {
             childLogger1,
             "test2");
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 
-    it("Undefined second child namespace",()=>{
+    it("Undefined second child namespace", () => {
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -192,11 +192,11 @@ describe("ChildLogger", () => {
         const childLogger2 = ChildLogger.create(
             childLogger1);
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 
-    it("Undefined namespace",()=>{
+    it("Undefined namespace", () => {
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -213,7 +213,7 @@ describe("ChildLogger", () => {
         const childLogger2 = ChildLogger.create(
             childLogger1);
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 });

@@ -41,7 +41,7 @@ describe("segmentGroupCollection", () => {
         const dequeuedSegmentGroup = segment.segmentGroups.dequeue();
 
         assert.equal(segment.segmentGroups.size, segmentGroupCount - 1);
-        assert.equal(dequeuedSegmentGroup.segments.length, 1);
+        assert.equal(dequeuedSegmentGroup?.segments.length, 1);
         assert.equal(dequeuedSegmentGroup.segments[0], segment);
         assert.equal(dequeuedSegmentGroup, segmentGroup);
     });
@@ -80,7 +80,7 @@ describe("segmentGroupCollection", () => {
             const copySegmentGroup = segmentCopy.segmentGroups.dequeue();
 
             assert.equal(segmentGroup, copySegmentGroup);
-            assert.equal(segmentGroup.segments.length, 2);
+            assert.equal(segmentGroup?.segments.length, 2);
             assert.equal(segmentGroup.segments[0], segment);
             assert.equal(segmentGroup.segments[1], segmentCopy);
         }

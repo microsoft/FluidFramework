@@ -41,7 +41,7 @@ export interface IOpsCachingPolicy {
      * Measured in ms.
      * Default: 5000
      */
-    timerGranularity?: number,
+    timerGranularity?: number;
 
     /**
      * Total number of ops to cache. When we reach that number, ops caching stops
@@ -57,6 +57,7 @@ export interface ICollabSessionOptions {
      */
     unauthenticatedUserDisplayName?: string;
     /**
+     * @deprecated - Due to security reasons we will passing the token via Authorization header only.
      * Value indicating session preference to always pass access token via Authorization header.
      * Default behavior is to pass access token via query parameter unless overall href string
      * length exceeds 2048 characters. Using query param is performance optimization which results
@@ -96,8 +97,11 @@ export interface HostStoragePolicy {
      */
     sessionOptions?: ICollabSessionOptions;
 
-    // True to have the sharing link redeem fallback in case the Trees Latest/Redeem 1RT call fails with redeem error.
-    // During fallback it will first redeem the sharing link and then make the Trees latest call.
+    /**
+     * @deprecated - This field will be always set to true after removal.
+     * True to have the sharing link redeem fallback in case the Trees Latest/Redeem 1RT call fails with redeem error.
+     * During fallback it will first redeem the sharing link and then make the Trees latest call.
+     */
     enableRedeemFallback?: boolean;
 
     /**
@@ -106,6 +110,7 @@ export interface HostStoragePolicy {
     cacheCreateNewSummary?: boolean;
 
     /**
+     * @deprecated - This will be replaced with feature gate snapshotFormatFetchType.
      * Policy controlling if we want to fetch binary format snapshot.
      */
     fetchBinarySnapshotFormat?: boolean;
@@ -121,5 +126,5 @@ export interface HostStoragePolicy {
      * method, we will request for send the request to ODSP with the same (if the flag is enabled) so
      * that a sharing can be created with the creation of file to save number for round trips made to ODSP.
      */
-     enableShareLinkWithCreate?: boolean
+     enableShareLinkWithCreate?: boolean;
 }

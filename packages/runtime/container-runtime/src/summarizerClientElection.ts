@@ -17,6 +17,7 @@ export interface ISummarizerClientElectionEvents extends IEvent {
 
 export interface ISummarizerClientElection extends IEventProvider<ISummarizerClientElectionEvents> {
     readonly electedClientId: string | undefined;
+    readonly electedParentId: string | undefined;
 }
 
 /**
@@ -43,6 +44,9 @@ export class SummarizerClientElection
 
     public get electedClientId() {
         return this.clientElection.electedClient?.clientId;
+    }
+    public get electedParentId() {
+        return this.clientElection.electedParent?.clientId;
     }
 
     constructor(
@@ -85,6 +89,7 @@ export class SummarizerClientElection
                 }
 
                 if (this.electionEnabled) {
+                    const previousParentId = this.electedParentId;
                     this.clientElection.incrementElectedClient(sequenceNumber);
 
                     // Verify that state incremented as expected. This should be reliable,
@@ -98,6 +103,13 @@ export class SummarizerClientElection
                                 lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
                                 // Expected to be same as op sequenceNumber
                                 electionSequenceNumber,
+                                sequenceNumber,
+                                previousClientId: electedClientId,
+                                previousParentId,
+                                electedParentId: this.electedParentId,
+                                electedClientId: this.electedClientId,
+                                opsSinceLastReport,
+                                maxOpsSinceLastSummary,
                             });
                         }
                     }
@@ -127,9 +139,10 @@ export class SummarizerClientElection
     }
 
     public serialize(): ISerializedElection {
-        const { electedClientId, electionSequenceNumber } = this.clientElection.serialize();
+        const { electedClientId, electedParentId, electionSequenceNumber } = this.clientElection.serialize();
         return {
             electedClientId,
+            electedParentId,
             electionSequenceNumber: this.lastSummaryAckSeqForClient ?? electionSequenceNumber,
         };
     }
@@ -144,5 +157,5 @@ export class SummarizerClientElection
     }
 
     public static readonly clientDetailsPermitElection = (details: IClientDetails): boolean =>
-        details.capabilities.interactive && details.type !== summarizerClientType;
+        details.capabilities.interactive || details.type === summarizerClientType;
 }

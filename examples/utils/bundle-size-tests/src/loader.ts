@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {Loader} from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
 
 export function apisToBundle() {
     new Loader({

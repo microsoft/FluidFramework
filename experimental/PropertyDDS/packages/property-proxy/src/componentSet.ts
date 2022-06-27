@@ -167,7 +167,7 @@ class ComponentSet extends Set {
      */
     // TODO(marcus): inline interface is a workaround it represents a proxy of NamedProperty that
     // should have a field guid
-    _getGuid(value: NamedProperty | { guid?: string }) {
+    _getGuid(value: NamedProperty | { guid?: string; }) {
         // The set property uses the guid field of NamedProperty for equalit
         let guid: string | undefined;
 

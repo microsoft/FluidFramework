@@ -174,7 +174,7 @@ export interface HookArguments {
  */
 export function validateBenchmarkArguments(
 	args: BenchmarkArguments,
-): { isAsync: true; benchmarkFn: () => Promise<unknown> } | { isAsync: false; benchmarkFn: () => void } {
+): { isAsync: true; benchmarkFn: () => Promise<unknown>; } | { isAsync: false; benchmarkFn: () => void; } {
 	const intersection = args as BenchmarkSyncArguments & BenchmarkAsyncArguments;
 	const isSync = intersection.benchmarkFn !== undefined;
 	const isAsync = intersection.benchmarkFnAsync !== undefined;

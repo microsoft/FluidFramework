@@ -5,11 +5,7 @@
 
 import fs from "fs";
 import { assert, bufferToString } from "@fluidframework/common-utils";
-import {
-    IDocumentStorageService,
-    IDocumentStorageServicePolicies,    // these are needed for api-extractor
-    ISummaryContext,                    // these are needed for api-extractor
-} from "@fluidframework/driver-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver";
@@ -198,8 +194,6 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
                 });
             }
 
-            assert(Object.keys(snapshotTree.commits).length === 0,
-                0x095 /* "Leftover distinct commits after building tree!" */);
             return tree;
         }
     };

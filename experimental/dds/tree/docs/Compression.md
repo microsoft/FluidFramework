@@ -1,6 +1,6 @@
 # Compression
 
-This document covers reducing per node costs in common high node count use-cases using the approach prototyped in <https://github.com/CraigMacomber/sequence/tree/main/src>.
+This document covers reducing per node costs in common high node count use-cases using the approach prototyped in <https://github.com/CraigMacomber/sequence/tree/main/forest/src>.
 
 ## Motivation
 
@@ -93,7 +93,7 @@ The `schema` information can be factored into two parts:
     - definition
     - does it have a value? (if using a byte array, how long is the value)
     - list of traits (each with a trait id, a child count, and a reference to a `schema` for the child)
-2. Derived data used to accelerate lookups. This is omitted from the serialized version of UniformChunk, and is not detailed here. The short version is store what ever is needed to optimize the implementation of Chunk that UniformChunk provides. This is only needed on the root schema, and is why (Ex: [RootChunkSchema](https://github.com/CraigMacomber/sequence/blob/main/src/chunk.rs#L24)) is distinct from [ChunkSchema](https://github.com/CraigMacomber/sequence/blob/ada56998a853ea19b5a6536e7b79771400044bc0/src/chunk.rs#L106). Things like tables to look up schema or parent info from `idOffset % stride` (where stride is the number of nodes in the schema for a single tree in the two level sequence) belong there.
+2. Derived data used to accelerate lookups. This is omitted from the serialized version of UniformChunk, and is not detailed here. The short version is store what ever is needed to optimize the implementation of Chunk that UniformChunk provides. This is only needed on the root schema, and is why (Ex: [RootChunkSchema](https://github.com/CraigMacomber/sequence/blob/main/forest/src/chunk.rs#L24)) is distinct from [ChunkSchema](https://github.com/CraigMacomber/sequence/blob/ada56998a853ea19b5a6536e7b79771400044bc0/src/chunk.rs#L106). Things like tables to look up schema or parent info from `idOffset % stride` (where stride is the number of nodes in the schema for a single tree in the two level sequence) belong there.
 
 Another way to think about this is there are 3 classes of data for nodes in a uniform chunk:
 

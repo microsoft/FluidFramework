@@ -1,16 +1,17 @@
 # @fluid-tools/webpack-fluid-loader
 
-This folder contains the webpack-fluid-loader. This package is meant to be used with the webpack-dev-server and is used by yo Fluid as the default `start` option.
+This folder contains the webpack-fluid-loader. This package is meant to be used with the `webpack --serve` and is used by yo Fluid as the default `start` option.
 
 This loader is intended for development purposes only and should not be used in production.
 
-The following environment variables can be defined when running webpack-dev-server to change the behavior of webpack-fluid-loader:
+The following environment variables can be defined when running `webpack --serve` to change the behavior of webpack-fluid-loader:
 
 | variable | description |
 | ---------| ----------- |
 | `mode` | Specify the mode to run in. See modes below. |
 | `single` | Load Fluid object normally when using local mode for ordering, etc. |
 | `fluidHost` | Host url to target while testing. If you supply this, you must supply a tenant ID and secret |
+| `discoveryEndpoint` | Host url to discovery endpoint while testing. If you supply this, you must supply a tenant ID and secret |
 | `tenantId` | Tenant ID for your host. If you supply this you must supply a tenant secret |
 | `tenantSecret` | Secret for your tenant |
 | `bearerSecret` | Secret for your bearer |
@@ -41,10 +42,13 @@ provided in the following ways (looked for in the following order):
 
 ### command line:
 ```
-npm run start -- --env.fluidHost https://fluidhost.com --env.tenantId my_tenant --env.tenantSecret my_secret --env.bearerSecret bear_secret --env.npm npm.com
+npm run start -- --env discoveryEndpoint=https://discoveryendpoint.com --env tenantId=my_tenant --env tenantSecret=my_secret --env bearerSecret=bear_secret --env npm=npm.com
+or
+npm run start -- --env fluidHost=https://fluidhost.com --env tenantId=my_tenant --env tenantSecret=my_secret --env bearerSecret=bear_secret --env npm=npm.com
 ```
 
 ### environment variables:
+- `fluid__webpack__discoveryEndpoint`
 - `fluid__webpack__fluidHost`
 - `fluid__webpack__tenantId`
 - `fluid__webpack__tenantSecret`
@@ -58,6 +62,7 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid
 {
     "fluid": {
         "webpack": {
+            "discoveryEndpoint": "https://discoveryendpoint.com",
             "fluidHost": "https://fluidhost.com",
             "tenantId": "my_tenant",
             "tenantSecret": "my_secret",
@@ -73,6 +78,6 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid
 ## SharePoint
 To use a SharePoint server, the Microsoft login clientId and secret environment variables must be set.  This can be done by running the getkeys tool.
 
-Sometimes the cached tokens are out of date or incorrect, and it will not automatically refresh them.  They can be manually refreshed by going navigating to http://localhost:8080/odspLogin (port may vary).  To force reauth on start, the env variable `odspForceReauth` can be set.  This can also be done by adding `--env.mode forceReauth true` to the end of the command.  For example: `npm run start:spo-df -- --env.mode forceReauth true`.
+Sometimes the cached tokens are out of date or incorrect, and it will not automatically refresh them.  They can be manually refreshed by going navigating to http://localhost:8080/odspLogin (port may vary).  To force reauth on start, the env variable `odspForceReauth` can be set.  This can also be done by adding `--env forceReauth` to the end of the command.  For example: `npm run start:spo-df -- --env forceReauth`.
 
 Use `spo-df` if your OneDrive is on the DogFood server, and `spo` if it is not.

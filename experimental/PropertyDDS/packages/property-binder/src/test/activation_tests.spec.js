@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 /* globals expect */
-import { DataBinder } from '../../src/data_binder/dataBinder';
+import { DataBinder } from '../data_binder/dataBinder';
 
 import { catchConsoleErrors } from './catchConsoleError';
 
-import { DataBinding } from '../../src/data_binder/dataBinding';
+import { DataBinding } from '../data_binder/dataBinding';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
-import { ActivationQueryCacheHelper } from '../../src/internal/activationQueryCacheHelper';
+import { ActivationQueryCacheHelper } from '../internal/activationQueryCacheHelper';
 import { MockSharedPropertyTree } from './mockSharedPropertyTree'
 
 /**

@@ -5,13 +5,18 @@
 
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { AttachmentTreeEntry, BlobTreeEntry } from "@fluidframework/protocol-base";
-import { ISnapshotTree, ITree, ITreeEntry } from "@fluidframework/protocol-definitions";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+    IGarbageCollectionData,
+    ISummaryTreeWithStats,
+    ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 
 /**
  * This class represents blob (long string)
@@ -52,8 +57,8 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
  * Information from a snapshot needed to load BlobManager
  */
 export interface IBlobManagerLoadInfo {
-    ids?: string[],
-    redirectTable?: [string, string][],
+    ids?: string[];
+    redirectTable?: [string, string][];
 }
 
 export class BlobManager {
@@ -74,6 +79,9 @@ export class BlobManager {
         snapshot: IBlobManagerLoadInfo,
         private readonly getStorage: () => IDocumentStorageService,
         private readonly attachBlobCallback: (blobId: string) => void,
+        // To be called when a blob node is requested. blobPath is the path of the blob's node in GC's graph. It's
+        // of the format `/<BlobManager.basePath>/<blobId>`.
+        private readonly gcNodeUpdated: (blobPath: string) => void,
         private readonly runtime: IContainerRuntime,
         private readonly logger: ITelemetryLogger,
     ) {
@@ -89,25 +97,33 @@ export class BlobManager {
         return this.blobIds.has(id) || this.detachedBlobIds.has(id);
     }
 
+    /**
+     * For a blobId, returns its path in GC's graph. The node path is of the format `/<BlobManager.basePath>/<blobId>`
+     * This path must match the path of the blob handle returned by the createBlob API because blobs are marked
+     * referenced by storing these handles in a referenced DDS.
+     */
+    private getBlobGCNodePath(blobId: string) {
+        return `/${BlobManager.basePath}/${blobId}`;
+    }
+
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
         const storageId = this.redirectTable?.get(blobId) ?? blobId;
         assert(this.hasBlob(storageId), 0x11f /* "requesting unknown blobs" */);
 
+        // When this blob is retrieved, let the container runtime know that the corresponding GC node got updated.
+        this.gcNodeUpdated(this.getBlobGCNodePath(blobId));
+
         return new BlobHandle(
             `${BlobManager.basePath}/${storageId}`,
             this.routeContext,
-            async () => {
-                return this.getStorage().readBlob(storageId).catch((error) => {
-                    this.logger.sendErrorEvent(
-                        {
-                            eventName:"AttachmentReadBlobError",
-                            id: storageId,
-                        },
-                        error,
-                    );
-                    throw error;
-                });
-            },
+            async () => PerformanceEvent.timedExecAsync(
+                this.logger,
+                { eventName: "AttachmentReadBlob", id: storageId },
+                async () => {
+                    return this.getStorage().readBlob(storageId);
+                },
+                { end: true, cancel: "error" },
+            ),
         );
     }
 
@@ -118,7 +134,20 @@ export class BlobManager {
             await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
         }
 
-        const response = await this.getStorage().createBlob(blob);
+        if (!this.runtime.connected && this.runtime.attachState === AttachState.Attached) {
+            // see https://github.com/microsoft/FluidFramework/issues/8246
+            // Avoid getting storage if we are offline since it might be undefined. In the future we will return
+            // handles immediately while offline
+            await new Promise((resolve) => this.runtime.once("connected", resolve));
+        }
+
+        const response = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "createBlob" },
+            async () => this.getStorage().createBlob(blob),
+            { end: true, cancel: "error" },
+        );
+
         const handle = new BlobHandle(
             `${BlobManager.basePath}/${response.id}`,
             this.routeContext,
@@ -147,9 +176,12 @@ export class BlobManager {
     }
 
     public processBlobAttachOp(blobId: string, local: boolean) {
-        assert(!local || this.pendingBlobIds.has(blobId), 0x1f8 /* "local BlobAttach op with no pending blob" */);
-        this.pendingBlobIds.get(blobId)?.resolve();
-        this.pendingBlobIds.delete(blobId);
+        if (local) {
+            const pendingBlobP = this.pendingBlobIds.get(blobId);
+            assert(pendingBlobP !== undefined, 0x1f8 /* "local BlobAttach op with no pending blob" */);
+            pendingBlobP.resolve();
+            this.pendingBlobIds.delete(blobId);
+        }
         this.blobIds.add(blobId);
     }
 
@@ -202,19 +234,80 @@ export class BlobManager {
         });
     }
 
-    public snapshot(): ITree {
+    /**
+     * Generates data used for garbage collection. Each blob uploaded represents a node in the GC graph as it can be
+     * individually referenced by storing its handle in a referenced DDS. Returns the list of blob ids as GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data. BlobManager doesn't care
+     * about this for now because the data is a simple list of blob ids.
+     */
+    public getGCData(fullGC: boolean = false): IGarbageCollectionData {
+        const gcData: IGarbageCollectionData = { gcNodes: {} };
+
+        this.blobIds.forEach((blobId: string) => {
+            gcData.gcNodes[this.getBlobGCNodePath(blobId)] = [];
+        });
+
+        /**
+         * For all blobs in the redirect table, the handle returned on creation is based off of the localId. So, these
+         * nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
+         * must also be marked referenced. So, we add a route from the localId node to the storageId node.
+         * Note that because of de-duping, there can be multiple localIds that all redirect to the same storageId or
+         * a blob may be referenced via its storageId handle.
+         */
+        if (this.redirectTable !== undefined) {
+            for (const [localId, storageId] of this.redirectTable) {
+                // Add node for the localId and add a route to the storageId node. The storageId node will have been
+                // added above when adding nodes for this.blobIds.
+                gcData.gcNodes[this.getBlobGCNodePath(localId)] = [this.getBlobGCNodePath(storageId)];
+            }
+        }
+
+        return gcData;
+    }
+
+    /**
+     * When running GC in test mode, this is called to delete blobs that are unused.
+     * @param unusedRoutes - These are the blob node ids that are unused and should be deleted.
+     */
+    public deleteUnusedRoutes(unusedRoutes: string[]): void {
+        // The routes or blob node paths are in the same format as returned in getGCData -
+        // `/<BlobManager.basePath>/<blobId>`.
+        for (const route of unusedRoutes) {
+            const pathParts = route.split("/");
+            assert(
+                pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+                0x2d5 /* "Invalid blob node id in unused routes." */,
+            );
+            const blobId = pathParts[2];
+
+            // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
+            // corresponding storageId may still be used either directly or via other localIds.
+            if (this.redirectTable?.has(blobId)) {
+                this.redirectTable.delete(blobId);
+                continue;
+            }
+            this.blobIds.delete(blobId);
+        }
+    }
+
+    public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         // If we have a redirect table it means the container is about to transition to "Attaching" state, so we need
         // to return an actual snapshot containing all the real storage IDs we know about.
         const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;
         const blobIds = attachingOrAttached ? this.blobIds : this.detachedBlobIds;
-        const entries: ITreeEntry[] = [...blobIds].map((id) => new AttachmentTreeEntry(id, id));
+        const builder = new SummaryTreeBuilder();
+        blobIds.forEach((blobId) => {
+            builder.addAttachment(blobId);
+        });
+
         if (this.redirectTable && this.redirectTable.size > 0) {
-            entries.push(new BlobTreeEntry(
+            builder.addBlob(
                 BlobManager.redirectTableBlobName,
-                JSON.stringify(Array.from(this.redirectTable.entries()))),
+                JSON.stringify(Array.from(this.redirectTable.entries())),
             );
         }
-        return { entries };
+
+        return builder.getSummaryTree();
     }
 
     public setRedirectTable(table: Map<string, string>) {

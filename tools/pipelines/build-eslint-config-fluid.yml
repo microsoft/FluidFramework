@@ -64,7 +64,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: common/build/eslint-config-fluid
     tagName: eslint-config-fluid
-    taskBuild: false
+    taskBuild: print-config
     taskBuildDocs: false
     taskLint: false
     taskTest: false

@@ -14,7 +14,7 @@ import { SharedString } from "@fluidframework/sequence";
 export class MonacoRunner extends DataObject {
     private _text: SharedString | undefined;
     public get text(): SharedString {
-        if(this._text === undefined) {
+        if (this._text === undefined) {
             throw new Error("Text not loaded");
         }
         return this._text;

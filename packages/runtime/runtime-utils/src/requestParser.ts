@@ -92,7 +92,7 @@ export class RequestParser implements IRequest {
         }
         if (startingPathIndex === pathLen && this.url.includes("?")) {
             return {
-                url:`/${this.query}`,
+                url: `/${this.query}`,
                 headers: this.headers,
             };
         }

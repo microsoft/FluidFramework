@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { notificationContext } from './NotificationsViewer';
+import { notificationContext } from "./NotificationsViewer";
 
 const isPromise = <K, R>(in_obj: Promise<K> | R): in_obj is Promise<K> => {
   return Promise.resolve(in_obj as Promise<K>) === in_obj;
@@ -13,7 +13,7 @@ const isPromise = <K, R>(in_obj: Promise<K> | R): in_obj is Promise<K> => {
  */
 export const CreateErrorObjAndSend = (err: string | Error) => {
   const errObj = {
-    message: (typeof err === 'string' ? err : err.message),
+    message: (typeof err === "string" ? err : err.message),
   };
   notificationContext.pushNotification(errObj);
 };
@@ -30,8 +30,8 @@ type anyFunction = (...args: any[]) => any;
 /**
  * Catches errors from a rejected promise or from a throwing function and pushes it into a notification list.
  * If no error occurs, returns according to the input function.
- * @param anythingThatMightEmitError The input function. Parameters should be passed by using `bind`.
- * @param catchErr (default = true) Whether to catch errors or not. If this is false, the ErrorPopup will return a
+ * @param anythingThatMightEmitError - The input function. Parameters should be passed by using `bind`.
+ * @param catchErr - (default = true) Whether to catch errors or not. If this is false, the ErrorPopup will return a
  *  rejected Promise on error.
  * @return A Promise. When the given function returns a Promise, this Promise is returned in case of
  *  `catchErr = false`. If it set to `true`, a caught Promise is returned. When the given function returns anything but
@@ -39,9 +39,10 @@ type anyFunction = (...args: any[]) => any;
  *  When an exception is thrown in the given function, we return a resolved Promise, or a Promise that is rejected with
  *  the original error object, depending on the `catchErr` flag.
  */
-export function ErrorPopup<T extends anyFunction = anyFunction,
-  K = ReturnType<T> extends Promise<infer R> ? R: ReturnType<T>>(anythingThatMightEmitError: T, catchErr = true)
-  : Promise<void | K> {
+export async function ErrorPopup<
+  T extends anyFunction = anyFunction,
+  K = ReturnType<T> extends Promise<infer R> ? R : ReturnType<T>,
+>(anythingThatMightEmitError: T, catchErr = true): Promise<void | K> {
   try {
     const result = anythingThatMightEmitError();
     if (isPromise<K, ReturnType<T>>(result)) {
@@ -53,7 +54,7 @@ export function ErrorPopup<T extends anyFunction = anyFunction,
     } else {
       return Promise.resolve(result);
     }
-  } catch (err) {
+  } catch (err: any) {
     processError(err);
     if (catchErr) {
       return Promise.resolve();

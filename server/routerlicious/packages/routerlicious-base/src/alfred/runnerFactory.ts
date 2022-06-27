@@ -41,6 +41,7 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 
 export class OrdererManager implements core.IOrdererManager {
     constructor(
+        private readonly globalDbEnabled: boolean,
         private readonly ordererUrl: string,
         private readonly tenantManager: core.ITenantManager,
         private readonly localOrderManager: LocalOrderManager,
@@ -58,7 +59,8 @@ export class OrdererManager implements core.IOrdererManager {
             getLumberBaseProperties(documentId, tenantId),
         );
 
-        if (tenant.orderer.url !== this.ordererUrl) {
+        if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
+            Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
             return Promise.reject(new Error("Invalid ordering service endpoint"));
         }
 
@@ -85,6 +87,7 @@ export class AlfredResources implements core.IResources {
         public restThrottler: core.IThrottler,
         public socketConnectThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
+        public socketSubmitSignalThrottler: core.IThrottler,
         public singleUseTokenCache: core.ICache,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
@@ -92,14 +95,17 @@ export class AlfredResources implements core.IResources {
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
-        public globalDbMongoManager?: core.MongoManager,
+        public documentsCollection: core.ICollection<core.IDocument>,
+        public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+        const socketIoConfig = config.get("alfred:socketIo");
         this.webServerFactory = new services.SocketIoWebServerFactory(
             this.redisConfig,
             socketIoAdapterConfig,
-            httpServerConfig);
+            httpServerConfig,
+            socketIoConfig);
     }
 
     public async dispose(): Promise<void> {
@@ -120,6 +126,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
         const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
         const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+        const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
         const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
 
         const producer = services.createProducer(
@@ -131,6 +138,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             kafkaProducerPollIntervalMs,
             kafkaNumberOfPartitions,
             kafkaReplicationFactor,
+            kafkaMaxBatchSize,
             kafkaSslCACertFilePath);
 
         const redisConfig = config.get("redis");
@@ -160,27 +168,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const redisClientForJwtCache = new Redis(redisOptions2);
         const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
-        const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
         // Database connection for global db if enabled
         let globalDbMongoManager;
-        let globalDb;
         const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+        const factory = await services.getDbFactory(config);
         if (globalDbEnabled) {
-            const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
-            const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
-            globalDbMongoManager = new core.MongoManager(globalDbMongoFactory, false);
-            globalDb = await globalDbMongoManager.getDatabase();
+            globalDbMongoManager = new core.MongoManager(factory, false, null, true);
         }
 
         // Database connection for operations db
-        const operationsDbMongoUrl = config.get("mongo:operationsDbEndpoint") as string;
-        const operationsDbMongoFactory = new services.MongoDbFactory(operationsDbMongoUrl, bufferMaxEntries);
-        const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory, false);
+        const operationsDbMongoManager = new core.MongoManager(factory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
         // Create the index on the documents collection
-        const operationsDb = await operationsDbMongoManager.getDatabase();
-        const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
+        const dbManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
+        const db: core.IDb = await dbManager.getDatabase();
         const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
         await documentsCollection.createIndex(
             {
@@ -205,7 +207,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             operationsDbMongoManager,
             config.get("mongo:collectionNames:reservations"));
 
-        const tenantManager = new services.TenantManager(authEndpoint);
+        const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+        const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 
         // Redis connection for throttling.
         const redisConfigForThrottling = config.get("redisForThrottling");
@@ -234,10 +237,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             config.get("alfred:throttling:restCalls:minCooldownIntervalInMs") as number | undefined;
         const throttleMinRequestThrottleIntervalInMs =
             config.get("alfred:throttling:restCalls:minThrottleIntervalInMs") as number | undefined;
-        const throttleStorageManager =
-            new services.RedisThrottleStorageManager(redisClientForThrottling, redisParamsForThrottling);
+        const throttleAndUsageStorageManager =
+            new services.RedisThrottleAndUsageStorageManager(redisClientForThrottling, redisParamsForThrottling);
         const restThrottlerHelper = new services.ThrottlerHelper(
-            throttleStorageManager,
+            throttleAndUsageStorageManager,
             throttleMaxRequestsPerMs,
             throttleMaxRequestBurst,
             throttleMinRequestCooldownIntervalInMs);
@@ -256,7 +259,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const throttleMinSocketConnectionThrottleIntervalInMs =
             config.get("alfred:throttling:socketConnections:minThrottleIntervalInMs") as number | undefined;
         const socketConnectThrottlerHelper = new services.ThrottlerHelper(
-            throttleStorageManager,
+            throttleAndUsageStorageManager,
             throttleMaxSocketConnectionsPerMs,
             throttleMaxSocketConnectionBurst,
             throttleMinSocketConnectionCooldownIntervalInMs,
@@ -276,13 +279,32 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const throttleMinSubmitOpThrottleIntervalInMs =
             config.get("alfred:throttling:submitOps:minThrottleIntervalInMs") as number | undefined;
         const socketSubmitOpThrottlerHelper = new services.ThrottlerHelper(
-            throttleStorageManager,
+            throttleAndUsageStorageManager,
             throttleMaxSubmitOpsPerMs,
             throttleMaxSubmitOpBurst,
             throttleMinSubmitOpCooldownIntervalInMs);
         const socketSubmitOpThrottler = new services.Throttler(
             socketSubmitOpThrottlerHelper,
             throttleMinSubmitOpThrottleIntervalInMs,
+            winston);
+
+        // Socket SubmitSignal Throttler
+        const throttleMaxSubmitSignalsPerMs =
+            config.get("alfred:throttling:submitSignals:maxPerMs") as number | undefined;
+        const throttleMaxSubmitSignalBurst =
+            config.get("alfred:throttling:submitSignals:maxBurst") as number | undefined;
+        const throttleMinSubmitSignalCooldownIntervalInMs =
+            config.get("alfred:throttling:submitSignals:minCooldownIntervalInMs") as number | undefined;
+        const throttleMinSubmitSignalThrottleIntervalInMs =
+            config.get("alfred:throttling:submitSignals:minThrottleIntervalInMs") as number | undefined;
+        const socketSubmitSignalThrottlerHelper = new services.ThrottlerHelper(
+            throttleAndUsageStorageManager,
+            throttleMaxSubmitSignalsPerMs,
+            throttleMaxSubmitSignalBurst,
+            throttleMinSubmitSignalCooldownIntervalInMs);
+        const socketSubmitSignalThrottler = new services.Throttler(
+            socketSubmitSignalThrottlerHelper,
+            throttleMinSubmitSignalThrottleIntervalInMs,
             winston);
 
         const databaseManager = new core.MongoDatabaseManager(
@@ -321,13 +343,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const serverUrl = config.get("worker:serverUrl");
 
         const orderManager = new OrdererManager(
+            globalDbEnabled,
             serverUrl,
             tenantManager,
             localOrderManager,
             kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
-        const appTenants = config.get("alfred:tenants") as { id: string, key: string }[];
+        const appTenants = config.get("alfred:tenants") as { id: string; key: string; }[];
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
@@ -343,6 +366,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             restThrottler,
             socketConnectThrottler,
             socketSubmitOpThrottler,
+            socketSubmitSignalThrottler,
             redisJwtCache,
             storage,
             appTenants,
@@ -350,7 +374,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             port,
             documentsCollectionName,
             metricClientConfig,
-            globalDbMongoManager);
+            documentsCollection,
+            throttleAndUsageStorageManager);
     }
 }
 
@@ -365,6 +390,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.restThrottler,
             resources.socketConnectThrottler,
             resources.socketSubmitOpThrottler,
+            resources.socketSubmitSignalThrottler,
             resources.singleUseTokenCache,
             resources.storage,
             resources.clientManager,
@@ -372,6 +398,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.mongoManager,
             resources.producer,
             resources.metricClientConfig,
-            resources.globalDbMongoManager);
+            resources.documentsCollection,
+            resources.throttleAndUsageStorageManager);
     }
 }

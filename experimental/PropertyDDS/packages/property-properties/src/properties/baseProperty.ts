@@ -56,36 +56,36 @@ const PATH_TOKENS = {
 
 interface IBasePropertyParams {
     /** id of the property */
-    id?: string,
+    id?: string;
     /** The type unique identifier */
-    typeid?: string,
+    typeid?: string;
     /** The length of the property. Only valid if the property is an array, otherwise the length defaults to 1 */
-    length: number,
+    length: number;
     /** The type of property this template represents i.e. single, array, map, set. */
-    context: string,
+    context: string;
 
     // TODO: UNUSED PARAMETER ??
     /** List of property templates that are used to define children properties */
-    properties: BaseProperty[],
+    properties: BaseProperty[];
 
     // TODO: UNUSED PARAMETER ??
     /**  List of property template typeids that this PropertyTemplate inherits from */
-    inherits: string[]
+    inherits: string[];
 }
 
 interface ISerializeOptions {
     /** Only include dirty entries in the serialization */
-    dirtyOnly?: boolean,
+    dirtyOnly?: boolean;
     /** Include the typeid of the root of the hierarchy */
-    includeRootTypeid?: boolean,
+    includeRootTypeid?: boolean;
     /** The type of dirtiness to use when reporting dirty changes. */
-    dirtinessType?: MODIFIED_STATE_FLAGS,
+    dirtinessType?: MODIFIED_STATE_FLAGS;
     /**
      * If this is set to true, the serialize
      * function will descend into referenced repositories. WARNING: if there are loops in the references
      * this can result in an infinite loop
      */
-    includeReferencedRepositories?: boolean
+    includeReferencedRepositories?: boolean;
 }
 
 /**
@@ -601,7 +601,7 @@ export abstract class BaseProperty {
      */
     _setId(in_id) {
         if (!_.isString(in_id) && !_.isNumber(in_id)) {
-            throw new Error(MSG.ID_STRING_OR_NUMBER + in_id);
+            throw new TypeError(MSG.ID_STRING_OR_NUMBER + in_id);
         }
 
         if (this._parent !== undefined) {
@@ -700,7 +700,7 @@ export abstract class BaseProperty {
         return [];
     }
 
-    get(id: string, params?: { referenceResolutionMode: REFERENCE_RESOLUTION }): BaseProperty | undefined {
+    get(id: string, params?: { referenceResolutionMode: REFERENCE_RESOLUTION; }): BaseProperty | undefined {
         return undefined;
     }
 
@@ -1135,7 +1135,7 @@ export abstract class BaseProperty {
         };
         if (in_options !== undefined) {
             if (typeof in_options !== 'object') {
-                throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
+                throw new TypeError(MSG.SERIALIZE_TAKES_OBJECT);
             }
             Object.assign(opts, in_options);
         }

@@ -1,0 +1,61 @@
+{
+	"editHistory": {
+		"editChunks": [
+			{
+				"startRevision": 0,
+				"chunk": [
+					{
+						"changes": [
+							{
+								"destination": 0,
+								"source": [
+									[
+										4,
+										14,
+										[
+											5,
+											[
+												[7, 10, [99]],
+												[1, [2, [[3, 13, ["payload"]]]]]
+											],
+											6,
+											[[8, 15]]
+										]
+									]
+								],
+								"type": 5
+							},
+							{
+								"source": 0,
+								"destination": { "side": 1, "referenceTrait": { "label": "root", "parent": 0 } },
+								"type": 0
+							}
+						]
+					}
+				]
+			}
+		],
+		"editIds": ["9c80454e-039e-4eb4-a277-ceaab85a9d44"]
+	},
+	"version": "0.1.1",
+	"internedStrings": [
+		"51c58718-47b9-4fe4-ad46-56312f3b9e86",
+		"C",
+		"leaf",
+		"E",
+		"Root",
+		"left",
+		"right",
+		"A",
+		"B",
+		"D",
+		"root"
+	],
+	"idCompressor": {
+		"version": "0.0.1",
+		"reservedIdCount": 10,
+		"clusterCapacity": 512,
+		"sessions": [["968bee41-bcf7-46d2-8035-6eb163b76c4c"]],
+		"clusters": [[0, 512, 6]]
+	}
+}

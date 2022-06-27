@@ -20,7 +20,7 @@ export interface IClientConfig {
 
 export interface IOdspAuthRequestInfo {
     accessToken: string;
-    refreshTokenFn?: () => Promise<string>,
+    refreshTokenFn?: () => Promise<string>;
 }
 
 export type TokenRequestCredentials = {
@@ -38,9 +38,9 @@ export type TokenRequestCredentials = {
 
 type TokenRequestBody =
     TokenRequestCredentials & {
-        client_id: string,
-        client_secret: string,
-        scope: string,
+        client_id: string;
+        client_secret: string;
+        scope: string;
     };
 
 export const getOdspScope = (server: string) => `offline_access ${getSiteUrl(server)}/AllSites.Write`;

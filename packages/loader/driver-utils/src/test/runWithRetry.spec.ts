@@ -13,7 +13,7 @@ const fastSetTimeout: any =
     (callback: (...cbArgs: any[]) => void, ms: number, ...args: any[]) => _setTimeout(callback, ms / 1000.0, ...args);
 async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
     global.setTimeout = fastSetTimeout;
-    return callback().finally(()=>{
+    return callback().finally(() => {
         global.setTimeout = _setTimeout;
     });
 }
@@ -171,7 +171,7 @@ describe("runWithRetry Tests", () => {
             return true;
         };
         try {
-            success = await runWithFastSetTimeout(async ()=> runWithRetry(
+            success = await runWithFastSetTimeout(async () => runWithRetry(
                 api,
                 "test",
                 logger,

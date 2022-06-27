@@ -101,7 +101,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
                     } else if (property instanceof BaseProperty && _.isObject(value)) {
                         property._setValues(value, false, false);
                     } else {
-                        throw new Error(MSG.SET_VALUES_PATH_INVALID + key);
+                        throw new TypeError(MSG.SET_VALUES_PATH_INVALID + key);
                     }
                 } else {
                     if (value instanceof BaseProperty) {
@@ -239,7 +239,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
             // Insert the entry into the collection
             this._insert(in_key, in_property, true);
         } else {
-            throw new Error(MSG.NONVALUE_MAP_INSERT_PROP);
+            throw new TypeError(MSG.NONVALUE_MAP_INSERT_PROP);
         }
     }
 

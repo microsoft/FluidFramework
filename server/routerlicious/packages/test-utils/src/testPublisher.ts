@@ -29,7 +29,7 @@ export class TestTopic implements core.ITopic {
 
 export class TestPublisher implements core.IPublisher {
     private readonly events = new EventEmitter();
-    private topics: { [topic: string]: TestTopic } = {};
+    private topics: { [topic: string]: TestTopic; } = {};
 
     public on(event: string, listener: (...args: any[]) => void) {
         this.events.on(event, listener);

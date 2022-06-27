@@ -6,8 +6,6 @@ _Details coming soon..._
 
 [fluidpreview-intercept](./fluidpreview-intercept/README.md)
 
-[generator-fluid](./generator-fluid/README.md)
-
 [getkeys](./getkeys/README.md)
 
 [pipelines](./pipelines/README.md)

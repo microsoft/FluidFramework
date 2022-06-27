@@ -35,7 +35,7 @@ export class DefaultTokenProvider implements ITokenProvider {
     fetchOrdererToken(): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(): Promise<ITokenResponse>;
-    }
+}
 
 // @public
 export class DeltaStorageService implements IDeltaStorageService {
@@ -43,14 +43,24 @@ export class DeltaStorageService implements IDeltaStorageService {
     // (undocumented)
     get(tenantId: string, id: string, from: number, // inclusive
     to: number): Promise<IDeltasFetchResult>;
-    }
+}
 
 // @public
 export class DocumentDeltaStorageService implements IDocumentDeltaStorageService {
     constructor(tenantId: string, id: string, storageService: IDeltaStorageService, documentStorageService: DocumentStorageService);
     // (undocumented)
     fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
-    }
+}
+
+// @public
+export class DocumentPostCreateError extends Error {
+    constructor(
+    innerError: Error);
+    // (undocumented)
+    readonly name = "DocumentPostCreateError";
+    // (undocumented)
+    get stack(): string | undefined;
+}
 
 // @public
 export class DocumentService implements api.IDocumentService {
@@ -76,7 +86,7 @@ export class DocumentService implements api.IDocumentService {
 
 // @public (undocumented)
 export class DocumentStorageService extends DocumentStorageServiceProxy {
-    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTreeVersion>);
+    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTreeVersion>, noCacheGitManager?: GitManager | undefined);
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
@@ -85,11 +95,14 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
     get logTailSha(): string | undefined;
     // (undocumented)
     manager: GitManager;
+    // (undocumented)
+    noCacheGitManager?: GitManager | undefined;
 }
 
 // @public (undocumented)
 export interface IRouterliciousDriverPolicies {
     aggregateBlobsSmallerThanBytes: number | undefined;
+    enableDiscovery?: boolean;
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
@@ -99,6 +112,7 @@ export interface IRouterliciousDriverPolicies {
 
 // @public
 export interface ITokenProvider {
+    documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
     fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 }
@@ -133,8 +147,6 @@ export class NullBlobStorageService implements IDocumentStorageService {
     get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: api_2.ISummaryTree, context: ISummaryContext): Promise<string>;
-    // (undocumented)
-    write(tree: api_2.ITree, parents: string[], message: string, ref: string): Promise<api_2.IVersion>;
 }
 
 // @public
@@ -142,11 +154,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    // (undocumented)
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, isCreateContainer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "fluid:";
-    }
-
+}
 
 // (No @packageDocumentation comment for this package)
 

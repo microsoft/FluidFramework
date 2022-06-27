@@ -10,7 +10,7 @@ import {
     timeoutPromise,
 } from "@fluidframework/test-utils";
 
-import {generatePairwiseOptions} from "@fluidframework/test-pairwise-generator";
+import { generatePairwiseOptions } from "@fluidframework/test-pairwise-generator";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
@@ -31,7 +31,7 @@ const ddsKey = "string";
 
 const testConfigs =
     generatePairwiseOptions({
-        containerAttachPoint:[ContainerCreated, DatastoreCreated, ... sharedPoints],
+        containerAttachPoint: [ContainerCreated, DatastoreCreated, ... sharedPoints],
         containerSaveAfterAttach: [true, false],
         datastoreAttachPoint: [DatastoreCreated, ... sharedPoints],
         datastoreSaveAfterAttach: [true, false],
@@ -42,7 +42,7 @@ const testConfigs =
 describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
     before(function() {
         const provider = getTestObjectProvider();
-        switch(provider.driver.type) {
+        switch (provider.driver.type) {
             case "local":
             case "tinylicious":
                 break;
@@ -56,9 +56,9 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
             const provider = getTestObjectProvider();
             const timeoutDurationMs = this.timeout() / 2;
             let containerUrl: IResolvedUrl | undefined;
-            const oldRegistry: [string | undefined, IChannelFactory][] =
+            const channelFactoryRegistry: [string | undefined, IChannelFactory][] =
                 [[SharedStringFactory.Type, SharedString.getFactory()]];
-            const containerConfig = { registry: oldRegistry };
+            const containerConfig = { registry: channelFactoryRegistry };
 
             // act code block
             {
@@ -91,7 +91,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         && initContainer.attachState !== AttachState.Detached) {
                         await timeoutPromise(
                             (resolve) => initContainer.once("saved", () => resolve()),
-                            {durationMs: timeoutDurationMs, errorMsg:"datastoreSaveAfterAttach timeout"});
+                            { durationMs: timeoutDurationMs, errorMsg: "datastoreSaveAfterAttach timeout" });
                     }
                 };
                 if (testConfig.datastoreAttachPoint === DatastoreCreated) {
@@ -111,7 +111,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         && initContainer.attachState !== AttachState.Detached) {
                             await timeoutPromise(
                                 (resolve) => initContainer.once("saved", () => resolve()),
-                                {durationMs: timeoutDurationMs,errorMsg:"ddsSaveAfterAttach timeout"});
+                                { durationMs: timeoutDurationMs, errorMsg: "ddsSaveAfterAttach timeout" });
                     }
                 };
                 if (testConfig.ddsAttachPoint === 2) {
@@ -140,13 +140,13 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                 while (initContainer.attachState !== AttachState.Attached) {
                     await timeoutPromise(
                         (resolve) => initContainer.once("attached", () => resolve()),
-                        {durationMs: timeoutDurationMs, errorMsg:"container attach timeout"});
+                        { durationMs: timeoutDurationMs, errorMsg: "container attach timeout" });
                 }
 
                 while (initContainer.isDirty) {
                     await timeoutPromise(
                         (resolve) => initContainer.once("saved", () => resolve()),
-                        {durationMs: timeoutDurationMs, errorMsg:"final save timeout"});
+                        { durationMs: timeoutDurationMs, errorMsg: "final save timeout" });
                 }
                 containerUrl = initContainer.resolvedUrl;
 
@@ -167,7 +167,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                 const initDataObject = await requestFluidObject<ITestFluidObject>(validationContainer, "default");
 
                 const newDatastore = await (await waitKey<IFluidHandle<ITestFluidObject>>(
-                    initDataObject.root,"ds", timeoutDurationMs)).get();
+                    initDataObject.root, "ds", timeoutDurationMs)).get();
 
                 const newString = await (await waitKey<IFluidHandle<SharedString>>(
                     newDatastore.root, ddsKey, timeoutDurationMs)).get();
@@ -191,8 +191,7 @@ async function waitChar(sharedString: SharedString, pos: number, timeoutDuration
         const text = sharedString.getText();
         if (text.length > pos) {
             resolve(text[pos]);
-        }
-        else {
+        } else {
             const waitFunc = (event: SequenceDeltaEvent) => {
                 const range = event.ranges.find((value) => value.position === pos);
                 if (range) {
@@ -203,7 +202,7 @@ async function waitChar(sharedString: SharedString, pos: number, timeoutDuration
             sharedString.on("sequenceDelta", waitFunc);
         }
     },
-    {durationMs: timeoutDurationMs, errorMsg:`${pos} not available before timeout`});
+    { durationMs: timeoutDurationMs, errorMsg: `${pos} not available before timeout` });
 }
 
 async function waitKey<T>(map: ISharedMap, key: string, timeoutDurationMs: number): Promise<T> {
@@ -222,5 +221,5 @@ async function waitKey<T>(map: ISharedMap, key: string, timeoutDurationMs: numbe
             map.on("valueChanged", waitFunc);
         }
     },
-    {durationMs: timeoutDurationMs,errorMsg:`${key} not available before timeout`});
+    { durationMs: timeoutDurationMs, errorMsg: `${key} not available before timeout` });
 }

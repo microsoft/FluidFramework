@@ -220,15 +220,12 @@ export class SnapshotV1 {
                     raw.removedSeq = segment.removedSeq;
 
                     // back compat for when we split overlap and removed client
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    raw.removedClient = this.getLongClientId(segment.removedClientId!);
+                    raw.removedClient =
+                        segment.removedClientIds !== undefined
+                            ? this.getLongClientId(segment.removedClientIds[0])
+                            : undefined;
 
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const removedClientIds = [segment.removedClientId!];
-                    if(segment.removedClientOverlap !== undefined) {
-                        removedClientIds.push(... segment.removedClientOverlap);
-                    }
-                    raw.removedClientIds = removedClientIds.map((id)=>this.getLongClientId(id));
+                    raw.removedClientIds = segment.removedClientIds?.map((id) => this.getLongClientId(id));
                 }
 
             // Sanity check that we are preserving either the seq < minSeq or a removed segment's info.

@@ -9,6 +9,7 @@ import Axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosRequestHeade
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
+import { CorrelationIdHeaderName } from "./constants";
 
 export abstract class RestWrapper {
     constructor(
@@ -122,7 +123,8 @@ export class BasicRestWrapper extends RestWrapper {
         const options = { ...requestConfig };
         options.headers = this.generateHeaders(
             options.headers,
-            (this.getCorrelationId && this.getCorrelationId()) || uuid());
+            this.getCorrelationId?.() ?? uuid(),
+        );
 
         return new Promise<T>((resolve, reject) => {
             this.axios.request<T>(options)
@@ -133,7 +135,7 @@ export class BasicRestWrapper extends RestWrapper {
                         resolve(error?.response?.data);
                     }
 
-                    if (error && error.config) {
+                    if (error?.config) {
                         // eslint-disable-next-line max-len
                         debug(`[${error.config.method}] request to [${error.config.baseURL ?? ""}${error.config.url ?? ""}] failed with [${error.response?.status}] [${safeStringify(error.response?.data, undefined, 2)}]`);
                     } else {
@@ -149,7 +151,7 @@ export class BasicRestWrapper extends RestWrapper {
                     } else if (error?.response?.status === 401 && canRetry && this.refreshOnAuthError()) {
                         const retryConfig = { ...requestConfig };
                         retryConfig.headers = this.generateHeaders(
-                            retryConfig.headers, options.headers["x-correlation-id"] as string);
+                            retryConfig.headers, options.headers[CorrelationIdHeaderName] as string);
 
                         this.request<T>(retryConfig, statusCode, false)
                             .then(resolve)
@@ -190,10 +192,10 @@ export class BasicRestWrapper extends RestWrapper {
             result = { ...this.defaultHeaders, ...headers };
         }
 
-        if (result["x-correlation-id"]) {
+        if (result[CorrelationIdHeaderName]) {
             return result;
         }
-        return { "x-correlation-id": fallbackCorrelationId, ...result };
+        return { [CorrelationIdHeaderName]: fallbackCorrelationId, ...result };
     }
 
     private refreshOnAuthError(): boolean {

@@ -15,6 +15,10 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 
     constructor() { super(); }
 
+    clear() {
+        this.events = [];
+    }
+
     send(event: ITelemetryBaseEvent): void {
         this.events.push(event);
     }

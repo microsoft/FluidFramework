@@ -35,7 +35,7 @@ export class FlaggedError {
      * @returns True if the quiet flag is set.
      */
     isQuiet(): boolean {
-        return _isFlagSet(this.flags,FlaggedError.FLAGS.QUIET);
+        return _isFlagSet(this.flags, FlaggedError.FLAGS.QUIET);
     }
 
     /**

@@ -281,4 +281,4 @@ const TemplateSchema = {
     ],
 };
 
-export { TemplateSchema , NativeTypes };
+export { TemplateSchema, NativeTypes };

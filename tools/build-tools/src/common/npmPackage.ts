@@ -24,6 +24,8 @@ import {
 import { MonoRepo } from "./monoRepo";
 import { options } from "../fluidBuild/options";
 
+export type ScriptDependencies = { [key: string]: string[] };
+
 interface IPerson {
     name: string;
     email: string;
@@ -59,7 +61,15 @@ interface IPackage {
     os: string[];
     cpu: string[];
     [key: string]: any;
-};
+
+    fluidBuild?: {
+        buildDependencies: {
+            merge?: {
+                [key: string]: ScriptDependencies
+            }
+        }
+    };
+}
 
 export class Package {
     private static packageCount: number = 0;
@@ -213,13 +223,13 @@ export class Package {
         const installScript = "npm i";
         return execWithErrorAsync(installScript, { cwd: this.directory }, this.directory);
     }
-};
+}
 
 interface TaskExec<TItem, TResult> {
     item: TItem;
     resolve: (result: TResult) => void;
     reject: (reason?: any) => void;
-};
+}
 
 async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TItem) => Promise<TResult>, messageCallback?: (item: TItem) => string) {
     let numDone = 0;
@@ -248,7 +258,7 @@ export class Packages {
     public constructor(public readonly packages: Package[]) {
     }
 
-    public static loadDir(dirFullPath: string, group: string, ignoredDirFullPaths: string[] | undefined, monoRepo?: MonoRepo, ) {
+    public static loadDir(dirFullPath: string, group: string, ignoredDirFullPaths: string[] | undefined, monoRepo?: MonoRepo,) {
         const packageJsonFileName = path.join(dirFullPath, "package.json");
         if (existsSync(packageJsonFileName)) {
             return [new Package(packageJsonFileName, group, monoRepo)];
@@ -276,7 +286,7 @@ export class Packages {
     }
 
     public async forEachAsync<TResult>(exec: (pkg: Package) => Promise<TResult>, parallel: boolean, message?: string) {
-        if (parallel) { return this.queueExecOnAllPackageCore(exec, message) };
+        if (parallel) { return this.queueExecOnAllPackageCore(exec, message) }
 
         const results: TResult[] = [];
         for (const pkg of this.packages) {
@@ -306,7 +316,7 @@ export class Packages {
             if (cleanScript) {
                 cleanP.push(execCleanScript(pkg, cleanScript));
             }
-        };
+        }
         const results = await Promise.all(cleanP);
         return !results.some(result => result.error);
     }

@@ -2,9 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { PromiseCache } from "@fluidframework/common-utils";
-import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IContainerPackageInfo,
     IResolvedUrl,
@@ -134,7 +133,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             // when redeeming the share link during the redeem fallback for trees latest call becomes greater than
             // the eligible length.
             odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo || {},
-                {sharingLinkToRedeem: this.removeNavParam(request.url)});
+                { sharingLinkToRedeem: this.removeNavParam(request.url) });
         }
         if (odspResolvedUrl.itemId) {
             // Kick start the sharing link request if we don't have it already as a performance optimization.
@@ -191,20 +190,24 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         dataStorePath: string,
-        packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails,
+        packageInfoSource?: IContainerPackageInfo,
     ): Promise<string> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
         const shareLinkUrl = new URL(shareLink);
-
-        // back-compat: IFluidCodeDetails usage to be removed in 0.58.0
+        // back-compat: GitHub #9653
+        const isFluidPackage = (pkg: any) =>
+            typeof pkg === "object"
+            && typeof pkg?.name === "string"
+            && typeof pkg?.fluid === "object";
         let containerPackageName;
         if (packageInfoSource && "name" in packageInfoSource) {
             containerPackageName = packageInfoSource.name;
-        } else if (isFluidPackage(packageInfoSource?.package)) {
-            containerPackageName = packageInfoSource?.package.name;
+            // packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
+        } else if (isFluidPackage((packageInfoSource as any)?.package)) {
+            containerPackageName = (packageInfoSource as any)?.package.name;
         } else {
-            containerPackageName = packageInfoSource?.package;
+            containerPackageName = (packageInfoSource as any)?.package;
         }
         containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 

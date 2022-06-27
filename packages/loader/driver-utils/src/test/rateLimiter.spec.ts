@@ -75,7 +75,7 @@ describe("Rate Limiter", () => {
         assert(limiter.waitQueueLength === 0);
     });
 
-    it ("can run many tasks sequentially", async () => {
+    it("can run many tasks sequentially", async () => {
         let counter = 0;
         const promises: Promise<void>[] = [];
         for (let i = 0; i < 3; i++) {
