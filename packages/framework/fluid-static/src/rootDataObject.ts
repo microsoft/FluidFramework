@@ -50,7 +50,10 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     }
 
     /**
-     * {@inheritDoc @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
+     * The first time this object is initialized, creates each object identified in
+     * {@link RootDataObjectProps.initialObjects} and stores them as unique values in the root directory.
+     *
+     * @see {@link @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
      */
     protected async initializingFirstTime(props: RootDataObjectProps) {
         this.root.createSubDirectory(this.initialObjectsDirKey);
@@ -69,7 +72,10 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     }
 
     /**
-     * {@inheritDoc @fluidframework/aqueduct#PureDataObject.hasInitialized}
+     * Every time an instance is initialized, loads all of the initial objects in the root directory so they can be
+     * accessed immediately.
+     *
+     * @see {@link @fluidframework/aqueduct#PureDataObject.hasInitialized}
      */
     protected async hasInitialized() {
         // We will always load the initial objects so they are available to the developer
