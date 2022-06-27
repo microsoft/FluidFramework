@@ -107,14 +107,8 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "ClassDeclaration_IntervalCollection": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "ClassDeclaration_SequenceInterval": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
+      "ClassDeclaration_IntervalCollection": {"backCompat": false},
+      "ClassDeclaration_SequenceInterval": {"backCompat": false},
       "InterfaceDeclaration_ISharedString": {"backCompat": false},
       "ClassDeclaration_SequenceEvent": {"backCompat": false},
       "ClassDeclaration_SequenceDeltaEvent": {"backCompat": false},

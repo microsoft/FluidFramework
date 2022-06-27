@@ -101,7 +101,6 @@
     "version": "2.0.0",
     "broken": {
       "ClassDeclaration_Client": {
-        "forwardCompat": false,
         "backCompat": false
       },
       "ClassDeclaration_LocalReference": {
@@ -115,6 +114,7 @@
       "ClassDeclaration_SnapshotLegacy": {"backCompat": false, "forwardCompat": false},
       "InterfaceDeclaration_IConsensusInfo": {"backCompat": false, "forwardCompat": false},
       "RemovedClassDeclaration_LocalReference": {"forwardCompat": false, "backCompat": false},
+      "InterfaceDeclaration_LocalReferencePosition": {"backCompat": false},
       "ClassDeclaration_MergeTree": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_BaseSegment": {"forwardCompat": false},
       "InterfaceDeclaration_IHierBlock": {"forwardCompat": false},

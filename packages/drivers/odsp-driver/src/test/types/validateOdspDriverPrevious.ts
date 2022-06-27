@@ -112,6 +112,30 @@ use_old_FunctionDeclaration_createOdspUrl(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_currentReadVersion": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_currentReadVersion():
+    TypeOnly<typeof old.currentReadVersion>;
+declare function use_current_VariableDeclaration_currentReadVersion(
+    use: TypeOnly<typeof current.currentReadVersion>);
+use_current_VariableDeclaration_currentReadVersion(
+    get_old_VariableDeclaration_currentReadVersion());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_currentReadVersion": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_currentReadVersion():
+    TypeOnly<typeof current.currentReadVersion>;
+declare function use_old_VariableDeclaration_currentReadVersion(
+    use: TypeOnly<typeof old.currentReadVersion>);
+use_old_VariableDeclaration_currentReadVersion(
+    get_current_VariableDeclaration_currentReadVersion());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_encodeOdspFluidDataStoreLocator": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_encodeOdspFluidDataStoreLocator():
@@ -276,6 +300,30 @@ declare function use_old_InterfaceDeclaration_ISharingLinkHeader(
     use: TypeOnly<old.ISharingLinkHeader>);
 use_old_InterfaceDeclaration_ISharingLinkHeader(
     get_current_InterfaceDeclaration_ISharingLinkHeader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshotContents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISnapshotContents():
+    TypeOnly<old.ISnapshotContents>;
+declare function use_current_InterfaceDeclaration_ISnapshotContents(
+    use: TypeOnly<current.ISnapshotContents>);
+use_current_InterfaceDeclaration_ISnapshotContents(
+    get_old_InterfaceDeclaration_ISnapshotContents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshotContents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISnapshotContents():
+    TypeOnly<current.ISnapshotContents>;
+declare function use_old_InterfaceDeclaration_ISnapshotContents(
+    use: TypeOnly<old.ISnapshotContents>);
+use_old_InterfaceDeclaration_ISnapshotContents(
+    get_current_InterfaceDeclaration_ISnapshotContents());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -568,6 +616,30 @@ use_old_InterfaceDeclaration_OdspFluidDataStoreLocator(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_parseCompactSnapshotResponse": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_parseCompactSnapshotResponse():
+    TypeOnly<typeof old.parseCompactSnapshotResponse>;
+declare function use_current_FunctionDeclaration_parseCompactSnapshotResponse(
+    use: TypeOnly<typeof current.parseCompactSnapshotResponse>);
+use_current_FunctionDeclaration_parseCompactSnapshotResponse(
+    get_old_FunctionDeclaration_parseCompactSnapshotResponse());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_parseCompactSnapshotResponse": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_parseCompactSnapshotResponse():
+    TypeOnly<typeof current.parseCompactSnapshotResponse>;
+declare function use_old_FunctionDeclaration_parseCompactSnapshotResponse(
+    use: TypeOnly<typeof old.parseCompactSnapshotResponse>);
+use_old_FunctionDeclaration_parseCompactSnapshotResponse(
+    get_current_FunctionDeclaration_parseCompactSnapshotResponse());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_prefetchLatestSnapshot": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_prefetchLatestSnapshot():
@@ -588,6 +660,30 @@ declare function use_old_FunctionDeclaration_prefetchLatestSnapshot(
     use: TypeOnly<typeof old.prefetchLatestSnapshot>);
 use_old_FunctionDeclaration_prefetchLatestSnapshot(
     get_current_FunctionDeclaration_prefetchLatestSnapshot());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_ReadBuffer": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_ReadBuffer():
+    TypeOnly<old.ReadBuffer>;
+declare function use_current_ClassDeclaration_ReadBuffer(
+    use: TypeOnly<current.ReadBuffer>);
+use_current_ClassDeclaration_ReadBuffer(
+    get_old_ClassDeclaration_ReadBuffer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_ReadBuffer": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_ReadBuffer():
+    TypeOnly<current.ReadBuffer>;
+declare function use_old_ClassDeclaration_ReadBuffer(
+    use: TypeOnly<old.ReadBuffer>);
+use_old_ClassDeclaration_ReadBuffer(
+    get_current_ClassDeclaration_ReadBuffer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -636,6 +732,30 @@ declare function use_old_EnumDeclaration_SharingLinkHeader(
     use: TypeOnly<old.SharingLinkHeader>);
 use_old_EnumDeclaration_SharingLinkHeader(
     get_current_EnumDeclaration_SharingLinkHeader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_snapshotMinReadVersion": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_snapshotMinReadVersion():
+    TypeOnly<typeof old.snapshotMinReadVersion>;
+declare function use_current_VariableDeclaration_snapshotMinReadVersion(
+    use: TypeOnly<typeof current.snapshotMinReadVersion>);
+use_current_VariableDeclaration_snapshotMinReadVersion(
+    get_old_VariableDeclaration_snapshotMinReadVersion());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_snapshotMinReadVersion": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_snapshotMinReadVersion():
+    TypeOnly<typeof current.snapshotMinReadVersion>;
+declare function use_old_VariableDeclaration_snapshotMinReadVersion(
+    use: TypeOnly<typeof old.snapshotMinReadVersion>);
+use_old_VariableDeclaration_snapshotMinReadVersion(
+    get_current_VariableDeclaration_snapshotMinReadVersion());
 
 /*
 * Validate forward compat by using old type in place of current type
