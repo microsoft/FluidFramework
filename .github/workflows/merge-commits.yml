@@ -1,8 +1,14 @@
 name: Merge commits to next branch
 
+# on:
+#   schedule:
+#     - cron: "0 */2 * * *"
+
 on:
-  schedule:
-    - cron: "0 */2 * * *"
+  push:
+    branches:
+      - 'batching'
+
 
 env:
   TARGET_BRANCH: next
@@ -159,7 +165,7 @@ jobs:
       group: group-pr
       cancel-in-progress: false
     needs: [ pull-request ]
-    if: ( needs.pull-request.result == 'success' )
+    if: always()
     steps:
       - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
       - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
