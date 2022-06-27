@@ -101,7 +101,7 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
 }
 
 // @public
-export interface AzureUser<T = unknown> extends IUser {
+export interface AzureUser<T = any> extends IUser {
     additionalDetails?: T;
     name: string;
 }

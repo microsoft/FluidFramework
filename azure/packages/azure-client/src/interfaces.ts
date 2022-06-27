@@ -125,7 +125,7 @@ export interface AzureContainerServices {
  * Since Azure provides user names for all of its members, we extend the
  * {@link @fluidframework/protocol-definitions#IUser} interface to include this service-specific value.
  */
-export interface AzureUser<T = unknown> extends IUser {
+export interface AzureUser<T = any> extends IUser {
     /**
      * The user's name
      */

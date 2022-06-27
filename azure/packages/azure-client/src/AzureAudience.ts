@@ -26,7 +26,7 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
       userId: audienceMember.user.id,
       userName: azureUser.name,
       connections: [],
-      additionalDetails: azureUser.additionalDetails,
+      additionalDetails: azureUser.additionalDetails as unknown,
     };
   }
 }
