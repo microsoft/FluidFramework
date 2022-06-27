@@ -1,13 +1,8 @@
 name: Merge commits to next branch
 
-# on:
-#   schedule:
-#     - cron: "0 */2 * * *"
-
 on:
-  push:
-    branches:
-      - 'workflow-fix'
+  schedule:
+    - cron: "0 */2 * * *"
 
 env:
   TARGET_BRANCH: next
@@ -139,7 +134,7 @@ jobs:
       - name: Create PR using octokit
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
-          token: ${{ secrets.WORKFLOW_TOKEN }}
+          token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           script: |
             const { Octokit } = require("@octokit/core");
             const token = `${{ secrets.GITHUB_TOKEN }}`;
@@ -153,7 +148,7 @@ jobs:
               title: 'Main Next Integrate',
               body: 'This commit is queued for getting merged with the next branch. Please make sure to resolve any conflicts/CI failures seen on this PR. Thank you!',
               head: sha,
-              base: baseBranch
+              base: 'next'
             });
             await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
               owner: 'microsoft',
