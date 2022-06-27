@@ -61,11 +61,9 @@
     "version": "2.0.0",
     "broken": {
       "ClassDeclaration_IntervalCollection": {
-        "backCompat": false,
-        "forwardCompat": false
+        "backCompat": false
       },
       "ClassDeclaration_SequenceInterval": {
-	      "forwardCompat": false,
         "backCompat": false
       },
       "InterfaceDeclaration_ISharedString": {"backCompat": false},

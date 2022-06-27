@@ -98,12 +98,6 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_MockContainerRuntimeFactory": {
-        "forwardCompat": false
-      },
       "ClassDeclaration_MockDeltaManager": {
         "backCompat": false
       },
