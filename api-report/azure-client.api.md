@@ -20,7 +20,7 @@ import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-    // @internal (undocumented)
+    // @internal
     protected createServiceMember(audienceMember: IClient): AzureMember;
 }
 
