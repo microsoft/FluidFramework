@@ -56,10 +56,6 @@
   },
   "typeValidation": {
     "version": "1.1.0",
-    "broken": {
-      "InterfaceDeclaration_ISignalEnvelope": {
-        "forwardCompat": false
-      }
-    }
+    "broken": { }
   }
 }
