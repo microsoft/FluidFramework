@@ -12,7 +12,7 @@ const webpack = require("webpack");
 // const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = env => {
-    const isProduction = env && env.production;
+    const isProduction = env?.production;
     return merge(
         {
             entry: './src/index.ts',
@@ -33,7 +33,7 @@ module.exports = env => {
                     {
                         test: /\.tsx?$/,
                         use: [{
-                            loader: require.resolve("ts-loader"),
+                            loader: "ts-loader",
                             options: {
                                 compilerOptions: {
                                     module: "esnext"
@@ -64,14 +64,14 @@ module.exports = env => {
                     },
                     {
                         test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                        loader: require.resolve('url-loader'),
+                        loader: 'url-loader',
                         options: {
                             limit: 10000
                         }
                     },
                     {
                         test: /\.html$/,
-                        loader: require.resolve('html-loader')
+                        loader: 'html-loader'
                     }
                 ]
             },

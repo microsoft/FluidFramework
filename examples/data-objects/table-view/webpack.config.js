@@ -9,7 +9,7 @@ const { merge } = require("webpack-merge");
 const webpack = require("webpack");
 
 module.exports = env => {
-    const isProduction = env === "production";
+    const isProduction = env?.production;
     const styleLocalIdentName = isProduction
         ? "[hash:base64:5]"
         : "[local]-[hash:base64:5]"
@@ -34,7 +34,7 @@ module.exports = env => {
                     {
                         test: /\.tsx?$/,
                         use: [{
-                            loader: require.resolve("ts-loader"),
+                            loader: "ts-loader",
                             options: {
                                 compilerOptions: {
                                     module: "esnext"
@@ -52,7 +52,7 @@ module.exports = env => {
                         test: /\.css$/,
                         use: [
                             "style-loader", {
-                                loader: require.resolve("css-loader"),
+                                loader: "css-loader",
                                 options: {
                                     modules: true,
                                     localIdentName: styleLocalIdentName
@@ -62,14 +62,14 @@ module.exports = env => {
                     },
                     {
                         test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                        loader: require.resolve('url-loader'),
+                        loader: 'url-loader',
                         options: {
                             limit: 10000
                         }
                     },
                     {
                         test: /\.html$/,
-                        loader: require.resolve('html-loader')
+                        loader: 'html-loader'
                     }
                 ]
             },

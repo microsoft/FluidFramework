@@ -27,7 +27,7 @@ module.exports = env => {
                 }
             },{
                 test: /\.tsx?$/,
-                loader: require.resolve("ts-loader")
+                loader: "ts-loader"
             },
             {
                 test: /\.s?css$/,
@@ -37,10 +37,10 @@ module.exports = env => {
                 test: /\.svg$/,
                 use: [
                   {
-                    loader: require.resolve('svg-sprite-loader')
+                    loader: 'svg-sprite-loader'
                   },
                   {
-                    loader: require.resolve('svgo-loader'),
+                    loader: 'svgo-loader',
                     options: require('./svgo.plugins.js')
                   }
                 ]

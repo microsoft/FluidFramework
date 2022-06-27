@@ -10,7 +10,7 @@ const webpack = require("webpack");
 // const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = env => {
-    const isProduction = env && env.production;
+    const isProduction = env?.production;
 
     return merge({
         entry: {
