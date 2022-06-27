@@ -7,7 +7,7 @@ User presence scenarios are well-suited for `SignalManager`, as users are requir
 
 
 ### Creation
-Just like with DDSes, the `FluidContainer` provides a container schema where you can include `SignalManager` as a shared object you would like to load.
+Just like with DDSes, you can include `SignalManager` as a shared object you would like to load in your `FluidContainer` schema.
 
 Here is a look at how you would go about loading `SignalManager` as part of the initial objects of the container:
 
