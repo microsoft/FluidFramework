@@ -4,6 +4,7 @@
  */
 
 export {
+    EmptyKey,
     FieldKey,
     TreeType,
 } from "./types";
