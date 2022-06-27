@@ -44,4 +44,4 @@ jobs:
         with:
           number: ${{ steps.findPr.outputs.pr }}
           message: |
-            This commit is queued for merging with the `test_next` branch! Please ignore this PR for now. Contact @microsoft/fluid-cr-infra for help.
+            This commit is queued for merging with the `next` branch! Please ignore this PR for now. Contact @microsoft/fluid-cr-infra for help.
