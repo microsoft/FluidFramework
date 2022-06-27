@@ -59,6 +59,12 @@
     "broken": {
       "InterfaceDeclaration_ISignalEnvelope": {
         "forwardCompat": false
+      },
+      "InterfaceDeclaration_IFluidDataStoreContext": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IFluidDataStoreContextDetached": {
+        "backCompat": false
       }
     }
   }
